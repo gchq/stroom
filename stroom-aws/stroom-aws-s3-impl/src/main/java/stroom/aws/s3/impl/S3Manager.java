@@ -33,6 +33,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.string.TemplateUtil.Template;
 
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -383,9 +384,12 @@ public class S3Manager {
 
     public String createBucketName(final String bucketNamePattern,
                                    final Meta meta) {
-        String bucketName = bucketNamePattern;
-        bucketName = pathCreator.replace(bucketName, "feed", meta::getFeedName);
-        bucketName = pathCreator.replace(bucketName, "type", meta::getTypeName);
+        final Template template = templatorCache.getTemplator(bucketNamePattern);
+        String bucketName = template.buildExecutor()
+                .addLazyReplacement("feed", meta::getFeedName)
+                .addLazyReplacement("type", meta::getTypeName)
+                .execute();
+
         bucketName = bucketName.toLowerCase(Locale.ROOT);
         bucketName = S3_BUCKET_NAME_INVALID_CHARS_PATTERN.matcher(bucketName).replaceAll("-");
         bucketName = LEADING_HYPHENS.matcher(bucketName).replaceAll("");

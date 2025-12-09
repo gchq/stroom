@@ -25,7 +25,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.string.TemplateUtil;
-import stroom.util.string.TemplateUtil.Templator;
+import stroom.util.string.TemplateUtil.Template;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -130,12 +130,12 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
 
         private static final String FEED_ONLY_TEMPLATE = "${feed}";
 
-        private final Templator templator;
+        private final Template template;
 
         public FeedNameGenerator(final ConfigState configState) {
             if (configState.feedNameGenerationEnabled) {
                 try {
-                    this.templator = TemplateUtil.parseTemplate(
+                    this.template = TemplateUtil.parseTemplate(
                             configState.feedNameTemplate,
                             FeedNameGenerator::normaliseParamReplacement,
                             FeedNameGenerator::normaliseStaticText);
@@ -146,14 +146,14 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
                 }
             } else {
                 // Feed name gen not enabled so just get the feed name from the attr map
-                this.templator = TemplateUtil.parseTemplate(
+                this.template = TemplateUtil.parseTemplate(
                         FEED_ONLY_TEMPLATE,
                         str -> NullSafe.string(str).toUpperCase());
             }
         }
 
         public String generateName(final AttributeMap attributeMap) {
-            return templator.generateWith(attributeMap);
+            return template.executeWith(attributeMap);
         }
 
         private static String normaliseParamReplacement(final String name) {

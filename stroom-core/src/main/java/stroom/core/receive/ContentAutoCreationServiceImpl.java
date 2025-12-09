@@ -73,7 +73,7 @@ import stroom.util.shared.UserDesc;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserType;
 import stroom.util.string.TemplateUtil;
-import stroom.util.string.TemplateUtil.Templator;
+import stroom.util.string.TemplateUtil.Template;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -119,9 +119,9 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
     private final ProcessorFilterService processorFilterService;
     private final PipelineService pipelineService;
     private final CachedValue<ExpressionMatcher, Set<String>> cachedExpressionMatcher;
-    private final CachedValue<Templator, String> cachedDestinationPathTemplator;
-    private final CachedValue<Templator, String> cachedGroupTemplator;
-    private final CachedValue<Templator, String> cachedAdditionalGroupTemplator;
+    private final CachedValue<Template, String> cachedDestinationPathTemplator;
+    private final CachedValue<Template, String> cachedGroupTemplator;
+    private final CachedValue<Template, String> cachedAdditionalGroupTemplator;
 
     @Inject
     public ContentAutoCreationServiceImpl(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
@@ -309,8 +309,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                         final AttributeMap attributeMap,
                                         final ContentTemplate contentTemplate) {
 
-        final Templator templator = cachedDestinationPathTemplator.getValue();
-        final String destinationPath = templator.generateWith(attributeMap);
+        final Template template = cachedDestinationPathTemplator.getValue();
+        final String destinationPath = template.executeWith(attributeMap);
         final DocPath docPath = DocPath.fromPathString(destinationPath);
 
         LOGGER.info("Ensuring path '{}' exists", docPath);
@@ -334,8 +334,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         }
 
         // Set up the group
-        final Templator groupTemplator = cachedGroupTemplator.getValue();
-        final String groupName = groupTemplator.generateWith(attributeMap);
+        final Template groupTemplate = cachedGroupTemplator.getValue();
+        final String groupName = groupTemplate.executeWith(attributeMap);
         LOGGER.info("Auto-creating user group '{}'", groupName);
         final User group = userService.getOrCreateUserGroup(groupName);
         addAppPerms(group);
@@ -346,8 +346,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
         // Set up the additional group
         Optional<User> optAdditionalGroup = Optional.empty();
-        final Templator additionalGroupTemplator = cachedAdditionalGroupTemplator.getValue();
-        final String additionalGroupName = additionalGroupTemplator.generateWith(attributeMap);
+        final Template additionalGroupTemplate = cachedAdditionalGroupTemplator.getValue();
+        final String additionalGroupName = additionalGroupTemplate.executeWith(attributeMap);
         if (NullSafe.isNonBlankString(additionalGroupName)) {
             LOGGER.info("Auto-creating user group '{}'", additionalGroupName);
             final User additionalGroup = userService.getOrCreateUserGroup(additionalGroupName);

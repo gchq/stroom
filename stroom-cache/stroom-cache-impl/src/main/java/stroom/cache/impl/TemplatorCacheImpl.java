@@ -23,7 +23,7 @@ import stroom.cache.api.TemplatorCache;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.string.TemplateUtil;
-import stroom.util.string.TemplateUtil.Templator;
+import stroom.util.string.TemplateUtil.Template;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -34,9 +34,9 @@ public class TemplatorCacheImpl implements TemplatorCache {
     public static final String CACHE_NAME = "Template Cache";
 
     /**
-     * Template {@link String} => {@link Templator}
+     * Template {@link String} => {@link Template}
      */
-    private final LoadingStroomCache<String, Templator> cache;
+    private final LoadingStroomCache<String, Template> cache;
 
     @Inject
     public TemplatorCacheImpl(final CacheManager cacheManager) {
@@ -50,10 +50,10 @@ public class TemplatorCacheImpl implements TemplatorCache {
     }
 
     @Override
-    public Templator getTemplator(final String template) {
+    public Template getTemplator(final String template) {
         // Not much point caching the empty instance
         if (NullSafe.isEmptyString(template)) {
-            return Templator.EMPTY_TEMPLATE;
+            return Template.EMPTY_TEMPLATE;
         } else {
             return cache.get(template);
         }

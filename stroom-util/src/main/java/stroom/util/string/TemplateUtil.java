@@ -57,19 +57,19 @@ public class TemplateUtil {
     public static final Set<String> NON_ENV_VARS = Arrays.stream(SimplePathCreator.NON_ENV_VARS)
             .collect(Collectors.toSet());
 
-    public static Templator parseTemplate(final String template) {
+    public static Template parseTemplate(final String template) {
         return parseTemplate(template, null, null);
     }
 
-    public static Templator parseTemplate(final String template,
-                                          final Function<String, String> formatter) {
+    public static Template parseTemplate(final String template,
+                                         final Function<String, String> formatter) {
         return parseTemplate(template, formatter, formatter);
     }
 
     /**
      * Parses a template like '${accountId}_${component}_static_text' and returns
-     * a {@link Templator} that can be used many times to build strings from
-     * the parsed template. The {@link Templator} is intended to be cached,
+     * a {@link Template} that can be used many times to build strings from
+     * the parsed template. The {@link Template} is intended to be cached,
      * held as a static or on a singleton depending on the lifetime of the template string.
      * <p>
      * The template is case-sensitive.
@@ -83,11 +83,11 @@ public class TemplateUtil {
      *                             static parts of the template
      *                             e.g. {@link String#toUpperCase()} and/or to replace unwanted chars.
      */
-    public static Templator parseTemplate(final String template,
-                                          final Function<String, String> replacementFormatter,
-                                          final Function<String, String> staticTextFormatter) {
+    public static Template parseTemplate(final String template,
+                                         final Function<String, String> replacementFormatter,
+                                         final Function<String, String> staticTextFormatter) {
         if (NullSafe.isEmptyString(template)) {
-            return Templator.EMPTY_TEMPLATE;
+            return Template.EMPTY_TEMPLATE;
         } else {
             final List<PartExtractor> funcList = new ArrayList<>();
             final Set<String> varsInTemplate = new HashSet<>();
@@ -140,7 +140,7 @@ public class TemplateUtil {
                 funcList.add(StaticPart.of(staticText));
                 sb.setLength(0);
             }
-            return new Templator(template, varsInTemplate, funcList);
+            return new Template(template, varsInTemplate, funcList);
         }
     }
 
@@ -173,9 +173,9 @@ public class TemplateUtil {
      * {@code ${feed}_${type}}
      * </p>
      */
-    public static class Templator {
+    public static class Template {
 
-        public static final Templator EMPTY_TEMPLATE = new Templator(
+        public static final Template EMPTY_TEMPLATE = new Template(
                 "",
                 Collections.emptySet(),
                 Collections.emptyList());
@@ -188,9 +188,9 @@ public class TemplateUtil {
         private final List<PartExtractor> partExtractors;
         private final int partExtractorCount;
 
-        private Templator(final String template,
-                          final Set<String> varsInTemplate,
-                          final List<PartExtractor> partExtractors) {
+        private Template(final String template,
+                         final Set<String> varsInTemplate,
+                         final List<PartExtractor> partExtractors) {
             this.template = Objects.requireNonNull(template);
             this.varsInTemplate = NullSafe.unmodifialbeSet(varsInTemplate);
             this.partExtractors = NullSafe.unmodifiableList(partExtractors);
@@ -203,18 +203,18 @@ public class TemplateUtil {
          *
          * @param varToReplacementMap A map of case-sensitive template variables (without their braces)
          *                            to the replacement value.
-         * @see Templator#buildGenerator() buildGenerator() for more control of variable replacement.
+         * @see Template#buildExecutor() buildGenerator() for more control of variable replacement.
          */
-        public String generateWith(final Map<String, String> varToReplacementMap) {
+        public String executeWith(final Map<String, String> varToReplacementMap) {
             // partExtractors cope with null map
             final String output;
             if (partExtractorCount == 0) {
                 output = "";
             } else {
                 final Map<String, String> map = NullSafe.map(varToReplacementMap);
-                output = buildGenerator()
+                output = buildExecutor()
                         .addCommonReplacementFunction(map::get)
-                        .generate();
+                        .execute();
             }
 
             LOGGER.debug("Generated output '{}' from varToReplacementProviderMap: {}",
@@ -222,8 +222,8 @@ public class TemplateUtil {
             return output;
         }
 
-        private String doGenerate(final Map<String, ReplacementProvider> varToReplacementProviderMap,
-                                  final List<OptionalReplacementProvider> dynamicReplacementProviders) {
+        private String doExecute(final Map<String, ReplacementProvider> varToReplacementProviderMap,
+                                 final List<OptionalReplacementProvider> dynamicReplacementProviders) {
             // partExtractors cope with null map
             final String output;
             if (partExtractorCount == 0) {
@@ -251,10 +251,10 @@ public class TemplateUtil {
 
         /**
          * Create a builder to add the replacements and generate the output.
-         * {@link GeneratorBuilder} is not thread safe.
+         * {@link ExecutorBuilder} is not thread safe.
          */
-        public GeneratorBuilder buildGenerator() {
-            return new GeneratorBuilder(this);
+        public ExecutorBuilder buildExecutor() {
+            return new ExecutorBuilder(this);
         }
 
         /**
@@ -289,10 +289,10 @@ public class TemplateUtil {
             if (object == null || getClass() != object.getClass()) {
                 return false;
             }
-            final Templator templator = (Templator) object;
-            return Objects.equals(template, templator.template)
-                   && Objects.equals(varsInTemplate, templator.varsInTemplate)
-                   && Objects.equals(partExtractors, templator.partExtractors);
+            final Template template = (Template) object;
+            return Objects.equals(this.template, template.template)
+                   && Objects.equals(varsInTemplate, template.varsInTemplate)
+                   && Objects.equals(partExtractors, template.partExtractors);
         }
 
         @Override
@@ -305,7 +305,7 @@ public class TemplateUtil {
     // --------------------------------------------------------------------------------
 
 
-    public static class GeneratorBuilder {
+    public static class ExecutorBuilder {
 
         private static final SingleStatefulReplacementProvider STATEFUL_UUID_REPLACEMENT_PROVIDER =
                 new SingleStatefulReplacementProvider(
@@ -320,10 +320,10 @@ public class TemplateUtil {
          * Replacement providers where the var is not known up front, e.g. replacing system properties.
          */
         private List<OptionalReplacementProvider> dynamicReplacementProviders = null;
-        private final Templator templator;
+        private final Template template;
 
-        private GeneratorBuilder(final Templator templator) {
-            this.templator = templator;
+        private ExecutorBuilder(final Template template) {
+            this.template = template;
         }
 
         /**
@@ -331,15 +331,15 @@ public class TemplateUtil {
          * This will override any existing replacement for var.
          * If var is not in the template it is a no-op.
          */
-        public GeneratorBuilder addReplacement(final String var, final String replacement) {
+        public ExecutorBuilder addReplacement(final String var, final String replacement) {
             if (NullSafe.isNonBlankString(var)) {
-                if (templator.isVarInTemplate(var)) {
+                if (template.isVarInTemplate(var)) {
                     if (NullSafe.isNonEmptyString(replacement)) {
                         // No point adding a func for an empty replacement
                         varToReplacementProviderMap.put(var, aVar -> replacement);
                     }
                 } else {
-                    LOGGER.debug("var '{}' is not in template '{}'", var, templator.template);
+                    LOGGER.debug("var '{}' is not in template '{}'", var, template.template);
                 }
             } else {
                 throw new IllegalArgumentException("Blank var");
@@ -353,10 +353,10 @@ public class TemplateUtil {
          * This will override any existing replacements for vars matching the keys in replacementsMap.
          * Any entries where the var is not in the template will be ignored.
          */
-        public GeneratorBuilder addReplacements(final Map<String, String> replacementsMap) {
+        public ExecutorBuilder addReplacements(final Map<String, String> replacementsMap) {
             NullSafe.map(replacementsMap)
                     .forEach((var, replacement) -> {
-                        if (templator.isVarInTemplate(var)
+                        if (template.isVarInTemplate(var)
                             && NullSafe.isNonEmptyString(replacement)) {
                             // No point adding a func for an empty replacement
                             varToReplacementProviderMap.put(var, aVar -> replacement);
@@ -371,16 +371,16 @@ public class TemplateUtil {
          * even if var appears more than once in the template.
          * If var is not in the template it is a no-op.
          */
-        public GeneratorBuilder addLazyReplacement(final String var,
-                                                   final Supplier<String> replacementSupplier) {
+        public ExecutorBuilder addLazyReplacement(final String var,
+                                                  final Supplier<String> replacementSupplier) {
             Objects.requireNonNull(replacementSupplier);
             if (NullSafe.isNonBlankString(var)) {
-                if (templator.isVarInTemplate(var)) {
+                if (template.isVarInTemplate(var)) {
                     final SingleStatefulReplacementProvider singleStatefulReplacementProvider =
                             new SingleStatefulReplacementProvider(var, replacementSupplier);
                     varToReplacementProviderMap.put(var, singleStatefulReplacementProvider);
                 } else {
-                    LOGGER.debug("var '{}' is not in template '{}'", var, templator.template);
+                    LOGGER.debug("var '{}' is not in template '{}'", var, template.template);
                 }
             } else {
                 throw new IllegalArgumentException("Blank var");
@@ -396,12 +396,12 @@ public class TemplateUtil {
          * will resolve them from some other source.
          * </p>
          */
-        public GeneratorBuilder addCommonReplacementFunction(final ReplacementProvider replacementProvider) {
+        public ExecutorBuilder addCommonReplacementFunction(final ReplacementProvider replacementProvider) {
             Objects.requireNonNull(replacementProvider);
 
             final ReplacementProvider statefulReplacementProvider = new CommonStatefulReplacementProvider(
                     replacementProvider);
-            for (final String var : templator.getVarsInTemplate()) {
+            for (final String var : template.getVarsInTemplate()) {
                 varToReplacementProviderMap.put(var, statefulReplacementProvider);
             }
             return this;
@@ -423,7 +423,7 @@ public class TemplateUtil {
          * Uses the current time in {@link ZoneOffset#UTC} for all the replacements.
          * </p>
          */
-        public GeneratorBuilder addStandardTimeReplacements() {
+        public ExecutorBuilder addStandardTimeReplacements() {
             addStandardTimeReplacements(ZonedDateTime.now(ZoneOffset.UTC));
             return this;
         }
@@ -443,8 +443,8 @@ public class TemplateUtil {
          *
          * @param zonedDateTime The time to use for all replacements.
          */
-        public GeneratorBuilder addStandardTimeReplacements(final ZonedDateTime zonedDateTime) {
-            final Set<String> varsInTemplate = templator.getVarsInTemplate();
+        public ExecutorBuilder addStandardTimeReplacements(final ZonedDateTime zonedDateTime) {
+            final Set<String> varsInTemplate = template.getVarsInTemplate();
 
             addTimeReplacement("year", varsInTemplate, zonedDateTime::getYear, 4);
             addTimeReplacement("month", varsInTemplate, zonedDateTime::getMonthValue, 2);
@@ -465,7 +465,7 @@ public class TemplateUtil {
          *                       of {@code ${uuid}}, else a random UUID will be generated for each.
          * @return
          */
-        public GeneratorBuilder addUuidReplacement(final boolean reuseUUidValue) {
+        public ExecutorBuilder addUuidReplacement(final boolean reuseUUidValue) {
             if (reuseUUidValue) {
                 varToReplacementProviderMap.put(UUID_VAR, STATEFUL_UUID_REPLACEMENT_PROVIDER);
             } else {
@@ -482,9 +482,9 @@ public class TemplateUtil {
          * @param homeDirProvider Provider of the stroom home dir.
          * @param tempDirProvider Provider of the stroom temp dir.
          */
-        public GeneratorBuilder addSystemPropertyReplacements(final HomeDirProvider homeDirProvider,
-                                                              final TempDirProvider tempDirProvider) {
-            if (templator.varsInTemplate.contains(STROOM_HOME_VAR)) {
+        public ExecutorBuilder addSystemPropertyReplacements(final HomeDirProvider homeDirProvider,
+                                                             final TempDirProvider tempDirProvider) {
+            if (template.varsInTemplate.contains(STROOM_HOME_VAR)) {
                 varToReplacementProviderMap.put(STROOM_HOME_VAR, new SingleStatefulReplacementProvider(
                         STROOM_HOME_VAR,
                         () -> {
@@ -496,7 +496,7 @@ public class TemplateUtil {
                         }));
             }
 
-            if (templator.varsInTemplate.contains(STROOM_TEMP_VAR)) {
+            if (template.varsInTemplate.contains(STROOM_TEMP_VAR)) {
                 varToReplacementProviderMap.put(STROOM_TEMP_VAR, new SingleStatefulReplacementProvider(
                         STROOM_TEMP_VAR,
                         () -> {
@@ -524,7 +524,7 @@ public class TemplateUtil {
          * Adds a dynamic replacement provider to the list of dynamic replacement providers that will be called
          * in turn if there is no static replacement provider for the var.
          */
-        public GeneratorBuilder addDynamicReplacementProvider(final OptionalReplacementProvider replacementProvider) {
+        public ExecutorBuilder addDynamicReplacementProvider(final OptionalReplacementProvider replacementProvider) {
             if (replacementProvider != null) {
                 if (dynamicReplacementProviders == null) {
                     dynamicReplacementProviders = new ArrayList<>();
@@ -538,7 +538,7 @@ public class TemplateUtil {
          * Sets the list of dynamic replacement providers that will be called
          * in turn if there is no static replacement provider for the var.
          */
-        public GeneratorBuilder setDynamicReplacementProviders(
+        public ExecutorBuilder setDynamicReplacementProviders(
                 final List<OptionalReplacementProvider> replacementProviders) {
             if (replacementProviders != null) {
                 dynamicReplacementProviders = new ArrayList<>(NullSafe.list(replacementProviders));
@@ -547,12 +547,12 @@ public class TemplateUtil {
         }
 
         /**
-         * Generate the output string from the template.
+         * Execute the template using the provided replacements to output a string.
          *
          * @return The String generated from replacing the variables in the template.
          */
-        public String generate() {
-            return templator.doGenerate(
+        public String execute() {
+            return template.doExecute(
                     varToReplacementProviderMap,
                     NullSafe.list(dynamicReplacementProviders));
         }

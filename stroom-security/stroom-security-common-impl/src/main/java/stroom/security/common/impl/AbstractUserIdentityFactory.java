@@ -41,7 +41,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.string.TemplateUtil;
-import stroom.util.string.TemplateUtil.Templator;
+import stroom.util.string.TemplateUtil.Template;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -70,7 +70,7 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
     private final ServiceUserFactory serviceUserFactory;
     private final JerseyClientFactory jerseyClientFactory;
     private final SimplePathCreator simplePathCreator;
-    private final CachedValue<Templator, String> cachedFullNameTemplate;
+    private final CachedValue<Template, String> cachedFullNameTemplate;
 
     // A service account/user for communicating with other apps in the same OIDC realm,
     // e.g. proxy => stroom. Created lazily.
@@ -447,14 +447,14 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         Objects.requireNonNull(openIdConfiguration);
         Objects.requireNonNull(jwtClaims);
         // e.g. "${firstName} ${lastName}" => "john Doe"
-        final Templator fullNameTemplator = cachedFullNameTemplate.getValue();
-        if (!fullNameTemplator.isBlank()) {
+        final Template fullNameTemplate = cachedFullNameTemplate.getValue();
+        if (!fullNameTemplate.isBlank()) {
             // If the claim in the template is not in the claims then just replace with empty string
-            final String fullName = NullSafe.trim(fullNameTemplator.buildGenerator()
+            final String fullName = NullSafe.trim(fullNameTemplate.buildExecutor()
                     .addCommonReplacementFunction(aClaim -> JwtUtil.getClaimValue(jwtClaims, aClaim)
                             .map(NullSafe::trim)
                             .orElse(""))
-                    .generate());
+                    .execute());
             return fullName.isEmpty()
                     ? Optional.empty()
                     : Optional.of(fullName);

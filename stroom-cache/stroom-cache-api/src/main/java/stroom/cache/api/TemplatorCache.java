@@ -17,22 +17,25 @@
 package stroom.cache.api;
 
 
-import stroom.util.string.TemplateUtil.Templator;
+import stroom.util.string.TemplateUtil;
+import stroom.util.string.TemplateUtil.Template;
 
 /**
- * A cache of {@link Templator} instances, keyed by their {@link String} template.
+ * A cache of {@link Template} instances, keyed by their {@link String} template.
  * The {@link String} templates contain named variables for replacement,
  * of the form {@code ${feed}_${type}}.
  */
 public interface TemplatorCache {
 
     /**
-     * Gets the {@link Templator} for template.
-     * {@link Templator} is created using {@link Templator#parseTemplate(String)}.
-     * If you need to create a {@link Templator} with custom formatters then you can't use this
+     * Gets the {@link Template} for template.
+     * {@link Template} is created using {@link TemplateUtil#parseTemplate(String)}.
+     * If you need to create a {@link Template} with custom formatters then you can't use this
      * cache.
+     *
+     * @return The {@link Template} instance for the passed template. Will not be null.
      */
-    Templator getTemplator(final String template);
+    Template getTemplator(final String template);
 
     /**
      * Evicts this template from the cache.

@@ -17,37 +17,37 @@
 package stroom.cache.impl;
 
 import stroom.cache.api.CacheManager;
-import stroom.util.string.TemplateUtil.Templator;
+import stroom.util.string.TemplateUtil.Template;
 
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestTemplatorCacheImpl {
+class TestTemplateCacheImpl {
 
     @Test
     void test() {
         try (final CacheManager cacheManager = new CacheManagerImpl()) {
             final TemplatorCacheImpl templatorCache = new TemplatorCacheImpl(cacheManager);
 
-            final Templator template1 = templatorCache.getTemplator("foo");
-            final String output1 = template1.buildGenerator()
-                    .generate();
+            final Template template1 = templatorCache.getTemplator("foo");
+            final String output1 = template1.buildExecutor()
+                    .execute();
             assertThat(output1)
                     .isEqualTo("foo");
 
-            final Templator template2 = templatorCache.getTemplator("foo ${xxx}");
-            final String output2 = template2.buildGenerator()
+            final Template template2 = templatorCache.getTemplator("foo ${xxx}");
+            final String output2 = template2.buildExecutor()
                     .addReplacement("xxx", "bar")
-                    .generate();
+                    .execute();
             assertThat(output2)
                     .isEqualTo("foo bar");
 
-            final Templator template3 = templatorCache.getTemplator("foo");
+            final Template template3 = templatorCache.getTemplator("foo");
             assertThat(template3)
                     .isSameAs(template1);
 
-            final Templator template4 = templatorCache.getTemplator("foo ${xxx}");
+            final Template template4 = templatorCache.getTemplator("foo ${xxx}");
             assertThat(template4)
                     .isSameAs(template2);
         }
@@ -58,19 +58,19 @@ class TestTemplatorCacheImpl {
         try (final CacheManager cacheManager = new CacheManagerImpl()) {
             final TemplatorCacheImpl templatorCache = new TemplatorCacheImpl(cacheManager);
 
-            final Templator template1 = templatorCache.getTemplator("foo");
-            final String output1 = template1.buildGenerator()
-                    .generate();
+            final Template template1 = templatorCache.getTemplator("foo");
+            final String output1 = template1.buildExecutor()
+                    .execute();
             assertThat(output1)
                     .isEqualTo("foo");
 
-            final Templator template3 = templatorCache.getTemplator("foo");
+            final Template template3 = templatorCache.getTemplator("foo");
             assertThat(template3)
                     .isSameAs(template1);
 
             templatorCache.evict("foo");
 
-            final Templator template4 = templatorCache.getTemplator("foo");
+            final Template template4 = templatorCache.getTemplator("foo");
             assertThat(template4)
                     .isNotSameAs(template1);
         }

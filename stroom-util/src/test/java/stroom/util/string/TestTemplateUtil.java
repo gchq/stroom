@@ -18,8 +18,8 @@ package stroom.util.string;
 
 import stroom.test.common.TestUtil;
 import stroom.util.shared.NullSafe;
-import stroom.util.string.TemplateUtil.GeneratorBuilder;
-import stroom.util.string.TemplateUtil.Templator;
+import stroom.util.string.TemplateUtil.ExecutorBuilder;
+import stroom.util.string.TemplateUtil.Template;
 
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
@@ -58,30 +58,30 @@ class TestTemplateUtil {
                 .withTestFunction(testCase -> {
                     final Map<String, String> map = NullSafe.map(testCase.getInput()._1);
                     final String template = testCase.getInput()._2;
-                    final Templator templator = TemplateUtil.parseTemplate(
+                    final Template templator = TemplateUtil.parseTemplate(
                             template,
                             String::toUpperCase,
                             String::toLowerCase);
-                    final String output1 = templator.buildGenerator()
+                    final String output1 = templator.buildExecutor()
                             .addCommonReplacementFunction(map::get)
-                            .generate();
+                            .execute();
 
                     // Check re-use
-                    final GeneratorBuilder generatorBuilder2 = templator.buildGenerator();
-                    map.forEach(generatorBuilder2::addReplacement);
+                    final ExecutorBuilder executorBuilder2 = templator.buildExecutor();
+                    map.forEach(executorBuilder2::addReplacement);
 
-                    final String output2 = generatorBuilder2.generate();
+                    final String output2 = executorBuilder2.execute();
                     assertThat(output2)
                             .isEqualTo(output1);
 
-                    final GeneratorBuilder generatorBuilder3 = templator.buildGenerator();
+                    final ExecutorBuilder executorBuilder3 = templator.buildExecutor();
                     map.forEach((var, value) ->
-                            generatorBuilder3.addLazyReplacement(var, () -> value));
-                    final String output3 = generatorBuilder3.generate();
+                            executorBuilder3.addLazyReplacement(var, () -> value));
+                    final String output3 = executorBuilder3.execute();
                     assertThat(output3)
                             .isEqualTo(output1);
 
-                    final String output4 = templator.generateWith(map);
+                    final String output4 = templator.executeWith(map);
                     assertThat(output4)
                             .isEqualTo(output1);
 
@@ -112,15 +112,15 @@ class TestTemplateUtil {
     @Test
     void testFunctionReUse() {
         final AtomicInteger counter = new AtomicInteger(1);
-        final Templator templator = TemplateUtil.parseTemplate("The count is ${count} then ${count} then ${count}");
-        assertThat(templator.getVarsInTemplate())
+        final Template template = TemplateUtil.parseTemplate("The count is ${count} then ${count} then ${count}");
+        assertThat(template.getVarsInTemplate())
                 .containsExactlyInAnyOrder("count");
         // The replacement provider func should only be called once to get the replacement,
         // then the replacement reused.
-        final String output = templator.buildGenerator()
+        final String output = template.buildExecutor()
                 .addLazyReplacement("count", () ->
                         String.valueOf(counter.getAndIncrement()))
-                .generate();
+                .execute();
         assertThat(output)
                 .isEqualTo("The count is 1 then 1 then 1");
     }
@@ -132,8 +132,8 @@ class TestTemplateUtil {
         replacements.put("drink", "");
         replacements.put("animal", "cow");
 
-        final Templator templator = TemplateUtil.parseTemplate("${food}, ${drink} and ${animal}");
-        final String output = templator.generateWith(replacements);
+        final Template template = TemplateUtil.parseTemplate("${food}, ${drink} and ${animal}");
+        final String output = template.executeWith(replacements);
         assertThat(output)
                 .isEqualTo(",  and cow");
     }
@@ -145,10 +145,10 @@ class TestTemplateUtil {
         replacements.put("drink", "");
         replacements.put("animal", "cow");
 
-        final Templator templator = TemplateUtil.parseTemplate("${food}, ${drink} and ${animal}");
-        final String output = templator.buildGenerator()
+        final Template template = TemplateUtil.parseTemplate("${food}, ${drink} and ${animal}");
+        final String output = template.buildExecutor()
                 .addCommonReplacementFunction(replacements::get)
-                .generate();
+                .execute();
         assertThat(output)
                 .isEqualTo(",  and cow");
     }
@@ -156,29 +156,29 @@ class TestTemplateUtil {
     @Test
     void testNullMap() {
 
-        final Templator templator = TemplateUtil.parseTemplate("${food}, ${drink} and ${animal}");
-        final String output = templator.generateWith(null);
+        final Template template = TemplateUtil.parseTemplate("${food}, ${drink} and ${animal}");
+        final String output = template.executeWith(null);
         assertThat(output)
                 .isEqualTo(",  and ");
     }
 
     @Test
     void testTemplatorReUse1() {
-        final Templator templator = TemplateUtil.parseTemplate("${food}, ${drink} and ${animal}");
+        final Template template = TemplateUtil.parseTemplate("${food}, ${drink} and ${animal}");
 
-        final String output1 = templator.buildGenerator()
+        final String output1 = template.buildExecutor()
                 .addReplacements(Map.of(
                         "food", "cheese",
                         "drink", "milk",
                         "animal", "toad"))
-                .generate();
+                .execute();
 
-        final String output2 = templator.buildGenerator()
+        final String output2 = template.buildExecutor()
                 .addReplacements(Map.of(
                         "food", "scampi fries",
                         "drink", "beer",
                         "animal", "worm"))
-                .generate();
+                .execute();
 
         assertThat(output1)
                 .isEqualTo("cheese, milk and toad");
@@ -188,27 +188,27 @@ class TestTemplateUtil {
 
     @Test
     void testTemplatorReUse2() {
-        final Templator templator = TemplateUtil.parseTemplate("${food}, ${drink} and some more ${food}");
+        final Template template = TemplateUtil.parseTemplate("${food}, ${drink} and some more ${food}");
 
         final AtomicInteger counter1 = new AtomicInteger(100);
         final Map<String, String> map1 = Map.of(
                 "food", "cheese",
                 "drink", "milk",
                 "animal", "toad");
-        final String output1 = templator.buildGenerator()
+        final String output1 = template.buildExecutor()
                 .addCommonReplacementFunction(key ->
                         map1.get(key) + "_" + counter1.incrementAndGet())
-                .generate();
+                .execute();
 
         final AtomicInteger counter2 = new AtomicInteger(200);
         final Map<String, String> map2 = Map.of(
                 "food", "scampi_fries",
                 "drink", "beer",
                 "animal", "worm");
-        final String output2 = templator.buildGenerator()
+        final String output2 = template.buildExecutor()
                 .addCommonReplacementFunction(key ->
                         map2.get(key) + "_" + counter2.incrementAndGet())
-                .generate();
+                .execute();
 
         assertThat(output1)
                 .isEqualTo("cheese_101, milk_102 and some more cheese_101");
@@ -228,10 +228,10 @@ class TestTemplateUtil {
                 ZoneOffset.UTC);
         final String template =
                 "${foo}__${year}/${year}-${month}/${year}-${month}-${day}/${hour}:${minute}:${second}.${millis}";
-        final Templator templator = TemplateUtil.parseTemplate(template);
-        final String output = templator.buildGenerator()
+        final Template templator = TemplateUtil.parseTemplate(template);
+        final String output = templator.buildExecutor()
                 .addStandardTimeReplacements(zonedDateTime)
-                .generate();
+                .execute();
         assertThat(output)
                 .isEqualTo("__2018/2018-08/2018-08-20/13:17:22.123");
     }
@@ -239,10 +239,10 @@ class TestTemplateUtil {
     @Test
     void testUuidReplacement_reuse() {
         final String template = "${uuid},${uuid}";
-        final Templator templator = TemplateUtil.parseTemplate(template);
-        final String output = templator.buildGenerator()
+        final Template templator = TemplateUtil.parseTemplate(template);
+        final String output = templator.buildExecutor()
                 .addUuidReplacement(true)
-                .generate();
+                .execute();
 
         final String[] parts = output.split(",");
         assertThat(parts)
@@ -256,10 +256,10 @@ class TestTemplateUtil {
     @Test
     void testUuidReplacement_unique() {
         final String template = "${uuid},${uuid}";
-        final Templator templator = TemplateUtil.parseTemplate(template);
-        final String output = templator.buildGenerator()
+        final Template templator = TemplateUtil.parseTemplate(template);
+        final String output = templator.buildExecutor()
                 .addUuidReplacement(false)
-                .generate();
+                .execute();
 
         final String[] parts = output.split(",");
         assertThat(parts)
@@ -273,8 +273,8 @@ class TestTemplateUtil {
     @Test
     void testDynamicProviders() {
         final String template = "${a},${b},${c}";
-        final Templator templator = TemplateUtil.parseTemplate(template);
-        final String output = templator.buildGenerator()
+        final Template templator = TemplateUtil.parseTemplate(template);
+        final String output = templator.buildExecutor()
                 .addReplacement("b", "BBB")
                 .addDynamicReplacementProvider(ignored -> Optional.empty())
                 .addDynamicReplacementProvider(var ->
@@ -290,7 +290,7 @@ class TestTemplateUtil {
                     };
                     return Optional.of(str);
                 })
-                .generate();
+                .execute();
 
         assertThat(output)
                 .isEqualTo("AAA,BBB,ccc");
