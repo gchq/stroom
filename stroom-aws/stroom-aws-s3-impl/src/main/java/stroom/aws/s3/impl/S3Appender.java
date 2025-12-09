@@ -18,6 +18,7 @@ package stroom.aws.s3.impl;
 
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.aws.s3.shared.S3ConfigDoc;
+import stroom.cache.api.TemplatorCache;
 import stroom.docref.DocRef;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
@@ -73,6 +74,7 @@ public class S3Appender extends AbstractAppender {
     private static final String DEFAULT_COMPRESSION_METHOD_PROP_VALUE = CompressorStreamFactory.GZIP;
 
     private final S3AppenderTempDir s3AppenderTempDir;
+    private final TemplatorCache templatorCache;
     private final PathCreator pathCreator;
     private final OutputFactory outputFactory;
     private final S3ClientConfigCache s3ClientConfigCache;
@@ -88,10 +90,12 @@ public class S3Appender extends AbstractAppender {
                       final MetaDataHolder metaDataHolder,
                       final MetaHolder metaHolder,
                       final S3AppenderTempDir s3AppenderTempDir,
+                      final TemplatorCache templatorCache,
                       final PathCreator pathCreator,
                       final S3ClientConfigCache s3ClientConfigCache) {
         super(errorReceiverProxy);
         this.s3AppenderTempDir = s3AppenderTempDir;
+        this.templatorCache = templatorCache;
         this.pathCreator = pathCreator;
         this.s3ClientConfigCache = s3ClientConfigCache;
         this.metaDataHolder = metaDataHolder;
@@ -135,7 +139,7 @@ public class S3Appender extends AbstractAppender {
                     super.close();
 
                     try {
-                        final S3Manager s3Manager = new S3Manager(pathCreator, s3ClientConfig);
+                        final S3Manager s3Manager = new S3Manager(templatorCache, pathCreator, s3ClientConfig);
                         final String bucketNamePattern = NullSafe
                                 .nonBlank(S3Appender.this.bucketNamePattern)
                                 .orElse(s3Manager.getBucketNamePattern());

@@ -65,4 +65,9 @@ public class TemplatorCacheImpl implements TemplatorCache {
             cache.remove(template);
         }
     }
+
+    @Override
+    public String toString() {
+        return cache.name() + ": " + cache.size();
+    }
 }
