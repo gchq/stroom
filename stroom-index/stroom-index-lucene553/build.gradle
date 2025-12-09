@@ -52,3 +52,9 @@ dependencies {
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
 }
+
+tasks.register("printRuntimeClasspath") {
+    sourceSets.main.runtimeClasspath.each { println it}
+}
+
+tasks.printRuntimeClasspath.dependsOn compileJava

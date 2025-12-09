@@ -18,35 +18,46 @@ ext.moduleName = 'lucene553.shaded'
 
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
+apply plugin: 'com.gradleup.shadow'
+
 configurations {
+    // Define our own configuration to stop the pre-shaded classes appearing
+    // on the classpath, I think.
+    lucene553Shadow {
+        transitive = false
+        extendsFrom(implementation)
+    }
     shadow {
-        canBeConsumed = true
-        canBeResolved = false
         transitive = false
     }
 }
 
 dependencies {
-    implementation "org.apache.lucene:lucene-analyzers-common:5.5.3"
-    implementation "org.apache.lucene:lucene-backward-codecs:5.5.3"
-    implementation "org.apache.lucene:lucene-core:5.5.3"
-    implementation "org.apache.lucene:lucene-memory:5.5.3"
-    implementation "org.apache.lucene:lucene-queryparser:5.5.3"
+    lucene553Shadow "org.apache.lucene:lucene-analyzers-common:5.5.3"
+    lucene553Shadow "org.apache.lucene:lucene-backward-codecs:5.5.3"
+    lucene553Shadow "org.apache.lucene:lucene-core:5.5.3"
+    lucene553Shadow "org.apache.lucene:lucene-memory:5.5.3"
+    lucene553Shadow "org.apache.lucene:lucene-queryparser:5.5.3"
 }
 
-tasks.register('lucene553ShadowJar', ShadowJar) {
+tasks.shadowJar {
     archiveClassifier = 'all'
-    configurations = [project.configurations.runtimeClasspath]
+    configurations = [project.configurations.lucene553Shadow]
     zip64 = true
+    // Shaded the packages
     relocate 'org.apache.lucene', 'org.apache.lucene553'
 
+    // Lucene jars included service loaders which need merging together.
+    // Without INCLUDE, it drops some which makes tests fail
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     mergeServiceFiles()
 }
 
 artifacts {
-    shadow(lucene553ShadowJar.archiveFile) {
-        builtBy(lucene553ShadowJar)
+    shadow(tasks.shadowJar.archiveFile) {
+        builtBy shadowJar
     }
 }
 
-tasks.build.dependsOn lucene553ShadowJar
+// Ensure shadowJar task is run
+tasks.assemble.dependsOn shadowJar
