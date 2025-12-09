@@ -176,7 +176,7 @@ main() {
     -PdumpFailedTestXml=true \
     -Pversion="${BUILD_VERSION:-SNAPSHOT}" \
     :stroom-app:shadowJar \
-    :stroom-proxy-app:shadowJar \
+    :stroom-proxy:stroom-proxy-app:shadowJar \
     :stroom-headless:shadowJar \
     buildDistribution \
     copyFilesForStroomDockerBuild \
