@@ -201,12 +201,15 @@ subprojects {
 //    }
 
     // This bit makes all sub projects have access to the BOMs for the dependency versions
-    dependencies {
-        implementation platform(libs.dropwizard.dependencies)
-        implementation platform(libs.dropwizard.bom)
-        implementation platform(libs.aws.bom)
+    // Don't add them for the lucene shaded jar
+    if (project.name != "lucene553-shaded") {
+        dependencies {
+            implementation platform(libs.dropwizard.dependencies)
+            implementation platform(libs.dropwizard.bom)
+            implementation platform(libs.aws.bom)
 
-        testImplementation platform(libs.junit.bom)
+            testImplementation platform(libs.junit.bom)
+        }
     }
 
     //println project.getConfigurations().getByName("implementation").getAllDependencies()
