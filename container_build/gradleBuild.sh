@@ -136,7 +136,7 @@ main() {
     build \
     "${test_args[@]}" \
     -x :stroom-app:shadowJar \
-    -x :stroom-proxy-app:shadowJar \
+    -x :stroom-proxy:stroom-proxy-app:shadowJar \
     -x :stroom-headless:shadowJar \
     -x resolve \
     -x copyFilesForStroomDockerBuild \
