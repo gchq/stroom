@@ -35,7 +35,7 @@ public interface TemplatorCache {
      *
      * @return The {@link Template} instance for the passed template. Will not be null.
      */
-    Template getTemplator(final String template);
+    Template getTemplate(final String template);
 
     /**
      * Evicts this template from the cache.

@@ -384,7 +384,7 @@ public class S3Manager {
 
     public String createBucketName(final String bucketNamePattern,
                                    final Meta meta) {
-        final Template template = templatorCache.getTemplator(bucketNamePattern);
+        final Template template = templatorCache.getTemplate(bucketNamePattern);
         String bucketName = template.buildExecutor()
                 .addLazyReplacement("feed", meta::getFeedName)
                 .addLazyReplacement("type", meta::getTypeName)
@@ -633,24 +633,28 @@ public class S3Manager {
     }
 
     public String createKey(final String keyPattern, final Meta meta) {
-        String keyName = keyPattern;
+        final Template template = templatorCache.getTemplate(keyPattern);
         final ZonedDateTime zonedDateTime =
                 ZonedDateTime.ofInstant(Instant.ofEpochMilli(meta.getCreateMs()), ZoneOffset.UTC);
-        final String idPadded = padId(meta.getId());
-        keyName = pathCreator.replaceTimeVars(keyName, zonedDateTime);
-        keyName = pathCreator.replace(keyName, "feed", meta::getFeedName);
-        keyName = pathCreator.replace(keyName, "type", meta::getTypeName);
-        keyName = pathCreator.replace(keyName, "id", () -> String.valueOf(meta.getId()));
-        keyName = pathCreator.replace(keyName, "idPath", () -> getIdPath(idPadded));
-        keyName = pathCreator.replace(keyName, "idPadded", () -> idPadded);
+
+        String keyName = template.buildExecutor()
+                .addStandardTimeReplacements(zonedDateTime)
+                .addLazyReplacement("feed", meta::getFeedName)
+                .addLazyReplacement("type", meta::getTypeName)
+                .addLazyReplacement("id", () -> String.valueOf(meta.getId()))
+                .addLazyReplacement("idPath", () -> getIdPath(padId(meta.getId())))
+                .addLazyReplacement("idPadded", () -> padId(meta.getId()))
+                .execute();
 
         keyName = S3_KEY_NAME_INVALID_CHARS_PATTERN.matcher(keyName).replaceAll("-");
         keyName = MULTI_SLASH.matcher(keyName).replaceAll("/");
         keyName = LEADING_SLASH.matcher(keyName).replaceAll("");
         keyName = TRAILING_SLASH.matcher(keyName).replaceAll("");
 
-        if (keyName.getBytes(StandardCharsets.UTF_8).length > 1024) {
-            throw new RuntimeException("Key name too long: " + keyName);
+        final int keyBytesLen = keyName.getBytes(StandardCharsets.UTF_8).length;
+        if (keyBytesLen > 1024) {
+            throw new RuntimeException(LogUtil.message("Key name '{}' too long {}, must be less than 1,024 bytes",
+                    keyName, keyBytesLen));
         }
 
         return keyName;

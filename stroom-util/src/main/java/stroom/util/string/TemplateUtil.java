@@ -115,6 +115,7 @@ public class TemplateUtil {
                     inVariable = false;
                     // Intern it so if we are using static var replacement, we will benefit from
                     // only computing the hashcode once and String#equals being able to use '=='
+                    // as most replacements will use a hard coded (and thus already interned) string.
                     final String var = sb.toString().intern();
                     varsInTemplate.add(var);
                     final PartExtractor partExtractor = varToPartExtractorMap.computeIfAbsent(var, aVar ->
@@ -187,6 +188,7 @@ public class TemplateUtil {
         private final Set<String> varsInTemplate;
         private final List<PartExtractor> partExtractors;
         private final int partExtractorCount;
+        private boolean isAllStaticText;
 
         private Template(final String template,
                          final Set<String> varsInTemplate,
@@ -196,6 +198,18 @@ public class TemplateUtil {
             this.partExtractors = NullSafe.unmodifiableList(partExtractors);
             // Cache this
             this.partExtractorCount = this.partExtractors.size();
+            this.isAllStaticText = isAllStatic(partExtractors);
+        }
+
+        private boolean isAllStatic(final List<PartExtractor> partExtractors) {
+            if (partExtractors.isEmpty()) {
+                // Empty template, but we should never get here as EMPTY should be used.
+                return true;
+            } else {
+                return partExtractors.stream()
+                        .allMatch(partExtractor ->
+                                partExtractor instanceof StaticPart);
+            }
         }
 
         /**
@@ -210,6 +224,8 @@ public class TemplateUtil {
             final String output;
             if (partExtractorCount == 0) {
                 output = "";
+            } else if (isAllStaticText) {
+                output = template;
             } else {
                 final Map<String, String> map = NullSafe.map(varToReplacementMap);
                 output = buildExecutor()
@@ -228,6 +244,8 @@ public class TemplateUtil {
             final String output;
             if (partExtractorCount == 0) {
                 output = "";
+            } else if (isAllStaticText) {
+                return template;
             } else if (partExtractorCount == 1) {
                 return NullSafe.string(partExtractors.getFirst().apply(
                         varToReplacementProviderMap,
@@ -244,17 +262,22 @@ public class TemplateUtil {
                 return String.join("", parts);
             }
 
-            LOGGER.debug("Generated output '{}' from varToReplacementProviderMap: {}, dynamicReplacementProviders: {}",
-                    output, varToReplacementProviderMap, dynamicReplacementProviders);
+            LOGGER.debug("Generated output '{}' from template: '{}', varToReplacementProviderMap: {}, " +
+                         "dynamicReplacementProviders: {}",
+                    output, template, varToReplacementProviderMap, dynamicReplacementProviders);
             return output;
         }
 
         /**
          * Create a builder to add the replacements and generate the output.
-         * {@link ExecutorBuilder} is not thread safe.
+         * {@link ExecutorBuilderImpl} is not thread safe.
          */
         public ExecutorBuilder buildExecutor() {
-            return new ExecutorBuilder(this);
+            if (isAllStaticText) {
+                return new AllStaticExecutorBuilderImpl(this);
+            } else {
+                return new ExecutorBuilderImpl(this);
+            }
         }
 
         /**
@@ -305,47 +328,14 @@ public class TemplateUtil {
     // --------------------------------------------------------------------------------
 
 
-    public static class ExecutorBuilder {
-
-        private static final SingleStatefulReplacementProvider STATEFUL_UUID_REPLACEMENT_PROVIDER =
-                new SingleStatefulReplacementProvider(
-                        UUID_VAR,
-                        () -> UUID.randomUUID().toString());
-
-        private static final ReplacementProvider STATELESS_UUID_REPLACEMENT_PROVIDER = ignored ->
-                UUID.randomUUID().toString();
-
-        private final Map<String, ReplacementProvider> varToReplacementProviderMap = new HashMap<>();
-        /**
-         * Replacement providers where the var is not known up front, e.g. replacing system properties.
-         */
-        private List<OptionalReplacementProvider> dynamicReplacementProviders = null;
-        private final Template template;
-
-        private ExecutorBuilder(final Template template) {
-            this.template = template;
-        }
+    public interface ExecutorBuilder {
 
         /**
          * Add a simple static replacement for var.
          * This will override any existing replacement for var.
          * If var is not in the template it is a no-op.
          */
-        public ExecutorBuilder addReplacement(final String var, final String replacement) {
-            if (NullSafe.isNonBlankString(var)) {
-                if (template.isVarInTemplate(var)) {
-                    if (NullSafe.isNonEmptyString(replacement)) {
-                        // No point adding a func for an empty replacement
-                        varToReplacementProviderMap.put(var, aVar -> replacement);
-                    }
-                } else {
-                    LOGGER.debug("var '{}' is not in template '{}'", var, template.template);
-                }
-            } else {
-                throw new IllegalArgumentException("Blank var");
-            }
-            return this;
-        }
+        ExecutorBuilder addReplacement(String var, String replacement);
 
         /**
          * Add multiple static replacements. The map key is the var in the template and the
@@ -353,17 +343,7 @@ public class TemplateUtil {
          * This will override any existing replacements for vars matching the keys in replacementsMap.
          * Any entries where the var is not in the template will be ignored.
          */
-        public ExecutorBuilder addReplacements(final Map<String, String> replacementsMap) {
-            NullSafe.map(replacementsMap)
-                    .forEach((var, replacement) -> {
-                        if (template.isVarInTemplate(var)
-                            && NullSafe.isNonEmptyString(replacement)) {
-                            // No point adding a func for an empty replacement
-                            varToReplacementProviderMap.put(var, aVar -> replacement);
-                        }
-                    });
-            return this;
-        }
+        ExecutorBuilder addReplacements(Map<String, String> replacementsMap);
 
         /**
          * Add a lazy static {@link ReplacementProvider} for var.
@@ -371,22 +351,8 @@ public class TemplateUtil {
          * even if var appears more than once in the template.
          * If var is not in the template it is a no-op.
          */
-        public ExecutorBuilder addLazyReplacement(final String var,
-                                                  final Supplier<String> replacementSupplier) {
-            Objects.requireNonNull(replacementSupplier);
-            if (NullSafe.isNonBlankString(var)) {
-                if (template.isVarInTemplate(var)) {
-                    final SingleStatefulReplacementProvider singleStatefulReplacementProvider =
-                            new SingleStatefulReplacementProvider(var, replacementSupplier);
-                    varToReplacementProviderMap.put(var, singleStatefulReplacementProvider);
-                } else {
-                    LOGGER.debug("var '{}' is not in template '{}'", var, template.template);
-                }
-            } else {
-                throw new IllegalArgumentException("Blank var");
-            }
-            return this;
-        }
+        ExecutorBuilder addLazyReplacement(String var,
+                                           Supplier<String> replacementSupplier);
 
         /**
          * Add a single {@link ReplacementProvider} function that will be used for <strong>ALL</strong>
@@ -396,16 +362,7 @@ public class TemplateUtil {
          * will resolve them from some other source.
          * </p>
          */
-        public ExecutorBuilder addCommonReplacementFunction(final ReplacementProvider replacementProvider) {
-            Objects.requireNonNull(replacementProvider);
-
-            final ReplacementProvider statefulReplacementProvider = new CommonStatefulReplacementProvider(
-                    replacementProvider);
-            for (final String var : template.getVarsInTemplate()) {
-                varToReplacementProviderMap.put(var, statefulReplacementProvider);
-            }
-            return this;
-        }
+        ExecutorBuilder addCommonReplacementFunction(ReplacementProvider replacementProvider);
 
         /**
          * Add the following var replacements:
@@ -423,10 +380,7 @@ public class TemplateUtil {
          * Uses the current time in {@link ZoneOffset#UTC} for all the replacements.
          * </p>
          */
-        public ExecutorBuilder addStandardTimeReplacements() {
-            addStandardTimeReplacements(ZonedDateTime.now(ZoneOffset.UTC));
-            return this;
-        }
+        ExecutorBuilder addStandardTimeReplacements();
 
         /**
          * Add the following var replacements:
@@ -443,6 +397,226 @@ public class TemplateUtil {
          *
          * @param zonedDateTime The time to use for all replacements.
          */
+        ExecutorBuilder addStandardTimeReplacements(ZonedDateTime zonedDateTime);
+
+        /**
+         * Add a replacement for {@code ${uuid}} with a randomly generated UUID.
+         *
+         * @param reuseUUidValue If true, a single randomly generated UUID will be used for all occurrences
+         *                       of {@code ${uuid}}, else a random UUID will be generated for each.
+         */
+        ExecutorBuilder addUuidReplacement(boolean reuseUUidValue);
+
+        /**
+         * Add the standard replacements for {@code ${stroom.home}} and {@code ${stroom.temp}}. It will
+         * also try to resolve each var as a system property followed by an environment variable (except
+         * for any in this set {@link TemplateUtil#NON_ENV_VARS}.
+         *
+         * @param homeDirProvider Provider of the stroom home dir.
+         * @param tempDirProvider Provider of the stroom temp dir.
+         */
+        ExecutorBuilder addSystemPropertyReplacements(HomeDirProvider homeDirProvider,
+                                                      TempDirProvider tempDirProvider);
+
+        /**
+         * Adds a dynamic replacement provider to the list of dynamic replacement providers that will be called
+         * in turn if there is no static replacement provider for the var.
+         */
+        ExecutorBuilder addDynamicReplacementProvider(OptionalReplacementProvider replacementProvider);
+
+        /**
+         * Sets the list of dynamic replacement providers that will be called
+         * in turn if there is no static replacement provider for the var.
+         */
+        ExecutorBuilder setDynamicReplacementProviders(
+                List<OptionalReplacementProvider> replacementProviders);
+
+        /**
+         * Execute the template using the provided replacements to output a string.
+         *
+         * @return The String generated from replacing the variables in the template.
+         */
+        String execute();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * Builder for a {@link Template} that is all static text, so replacement methods are all a no-op.
+     */
+    public static class AllStaticExecutorBuilderImpl implements ExecutorBuilder {
+
+        private final Template template;
+
+        private AllStaticExecutorBuilderImpl(final Template template) {
+            this.template = template;
+        }
+
+        @Override
+        public ExecutorBuilder addReplacement(final String var, final String replacement) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addReplacements(final Map<String, String> replacementsMap) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addLazyReplacement(final String var, final Supplier<String> replacementSupplier) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addCommonReplacementFunction(final ReplacementProvider replacementProvider) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addStandardTimeReplacements() {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addStandardTimeReplacements(final ZonedDateTime zonedDateTime) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addUuidReplacement(final boolean reuseUUidValue) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addSystemPropertyReplacements(final HomeDirProvider homeDirProvider,
+                                                             final TempDirProvider tempDirProvider) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addDynamicReplacementProvider(final OptionalReplacementProvider replacementProvider) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder setDynamicReplacementProviders(final List<OptionalReplacementProvider> replacementProviders) {
+            // Template is all static text so this is a no-op
+            return this;
+        }
+
+        @Override
+        public String execute() {
+            // Just return the original template string as there is nothing to replace
+            return template.template;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * Standard builder for executing a template with at least one variable in it.
+     */
+    public static class ExecutorBuilderImpl implements ExecutorBuilder {
+
+        private static final SingleStatefulReplacementProvider STATEFUL_UUID_REPLACEMENT_PROVIDER =
+                new SingleStatefulReplacementProvider(
+                        UUID_VAR,
+                        () -> UUID.randomUUID().toString());
+
+        private static final ReplacementProvider STATELESS_UUID_REPLACEMENT_PROVIDER = ignored ->
+                UUID.randomUUID().toString();
+
+        private final Map<String, ReplacementProvider> varToReplacementProviderMap = new HashMap<>();
+        /**
+         * Replacement providers where the var is not known up front, e.g. replacing system properties.
+         */
+        private List<OptionalReplacementProvider> dynamicReplacementProviders = null;
+        private final Template template;
+
+        private ExecutorBuilderImpl(final Template template) {
+            this.template = template;
+        }
+
+        @Override
+        public ExecutorBuilder addReplacement(final String var, final String replacement) {
+            if (NullSafe.isNonBlankString(var)) {
+                if (template.isVarInTemplate(var)) {
+                    if (NullSafe.isNonEmptyString(replacement)) {
+                        // No point adding a func for an empty replacement
+                        varToReplacementProviderMap.put(var, aVar -> replacement);
+                    }
+                } else {
+                    LOGGER.debug("var '{}' is not in template '{}'", var, template.template);
+                }
+            } else {
+                throw new IllegalArgumentException("Blank var");
+            }
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addReplacements(final Map<String, String> replacementsMap) {
+            NullSafe.map(replacementsMap)
+                    .forEach((var, replacement) -> {
+                        if (template.isVarInTemplate(var)
+                            && NullSafe.isNonEmptyString(replacement)) {
+                            // No point adding a func for an empty replacement
+                            varToReplacementProviderMap.put(var, aVar -> replacement);
+                        }
+                    });
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addLazyReplacement(final String var,
+                                                  final Supplier<String> replacementSupplier) {
+            Objects.requireNonNull(replacementSupplier);
+            if (NullSafe.isNonBlankString(var)) {
+                if (template.isVarInTemplate(var)) {
+                    final SingleStatefulReplacementProvider singleStatefulReplacementProvider =
+                            new SingleStatefulReplacementProvider(var, replacementSupplier);
+                    varToReplacementProviderMap.put(var, singleStatefulReplacementProvider);
+                } else {
+                    LOGGER.debug("var '{}' is not in template '{}'", var, template.template);
+                }
+            } else {
+                throw new IllegalArgumentException("Blank var");
+            }
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addCommonReplacementFunction(final ReplacementProvider replacementProvider) {
+            Objects.requireNonNull(replacementProvider);
+
+            final ReplacementProvider statefulReplacementProvider = new CommonStatefulReplacementProvider(
+                    replacementProvider);
+            for (final String var : template.getVarsInTemplate()) {
+                varToReplacementProviderMap.put(var, statefulReplacementProvider);
+            }
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addStandardTimeReplacements() {
+            addStandardTimeReplacements(ZonedDateTime.now(ZoneOffset.UTC));
+            return this;
+        }
+
+        @Override
         public ExecutorBuilder addStandardTimeReplacements(final ZonedDateTime zonedDateTime) {
             final Set<String> varsInTemplate = template.getVarsInTemplate();
 
@@ -458,13 +632,7 @@ public class TemplateUtil {
             return this;
         }
 
-        /**
-         * Add a replacement for {@code ${uuid}} with a randomly generated UUID.
-         *
-         * @param reuseUUidValue If true, a single randomly generated UUID will be used for all occurrences
-         *                       of {@code ${uuid}}, else a random UUID will be generated for each.
-         * @return
-         */
+        @Override
         public ExecutorBuilder addUuidReplacement(final boolean reuseUUidValue) {
             if (reuseUUidValue) {
                 varToReplacementProviderMap.put(UUID_VAR, STATEFUL_UUID_REPLACEMENT_PROVIDER);
@@ -474,14 +642,7 @@ public class TemplateUtil {
             return this;
         }
 
-        /**
-         * Add the standard replacements for {@code ${stroom.home}} and {@code ${stroom.temp}}. It will
-         * also try to resolve each var as a system property followed by an environment variable (except
-         * for any in this set {@link TemplateUtil#NON_ENV_VARS}.
-         *
-         * @param homeDirProvider Provider of the stroom home dir.
-         * @param tempDirProvider Provider of the stroom temp dir.
-         */
+        @Override
         public ExecutorBuilder addSystemPropertyReplacements(final HomeDirProvider homeDirProvider,
                                                              final TempDirProvider tempDirProvider) {
             if (template.varsInTemplate.contains(STROOM_HOME_VAR)) {
@@ -520,10 +681,7 @@ public class TemplateUtil {
             return this;
         }
 
-        /**
-         * Adds a dynamic replacement provider to the list of dynamic replacement providers that will be called
-         * in turn if there is no static replacement provider for the var.
-         */
+        @Override
         public ExecutorBuilder addDynamicReplacementProvider(final OptionalReplacementProvider replacementProvider) {
             if (replacementProvider != null) {
                 if (dynamicReplacementProviders == null) {
@@ -534,10 +692,7 @@ public class TemplateUtil {
             return this;
         }
 
-        /**
-         * Sets the list of dynamic replacement providers that will be called
-         * in turn if there is no static replacement provider for the var.
-         */
+        @Override
         public ExecutorBuilder setDynamicReplacementProviders(
                 final List<OptionalReplacementProvider> replacementProviders) {
             if (replacementProviders != null) {
@@ -546,11 +701,7 @@ public class TemplateUtil {
             return this;
         }
 
-        /**
-         * Execute the template using the provided replacements to output a string.
-         *
-         * @return The String generated from replacing the variables in the template.
-         */
+        @Override
         public String execute() {
             return template.doExecute(
                     varToReplacementProviderMap,

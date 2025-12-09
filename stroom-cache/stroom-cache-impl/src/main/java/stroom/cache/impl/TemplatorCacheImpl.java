@@ -50,7 +50,7 @@ public class TemplatorCacheImpl implements TemplatorCache {
     }
 
     @Override
-    public Template getTemplator(final String template) {
+    public Template getTemplate(final String template) {
         // Not much point caching the empty instance
         if (NullSafe.isEmptyString(template)) {
             return Template.EMPTY_TEMPLATE;

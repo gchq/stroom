@@ -30,24 +30,24 @@ class TestTemplateCacheImpl {
         try (final CacheManager cacheManager = new CacheManagerImpl()) {
             final TemplatorCacheImpl templatorCache = new TemplatorCacheImpl(cacheManager);
 
-            final Template template1 = templatorCache.getTemplator("foo");
+            final Template template1 = templatorCache.getTemplate("foo");
             final String output1 = template1.buildExecutor()
                     .execute();
             assertThat(output1)
                     .isEqualTo("foo");
 
-            final Template template2 = templatorCache.getTemplator("foo ${xxx}");
+            final Template template2 = templatorCache.getTemplate("foo ${xxx}");
             final String output2 = template2.buildExecutor()
                     .addReplacement("xxx", "bar")
                     .execute();
             assertThat(output2)
                     .isEqualTo("foo bar");
 
-            final Template template3 = templatorCache.getTemplator("foo");
+            final Template template3 = templatorCache.getTemplate("foo");
             assertThat(template3)
                     .isSameAs(template1);
 
-            final Template template4 = templatorCache.getTemplator("foo ${xxx}");
+            final Template template4 = templatorCache.getTemplate("foo ${xxx}");
             assertThat(template4)
                     .isSameAs(template2);
         }
@@ -58,19 +58,19 @@ class TestTemplateCacheImpl {
         try (final CacheManager cacheManager = new CacheManagerImpl()) {
             final TemplatorCacheImpl templatorCache = new TemplatorCacheImpl(cacheManager);
 
-            final Template template1 = templatorCache.getTemplator("foo");
+            final Template template1 = templatorCache.getTemplate("foo");
             final String output1 = template1.buildExecutor()
                     .execute();
             assertThat(output1)
                     .isEqualTo("foo");
 
-            final Template template3 = templatorCache.getTemplator("foo");
+            final Template template3 = templatorCache.getTemplate("foo");
             assertThat(template3)
                     .isSameAs(template1);
 
             templatorCache.evict("foo");
 
-            final Template template4 = templatorCache.getTemplator("foo");
+            final Template template4 = templatorCache.getTemplate("foo");
             assertThat(template4)
                     .isNotSameAs(template1);
         }
