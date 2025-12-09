@@ -316,7 +316,6 @@ public class AnalyticDataShardListPresenter
 //                .builder()
 //                .timeToWaitForData(SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build())
 //                .useSourceFeedIfPossible(true)
-//                .includeRuleDocumentation(true)
 //                .build();
 //        final AnalyticNotification newNotification = AnalyticNotification
 //                .builder()

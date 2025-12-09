@@ -217,7 +217,6 @@ class TestDuplicateCheckFactoryImpl {
                 .destination(NotificationStreamDestination.builder()
                         .destinationFeed(new DocRef("Feed", "test"))
                         .useSourceFeedIfPossible(false)
-                        .includeRuleDocumentation(true)
                         .build())
                 .build();
         return List.of(notificationConfig);
