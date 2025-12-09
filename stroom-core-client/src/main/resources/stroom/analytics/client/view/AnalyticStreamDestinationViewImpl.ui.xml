@@ -10,10 +10,5 @@
         <form:FormGroup identity="analyticStreamDestinationUseSourceFeedIfPossible" label="Use Source Feed If Possible (Streaming Only)">
             <tickbox:CustomCheckBox ui:field="useSourceFeedIfPossible"/>
         </form:FormGroup>
-
-        <!-- includeRuleDocumentation determines whether the rule's documentation will be visible in detections produced by that rule. -->
-        <form:FormGroup identity="includeRuleDocumentation" label="Include Rule Documentation">
-            <tickbox:CustomCheckBox ui:field="includeRuleDocumentation"/>
-        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

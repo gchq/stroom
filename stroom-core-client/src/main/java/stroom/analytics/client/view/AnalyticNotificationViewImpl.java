@@ -16,10 +16,9 @@
 
 package stroom.analytics.client.view;
 
-import stroom.analytics.client.presenter.AbstractProcessingPresenter.AnalyticProcessingView;
-import stroom.analytics.client.presenter.AnalyticProcessingUiHandlers;
-import stroom.analytics.shared.AnalyticProcessType;
-import stroom.item.client.SelectionBox;
+import stroom.analytics.client.presenter.AbstractNotificationPresenter.AnalyticNotificationView;
+import stroom.document.client.event.DirtyUiHandlers;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -31,19 +30,21 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class AnalyticProcessingViewImpl
-        extends ViewWithUiHandlers<AnalyticProcessingUiHandlers>
-        implements AnalyticProcessingView {
+public class AnalyticNotificationViewImpl
+        extends ViewWithUiHandlers<DirtyUiHandlers>
+        implements AnalyticNotificationView {
 
     private final Widget widget;
 
     @UiField
-    SelectionBox<AnalyticProcessType> processingType;
+    SimplePanel errorFeed;
     @UiField
-    SimplePanel processSettings;
+    SimplePanel table;
+    @UiField
+    CustomCheckBox includeRuleDocumentation;
 
     @Inject
-    public AnalyticProcessingViewImpl(final Binder binder) {
+    public AnalyticNotificationViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -53,31 +54,31 @@ public class AnalyticProcessingViewImpl
     }
 
     @Override
-    public void addProcessingType(final AnalyticProcessType processingType) {
-        this.processingType.addItem(processingType);
+    public void setErrorFeedView(final View view) {
+        this.errorFeed.setWidget(view.asWidget());
     }
 
     @Override
-    public AnalyticProcessType getProcessingType() {
-        return this.processingType.getValue();
+    public Boolean isIncludeRuleDocumentation() {
+        return this.includeRuleDocumentation.getValue();
     }
 
     @Override
-    public void setProcessingType(final AnalyticProcessType analyticProcessType) {
-        this.processingType.setValue(analyticProcessType);
+    public void setIncludeRuleDocumentation(final Boolean includeRuleDocumentation) {
+        this.includeRuleDocumentation.setValue(includeRuleDocumentation);
     }
 
     @Override
-    public void setProcessSettings(final View view) {
-        this.processSettings.setWidget(view.asWidget());
+    public void setTable(final View view) {
+        this.table.setWidget(view.asWidget());
     }
 
-    @UiHandler("processingType")
-    public void onProcessingType(final ValueChangeEvent<AnalyticProcessType> event) {
-        getUiHandlers().onProcessingTypeChange();
+    @UiHandler("includeRuleDocumentation")
+    public void onIncludeRuleDocumentation(final ValueChangeEvent<Boolean> event) {
+        getUiHandlers().onDirty();
     }
 
-    public interface Binder extends UiBinder<Widget, AnalyticProcessingViewImpl> {
+    public interface Binder extends UiBinder<Widget, AnalyticNotificationViewImpl> {
 
     }
 }

@@ -17,41 +17,38 @@
 package stroom.analytics.client.presenter;
 
 import stroom.analytics.shared.AnalyticProcessType;
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.QueryLanguageVersion;
-import stroom.analytics.shared.ReportDoc;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.ui.config.client.UiConfigCache;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-public class ReportProcessingPresenter
-        extends AbstractProcessingPresenter<ReportDoc> {
+public class AnalyticNotificationPresenter
+        extends AbstractNotificationPresenter<AnalyticRuleDoc> {
 
 
     @Inject
-    public ReportProcessingPresenter(final EventBus eventBus,
-                                     final AnalyticProcessingView view,
-                                     final ScheduledProcessingPresenter scheduledProcessingPresenter,
-                                     final TableBuilderProcessingPresenter tableBuilderProcessingPresenter,
-                                     final StreamingProcessingPresenter streamingProcessingPresenter,
-                                     final UiConfigCache uiConfigCache) {
+    public AnalyticNotificationPresenter(final EventBus eventBus,
+                                         final AnalyticNotificationView view,
+                                         final DocSelectionBoxPresenter errorFeedPresenter,
+                                         final AnalyticNotificationListPresenter notificationListPresenter,
+                                         final UiConfigCache uiConfigCache) {
         super(eventBus,
                 view,
-                scheduledProcessingPresenter,
-                tableBuilderProcessingPresenter,
-                streamingProcessingPresenter,
+                errorFeedPresenter,
+                notificationListPresenter,
                 uiConfigCache);
-        getView().addProcessingType(AnalyticProcessType.SCHEDULED_QUERY);
     }
 
     @Override
-    protected ReportDoc onWrite(final ReportDoc reportDoc) {
-        return reportDoc
+    protected AnalyticRuleDoc onWrite(final AnalyticRuleDoc analyticRuleDoc) {
+        return analyticRuleDoc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
-                .analyticProcessType(getView().getProcessingType())
-                .analyticProcessConfig(writeProcessConfig())
+                .errorFeed(errorFeedPresenter.getSelectedEntityReference())
+                .includeRuleDocumentation(getView().isIncludeRuleDocumentation())
                 .build();
     }
 }

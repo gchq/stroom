@@ -60,7 +60,6 @@ public class AnalyticStreamDestinationPresenter
     public void read(final NotificationStreamDestination streamDestination) {
         if (streamDestination != null) {
             getView().setUseSourceFeedIfPossible(streamDestination.isUseSourceFeedIfPossible());
-            getView().setIncludeRuleDocumentation(streamDestination.isIncludeRuleDocumentation());
             feedPresenter.setSelectedEntityReference(streamDestination.getDestinationFeed(), true);
         }
     }
@@ -68,8 +67,7 @@ public class AnalyticStreamDestinationPresenter
     public NotificationStreamDestination write() {
         return new NotificationStreamDestination(
                 feedPresenter.getSelectedEntityReference(),
-                getView().isUseSourceFeedIfPossible(),
-                getView().isIncludeRuleDocumentation());
+                getView().isUseSourceFeedIfPossible());
     }
 
     @Override
@@ -92,10 +90,6 @@ public class AnalyticStreamDestinationPresenter
 
         boolean isUseSourceFeedIfPossible();
 
-        boolean isIncludeRuleDocumentation();
-
         void setUseSourceFeedIfPossible(boolean useSourceFeedIfPossible);
-
-        void setIncludeRuleDocumentation(boolean includeRuleDocumentation);
     }
 }
