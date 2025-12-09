@@ -27,7 +27,6 @@ import stroom.pipeline.client.presenter.TextConverterSettingsPresenter;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.client.presenter.XsltPresenter;
 import stroom.pipeline.client.view.TextConverterSettingsViewImpl;
-import stroom.pipeline.stepping.client.PipelineSteppingPlugin;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter;
@@ -93,7 +92,6 @@ public class PipelineModule extends PluginModule {
         bind(XsltPresenter.class);
 
         bindPlugin(PipelinePlugin.class);
-        bindPlugin(PipelineSteppingPlugin.class);
         bind(PipelinePresenter.class);
         bindPresenterWidget(
                 StepLocationLinkPresenter.class,

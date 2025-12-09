@@ -210,7 +210,7 @@ public class PipelineStoreImpl implements PipelineStore {
     }
 
     @Override
-    public PipelineDoc writeDocument(final PipelineDoc document) {
+    public PipelineDoc  writeDocument(final PipelineDoc document) {
         return store.writeDocument(document);
     }
 

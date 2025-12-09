@@ -49,7 +49,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
+public class    PipelineModel implements HasChangeDataHandlers<PipelineModel> {
 
     private static final String SOURCE = "Source";
     public static final PipelineElement SOURCE_ELEMENT = new PipelineElement(SOURCE, SOURCE);
@@ -609,5 +609,20 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         eventBus.fireEventFromSource(event, this);
+    }
+
+    public boolean hasElement(final PipelineElement element) {
+        final PipelineData pipelineData = pipelineLayer.getPipelineData();
+        return pipelineData.getAddedElements().contains(element) &&
+               !pipelineData.getRemovedElements().contains(element);
+    }
+
+    @Override
+    public String toString() {
+        return "PipelineModel{" +
+               "combinedData=" + combinedData +
+               ", pipelineLayer=" + pipelineLayer +
+               ", elementTypes=" + elementTypes +
+               '}';
     }
 }

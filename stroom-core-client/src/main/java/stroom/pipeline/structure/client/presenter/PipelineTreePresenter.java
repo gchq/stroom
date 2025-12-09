@@ -20,8 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.pipeline.client.event.ChangeDataEvent;
-import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineLayer;
@@ -46,7 +44,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresenter.PipelineTreeView>
-        implements ChangeDataHandler<PipelineModel>, HasDirtyHandlers, PipelineTreeUiHandlers, HasContextMenuHandlers {
+        implements HasDirtyHandlers, PipelineTreeUiHandlers, HasContextMenuHandlers {
 
     private final MySingleSelectionModel<PipelineElement> selectionModel;
     private PipelineModel pipelineModel;
@@ -73,14 +71,6 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
     public void setModel(final PipelineModel model) {
         this.pipelineModel = model;
         getView().setPipelineModel(pipelineModel);
-        if (model != null) {
-            model.addChangeDataHandler(this);
-        }
-        refresh();
-    }
-
-    @Override
-    public void onChange(final ChangeDataEvent<PipelineModel> event) {
         refresh();
     }
 

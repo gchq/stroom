@@ -590,6 +590,10 @@
     white-space: nowrap;
 }
 
+.steppingViewImpl-treeContainer {
+	padding: 15px 5px;
+}
+
 .pipelineStructureViewImpl-treeContainer {
 	padding: 10px 5px;
 }

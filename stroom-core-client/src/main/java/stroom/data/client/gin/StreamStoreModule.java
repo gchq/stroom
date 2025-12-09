@@ -47,6 +47,7 @@ import stroom.data.client.presenter.SourcePresenter;
 import stroom.data.client.presenter.SourcePresenter.SourceView;
 import stroom.data.client.presenter.SourceTabPresenter;
 import stroom.data.client.presenter.SourceTabPresenter.SourceTabView;
+import stroom.data.client.presenter.SteppingMetaListPresenter;
 import stroom.data.client.presenter.TextPresenter;
 import stroom.data.client.presenter.TextPresenter.TextView;
 import stroom.data.client.view.CharacterNavigatorViewImpl;
@@ -154,6 +155,7 @@ public class StreamStoreModule extends PluginModule {
                 ProgressView.class,
                 ProgressViewImpl.class);
         bind(MetaListPresenter.class);
+        bind(SteppingMetaListPresenter.class);
 
         bind(ProcessorTaskListPresenter.class);
 

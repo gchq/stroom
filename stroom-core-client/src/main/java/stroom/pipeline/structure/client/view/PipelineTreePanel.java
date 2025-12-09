@@ -103,11 +103,11 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     }
 
     public void setPipelineModel(final PipelineModel pipelineModel) {
-        if (renderer != null) {
-            throw new RuntimeException("Renderer already exists");
-        } else if (pipelineModel == null) {
+        if (pipelineModel == null) {
             throw new NullPointerException("Null model");
         }
+
+        clear();
 
         boxPanel = new FlowPanel();
         boxPanel.setStyleName("treePanel-boxPanel");
@@ -138,6 +138,18 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
         }
 
         panel.add(boxPanel);
+    }
+
+    private void clear() {
+        if (boxPanel != null) {
+            boxPanel.clear();
+            panel.remove(boxPanel);
+        }
+
+        if (canvas != null) {
+            canvas.clear();
+            panel.remove(canvas);
+        }
     }
 
     @Override
