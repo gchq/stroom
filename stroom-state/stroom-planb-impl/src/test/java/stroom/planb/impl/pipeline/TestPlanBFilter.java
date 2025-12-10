@@ -11,6 +11,8 @@ import stroom.pathways.shared.otel.trace.ScopeSpans;
 import stroom.pathways.shared.otel.trace.Span;
 import stroom.pathways.shared.otel.trace.SpanEvent;
 import stroom.pathways.shared.otel.trace.SpanLink;
+import stroom.pathways.shared.otel.trace.SpanStatus;
+import stroom.pathways.shared.otel.trace.StatusCode;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
@@ -124,7 +126,7 @@ public class TestPlanBFilter {
                                     spn.data("traceState", span.getTraceState());
                                     spn.data("flags", span.getFlags());
                                     spn.data("name", span.getName());
-                                    spn.data("kind", span.getKind());
+                                    spn.data("kind", span.getKind().getDisplayValue());
                                     spn.data("startTimeUnixNano", span.getStartTimeUnixNano());
                                     spn.data("endTimeUnixNano", span.getEndTimeUnixNano());
 
@@ -155,7 +157,11 @@ public class TestPlanBFilter {
                                     if (span.getStatus() != null) {
                                         spn.element("status", s -> {
                                             s.data("message", span.getStatus().getMessage());
-                                            s.data("code", span.getStatus().getCode());
+                                            s.data("code", NullSafe
+                                                    .get(span,
+                                                            Span::getStatus,
+                                                            SpanStatus::getCode,
+                                                            StatusCode::getDisplayValue));
                                         });
                                     }
                                 });

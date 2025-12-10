@@ -16,27 +16,11 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Stack;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class SpanHandler extends DefaultHandler {
-
-    private static final Map<String, StatusCode> STATUS_CODE_MAP = Arrays
-            .stream(StatusCode.values())
-            .collect(Collectors.toMap(
-                    sc -> sc.name().toLowerCase(Locale.ROOT),
-                    Function.identity()));
-    private static final Map<String, SpanKind> SPAN_KIND_MAP = Arrays
-            .stream(SpanKind.values())
-            .collect(Collectors.toMap(
-                    sk -> sk.name().toLowerCase(Locale.ROOT),
-                    Function.identity()));
 
     private final Span.Builder spanBuilder = Span.builder();
     private final CharBuffer contentBuffer = new CharBuffer(20);
@@ -129,7 +113,7 @@ public class SpanHandler extends DefaultHandler {
             if (localName.equalsIgnoreCase("message")) {
                 spanStatusBuilder.message(contentBuffer.toString());
             } else if (localName.equalsIgnoreCase("code")) {
-                spanStatusBuilder.code(STATUS_CODE_MAP.get(contentBuffer.toString().toLowerCase(Locale.ROOT)));
+                spanStatusBuilder.code(StatusCode.fromString(contentBuffer.toString()));
             } else if (localName.equalsIgnoreCase("status")) {
                 spanBuilder.status(spanStatusBuilder.build());
                 spanStatusBuilder = null;
@@ -179,7 +163,7 @@ public class SpanHandler extends DefaultHandler {
             } else if (localName.equalsIgnoreCase("name")) {
                 spanBuilder.name(contentBuffer.toString());
             } else if (localName.equalsIgnoreCase("kind")) {
-                spanBuilder.kind(SPAN_KIND_MAP.get(contentBuffer.toString().toLowerCase(Locale.ROOT)));
+                spanBuilder.kind(SpanKind.fromString(contentBuffer.toString()));
             } else if (localName.equalsIgnoreCase("startTimeUnixNano")) {
                 spanBuilder.startTimeUnixNano(contentBuffer.toString());
             } else if (localName.equalsIgnoreCase("endTimeUnixNano")) {
