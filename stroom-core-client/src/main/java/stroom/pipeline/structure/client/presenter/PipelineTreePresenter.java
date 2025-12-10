@@ -38,6 +38,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,12 +50,18 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
     private final MySingleSelectionModel<PipelineElement> selectionModel;
     private PipelineModel pipelineModel;
     private PipelineTreeBuilder pipelineTreeBuilder;
+    private List<PipelineElement> disabledElements = new ArrayList<>();
 
     @Inject
     public PipelineTreePresenter(final EventBus eventBus, final PipelineTreeView view) {
         super(eventBus, view);
 
-        selectionModel = new MySingleSelectionModel<>();
+        selectionModel = new MySingleSelectionModel<>() {
+            @Override
+            protected boolean isSelectable(final PipelineElement element) {
+                return !disabledElements.contains(element);
+            }
+        };
         view.setSelectionModel(selectionModel);
         view.setUiHandlers(this);
     }
@@ -147,6 +154,11 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
         getView().setSeverities(elementIdToSeveritiesMap);
     }
 
+    public void setDisabledElements(final List<PipelineElement> disabledElements) {
+        this.disabledElements = disabledElements;
+        getView().setDisabledElements(disabledElements);
+    }
+
     /**
      * @return All the element names currently in the pipeline
      */
@@ -181,6 +193,8 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
         void setAllowNullSelection(boolean allowNullSelection);
 
         int getTreeHeight();
+
+        void setDisabledElements(final List<PipelineElement> disabledElements);
 
         void setSeverities(final Map<String, Severity> elementIdToSeveritiesMap);
     }

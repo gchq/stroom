@@ -48,6 +48,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class    PipelineModel implements HasChangeDataHandlers<PipelineModel> {
 
@@ -615,6 +617,12 @@ public class    PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         final PipelineData pipelineData = pipelineLayer.getPipelineData();
         return pipelineData.getAddedElements().contains(element) &&
                !pipelineData.getRemovedElements().contains(element);
+    }
+
+    public List<PipelineElement> getPipelineElements(final Predicate<PipelineElement> predicate) {
+        return getPipelineData().getElements().getAdd().stream()
+                .filter(predicate)
+                .collect(Collectors.toList());
     }
 
     @Override

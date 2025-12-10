@@ -48,6 +48,7 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
+import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
@@ -190,7 +191,7 @@ public class SteppingPresenter
         sourcePresenter.getWidget().addStyleName("dashboard-panel overflow-hidden");
         sourcePresenter.setSteppingSource(true);
 
-        pipelineTreePresenter.setPipelineTreeBuilder(new SteppingPipelineTreeBuilder());
+        pipelineTreePresenter.setPipelineTreeBuilder(new DefaultPipelineTreeBuilder());
         pipelineTreePresenter.setAllowNullSelection(false);
 
         stepControlPresenter.setEnabledButtons(
@@ -718,6 +719,11 @@ public class SteppingPresenter
             } else {
                 pipelineTreePresenter.getSelectionModel().setSelected(selectedElement, true);
             }
+
+            final List<PipelineElement> disabledElements = pipelineModel.getPipelineElements(e ->
+                    !PipelineModel.SOURCE_ELEMENT.equals(e) &&
+                    !pipelineModel.hasRole(e, PipelineElementType.VISABILITY_STEPPING));
+            pipelineTreePresenter.setDisabledElements(disabledElements);
 
         } catch (final PipelineModelException e) {
             AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);

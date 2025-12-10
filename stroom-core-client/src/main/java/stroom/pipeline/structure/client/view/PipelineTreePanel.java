@@ -38,6 +38,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.view.client.SelectionModel;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -195,6 +196,14 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
             return 0;
         }
         return canvas.getOffsetHeight();
+    }
+
+    public void setDisabledElements(final List<PipelineElement> disabledElements) {
+        if (cellRenderer != null) {
+            cellRenderer.getBoxes().stream()
+                    .filter(b -> disabledElements.contains(b.getItem()))
+                    .forEach(b -> b.setDisabled(true));
+        }
     }
 
     public void setSeverities(final Map<String, Severity> elementIdToSeveritiesMap) {
