@@ -1,0 +1,163 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!-- UK Crown Copyright © 2016 -->
+<xs:schema xmlns:pb="plan-b:1" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="plan-b:1" elementFormDefault="qualified" attributeFormDefault="unqualified" version="1.0">
+  <xs:annotation>
+    <xs:documentation>XML structure used to store data for Plan B data stores. Although reference data XML can be used to populate Plan B stores this schema includes structures for additional Plan B sepecific features.
+    </xs:documentation>
+  </xs:annotation>
+  <xs:element name="plan-b">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:choice>
+          <xs:element name="histogram" minOccurs="0" maxOccurs="unbounded">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="map" type="xs:string" minOccurs="1" maxOccurs="1" />
+                <xs:group ref="pb:KeyPrefix" minOccurs="1" maxOccurs="1" />
+                <xs:element name="time" type="pb:DateTimeSimpleType" minOccurs="1" maxOccurs="1" />
+                <xs:element name="value" type="xs:positiveInteger" minOccurs="1" maxOccurs="1" />
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="metric" minOccurs="0" maxOccurs="unbounded">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="map" type="xs:string" minOccurs="1" maxOccurs="1" />
+                <xs:group ref="pb:KeyPrefix" minOccurs="1" maxOccurs="1" />
+                <xs:element name="time" type="pb:DateTimeSimpleType" minOccurs="1" maxOccurs="1" />
+                <xs:element name="value" type="xs:positiveInteger" minOccurs="1" maxOccurs="1" />
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="session" minOccurs="0" maxOccurs="unbounded">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="map" type="xs:string" minOccurs="1" maxOccurs="1" />
+                <xs:group ref="pb:KeyPrefix" minOccurs="1" maxOccurs="1" />
+                <xs:element name="time" type="pb:DateTimeSimpleType" minOccurs="1" maxOccurs="1" />
+                <xs:element name="timeout" type="pb:PeriodSimpleType" minOccurs="0" maxOccurs="1" />
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="state" minOccurs="0" maxOccurs="unbounded">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="map" type="xs:string" minOccurs="1" maxOccurs="1" />
+                <xs:group ref="pb:KeyPrefix" minOccurs="1" maxOccurs="1" />
+                <xs:group ref="pb:MixedValue" minOccurs="1" maxOccurs="1" />
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="range-state" minOccurs="0" maxOccurs="unbounded">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="map" type="xs:string" minOccurs="1" maxOccurs="1" />
+                <xs:group ref="pb:Range" minOccurs="1" maxOccurs="1" />
+                <xs:group ref="pb:MixedValue" minOccurs="1" maxOccurs="1" />
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="temporal-state" minOccurs="0" maxOccurs="unbounded">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="map" type="xs:string" minOccurs="1" maxOccurs="1" />
+                <xs:group ref="pb:KeyPrefix" minOccurs="1" maxOccurs="1" />
+                <xs:element name="time" type="pb:DateTimeSimpleType" minOccurs="0" maxOccurs="1" />
+                <xs:group ref="pb:MixedValue" minOccurs="1" maxOccurs="1" />
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element name="temporal-range-state" minOccurs="0" maxOccurs="unbounded">
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element name="map" type="xs:string" minOccurs="1" maxOccurs="1" />
+                <xs:group ref="pb:Range" minOccurs="1" maxOccurs="1" />
+                <xs:element name="time" type="pb:DateTimeSimpleType" minOccurs="0" maxOccurs="1" />
+                <xs:group ref="pb:MixedValue" minOccurs="1" maxOccurs="1" />
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+        </xs:choice>
+      </xs:sequence>
+      <xs:attribute name="version" type="pb:VersionSimpleType" use="required" />
+    </xs:complexType>
+  </xs:element>
+  <xs:group name="KeyPrefix">
+    <xs:choice>
+      <xs:element name="key" type="xs:string" minOccurs="1" maxOccurs="1" />
+      <xs:element name="tags" type="pb:TagsComplexType" minOccurs="1" maxOccurs="1" />
+    </xs:choice>
+  </xs:group>
+  <xs:group name="Range">
+    <xs:sequence>
+      <xs:element name="range" minOccurs="1" maxOccurs="1">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="from" type="xs:long" minOccurs="1" maxOccurs="1" />
+            <xs:element name="to" type="xs:long" minOccurs="1" maxOccurs="1" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <xs:group name="MixedValue">
+    <xs:sequence>
+      <xs:element name="value" minOccurs="1" maxOccurs="1">
+        <xs:complexType mixed="true">
+          <xs:sequence>
+            <xs:any minOccurs="0" processContents="lax" />
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+  <xs:complexType name="TagsComplexType">
+    <xs:annotation>
+      <xs:documentation>A set of tags used for a multi part key.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence minOccurs="1" maxOccurs="1">
+      <xs:element name="tag" minOccurs="1" maxOccurs="10">
+        <xs:annotation>
+          <xs:documentation>A tag</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:sequence minOccurs="1" maxOccurs="1">
+            <xs:element name="name" type="xs:string" minOccurs="1" maxOccurs="1">
+              <xs:annotation>
+                <xs:documentation>The tag name.</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="value" type="xs:string" minOccurs="1" maxOccurs="1">
+              <xs:annotation>
+                <xs:documentation>The tag value.</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:simpleType name="DateTimeSimpleType">
+    <xs:annotation>
+      <xs:documentation>This type constrains the date time format further so that it is always represented as 'yyyy-MM-ddThh:mm:ss.sssZ'.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:dateTime">
+      <xs:pattern value="[\d]{4}-[\d]{2}-[\d]{2}T[\d]{2}:[\d]{2}:[\d]{2}.[\d]{3}Z" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="PeriodSimpleType">
+    <xs:annotation>
+      <xs:documentation>This type constrains a string to represent a period, e.g. '15m'.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[\d]+[hms]" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="VersionSimpleType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[0-9]+(\.[0-9]+)*" />
+      <xs:enumeration value="1.0" />
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>
