@@ -145,10 +145,12 @@ public class RollingFileAppender extends AbstractRollingAppender {
                 dir = pathCreator.replaceContextVars(dir);
                 dir = pathCreator.toAppPath(dir).toString();
 
+                // TODO change to use TemplateCache and PipelineContextVariableResolver
                 fileName = fileNamePattern;
                 fileName = pathCreator.replaceContextVars(fileName);
                 fileName = pathCreator.replaceSystemProperties(fileName);
 
+                // TODO change to use TemplateCache and PipelineContextVariableResolver
                 rolledFileName = rolledFileNamePattern;
                 rolledFileName = pathCreator.replaceContextVars(rolledFileName);
                 rolledFileName = pathCreator.replaceSystemProperties(rolledFileName);

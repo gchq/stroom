@@ -18,7 +18,7 @@ package stroom.aws.s3.impl;
 
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.aws.s3.shared.S3ConfigDoc;
-import stroom.cache.api.TemplatorCache;
+import stroom.cache.api.TemplateCache;
 import stroom.docref.DocRef;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
@@ -36,7 +36,6 @@ import stroom.pipeline.writer.OutputFactory;
 import stroom.pipeline.writer.OutputProxy;
 import stroom.svg.shared.SvgImage;
 import stroom.util.io.CompressionUtil;
-import stroom.util.io.PathCreator;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -74,8 +73,7 @@ public class S3Appender extends AbstractAppender {
     private static final String DEFAULT_COMPRESSION_METHOD_PROP_VALUE = CompressorStreamFactory.GZIP;
 
     private final S3AppenderTempDir s3AppenderTempDir;
-    private final TemplatorCache templatorCache;
-    private final PathCreator pathCreator;
+    private final TemplateCache templateCache;
     private final OutputFactory outputFactory;
     private final S3ClientConfigCache s3ClientConfigCache;
     private final MetaDataHolder metaDataHolder;
@@ -90,17 +88,15 @@ public class S3Appender extends AbstractAppender {
                       final MetaDataHolder metaDataHolder,
                       final MetaHolder metaHolder,
                       final S3AppenderTempDir s3AppenderTempDir,
-                      final TemplatorCache templatorCache,
-                      final PathCreator pathCreator,
+                      final TemplateCache templateCache,
                       final S3ClientConfigCache s3ClientConfigCache) {
         super(errorReceiverProxy);
         this.s3AppenderTempDir = s3AppenderTempDir;
-        this.templatorCache = templatorCache;
-        this.pathCreator = pathCreator;
+        this.templateCache = templateCache;
         this.s3ClientConfigCache = s3ClientConfigCache;
         this.metaDataHolder = metaDataHolder;
         this.metaHolder = metaHolder;
-        outputFactory = new OutputFactory(metaDataHolder);
+        this.outputFactory = new OutputFactory(metaDataHolder);
 
         // Ensure outputStreamSupport has the defaults for S3Appender
         setUseCompression(DEFAULT_USE_COMPRESSION_PROP_VALUE_BOOLEAN);
@@ -139,7 +135,7 @@ public class S3Appender extends AbstractAppender {
                     super.close();
 
                     try {
-                        final S3Manager s3Manager = new S3Manager(templatorCache, pathCreator, s3ClientConfig);
+                        final S3Manager s3Manager = new S3Manager(templateCache, s3ClientConfig);
                         final String bucketNamePattern = NullSafe
                                 .nonBlank(S3Appender.this.bucketNamePattern)
                                 .orElse(s3Manager.getBucketNamePattern());

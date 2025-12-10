@@ -25,10 +25,9 @@ import stroom.aws.s3.shared.AwsProvidedContext;
 import stroom.aws.s3.shared.AwsProxyConfig;
 import stroom.aws.s3.shared.AwsTag;
 import stroom.aws.s3.shared.S3ClientConfig;
-import stroom.cache.api.TemplatorCache;
+import stroom.cache.api.TemplateCache;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
-import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -116,15 +115,12 @@ public class S3Manager {
     private static final String START_PREFIX = "000";
     private static final int PAD_SIZE = 3;
 
-    private final TemplatorCache templatorCache;
-    private final PathCreator pathCreator;
+    private final TemplateCache templateCache;
     private final S3ClientConfig s3ClientConfig;
 
-    public S3Manager(final TemplatorCache templatorCache,
-                     final PathCreator pathCreator,
+    public S3Manager(final TemplateCache templateCache,
                      final S3ClientConfig s3ClientConfig) {
-        this.templatorCache = templatorCache;
-        this.pathCreator = pathCreator;
+        this.templateCache = templateCache;
         this.s3ClientConfig = s3ClientConfig;
     }
 
@@ -384,7 +380,7 @@ public class S3Manager {
 
     public String createBucketName(final String bucketNamePattern,
                                    final Meta meta) {
-        final Template template = templatorCache.getTemplate(bucketNamePattern);
+        final Template template = templateCache.getTemplate(bucketNamePattern);
         String bucketName = template.buildExecutor()
                 .addLazyReplacement("feed", meta::getFeedName)
                 .addLazyReplacement("type", meta::getTypeName)
@@ -633,7 +629,7 @@ public class S3Manager {
     }
 
     public String createKey(final String keyPattern, final Meta meta) {
-        final Template template = templatorCache.getTemplate(keyPattern);
+        final Template template = templateCache.getTemplate(keyPattern);
         final ZonedDateTime zonedDateTime =
                 ZonedDateTime.ofInstant(Instant.ofEpochMilli(meta.getCreateMs()), ZoneOffset.UTC);
 

@@ -25,7 +25,7 @@ import stroom.util.string.TemplateUtil.Template;
  * The {@link String} templates contain named variables for replacement,
  * of the form {@code ${feed}_${type}}.
  */
-public interface TemplatorCache {
+public interface TemplateCache {
 
     /**
      * Gets the {@link Template} for template.

@@ -28,7 +28,7 @@ class TestTemplateCacheImpl {
     @Test
     void test() {
         try (final CacheManager cacheManager = new CacheManagerImpl()) {
-            final TemplatorCacheImpl templatorCache = new TemplatorCacheImpl(cacheManager);
+            final TemplateCacheImpl templatorCache = new TemplateCacheImpl(cacheManager);
 
             final Template template1 = templatorCache.getTemplate("foo");
             final String output1 = template1.buildExecutor()
@@ -56,7 +56,7 @@ class TestTemplateCacheImpl {
     @Test
     void evict() {
         try (final CacheManager cacheManager = new CacheManagerImpl()) {
-            final TemplatorCacheImpl templatorCache = new TemplatorCacheImpl(cacheManager);
+            final TemplateCacheImpl templatorCache = new TemplateCacheImpl(cacheManager);
 
             final Template template1 = templatorCache.getTemplate("foo");
             final String output1 = template1.buildExecutor()

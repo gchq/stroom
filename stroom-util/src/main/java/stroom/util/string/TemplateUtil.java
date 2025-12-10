@@ -56,6 +56,9 @@ public class TemplateUtil {
     public static final String STROOM_HOME_VAR = SimplePathCreator.STROOM_TEMP;
     public static final Set<String> NON_ENV_VARS = Arrays.stream(SimplePathCreator.NON_ENV_VARS)
             .collect(Collectors.toSet());
+    public static final String FILE_NAME_VAR = "fileName";
+    public static final String FILE_STEM_VAR = "fileStem";
+    public static final String FILE_EXTENSION_VAR = "fileExtension";
 
     public static Template parseTemplate(final String template) {
         return parseTemplate(template, null, null);
@@ -288,7 +291,8 @@ public class TemplateUtil {
         }
 
         public boolean isVarInTemplate(final String var) {
-            return varsInTemplate.contains(var);
+            return var != null
+                   && varsInTemplate.contains(var);
         }
 
         @Override
@@ -419,6 +423,18 @@ public class TemplateUtil {
                                                       TempDirProvider tempDirProvider);
 
         /**
+         * Adds these replacements using the supplied fileName value.
+         * <ul>
+         *     <li>{@code fileName} => fileName</li>
+         *     <li>{@code fileStem} => Everything up to the last '.' in filename, e.g. 'foo' in 'foo.txt'</li>
+         *     <li>{@code fileExtension} => The extension of fileName if present, e.g. 'txt' in 'foo.txt'</li>
+         * </ul>
+         *
+         * @param fileName The file name to use in any replacements.
+         */
+        ExecutorBuilder addFileNameReplacement(String fileName);
+
+        /**
          * Adds a dynamic replacement provider to the list of dynamic replacement providers that will be called
          * in turn if there is no static replacement provider for the var.
          */
@@ -504,13 +520,20 @@ public class TemplateUtil {
         }
 
         @Override
+        public ExecutorBuilder addFileNameReplacement(final String fileName) {
+            // Template is all static text so this is a no-op
+            return null;
+        }
+
+        @Override
         public ExecutorBuilder addDynamicReplacementProvider(final OptionalReplacementProvider replacementProvider) {
             // Template is all static text so this is a no-op
             return this;
         }
 
         @Override
-        public ExecutorBuilder setDynamicReplacementProviders(final List<OptionalReplacementProvider> replacementProviders) {
+        public ExecutorBuilder setDynamicReplacementProviders(
+                final List<OptionalReplacementProvider> replacementProviders) {
             // Template is all static text so this is a no-op
             return this;
         }
@@ -645,7 +668,7 @@ public class TemplateUtil {
         @Override
         public ExecutorBuilder addSystemPropertyReplacements(final HomeDirProvider homeDirProvider,
                                                              final TempDirProvider tempDirProvider) {
-            if (template.varsInTemplate.contains(STROOM_HOME_VAR)) {
+            if (template.isVarInTemplate(STROOM_HOME_VAR)) {
                 varToReplacementProviderMap.put(STROOM_HOME_VAR, new SingleStatefulReplacementProvider(
                         STROOM_HOME_VAR,
                         () -> {
@@ -657,7 +680,7 @@ public class TemplateUtil {
                         }));
             }
 
-            if (template.varsInTemplate.contains(STROOM_TEMP_VAR)) {
+            if (template.isVarInTemplate(STROOM_TEMP_VAR)) {
                 varToReplacementProviderMap.put(STROOM_TEMP_VAR, new SingleStatefulReplacementProvider(
                         STROOM_TEMP_VAR,
                         () -> {
@@ -678,6 +701,41 @@ public class TemplateUtil {
                 }
             });
 
+            return this;
+        }
+
+        @Override
+        public ExecutorBuilder addFileNameReplacement(final String fileName) {
+            if (template.isVarInTemplate(FILE_NAME_VAR)) {
+                varToReplacementProviderMap.put(FILE_NAME_VAR, new SingleStatefulReplacementProvider(
+                        FILE_NAME_VAR, () -> NullSafe.string(fileName)));
+            }
+
+            if (template.isVarInTemplate(FILE_STEM_VAR)) {
+                varToReplacementProviderMap.put(FILE_STEM_VAR, new SingleStatefulReplacementProvider(
+                        FILE_STEM_VAR, () -> {
+                    final String safeFileName = NullSafe.string(fileName);
+                    String fileStem = safeFileName;
+                    final int index = safeFileName.lastIndexOf(".");
+                    if (index != -1) {
+                        fileStem = safeFileName.substring(0, index);
+                    }
+                    return fileStem;
+                }));
+            }
+
+            if (template.isVarInTemplate(FILE_EXTENSION_VAR)) {
+                varToReplacementProviderMap.put(FILE_EXTENSION_VAR, new SingleStatefulReplacementProvider(
+                        FILE_EXTENSION_VAR, () -> {
+                    final String safeFileName = NullSafe.string(fileName);
+                    String fileExtension = "";
+                    final int index = safeFileName.lastIndexOf(".");
+                    if (index != -1) {
+                        fileExtension = safeFileName.substring(index + 1);
+                    }
+                    return fileExtension;
+                }));
+            }
             return this;
         }
 

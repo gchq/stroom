@@ -19,7 +19,7 @@ package stroom.cache.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
-import stroom.cache.api.TemplatorCache;
+import stroom.cache.api.TemplateCache;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.string.TemplateUtil;
@@ -29,7 +29,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class TemplatorCacheImpl implements TemplatorCache {
+public class TemplateCacheImpl implements TemplateCache {
 
     public static final String CACHE_NAME = "Template Cache";
 
@@ -39,7 +39,7 @@ public class TemplatorCacheImpl implements TemplatorCache {
     private final LoadingStroomCache<String, Template> cache;
 
     @Inject
-    public TemplatorCacheImpl(final CacheManager cacheManager) {
+    public TemplateCacheImpl(final CacheManager cacheManager) {
         // TODO config ought to come from config somewhere
         this.cache = cacheManager.createLoadingCache(
                 CACHE_NAME,

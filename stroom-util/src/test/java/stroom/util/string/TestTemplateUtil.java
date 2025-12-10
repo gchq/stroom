@@ -295,4 +295,28 @@ class TestTemplateUtil {
         assertThat(output)
                 .isEqualTo("AAA,BBB,ccc");
     }
+
+    @Test
+    void testFileNameReplacement() {
+        final String template = "__${fileStem}.${fileExtension} - ${fileName}__";
+        final Template templator = TemplateUtil.parseTemplate(template);
+        final String output = templator.buildExecutor()
+                .addFileNameReplacement("foo.txt")
+                .execute();
+        assertThat(output)
+                .isEqualTo("__foo.txt - foo.txt__");
+    }
+
+    @Test
+    void testFileNameReplacement2() {
+        final String template = "__${foo}__";
+        final Template templator = TemplateUtil.parseTemplate(template);
+        final String output = templator.buildExecutor()
+                .addFileNameReplacement("foo.txt")
+                .addReplacement("foo", "bar")
+                .execute();
+
+        assertThat(output)
+                .isEqualTo("__bar__");
+    }
 }
