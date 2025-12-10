@@ -41,8 +41,6 @@ public class AnalyticStreamDestinationViewImpl
     @UiField
     CustomCheckBox useSourceFeedIfPossible;
 
-
-
     @Inject
     public AnalyticStreamDestinationViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
