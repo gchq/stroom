@@ -228,7 +228,8 @@ public class TemplateUtil {
             if (partExtractorCount == 0) {
                 output = "";
             } else if (isAllStaticText) {
-                output = template;
+                // All static so there will be only one extractor
+                output = partExtractors.getFirst().apply(Collections.emptyMap(), Collections.emptyList());
             } else {
                 final Map<String, String> map = NullSafe.map(varToReplacementMap);
                 output = buildExecutor()
@@ -238,7 +239,7 @@ public class TemplateUtil {
 
             LOGGER.debug("Generated output '{}' from varToReplacementProviderMap: {}",
                     output, varToReplacementMap);
-            return output;
+            return NullSafe.string(output);
         }
 
         private String doExecute(final Map<String, ReplacementProvider> varToReplacementProviderMap,
@@ -247,8 +248,6 @@ public class TemplateUtil {
             final String output;
             if (partExtractorCount == 0) {
                 output = "";
-            } else if (isAllStaticText) {
-                return template;
             } else if (partExtractorCount == 1) {
                 return NullSafe.string(partExtractors.getFirst().apply(
                         varToReplacementProviderMap,

@@ -36,6 +36,9 @@ public class StreamEventMap {
 
     private static final Key COMPLETE = new Key(-1, -1);
 
+    /**
+     * Keyed by streamId
+     */
     private final Map<Long, Set<Event>> storedDataMap;
     private final LinkedList<Key> streamIdQueue;
     private final int capacity;
@@ -140,9 +143,9 @@ public class StreamEventMap {
                     notEmpty.signal();
                 } else {
                     LOGGER.warn("Duplicate segment for streamId=" +
-                            event.getStreamId() +
-                            ", eventId=" +
-                            event.getEventId());
+                                event.getStreamId() +
+                                ", eventId=" +
+                                event.getEventId());
                 }
             } finally {
                 lock.unlock();
