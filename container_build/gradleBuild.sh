@@ -175,10 +175,8 @@ main() {
     --stacktrace \
     -PdumpFailedTestXml=true \
     -Pversion="${BUILD_VERSION:-SNAPSHOT}" \
-    :stroom-app:shadowJar \
-    :stroom-proxy:stroom-proxy-app:shadowJar \
-    :stroom-headless:shadowJar \
     buildDistribution \
+    shadowJar \
     copyFilesForStroomDockerBuild \
     copyFilesForProxyDockerBuild \
     -x test \
