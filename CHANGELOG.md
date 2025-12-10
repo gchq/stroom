@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.14] - 2025-12-10
+
+* Issue **#5290** : Plan B trace store now requires data to conform to Plan B trace schema.
+
+* Fix build issue causing Stroom to not boot.
+
+
 ## [v7.11-beta.13] - 2025-12-09
 
 * Issue **#5304** : Fix error when unzipping the stroom-app-all jar file. This problem was also leading to AV scan alerts.
@@ -1870,7 +1877,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.13...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.14...HEAD
+[v7.11-beta.14]: https://github.com/gchq/stroom/compare/v7.11-beta.13...v7.11-beta.14
 [v7.11-beta.13]: https://github.com/gchq/stroom/compare/v7.11-beta.12...v7.11-beta.13
 [v7.11-beta.12]: https://github.com/gchq/stroom/compare/v7.11-beta.11...v7.11-beta.12
 [v7.11-beta.11]: https://github.com/gchq/stroom/compare/v7.11-beta.10...v7.11-beta.11
