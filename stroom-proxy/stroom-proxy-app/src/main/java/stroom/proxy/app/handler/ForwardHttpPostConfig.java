@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.DownstreamHostConfig;
@@ -10,7 +26,6 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.NullSafe;
-import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -65,17 +80,19 @@ public final class ForwardHttpPostConfig
 
     @SuppressWarnings({"unused", "checkstyle:linelength"})
     @JsonCreator
-    public ForwardHttpPostConfig(@JsonProperty("enabled") final Boolean enabled,
-                                 @JsonProperty("instant") final Boolean instant,
-                                 @JsonProperty("name") final String name,
-                                 @JsonProperty("forwardUrl") final String forwardUrl,
-                                 @JsonProperty("livenessCheckUrl") final String livenessCheckUrl,
-                                 @JsonProperty("livenessCheckEnabled") final Boolean livenessCheckEnabled,
-                                 @JsonProperty("apiKey") final String apiKey,
-                                 @JsonProperty("addOpenIdAccessToken") final Boolean addOpenIdAccessToken,
-                                 @JsonProperty("httpClient") final HttpClientConfiguration httpClient,
-                                 @JsonProperty("queue") final ForwardHttpQueueConfig forwardQueueConfig,
-                                 @JsonProperty("forwardHeadersAdditionalAllowSet") final Set<String> forwardHeadersAdditionalAllowSet) {
+    public ForwardHttpPostConfig(
+            @JsonProperty("enabled") final Boolean enabled,
+            @JsonProperty("instant") final Boolean instant,
+            @JsonProperty("name") final String name,
+            @JsonProperty("forwardUrl") final String forwardUrl,
+            @JsonProperty("livenessCheckUrl") final String livenessCheckUrl,
+            @JsonProperty("livenessCheckEnabled") final Boolean livenessCheckEnabled,
+            @JsonProperty("apiKey") final String apiKey,
+            @JsonProperty("addOpenIdAccessToken") final Boolean addOpenIdAccessToken,
+            @JsonProperty("httpClient") final HttpClientConfiguration httpClient,
+            @JsonProperty("queue") final ForwardHttpQueueConfig forwardQueueConfig,
+            @JsonProperty("forwardHeadersAdditionalAllowSet") final Set<String> forwardHeadersAdditionalAllowSet) {
+
         this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_IS_ENABLED);
         this.instant = Objects.requireNonNullElse(instant, DEFAULT_IS_INSTANT);
         this.name = name;
@@ -92,10 +109,10 @@ public final class ForwardHttpPostConfig
     private HttpClientConfiguration createDefaultHttpClientConfiguration() {
         return HttpClientConfiguration
                 .builder()
-                .timeout(StroomDuration.ofMinutes(1))
-                .connectionTimeout(StroomDuration.ofMinutes(1))
-                .connectionRequestTimeout(StroomDuration.ofMinutes(1))
-                .timeToLive(StroomDuration.ofHours(1))
+                .timeout(HttpClientConfiguration.DEFAULT_TIMEOUT)
+                .connectionTimeout(HttpClientConfiguration.DEFAULT_CONNECTION_TIMEOUT)
+                .connectionRequestTimeout(HttpClientConfiguration.DEFAULT_CONNECTION_REQUEST_TIMEOUT)
+                .timeToLive(HttpClientConfiguration.DEFAULT_TIME_TO_LIVE)
                 .build();
     }
 

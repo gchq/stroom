@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.impl.data;
 
 import stroom.node.api.NodeCallUtil;
@@ -207,10 +223,10 @@ public class PlanBQueryService {
                              final Supplier<Val> otherwise) {
         return switch (planBValue) {
             case null -> otherwise.get();
-            case final State state -> ValString.create(state.val().toString());
-            case final TemporalState temporalState -> ValString.create(temporalState.val().toString());
-            case final RangeState rangeState -> ValString.create(rangeState.val().toString());
-            case final TemporalRangeState temporalRangeState -> ValString.create(temporalRangeState.val().toString());
+            case final State state -> state.val();
+            case final TemporalState temporalState -> temporalState.val();
+            case final RangeState rangeState -> rangeState.val();
+            case final TemporalRangeState temporalRangeState -> temporalRangeState.val();
             case final Session ignored -> ValBoolean.create(true);
             default -> throw new IllegalStateException("Unexpected value: " + planBValue);
         };

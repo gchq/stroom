@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.headless;
@@ -47,6 +46,7 @@ import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.ElementId;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -133,16 +133,17 @@ class CliTranslationTaskHandler {
                     // Setup the meta data holder.
                     metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
-                    // Set the pipeline so it can be used by a filter if needed.
+                    // Set the pipeline, so it can be used by a filter if needed.
                     final List<DocRef> pipelines = pipelineStore.findByName(feedName);
-                    if (pipelines == null || pipelines.size() == 0) {
-                        throw ProcessException.create("No pipeline found for feed name '" + feedName + "'");
-                    }
-                    if (pipelines.size() > 1) {
-                        throw ProcessException.create("More than one pipeline found for feed name '" + feedName + "'");
+                    final int pipelinesCount = NullSafe.size(pipelines);
+                    if (pipelinesCount == 0) {
+                        throw ProcessException.create("No pipeline found matching feed name '" + feedName + "'");
+                    } else if (pipelinesCount > 1) {
+                        throw ProcessException.create(
+                                "More than one pipeline found matching feed name '" + feedName + "'");
                     }
 
-                    final DocRef pipelineRef = pipelines.get(0);
+                    final DocRef pipelineRef = pipelines.getFirst();
                     pipelineHolder.setPipeline(pipelineRef);
 
                     // Create the parser.
@@ -172,7 +173,9 @@ class CliTranslationTaskHandler {
 
                     // Add stream providers for lookups etc.
                     final BasicInputStreamProvider inputStreamProvider = new BasicInputStreamProvider();
-                    inputStreamProvider.put(null, new IgnoreCloseInputStream(dataStream), dataStream.available());
+                    inputStreamProvider.put(
+                            null,
+                            new IgnoreCloseInputStream(dataStream), dataStream.available());
                     inputStreamProvider.put(StreamTypeNames.RAW_EVENTS,
                             new IgnoreCloseInputStream(dataStream),
                             dataStream.available());

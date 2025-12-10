@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,13 @@ import stroom.query.client.presenter.FieldInfoSelectionItem;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.security.shared.DocumentPermission;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.StringUtil;
 import stroom.util.shared.UserRef;
 import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
@@ -85,7 +88,8 @@ public class TermEditor extends Composite {
     private FieldSelectionListModel fieldSelectionListModel;
 
     public TermEditor(final Provider<DocSelectionBoxPresenter> docRefProvider,
-                      final Provider<UserRefSelectionBoxPresenter> userRefProvider) {
+                      final Provider<UserRefSelectionBoxPresenter> userRefProvider,
+                      final UiConfigCache uiConfigCache) {
         final DocSelectionBoxPresenter docRefPresenter = docRefProvider.get();
         docRefPresenter.setRequiredPermissions(DocumentPermission.USE);
         docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
@@ -108,7 +112,7 @@ public class TermEditor extends Composite {
         userRefWidget.addStyleName("docRef");
         userRefWidget.setVisible(false);
 
-        fieldListBox = createFieldBox();
+        fieldListBox = createFieldBox(uiConfigCache);
         conditionListBox = createConditionBox();
 
         andLabel = createLabel(" and ");
@@ -328,29 +332,29 @@ public class TermEditor extends Composite {
         } else {
             switch (condition) {
                 case EQUALS,
-                     NOT_EQUALS,
-                     LESS_THAN,
-                     LESS_THAN_OR_EQUAL_TO,
-                     GREATER_THAN,
-                     GREATER_THAN_OR_EQUAL_TO:
+                        NOT_EQUALS,
+                        LESS_THAN,
+                        LESS_THAN_OR_EQUAL_TO,
+                        GREATER_THAN,
+                        GREATER_THAN_OR_EQUAL_TO:
                     enterTextOrDateMode(indexFieldType);
                     break;
                 case BETWEEN:
                     enterTextOrDateRangeMode(indexFieldType);
                     break;
                 case IN_DICTIONARY,
-                     IN_FOLDER,
-                     IS_DOC_REF,
-                     OF_DOC_REF:
+                        IN_FOLDER,
+                        IS_DOC_REF,
+                        OF_DOC_REF:
                     enterDocRefMode(field, condition);
                     break;
                 case IS_USER_REF,
-                     USER_HAS_PERM,
-                     USER_HAS_OWNER,
-                     USER_HAS_DELETE,
-                     USER_HAS_EDIT,
-                     USER_HAS_VIEW,
-                     USER_HAS_USE:
+                        USER_HAS_PERM,
+                        USER_HAS_OWNER,
+                        USER_HAS_DELETE,
+                        USER_HAS_EDIT,
+                        USER_HAS_VIEW,
+                        USER_HAS_USE:
                     enterUserRefMode(field, condition);
                     break;
                 default:
@@ -541,13 +545,17 @@ public class TermEditor extends Composite {
         registrations.add(handlerRegistration);
     }
 
-    private BaseSelectionBox<QueryField, FieldInfoSelectionItem> createFieldBox() {
+    private BaseSelectionBox<QueryField, FieldInfoSelectionItem> createFieldBox(final UiConfigCache uiConfigCache) {
         final BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox =
                 new BaseSelectionBox<QueryField, FieldInfoSelectionItem>();
         fieldListBox.addStyleName(ITEM_CLASS_NAME);
         fieldListBox.addStyleName(DROPDOWN_CLASS_NAME);
         fieldListBox.addStyleName("field");
         fieldListBox.addStyleName("termEditor-item");
+        uiConfigCache.get(uiConfig ->
+                NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl ->
+                        fieldListBox.registerPopupTextProvider(() ->
+                                QuickFilterTooltipUtil.createTooltip("Field Filter", helpUrl))));
         return fieldListBox;
     }
 

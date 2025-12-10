@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 buildscript {
     ext.jooqVer = '3.20.1'
     repositories {
@@ -58,7 +74,8 @@ plugins {
 
 apply plugin: 'de.undercouch.download'
 
-ext.javaLanguageVersion = 21
+ext.javaLanguageVersion = 25
+
 // Adoptium also covers Temurin
 ext.javaVendor = JvmVendorSpec.ADOPTIUM
 
@@ -184,12 +201,15 @@ subprojects {
 //    }
 
     // This bit makes all sub projects have access to the BOMs for the dependency versions
-    dependencies {
-        implementation platform(libs.dropwizard.dependencies)
-        implementation platform(libs.dropwizard.bom)
-        implementation platform(libs.aws.bom)
+    // Don't add them for the lucene shaded jar
+    if (project.name != "lucene553-shaded") {
+        dependencies {
+            implementation platform(libs.dropwizard.dependencies)
+            implementation platform(libs.dropwizard.bom)
+            implementation platform(libs.aws.bom)
 
-        testImplementation platform(libs.junit.bom)
+            testImplementation platform(libs.junit.bom)
+        }
     }
 
     //println project.getConfigurations().getByName("implementation").getAllDependencies()

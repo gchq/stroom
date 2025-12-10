@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,7 @@ import java.util.regex.Pattern;
  */
 @ConfigurableElement(
         type = "PlanBFilter",
+        displayValue = "Plan B Filter",
         description = """
                 Takes XML input (conforming to the reference-data:2 schema) and \
                 loads the data into the Plan B State Store.

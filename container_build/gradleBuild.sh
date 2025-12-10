@@ -1,4 +1,20 @@
 #!/usr/bin/env bash
+#
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 # Runs the full CI gradle build in a staged approach
 # Usage: ./build.sh
 #        MAX_WORKERS=6 SKIP_TESTS=true ./build.sh
@@ -108,6 +124,7 @@ main() {
   # our docker services as well.
   # Don't clean as this is a fresh clone and clean will wipe the cached
   # content pack zips
+  # Fully qualify the shadowJar tasks as we want to run lucene553 shadowJar
   echo "::group::Basic Java build"
   echo -e "${GREEN}Do the basic java build${NC}"
   ./gradlew \
@@ -118,7 +135,9 @@ main() {
     -Pversion="${BUILD_VERSION:-SNAPSHOT}" \
     build \
     "${test_args[@]}" \
-    -x shadowJar \
+    -x :stroom-app:shadowJar \
+    -x :stroom-proxy:stroom-proxy-app:shadowJar \
+    -x :stroom-headless:shadowJar \
     -x resolve \
     -x copyFilesForStroomDockerBuild \
     -x copyFilesForProxyDockerBuild \
@@ -146,6 +165,7 @@ main() {
   echo "::endgroup::"
 
   # Make the distribution.
+  # Fully qualify the shadowJar tasks as have run lucene553 shadowJar
   echo "::group::Distribution build"
   echo -e "${GREEN}Build the distribution with version" \
     "${BLUE}${BUILD_VERSION:-SNAPSHOT}${NC}"
@@ -155,7 +175,9 @@ main() {
     --stacktrace \
     -PdumpFailedTestXml=true \
     -Pversion="${BUILD_VERSION:-SNAPSHOT}" \
-    shadowJar \
+    :stroom-app:shadowJar \
+    :stroom-proxy:stroom-proxy-app:shadowJar \
+    :stroom-headless:shadowJar \
     buildDistribution \
     copyFilesForStroomDockerBuild \
     copyFilesForProxyDockerBuild \

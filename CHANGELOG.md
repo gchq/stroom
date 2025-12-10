@@ -13,6 +13,45 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.13] - 2025-12-09
+
+* Issue **#5304** : Fix error when unzipping the stroom-app-all jar file. This problem was also leading to AV scan alerts.
+
+
+## [v7.11-beta.12] - 2025-12-03
+
+* Fix Files list on Stream Info pane so that you can copy each file path individually.
+
+* Uplift Gradle to v9.2.1.
+
+* Issue **#5297** : Fix missing execute permissions and incorrect file dates in stroom and stroom-proxy distribution ZIP files.
+
+
+## [v7.11-beta.11] - 2025-12-02
+
+* Uplift docker image JDK to `eclipse-temurin:25_36-jdk-alpine-3.22`.
+
+* Issue **#5259** : Fix PlanB Val.toString() NPE.
+
+* Bumps org.quartz-scheduler:quartz from 2.5.0-rc1 to 2.5.1.
+
+* Bumps org.eclipse.transformer:org.eclipse.transformer.cli from 0.5.0 to 1.0.0.
+
+* Issue **#5288** : Fix config defaults for `ForwardHttpPostConfig` and `HttpClientConfiguration`.
+
+* Issue **#5291** : Fix explorer item sort order.
+
+* Issue **#5152** : Fix position of the Clear icon on the Quick Filter.
+
+* Make the Quick Filter Help button hide the help popup if it is visible.
+
+* Add the same Quick Filter help popup as used on the explorer QF to the QFs on Dashboard table columns, Query help and Expression Term editors.
+
+* Issue **#5293** : Fix pipeline element type and name display.
+
+* Issue **#5229** : Change the default main method for the stroom-headless jar to be Headless rather than Cli. Fix errors when running stroom-headless.
+
+
 ## [v7.11-beta.10] - 2025-11-20
 
 * Issue **#5257** : Upgrade Lucene to 10.3.1.
@@ -384,53 +423,6 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#4956** : Add error handling to duplicate check deletion.
 
 * Issue **#4967** : Fix SQL deadlock.
-
-
-## [v7.10-beta.3] - 2025-06-05
-
-* Issue **#4900** : Add histogram and metric stores to Plan B.
-
-
-## [v7.10-beta.2] - 2025-06-05
-
-* Issue **#4940** : Fix duplicate store error log.
-
-* Issue **#4941** : Fix annotation data retention.
-
-* Issue **#4957** : Default vis settings are not added to Query pane visualisations.
-
-* Issue **#3861** : Add Shard Id, Index Version to Index Shards searchable.
-
-* Issue **#4112** : Allow use of Capture groups in the decode() function result.
-
-* Issue **#3955** : Add case expression function.
-
-
-## [v7.10-beta.1] - 2025-05-27
-
-* Issue **#4484** : Change selection handling to use fully qualified keys.
-
-* Issue **#4456** : Fix selection handling across multiple components by uniquely namespacing selections.
-
-* Issue **#4886** : Fix ctrl+enter query execution for rules and reports.
-
-* Issue **#4884** : Suggest only queryable fields in StroomQL where clause.
-
-* Issue **#4742** : Allow embedded queries to be copies rather than references.
-
-* Issue **#4894** : Plan B query without snapshots.
-
-* Issue **#4896** : Plan B option to synchronise writes.
-
-* Issue **#4720** : Add Plan B shards data source.
-
-* Issue **#4919** : Add functions to format byte size strings.
-
-* Issue **#4901** : Add advanced schema selection to Plan B to improve performance and reduce storage requirements.
-
-* Fix primitive value conversion of query field types.
-
-* Issue **#4945** : Increase index field name length.
 
 
 ## [v7.9-beta.12] - 2025-05-07
@@ -1878,7 +1870,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.10...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.13...HEAD
+[v7.11-beta.13]: https://github.com/gchq/stroom/compare/v7.11-beta.12...v7.11-beta.13
+[v7.11-beta.12]: https://github.com/gchq/stroom/compare/v7.11-beta.11...v7.11-beta.12
+[v7.11-beta.11]: https://github.com/gchq/stroom/compare/v7.11-beta.10...v7.11-beta.11
 [v7.11-beta.10]: https://github.com/gchq/stroom/compare/v7.11-beta.9...v7.11-beta.10
 [v7.11-beta.9]: https://github.com/gchq/stroom/compare/v7.11-beta.8...v7.11-beta.9
 [v7.11-beta.8]: https://github.com/gchq/stroom/compare/v7.11-beta.7...v7.11-beta.8

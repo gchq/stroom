@@ -35,6 +35,7 @@ proxy-remote.yml*
 *.iml
 .idea/*
 !.idea/codeStyles
+!.idea/copyright
 !.idea/inspectionProfiles
 !.idea/runConfigurations
 !.idea/icon.png
