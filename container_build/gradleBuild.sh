@@ -124,6 +124,7 @@ main() {
   # our docker services as well.
   # Don't clean as this is a fresh clone and clean will wipe the cached
   # content pack zips
+  # Fully qualify the shadowJar tasks as we want to run lucene553 shadowJar
   echo "::group::Basic Java build"
   echo -e "${GREEN}Do the basic java build${NC}"
   ./gradlew \
@@ -134,7 +135,9 @@ main() {
     -Pversion="${BUILD_VERSION:-SNAPSHOT}" \
     build \
     "${test_args[@]}" \
-    -x shadowJar \
+    -x :stroom-app:shadowJar \
+    -x :stroom-proxy:stroom-proxy-app:shadowJar \
+    -x :stroom-headless:shadowJar \
     -x resolve \
     -x copyFilesForStroomDockerBuild \
     -x copyFilesForProxyDockerBuild \
@@ -162,6 +165,7 @@ main() {
   echo "::endgroup::"
 
   # Make the distribution.
+  # Fully qualify the shadowJar tasks as have run lucene553 shadowJar
   echo "::group::Distribution build"
   echo -e "${GREEN}Build the distribution with version" \
     "${BLUE}${BUILD_VERSION:-SNAPSHOT}${NC}"
@@ -171,8 +175,8 @@ main() {
     --stacktrace \
     -PdumpFailedTestXml=true \
     -Pversion="${BUILD_VERSION:-SNAPSHOT}" \
-    shadowJar \
     buildDistribution \
+    shadowJar \
     copyFilesForStroomDockerBuild \
     copyFilesForProxyDockerBuild \
     -x test \
