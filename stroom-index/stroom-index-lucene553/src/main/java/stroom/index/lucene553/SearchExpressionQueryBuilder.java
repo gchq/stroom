@@ -29,6 +29,7 @@ import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.IndexField;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.IndexFieldCache;
+import stroom.query.language.token.InTermsUtil;
 import stroom.search.impl.SearchException;
 
 import org.apache.lucene553.analysis.Analyzer;
@@ -317,7 +318,7 @@ class SearchExpressionQueryBuilder {
                     return getDictionary(fieldName, docRef, indexField, terms);
                 }
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFldType().getDisplayValue() + " field type");
+                                                     + indexField.getFldType().getDisplayValue() + " field type");
             }
         } else if (FieldType.LONG.equals(indexField.getFldType())) {
             switch (condition) {
@@ -365,7 +366,7 @@ class SearchExpressionQueryBuilder {
                     return getDictionary(fieldName, docRef, indexField, terms);
                 }
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFldType().getDisplayValue() + " field type");
+                                                     + indexField.getFldType().getDisplayValue() + " field type");
             }
         } else if (FieldType.FLOAT.equals(indexField.getFldType())) {
             switch (condition) {
@@ -416,7 +417,7 @@ class SearchExpressionQueryBuilder {
                     return getDictionary(fieldName, docRef, indexField, terms);
                 }
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFldType().getDisplayValue() + " field type");
+                                                     + indexField.getFldType().getDisplayValue() + " field type");
             }
         } else if (FieldType.DOUBLE.equals(indexField.getFldType())) {
             switch (condition) {
@@ -476,7 +477,7 @@ class SearchExpressionQueryBuilder {
                     return getDictionary(fieldName, docRef, indexField, terms);
                 }
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFldType().getDisplayValue() + " field type");
+                                                     + indexField.getFldType().getDisplayValue() + " field type");
             }
         } else if (FieldType.DATE.equals(indexField.getFldType())) {
             switch (condition) {
@@ -540,7 +541,7 @@ class SearchExpressionQueryBuilder {
                     return getDictionary(fieldName, docRef, indexField, terms);
                 }
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFldType().getDisplayValue() + " field type");
+                                                     + indexField.getFldType().getDisplayValue() + " field type");
             }
         } else if (indexField.getFldType().isNumeric()) {
             switch (condition) {
@@ -588,7 +589,7 @@ class SearchExpressionQueryBuilder {
                     return getDictionary(fieldName, docRef, indexField, terms);
                 }
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFldType().getDisplayValue() + " field type");
+                                                     + indexField.getFldType().getDisplayValue() + " field type");
             }
         } else {
             return switch (condition) {
@@ -598,9 +599,9 @@ class SearchExpressionQueryBuilder {
                 case CONTAINS -> getContains(fieldName, value, indexField, terms);
                 case IN -> getIn(fieldName, value, indexField, terms);
                 case IN_DICTIONARY -> getDictionary(fieldName, docRef, indexField, terms);
-                case IS_DOC_REF -> getSubQuery(indexField, docRef.getUuid(), terms, false);
+                case IS_DOC_REF -> getSubQuery(indexField, docRef.getUuid(), terms);
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFldType().getDisplayValue() + " field type");
+                                                     + indexField.getFldType().getDisplayValue() + " field type");
             };
         }
     }
@@ -712,7 +713,7 @@ class SearchExpressionQueryBuilder {
                               final String value,
                               final IndexField indexField,
                               final Set<String> terms) {
-        final Query query = getSubQuery(indexField, value, terms, false);
+        final Query query = getSubQuery(indexField, value, terms);
         return modifyOccurrence(query, Occur.MUST);
     }
 
@@ -720,8 +721,10 @@ class SearchExpressionQueryBuilder {
                         final String value,
                         final IndexField indexField,
                         final Set<String> terms) {
-        final Query query = getSubQuery(indexField, value, terms, true);
-        return modifyOccurrence(query, Occur.SHOULD);
+        final Builder orTermsBuilder = new Builder();
+        InTermsUtil.getInTerms(value).forEach(val ->
+                orTermsBuilder.add(getSubQuery(indexField, val, terms), Occur.SHOULD));
+        return orTermsBuilder.build();
     }
 
     private Query modifyOccurrence(final Query query, final Occur occur) {
@@ -759,7 +762,7 @@ class SearchExpressionQueryBuilder {
             } else if (indexField.getFldType().isNumeric()) {
                 query = getLongIn(fieldName, val);
             } else {
-                query = getSubQuery(indexField, val, terms, false);
+                query = getSubQuery(indexField, val, terms);
             }
 
             if (query != null) {
@@ -789,8 +792,9 @@ class SearchExpressionQueryBuilder {
         };
     }
 
-    private Query getSubQuery(final IndexField field, final String value,
-                              final Set<String> terms, final boolean in) {
+    private Query getSubQuery(final IndexField field,
+                              final String value,
+                              final Set<String> terms) {
         Query query = null;
 
         // Store terms for hit highlighting.
@@ -806,7 +810,7 @@ class SearchExpressionQueryBuilder {
         // modify the query so that each word becomes a new term in a boolean
         // query.
         String val = value.trim();
-        if (in || !AnalyzerType.KEYWORD.equals(field.getAnalyzerType())) {
+        if (!AnalyzerType.KEYWORD.equals(field.getAnalyzerType())) {
             // If the field has been analysed then we need to analyse the search
             // query to create matching terms.
             final Analyzer analyzer = AnalyzerFactory.create(field.getAnalyzerType(),
@@ -819,7 +823,7 @@ class SearchExpressionQueryBuilder {
                 val = MULTIPLE_WILDCARD.matcher(val).replaceAll("+");
             }
 
-            if (val.length() > 0) {
+            if (!val.isEmpty()) {
                 final StandardQueryParser queryParser = new StandardQueryParser(analyzer);
                 queryParser.setAllowLeadingWildcard(true);
                 queryParser.setLowercaseExpandedTerms(!field.isCaseSensitive());
