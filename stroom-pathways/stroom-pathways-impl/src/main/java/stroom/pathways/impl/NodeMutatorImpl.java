@@ -30,6 +30,9 @@ import stroom.pathways.shared.pathway.ConstraintValue;
 import stroom.pathways.shared.pathway.IntegerRange;
 import stroom.pathways.shared.pathway.IntegerSet;
 import stroom.pathways.shared.pathway.IntegerValue;
+import stroom.pathways.shared.pathway.LongRange;
+import stroom.pathways.shared.pathway.LongSet;
+import stroom.pathways.shared.pathway.LongValue;
 import stroom.pathways.shared.pathway.NanoTimeRange;
 import stroom.pathways.shared.pathway.NanoTimeValue;
 import stroom.pathways.shared.pathway.PathKey;
@@ -277,57 +280,64 @@ public class NodeMutatorImpl implements TraceWalker {
             } else {
                 final boolean opt = NullSafe.getOrElse(constraint, Constraint::isOptional, optional);
                 switch (value) {
-                    case final Integer integer -> constraints.put(name, new Constraint(name,
+                    case final Integer val -> constraints.put(name, new Constraint(name,
                             createIntConstraint(location,
                                     getConstraintValue(constraint),
-                                    integer,
+                                    val,
                                     messageReceiver,
                                     pathwaysDoc),
                             opt));
-                    case final Boolean bool -> constraints.put(name, new Constraint(name,
+                    case final Long val -> constraints.put(name, new Constraint(name,
+                            createLongConstraint(location,
+                                    getConstraintValue(constraint),
+                                    val,
+                                    messageReceiver,
+                                    pathwaysDoc),
+                            opt));
+                    case final Boolean val -> constraints.put(name, new Constraint(name,
                             createBooleanConstraint(location,
                                     getConstraintValue(constraint),
-                                    bool,
+                                    val,
                                     messageReceiver,
                                     pathwaysDoc),
                             opt));
-                    case final String string -> constraints.put(name, new Constraint(name,
+                    case final String val -> constraints.put(name, new Constraint(name,
                             createStringConstraint(location,
                                     getConstraintValue(constraint),
-                                    string,
+                                    val,
                                     messageReceiver,
                                     pathwaysDoc),
                             opt));
-                    case final NanoTime nanoTime -> constraints.put(name, new Constraint(name,
+                    case final NanoTime val -> constraints.put(name, new Constraint(name,
                             createNanoTimeConstraint(location,
                                     getConstraintValue(constraint),
-                                    nanoTime,
+                                    val,
                                     messageReceiver,
                                     pathwaysDoc),
                             opt));
-                    case final AnyValue anyValue -> {
+                    case final AnyValue val -> {
                         // Unwrap.
-                        if (anyValue.getStringValue() != null) {
+                        if (val.getStringValue() != null) {
                             setOrExpand(constraints,
                                     pathNode,
                                     name,
-                                    anyValue.getStringValue(),
+                                    val.getStringValue(),
                                     optional,
                                     messageReceiver,
                                     pathwaysDoc);
-                        } else if (anyValue.getBoolValue() != null) {
+                        } else if (val.getBoolValue() != null) {
                             setOrExpand(constraints,
                                     pathNode,
                                     name,
-                                    anyValue.getBoolValue(),
+                                    val.getBoolValue(),
                                     optional,
                                     messageReceiver,
                                     pathwaysDoc);
-                        } else if (anyValue.getIntValue() != null) {
+                        } else if (val.getIntValue() != null) {
                             setOrExpand(constraints,
                                     pathNode,
                                     name,
-                                    anyValue.getIntValue(),
+                                    val.getIntValue(),
                                     optional,
                                     messageReceiver,
                                     pathwaysDoc);
@@ -501,6 +511,97 @@ public class NodeMutatorImpl implements TraceWalker {
                         messageReceiver.log(Severity.INFO, () ->
                                 "Expanding integer range max: " + location.get() + " " + value);
                         return new IntegerRange(intRange.getMin(), value);
+                    }
+                }
+            }
+            default -> {
+                if (!(current instanceof AnyTypeValue)) {
+                    if (!pathwaysDoc.isAllowPathwayMutation()) {
+                        messageReceiver.log(Severity.ERROR, () ->
+                                "Unexpected type found: " + location.get() + " " + value);
+                    } else {
+                        messageReceiver.log(Severity.WARNING, () ->
+                                "Changing to any type: " + location.get() + " " + value);
+                        return new AnyTypeValue();
+                    }
+                }
+            }
+        }
+        return current;
+    }
+
+    private ConstraintValue createLongConstraint(final Supplier<String> location,
+                                                final ConstraintValue current,
+                                                final long value,
+                                                final MessageReceiver messageReceiver,
+                                                final PathwaysDoc pathwaysDoc) {
+        switch (current) {
+            case null -> {
+                if (!pathwaysDoc.isAllowPathwayMutation()) {
+                    messageReceiver.log(Severity.ERROR, () ->
+                            "Unexpected long: " + location.get() + " " + value);
+                } else {
+                    messageReceiver.log(Severity.INFO, () ->
+                            "Adding integer constraint: " + location.get() + " " + value);
+                    return new LongValue(value);
+                }
+            }
+            case final LongValue longValue -> {
+                if (!Objects.equals(longValue.getValue(), value)) {
+                    if (!pathwaysDoc.isAllowPathwayMutation()) {
+                        messageReceiver.log(Severity.ERROR, () ->
+                                "Unexpected long: " + location.get() + " " + value);
+                    } else {
+                        messageReceiver.log(Severity.INFO, () ->
+                                "Expanding long set: " + location.get() + " " + value);
+                        return new LongSet(Set.of(longValue.getValue(), value));
+                    }
+                }
+            }
+            case final LongSet longSet -> {
+                final Set<Long> set = new HashSet<>(longSet.getSet());
+                if (set.add(value)) {
+                    if (!pathwaysDoc.isAllowPathwayMutation()) {
+                        messageReceiver.log(Severity.ERROR, () ->
+                                "Unexpected long: " + location.get() + " " + value);
+                    } else {
+                        if (set.size() > MAX_SET_SIZE) {
+                            // Convert to range.
+                            long min = value;
+                            long max = value;
+                            for (final long num : longSet.getSet()) {
+                                min = Math.min(min, num);
+                                max = Math.max(max, num);
+                            }
+                            messageReceiver.log(Severity.INFO, () ->
+                                    "Making long range: " + location.get() + " " + value);
+                            return new LongRange(min, max);
+                        } else {
+                            messageReceiver.log(Severity.INFO, () ->
+                                    "Expanding long set: " + location.get() + " " + value);
+                            return new LongSet(set);
+                        }
+                    }
+                }
+            }
+            case final LongRange longRange -> {
+                if (longRange.getMin() > value) {
+                    if (!pathwaysDoc.isAllowPathwayMutation()) {
+                        messageReceiver.log(Severity.ERROR, () ->
+                                "Long exceeds min constraint: " + location.get() + " " + value);
+                    } else {
+                        messageReceiver.log(Severity.INFO, () ->
+                                "Expanding long range min: " + location.get() + " " + value);
+                        return new LongRange(value, longRange.getMax());
+                    }
+                } else if (longRange.getMax() < value) {
+                    if (!pathwaysDoc.isAllowPathwayMutation()) {
+                        messageReceiver.log(Severity.ERROR, () ->
+                                "Long exceeds max constraint: " + location.get() + " " + value);
+                    } else {
+                        messageReceiver.log(Severity.INFO, () ->
+                                "Expanding long range max: " + location.get() + " " + value);
+                        return new LongRange(longRange.getMin(), value);
                     }
                 }
             }

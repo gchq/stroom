@@ -196,9 +196,9 @@ public class SpanValueSerde implements Serde<SpanValue> {
                         : 0));
 
             } else if (anyValue.getIntValue() != null) {
-                result = ensure(output, 1 + Integer.BYTES);
-                result.put(ValueType.INTEGER.getPrimitiveValue());
-                result.putInt(anyValue.getIntValue());
+                result = ensure(output, 1 + Long.BYTES);
+                result.put(ValueType.LONG.getPrimitiveValue());
+                result.putLong(anyValue.getIntValue());
 
             } else if (anyValue.getDoubleValue() != null) {
                 result = ensure(output, 1 + Double.BYTES);
@@ -256,8 +256,8 @@ public class SpanValueSerde implements Serde<SpanValue> {
         } else if (type == ValueType.BOOLEAN.getPrimitiveValue()) {
             return AnyValue.boolValue(input.get() == 1);
 
-        } else if (type == ValueType.INTEGER.getPrimitiveValue()) {
-            return AnyValue.intValue(input.getInt());
+        } else if (type == ValueType.LONG.getPrimitiveValue()) {
+            return AnyValue.intValue(input.getLong());
 
         } else if (type == ValueType.DOUBLE.getPrimitiveValue()) {
             return AnyValue.doubleValue(input.getDouble());
@@ -581,6 +581,9 @@ public class SpanValueSerde implements Serde<SpanValue> {
         } else if (type == ValueType.INTEGER.getPrimitiveValue()) {
             ByteBufferUtils.skip(input, Integer.BYTES);
 
+        } else if (type == ValueType.LONG.getPrimitiveValue()) {
+            ByteBufferUtils.skip(input, Long.BYTES);
+
         } else if (type == ValueType.DOUBLE.getPrimitiveValue()) {
             ByteBufferUtils.skip(input, Double.BYTES);
 
@@ -770,6 +773,9 @@ public class SpanValueSerde implements Serde<SpanValue> {
                 ByteBufferUtils.skip(input, 1);
 
             } else if (type == ValueType.INTEGER.getPrimitiveValue()) {
+                ByteBufferUtils.skip(input, Integer.BYTES);
+
+            } else if (type == ValueType.LONG.getPrimitiveValue()) {
                 ByteBufferUtils.skip(input, Integer.BYTES);
 
             } else if (type == ValueType.DOUBLE.getPrimitiveValue()) {

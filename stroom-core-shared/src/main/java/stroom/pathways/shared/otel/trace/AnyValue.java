@@ -35,7 +35,7 @@ public class AnyValue {
     private final Boolean boolValue;
 
     @JsonProperty("intValue")
-    private final Integer intValue;
+    private final Long intValue;
 
     @JsonProperty("doubleValue")
     private final Double doubleValue;
@@ -52,7 +52,7 @@ public class AnyValue {
     @JsonCreator
     public AnyValue(@JsonProperty("stringValue") final String stringValue,
                     @JsonProperty("boolValue") final Boolean boolValue,
-                    @JsonProperty("intValue") final Integer intValue,
+                    @JsonProperty("intValue") final Long intValue,
                     @JsonProperty("doubleValue") final Double doubleValue,
                     @JsonProperty("arrayValue") final ArrayValue arrayValue,
                     @JsonProperty("kvlistValue") final KeyValueList kvlistValue,
@@ -88,7 +88,7 @@ public class AnyValue {
                 null);
     }
 
-    public static AnyValue intValue(final int intValue) {
+    public static AnyValue intValue(final long intValue) {
         return new AnyValue(
                 null,
                 null,
@@ -151,7 +151,7 @@ public class AnyValue {
         return boolValue;
     }
 
-    public Integer getIntValue() {
+    public Long getIntValue() {
         return intValue;
     }
 
@@ -203,7 +203,7 @@ public class AnyValue {
             return boolValue.toString().toLowerCase(Locale.ROOT);
         }
         if (intValue != null) {
-            return Integer.toString(intValue);
+            return Long.toString(intValue);
         }
         if (doubleValue != null) {
             return Double.toString(doubleValue);
