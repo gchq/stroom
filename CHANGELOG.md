@@ -13,6 +13,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.13] - 2025-12-11
+
+* Issue **#5288** : Fix config defaults for `ForwardHttpPostConfig` and `HttpClientConfiguration`.
+
+* Issue **#5281** : Fix behaviour of query expression IN condition.
+
 * Issue **#5229** : Change the default main method for the stroom-headless jar to be Headless rather than Cli. Fix errors when running stroom-headless.
 
 
@@ -1784,7 +1790,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.13...HEAD
+[v7.10.13]: https://github.com/gchq/stroom/compare/v7.10.12...v7.10.13
 [v7.10.12]: https://github.com/gchq/stroom/compare/v7.10.11...v7.10.12
 [v7.10.11]: https://github.com/gchq/stroom/compare/v7.10.10...v7.10.11
 [v7.10.10]: https://github.com/gchq/stroom/compare/v7.10.9...v7.10.10
