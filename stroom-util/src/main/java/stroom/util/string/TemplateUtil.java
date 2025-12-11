@@ -24,6 +24,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 
 import com.google.common.base.Strings;
 
@@ -51,19 +53,65 @@ public class TemplateUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TemplateUtil.class);
 
-    public static final String UUID_VAR = "uuid";
-    public static final String STROOM_TEMP_VAR = SimplePathCreator.STROOM_HOME;
-    public static final String STROOM_HOME_VAR = SimplePathCreator.STROOM_TEMP;
-    public static final Set<String> NON_ENV_VARS = Arrays.stream(SimplePathCreator.NON_ENV_VARS)
-            .collect(Collectors.toSet());
-    public static final String FILE_NAME_VAR = "fileName";
-    public static final String FILE_STEM_VAR = "fileStem";
-    public static final String FILE_EXTENSION_VAR = "fileExtension";
+    public static final CIKey UUID_VAR = CIKey.internStaticKey("uuid");
+    public static final CIKey STROOM_TEMP_VAR = CIKey.internStaticKey(SimplePathCreator.STROOM_HOME);
+    public static final CIKey STROOM_HOME_VAR = CIKey.internStaticKey(SimplePathCreator.STROOM_TEMP);
+    /**
+     * Represents epoch millis
+     */
+    public static final CIKey MS_VAR = CIKey.internStaticKey("ms");
+    /**
+     * Represents the millis part of the current second.
+     */
+    public static final CIKey MILLIS_VAR = CIKey.internStaticKey("millis");
+    public static final CIKey SECOND_VAR = CIKey.internStaticKey("second");
+    public static final CIKey MINUTE_VAR = CIKey.internStaticKey("minute");
+    public static final CIKey HOUR_VAR = CIKey.internStaticKey("hour");
+    public static final CIKey DAY_VAR = CIKey.internStaticKey("day");
+    public static final CIKey MONTH_VAR = CIKey.internStaticKey("month");
+    public static final CIKey YEAR_VAR = CIKey.internStaticKey("year");
+    public static final CIKey FILE_NAME_VAR = CIKey.internStaticKey("fileName");
+    public static final CIKey FILE_STEM_VAR = CIKey.internStaticKey("fileStem");
+    public static final CIKey FILE_EXTENSION_VAR = CIKey.internStaticKey("fileExtension");
 
+    public static final Set<CIKey> NON_ENV_VARS;
+
+    static {
+        NON_ENV_VARS = Arrays.stream(SimplePathCreator.NON_ENV_VARS)
+                .map(CIKey::internStaticKey)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * Parses a template like '${accountId}_${component}_static_text' and returns
+     * a {@link Template} that can be used many times to build strings from
+     * the parsed template. The {@link Template} is intended to be cached,
+     * held as a static or on a singleton depending on the lifetime of the template string.
+     * <p>
+     * The variables in the template are case-insensitive.
+     * </p>
+     *
+     * @param template The template string to parse.
+     */
     public static Template parseTemplate(final String template) {
         return parseTemplate(template, null, null);
     }
 
+    /**
+     * Parses a template like '${accountId}_${component}_static_text' and returns
+     * a {@link Template} that can be used many times to build strings from
+     * the parsed template. The {@link Template} is intended to be cached,
+     * held as a static or on a singleton depending on the lifetime of the template string.
+     * <p>
+     * The variables in the template are case-insensitive.
+     * </p>
+     *
+     * @param template  The template string to parse.
+     * @param formatter An optional formatter that will be called on all
+     *                  static parts and all
+     *                  replacements for parameterised parts of the template.
+     *                  e.g. {@link String#toUpperCase()} and/or to replace unwanted chars.
+     */
     public static Template parseTemplate(final String template,
                                          final Function<String, String> formatter) {
         return parseTemplate(template, formatter, formatter);
@@ -75,7 +123,7 @@ public class TemplateUtil {
      * the parsed template. The {@link Template} is intended to be cached,
      * held as a static or on a singleton depending on the lifetime of the template string.
      * <p>
-     * The template is case-sensitive.
+     * The variables in the template are case-insensitive.
      * </p>
      *
      * @param template             The template string to parse.
@@ -92,9 +140,9 @@ public class TemplateUtil {
         if (NullSafe.isEmptyString(template)) {
             return Template.EMPTY_TEMPLATE;
         } else {
-            final List<PartExtractor> funcList = new ArrayList<>();
-            final Set<String> varsInTemplate = new HashSet<>();
-            final Map<String, PartExtractor> varToPartExtractorMap = new HashMap<>();
+            final List<TemplatePart> funcList = new ArrayList<>();
+            final Set<CIKey> varsInTemplate = new HashSet<>();
+            final Map<CIKey, TemplatePart> varToPartExtractorMap = new HashMap<>();
             final StringBuilder sb = new StringBuilder();
             char lastChar = 0;
             boolean inVariable = false;
@@ -110,20 +158,19 @@ public class TemplateUtil {
                     if (!sb.isEmpty()) {
                         // Stuff before must be static text
                         final String staticText = format(sb.toString(), staticTextFormatter);
-                        funcList.add(StaticPart.of(staticText));
+                        funcList.add(StaticTextPart.of(staticText));
                         LOGGER.debug("Adding static text func for '{}'", staticText);
                         sb.setLength(0);
                     }
                 } else if (inVariable && chr == '}') {
                     inVariable = false;
-                    // Intern it so if we are using static var replacement, we will benefit from
-                    // only computing the hashcode once and String#equals being able to use '=='
-                    // as most replacements will use a hard coded (and thus already interned) string.
-                    final String var = sb.toString().intern();
+                    // Because we may use the var to lookup system props or env vars, we MUST
+                    // retain the original case inside the CIKey, so can't user CIKey.ofIgnoringCase()
+                    final CIKey var = CIKey.of(sb.toString());
                     varsInTemplate.add(var);
-                    final PartExtractor partExtractor = varToPartExtractorMap.computeIfAbsent(var, aVar ->
-                            new DynamicPart(aVar, effectiveParamFormatter));
-                    funcList.add(partExtractor);
+                    final TemplatePart templatePart = varToPartExtractorMap.computeIfAbsent(var, aVar ->
+                            new VariablePart(aVar, effectiveParamFormatter));
+                    funcList.add(templatePart);
                     LOGGER.debug("Adding replacement func for var '{}'", var);
                     sb.setLength(0);
                 } else if (chr != '$') {
@@ -141,7 +188,7 @@ public class TemplateUtil {
             if (!sb.isEmpty()) {
                 // Stuff before must be static text
                 final String staticText = format(sb.toString(), staticTextFormatter);
-                funcList.add(StaticPart.of(staticText));
+                funcList.add(StaticTextPart.of(staticText));
                 sb.setLength(0);
             }
             return new Template(template, varsInTemplate, funcList);
@@ -188,30 +235,30 @@ public class TemplateUtil {
          * Here for debugging and toString
          */
         private final String template;
-        private final Set<String> varsInTemplate;
-        private final List<PartExtractor> partExtractors;
+        private final Set<CIKey> varsInTemplate;
+        private final List<TemplatePart> templateParts;
         private final int partExtractorCount;
         private boolean isAllStaticText;
 
         private Template(final String template,
-                         final Set<String> varsInTemplate,
-                         final List<PartExtractor> partExtractors) {
+                         final Set<CIKey> varsInTemplate,
+                         final List<TemplatePart> templateParts) {
             this.template = Objects.requireNonNull(template);
             this.varsInTemplate = NullSafe.unmodifialbeSet(varsInTemplate);
-            this.partExtractors = NullSafe.unmodifiableList(partExtractors);
+            this.templateParts = NullSafe.unmodifiableList(templateParts);
             // Cache this
-            this.partExtractorCount = this.partExtractors.size();
-            this.isAllStaticText = isAllStatic(partExtractors);
+            this.partExtractorCount = this.templateParts.size();
+            this.isAllStaticText = isAllStatic(templateParts);
         }
 
-        private boolean isAllStatic(final List<PartExtractor> partExtractors) {
-            if (partExtractors.isEmpty()) {
+        private boolean isAllStatic(final List<TemplatePart> templateParts) {
+            if (templateParts.isEmpty()) {
                 // Empty template, but we should never get here as EMPTY should be used.
                 return true;
             } else {
-                return partExtractors.stream()
-                        .allMatch(partExtractor ->
-                                partExtractor instanceof StaticPart);
+                return templateParts.stream()
+                        .allMatch(templatePart ->
+                                templatePart instanceof StaticTextPart);
             }
         }
 
@@ -222,19 +269,22 @@ public class TemplateUtil {
          *                            to the replacement value.
          * @see Template#buildExecutor() buildGenerator() for more control of variable replacement.
          */
-        public String executeWith(final Map<String, String> varToReplacementMap) {
+        public String executeWith(final Map<CIKey, String> varToReplacementMap) {
             // partExtractors cope with null map
             final String output;
             if (partExtractorCount == 0) {
                 output = "";
             } else if (isAllStaticText) {
                 // All static so there will be only one extractor
-                output = partExtractors.getFirst().apply(Collections.emptyMap(), Collections.emptyList());
+                output = templateParts.getFirst().apply(Collections.emptyMap(), Collections.emptyList());
             } else {
-                final Map<String, String> map = NullSafe.map(varToReplacementMap);
-                output = buildExecutor()
-                        .addCommonReplacementFunction(map::get)
-                        .execute();
+                if (NullSafe.isEmptyMap(varToReplacementMap)) {
+                    output = buildExecutor().execute();
+                } else {
+                    output = buildExecutor()
+                            .addCommonReplacementFunction(varToReplacementMap::get)
+                            .execute();
+                }
             }
 
             LOGGER.debug("Generated output '{}' from varToReplacementProviderMap: {}",
@@ -242,21 +292,21 @@ public class TemplateUtil {
             return NullSafe.string(output);
         }
 
-        private String doExecute(final Map<String, ReplacementProvider> varToReplacementProviderMap,
+        private String doExecute(final Map<CIKey, ReplacementProvider> varToReplacementProviderMap,
                                  final List<OptionalReplacementProvider> dynamicReplacementProviders) {
             // partExtractors cope with null map
             final String output;
             if (partExtractorCount == 0) {
                 output = "";
             } else if (partExtractorCount == 1) {
-                return NullSafe.string(partExtractors.getFirst().apply(
+                return NullSafe.string(templateParts.getFirst().apply(
                         varToReplacementProviderMap,
                         dynamicReplacementProviders));
             } else {
                 final String[] parts = new String[partExtractorCount];
                 for (int i = 0; i < partExtractorCount; i++) {
-                    final PartExtractor partExtractor = partExtractors.get(i);
-                    final String part = NullSafe.string(partExtractor.apply(
+                    final TemplatePart templatePart = templateParts.get(i);
+                    final String part = NullSafe.string(templatePart.apply(
                             varToReplacementProviderMap,
                             dynamicReplacementProviders));
                     parts[i] = part;
@@ -285,11 +335,11 @@ public class TemplateUtil {
         /**
          * @return The set of vars in the template.
          */
-        public Set<String> getVarsInTemplate() {
+        public Set<CIKey> getVarsInTemplate() {
             return Collections.unmodifiableSet(varsInTemplate);
         }
 
-        public boolean isVarInTemplate(final String var) {
+        public boolean isVarInTemplate(final CIKey var) {
             return var != null
                    && varsInTemplate.contains(var);
         }
@@ -318,12 +368,12 @@ public class TemplateUtil {
             final Template template = (Template) object;
             return Objects.equals(this.template, template.template)
                    && Objects.equals(varsInTemplate, template.varsInTemplate)
-                   && Objects.equals(partExtractors, template.partExtractors);
+                   && Objects.equals(templateParts, template.templateParts);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(template, varsInTemplate, partExtractors);
+            return Objects.hash(template, varsInTemplate, templateParts);
         }
     }
 
@@ -338,7 +388,7 @@ public class TemplateUtil {
          * This will override any existing replacement for var.
          * If var is not in the template it is a no-op.
          */
-        ExecutorBuilder addReplacement(String var, String replacement);
+        ExecutorBuilder addReplacement(CIKey var, String replacement);
 
         /**
          * Add multiple static replacements. The map key is the var in the template and the
@@ -346,7 +396,7 @@ public class TemplateUtil {
          * This will override any existing replacements for vars matching the keys in replacementsMap.
          * Any entries where the var is not in the template will be ignored.
          */
-        ExecutorBuilder addReplacements(Map<String, String> replacementsMap);
+        ExecutorBuilder addReplacements(Map<CIKey, String> replacementsMap);
 
         /**
          * Add a lazy static {@link ReplacementProvider} for var.
@@ -354,7 +404,7 @@ public class TemplateUtil {
          * even if var appears more than once in the template.
          * If var is not in the template it is a no-op.
          */
-        ExecutorBuilder addLazyReplacement(String var,
+        ExecutorBuilder addLazyReplacement(CIKey var,
                                            Supplier<String> replacementSupplier);
 
         /**
@@ -411,9 +461,17 @@ public class TemplateUtil {
         ExecutorBuilder addUuidReplacement(boolean reuseUUidValue);
 
         /**
-         * Add the standard replacements for {@code ${stroom.home}} and {@code ${stroom.temp}}. It will
-         * also try to resolve each var as a system property followed by an environment variable (except
-         * for any in this set {@link TemplateUtil#NON_ENV_VARS}.
+         * Add the standard replacements for {@code ${stroom.home}} and {@code ${stroom.temp}}.
+         * <p>
+         * It will also try to resolve each var as a system property followed by an environment variable (except
+         * for any in this set {@link TemplateUtil#NON_ENV_VARS}).
+         * </p>
+         * <p>
+         * These replacements will be done if no other explicit replacements have been configured
+         * for the variable, e.g. if the template is {@code "${FEED}"} and an explicit replacement for
+         * {@code "FEED"} has been added, it will use that, else it will try to find a system property that
+         * matches, else it will try to find an env var that matches.
+         * </p>
          *
          * @param homeDirProvider Provider of the stroom home dir.
          * @param tempDirProvider Provider of the stroom temp dir.
@@ -470,19 +528,19 @@ public class TemplateUtil {
         }
 
         @Override
-        public ExecutorBuilder addReplacement(final String var, final String replacement) {
+        public ExecutorBuilder addReplacement(final CIKey var, final String replacement) {
             // Template is all static text so this is a no-op
             return this;
         }
 
         @Override
-        public ExecutorBuilder addReplacements(final Map<String, String> replacementsMap) {
+        public ExecutorBuilder addReplacements(final Map<CIKey, String> replacementsMap) {
             // Template is all static text so this is a no-op
             return this;
         }
 
         @Override
-        public ExecutorBuilder addLazyReplacement(final String var, final Supplier<String> replacementSupplier) {
+        public ExecutorBuilder addLazyReplacement(final CIKey var, final Supplier<String> replacementSupplier) {
             // Template is all static text so this is a no-op
             return this;
         }
@@ -561,7 +619,7 @@ public class TemplateUtil {
         private static final ReplacementProvider STATELESS_UUID_REPLACEMENT_PROVIDER = ignored ->
                 UUID.randomUUID().toString();
 
-        private final Map<String, ReplacementProvider> varToReplacementProviderMap = new HashMap<>();
+        private final Map<CIKey, ReplacementProvider> varToReplacementProviderMap = new HashMap<>();
         /**
          * Replacement providers where the var is not known up front, e.g. replacing system properties.
          */
@@ -573,8 +631,9 @@ public class TemplateUtil {
         }
 
         @Override
-        public ExecutorBuilder addReplacement(final String var, final String replacement) {
-            if (NullSafe.isNonBlankString(var)) {
+        public ExecutorBuilder addReplacement(final CIKey var, final String replacement) {
+            Objects.requireNonNull(var);
+            if (!var.isEmpty()) {
                 if (template.isVarInTemplate(var)) {
                     if (NullSafe.isNonEmptyString(replacement)) {
                         // No point adding a func for an empty replacement
@@ -590,7 +649,7 @@ public class TemplateUtil {
         }
 
         @Override
-        public ExecutorBuilder addReplacements(final Map<String, String> replacementsMap) {
+        public ExecutorBuilder addReplacements(final Map<CIKey, String> replacementsMap) {
             NullSafe.map(replacementsMap)
                     .forEach((var, replacement) -> {
                         if (template.isVarInTemplate(var)
@@ -603,10 +662,11 @@ public class TemplateUtil {
         }
 
         @Override
-        public ExecutorBuilder addLazyReplacement(final String var,
+        public ExecutorBuilder addLazyReplacement(final CIKey var,
                                                   final Supplier<String> replacementSupplier) {
+            Objects.requireNonNull(var);
             Objects.requireNonNull(replacementSupplier);
-            if (NullSafe.isNonBlankString(var)) {
+            if (!var.isEmpty()) {
                 if (template.isVarInTemplate(var)) {
                     final SingleStatefulReplacementProvider singleStatefulReplacementProvider =
                             new SingleStatefulReplacementProvider(var, replacementSupplier);
@@ -626,7 +686,7 @@ public class TemplateUtil {
 
             final ReplacementProvider statefulReplacementProvider = new CommonStatefulReplacementProvider(
                     replacementProvider);
-            for (final String var : template.getVarsInTemplate()) {
+            for (final CIKey var : template.getVarsInTemplate()) {
                 varToReplacementProviderMap.put(var, statefulReplacementProvider);
             }
             return this;
@@ -640,26 +700,26 @@ public class TemplateUtil {
 
         @Override
         public ExecutorBuilder addStandardTimeReplacements(final ZonedDateTime zonedDateTime) {
-            final Set<String> varsInTemplate = template.getVarsInTemplate();
+            final Set<CIKey> varsInTemplate = template.getVarsInTemplate();
 
-            addTimeReplacement("year", varsInTemplate, zonedDateTime::getYear, 4);
-            addTimeReplacement("month", varsInTemplate, zonedDateTime::getMonthValue, 2);
-            addTimeReplacement("day", varsInTemplate, zonedDateTime::getDayOfMonth, 2);
-            addTimeReplacement("hour", varsInTemplate, zonedDateTime::getHour, 2);
-            addTimeReplacement("minute", varsInTemplate, zonedDateTime::getMinute, 2);
-            addTimeReplacement("second", varsInTemplate, zonedDateTime::getSecond, 2);
-            addTimeReplacement("millis", varsInTemplate, () ->
+            addTimeReplacement(YEAR_VAR, varsInTemplate, zonedDateTime::getYear, 4);
+            addTimeReplacement(MONTH_VAR, varsInTemplate, zonedDateTime::getMonthValue, 2);
+            addTimeReplacement(DAY_VAR, varsInTemplate, zonedDateTime::getDayOfMonth, 2);
+            addTimeReplacement(HOUR_VAR, varsInTemplate, zonedDateTime::getHour, 2);
+            addTimeReplacement(MINUTE_VAR, varsInTemplate, zonedDateTime::getMinute, 2);
+            addTimeReplacement(SECOND_VAR, varsInTemplate, zonedDateTime::getSecond, 2);
+            addTimeReplacement(MILLIS_VAR, varsInTemplate, () ->
                     zonedDateTime.getLong(ChronoField.MILLI_OF_SECOND), 3);
-            addTimeReplacement("ms", varsInTemplate, () -> zonedDateTime.toInstant().toEpochMilli(), 3);
+            addTimeReplacement(MS_VAR, varsInTemplate, () -> zonedDateTime.toInstant().toEpochMilli(), 3);
             return this;
         }
 
         @Override
         public ExecutorBuilder addUuidReplacement(final boolean reuseUUidValue) {
             if (reuseUUidValue) {
-                varToReplacementProviderMap.put(UUID_VAR, STATEFUL_UUID_REPLACEMENT_PROVIDER);
+                varToReplacementProviderMap.put(CIKeys.UUID, STATEFUL_UUID_REPLACEMENT_PROVIDER);
             } else {
-                varToReplacementProviderMap.put(UUID_VAR, STATELESS_UUID_REPLACEMENT_PROVIDER);
+                varToReplacementProviderMap.put(CIKeys.UUID, STATELESS_UUID_REPLACEMENT_PROVIDER);
             }
             return this;
         }
@@ -691,10 +751,15 @@ public class TemplateUtil {
                         }));
             }
 
+            if (dynamicReplacementProviders == null) {
+                dynamicReplacementProviders = new ArrayList<>();
+            }
+
             dynamicReplacementProviders.add(var -> {
                 if (!NON_ENV_VARS.contains(var)) {
-                    return getSystemProperty(var)
-                            .or(() -> getEnvVar(var));
+                    final String varStr = var.get();
+                    return getSystemProperty(varStr)
+                            .or(() -> getEnvVar(varStr));
                 } else {
                     return Optional.empty();
                 }
@@ -773,8 +838,8 @@ public class TemplateUtil {
             return Optional.ofNullable(System.getenv(key));
         }
 
-        private void addTimeReplacement(final String var,
-                                        final Set<String> varsInTemplate,
+        private void addTimeReplacement(final CIKey var,
+                                        final Set<CIKey> varsInTemplate,
                                         final LongSupplier valueSupplier,
                                         final int pad) {
             if (varsInTemplate.contains(var)) {
@@ -795,14 +860,14 @@ public class TemplateUtil {
 
 
     @FunctionalInterface
-    public interface ReplacementProvider extends Function<String, String> {
+    public interface ReplacementProvider extends Function<CIKey, String> {
 
         /**
          * @param var The variable being replaced
          * @return The replacement value
          */
         @Override
-        String apply(final String var);
+        String apply(final CIKey var);
     }
 
 
@@ -810,14 +875,14 @@ public class TemplateUtil {
 
 
     @FunctionalInterface
-    public interface OptionalReplacementProvider extends Function<String, Optional<String>> {
+    public interface OptionalReplacementProvider extends Function<CIKey, Optional<String>> {
 
         /**
          * @param var The variable being replaced
          * @return The replacement value
          */
         @Override
-        Optional<String> apply(final String var);
+        Optional<String> apply(final CIKey var);
     }
 
 
@@ -826,18 +891,18 @@ public class TemplateUtil {
 
     private static class SingleStatefulReplacementProvider implements ReplacementProvider {
 
-        private final String var;
+        private final CIKey var;
         private final Supplier<String> replacementSupplier;
         private String replacement = null;
 
-        private SingleStatefulReplacementProvider(final String var,
+        private SingleStatefulReplacementProvider(final CIKey var,
                                                   final Supplier<String> replacementSupplier) {
             this.var = var;
             this.replacementSupplier = replacementSupplier;
         }
 
         @Override
-        public String apply(final String var) {
+        public String apply(final CIKey var) {
             if (!Objects.equals(var, this.var)) {
                 throw new IllegalArgumentException(LogUtil.message("Vars are different! '{}' vs '{}'",
                         var, this.var));
@@ -856,14 +921,14 @@ public class TemplateUtil {
     private static class CommonStatefulReplacementProvider implements ReplacementProvider {
 
         private final ReplacementProvider replacementProvider;
-        private final Map<String, String> replacements = new HashMap<>();
+        private final Map<CIKey, String> replacements = new HashMap<>();
 
         private CommonStatefulReplacementProvider(final ReplacementProvider replacementProvider) {
             this.replacementProvider = replacementProvider;
         }
 
         @Override
-        public String apply(final String var) {
+        public String apply(final CIKey var) {
             Objects.requireNonNull(var);
             String replacement = replacements.get(var);
             if (replacement == null) {
@@ -878,14 +943,17 @@ public class TemplateUtil {
     // --------------------------------------------------------------------------------
 
 
+    /**
+     * A logical part of the template, either a chunk of static text or a variable (i.e. {@code ${foo}})
+     */
     @FunctionalInterface
-    private interface PartExtractor extends BiFunction<
-            Map<String, ReplacementProvider>,
+    private interface TemplatePart extends BiFunction<
+            Map<CIKey, ReplacementProvider>,
             List<OptionalReplacementProvider>,
             String> {
 
         @Override
-        String apply(Map<String, ReplacementProvider> stringReplacementProviderMap,
+        String apply(Map<CIKey, ReplacementProvider> stringReplacementProviderMap,
                      List<OptionalReplacementProvider> dynamicReplacementProviders);
     }
 
@@ -893,19 +961,19 @@ public class TemplateUtil {
     // --------------------------------------------------------------------------------
 
 
-    private static class DynamicPart implements PartExtractor {
+    private static class VariablePart implements TemplatePart {
 
-        private final String var;
+        private final CIKey var;
         private final Function<String, String> formatter;
 
-        private DynamicPart(final String var,
-                            final Function<String, String> formatter) {
+        private VariablePart(final CIKey var,
+                             final Function<String, String> formatter) {
             this.var = var;
             this.formatter = formatter;
         }
 
         @Override
-        public String apply(final Map<String, ReplacementProvider> varToReplacementProviderMap,
+        public String apply(final Map<CIKey, ReplacementProvider> varToReplacementProviderMap,
                             final List<OptionalReplacementProvider> dynamicReplacementProviders) {
             // Reuse the replacement across calls
             final ReplacementProvider replacementProvider = varToReplacementProviderMap.get(var);
@@ -937,18 +1005,19 @@ public class TemplateUtil {
     // --------------------------------------------------------------------------------
 
 
-    private record StaticPart(String staticText) implements PartExtractor {
+    private record StaticTextPart(String staticText) implements TemplatePart {
 
-        private StaticPart(final String staticText) {
+        private StaticTextPart(final String staticText) {
             this.staticText = NullSafe.string(staticText);
         }
 
-        private static StaticPart of(final String staticText) {
-            return new StaticPart(staticText);
+        private static StaticTextPart of(final String staticText) {
+            Objects.requireNonNull(staticText);
+            return new StaticTextPart(staticText);
         }
 
         @Override
-        public String apply(final Map<String, ReplacementProvider> stringReplacementProviderMap,
+        public String apply(final Map<CIKey, ReplacementProvider> stringReplacementProviderMap,
                             final List<OptionalReplacementProvider> dynamicReplacementProviders) {
             return staticText;
         }

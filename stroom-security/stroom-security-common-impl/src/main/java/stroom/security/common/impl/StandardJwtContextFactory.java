@@ -30,6 +30,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 import stroom.util.string.TemplateUtil;
 import stroom.util.string.TemplateUtil.Template;
 
@@ -111,8 +112,8 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     static final String SIGNER_HEADER_KEY = "signer";
     static final String AMZN_OIDC_SIGNER_SPLIT_CHAR = ":";
     static final Pattern AMZN_REGION_PATTERN = Pattern.compile("^[a-z0-9-]+$");
-    static final String AWS_REGION_TEMPLATE_VARIABLE = "awsRegion";
-    static final String KEY_ID_TEMPLATE_VARIABLE = "keyId";
+    static final CIKey AWS_REGION_TEMPLATE_VARIABLE = CIKey.internStaticKey("awsRegion");
+    static final CIKey KEY_ID_TEMPLATE_VARIABLE = CIKey.internStaticKey("keyId");
 
     private static final String AUTHORIZATION_HEADER = HttpHeaders.AUTHORIZATION;
 

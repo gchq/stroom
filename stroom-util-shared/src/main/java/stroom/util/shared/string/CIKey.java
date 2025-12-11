@@ -263,7 +263,7 @@ public class CIKey implements Comparable<CIKey> {
     }
 
     /**
-     * Create a {@link CIKey} for a key that is known NOT to be in {@link CIKey}s map
+     * Create a {@link CIKey} for a key that is assumed NOT to be in {@link CIKey}s map
      * of common keys and is a key that will not be added to the map of common keys in future.
      * This is a minor optimisation that saves a map lookup if the key is known
      * to probably not be in the map.
@@ -289,6 +289,11 @@ public class CIKey implements Comparable<CIKey> {
      * Only use this for commonly used static {@link CIKey} instances
      * as if the key is not already held in the map of common {@link CIKey}s
      * then it will be added.
+     * <p>
+     * The returned {@link CIKey} with either be an existing interned one
+     * or a new instance that will be held for use in future calls or calls
+     * to {@link CIKey#of(String)}.
+     * </p>
      * <p>
      * Is null safe. If key is null, returns null.
      * </p>

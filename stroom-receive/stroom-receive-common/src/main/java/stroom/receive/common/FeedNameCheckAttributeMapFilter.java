@@ -24,6 +24,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 import stroom.util.string.TemplateUtil;
 import stroom.util.string.TemplateUtil.Template;
 
@@ -153,7 +154,7 @@ public class FeedNameCheckAttributeMapFilter implements AttributeMapFilter {
         }
 
         public String generateName(final AttributeMap attributeMap) {
-            return template.executeWith(attributeMap);
+            return template.executeWith(CIKey.mapOf(attributeMap));
         }
 
         private static String normaliseParamReplacement(final String name) {

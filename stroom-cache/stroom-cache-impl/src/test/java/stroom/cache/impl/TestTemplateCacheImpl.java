@@ -17,6 +17,7 @@
 package stroom.cache.impl;
 
 import stroom.cache.api.CacheManager;
+import stroom.util.shared.string.CIKey;
 import stroom.util.string.TemplateUtil.Template;
 
 import org.junit.jupiter.api.Test;
@@ -38,7 +39,7 @@ class TestTemplateCacheImpl {
 
             final Template template2 = templatorCache.getTemplate("foo ${xxx}");
             final String output2 = template2.buildExecutor()
-                    .addReplacement("xxx", "bar")
+                    .addReplacement(CIKey.ofDynamicKey("xxx"), "bar")
                     .execute();
             assertThat(output2)
                     .isEqualTo("foo bar");

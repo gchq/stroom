@@ -415,7 +415,8 @@ public abstract class AbstractOpenIdConfig
     @JsonPropertyDescription("A template to build the user's full name using claim values as variables in the " +
                              "template. E.g '${firstName} ${lastName}' or '${name}'. " +
                              "If this property is set in the YAML file, use single quotes to prevent the " +
-                             "variables being expanded when the config file is loaded.")
+                             "variables being expanded when the config file is loaded. Note: claim names are " +
+                             "case sensitive.")
     public String getFullNameClaimTemplate() {
         return fullNameClaimTemplate;
     }

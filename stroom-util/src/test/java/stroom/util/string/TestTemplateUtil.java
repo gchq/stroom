@@ -17,7 +17,7 @@
 package stroom.util.string;
 
 import stroom.test.common.TestUtil;
-import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 import stroom.util.string.TemplateUtil.ExecutorBuilder;
 import stroom.util.string.TemplateUtil.Template;
 
@@ -27,11 +27,15 @@ import io.vavr.Tuple2;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -43,23 +47,23 @@ class TestTemplateUtil {
 
     @TestFactory
     Stream<DynamicTest> testTemplator() {
-        final Map<String, String> populatedMap = Map.of(
+        final Map<CIKey, String> populatedMap = CIKey.mapOf(
                 "number", "123",
                 "animal", "cow",
                 "food", "cheese",
                 "colour", "indigo");
-        final Map<String, String> emptyMap = Map.of();
+        final Map<CIKey, String> emptyMap = CIKey.mapOf(Map.of());
 
         return TestUtil.buildDynamicTestStream()
-                .withWrappedInputType(new TypeLiteral<Tuple2<Map<String, String>, String>>() {
+                .withWrappedInputType(new TypeLiteral<Tuple2<Map<CIKey, String>, String>>() {
 
                 })
                 .withOutputType(String.class)
                 .withTestFunction(testCase -> {
-                    final Map<String, String> map = NullSafe.map(testCase.getInput()._1);
-                    final String template = testCase.getInput()._2;
+                    final Map<CIKey, String> map = Objects.requireNonNullElse(testCase.getInput()._1, emptyMap);
+                    final String templateStr = testCase.getInput()._2;
                     final Template templator = TemplateUtil.parseTemplate(
-                            template,
+                            templateStr,
                             String::toUpperCase,
                             String::toLowerCase);
                     final String output1 = templator.buildExecutor()
@@ -81,7 +85,7 @@ class TestTemplateUtil {
                     assertThat(output3)
                             .isEqualTo(output1);
 
-                    final String output4 = templator.executeWith(map);
+                    final String output4 = templator.executeWith(testCase.getInput()._1);
                     assertThat(output4)
                             .isEqualTo(output1);
 
@@ -114,11 +118,11 @@ class TestTemplateUtil {
         final AtomicInteger counter = new AtomicInteger(1);
         final Template template = TemplateUtil.parseTemplate("The count is ${count} then ${count} then ${count}");
         assertThat(template.getVarsInTemplate())
-                .containsExactlyInAnyOrder("count");
+                .containsExactlyInAnyOrder(CIKey.ofDynamicKey("count"));
         // The replacement provider func should only be called once to get the replacement,
         // then the replacement reused.
         final String output = template.buildExecutor()
-                .addLazyReplacement("count", () ->
+                .addLazyReplacement(CIKey.ofDynamicKey("count"), () ->
                         String.valueOf(counter.getAndIncrement()))
                 .execute();
         assertThat(output)
@@ -127,10 +131,10 @@ class TestTemplateUtil {
 
     @Test
     void testNullValues1() {
-        final Map<String, String> replacements = new HashMap<>();
-        replacements.put("food", null);
-        replacements.put("drink", "");
-        replacements.put("animal", "cow");
+        final Map<CIKey, String> replacements = new HashMap<>();
+        replacements.put(CIKey.ofDynamicKey("food"), null);
+        replacements.put(CIKey.ofDynamicKey("drink"), "");
+        replacements.put(CIKey.ofDynamicKey("animal"), "cow");
 
         final Template template = TemplateUtil.parseTemplate("${food}, ${drink} and ${animal}");
         final String output = template.executeWith(replacements);
@@ -140,10 +144,10 @@ class TestTemplateUtil {
 
     @Test
     void testNullValues2() {
-        final Map<String, String> replacements = new HashMap<>();
-        replacements.put("food", null);
-        replacements.put("drink", "");
-        replacements.put("animal", "cow");
+        final Map<CIKey, String> replacements = new HashMap<>();
+        replacements.put(CIKey.ofDynamicKey("food"), null);
+        replacements.put(CIKey.ofDynamicKey("drink"), "");
+        replacements.put(CIKey.ofDynamicKey("animal"), "cow");
 
         final Template template = TemplateUtil.parseTemplate("${food}, ${drink} and ${animal}");
         final String output = template.buildExecutor()
@@ -168,16 +172,16 @@ class TestTemplateUtil {
 
         final String output1 = template.buildExecutor()
                 .addReplacements(Map.of(
-                        "food", "cheese",
-                        "drink", "milk",
-                        "animal", "toad"))
+                        CIKey.ofDynamicKey("food"), "cheese",
+                        CIKey.ofDynamicKey("drink"), "milk",
+                        CIKey.ofDynamicKey("animal"), "toad"))
                 .execute();
 
         final String output2 = template.buildExecutor()
                 .addReplacements(Map.of(
-                        "food", "scampi fries",
-                        "drink", "beer",
-                        "animal", "worm"))
+                        CIKey.ofDynamicKey("food"), "scampi fries",
+                        CIKey.ofDynamicKey("drink"), "beer",
+                        CIKey.ofDynamicKey("animal"), "worm"))
                 .execute();
 
         assertThat(output1)
@@ -191,20 +195,20 @@ class TestTemplateUtil {
         final Template template = TemplateUtil.parseTemplate("${food}, ${drink} and some more ${food}");
 
         final AtomicInteger counter1 = new AtomicInteger(100);
-        final Map<String, String> map1 = Map.of(
+        final Map<CIKey, String> map1 = CIKey.mapOf(Map.of(
                 "food", "cheese",
                 "drink", "milk",
-                "animal", "toad");
+                "animal", "toad"));
         final String output1 = template.buildExecutor()
                 .addCommonReplacementFunction(key ->
                         map1.get(key) + "_" + counter1.incrementAndGet())
                 .execute();
 
         final AtomicInteger counter2 = new AtomicInteger(200);
-        final Map<String, String> map2 = Map.of(
+        final Map<CIKey, String> map2 = CIKey.mapOf(Map.of(
                 "food", "scampi_fries",
                 "drink", "beer",
-                "animal", "worm");
+                "animal", "worm"));
         final String output2 = template.buildExecutor()
                 .addCommonReplacementFunction(key ->
                         map2.get(key) + "_" + counter2.incrementAndGet())
@@ -226,9 +230,9 @@ class TestTemplateUtil {
                 22,
                 123456789,
                 ZoneOffset.UTC);
-        final String template =
+        final String templateStr =
                 "${foo}__${year}/${year}-${month}/${year}-${month}-${day}/${hour}:${minute}:${second}.${millis}";
-        final Template templator = TemplateUtil.parseTemplate(template);
+        final Template templator = TemplateUtil.parseTemplate(templateStr);
         final String output = templator.buildExecutor()
                 .addStandardTimeReplacements(zonedDateTime)
                 .execute();
@@ -238,8 +242,8 @@ class TestTemplateUtil {
 
     @Test
     void testUuidReplacement_reuse() {
-        final String template = "${uuid},${uuid}";
-        final Template templator = TemplateUtil.parseTemplate(template);
+        final String templateStr = "${uuid},${uuid}";
+        final Template templator = TemplateUtil.parseTemplate(templateStr);
         final String output = templator.buildExecutor()
                 .addUuidReplacement(true)
                 .execute();
@@ -255,8 +259,8 @@ class TestTemplateUtil {
 
     @Test
     void testUuidReplacement_unique() {
-        final String template = "${uuid},${uuid}";
-        final Template templator = TemplateUtil.parseTemplate(template);
+        final String templateStr = "${uuid},${uuid}";
+        final Template templator = TemplateUtil.parseTemplate(templateStr);
         final String output = templator.buildExecutor()
                 .addUuidReplacement(false)
                 .execute();
@@ -272,23 +276,26 @@ class TestTemplateUtil {
 
     @Test
     void testDynamicProviders() {
-        final String template = "${a},${b},${c}";
-        final Template templator = TemplateUtil.parseTemplate(template);
-        final String output = templator.buildExecutor()
-                .addReplacement("b", "BBB")
+        final Template template = TemplateUtil.parseTemplate("${a},${b},${c}");
+        final String output = template.buildExecutor()
+                .addReplacement(CIKey.ofDynamicKey("b"), "BBB")
                 .addDynamicReplacementProvider(ignored -> Optional.empty())
                 .addDynamicReplacementProvider(var ->
-                        "a".equals(var)
+                        CIKey.ofDynamicKey("a").equals(var)
                                 ? Optional.of("AAA")
                                 : Optional.empty())
                 .addDynamicReplacementProvider(var -> {
-                    final String str = switch (var) {
-                        case "a" -> "aaa"; // 2nd dynamic provider used for this
-                        case "b" -> "bbb"; // Static one is used for ${b}
-                        case "c" -> "ccc";
-                        default -> "";
-                    };
-                    return Optional.of(str);
+                    final String replacement;
+                    if (CIKey.ofDynamicKey("a").equals(var)) {
+                        replacement = "aaa"; // 1nd dynamic provider used for this
+                    } else if (CIKey.ofDynamicKey("b").equals(var)) {
+                        replacement = "bbb"; // Static one is used for ${b}
+                    } else if (CIKey.ofDynamicKey("c").equals(var)) {
+                        replacement = "ccc";
+                    } else {
+                        replacement = "";
+                    }
+                    return Optional.of(replacement);
                 })
                 .execute();
 
@@ -298,9 +305,8 @@ class TestTemplateUtil {
 
     @Test
     void testFileNameReplacement() {
-        final String template = "__${fileStem}.${fileExtension} - ${fileName}__";
-        final Template templator = TemplateUtil.parseTemplate(template);
-        final String output = templator.buildExecutor()
+        final Template template = TemplateUtil.parseTemplate("__${fileStem}.${fileExtension} - ${fileName}__");
+        final String output = template.buildExecutor()
                 .addFileNameReplacement("foo.txt")
                 .execute();
         assertThat(output)
@@ -309,14 +315,40 @@ class TestTemplateUtil {
 
     @Test
     void testFileNameReplacement2() {
-        final String template = "__${foo}__";
-        final Template templator = TemplateUtil.parseTemplate(template);
-        final String output = templator.buildExecutor()
+        final Template template = TemplateUtil.parseTemplate("__${foo}__");
+        final String output = template.buildExecutor()
                 .addFileNameReplacement("foo.txt")
-                .addReplacement("foo", "bar")
+                .addReplacement(CIKey.ofDynamicKey("foo"), "bar")
                 .execute();
 
         assertThat(output)
                 .isEqualTo("__bar__");
+    }
+
+    @Test
+    void testCaseInsense() {
+        final Template template = TemplateUtil.parseTemplate("__${foo}__${Foo}__${FOO}__");
+        final String output = template.buildExecutor()
+                .addReplacement(CIKey.ofDynamicKey("foo"), "bar")
+                .execute();
+
+        assertThat(output)
+                .isEqualTo("__bar__bar__bar__");
+    }
+
+    @Test
+    void testSystemPropReplacement(@TempDir final Path tempDir) throws IOException {
+        final String propKey = "stroom.test.29348023984";
+        final String propVal = "prop-val";
+        System.setProperty(propKey, propVal);
+        final Template template = TemplateUtil.parseTemplate("__${stroom.test.29348023984}__${FOO}__");
+        final String output = template.buildExecutor()
+                .addReplacement(CIKey.ofDynamicKey("foo"), "bar")
+                .addSystemPropertyReplacements(
+                        () -> tempDir.resolve("home"),
+                        () -> tempDir.resolve("temp"))
+                .execute();
+        assertThat(output)
+                .isEqualTo("__prop-val__bar__");
     }
 }

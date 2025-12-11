@@ -72,6 +72,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserDesc;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserType;
+import stroom.util.shared.string.CIKey;
 import stroom.util.string.TemplateUtil;
 import stroom.util.string.TemplateUtil.Template;
 
@@ -310,7 +311,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                         final ContentTemplate contentTemplate) {
 
         final Template template = cachedDestinationPathTemplator.getValue();
-        final String destinationPath = template.executeWith(attributeMap);
+        final Map<CIKey, String> caseInsenseAttrMap = CIKey.mapOf(attributeMap);
+        final String destinationPath = template.executeWith(caseInsenseAttrMap);
         final DocPath docPath = DocPath.fromPathString(destinationPath);
 
         LOGGER.info("Ensuring path '{}' exists", docPath);
@@ -335,7 +337,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
         // Set up the group
         final Template groupTemplate = cachedGroupTemplator.getValue();
-        final String groupName = groupTemplate.executeWith(attributeMap);
+        final String groupName = groupTemplate.executeWith(caseInsenseAttrMap);
         LOGGER.info("Auto-creating user group '{}'", groupName);
         final User group = userService.getOrCreateUserGroup(groupName);
         addAppPerms(group);
@@ -347,7 +349,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         // Set up the additional group
         Optional<User> optAdditionalGroup = Optional.empty();
         final Template additionalGroupTemplate = cachedAdditionalGroupTemplator.getValue();
-        final String additionalGroupName = additionalGroupTemplate.executeWith(attributeMap);
+        final String additionalGroupName = additionalGroupTemplate.executeWith(caseInsenseAttrMap);
         if (NullSafe.isNonBlankString(additionalGroupName)) {
             LOGGER.info("Auto-creating user group '{}'", additionalGroupName);
             final User additionalGroup = userService.getOrCreateUserGroup(additionalGroupName);

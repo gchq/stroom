@@ -32,6 +32,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 import stroom.util.string.StringIdUtil;
 import stroom.util.string.TemplateUtil.Template;
 
@@ -115,6 +116,12 @@ public class S3Manager {
 
     private static final String START_PREFIX = "000";
     private static final int PAD_SIZE = 3;
+
+    private static final CIKey FEED_VAR = CIKey.internStaticKey("feed");
+    private static final CIKey TYPE_VAR = CIKey.internStaticKey("type");
+    private static final CIKey ID_VAR = CIKey.internStaticKey("id");
+    private static final CIKey ID_PATH_VAR = CIKey.internStaticKey("idPath");
+    private static final CIKey ID_PADDED_VAR = CIKey.internStaticKey("idPadded");
 
     private final TemplateCache templateCache;
     private final S3ClientConfig s3ClientConfig;
@@ -383,8 +390,8 @@ public class S3Manager {
                                    final Meta meta) {
         final Template template = templateCache.getTemplate(bucketNamePattern);
         String bucketName = template.buildExecutor()
-                .addLazyReplacement("feed", meta::getFeedName)
-                .addLazyReplacement("type", meta::getTypeName)
+                .addLazyReplacement(FEED_VAR, meta::getFeedName)
+                .addLazyReplacement(TYPE_VAR, meta::getTypeName)
                 .execute();
 
         bucketName = cleanBuckName(bucketName);
@@ -640,11 +647,11 @@ public class S3Manager {
 
         String keyName = template.buildExecutor()
                 .addStandardTimeReplacements(zonedDateTime)
-                .addLazyReplacement("feed", meta::getFeedName)
-                .addLazyReplacement("type", meta::getTypeName)
-                .addLazyReplacement("id", () -> String.valueOf(meta.getId()))
-                .addLazyReplacement("idPath", () -> getIdPath(padId(meta.getId())))
-                .addLazyReplacement("idPadded", () -> padId(meta.getId()))
+                .addLazyReplacement(FEED_VAR, meta::getFeedName)
+                .addLazyReplacement(TYPE_VAR, meta::getTypeName)
+                .addLazyReplacement(ID_VAR, () -> String.valueOf(meta.getId()))
+                .addLazyReplacement(ID_PATH_VAR, () -> getIdPath(padId(meta.getId())))
+                .addLazyReplacement(ID_PADDED_VAR, () -> padId(meta.getId()))
                 .execute();
 
         keyName = cleanKeyName(keyName);

@@ -451,9 +451,12 @@ public abstract class AbstractUserIdentityFactory implements UserIdentityFactory
         if (!fullNameTemplate.isBlank()) {
             // If the claim in the template is not in the claims then just replace with empty string
             final String fullName = NullSafe.trim(fullNameTemplate.buildExecutor()
-                    .addCommonReplacementFunction(aClaim -> JwtUtil.getClaimValue(jwtClaims, aClaim)
-                            .map(NullSafe::trim)
-                            .orElse(""))
+                    .addCommonReplacementFunction(aClaim -> {
+                        // JWT claims are case-sensitive
+                        return JwtUtil.getClaimValue(jwtClaims, aClaim.get())
+                                .map(NullSafe::trim)
+                                .orElse("");
+                    })
                     .execute());
             return fullName.isEmpty()
                     ? Optional.empty()
