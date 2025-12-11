@@ -366,7 +366,13 @@ public class PropertyListPresenter
             final Source source = getSource(editing);
 
             final NewPropertyPresenter editor = newPropertyPresenter.get();
-            editor.edit(pipelinePropertyType, property, inheritedProperty, editing, source,
+            editor.edit(
+                    currentElement,
+                    pipelinePropertyType,
+                    property,
+                    inheritedProperty,
+                    editing,
+                    source,
                     defaultValue,
                     inheritedValue,
                     inheritedFrom);
