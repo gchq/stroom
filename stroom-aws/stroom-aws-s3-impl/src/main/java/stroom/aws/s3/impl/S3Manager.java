@@ -32,6 +32,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.string.StringIdUtil;
 import stroom.util.string.TemplateUtil.Template;
 
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
@@ -386,10 +387,7 @@ public class S3Manager {
                 .addLazyReplacement("type", meta::getTypeName)
                 .execute();
 
-        bucketName = bucketName.toLowerCase(Locale.ROOT);
-        bucketName = S3_BUCKET_NAME_INVALID_CHARS_PATTERN.matcher(bucketName).replaceAll("-");
-        bucketName = LEADING_HYPHENS.matcher(bucketName).replaceAll("");
-        bucketName = TRAILING_HYPHENS.matcher(bucketName).replaceAll("");
+        bucketName = cleanBuckName(bucketName);
         final int len = bucketName.length();
         if (len < 3) {
             LOGGER.error("Bucket name too short, must be >=3. bucketName: '{}'", bucketName);
@@ -400,6 +398,14 @@ public class S3Manager {
             return bucketName.substring(0, 63);
         }
 
+        return bucketName;
+    }
+
+    private static String cleanBuckName(String bucketName) {
+        bucketName = bucketName.toLowerCase(Locale.ROOT);
+        bucketName = S3_BUCKET_NAME_INVALID_CHARS_PATTERN.matcher(bucketName).replaceAll("-");
+        bucketName = LEADING_HYPHENS.matcher(bucketName).replaceAll("");
+        bucketName = TRAILING_HYPHENS.matcher(bucketName).replaceAll("");
         return bucketName;
     }
 
@@ -567,7 +573,6 @@ public class S3Manager {
                                            downloadResult);
                         response = downloadResult.response();
                     }
-
                 } else {
                     response = s3AsyncClient.getObject(request, dest).join();
                 }
@@ -642,10 +647,7 @@ public class S3Manager {
                 .addLazyReplacement("idPadded", () -> padId(meta.getId()))
                 .execute();
 
-        keyName = S3_KEY_NAME_INVALID_CHARS_PATTERN.matcher(keyName).replaceAll("-");
-        keyName = MULTI_SLASH.matcher(keyName).replaceAll("/");
-        keyName = LEADING_SLASH.matcher(keyName).replaceAll("");
-        keyName = TRAILING_SLASH.matcher(keyName).replaceAll("");
+        keyName = cleanKeyName(keyName);
 
         final int keyBytesLen = keyName.getBytes(StandardCharsets.UTF_8).length;
         if (keyBytesLen > 1024) {
@@ -656,22 +658,23 @@ public class S3Manager {
         return keyName;
     }
 
+    private static String cleanKeyName(String keyName) {
+        keyName = S3_KEY_NAME_INVALID_CHARS_PATTERN.matcher(keyName).replaceAll("-");
+        keyName = MULTI_SLASH.matcher(keyName).replaceAll("/");
+        keyName = LEADING_SLASH.matcher(keyName).replaceAll("");
+        keyName = TRAILING_SLASH.matcher(keyName).replaceAll("");
+        return keyName;
+    }
+
     /**
      * Pad a prefix.
      */
     private String padId(final Long current) {
         if (current == null) {
             return START_PREFIX;
+        } else {
+            return StringIdUtil.idToString(current);
         }
-
-        final StringBuilder sb = new StringBuilder();
-        sb.append(current);
-
-        while ((sb.length() % PAD_SIZE) != 0) {
-            sb.insert(0, "0");
-        }
-
-        return sb.toString();
     }
 
     private String getIdPath(final String id) {

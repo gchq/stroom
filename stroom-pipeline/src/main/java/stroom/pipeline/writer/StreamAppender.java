@@ -23,6 +23,7 @@ import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.feed.shared.FeedDoc;
+import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -187,21 +188,22 @@ public class StreamAppender extends AbstractAppender {
                 checkTermination();
 
                 // Write process meta data.
-                streamTarget.getAttributes().putAll(metaData.getAttributes());
+                final AttributeMap targetAttributeMap = streamTarget.getAttributes();
+                targetAttributeMap.putAll(metaData.getAttributes());
 
                 // Get current process statistics
-                final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(recordCount,
-                        errorReceiverProxy);
+                final ProcessStatistics processStatistics = ProcessStatisticsFactory.create(
+                        recordCount, errorReceiverProxy);
                 // Diff the current statistics with the last captured statistics.
                 final ProcessStatistics currentStatistics = processStatistics.subtract(lastProcessStatistics);
                 // Set the last statistics.
                 lastProcessStatistics = processStatistics;
 
                 // Write statistics meta data.
-                currentStatistics.write(streamTarget.getAttributes());
+                currentStatistics.write(targetAttributeMap);
 
                 // Overwrite the actual output record count.
-                streamTarget.getAttributes().put(MetaFields.REC_WRITE.getFldName(), String.valueOf(count));
+                targetAttributeMap.put(MetaFields.REC_WRITE.getFldName(), String.valueOf(count));
 
                 // Close the stream target.
                 try {
@@ -215,7 +217,6 @@ public class StreamAppender extends AbstractAppender {
                         streamStore.deleteTarget(streamTarget);
                     }
                 }
-
             } catch (final RuntimeException e) {
 
                 // Delete the target.
@@ -232,7 +233,7 @@ public class StreamAppender extends AbstractAppender {
     @PipelinePropertyDocRef(types = FeedDoc.TYPE)
     @PipelineProperty(
             description = "The feed that output stream should be written to. If not specified the feed the input " +
-                    "stream belongs to will be used.",
+                          "stream belongs to will be used.",
             displayPriority = 2)
     public void setFeed(final DocRef feedRef) {
         this.feedRef = feedRef;
@@ -247,7 +248,7 @@ public class StreamAppender extends AbstractAppender {
 
     @PipelineProperty(
             description = "Should the output stream be marked with indexed segments to allow fast access to " +
-                    "individual records?",
+                          "individual records?",
             defaultValue = "true",
             displayPriority = 3)
     public void setSegmentOutput(final boolean segmentOutput) {
@@ -256,7 +257,7 @@ public class StreamAppender extends AbstractAppender {
 
     @SuppressWarnings("unused")
     @PipelineProperty(description = "When the current output stream exceeds this size it will be closed and a " +
-            "new one created.",
+                                    "new one created.",
             displayPriority = 4)
     public void setRollSize(final String size) {
         super.setRollSize(size);
