@@ -35,6 +35,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = IntegerValue.class, name = "integer"),
         @JsonSubTypes.Type(value = IntegerSet.class, name = "integerSet"),
         @JsonSubTypes.Type(value = IntegerRange.class, name = "integerRange"),
+        @JsonSubTypes.Type(value = LongValue.class, name = "long"),
+        @JsonSubTypes.Type(value = LongSet.class, name = "longSet"),
+        @JsonSubTypes.Type(value = LongRange.class, name = "longRange"),
         @JsonSubTypes.Type(value = DoubleValue.class, name = "double"),
         @JsonSubTypes.Type(value = DoubleSet.class, name = "doubleSet"),
         @JsonSubTypes.Type(value = DoubleRange.class, name = "doubleRange")
@@ -51,6 +54,9 @@ public sealed interface ConstraintValue permits
         IntegerValue,
         IntegerSet,
         IntegerRange,
+        LongValue,
+        LongSet,
+        LongRange,
         DoubleValue,
         DoubleSet,
         DoubleRange {

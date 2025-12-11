@@ -31,6 +31,9 @@ import stroom.pathways.shared.pathway.DoubleValue;
 import stroom.pathways.shared.pathway.IntegerRange;
 import stroom.pathways.shared.pathway.IntegerSet;
 import stroom.pathways.shared.pathway.IntegerValue;
+import stroom.pathways.shared.pathway.LongRange;
+import stroom.pathways.shared.pathway.LongSet;
+import stroom.pathways.shared.pathway.LongValue;
 import stroom.pathways.shared.pathway.NamePathKey;
 import stroom.pathways.shared.pathway.NamesPathKey;
 import stroom.pathways.shared.pathway.NanoTimeRange;
@@ -172,6 +175,9 @@ public class PathwaySerde {
             case ConstraintValueType.INTEGER -> new IntegerValue(input.readInt());
             case ConstraintValueType.INTEGER_SET -> new IntegerSet(readSet(input, Input::readInt));
             case ConstraintValueType.INTEGER_RANGE -> new IntegerRange(input.readInt(), input.readInt());
+            case ConstraintValueType.LONG -> new LongValue(input.readLong());
+            case ConstraintValueType.LONG_SET -> new LongSet(readSet(input, Input::readLong));
+            case ConstraintValueType.LONG_RANGE -> new LongRange(input.readLong(), input.readLong());
             case ConstraintValueType.DOUBLE -> new DoubleValue(input.readDouble());
             case ConstraintValueType.DOUBLE_SET -> new DoubleSet(readSet(input, Input::readDouble));
             case ConstraintValueType.DOUBLE_RANGE -> new DoubleRange(input.readDouble(), input.readDouble());
@@ -317,6 +323,16 @@ public class PathwaySerde {
             case final IntegerRange integerRange -> {
                 output.writeInt(integerRange.getMin());
                 output.writeInt(integerRange.getMax());
+            }
+            case final LongValue longValue -> {
+                output.writeLong(longValue.getValue());
+            }
+            case final LongSet longSet -> {
+                writeSet(longSet.getSet(), output, this::writeLong);
+            }
+            case final LongRange longRange -> {
+                output.writeLong(longRange.getMin());
+                output.writeLong(longRange.getMax());
             }
             case final DoubleValue doubleValue -> {
                 output.writeDouble(doubleValue.getValue());
