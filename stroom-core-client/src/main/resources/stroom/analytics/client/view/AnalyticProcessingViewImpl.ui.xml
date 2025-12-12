@@ -5,11 +5,6 @@
              xmlns:l="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="dock-min form-padding form">
-            <form:FormGroup identity="analyticProcessingErrorFeed"
-                            label="Feed For Errors"
-                            helpText="The Feed to write any errors that occur during execution to.">
-                <g:SimplePanel ui:field="errorFeed"/>
-            </form:FormGroup>
             <form:FormGroup identity="analyticProcessingType"
                             label="Processing Type">
                 <l:SelectionBox ui:field="processingType"/>

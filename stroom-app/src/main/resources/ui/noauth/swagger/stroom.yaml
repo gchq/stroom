@@ -14791,6 +14791,8 @@ components:
             $ref: "#/components/schemas/DocRef"
           useSourceFeedIfPossible:
             type: boolean
+          includeRuleDocumentation:
+            type: boolean
     NumberFormatSettings:
       type: object
       allOf:

@@ -42,7 +42,6 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
         extends DocumentEditPresenter<AbstractProcessingPresenter.AnalyticProcessingView, D>
         implements AnalyticProcessingUiHandlers, HasChangeDataHandlers<AnalyticProcessType> {
 
-    final DocSelectionBoxPresenter errorFeedPresenter;
     private final ScheduledProcessingPresenter scheduledProcessingPresenter;
     private final TableBuilderProcessingPresenter tableBuilderProcessingPresenter;
     private final StreamingProcessingPresenter streamingProcessingPresenter;
@@ -51,22 +50,16 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
     @Inject
     public AbstractProcessingPresenter(final EventBus eventBus,
                                        final AnalyticProcessingView view,
-                                       final DocSelectionBoxPresenter errorFeedPresenter,
                                        final ScheduledProcessingPresenter scheduledProcessingPresenter,
                                        final TableBuilderProcessingPresenter tableBuilderProcessingPresenter,
                                        final StreamingProcessingPresenter streamingProcessingPresenter,
                                        final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.uiConfigCache = uiConfigCache;
-        this.errorFeedPresenter = errorFeedPresenter;
         this.scheduledProcessingPresenter = scheduledProcessingPresenter;
         this.tableBuilderProcessingPresenter = tableBuilderProcessingPresenter;
         this.streamingProcessingPresenter = streamingProcessingPresenter;
         view.setUiHandlers(this);
-
-        errorFeedPresenter.setIncludedTypes(FeedDoc.TYPE);
-        errorFeedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
-        getView().setErrorFeedView(errorFeedPresenter.getView());
     }
 
     public void setDocumentEditPresenter(final DocumentEditPresenter<?, ?> documentEditPresenter) {
@@ -77,7 +70,6 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onDirty()));
         registerHandler(tableBuilderProcessingPresenter.addDirtyHandler(event -> setDirty(true)));
         registerHandler(streamingProcessingPresenter.addDirtyHandler(event -> setDirty(true)));
     }
@@ -98,19 +90,6 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
     protected void onRead(final DocRef docRef, final D analyticRuleDoc, final boolean readOnly) {
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
-                DocRef selectedDocRef = analyticRuleDoc.getErrorFeed();
-                if (selectedDocRef == null) {
-                    if (ReportDoc.TYPE.equals(docRef.getType())) {
-                        selectedDocRef = extendedUiConfig.getReportUiDefaultConfig().getDefaultErrorFeed();
-                    } else {
-                        selectedDocRef = extendedUiConfig.getAnalyticUiDefaultConfig().getDefaultErrorFeed();
-                    }
-                }
-
-                if (selectedDocRef != null) {
-                    errorFeedPresenter.setSelectedEntityReference(selectedDocRef, true);
-                }
-
                 final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
                 final AnalyticProcessType analyticProcessType = analyticRuleDoc.getAnalyticProcessType() == null
                         ? AnalyticProcessType.SCHEDULED_QUERY
@@ -187,8 +166,6 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
 
 
     public interface AnalyticProcessingView extends View, HasUiHandlers<AnalyticProcessingUiHandlers> {
-
-        void setErrorFeedView(View view);
 
         void addProcessingType(AnalyticProcessType processingType);
 
