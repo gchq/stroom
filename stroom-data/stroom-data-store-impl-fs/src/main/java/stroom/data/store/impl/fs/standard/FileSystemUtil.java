@@ -50,7 +50,7 @@ import java.util.Collection;
  * <p>
  * Any files ended in .lock are locked output streams that have not yet closed.
  */
-final class FileSystemUtil {
+public final class FileSystemUtil {
 
     private static final int MKDIR_RETRY_COUNT = 2;
     private static final int MKDIR_RETRY_SLEEP_MS = 100;
@@ -63,7 +63,7 @@ final class FileSystemUtil {
     /**
      * How big our buffers are. This should always be a multiple of 8.
      */
-    static final int STREAM_BUFFER_SIZE = 1024 * 100;
+    public static final int STREAM_BUFFER_SIZE = 1024 * 100;
     /**
      * The store root.
      */
@@ -84,8 +84,8 @@ final class FileSystemUtil {
 //            builder.append(streamType.toString());
 //        }
         final String path = volumePath +
-                SEPERATOR_CHAR +
-                STORE_NAME;
+                            SEPERATOR_CHAR +
+                            STORE_NAME;
         return Paths.get(path);
     }
 

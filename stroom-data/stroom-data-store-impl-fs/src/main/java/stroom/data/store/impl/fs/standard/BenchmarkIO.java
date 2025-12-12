@@ -18,6 +18,8 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.TargetUtil;
+import stroom.data.store.impl.fs.standard.BlockGZIPInputFile;
+import stroom.data.store.impl.fs.standard.BlockGZIPOutputFile;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 

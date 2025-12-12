@@ -16,6 +16,8 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.data.store.impl.fs.standard.BlockGZIPInputFile;
+import stroom.data.store.impl.fs.standard.BlockGZIPOutputFile;
 import stroom.util.ArgsUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;

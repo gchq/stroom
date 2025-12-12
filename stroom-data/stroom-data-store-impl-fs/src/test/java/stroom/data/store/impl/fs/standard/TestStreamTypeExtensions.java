@@ -17,6 +17,8 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.impl.fs.standard.InternalStreamTypeNames;
+import stroom.data.store.impl.fs.standard.StreamTypeExtensions;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;

@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.data.store.impl.fs.standard.BlockGZIPConstants;
 import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.SeekableOutputStream;
 import stroom.util.io.StreamCloser;
@@ -35,6 +36,7 @@ import java.nio.file.Paths;
  * (thus the file does not exist if no data was written).
  */
 class LockingFileOutputStream extends OutputStream implements SeekableOutputStream {
+
     private final Path finalFile;
     private final Path lockFile;
     private OutputStream outputStream;

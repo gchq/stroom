@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.impl.fs.standard.InternalStreamTypeNames;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple2;

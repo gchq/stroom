@@ -18,6 +18,10 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.standard.FileSystemUtil;
+import stroom.data.store.impl.fs.standard.FsPathHelper;
+import stroom.data.store.impl.fs.standard.InternalStreamTypeNames;
+import stroom.data.store.impl.fs.standard.StreamTypeExtensions;
 import stroom.data.store.mock.MockFsTypePaths;
 import stroom.meta.shared.Meta;
 import stroom.test.common.util.test.FileSystemTestUtil;

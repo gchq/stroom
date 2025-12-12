@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.data.store.impl.fs.standard.BlockGZIPInputFile;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.util.AbstractCommandLineTool;

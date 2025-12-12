@@ -17,6 +17,10 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.impl.fs.standard.BlockGZIPInputFile;
+import stroom.data.store.impl.fs.standard.BlockGZIPOutputFile;
+import stroom.data.store.impl.fs.standard.InternalStreamTypeNames;
+import stroom.data.store.impl.fs.standard.LockingFileOutputStream;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.SimpleMeta;
 import stroom.util.date.DateUtil;
@@ -330,8 +334,8 @@ class FsPathHelper {
     private FileStoreType getFileStoreType(final String streamTypeName) {
         return switch (streamTypeName) {
             case InternalStreamTypeNames.SEGMENT_INDEX,
-                    InternalStreamTypeNames.BOUNDARY_INDEX,
-                    InternalStreamTypeNames.MANIFEST -> FileStoreType.dat;
+                 InternalStreamTypeNames.BOUNDARY_INDEX,
+                 InternalStreamTypeNames.MANIFEST -> FileStoreType.dat;
             default -> FileStoreType.bgz;
         };
     }

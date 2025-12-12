@@ -17,7 +17,9 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.impl.fs.FsPathHelper.DecodedPath;
+import stroom.data.store.impl.fs.standard.FsPathHelper;
+import stroom.data.store.impl.fs.standard.FsPathHelper.DecodedPath;
+import stroom.data.store.impl.fs.standard.StreamTypeExtensions;
 import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.SimpleMetaImpl;
 import stroom.test.common.TestUtil;

@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.data.store.impl.fs.standard.BlockGZIPInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.ResourcePaths;

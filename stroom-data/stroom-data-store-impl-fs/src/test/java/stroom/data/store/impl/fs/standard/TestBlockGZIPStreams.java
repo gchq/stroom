@@ -16,6 +16,8 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.data.store.impl.fs.standard.BlockGZIPInputStream;
+import stroom.data.store.impl.fs.standard.BlockGZIPOutputFile;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -33,6 +35,7 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestBlockGZIPStreams {
+
     @Test
     void testSimple(@TempDir final Path tempDir) throws IOException {
         final Path testFile = Files.createTempFile(tempDir, "test", ".bgz");
@@ -46,8 +49,8 @@ class TestBlockGZIPStreams {
         os.close();
 
         try (final BlockGZIPInputStream bgzi = new BlockGZIPInputStream(Files.newInputStream(testFile));
-             final LineNumberReader in = new LineNumberReader(
-                     new InputStreamReader(bgzi, StreamUtil.DEFAULT_CHARSET))) {
+                final LineNumberReader in = new LineNumberReader(
+                        new InputStreamReader(bgzi, StreamUtil.DEFAULT_CHARSET))) {
             String line;
             int expected = 0;
             while ((line = in.readLine()) != null) {
