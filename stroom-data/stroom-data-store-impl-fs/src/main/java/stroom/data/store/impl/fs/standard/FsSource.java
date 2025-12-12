@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
 
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
+import stroom.data.store.impl.fs.RASegmentInputStream;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.Meta;
@@ -44,7 +45,7 @@ import java.util.stream.Collectors;
  * A file system implementation of Source.
  * Used by {@link stroom.data.store.impl.fs.shared.FsVolumeType#STANDARD} volumes
  */
-final class FsSource implements InternalSource, SegmentInputStreamProviderFactory {
+public final class FsSource implements InternalSource, SegmentInputStreamProviderFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsSource.class);
 
@@ -93,10 +94,10 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
      *
      * @return A new file system source.
      */
-    static FsSource create(final FsPathHelper fileSystemStreamPathHelper,
-                           final Meta meta,
-                           final Path rootPath,
-                           final String streamType) {
+    public static FsSource create(final FsPathHelper fileSystemStreamPathHelper,
+                                  final Meta meta,
+                                  final Path rootPath,
+                                  final String streamType) {
         return new FsSource(fileSystemStreamPathHelper, meta, rootPath, streamType);
     }
 

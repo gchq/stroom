@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
 
 import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.impl.fs.standard.InternalStreamTypeNames;
-import stroom.data.store.impl.fs.standard.StreamTypeExtensions;
+import stroom.data.store.impl.fs.FsVolumeConfig;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;

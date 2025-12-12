@@ -18,6 +18,8 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
+import stroom.data.store.impl.fs.standard.SegmentOutputStreamProvider;
+import stroom.data.store.impl.fs.standard.SegmentOutputStreamProviderFactory;
 import stroom.meta.shared.Meta;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

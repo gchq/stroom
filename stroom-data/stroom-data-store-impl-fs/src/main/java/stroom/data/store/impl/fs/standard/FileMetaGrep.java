@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
 
-import stroom.data.store.impl.fs.standard.BlockGZIPInputFile;
+import stroom.data.store.impl.fs.RASegmentInputStream;
+import stroom.data.store.impl.fs.UncompressedInputStream;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.util.AbstractCommandLineTool;

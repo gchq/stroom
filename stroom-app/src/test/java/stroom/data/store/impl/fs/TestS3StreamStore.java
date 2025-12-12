@@ -23,6 +23,7 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.standard.FsPathHelper;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
@@ -47,7 +48,6 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.Period;
 import stroom.util.date.DateUtil;
-import stroom.util.io.FileUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
@@ -58,9 +58,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -72,7 +70,6 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
 
 class TestS3StreamStore extends AbstractCoreIntegrationTest {
 
@@ -786,40 +783,45 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
 //        }
     }
 
-    /**
-     * Test.
-     */
-    @Test
-    void testIOErrors() throws IOException {
-        final String testString = FileSystemTestUtil.getUniqueTestString();
+    // TODO Not testing S3, so commented out
+//    /**
+//     * Test.
+//     */
+//    @Test
+//    void testIOErrors() throws IOException {
+//        final String testString = FileSystemTestUtil.getUniqueTestString();
+//
+//        final MetaProperties metaProperties = MetaProperties.builder()
+//                .feedName(FEED1)
+//                .typeName(StreamTypeNames.RAW_EVENTS)
+//                .build();
+//
+//        Path dir = null;
+//        try {
+//            try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
+//                TargetUtil.write(streamTarget, testString);
+//
+//                dir = ((FsTarget) streamTarget).getFile().getParent();
+//                FileUtil.removeFilePermission(dir,
+//                        PosixFilePermission.OWNER_WRITE,
+//                        PosixFilePermission.GROUP_WRITE,
+//                        PosixFilePermission.OTHERS_WRITE);
+//            }
+//
+//            fail("Expecting an error");
+//        } catch (final RuntimeException e) {
+//            // Expected.
+//        } finally {
+//            FileUtil.addFilePermission(dir,
+//                    PosixFilePermission.OWNER_WRITE,
+//                    PosixFilePermission.GROUP_WRITE,
+//                    PosixFilePermission.OTHERS_WRITE);
+//        }
+//    }
 
-        final MetaProperties metaProperties = MetaProperties.builder()
-                .feedName(FEED1)
-                .typeName(StreamTypeNames.RAW_EVENTS)
-                .build();
 
-        Path dir = null;
-        try {
-            try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
-                TargetUtil.write(streamTarget, testString);
+    // --------------------------------------------------------------------------------
 
-                dir = ((FsTarget) streamTarget).getFile().getParent();
-                FileUtil.removeFilePermission(dir,
-                        PosixFilePermission.OWNER_WRITE,
-                        PosixFilePermission.GROUP_WRITE,
-                        PosixFilePermission.OTHERS_WRITE);
-            }
-
-            fail("Expecting an error");
-        } catch (final RuntimeException e) {
-            // Expected.
-        } finally {
-            FileUtil.addFilePermission(dir,
-                    PosixFilePermission.OWNER_WRITE,
-                    PosixFilePermission.GROUP_WRITE,
-                    PosixFilePermission.OTHERS_WRITE);
-        }
-    }
 
     private enum DeleteTestStyle {
         META,

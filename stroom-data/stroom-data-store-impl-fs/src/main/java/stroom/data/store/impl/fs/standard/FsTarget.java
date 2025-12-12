@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
 
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
+import stroom.data.store.impl.fs.OutputStreamProviderImpl;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
@@ -44,7 +45,7 @@ import java.util.Objects;
  * A file system implementation of Target.
  * Used by {@link stroom.data.store.impl.fs.shared.FsVolumeType#STANDARD} volumes
  */
-final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFactory {
+public final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsTarget.class);
 
@@ -99,11 +100,11 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
      *
      * @return A new file system target.
      */
-    static FsTarget create(final MetaService metaService,
-                           final FsPathHelper fileSystemStreamPathHelper,
-                           final Meta meta,
-                           final Path rootPath,
-                           final String streamType) {
+    public static FsTarget create(final MetaService metaService,
+                                  final FsPathHelper fileSystemStreamPathHelper,
+                                  final Meta meta,
+                                  final Path rootPath,
+                                  final String streamType) {
         LOGGER.debug(() -> LogUtil.message("create() - metaId: {}, rootPath: {}, streamType: {}",
                 meta.getId(), rootPath, streamType));
         return new FsTarget(metaService, fileSystemStreamPathHelper, meta, rootPath, streamType);

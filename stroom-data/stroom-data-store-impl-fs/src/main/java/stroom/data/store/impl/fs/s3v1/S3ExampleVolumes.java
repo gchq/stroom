@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.s3v1;
 
 import stroom.aws.s3.shared.AwsBasicCredentials;
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.data.store.api.FsVolumeGroupService;
+import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;

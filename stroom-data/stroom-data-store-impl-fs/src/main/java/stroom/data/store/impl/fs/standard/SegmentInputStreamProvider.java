@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
 
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.WrappedSegmentInputStream;
+import stroom.data.store.impl.fs.RASegmentInputStream;
 import stroom.util.io.SeekableInputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

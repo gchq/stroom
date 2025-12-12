@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
 
-import stroom.data.store.impl.fs.standard.BlockGZIPConstants;
 import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.SeekableOutputStream;
 import stroom.util.io.StreamCloser;
@@ -35,7 +34,7 @@ import java.nio.file.Paths;
  * If lazy is set on it also does not create the file until some data is written
  * (thus the file does not exist if no data was written).
  */
-class LockingFileOutputStream extends OutputStream implements SeekableOutputStream {
+public class LockingFileOutputStream extends OutputStream implements SeekableOutputStream {
 
     private final Path finalFile;
     private final Path lockFile;

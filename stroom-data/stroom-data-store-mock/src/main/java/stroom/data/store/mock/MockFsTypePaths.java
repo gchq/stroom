@@ -18,7 +18,7 @@ package stroom.data.store.mock;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.impl.fs.FsTypePathDao;
-import stroom.data.store.impl.fs.InternalStreamTypeNames;
+import stroom.data.store.impl.fs.standard.InternalStreamTypeNames;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

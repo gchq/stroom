@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.s3v1;
 
 import stroom.aws.s3.impl.S3FileExtensions;
 import stroom.data.store.api.DataException;
@@ -22,6 +22,8 @@ import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.FsPrefixUtil;
+import stroom.data.store.impl.fs.RASegmentOutputStream;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
@@ -52,7 +54,7 @@ import java.util.stream.Stream;
 /**
  * A file system implementation of Target.
  */
-final class S3Target implements Target {
+public final class S3Target implements Target {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3Target.class);
 

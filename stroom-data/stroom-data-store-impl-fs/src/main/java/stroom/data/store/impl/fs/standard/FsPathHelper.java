@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
 
 import stroom.data.shared.StreamTypeNames;
-import stroom.data.store.impl.fs.standard.BlockGZIPInputFile;
-import stroom.data.store.impl.fs.standard.BlockGZIPOutputFile;
-import stroom.data.store.impl.fs.standard.InternalStreamTypeNames;
-import stroom.data.store.impl.fs.standard.LockingFileOutputStream;
+import stroom.data.store.impl.fs.FsFeedPathDao;
+import stroom.data.store.impl.fs.FsPrefixUtil;
+import stroom.data.store.impl.fs.FsTypePathDao;
+import stroom.data.store.impl.fs.UncompressedInputStream;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.SimpleMeta;
 import stroom.util.date.DateUtil;
@@ -54,7 +54,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class FsPathHelper {
+public class FsPathHelper {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsPathHelper.class);
 
@@ -62,7 +62,7 @@ class FsPathHelper {
      * We use this rather than the File.separator as we need to be standard
      * across Windows and UNIX.
      */
-    static final String FILE_SEPARATOR_CHAR = "=";
+    public static final String FILE_SEPARATOR_CHAR = "=";
     private static final String STORE_NAME = "store";
 
     private static final String[] CHILD_STREAM_TYPES = new String[]{
@@ -91,7 +91,7 @@ class FsPathHelper {
                 path2.getFileName().toString().contains(FILE_SEPARATOR_CHAR));
     }
 
-    static long getId(final Path path) {
+    public static long getId(final Path path) {
         Objects.requireNonNull(path);
         final String fileName = path.getFileName().toString();
         final int start = fileName.indexOf(FILE_SEPARATOR_CHAR);
@@ -99,7 +99,7 @@ class FsPathHelper {
             final int end = fileName.indexOf(".", start);
             if (end != -1) {
                 final String fullIdString = fileName.substring(start + 1, end);
-                if (fullIdString.length() > 0) {
+                if (!fullIdString.isEmpty()) {
                     return FsPrefixUtil.dePadId(fullIdString);
                 }
             }
@@ -107,7 +107,7 @@ class FsPathHelper {
         return -1;
     }
 
-    static DecodedPath decodedPath(final Path path) {
+    public static DecodedPath decodedPath(final Path path) {
         Objects.requireNonNull(path);
         return DecodedPath.fromPath(path);
     }
@@ -179,7 +179,7 @@ class FsPathHelper {
      * [feedid]_[streamid]
      * </p>
      */
-    String getBaseName(final Meta meta) {
+    public String getBaseName(final Meta meta) {
         final String feedPath = fileSystemFeedPaths.getOrCreatePath(meta.getFeedName());
         return feedPath +
                FILE_SEPARATOR_CHAR +
@@ -189,7 +189,7 @@ class FsPathHelper {
     /**
      * Find all the descendants to this file.
      */
-    List<Path> findAllDescendantStreamFileList(final Path parent) {
+    public List<Path> findAllDescendantStreamFileList(final Path parent) {
         final List<Path> rtn = new ArrayList<>();
         final List<Path> kids = findChildStreamFileList(parent);
         for (final Path kid : kids) {
@@ -199,17 +199,17 @@ class FsPathHelper {
         return rtn;
     }
 
-    Path getRootPath(final Path volumePath,
-                     final SimpleMeta meta) {
+    public Path getRootPath(final Path volumePath,
+                            final SimpleMeta meta) {
         return getRootPath(volumePath, meta, meta.getTypeName());
     }
 
     /**
      * Return a File IO object.
      */
-    Path getRootPath(final Path volumePath,
-                     final SimpleMeta meta,
-                     final String streamTypeName) {
+    public Path getRootPath(final Path volumePath,
+                            final SimpleMeta meta,
+                            final String streamTypeName) {
         final String utcDate = DateUtil.createNormalDateTimeString(meta.getCreateMs());
         final String typePath = fileSystemTypePaths.getOrCreatePath(streamTypeName);
         final String feedPath = fileSystemFeedPaths.getOrCreatePath(meta.getFeedName());
@@ -241,7 +241,7 @@ class FsPathHelper {
                getFileStoreType(streamTypeName);
     }
 
-    Set<Path> findRootStreamFiles(final String streamTypeName, final Path parentPath) {
+    public Set<Path> findRootStreamFiles(final String streamTypeName, final Path parentPath) {
         if (parentPath == null) {
             return Collections.emptySet();
         } else {
@@ -369,7 +369,7 @@ class FsPathHelper {
      * or
      * {@code default_stream_volume/store/ERROR/2023/02/11/005}
      */
-    static class DecodedPath {
+    public static class DecodedPath {
 
         private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DecodedPath.class);
 

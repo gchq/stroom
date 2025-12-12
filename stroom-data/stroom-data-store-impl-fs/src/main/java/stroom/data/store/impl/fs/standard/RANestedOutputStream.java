@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
+
+import stroom.data.store.impl.fs.RASegmentOutputStream;
+import stroom.data.store.impl.fs.SupplierWithIO;
 
 import java.io.IOException;
 import java.io.OutputStream;

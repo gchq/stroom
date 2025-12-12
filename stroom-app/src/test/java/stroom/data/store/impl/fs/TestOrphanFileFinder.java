@@ -22,6 +22,7 @@ import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.standard.FileSystemUtil;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -169,7 +170,6 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
 
         final String expected = LogUtil.message("""
                 Summary:
-
                 | Type       | File/Directory | Feed (if present) | Date       | Orphan Count |
                 |------------|----------------|-------------------|------------|--------------|
                 | RAW_EVENTS | Dir            |                   | {} |            1 |""", date);
@@ -198,10 +198,11 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
 
         final List<Path> files = fileFinder.findAllStreamFile(md);
 
-        assertThat(files.size() > 0).isTrue();
+        assertThat(files).isNotEmpty();
 
         final FindDataVolumeCriteria findStreamVolumeCriteria = FindDataVolumeCriteria.create(md);
-        assertThat(dataVolumeService.find(findStreamVolumeCriteria).size() > 0).isTrue();
+        assertThat(dataVolumeService.find(findStreamVolumeCriteria).isEmpty())
+                .isFalse();
 
         final Path validDir = files.iterator()
                 .next()
@@ -327,7 +328,6 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
 
             final String expected = LogUtil.message("""
                     Summary:
-
                     | Type       | File/Directory | Feed (if present) | Date       | Orphan Count |
                     |------------|----------------|-------------------|------------|--------------|
                     | RAW_EVENTS | Dir            |                   | {} |            3 |""", date);
@@ -338,8 +338,12 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
             final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
             assertThat(volumeList.size()).isEqualTo(1);
 
-            assertThat(FileSystemUtil.isAllFile(lockedFiles)).as("Locked files should still exist").isTrue();
-            assertThat(FileSystemUtil.isAllFile(unlockedFiles)).as("Unlocked files should still exist").isTrue();
+            assertThat(FileSystemUtil.isAllFile(lockedFiles))
+                    .as("Locked files should still exist")
+                    .isTrue();
+            assertThat(FileSystemUtil.isAllFile(unlockedFiles))
+                    .as("Unlocked files should still exist")
+                    .isTrue();
         }
     }
 
@@ -363,9 +367,9 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
 
         final FindDataVolumeCriteria streamVolumeCriteria = FindDataVolumeCriteria.create(meta);
 
-        assertThat(dataVolumeService.find(streamVolumeCriteria).size() >= 1)
+        assertThat(dataVolumeService.find(streamVolumeCriteria).size())
                 .as("Must be saved to at least one volume")
-                .isTrue();
+                .isGreaterThanOrEqualTo(1);
 
         final FsOrphanFileFinderSummary summary = new FsOrphanFileFinderSummary();
         scan(summary);
@@ -377,9 +381,9 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
                 .as("Files have been deleted above")
                 .isEqualTo(0);
 
-        assertThat(dataVolumeService.find(streamVolumeCriteria).size() >= 1)
+        assertThat(dataVolumeService.find(streamVolumeCriteria).size())
                 .as("Volumes should still exist as they are new")
-                .isTrue();
+                .isGreaterThanOrEqualTo(1);
 
         final FsOrphanFileFinderSummary summary2 = new FsOrphanFileFinderSummary();
         scan(summary2);

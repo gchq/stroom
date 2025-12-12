@@ -89,10 +89,10 @@ public class RASegmentInputStream extends SegmentInputStream {
         }
     }
 
-    RASegmentInputStream(final InputStream data,
-                         final InputStream indexInputStream,
-                         final long byteStart,
-                         final long byteEnd) {
+    public RASegmentInputStream(final InputStream data,
+                                final InputStream indexInputStream,
+                                final long byteStart,
+                                final long byteEnd) {
         try {
             this.data = data;
             this.indexInputStream = indexInputStream;
@@ -622,7 +622,7 @@ public class RASegmentInputStream extends SegmentInputStream {
     /**
      * Return the byte offset in the underlying stream given a segment number
      */
-    long byteOffset(final long segment) throws IOException {
+    public long byteOffset(final long segment) throws IOException {
         return byteOffset(segment, true);
     }
 
@@ -653,7 +653,7 @@ public class RASegmentInputStream extends SegmentInputStream {
     /**
      * Return the segment number given a byte position
      */
-    long segmentAtByteOffset(final long findBytePos) throws IOException {
+    public long segmentAtByteOffset(final long findBytePos) throws IOException {
         return segmentAtByteOffset(findBytePos, true);
     }
 
@@ -662,7 +662,7 @@ public class RASegmentInputStream extends SegmentInputStream {
      * will look for the lowest one skipping back over any empty segments
      * otherwise it will skip forward.
      */
-    long segmentAtByteOffset(final long findBytePos, final boolean lowerBound) throws IOException {
+    public long segmentAtByteOffset(final long findBytePos, final boolean lowerBound) throws IOException {
         // Seek past EOF?
         if (findBytePos > getDataSize()) {
             return -1;

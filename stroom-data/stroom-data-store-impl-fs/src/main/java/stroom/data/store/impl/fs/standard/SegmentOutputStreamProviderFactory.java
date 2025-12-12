@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
 
 /**
  * Used by {@link stroom.data.store.impl.fs.shared.FsVolumeType#STANDARD}

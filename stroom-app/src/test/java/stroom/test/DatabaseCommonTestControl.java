@@ -18,7 +18,7 @@ package stroom.test;
 
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeService;
-import stroom.data.store.impl.fs.S3ExampleVolumes;
+import stroom.data.store.impl.fs.s3v1.S3ExampleVolumes;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.index.VolumeCreator;
@@ -135,7 +135,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         final FsVolume fsVolume = fsVolumeService.getVolume(null);
         if (fsVolume == null) {
             Assertions.fail("No active and non-full volumes found. " +
-                    "Likely a problem with default volume creation in setup, or a too full disk.");
+                            "Likely a problem with default volume creation in setup, or a too full disk.");
         }
 
         LOGGER.info("Creating index volume groups in {}", indexVolDir.toAbsolutePath().normalize());

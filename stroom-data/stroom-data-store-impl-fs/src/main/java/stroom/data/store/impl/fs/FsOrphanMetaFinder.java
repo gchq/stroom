@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
+import stroom.data.store.impl.fs.standard.FsPathHelper;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.SimpleMeta;
 import stroom.task.api.TaskContext;
@@ -86,8 +87,8 @@ class FsOrphanMetaFinder {
         progress.log();
 
         while (minId != -1
-                && !Thread.currentThread().isInterrupted()
-                && !taskContext.isTerminated()) {
+               && !Thread.currentThread().isInterrupted()
+               && !taskContext.isTerminated()) {
             minId = scanBatch(minId, maxId, orphanConsumer, progress, taskContext);
         }
         if (Thread.currentThread().isInterrupted() || taskContext.isTerminated()) {
@@ -150,7 +151,7 @@ class FsOrphanMetaFinder {
             // root file to check existence.
             for (final DataVolume dataVolume : dataVolumes) {
                 if (!isTerminated(taskContext) &&
-                        FsVolumeType.STANDARD.equals(dataVolume.getVolume().getVolumeType())) {
+                    FsVolumeType.STANDARD.equals(dataVolume.getVolume().getVolumeType())) {
                     final long metaId = dataVolume.getMetaId();
                     // Should never be null as we used the metaMap keys to find the data vols
                     final SimpleMeta meta = metaIdToMetaMap.get(metaId);

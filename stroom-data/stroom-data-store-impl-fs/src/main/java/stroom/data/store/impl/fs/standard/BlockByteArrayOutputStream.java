@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -27,6 +27,7 @@ import java.nio.LongBuffer;
  * long in part of the buffer.
  */
 class BlockByteArrayOutputStream extends ByteArrayOutputStream {
+
     /**
      * Used for the long conversion
      */

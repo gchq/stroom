@@ -20,6 +20,7 @@ import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.standard.EchoServlet;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasSystemInfoBinder;

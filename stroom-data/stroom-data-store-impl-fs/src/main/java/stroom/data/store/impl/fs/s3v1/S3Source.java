@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.s3v1;
 
 import stroom.aws.s3.impl.S3FileExtensions;
 import stroom.data.shared.StreamTypeNames;
@@ -22,6 +22,9 @@ import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
+import stroom.data.store.impl.fs.FsPrefixUtil;
+import stroom.data.store.impl.fs.RASegmentInputStream;
+import stroom.data.store.impl.fs.UncompressedInputStream;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.Meta;

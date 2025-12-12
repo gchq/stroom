@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
 
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.WrappedSegmentOutputStream;
+import stroom.data.store.impl.fs.RASegmentOutputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

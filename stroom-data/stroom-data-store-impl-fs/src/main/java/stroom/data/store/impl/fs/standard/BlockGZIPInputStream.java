@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -23,6 +23,7 @@ import java.io.InputStream;
  * @see BlockGZIPConstants
  */
 class BlockGZIPInputStream extends BlockGZIPInput {
+
     private final InputStream inputStream;
 
     /**

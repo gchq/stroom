@@ -32,7 +32,7 @@ import java.nio.LongBuffer;
  * produces output that will be readable with a {@link stroom.data.store.api.SegmentInputStream}
  * that opens files for random access.
  */
-class RASegmentOutputStream extends SegmentOutputStream {
+public class RASegmentOutputStream extends SegmentOutputStream {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RASegmentOutputStream.class);
 
@@ -46,8 +46,8 @@ class RASegmentOutputStream extends SegmentOutputStream {
     private long position;
     private long lastBoundary;
 
-    RASegmentOutputStream(final OutputStream dataOutputStream,
-                          final SupplierWithIO<OutputStream> indexOutputStreamSupplier) {
+    public RASegmentOutputStream(final OutputStream dataOutputStream,
+                                 final SupplierWithIO<OutputStream> indexOutputStreamSupplier) {
         this.dataOutputStream = dataOutputStream;
         this.indexOutputStreamSupplier = indexOutputStreamSupplier;
     }

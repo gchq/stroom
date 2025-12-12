@@ -24,16 +24,16 @@ import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
-import stroom.data.store.impl.fs.InputStreamProviderImpl;
-import stroom.data.store.impl.fs.InternalSource;
-import stroom.data.store.impl.fs.InternalStreamTypeNames;
-import stroom.data.store.impl.fs.InternalTarget;
 import stroom.data.store.impl.fs.OutputStreamProviderImpl;
 import stroom.data.store.impl.fs.RASegmentInputStream;
-import stroom.data.store.impl.fs.SegmentInputStreamProvider;
-import stroom.data.store.impl.fs.SegmentInputStreamProviderFactory;
-import stroom.data.store.impl.fs.SegmentOutputStreamProvider;
-import stroom.data.store.impl.fs.SegmentOutputStreamProviderFactory;
+import stroom.data.store.impl.fs.standard.InputStreamProviderImpl;
+import stroom.data.store.impl.fs.standard.InternalSource;
+import stroom.data.store.impl.fs.standard.InternalStreamTypeNames;
+import stroom.data.store.impl.fs.standard.InternalTarget;
+import stroom.data.store.impl.fs.standard.SegmentInputStreamProvider;
+import stroom.data.store.impl.fs.standard.SegmentInputStreamProviderFactory;
+import stroom.data.store.impl.fs.standard.SegmentOutputStreamProvider;
+import stroom.data.store.impl.fs.standard.SegmentOutputStreamProviderFactory;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
@@ -499,7 +499,8 @@ public class MockStore implements Store, Clearable, AttributeMapFactory {
 
         /////////////////////////////////
         // START INTERNAL SOURCE
-        /////////////////////////////////
+
+        /// //////////////////////////////
         @Override
         public InputStream getInputStream() {
             if (inputStream == null) {
@@ -526,7 +527,8 @@ public class MockStore implements Store, Clearable, AttributeMapFactory {
 
         /////////////////////////////////
         // END INTERNAL SOURCE
-        /////////////////////////////////
+
+        /// //////////////////////////////
 
         @Override
         public SegmentInputStreamProvider getSegmentInputStreamProvider(final String streamTypeName) {

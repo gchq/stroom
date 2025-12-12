@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
 
 public class InternalStreamTypeNames {
+
     /**
      * Saved raw version for the archive.
      */

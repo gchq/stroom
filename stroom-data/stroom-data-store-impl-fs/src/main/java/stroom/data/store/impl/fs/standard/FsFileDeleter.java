@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
 
 import stroom.task.api.TaskContextFactory;
 import stroom.util.io.FileUtil;
@@ -39,7 +39,7 @@ import java.util.function.Supplier;
 /**
  * Split out on its own to aid mocking in tests.
  */
-class FsFileDeleter {
+public class FsFileDeleter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsFileDeleter.class);
 
@@ -60,10 +60,10 @@ class FsFileDeleter {
      * @param baseName The base of the filename, i.e. without extension.
      * @return False if any errors occurred deleting files. Missing files do not count as errors.
      */
-    boolean deleteFilesByBaseName(final long metaId,
-                                  final Path dir,
-                                  final String baseName,
-                                  final LongConsumer deleteCountConsumer) {
+    public boolean deleteFilesByBaseName(final long metaId,
+                                         final Path dir,
+                                         final String baseName,
+                                         final LongConsumer deleteCountConsumer) {
         Objects.requireNonNull(dir);
         Objects.requireNonNull(baseName);
         final String glob = baseName + ".*";
@@ -73,9 +73,9 @@ class FsFileDeleter {
                 if (!Thread.currentThread().isInterrupted()) {
                     try {
                         final Supplier<String> msgSupplier = () -> "Deleting file: '"
-                                + FileUtil.getCanonicalPath(file)
-                                + "' for stream "
-                                + metaId;
+                                                                   + FileUtil.getCanonicalPath(file)
+                                                                   + "' for stream "
+                                                                   + metaId;
                         info(msgSupplier);
 
                         // Doesn't matter if it does not exist as that is the desired end state anyway
@@ -95,13 +95,13 @@ class FsFileDeleter {
                     } catch (final IOException e) {
                         wasSuccessful.compareAndSet(true, false);
                         final String msg = "Error deleting file '" +
-                                FileUtil.getCanonicalPath(file) +
-                                "' for meta ID " +
-                                metaId;
+                                           FileUtil.getCanonicalPath(file) +
+                                           "' for meta ID " +
+                                           metaId;
                         LOGGER.debug(msg, e);
                         LOGGER.error(msg + " - "
-                                + e.getClass().getSimpleName() + " - " + e.getMessage()
-                                + " (see DEBUG for stacktrace)");
+                                     + e.getClass().getSimpleName() + " - " + e.getMessage()
+                                     + " (see DEBUG for stacktrace)");
                     }
                 } else {
                     // We probably haven't finished so treat as failure.  Next run of the job can finish it.
@@ -114,12 +114,12 @@ class FsFileDeleter {
         } catch (final IOException e) {
             wasSuccessful.compareAndSet(true, false);
             final String msg = "Error creating directory stream '" +
-                    FileUtil.getCanonicalPath(dir) +
-                    "' for stream " + metaId + ", glob=" + glob;
+                               FileUtil.getCanonicalPath(dir) +
+                               "' for stream " + metaId + ", glob=" + glob;
             LOGGER.debug(msg, e);
             LOGGER.error(msg + " - "
-                    + e.getClass().getSimpleName() + " - " + e.getMessage()
-                    + " (see DEBUG for stacktrace)");
+                         + e.getClass().getSimpleName() + " - " + e.getMessage()
+                         + " (see DEBUG for stacktrace)");
         }
         return wasSuccessful.get();
     }
@@ -135,10 +135,10 @@ class FsFileDeleter {
      * @param oldFileTime
      * @return
      */
-    boolean tryDeleteDir(final Path root,
-                         final Path dir,
-                         final long oldFileTime,
-                         final LongConsumer deleteCountConsumer) {
+    public boolean tryDeleteDir(final Path root,
+                                final Path dir,
+                                final long oldFileTime,
+                                final LongConsumer deleteCountConsumer) {
         Objects.requireNonNull(root);
         Objects.requireNonNull(dir);
 
@@ -211,7 +211,7 @@ class FsFileDeleter {
                         LOGGER.debug(() ->
                                 LogUtil.message(
                                         "tryDelete() - Skipping dir that was modified too recently " +
-                                                "(lastModified: {} >= oldFileTime: {}) {}",
+                                        "(lastModified: {} >= oldFileTime: {}) {}",
                                         Instant.ofEpochMilli(lastModified),
                                         Instant.ofEpochMilli(oldFileTime),
                                         canonicalDir));

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
 
+import stroom.data.store.impl.fs.BlockBufferedInputStream;
 import stroom.util.io.SeekableInputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

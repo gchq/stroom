@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
  * Utility to get prefix sequences.
  * </p>
  */
-final class FsPrefixUtil {
+public final class FsPrefixUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsPrefixUtil.class);
 
@@ -44,7 +44,7 @@ final class FsPrefixUtil {
     /**
      * Pad a prefix.
      */
-    static String padId(final Long current) {
+    public static String padId(final Long current) {
         if (current == null) {
             return START_PREFIX;
         }
@@ -64,7 +64,7 @@ final class FsPrefixUtil {
      *
      * @return The de-padded value, 0 if blank/null or -1 if not a number.
      */
-    static long dePadId(final String paddedId) {
+    public static long dePadId(final String paddedId) {
         if (NullSafe.isBlankString(paddedId)) {
             return -1L;
         } else {
@@ -93,7 +93,7 @@ final class FsPrefixUtil {
     /**
      * Given a string chop it up into parts and append to a path.
      */
-    static Path appendIdPath(final Path path, final String id) {
+    public static Path appendIdPath(final Path path, final String id) {
         Path result = path;
         for (int i = 0; i < id.length() - PAD_SIZE; i += PAD_SIZE) {
             final String part = id.substring(i, i + PAD_SIZE);

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
 
+import stroom.data.store.impl.fs.BlockBufferedInputStream;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
@@ -125,8 +126,8 @@ class BlockGZIPInputFile extends BlockGZIPInput {
         if ((currentBlockNumber != newBlockNumber)) {
             // Read our index
             raFile.position(idxStart
-                    + BlockGZIPConstants.LONG_BYTES
-                    + (newBlockNumber * BlockGZIPConstants.LONG_BYTES));
+                            + BlockGZIPConstants.LONG_BYTES
+                            + (newBlockNumber * BlockGZIPConstants.LONG_BYTES));
             currentRawStreamBuffer = createBufferedInputStream(true);
             final long seekPos = readLong();
             raFile.position(seekPos);

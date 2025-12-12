@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
 
 import stroom.util.io.FileUtil;
 
@@ -221,8 +221,8 @@ class BlockGZIPFileVerifier {
         fillBuffer(stream, headerMarkerRawBuffer, 0, headerMarkerRawBuffer.length);
         if (!checkEqualBuffer(BlockGZIPConstants.BLOCK_GZIP_V1_IDENTIFIER, headerMarkerRawBuffer)) {
             throw new IOException("Does not look like a Block GZIP V1 Stream \"" +
-                    FileUtil.getCanonicalPath(path) +
-                    "\"");
+                                  FileUtil.getCanonicalPath(path) +
+                                  "\"");
         }
     }
 

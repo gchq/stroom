@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.impl.fs.standard;
 
 import stroom.util.io.FileUtil;
 import stroom.util.io.FileUtilException;
@@ -78,7 +78,7 @@ public final class FileSystemUtil {
     /**
      * Create a root path.
      */
-    static Path createFileTypeRoot(final String volumePath) {
+    public static Path createFileTypeRoot(final String volumePath) {
         //        if (streamType != null) {
 //            builder.append(SEPERATOR_CHAR);
 //            builder.append(streamType.toString());
@@ -144,7 +144,7 @@ public final class FileSystemUtil {
         return ok;
     }
 
-    static boolean isAllFile(final Collection<Path> files) {
+    public static boolean isAllFile(final Collection<Path> files) {
         boolean allFiles = true;
         for (final Path file : files) {
             allFiles &= Files.isRegularFile(file);
@@ -160,7 +160,7 @@ public final class FileSystemUtil {
         return allDirs;
     }
 
-    static boolean updateLastModified(final Collection<Path> files, final long lastModified) {
+    public static boolean updateLastModified(final Collection<Path> files, final long lastModified) {
         boolean allOk = true;
         for (final Path file : files) {
             try {
