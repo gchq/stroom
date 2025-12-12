@@ -44,6 +44,9 @@ public class SegmentOutputStreamProvider {
     }
 
     public SegmentOutputStream get(final long index) {
+        LOGGER.debug("get() - dataTypeName: {}, this.index: {}, index: {}",
+                dataTypeName, this.index, index);
+
         try {
             if (this.index >= index) {
                 throw new IOException("Output stream already provided for index " + index);
@@ -52,7 +55,8 @@ public class SegmentOutputStreamProvider {
             // Move up to the right index if this OS is behind, i.e. it hasn't been requested for a certain
             // data type before.
             while (this.index < index - 1) {
-                LOGGER.debug("Fast forwarding for {}", dataTypeName);
+                LOGGER.debug("Fast forwarding for dataTypeName: {}, this.index: {}, index: {}",
+                        dataTypeName, this.index, index);
                 this.index++;
 
                 // Start writing segments on the 2nd stream to be added

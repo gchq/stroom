@@ -22,12 +22,15 @@ import stroom.util.io.SeekableInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+// TODO - Not currently used other than in tests. Do we need it?
+
 /**
  * Wrapper for a nested input stream.
  * <p>
  * You must call getNextEntry and closeEntry like the ZIP API.
  */
 class RANestedInputStream extends NestedInputStream {
+
     private final InputStream data;
     private final InputStream indexInputStream;
     private long currentEntry = -1;

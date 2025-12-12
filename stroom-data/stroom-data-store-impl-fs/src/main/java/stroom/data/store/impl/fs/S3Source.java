@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -253,9 +254,7 @@ final class S3Source implements Source {
             }
 
             final String extension = S3FileExtensions.EXTENSION_MAP.get(childStreamType);
-            if (extension == null) {
-                throw new RuntimeException("Unexpected child stream type: " + childStreamType);
-            }
+            Objects.requireNonNull(extension, () -> "Unexpected child stream type: " + childStreamType);
             return create(extension);
         }
 

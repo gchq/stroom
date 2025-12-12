@@ -19,9 +19,10 @@ package stroom.data.store.impl.fs;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.WrappedSegmentInputStream;
 import stroom.util.io.SeekableInputStream;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,7 +30,7 @@ import java.io.UncheckedIOException;
 
 public class SegmentInputStreamProvider {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SegmentInputStreamProvider.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SegmentInputStreamProvider.class);
 
     private final InternalSource source;
     //        private long index = -1;
@@ -80,6 +81,14 @@ public class SegmentInputStreamProvider {
             if (segmentIndex == null) {
                 return new SingleSegmentInputStreamImpl(segmentInputStream, size);
             }
+
+            LOGGER.trace(() -> LogUtil.message(
+                    "get() - index: {}, segmentCount: {}, entryByteOffsetStart, entryByteOffsetEnd: {}, size: {}",
+                    ModelStringUtil.formatCsv(index),
+                    ModelStringUtil.formatCsv(segmentCount),
+                    ModelStringUtil.formatCsv(entryByteOffsetStart),
+                    ModelStringUtil.formatCsv(entryByteOffsetEnd),
+                    ModelStringUtil.formatCsv(size)));
 
             final SegmentInputStream inputStream = new RASegmentInputStream(
                     getData(), segmentIndex, entryByteOffsetStart, entryByteOffsetEnd);

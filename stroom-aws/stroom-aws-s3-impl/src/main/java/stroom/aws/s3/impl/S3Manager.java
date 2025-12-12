@@ -32,6 +32,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.Range;
 import stroom.util.shared.string.CIKey;
 import stroom.util.string.StringIdUtil;
 import stroom.util.string.TemplateUtil.Template;
@@ -48,6 +49,7 @@ import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.SystemPropertyCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.WebIdentityTokenFileCredentialsProvider;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.profiles.ProfileFile;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
@@ -95,6 +97,7 @@ import java.time.ZonedDateTime;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -543,6 +546,42 @@ public class S3Manager {
         }
 
         logResponse("Created bucket: ", bucketName, null, response);
+    }
+
+    public ResponseInputStream<GetObjectResponse> getByteRange(final Meta meta,
+                                                               final Range<Long> byteRange) {
+        Objects.requireNonNull(meta);
+        Objects.requireNonNull(byteRange);
+        final String bucketName = createBucketName(getBucketNamePattern(), meta);
+        final String key = createKey(getKeyNamePattern(), meta);
+        final GetObjectRequest request = GetObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .range(rangeToHttpString(byteRange))
+                .build();
+
+        logRequest("Downloading: ", bucketName, key, request);
+
+        try (final S3Client s3Client = createClient(s3ClientConfig)) {
+            return s3Client.getObject(request);
+        } catch (final RuntimeException e) {
+            error("Error downloading: ", bucketName, key, e);
+            throw e;
+        }
+    }
+
+    private String rangeToHttpString(final Range<Long> range) {
+        Objects.requireNonNull(range);
+        if (!range.isBounded()) {
+            throw new IllegalArgumentException("Range must be bounded, range: " + range);
+        }
+        final long toInc = range.getTo() - 1;
+        if (range.getFrom() > toInc) {
+            throw new IllegalArgumentException("Invalid range: " + range);
+        }
+        final String str = "bytes=" + range.getFrom() + "-" + range.getTo();
+        LOGGER.debug("rangeToHttpString() - returning: {}", str);
+        return str;
     }
 
     public GetObjectResponse download(final Meta meta,

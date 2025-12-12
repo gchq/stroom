@@ -32,6 +32,7 @@ import stroom.query.api.datasource.QueryField;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
@@ -85,15 +87,14 @@ final class S3Target implements Target {
 
     @Override
     public AttributeMap getAttributes() {
-        if (attributeMap == null) {
-            attributeMap = new AttributeMap();
-        }
+        attributeMap = Objects.requireNonNullElseGet(attributeMap, AttributeMap::new);
         return attributeMap;
     }
 
     private void writeManifest() {
         try {
             final Path manifestFile = tempDir.resolve(S3FileExtensions.MANIFEST_FILE_NAME);
+            LOGGER.debug("writeManifest() - manifestFile: {}", manifestFile);
             try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(manifestFile))) {
                 AttributeMapUtil.write(getAttributes(), outputStream);
             }
@@ -103,12 +104,15 @@ final class S3Target implements Target {
     }
 
     private void updateAttribute(final S3Target target, final QueryField key, final String value) {
-        if (!target.getAttributes().containsKey(key.getFldName())) {
-            target.getAttributes().put(key.getFldName(), value);
+        final String keyFldName = key.getFldName();
+        if (!target.getAttributes().containsKey(keyFldName)) {
+            LOGGER.debug("updateAttribute() - keyFldName: {}, value: {}", keyFldName, value);
+            target.getAttributes().put(keyFldName, value);
         }
     }
 
     private void closeAllStreams() throws IOException {
+        LOGGER.debug("closeAllStreams()");
         // If we get error on closing the stream we must return it to the caller
         IOException streamCloseException = null;
 
@@ -267,6 +271,7 @@ final class S3Target implements Target {
     @Override
     public OutputStreamProvider next() {
         final long no = ++partNo;
+        LOGGER.debug("next() - meta: {}, no: {}, tempDir: {}", meta, no, tempDir);
         final S3OutputStreamProvider s3OutputStreamProvider = new S3OutputStreamProvider(tempDir, no);
         partMap.put(no, s3OutputStreamProvider);
         return s3OutputStreamProvider;
@@ -283,6 +288,8 @@ final class S3Target implements Target {
 
     private static class S3OutputStreamProvider implements OutputStreamProvider {
 
+        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3OutputStreamProvider.class);
+
         private final Path dir;
         private final String partString;
         private final List<SegmentOutputStream> segmentOutputStreams = new ArrayList<>();
@@ -290,7 +297,9 @@ final class S3Target implements Target {
 
         public S3OutputStreamProvider(final Path dir, final long partNo) {
             this.dir = dir;
-            partString = FsPrefixUtil.padId(partNo);
+            this.partString = FsPrefixUtil.padId(partNo);
+            LOGGER.debug(() -> LogUtil.message("ctor() - dir: {}, partNo: {}, partString: {}",
+                    dir, partNo, partString));
         }
 
         @Override
@@ -298,20 +307,20 @@ final class S3Target implements Target {
             if (dataStream != null) {
                 throw new RuntimeException("Unexpected get");
             }
+            LOGGER.debug("get()");
             dataStream = create(S3FileExtensions.DATA_EXTENSION);
             return dataStream;
         }
 
         @Override
         public SegmentOutputStream get(final String childStreamType) {
+            LOGGER.debug("get() - childStreamType: {}", childStreamType);
             if (childStreamType == null) {
                 return get();
             }
 
             final String extension = S3FileExtensions.EXTENSION_MAP.get(childStreamType);
-            if (extension == null) {
-                throw new RuntimeException("Unexpected child stream type: " + childStreamType);
-            }
+            Objects.requireNonNull(extension, () -> "Unexpected child stream type: " + childStreamType);
             return create(extension);
         }
 
@@ -320,6 +329,7 @@ final class S3Target implements Target {
                 final String fileName = partString + extension;
                 final Path dataFile = dir.resolve(fileName);
                 final Path indexFile = dir.resolve(fileName + S3FileExtensions.INDEX_EXTENSION);
+                LOGGER.debug("create() - dataFile: {}, indexFile: {}", dataFile, indexFile);
                 final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(dataFile));
                 final SegmentOutputStream segmentOutputStream = new RASegmentOutputStream(outputStream, () ->
                         new BufferedOutputStream(Files.newOutputStream(indexFile)));

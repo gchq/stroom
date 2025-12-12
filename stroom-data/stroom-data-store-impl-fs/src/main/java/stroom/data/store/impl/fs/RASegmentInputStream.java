@@ -19,9 +19,10 @@ package stroom.data.store.impl.fs;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.util.io.SeekableInputStream;
 import stroom.util.io.StreamUtil;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,7 +44,7 @@ import java.util.TreeSet;
  */
 public class RASegmentInputStream extends SegmentInputStream {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RASegmentInputStream.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RASegmentInputStream.class);
     private static final int INT8 = 8;
     private final byte[] eightBytes = new byte[INT8];
     private final byte[] singleByte = new byte[1];
@@ -102,7 +103,9 @@ public class RASegmentInputStream extends SegmentInputStream {
     }
 
     private long getDataSize() throws IOException {
-        return ((SeekableInputStream) data).getSize();
+        final long size = ((SeekableInputStream) data).getSize();
+        LOGGER.debug(() -> LogUtil.message("getDataSize() - size: {}", ModelStringUtil.formatCsv(size)));
+        return size;
     }
 
     private void initWindow(final long byteStart, final long byteEnd) throws IOException {

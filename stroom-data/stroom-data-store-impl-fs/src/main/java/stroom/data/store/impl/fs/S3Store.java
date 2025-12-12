@@ -27,6 +27,8 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
@@ -177,10 +179,15 @@ class S3Store {
         }
     }
 
+    /**
+     * Zips the contents of tempDir into a single ZIP file then uploads it to S3
+     */
     public void upload(final Path tempDir,
                        final DataVolume dataVolume,
                        final Meta meta,
                        final AttributeMap attributeMap) {
+        LOGGER.debug(() -> LogUtil.message("upload() - tempDir: {}, metaId: {}, attributeMap: {}",
+                tempDir, NullSafe.get(meta, Meta::getId), attributeMap));
         // Create zip.
         Path zipFile = null;
         try {

@@ -18,6 +18,8 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.util.io.CloseableUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -30,6 +32,8 @@ import java.nio.LongBuffer;
  * that opens files for random access.
  */
 class RASegmentOutputStream extends SegmentOutputStream {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RASegmentOutputStream.class);
 
     private static final int LONG_BYTES = 8;
 
@@ -66,6 +70,7 @@ class RASegmentOutputStream extends SegmentOutputStream {
      */
     @Override
     public void addSegment(final long position) throws IOException {
+        LOGGER.debug("addSegment() - position: {}, lastBoundary: {}", position, lastBoundary);
         if (position < lastBoundary) {
             throw new IOException("The boundary position cannot be less than the previous boundary position.");
         }
@@ -73,6 +78,7 @@ class RASegmentOutputStream extends SegmentOutputStream {
 
         // Lazily initialise index output stream provider.
         if (indexOutputStream == null) {
+            LOGGER.debug("addSegment() - creating indexOutputStream");
             indexOutputStream = indexOutputStreamSupplier.getWithIO();
             buffer = new byte[LONG_BYTES];
             longBuffer = ByteBuffer.wrap(buffer).asLongBuffer();
@@ -104,6 +110,7 @@ class RASegmentOutputStream extends SegmentOutputStream {
      */
     @Override
     public void flush() throws IOException {
+        LOGGER.debug("flush() - position: {}, lastBoundary: {}", position, lastBoundary);
         try {
             dataOutputStream.flush();
         } finally {

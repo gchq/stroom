@@ -29,6 +29,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.SeekableOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -37,6 +38,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * A file system implementation of Target.
@@ -52,10 +54,10 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
     private final Path volumePath;
     private final String streamType;
     private final FsTarget parent;
+
     private AttributeMap attributeMap;
     private OutputStream outputStream;
     private Path file;
-
     private Meta meta;
     private boolean closed;
     private boolean deleted;
@@ -101,6 +103,8 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
                            final Meta meta,
                            final Path rootPath,
                            final String streamType) {
+        LOGGER.debug(() -> LogUtil.message("create() - metaId: {}, rootPath: {}, streamType: {}",
+                meta.getId(), rootPath, streamType));
         return new FsTarget(metaService, fileSystemStreamPathHelper, meta, rootPath, streamType);
     }
 
@@ -120,9 +124,7 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
         if (parent != null) {
             return parent.getAttributes();
         }
-        if (attributeMap == null) {
-            attributeMap = new AttributeMap();
-        }
+        attributeMap = Objects.requireNonNullElseGet(attributeMap, AttributeMap::new);
         return attributeMap;
     }
 
@@ -138,7 +140,7 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
                     AttributeMapUtil.write(getAttributes(), outputStream);
                 }
             } else {
-                LOGGER.warn(() -> "closeStreamTarget() - Closing target file with no directory present");
+                LOGGER.warn("closeStreamTarget() - Closing target file with no directory present");
             }
         } catch (final IOException e) {
             LOGGER.error(() -> "closeStreamTarget() - Error on writing Manifest " + this, e);
@@ -211,11 +213,11 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
             try {
                 metaService.addAttributes(meta, attributeMap);
             } catch (final RuntimeException e) {
-                LOGGER.error(() -> "unlock() - Failed to persist attributes in new transaction... will ignore");
+                LOGGER.error("unlock() - Failed to persist attributes in new transaction... will ignore");
             }
         }
 
-        LOGGER.debug(() -> "unlock() " + meta);
+        LOGGER.debug("unlock() - meta: {}", meta);
         this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.UNLOCKED);
     }
 
@@ -301,6 +303,7 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
 
     @Override
     public OutputStreamProvider next() {
+        LOGGER.debug("next() - meta: {}, index: {}", meta, index);
         final OutputStreamProvider outputStreamProvider = new OutputStreamProviderImpl(meta, this, index);
         index++;
         return outputStreamProvider;
@@ -339,9 +342,9 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
         return "id=" + meta.getId();
     }
 
-    /////////////////////////////////
+    // ///////////////////////////////
     // START INTERNAL TARGET
-    /////////////////////////////////
+    // ///////////////////////////////
 
     /**
      * Gets the output stream for this stream target.
@@ -369,6 +372,8 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
                 }
 
                 outputStream = fileSystemStreamPathHelper.getOutputStream(streamType, file);
+                LOGGER.debug(() -> LogUtil.message("getOutputStream() - metaId: {}, streamType: {}, file: {}",
+                        meta.getId(), streamType, file));
             } catch (final IOException ioEx) {
                 LOGGER.error(() -> "getOutputStream() - " + ioEx.getMessage());
                 // No reason to get a IO on opening the out stream .... fail in
@@ -383,12 +388,14 @@ final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFacto
     public OutputStream getChildOutputStream(final String type) {
         final InternalTarget childTarget = getChild(type);
         if (childTarget != null) {
+            LOGGER.debug(() -> LogUtil.message("getOutputStream(type) - metaId: {}, streamType: {}",
+                    meta.getId(), streamType));
             return childTarget.getOutputStream();
         }
         return null;
     }
 
-    /////////////////////////////////
+    // ///////////////////////////////
     // END INTERNAL TARGET
-    /////////////////////////////////
+    // ///////////////////////////////
 }

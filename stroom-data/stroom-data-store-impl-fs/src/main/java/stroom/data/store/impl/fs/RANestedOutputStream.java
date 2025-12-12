@@ -19,17 +19,21 @@ package stroom.data.store.impl.fs;
 import java.io.IOException;
 import java.io.OutputStream;
 
+// TODO - Not currently used other than in tests. Do we need it?
+
 /**
  * Class used to write multiple streams to a single stream separated by segments
  * by a segment marker (boundary).
  */
 class RANestedOutputStream extends OutputStream {
+
     private final RASegmentOutputStream segmentOutputStream;
     private int segmentCount = 0;
     private boolean currentEntryClosed = true;
     private boolean closed = false;
 
-    RANestedOutputStream(final OutputStream dataFile, final SupplierWithIO<OutputStream> indexOutputStreamSupplier) {
+    RANestedOutputStream(final OutputStream dataFile,
+                         final SupplierWithIO<OutputStream> indexOutputStreamSupplier) {
         segmentOutputStream = new RASegmentOutputStream(dataFile, indexOutputStreamSupplier);
     }
 

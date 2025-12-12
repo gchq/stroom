@@ -19,6 +19,8 @@ package stroom.data.store.api;
 import java.io.IOException;
 import java.io.InputStream;
 
+// TODO - Not currently used other than in tests. Do we need it?
+
 /**
  * Stream that works like a zip input stream in that you can iterate over nested
  * items with in the main stream.
