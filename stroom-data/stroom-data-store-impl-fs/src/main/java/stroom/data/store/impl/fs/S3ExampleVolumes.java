@@ -66,7 +66,7 @@ public class S3ExampleVolumes {
 
             final FsVolume volume = new FsVolume();
             volume.setVolumeGroupId(s3VolumeGroup.getId());
-            volume.setVolumeType(FsVolumeType.S3);
+            volume.setVolumeType(FsVolumeType.S3_V1);
             volume.setS3ClientConfig(s3ClientConfig);
             volume.setS3ClientConfigData(JsonUtil.writeValueAsString(s3ClientConfig));
             volume.setPath("s3");

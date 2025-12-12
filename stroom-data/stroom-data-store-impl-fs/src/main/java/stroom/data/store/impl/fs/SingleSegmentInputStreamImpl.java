@@ -21,7 +21,11 @@ import stroom.data.store.api.SegmentInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Used by {@link stroom.data.store.impl.fs.shared.FsVolumeType#STANDARD} volumes
+ */
 class SingleSegmentInputStreamImpl extends SegmentInputStream {
+
     private final InputStream inputStream;
     private final long size;
 

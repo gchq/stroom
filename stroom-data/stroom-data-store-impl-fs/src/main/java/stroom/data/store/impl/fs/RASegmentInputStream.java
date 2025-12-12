@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
+ * <p>Random Access Segment Input Stream</p>
  * This is an implementation of <code>SegmentInputStream</code> that uses random
  * access files for the data and index.
  * <p>

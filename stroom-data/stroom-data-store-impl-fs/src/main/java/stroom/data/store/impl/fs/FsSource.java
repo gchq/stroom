@@ -42,6 +42,7 @@ import java.util.stream.Collectors;
 
 /**
  * A file system implementation of Source.
+ * Used by {@link stroom.data.store.impl.fs.shared.FsVolumeType#STANDARD} volumes
  */
 final class FsSource implements InternalSource, SegmentInputStreamProviderFactory {
 
@@ -267,7 +268,8 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
 
     /////////////////////////////////
     // START INTERNAL SOURCE
-    /////////////////////////////////
+
+    /// //////////////////////////////
 
     @Override
     public InputStream getInputStream() {

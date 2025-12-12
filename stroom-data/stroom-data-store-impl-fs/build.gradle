@@ -52,6 +52,7 @@ dependencies {
     implementation libs.slf4j.api
     implementation libs.vavr
 
+    testImplementation project(':stroom-data:stroom-data-store-mock')
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
 

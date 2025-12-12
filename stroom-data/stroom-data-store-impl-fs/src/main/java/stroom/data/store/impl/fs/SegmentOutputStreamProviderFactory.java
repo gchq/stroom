@@ -16,6 +16,10 @@
 
 package stroom.data.store.impl.fs;
 
+/**
+ * Used by {@link stroom.data.store.impl.fs.shared.FsVolumeType#STANDARD}
+ */
 public interface SegmentOutputStreamProviderFactory {
+
     SegmentOutputStreamProvider getSegmentOutputStreamProvider(String streamTypeName);
 }

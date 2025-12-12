@@ -21,8 +21,32 @@ import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
 public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
+
+    // ************ IMPORTANT!!!!!! ************
+    // Do NOT change the id values unless you fully understand the consequences.
+    // They are stored in the DB, so changing them will impact the volume type
+    // used for existing volumes, and likely break things.
+    // ************ IMPORTANT!!!!!! ************
+
+    /**
+     * Uses a posix file system that is mounted locally.
+     */
     STANDARD(0, "Standard"),
-    S3(1, "S3"),
+
+    /**
+     * The first iteration of an S3 stream store implementation.
+     * Writes all files (dat/meta/ctx/dat.idx/mf/etc) un-compressed to a temp dir, zips them up
+     * then uploads the file to S3.
+     * Reads are done by downloading the zip file from S3 to a temp dir and unzipping it.
+     */
+    S3_V1(1, "S3 v1"),
+
+    /**
+     * The second iteration of an S3 stream store implementation.
+     * Writes all the data to a temp dir. Data is compressed with zstd. Each segment is compressed
+     * as a separate zstd frame. The segment index is included at the end of the zstd file as a skippable frame.
+     * If there is sufficient data to create a dictionary, then a dictionary will be used.
+     */
     S3_V2(2, "S3 v2"),
     ;
 

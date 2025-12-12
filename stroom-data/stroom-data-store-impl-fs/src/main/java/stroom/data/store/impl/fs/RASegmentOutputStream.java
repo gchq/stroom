@@ -27,6 +27,7 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 
 /**
+ * <p>Random Access Segment Output Stream</p>
  * This class implements the {@link SegmentOutputStream} interface and
  * produces output that will be readable with a {@link stroom.data.store.api.SegmentInputStream}
  * that opens files for random access.

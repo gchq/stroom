@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.PhysicalDelete;
 import stroom.meta.shared.SimpleMeta;
@@ -45,7 +46,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -56,8 +60,10 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -78,6 +84,8 @@ public class PhysicalDeleteExecutor {
     private final ExecutorProvider executorProvider;
     private final FsFileDeleter fsFileDeleter;
     private final PathCreator pathCreator;
+
+    private final Map<FsVolumeType, AtomicBoolean> volumeTypeToHaveWarnedMap;
 
     @Inject
     PhysicalDeleteExecutor(
@@ -101,6 +109,12 @@ public class PhysicalDeleteExecutor {
         this.executorProvider = executorProvider;
         this.fsFileDeleter = fsFileDeleter;
         this.pathCreator = pathCreator;
+        this.volumeTypeToHaveWarnedMap = Collections.unmodifiableMap(new EnumMap<>(
+                Arrays.stream(FsVolumeType.values())
+                        .collect(Collectors.toMap(
+                                Function.identity(),
+                                ignored -> new AtomicBoolean(false)))));
+
     }
 
     public void exec() {
@@ -436,7 +450,8 @@ public class PhysicalDeleteExecutor {
                                 LOGGER.warn(() -> TASK_NAME + " - Unable to find any volume for " + simpleMeta);
                                 isSuccessful = true;
                             } else {
-                                switch (dataVolume.getVolume().getVolumeType()) {
+                                final FsVolumeType volumeType = dataVolume.getVolume().getVolumeType();
+                                switch (volumeType) {
                                     case STANDARD -> {
                                         final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
                                         final Path file = fileSystemStreamPathHelper.getRootPath(
@@ -459,11 +474,18 @@ public class PhysicalDeleteExecutor {
                                                         "'");
                                         }
                                     }
-                                    case S3 -> {
+                                    case S3_V1 -> {
                                         // FIXME: Add something.
+                                        warnAboutUnsupportedType(volumeType);
+                                        isSuccessful = false;
+                                    }
+                                    case S3_V2 -> {
+                                        // FIXME: Add something.
+                                        warnAboutUnsupportedType(volumeType);
                                         isSuccessful = false;
                                     }
                                     default -> {
+                                        warnAboutUnsupportedType(volumeType);
                                         isSuccessful = false;
                                     }
                                 }
@@ -481,6 +503,16 @@ public class PhysicalDeleteExecutor {
                         Thread.currentThread().interrupt();
                     }
                 });
+    }
+
+    private void warnAboutUnsupportedType(final FsVolumeType volumeType) {
+        if (volumeType != null) {
+            final AtomicBoolean haveWarned = volumeTypeToHaveWarnedMap.get(volumeType);
+            // Only warn once per run for each unsupported type
+            if (haveWarned.compareAndSet(false, true)) {
+                LOGGER.warn("{} is not currently supported for volume type {}", TASK_NAME, volumeType);
+            }
+        }
     }
 
     private void info(final Supplier<String> message) {

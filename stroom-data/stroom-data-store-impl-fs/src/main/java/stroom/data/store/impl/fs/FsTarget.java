@@ -42,6 +42,7 @@ import java.util.Objects;
 
 /**
  * A file system implementation of Target.
+ * Used by {@link stroom.data.store.impl.fs.shared.FsVolumeType#STANDARD} volumes
  */
 final class FsTarget implements InternalTarget, SegmentOutputStreamProviderFactory {
 

@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.data.store.mock;
 
 import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.impl.fs.FsTypePathDao;
+import stroom.data.store.impl.fs.InternalStreamTypeNames;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
-class MockFsTypePaths implements FsTypePathDao {
+public class MockFsTypePaths implements FsTypePathDao {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MockFsTypePaths.class);
     private static final Map<String, String> PATH_MAP = new HashMap<>();

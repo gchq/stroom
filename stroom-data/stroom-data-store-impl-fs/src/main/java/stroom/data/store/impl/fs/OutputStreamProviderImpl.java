@@ -23,6 +23,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+/**
+ * Used by {@link stroom.data.store.impl.fs.shared.FsVolumeType#STANDARD}
+ */
 public class OutputStreamProviderImpl implements OutputStreamProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OutputStreamProviderImpl.class);

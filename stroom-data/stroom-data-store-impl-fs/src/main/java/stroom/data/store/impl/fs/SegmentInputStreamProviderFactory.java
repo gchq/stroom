@@ -18,7 +18,11 @@ package stroom.data.store.impl.fs;
 
 import java.util.Set;
 
+/**
+ * Used by {@link stroom.data.store.impl.fs.shared.FsVolumeType#STANDARD} volumes
+ */
 public interface SegmentInputStreamProviderFactory {
+
     SegmentInputStreamProvider getSegmentInputStreamProvider(String streamTypeName);
 
     Set<String> getChildTypes();

@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.mock.MockFsTypePaths;
 import stroom.meta.shared.Meta;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.date.DateUtil;

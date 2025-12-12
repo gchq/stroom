@@ -25,6 +25,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
+/**
+ * Used by {@link stroom.data.store.impl.fs.shared.FsVolumeType#STANDARD} volumes
+ */
 public class SegmentOutputStreamProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SegmentOutputStreamProvider.class);

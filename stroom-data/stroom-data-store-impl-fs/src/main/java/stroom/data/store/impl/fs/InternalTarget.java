@@ -20,6 +20,9 @@ import stroom.data.store.api.Target;
 
 import java.io.OutputStream;
 
+/**
+ * Used by {@link stroom.data.store.impl.fs.shared.FsVolumeType#STANDARD} volumes
+ */
 public interface InternalTarget extends Target {
 
     OutputStream getOutputStream();

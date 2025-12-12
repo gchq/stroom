@@ -314,7 +314,7 @@ final class S3Target implements Target {
 
         @Override
         public SegmentOutputStream get(final String childStreamType) {
-            LOGGER.debug("get() - childStreamType: {}", childStreamType);
+            LOGGER.debug("get() - childStreamType: {}, dir: {}", childStreamType, dir);
             if (childStreamType == null) {
                 return get();
             }

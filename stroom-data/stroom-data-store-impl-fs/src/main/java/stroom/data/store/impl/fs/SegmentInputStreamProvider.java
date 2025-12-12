@@ -28,6 +28,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 
+/**
+ * Used by {@link stroom.data.store.impl.fs.shared.FsVolumeType#STANDARD} volumes
+ */
 public class SegmentInputStreamProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SegmentInputStreamProvider.class);

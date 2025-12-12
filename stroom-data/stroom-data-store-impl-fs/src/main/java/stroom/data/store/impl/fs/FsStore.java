@@ -27,6 +27,7 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaProperties;
@@ -35,9 +36,12 @@ import stroom.meta.shared.Meta;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.NonNull;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -85,7 +89,7 @@ class FsStore implements Store, AttributeMapFactory {
 
     @Override
     public Target openTarget(final MetaProperties metaProperties, final String volumeGroup) {
-        LOGGER.debug(() -> "openTarget() " + metaProperties);
+        LOGGER.debug("openTarget() - volumeGroup: {}, metaProperties: {}", volumeGroup, metaProperties);
 
         final FsVolume volume = volumeService.getVolume(volumeGroup);
         if (volume == null) {
@@ -97,32 +101,37 @@ class FsStore implements Store, AttributeMapFactory {
 
         // First time call (no file yet exists)
         final Meta meta = metaService.create(metaProperties);
-
         final DataVolume dataVolume = dataVolumeService.createDataVolume(meta.getId(), volume);
-        Target target = null;
-        switch (dataVolume.getVolume().getVolumeType()) {
-            case STANDARD -> {
-                final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
-                final String streamType = meta.getTypeName();
-                final FsTarget fsTarget = FsTarget.create(metaService,
-                        fileSystemStreamPathHelper,
-                        meta,
-                        volumePath,
-                        streamType);
-                // Force Creation of the files
-                fsTarget.getOutputStream();
-                target = fsTarget;
-            }
-            case S3 -> {
-                return s3Store.getTarget(dataVolume, meta);
-            }
-        }
-
+        final FsVolumeType volumeType = dataVolume.getVolume().getVolumeType();
+        final Target target = switch (volumeType) {
+            case STANDARD -> createFsTarget(dataVolume, meta);
+            case S3_V1 -> s3Store.getTarget(dataVolume, meta);
+            case S3_V2 -> throw new UnsupportedOperationException("S3v2 volume is not yet supported");
+            case null -> throw new UnsupportedOperationException(LogUtil.message(
+                    "Null volume type for metaId: {}, volumeId {}",
+                    dataVolume.getMetaId(), dataVolume.getVolume().getId()));
+        };
+        LOGGER.debug(() -> LogUtil.message("openTarget() - returning target: {}, volumeId: {}, meta: {}",
+                target.getClass(), dataVolume.getVolume().getId(), meta));
         return target;
+    }
+
+    private @NonNull Target createFsTarget(final DataVolume dataVolume, final Meta meta) {
+        final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
+        final String streamType = meta.getTypeName();
+        final FsTarget fsTarget = FsTarget.create(metaService,
+                fileSystemStreamPathHelper,
+                meta,
+                volumePath,
+                streamType);
+        // Force Creation of the files
+        fsTarget.getOutputStream();
+        return fsTarget;
     }
 
     @Override
     public void deleteTarget(final Target target) {
+        LOGGER.debug(() -> LogUtil.message("deleteTarget() - target: {}", LogUtil.typedValue(target)));
         // Make sure the stream is closed.
         try {
             if (target instanceof final FsTarget fsTarget) {
@@ -167,7 +176,7 @@ class FsStore implements Store, AttributeMapFactory {
     @Override
     public Source openSource(final long streamId, final boolean anyStatus) throws DataException {
         try {
-            LOGGER.debug(() -> "openSource() " + streamId);
+            LOGGER.debug("openSource() - streamId: {}", streamId);
 
             final Meta meta = metaService.getMeta(streamId, anyStatus);
             if (meta == null) {
@@ -183,15 +192,19 @@ class FsStore implements Store, AttributeMapFactory {
                 throw new DataException("Unable to find any volume for " + meta);
             }
 
-            Source source = null;
-            switch (dataVolume.getVolume().getVolumeType()) {
+            final FsVolume volume = dataVolume.getVolume();
+            final FsVolumeType volumeType = volume.getVolumeType();
+            final Source source = switch (volumeType) {
                 case STANDARD -> {
                     final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
-                    source = FsSource.create(fileSystemStreamPathHelper, meta, volumePath, meta.getTypeName());
+                    yield FsSource.create(fileSystemStreamPathHelper, meta, volumePath, meta.getTypeName());
                 }
-                case S3 -> source = s3Store.getSource(dataVolume, meta);
-            }
-
+                case S3_V1 -> s3Store.getSource(dataVolume, meta);
+                case S3_V2 -> throw new UnsupportedOperationException("S3v2 volume is not yet supported");
+                case null -> throw new UnsupportedOperationException("Null volume type for metaId: " + meta.getId());
+            };
+            LOGGER.debug(() -> LogUtil.message("openSource() - returning target: {}, volumeId: {}, meta: {}",
+                    source.getClass(), dataVolume.getVolume().getId(), meta));
             return source;
         } catch (final DataException e) {
             LOGGER.debug(e::getMessage, e);
@@ -202,9 +215,7 @@ class FsStore implements Store, AttributeMapFactory {
     @Override
     public Map<String, String> getAttributes(final long metaId) {
         try (final Source source = openSource(metaId, true)) {
-            return source != null
-                    ? source.getAttributes()
-                    : Collections.emptyMap();
+            return NullSafe.getOrElseGet(source, Source::getAttributes, Collections::emptyMap);
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -235,5 +246,4 @@ class FsStore implements Store, AttributeMapFactory {
             throw new UncheckedIOException(e);
         }
     }
-
 }

@@ -28,6 +28,7 @@ import stroom.meta.shared.Meta;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -228,6 +229,8 @@ final class S3Source implements Source {
 
     private static class S3InputStreamProvider implements InputStreamProvider {
 
+        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3InputStreamProvider.class);
+
         private final Path dir;
         private final String partString;
         private final List<SegmentInputStream> segmentInputStreams = new ArrayList<>();
@@ -235,7 +238,9 @@ final class S3Source implements Source {
 
         public S3InputStreamProvider(final Path dir, final long partNo) {
             this.dir = dir;
-            partString = FsPrefixUtil.padId(partNo);
+            this.partString = FsPrefixUtil.padId(partNo);
+            LOGGER.debug(() -> LogUtil.message("ctor() - dir: {}, partNo: {}, partString: {}",
+                    dir, partNo, partString));
         }
 
         @Override
@@ -243,12 +248,14 @@ final class S3Source implements Source {
             if (dataStream != null) {
                 throw new RuntimeException("Unexpected get");
             }
+            LOGGER.debug("get()");
             dataStream = create(S3FileExtensions.DATA_EXTENSION);
             return dataStream;
         }
 
         @Override
         public SegmentInputStream get(final String childStreamType) {
+            LOGGER.debug("get() - childStreamType: {}, dir: {}", childStreamType, dir);
             if (childStreamType == null) {
                 return get();
             }
@@ -263,6 +270,7 @@ final class S3Source implements Source {
                 final String fileName = partString + extension;
                 final Path dataFile = dir.resolve(fileName);
                 final Path indexFile = dir.resolve(fileName + S3FileExtensions.INDEX_EXTENSION);
+                LOGGER.debug("create() - dataFile: {}, indexFile: {}", dataFile, indexFile);
                 final InputStream inputStream = new UncompressedInputStream(dataFile, false);
                 final InputStream indexStream = new UncompressedInputStream(indexFile, true);
                 final SegmentInputStream segmentInputStream = new RASegmentInputStream(inputStream, indexStream);

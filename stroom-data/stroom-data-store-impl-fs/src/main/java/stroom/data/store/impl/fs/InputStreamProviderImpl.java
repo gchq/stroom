@@ -25,6 +25,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
+/**
+ * Used by {@link stroom.data.store.impl.fs.shared.FsVolumeType#STANDARD} volumes
+ */
 public class InputStreamProviderImpl implements InputStreamProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InputStreamProviderImpl.class);
