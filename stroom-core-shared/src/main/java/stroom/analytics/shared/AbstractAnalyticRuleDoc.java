@@ -39,7 +39,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     @JsonProperty
     private final String description;
     @JsonProperty
-    private boolean includeRuleDocumentation;
+    private final boolean includeRuleDocumentation;
     @JsonProperty
     private final QueryLanguageVersion languageVersion;
     @JsonProperty
@@ -68,7 +68,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     @JsonProperty
     private final DuplicateNotificationConfig duplicateNotificationConfig;
 
-    static final boolean includeRuleDocumentationDefaultValue = true;
+    static final boolean INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE = true;
 
     @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
@@ -260,7 +260,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
             extends AbstractBuilder<T, B> {
 
         String description;
-        boolean includeRuleDocumentation = includeRuleDocumentationDefaultValue;
+        boolean includeRuleDocumentation = INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE;
         QueryLanguageVersion languageVersion;
         List<Param> parameters;
         TimeRange timeRange;
