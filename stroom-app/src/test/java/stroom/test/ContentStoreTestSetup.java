@@ -27,7 +27,15 @@ import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -82,32 +90,96 @@ public class ContentStoreTestSetup {
         this.contentStoreResourceProvider = contentStoreResourceProvider;
     }
 
+    private Path cacheGitRepo(final String gitRepoUrl) throws IOException {
+        try {
+            // Derive the local repo path from the URL
+            final URI uri = new URI(gitRepoUrl);
+            String localName = uri.getPath();
+            final int iDot = localName.lastIndexOf('.');
+            if (iDot != -1) {
+                localName = localName.substring(0, iDot);
+            }
+
+            final Path repoPath = Path.of("../content-cache", localName).toAbsolutePath();
+
+            // Ensure directories exist
+            Files.createDirectories(repoPath);
+            final Path realRepoPath = repoPath.toRealPath();
+
+            // Do we already have a git repo?
+            final String[] repoContents = repoPath.toFile().list();
+            if (repoContents != null && repoContents.length > 0) {
+                // Update repo
+                try (final Git git = Git.open(repoPath.toFile())) {
+                    git.fetch().call();
+                }
+            } else {
+                // Clone repo to filesystem. Note bare as new repo is used as a remote repo.
+                final CloneCommand cloneCommand = Git.cloneRepository()
+                        .setURI(gitRepoUrl)
+                        .setDirectory(repoPath.toFile())
+                        .setCloneAllBranches(true)
+                        .setBare(false);
+
+                //noinspection EmptyTryBlock
+                try (@SuppressWarnings("unused") final Git git = cloneCommand.call()) {
+                    // No code
+                }
+            }
+
+            return realRepoPath;
+
+        } catch (final URISyntaxException e) {
+            throw new IOException("Invalid remote GitRepo URI: " + e.getMessage(), e);
+        } catch (final IOException e) {
+            throw new IOException("IO error caching remote GIT repo: " + e.getMessage(), e);
+        } catch (final GitAPIException e) {
+            throw new IOException("GIT error caching remote GIT repo: " + e.getMessage(), e);
+        }
+
+    }
+
     /**
      * Load the content store, if necessary.
      * Cannot be called from injected constructor.
      */
-    private synchronized void cacheContentStore() {
+    private synchronized void cacheContentStore() throws RuntimeException {
         if (contentStoreContents == null) {
+            try {
+                // Find local repository - create if necessary
+                final String contentRepo = "https://github.com/gchq/stroom-content.git";
+                final String visRepo = "https://github.com/gchq/stroom-visualisations-dev.git";
+                final Path localContentRepo = cacheGitRepo(contentRepo);
+                final Path localVisRepo = cacheGitRepo(visRepo);
 
-            // Hack to force the content store config to use our content store config file
-            contentStoreResource = contentStoreResourceProvider.get();
-            contentStoreResource.addTestUriContentStoreUrl(
-                    "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/content-store.yml");
-            contentStoreResource.addTestUriContentStoreUrl(
-                    "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/sample-source/content-store.yml");
+                final String contentStoreFileUrl = "file://" + localContentRepo.resolve("source/content-store.yml");
 
-            // Get all the items in one go
-            final PageRequest pageRequest = new PageRequest(0, Integer.MAX_VALUE);
-            final ResultPage<ContentStoreContentPackWithDynamicState> page =
-                    contentStoreResource.list(pageRequest);
+                // Hack to force the content store config to use our content store config file
+                contentStoreResource = contentStoreResourceProvider.get();
+                contentStoreResource.addTestUriContentStoreUrl(contentStoreFileUrl);
 
-            contentStoreContents = page.stream().toList();
+                // Tell the content pack to get from our local GIT repo instead of the https version
+                contentStoreResource.remapGitUrl("https://github.com/gchq/stroom-content.git",
+                        "file://" + localContentRepo);
+                contentStoreResource.remapGitUrl("https://github.com/gchq/stroom-visualisations-dev.git",
+                        "file://" + localVisRepo);
 
-            // List out all the IDs so we can install them if necessary
-            for (final ContentStoreContentPackWithDynamicState cpds : contentStoreContents) {
-                samplePackIds.add(cpds.getContentPack().getId());
+                // Get all the items in one go
+                final PageRequest pageRequest = new PageRequest(0, Integer.MAX_VALUE);
+                final ResultPage<ContentStoreContentPackWithDynamicState> page =
+                        contentStoreResource.list(pageRequest);
+
+                contentStoreContents = page.stream().toList();
+
+                // List out all the IDs so we can install them if necessary
+                for (final ContentStoreContentPackWithDynamicState cpds : contentStoreContents) {
+                    samplePackIds.add(cpds.getContentPack().getId());
+                }
+            } catch (final IOException e) {
+                throw new RuntimeException("Error caching content store: " + e.getMessage(), e);
             }
         }
+
     }
 
     /**
@@ -118,7 +190,6 @@ public class ContentStoreTestSetup {
      */
     public void install(final String contentPackId) throws RuntimeException {
         this.cacheContentStore();
-
         // Find the content pack
         ContentStoreContentPack contentPack = null;
         for (final ContentStoreContentPackWithDynamicState contentPackWithDynamicState : this.contentStoreContents) {
