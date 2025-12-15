@@ -91,6 +91,7 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
                     errorFeedPresenter.setSelectedEntityReference(selectedDocRef, true);
                 }
                 notificationList.read(docRef, analyticRuleDoc, readOnly);
+                getView().setIncludeRuleDocumentation(analyticRuleDoc.isIncludeRuleDocumentation());
             }
         }, this);
     }

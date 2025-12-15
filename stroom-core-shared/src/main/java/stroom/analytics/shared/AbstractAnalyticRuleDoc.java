@@ -41,6 +41,8 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     @JsonProperty
     private final String description;
     @JsonProperty
+    private final boolean includeRuleDocumentation;
+    @JsonProperty
     private final QueryLanguageVersion languageVersion;
     @JsonProperty
     private final List<Param> parameters;
@@ -68,6 +70,8 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     @JsonProperty
     private final DuplicateNotificationConfig duplicateNotificationConfig;
 
+    static final boolean INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE = true;
+
     @JsonCreator
     @SuppressWarnings("checkstyle:linelength")
     public AbstractAnalyticRuleDoc(@JsonProperty("type") final String type,
@@ -79,6 +83,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                                    @JsonProperty("createUser") final String createUser,
                                    @JsonProperty("updateUser") final String updateUser,
                                    @JsonProperty("description") final String description,
+                                   @JsonProperty("includeRuleDocumentation") final Boolean includeRuleDocumentation,
                                    @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
                                    @JsonProperty("parameters") final List<Param> parameters,
                                    @JsonProperty("timeRange") final TimeRange timeRange,
@@ -93,6 +98,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                                    @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = NullSafe.string(description);
+        this.includeRuleDocumentation = includeRuleDocumentation;
         this.languageVersion = NullSafe.requireNonNullElse(languageVersion, QueryLanguageVersion.STROOM_QL_VERSION_0_1);
         this.parameters = parameters;
         this.timeRange = NullSafe.requireNonNullElse(timeRange, TimeRanges.ALL_TIME);
@@ -120,6 +126,14 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
     public String getDescription() {
         return description;
+    }
+
+    /**
+     * The includeRuleDocumentation field determines whether a rule's documentation will be included in any detections that it produces.
+     * @return boolean value of includeRuleDocumentation
+     */
+    public boolean isIncludeRuleDocumentation() {
+        return includeRuleDocumentation;
     }
 
     public QueryLanguageVersion getLanguageVersion() {
@@ -234,6 +248,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
             extends AbstractBuilder<T, B> {
 
         String description;
+        boolean includeRuleDocumentation = INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE;
         QueryLanguageVersion languageVersion;
         List<Param> parameters;
         TimeRange timeRange;
@@ -252,6 +267,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
         public AbstractAnalyticRuleDocBuilder(final AbstractAnalyticRuleDoc doc) {
             super(doc);
             this.description = doc.description;
+            this.includeRuleDocumentation = doc.includeRuleDocumentation;
             this.languageVersion = doc.languageVersion;
             this.parameters = doc.parameters;
             this.timeRange = doc.timeRange;
@@ -310,6 +326,11 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
         public B duplicateNotificationConfig(final DuplicateNotificationConfig duplicateNotificationConfig) {
             this.duplicateNotificationConfig = duplicateNotificationConfig;
+            return self();
+        }
+
+        public B includeRuleDocumentation(final boolean includeRuleDocumentation) {
+            this.includeRuleDocumentation = includeRuleDocumentation;
             return self();
         }
     }
