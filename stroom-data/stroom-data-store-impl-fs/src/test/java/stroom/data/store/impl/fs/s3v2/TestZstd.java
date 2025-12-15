@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.aws.s3.impl;
+package stroom.data.store.impl.fs.s3v2;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.util.logging.LambdaLogger;
@@ -35,7 +35,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -59,6 +58,8 @@ public class TestZstd {
 
     private final byte[] fourByteArray = new byte[Integer.BYTES];
     private final ByteBuffer fourByteBuffer = ByteBuffer.wrap(fourByteArray);
+    private final byte[] eightByteArray = new byte[Long.BYTES];
+    private final ByteBuffer eightByteBuffer = ByteBuffer.wrap(eightByteArray);
 
     @Test
     void test(@TempDir final Path dir) throws IOException {
@@ -104,7 +105,7 @@ public class TestZstd {
             final ByteBuffer compressedBuffer = ByteBuffer.allocateDirect(compressedBytes.length);
             ByteBufferUtils.copy(ByteBuffer.wrap(compressedBytes), compressedBuffer);
 
-            assertThat(isSeekable(compressedBuffer))
+            assertThat(SegmentedZstdUtil.isSeekable(compressedBuffer))
                     .isTrue();
 
             // Try and retrieve each event individually and check it matches what we expect
@@ -201,7 +202,7 @@ public class TestZstd {
         // <4 byte magic number><4 byte size of payload (LE)><payload>
         // See https://github.com/facebook/zstd/blob/release/doc/zstd_compression_format.md#skippable-frames
 
-        final long payloadSize = FrameInfo.calculatePayloadSize(frameInfoList.size(), false);
+        final long payloadSize = SegmentedZstdUtil.calculateFramePayloadSize(frameInfoList.size());
 
         // Write the skippable frame header
 
@@ -214,8 +215,8 @@ public class TestZstd {
 
         // Write one entry describing each frame
         for (final FrameInfo frameInfo : frameInfoList) {
-            writeLEInteger(frameInfo.cumulativeCompressedSize, outputStream);
-            writeLEInteger(frameInfo.uncompressedSize, outputStream);
+            writeLELong(frameInfo.cumulativeCompressedSize(), outputStream);
+            writeLELong(frameInfo.uncompressedSize(), outputStream);
         }
 
         // write the footer
@@ -226,15 +227,15 @@ public class TestZstd {
         outputStream.write((byte) 0);
         // Seekable magic number, so we can look at the last 4 bytes of a zst file and determine
         // that it is seekable
-        outputStream.write(FrameInfo.SEEKABLE_MAGIC_NUMBER);
+        outputStream.write(ZstdConstants.SEEKABLE_MAGIC_NUMBER);
     }
 
     private void writeLEInteger(final long val, final OutputStream outputStream) throws IOException {
-        fourByteBuffer.clear();
-        fourByteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        putUnsignedInt(fourByteBuffer, val);
-        fourByteBuffer.flip();
-        outputStream.write(fourByteBuffer.array());
+        SegmentedZstdUtil.writeLEInteger(val, fourByteBuffer, outputStream);
+    }
+
+    private void writeLELong(final long val, final OutputStream outputStream) throws IOException {
+        SegmentedZstdUtil.writeLELong(val, eightByteBuffer, outputStream);
     }
 
 //    public static long getUnsignedInt(final ByteBuffer byteBuffer) {
@@ -243,15 +244,15 @@ public class TestZstd {
 //        return ((long) slice.getInt() & 0xFFFFFFFFL);
 //    }
 
-    public static long getUnsignedInt(final ByteBuffer byteBuffer, final int index) {
-        final ByteBuffer slice = byteBuffer.slice(index, Integer.BYTES)
-                .order(ByteOrder.LITTLE_ENDIAN);
-        return ((long) slice.getInt(0) & 0xFFFFFFFFL);
-    }
-
-    public static void putUnsignedInt(final ByteBuffer byteBuffer, final long value) {
-        byteBuffer.putInt((int) (value & 0xFFFFFFFFL));
-    }
+//    public static long getUnsignedInt(final ByteBuffer byteBuffer, final int index) {
+//        final ByteBuffer slice = byteBuffer.slice(index, Integer.BYTES)
+//                .order(ByteOrder.LITTLE_ENDIAN);
+//        return ((long) slice.getInt(0) & 0xFFFFFFFFL);
+//    }
+//
+//    public static void putUnsignedInt(final ByteBuffer byteBuffer, final long value) {
+//        byteBuffer.putInt((int) (value & 0xFFFFFFFFL));
+//    }
 
 //    private String getQuote(final ByteBuffer compressedBuffer,
 //                            final long[] cumulativeCompressedSizes,
@@ -291,18 +292,18 @@ public class TestZstd {
 //    }
 
     private String getEvent(final ByteBuffer compressedBuffer,
-                            final int eventIdx,
+                            final int frameIdx,
                             final ZstdDecompressCtx zstdDecompressCtx,
                             final ByteBuffer decompressedBuffer) {
 
-        final FrameLocation frameLocation = getFrameLocation(compressedBuffer, eventIdx);
-        final long compressedIdx = frameLocation.index;
-        final int compressedLen = frameLocation.len;
-        final long originalSize = frameLocation.originalSize;
+        final FrameLocation frameLocation = SegmentedZstdUtil.getFrameLocation(compressedBuffer, frameIdx);
+        final long compressedIdx = frameLocation.position();
+        final long compressedLen = frameLocation.compressedSize();
+        final long originalSize = frameLocation.originalSize();
 
         LOGGER.debug("getQuote() - eventIdx: {}, compressedIdx: {}, compressedLen: {}, originalSize: {}",
-                eventIdx, compressedIdx, compressedLen, originalSize);
-        final ByteBuffer frameBuffer = compressedBuffer.slice((int) compressedIdx, compressedLen);
+                frameIdx, compressedIdx, compressedLen, originalSize);
+        final ByteBuffer frameBuffer = compressedBuffer.slice((int) compressedIdx, (int) compressedLen);
         final ByteBuffer outputBuffer = decompressedBuffer.slice(0, (int) originalSize);
 
         zstdDecompressCtx.decompress(outputBuffer, frameBuffer);
@@ -311,76 +312,76 @@ public class TestZstd {
         return StandardCharsets.UTF_8.decode(outputBuffer).toString();
     }
 
-    private boolean isSeekable(final ByteBuffer compressedBuffer) {
-        // Includes the skippable frame
-        final int totalCompressedSize = compressedBuffer.capacity();
-        final int len = FrameInfo.SEEKABLE_MAGIC_NUMBER.length;
-        return ByteBufferUtils.equals(
-                compressedBuffer,
-                totalCompressedSize - len,
-                FrameInfo.SEEKABLE_MAGIC_NUMBER_BUFFER,
-                0,
-                len);
-    }
+//    private boolean isSeekable(final ByteBuffer compressedBuffer) {
+//        // Includes the skippable frame
+//        final int totalCompressedSize = compressedBuffer.capacity();
+//        final int len = ZstdConstants.SEEKABLE_MAGIC_NUMBER.length;
+//        return ByteBufferUtils.equals(
+//                compressedBuffer,
+//                totalCompressedSize - len,
+//                ZstdConstants.SEEKABLE_MAGIC_NUMBER_BUFFER,
+//                0,
+//                len);
+//    }
 
-    private int getFrameCount(final ByteBuffer compressedBuffer) {
-        // Includes the skippable frame
-        final int frameCountIdx = compressedBuffer.capacity()
-                                  - FrameInfo.SEEKABLE_MAGIC_NUMBER.length
-                                  - 1 // bitfield
-                                  - Integer.BYTES;
+//    private int getFrameCount(final ByteBuffer compressedBuffer) {
+//        // Includes the skippable frame
+//        final int frameCountIdx = compressedBuffer.capacity()
+//                                  - ZstdConstants.SEEKABLE_MAGIC_NUMBER.length
+//                                  - 1 // bitfield
+//                                  - Integer.BYTES;
+//
+//        final long frameCount = getUnsignedInt(compressedBuffer, frameCountIdx);
+//        return (int) frameCount;
+//    }
 
-        final long frameCount = getUnsignedInt(compressedBuffer, frameCountIdx);
-        return (int) frameCount;
-    }
+//    private FrameLocation getFrameLocation(final ByteBuffer compressedBuffer, final int frameIdx) {
+//        final int frameCount = getFrameCount(compressedBuffer);
+//        final long entryIdx = getSeekTableEntryIndex(compressedBuffer, frameIdx, frameCount);
+//        final FrameInfo frameInfo = getFrameInfo(compressedBuffer, frameIdx, entryIdx);
+//
+//        if (frameIdx == 0) {
+//            return new FrameLocation(
+//                    0L,
+//                    (int) frameInfo.cumulativeCompressedSize,
+//                    frameInfo.uncompressedSize());
+//        } else {
+//            final int prevFrameIdx = frameIdx - 1;
+//            final long prevEntryIdx = getSeekTableEntryIndex(compressedBuffer, prevFrameIdx, frameCount);
+//            final FrameInfo prevFrameInfo = getFrameInfo(compressedBuffer, prevFrameIdx, prevEntryIdx);
+//            return new FrameLocation(
+//                    prevFrameInfo.cumulativeCompressedSize,
+//                    (int) (frameInfo.cumulativeCompressedSize - prevFrameInfo.cumulativeCompressedSize),
+//                    frameInfo.uncompressedSize);
+//        }
+//    }
 
-    private FrameLocation getFrameLocation(final ByteBuffer compressedBuffer, final int frameIdx) {
-        final int frameCount = getFrameCount(compressedBuffer);
-        final long entryIdx = getSeekTableEntryIndex(compressedBuffer, frameIdx, frameCount);
-        final FrameInfo frameInfo = getFrameInfo(compressedBuffer, frameIdx, entryIdx);
+//    private FrameInfo getFrameInfo(final ByteBuffer byteBuffer,
+//                                   final int frameIdx,
+//                                   final long entryIdx) {
+//        return new FrameInfo(
+//                frameIdx,
+//                SegmentedZstdUtil.getUnsignedInt(byteBuffer, (int) entryIdx),
+//                (int) SegmentedZstdUtil.getUnsignedInt(byteBuffer, (int) entryIdx + Integer.BYTES));
+//    }
 
-        if (frameIdx == 0) {
-            return new FrameLocation(
-                    0L,
-                    (int) frameInfo.cumulativeCompressedSize,
-                    frameInfo.uncompressedSize());
-        } else {
-            final int prevFrameIdx = frameIdx - 1;
-            final long prevEntryIdx = getSeekTableEntryIndex(compressedBuffer, prevFrameIdx, frameCount);
-            final FrameInfo prevFrameInfo = getFrameInfo(compressedBuffer, prevFrameIdx, prevEntryIdx);
-            return new FrameLocation(
-                    prevFrameInfo.cumulativeCompressedSize,
-                    (int) (frameInfo.cumulativeCompressedSize - prevFrameInfo.cumulativeCompressedSize),
-                    frameInfo.uncompressedSize);
-        }
-    }
-
-    private FrameInfo getFrameInfo(final ByteBuffer byteBuffer,
-                                   final int frameIdx,
-                                   final long entryIdx) {
-        return new FrameInfo(
-                frameIdx,
-                getUnsignedInt(byteBuffer, (int) entryIdx),
-                (int) getUnsignedInt(byteBuffer, (int) entryIdx + Integer.BYTES));
-    }
-
-    private long getSeekTableEntryIndex(final ByteBuffer compressedBuffer,
-                                        final int frameIdx,
-                                        final int frameCount) {
-        // C == cumulativeCompressedSize
-        // U == uncompressedSize
-        // F == frameCount    \
-        // B == bitfield      | - Footer
-        // M == magic number  /
-        // Frames:                 0       1       2       3       4       5
-        // ........................CCCCUUUUCCCCUUUUCCCCUUUUCCCCUUUUCCCCUUUUCCCCUUUUFFFFBMMMM
-        // 012345678901234567890123456789012345678901234567890123456789012345678901234567890
-        // 0         1         2         3         4         5         6         7         8
-
-        return compressedBuffer.capacity()
-               - FrameInfo.FOOTER_BYTES
-               - ((frameCount - frameIdx) * (long) FrameInfo.getEntrySize(false));
-    }
+//    private long getSeekTableEntryIndex(final ByteBuffer compressedBuffer,
+//                                        final int frameIdx,
+//                                        final int frameCount) {
+//        // C == cumulativeCompressedSize
+//        // U == uncompressedSize
+//        // F == frameCount    \
+//        // B == bitfield      | - Footer
+//        // M == magic number  /
+//        // Frames:                 0       1       2       3       4       5
+//        // ........................CCCCUUUUCCCCUUUUCCCCUUUUCCCCUUUUCCCCUUUUCCCCUUUUFFFFBMMMM
+//        // 012345678901234567890123456789012345678901234567890123456789012345678901234567890
+//        // 0         1         2         3         4         5         6         7         8
+//
+//        return compressedBuffer.capacity()
+//               - ZstdConstants.SEEKABLE_FOOTER_BYTES
+//               - ((frameCount - frameIdx) * (long) ZstdConstants.SEEK_TABLE_ENTRY_BYTES);
+//    }
 
 
     // --------------------------------------------------------------------------------
@@ -393,40 +394,40 @@ public class TestZstd {
 
     // --------------------------------------------------------------------------------
 
-    private record FrameLocation(long index, int len, int originalSize) {
-
-    }
+//    private record FrameLocation(long index, int len, int originalSize) {
+//
+//    }
 
 
     // --------------------------------------------------------------------------------
 
 
-    private record FrameInfo(int frameIdx,
-                             long cumulativeCompressedSize, // long so we can serialise as unsigned int
-                             int uncompressedSize) {
-
-        // See https://github.com/facebook/zstd/blob/dev/contrib/seekable_format/zstd_seekable_compression_format.md
-        public static final byte[] SEEKABLE_MAGIC_NUMBER = new byte[]{
-                (byte) 0xB1, (byte) 0xEA, (byte) 0x92, (byte) 0x8F};
-        public static final ByteBuffer SEEKABLE_MAGIC_NUMBER_BUFFER = ByteBuffer.wrap(SEEKABLE_MAGIC_NUMBER);
-        // TODO is an int big enough. An unsigned int gives us a max compressed file of 4.2Gb
-        // <4b frame count LE><1b table descriptor><4b seekable magic number LE>
-        public static int FOOTER_BYTES = 9;
-
-        public static int getEntrySize(final boolean useChecksums) {
-            int entryBytes = Integer.BYTES + Integer.BYTES;
-            if (useChecksums) {
-                entryBytes += Integer.BYTES;
-            }
-            return entryBytes;
-        }
-
-        public static int calculatePayloadSize(final int frameCount,
-                                               final boolean useChecksums) {
-            final int entryBytes = getEntrySize(useChecksums);
-            return (entryBytes * frameCount) + FOOTER_BYTES;
-        }
-    }
+//    private record FrameInfo(int frameIdx,
+//                             long cumulativeCompressedSize, // long so we can serialise as unsigned int
+//                             int uncompressedSize) {
+//
+//        // See https://github.com/facebook/zstd/blob/dev/contrib/seekable_format/zstd_seekable_compression_format.md
+//        public static final byte[] SEEKABLE_MAGIC_NUMBER = new byte[]{
+//                (byte) 0xB1, (byte) 0xEA, (byte) 0x92, (byte) 0x8F};
+//        public static final ByteBuffer SEEKABLE_MAGIC_NUMBER_BUFFER = ByteBuffer.wrap(SEEKABLE_MAGIC_NUMBER);
+//        // TODO is an int big enough. An unsigned int gives us a max compressed file of 4.2Gb
+//        // <4b frame count LE><1b table descriptor><4b seekable magic number LE>
+//        public static int FOOTER_BYTES = 9;
+//
+//        public static int getEntrySize(final boolean useChecksums) {
+//            int entryBytes = Integer.BYTES + Integer.BYTES;
+//            if (useChecksums) {
+//                entryBytes += Integer.BYTES;
+//            }
+//            return entryBytes;
+//        }
+//
+//        public static int calculatePayloadSize(final int frameCount,
+//                                               final boolean useChecksums) {
+//            final int entryBytes = getEntrySize(useChecksums);
+//            return (entryBytes * frameCount) + FOOTER_BYTES;
+//        }
+//    }
 
 //    @Test
 //    void name() {

@@ -18,6 +18,7 @@ ext.moduleName = 'stroom.data.store.impl.fs'
 
 dependencies {
     implementation project(':stroom-aws:stroom-aws-s3-impl')
+    implementation project(':stroom-bytebuffer')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
@@ -51,11 +52,13 @@ dependencies {
     implementation libs.restygwt
     implementation libs.slf4j.api
     implementation libs.vavr
+    implementation libs.zstd.jni
 
     testImplementation project(':stroom-data:stroom-data-store-mock')
     testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.bundles.common.test.implementation
+    testImplementation libs.data.faker
     testRuntimeOnly libs.bundles.common.test.runtime
 }
