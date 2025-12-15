@@ -39,7 +39,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     @JsonProperty
     private final String description;
     @JsonProperty
-    private final Boolean includeRuleDocumentation;
+    private boolean includeRuleDocumentation;
     @JsonProperty
     private final QueryLanguageVersion languageVersion;
     @JsonProperty
@@ -68,6 +68,8 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     @JsonProperty
     private final DuplicateNotificationConfig duplicateNotificationConfig;
 
+    static final boolean includeRuleDocumentationDefaultValue = true;
+
     @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
     public AbstractAnalyticRuleDoc(@JsonProperty("type") final String type,
@@ -79,7 +81,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                                    @JsonProperty("createUser") final String createUser,
                                    @JsonProperty("updateUser") final String updateUser,
                                    @JsonProperty("description") final String description,
-                                   @JsonProperty("includeRuleDocumentation") final boolean includeRuleDocumentation,
+                                   @JsonProperty("includeRuleDocumentation") final Boolean includeRuleDocumentation,
                                    @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
                                    @JsonProperty("parameters") final List<Param> parameters,
                                    @JsonProperty("timeRange") final TimeRange timeRange,
@@ -93,7 +95,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                                    @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
                                    @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
-        System.out.println(includeRuleDocumentation);
         this.description = description;
         this.includeRuleDocumentation = includeRuleDocumentation;
         this.languageVersion = languageVersion;
@@ -129,8 +130,12 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
         return description;
     }
 
-    public Boolean getIncludeRuleDocumentation() {
-        return includeRuleDocumentation == null ? true : includeRuleDocumentation;
+    /**
+     * The includeRuleDocumentation field determines whether a rule's documentation will be included in any detections that it produces.
+     * @return boolean value of includeRuleDocumentation
+     */
+    public boolean isIncludeRuleDocumentation() {
+        return includeRuleDocumentation;
     }
 
     public QueryLanguageVersion getLanguageVersion() {
@@ -255,7 +260,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
             extends AbstractBuilder<T, B> {
 
         String description;
-        boolean includeRuleDocumentation = true;
+        boolean includeRuleDocumentation = includeRuleDocumentationDefaultValue;
         QueryLanguageVersion languageVersion;
         List<Param> parameters;
         TimeRange timeRange;

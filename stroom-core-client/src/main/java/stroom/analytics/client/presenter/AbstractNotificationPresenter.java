@@ -17,10 +17,8 @@
 package stroom.analytics.client.presenter;
 
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
-import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.ReportDoc;
-import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -94,7 +92,7 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
                     errorFeedPresenter.setSelectedEntityReference(selectedDocRef, true);
                 }
                 notificationList.onRead(docRef, analyticRuleDoc, readOnly);
-                getView().setIncludeRuleDocumentation(analyticRuleDoc.getIncludeRuleDocumentation());
+                getView().setIncludeRuleDocumentation(analyticRuleDoc.isIncludeRuleDocumentation());
             }
         }, this);
     }

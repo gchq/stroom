@@ -19,18 +19,15 @@ package stroom.analytics.client.presenter;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
-import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
-import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
-import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -91,9 +88,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
                 final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
-                final AnalyticProcessType analyticProcessType = analyticRuleDoc.getAnalyticProcessType() == null
-                        ? AnalyticProcessType.SCHEDULED_QUERY
-                        : analyticRuleDoc.getAnalyticProcessType();
+                final AnalyticProcessType analyticProcessType = NullSafe.requireNonNullElse(analyticRuleDoc.getAnalyticProcessType(), AnalyticProcessType.SCHEDULED_QUERY);
                 setProcessType(analyticProcessType);
 
                 if (AnalyticProcessType.SCHEDULED_QUERY.equals(analyticProcessType)) {

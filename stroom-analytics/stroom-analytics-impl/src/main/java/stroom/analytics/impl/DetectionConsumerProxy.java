@@ -234,7 +234,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
                 .withDetectorName(analyticRuleDoc.getName())
                 .withDetectorUuid(analyticRuleDoc.getUuid())
                 .withDetectorVersion(analyticRuleDoc.getVersion())
-                .withDetailedDescription(analyticRuleDoc.getIncludeRuleDocumentation()
+                .withDetailedDescription(analyticRuleDoc.isIncludeRuleDocumentation()
                         ? analyticRuleDoc.getDescription()
                         : null)
                 .withRandomDetectionUniqueId()

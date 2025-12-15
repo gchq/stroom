@@ -12,7 +12,7 @@
             </form:FormGroup>
 
             <!-- includeRuleDocumentation determines whether the rule's documentation will be visible in detections produced by that rule. -->
-            <form:FormGroup identity="includeRuleDocumentation" label="Include Rule Documentation">
+            <form:FormGroup identity="includeRuleDocumentation" label="Include Rule Documentation" helpText="Determines if the rule's documentation will be included in any detections that it produces.">
                 <tickbox:CustomCheckBox ui:field="includeRuleDocumentation"/>
             </form:FormGroup>
         </g:FlowPanel>
