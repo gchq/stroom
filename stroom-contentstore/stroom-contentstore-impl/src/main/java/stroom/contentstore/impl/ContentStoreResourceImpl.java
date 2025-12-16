@@ -230,11 +230,12 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
                     contentPacksWithState.add(cpWithState);
 
                     // If testing then override the gitUrl value to point elsewhere
+                    // This allows us to use a file: git repo as a cache to speed things up
                     if (overrideGitUrls != null) {
                         final String gitUrl = contentPack.getGitUrl();
                         final String overrideGitUrl = overrideGitUrls.get(gitUrl);
                         if (overrideGitUrl != null) {
-                            LOGGER.info("================= Overriding {} with {} ====================",
+                            LOGGER.info("Overriding GitURL '{}' with '{}'",
                                     gitUrl,
                                     overrideGitUrl);
                             contentPack.overrideGitUrl(overrideGitUrl);
