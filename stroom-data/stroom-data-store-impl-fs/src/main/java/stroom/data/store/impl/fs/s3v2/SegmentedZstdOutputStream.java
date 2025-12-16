@@ -16,7 +16,6 @@
 
 package stroom.data.store.impl.fs.s3v2;
 
-
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.util.io.NoCloseOutputStream;
 import stroom.util.logging.LambdaLogger;
@@ -242,27 +241,21 @@ public class SegmentedZstdOutputStream extends SegmentOutputStream {
 
     @Override
     public void write(final byte @NonNull [] b, final int off, final int len) throws IOException {
-        if (zstdOutputStream == null) {
-            zstdOutputStream = createZstdOutputStream();
-        }
+        zstdOutputStream = Objects.requireNonNullElseGet(zstdOutputStream, this::createZstdOutputStream);
         zstdOutputStream.write(b, off, len);
         position += len;
     }
 
     @Override
     public void write(final byte @NonNull [] b) throws IOException {
-        if (zstdOutputStream == null) {
-            zstdOutputStream = createZstdOutputStream();
-        }
+        zstdOutputStream = Objects.requireNonNullElseGet(zstdOutputStream, this::createZstdOutputStream);
         zstdOutputStream.write(b);
         position += b.length;
     }
 
     @Override
     public void write(final int b) throws IOException {
-        if (zstdOutputStream == null) {
-            zstdOutputStream = createZstdOutputStream();
-        }
+        zstdOutputStream = Objects.requireNonNullElseGet(zstdOutputStream, this::createZstdOutputStream);
         zstdOutputStream.write(b);
         position++;
     }
@@ -298,15 +291,4 @@ public class SegmentedZstdOutputStream extends SegmentOutputStream {
                ", zstdDictionary=" + zstdDictionary +
                '}';
     }
-
-
-    // --------------------------------------------------------------------------------
-
-
-//    private record FrameInfo(int frameIdx,
-//                             long cumulativeCompressedSize, // long so we can serialise as unsigned int
-//                             long uncompressedSize) {
-//
-//
-//    }
 }
