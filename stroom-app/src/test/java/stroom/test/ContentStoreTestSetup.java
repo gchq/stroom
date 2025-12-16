@@ -29,6 +29,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.errors.GitAPIException;
 
 import java.io.IOException;
@@ -111,7 +112,10 @@ public class ContentStoreTestSetup {
             if (repoContents != null && repoContents.length > 0) {
                 // Update repo
                 try (final Git git = Git.open(repoPath.toFile())) {
-                    git.fetch().call();
+                    final PullResult pullResult = git.pull().call();
+                    if (!pullResult.isSuccessful()) {
+                        throw new IOException("Unsuccessful pull request: " + pullResult);
+                    }
                 }
             } else {
                 // Clone repo to filesystem. Note bare as new repo is used as a remote repo.
