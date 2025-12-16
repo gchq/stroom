@@ -1,9 +1,11 @@
 package stroom.gitrepo.impl;
 
-import stroom.credentials.impl.CredentialsDao;
-import stroom.credentials.impl.CredentialsJgitSshTransportCallback;
-import stroom.credentials.shared.Credentials;
-import stroom.credentials.shared.CredentialsSecret;
+import stroom.credentials.api.StoredSecret;
+import stroom.credentials.api.StoredSecrets;
+import stroom.credentials.shared.AccessTokenSecret;
+import stroom.credentials.shared.Credential;
+import stroom.credentials.shared.KeyPairSecret;
+import stroom.credentials.shared.UsernamePasswordSecret;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
@@ -99,7 +101,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
     /**
      * Provides credential information
      */
-    private final CredentialsDao credentialsDao;
+    private final StoredSecrets storedSecrets;
 
     /** System temporary directory for SSH home and SSH directories. Not used. */
     private static final File tempDir;
@@ -159,14 +161,14 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                                      final Provider<GitRepoConfig> config,
                                      final PathCreator pathCreator,
                                      final GitRepoDao gitRepoDao,
-                                     final CredentialsDao credentialsDao) {
+                                     final StoredSecrets storedSecrets) {
         this.explorerService = explorerService;
         this.explorerNodeService = explorerNodeService;
         this.importExportSerializer = importExportSerializer;
         this.config = config;
         this.pathCreator = pathCreator;
         this.gitRepoDao = gitRepoDao;
-        this.credentialsDao = credentialsDao;
+        this.storedSecrets = storedSecrets;
     }
 
     /**
@@ -577,43 +579,49 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
     private void setGitCreds(final GitRepoDoc gitRepoDoc, final TransportCommand<?, ?> transportCommand)
             throws IOException {
         if (gitRepoDoc.needsCredentials()) {
-            final String credentialsId = gitRepoDoc.getCredentialsId();
+            final String credentialsId = gitRepoDoc.getCredentialName();
 
             try {
                 // Grab the credentials from the database
-                final Credentials credentials = credentialsDao.getCredentials(credentialsId);
-                final CredentialsSecret secret = credentialsDao.getSecret(credentialsId);
+                final StoredSecret storedSecret = storedSecrets.get(credentialsId);
+                final Credential credential = storedSecret.credential();
 
                 // Note any field of the secrets might be null so handle that
-                switch (credentials.getType()) {
+                switch (credential.getCredentialType()) {
                     case USERNAME_PASSWORD -> {
-                        String username = secret.getUsername();
-                        if (username == null) {
-                            username = EMPTY;
+                        if (storedSecret.secret() instanceof final UsernamePasswordSecret usernamePasswordSecret) {
+                            String username = usernamePasswordSecret.getUsername();
+                            if (username == null) {
+                                username = EMPTY;
+                            }
+                            String password = usernamePasswordSecret.getPassword();
+                            if (password == null) {
+                                password = EMPTY;
+                            }
+                            transportCommand.setCredentialsProvider(
+                                    new UsernamePasswordCredentialsProvider(username, password));
                         }
-                        String password = secret.getPassword();
-                        if (password == null) {
-                            password = EMPTY;
-                        }
-                        transportCommand.setCredentialsProvider(
-                                new UsernamePasswordCredentialsProvider(username, password));
                     }
                     case ACCESS_TOKEN -> {
-                        String accessToken = secret.getAccessToken();
-                        if (accessToken == null) {
-                            accessToken = EMPTY;
+                        if (storedSecret.secret() instanceof final AccessTokenSecret accessTokenSecret) {
+                            String accessToken = accessTokenSecret.getAccessToken();
+                            if (accessToken == null) {
+                                accessToken = EMPTY;
+                            }
+                            transportCommand.setCredentialsProvider(
+                                    new UsernamePasswordCredentialsProvider(GIT_USERNAME, accessToken));
                         }
-                        transportCommand.setCredentialsProvider(
-                                new UsernamePasswordCredentialsProvider(GIT_USERNAME, accessToken));
                     }
-                    case PRIVATE_CERT -> {
+                    case KEY_PAIR -> {
+                        if (storedSecret.secret() instanceof final KeyPairSecret keyPairSecret) {
                         transportCommand.setTransportConfigCallback(
-                                new CredentialsJgitSshTransportCallback(credentialsDao,
+                                new CredentialsJgitSshTransportCallback(storedSecrets,
                                         tempDir,
                                         credentialsId));
+                        }
                     }
                     default -> {
-                        throw new IOException("Unknown type of credentials: " + credentials.getType());
+                        throw new IOException("Unknown type of credentials: " + credential.getCredentialType());
                     }
                 }
             } catch (final IOException e) {

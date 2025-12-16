@@ -36,7 +36,6 @@ public class CredentialsManagerDialogPresenter
                                              final CredentialsListPresenter credentialsListPresenter) {
         super(eventBus, view);
         this.markdownConverter = markdownConverter;
-        credentialsListPresenter.setParentPresenter(this);
         credentialsListPresenter.setDefaultSelection(false);
         view.setCredentialsList(credentialsListPresenter);
         this.setInSlot(CredentialsListPresenter.CREDENTIALS_LIST, credentialsListPresenter);
@@ -62,14 +61,14 @@ public class CredentialsManagerDialogPresenter
                 .popupSize(PopupSize.resizable(DIALOG_WIDTH, DIALOG_HEIGHT))
                 .caption("Credentials")
                 .modal(true);
-        this.getView().setCredentialsId(credentialsId);
+        this.getView().setCredentialName(credentialsId);
     }
 
     /**
-     * @return The selected UUID, or null if nothing is selected.
+     * @return The selected credential name.
      */
-    public String getCredentialsId() {
-        return this.getView().getCredentialsId();
+    public String getCredentialName() {
+        return this.getView().getCredentialName();
     }
 
     /**
@@ -89,14 +88,14 @@ public class CredentialsManagerDialogPresenter
         void setLabelHtml(SafeHtml html);
 
         /**
-         * @param uuid The UUID that is currently selected.
+         * @param name The name of the credential that is currently selected.
          */
-        void setCredentialsId(String uuid);
+        void setCredentialName(String name);
 
         /**
-         * @return The selected UUID.
+         * @return The selected credential name.
          */
-        String getCredentialsId();
+        String getCredentialName();
 
     }
 }

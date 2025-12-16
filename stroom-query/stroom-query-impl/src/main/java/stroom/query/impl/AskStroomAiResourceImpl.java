@@ -16,6 +16,10 @@
 
 package stroom.query.impl;
 
+import stroom.ai.shared.AskStroomAIConfig;
+import stroom.ai.shared.ChatMemoryConfig;
+import stroom.ai.shared.TableSummaryConfig;
+import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
@@ -72,5 +76,29 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
             LOGGER.debug(e.getMessage(), e);
             throw e;
         }
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public AskStroomAIConfig getDefaultConfig() {
+        return askStroomAIServiceProvider.get().getDefaultConfig();
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public Boolean setDefaultModel(final DocRef modelRef) {
+        return askStroomAIServiceProvider.get().setDefaultModel(modelRef);
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public Boolean setDefaultTableSummaryConfig(final TableSummaryConfig config) {
+        return askStroomAIServiceProvider.get().setDefaultTableSummaryConfig(config);
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public Boolean setDefaultChatMemoryConfigConfig(final ChatMemoryConfig config) {
+        return askStroomAIServiceProvider.get().setDefaultChatMemoryConfigConfig(config);
     }
 }

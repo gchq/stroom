@@ -1,6 +1,6 @@
 package stroom.data.grid.client;
 
-import stroom.ai.shared.GeneralTableData;
+import stroom.ai.shared.GeneralTableContext;
 import stroom.data.client.event.AskStroomAiEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -79,13 +79,13 @@ public class MyDataGridAiSupport<T> {
 
     private void aiCell(final int row, final int col) {
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableData(chatMemoryId, getHeader(col),
+                new GeneralTableContext(chatMemoryId, getHeader(col),
                         Collections.singletonList(Collections.singletonList(dataGrid.getCellText(row, col)))));
     }
 
     private void aiRow(final int row) {
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableData(chatMemoryId, getHeaders(),
+                new GeneralTableContext(chatMemoryId, getHeaders(),
                         Collections.singletonList(getRow(row))));
     }
 
@@ -101,7 +101,7 @@ public class MyDataGridAiSupport<T> {
         }
 
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableData(chatMemoryId, getHeaders(),
+                new GeneralTableContext(chatMemoryId, getHeaders(),
                         rows));
     }
 
@@ -112,7 +112,7 @@ public class MyDataGridAiSupport<T> {
         }
 
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableData(chatMemoryId, getHeader(col),
+                new GeneralTableContext(chatMemoryId, getHeader(col),
                         rows));
     }
 
@@ -128,7 +128,7 @@ public class MyDataGridAiSupport<T> {
         }
 
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableData(chatMemoryId, getHeader(col),
+                new GeneralTableContext(chatMemoryId, getHeader(col),
                         rows));
     }
 
@@ -139,7 +139,7 @@ public class MyDataGridAiSupport<T> {
         }
 
         AskStroomAiEvent.fire(globalEventBus,
-                new GeneralTableData(chatMemoryId, getHeaders(),
+                new GeneralTableContext(chatMemoryId, getHeaders(),
                         rows));
     }
 

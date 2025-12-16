@@ -1,17 +1,20 @@
 package stroom.query.impl;
 
+import stroom.ai.shared.AskStroomAIConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResponse;
-import stroom.ai.shared.DashboardTableData;
-import stroom.ai.shared.GeneralTableData;
-import stroom.ai.shared.QueryTableData;
+import stroom.ai.shared.ChatMemoryConfig;
+import stroom.ai.shared.DashboardTableContext;
+import stroom.ai.shared.GeneralTableContext;
+import stroom.ai.shared.QueryTableContext;
+import stroom.ai.shared.TableSummaryConfig;
+import stroom.config.global.api.GlobalConfig;
 import stroom.dashboard.impl.DashboardService;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
-import stroom.langchain.api.ChatMemoryConfig;
 import stroom.langchain.api.ChatMemoryService;
 import stroom.langchain.api.OpenAIModelStore;
 import stroom.langchain.api.OpenAIService;
@@ -20,7 +23,6 @@ import stroom.langchain.api.SummaryReducer;
 import stroom.langchain.api.TableQuery;
 import stroom.langchain.api.TableQueryMessages;
 import stroom.langchain.api.TableSummaryMessages;
-import stroom.openai.shared.OpenAIModelConfig;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.Column;
 import stroom.query.api.OffsetRange;
@@ -50,29 +52,29 @@ public class AskStroomAIService {
     private static final String SUMMARY_CHAT_MEMORY_KEY = "summary";
     private static final Pattern MD_TABLE_ESCAPE = Pattern.compile("[$&`*_~#+-.!|()\\[\\]{}<>]");
 
-    private final Provider<OpenAIModelConfig> openAiModelConfigProvider;
-    private final Provider<ChatMemoryConfig> chatMemoryConfigProvider;
     private final OpenAIService openAIService;
     private final ChatMemoryService chatMemoryService;
     private final DashboardService dashboardService;
     private final QueryService queryService;
     private final OpenAIModelStore openAIModelStore;
+    private final Provider<AskStroomAIConfig> defaultConfigProvider;
+    private final Provider<GlobalConfig> globalConfigProvider;
 
     @Inject
-    public AskStroomAIService(final Provider<OpenAIModelConfig> openAiModelConfigProvider,
-                              final Provider<ChatMemoryConfig> chatMemoryConfigProvider,
-                              final OpenAIService openAIService,
+    public AskStroomAIService(final OpenAIService openAIService,
                               final ChatMemoryService chatMemoryService,
                               final DashboardService dashboardService,
                               final QueryService queryService,
-                              final OpenAIModelStore openAIModelStore) {
-        this.openAiModelConfigProvider = openAiModelConfigProvider;
-        this.chatMemoryConfigProvider = chatMemoryConfigProvider;
+                              final OpenAIModelStore openAIModelStore,
+                              final Provider<AskStroomAIConfig> defaultConfigProvider,
+                              final Provider<GlobalConfig> globalConfigProvider) {
         this.openAIService = openAIService;
         this.chatMemoryService = chatMemoryService;
         this.dashboardService = dashboardService;
         this.queryService = queryService;
         this.openAIModelStore = openAIModelStore;
+        this.defaultConfigProvider = defaultConfigProvider;
+        this.globalConfigProvider = globalConfigProvider;
     }
 
     /**
@@ -83,10 +85,10 @@ public class AskStroomAIService {
      * @return The node to use or null if the current node is ok.
      */
     public String getBestNode(final String nodeName, final AskStroomAiRequest request) {
-        if (request.getData() instanceof final DashboardTableData dashboardTableData) {
-            return dashboardService.getBestNode(nodeName, dashboardTableData.getSearchRequest());
-        } else if (request.getData() instanceof final QueryTableData queryTableData) {
-            return queryService.getBestNode(nodeName, queryTableData.getSearchRequest());
+        if (request.getContext() instanceof final DashboardTableContext dashboardTableContext) {
+            return dashboardService.getBestNode(nodeName, dashboardTableContext.getSearchRequest());
+        } else if (request.getContext() instanceof final QueryTableContext queryTableContext) {
+            return queryService.getBestNode(nodeName, queryTableContext.getSearchRequest());
         }
         return null;
     }
@@ -96,13 +98,13 @@ public class AskStroomAIService {
      * The user is provided with an aggregated response from all batches once compiled.
      */
     public AskStroomAiResponse askStroomAi(final AskStroomAiRequest request) {
-        if (request.getData() instanceof final DashboardTableData dashboardTableData) {
+        if (request.getContext() instanceof final DashboardTableContext dashboardTableContext) {
             final Function<OffsetRange, DashboardSearchResponse> dataProvider = range -> {
-                DashboardSearchRequest searchRequest = dashboardTableData.getSearchRequest();
+                DashboardSearchRequest searchRequest = dashboardTableContext.getSearchRequest();
                 final ComponentResultRequest componentResultRequest = searchRequest.getComponentResultRequests().getFirst();
                 if (componentResultRequest instanceof TableResultRequest tableResultRequest) {
                     tableResultRequest = tableResultRequest.copy().requestedRange(range).build();
-                    searchRequest = dashboardTableData.getSearchRequest()
+                    searchRequest = dashboardTableContext.getSearchRequest()
                             .copy()
                             .componentResultRequests(Collections.singletonList(tableResultRequest))
                             .build();
@@ -111,13 +113,12 @@ public class AskStroomAIService {
                 throw new RuntimeException("No table component provided");
             };
             return new AskStroomAiResponse(createStroomAiTableSummary(
-                    dashboardTableData.getChatMemoryId(),
-                    request.getMessage(),
+                    request,
                     dataProvider));
 
-        } else if (request.getData() instanceof final QueryTableData queryTableData) {
+        } else if (request.getContext() instanceof final QueryTableContext queryTableContext) {
             final Function<OffsetRange, DashboardSearchResponse> dataProvider = range -> {
-                final QuerySearchRequest searchRequest = queryTableData
+                final QuerySearchRequest searchRequest = queryTableContext
                         .getSearchRequest()
                         .copy()
                         .requestedRange(range)
@@ -125,14 +126,12 @@ public class AskStroomAIService {
                 return queryService.search(searchRequest);
             };
             return new AskStroomAiResponse(createStroomAiTableSummary(
-                    queryTableData.getChatMemoryId(),
-                    request.getMessage(),
+                    request,
                     dataProvider));
-        } else if (request.getData() instanceof final GeneralTableData generalTableData) {
+        } else if (request.getContext() instanceof final GeneralTableContext generalTableContext) {
             return new AskStroomAiResponse(createGeneralAiTableSummary(
-                    generalTableData.getChatMemoryId(),
-                    request.getMessage(),
-                    generalTableData));
+                    request,
+                    generalTableContext));
         }
 
         throw new IllegalStateException();
@@ -142,19 +141,23 @@ public class AskStroomAIService {
      * Passes the table rows in batches to the configured LLM chat completion endpoint, along with the user's query.
      * The user is provided with an aggregated response from all batches once compiled.
      */
-    private String createGeneralAiTableSummary(final String chatMemoryId,
-                                               final String aiQuery,
-                                               final GeneralTableData generalTableData) {
+    private String createGeneralAiTableSummary(final AskStroomAiRequest request,
+                                               final GeneralTableContext generalTableData) {
         try {
-            final OpenAIModelConfig modelConfig = openAiModelConfigProvider.get();
-            final ResultBuilder resultBuilder = createResultBuilder(chatMemoryId, aiQuery);
+            final AskStroomAIConfig config = request.getConfig();
+            final ResultBuilder resultBuilder = createResultBuilder(
+                    request, request.getMessage());
 
             // Create column header string.
             final String header = writeHeader(generalTableData.getColumns());
 
             // Batch and summarise user message responses into a combined summary
-            final int maxBatchSize = modelConfig.getMaximumBatchSize();
-            final int maximumRowCount = modelConfig.getMaximumTableInputRows();
+            final TableSummaryConfig tableSummaryConfig = NullSafe.getOrElse(
+                    config,
+                    AskStroomAIConfig::getTableSummary,
+                    new TableSummaryConfig());
+            final int maxBatchSize = tableSummaryConfig.getMaximumBatchSize();
+            final int maximumRowCount = tableSummaryConfig.getMaximumTableInputRows();
             final StringBuilder batch = new StringBuilder(header);
             int rowCount = 0;
 
@@ -209,12 +212,13 @@ public class AskStroomAIService {
      * Passes the table rows in batches to the configured LLM chat completion endpoint, along with the user's query.
      * The user is provided with an aggregated response from all batches once compiled.
      */
-    private String createStroomAiTableSummary(final String chatMemoryId,
-                                              final String aiQuery,
+    private String createStroomAiTableSummary(final AskStroomAiRequest request,
                                               final Function<OffsetRange, DashboardSearchResponse> dataProvider) {
         try {
-            final OpenAIModelConfig modelConfig = openAiModelConfigProvider.get();
-            final ResultBuilder resultBuilder = createResultBuilder(chatMemoryId, aiQuery);
+            final AskStroomAIConfig config = request.getConfig();
+            final ResultBuilder resultBuilder = createResultBuilder(
+                    request,
+                    request.getMessage());
 
 //            final ResultBuilder2 resultBuilder = new ResultBuilder2(chatModel, aiQuery);
 
@@ -227,8 +231,12 @@ public class AskStroomAIService {
             final String header = writeHeader(result.getColumns().stream().map(Column::getName).toList());
 
             // Batch and summarise user message responses into a combined summary
-            final int maxBatchSize = modelConfig.getMaximumBatchSize();
-            final int maximumRowCount = modelConfig.getMaximumTableInputRows();
+            final TableSummaryConfig tableSummaryConfig = NullSafe.getOrElse(
+                    config,
+                    AskStroomAIConfig::getTableSummary,
+                    new TableSummaryConfig());
+            final int maxBatchSize = tableSummaryConfig.getMaximumBatchSize();
+            final int maximumRowCount = tableSummaryConfig.getMaximumTableInputRows();
             final StringBuilder batch = new StringBuilder(header);
             int rowCount = 0;
 
@@ -279,18 +287,19 @@ public class AskStroomAIService {
         }
     }
 
-    private ResultBuilder createResultBuilder(final String chatMemoryId,
+    private ResultBuilder createResultBuilder(final AskStroomAiRequest request,
                                               final String aiQuery) {
-        final OpenAIModelConfig modelConfig = openAiModelConfigProvider.get();
-        if (modelConfig == null || modelConfig.getDefaultApiConfig() == null) {
-            throw new RuntimeException("No default OpenAI API specified");
+        final AskStroomAIConfig modelConfig = request.getConfig();
+        if (modelConfig == null || modelConfig.getModelRef() == null) {
+            throw new RuntimeException("No model specified");
         }
-        final DocRef docRef = modelConfig.getDefaultApiConfig();
+        final DocRef docRef = modelConfig.getModelRef();
 
         final ChatModel chatModel = getChatModel(docRef);
+        final String chatMemoryId = request.getContext().getChatMemoryId();
         final String tableChatMemoryId = TABLE_CHAT_MEMORY_KEY + "/" + chatMemoryId;
         final String summaryChatMemoryId = SUMMARY_CHAT_MEMORY_KEY + "/" + chatMemoryId;
-        final int maxTokens = chatMemoryConfigProvider.get().getTokenLimit();
+        final int maxTokens = request.getConfig().getChatMemory().getTokenLimit();
 
         final TableQuery tableQueryService = AiServices.builder(TableQuery.class)
                 .chatModel(chatModel)
@@ -419,5 +428,26 @@ public class AskStroomAIService {
         String get() {
             return cumulativeSummary;
         }
+    }
+
+    public AskStroomAIConfig getDefaultConfig() {
+        return defaultConfigProvider.get();
+    }
+
+    public Boolean setDefaultModel(final DocRef modelRef) {
+        globalConfigProvider.get().setDocRef(getDefaultConfig(), AskStroomAIConfig.PROP_NAME_MODEL_REF, modelRef);
+        return true;
+    }
+
+    public Boolean setDefaultTableSummaryConfig(final TableSummaryConfig config) {
+        globalConfigProvider.get().setInt(config, TableSummaryConfig.PROP_NAME_MAXIMUM_BATCH_SIZE, config.getMaximumBatchSize());
+        globalConfigProvider.get().setInt(config, TableSummaryConfig.PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS, config.getMaximumTableInputRows());
+        return true;
+    }
+
+    public Boolean setDefaultChatMemoryConfigConfig(final ChatMemoryConfig config) {
+        globalConfigProvider.get().setInt(config, ChatMemoryConfig.PROP_NAME_TOKEN_LIMIT, config.getTokenLimit());
+        globalConfigProvider.get().setString(config, ChatMemoryConfig.PROP_NAME_TIME_TO_LIVE, config.getTimeToLive().toString());
+        return true;
     }
 }

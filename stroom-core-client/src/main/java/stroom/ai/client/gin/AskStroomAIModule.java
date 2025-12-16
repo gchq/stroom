@@ -16,6 +16,9 @@
 
 package stroom.ai.client.gin;
 
+import stroom.ai.client.AskStroomAiConfigPresenter;
+import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
+import stroom.ai.client.AskStroomAiConfigViewImpl;
 import stroom.ai.client.AskStroomAiPresenter;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
 import stroom.ai.client.AskStroomAiViewImpl;
@@ -31,5 +34,9 @@ public class AskStroomAIModule extends AbstractPresenterModule {
                 AskStroomAiView.class,
                 AskStroomAiViewImpl.class,
                 AskStroomAiPresenter.AskStroomAiProxy.class);
+        bindPresenterWidget(
+                AskStroomAiConfigPresenter.class,
+                AskStroomAiConfigView.class,
+                AskStroomAiConfigViewImpl.class);
     }
 }

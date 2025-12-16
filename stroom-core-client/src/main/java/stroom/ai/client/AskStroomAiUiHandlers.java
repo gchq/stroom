@@ -17,17 +17,21 @@
 package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
-import stroom.ai.shared.AskStroomAiData;
+import stroom.ai.shared.AskStroomAiContext;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface AskStroomAiUiHandlers extends UiHandlers {
 
-    void setContext(String node, AskStroomAiData data);
+    void setContext(String node, AskStroomAiContext data);
+
+    void onSetDefaultModel();
 
     void onSendMessage(String message);
 
     void onDockBehaviourChange(DockBehaviour dockBehaviour);
+
+    void onChangeConfig();
 
     void clearHistory();
 }

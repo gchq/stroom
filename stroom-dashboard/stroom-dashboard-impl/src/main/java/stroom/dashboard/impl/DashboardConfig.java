@@ -16,7 +16,6 @@
 
 package stroom.dashboard.impl;
 
-import stroom.openai.shared.OpenAIModelConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -30,21 +29,17 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class DashboardConfig extends AbstractConfig implements IsStroomConfig {
 
     private final CacheConfig visualisationDocCache;
-    private final OpenAIModelConfig openAiModel;
 
     public DashboardConfig() {
         visualisationDocCache = CacheConfig.builder()
                 .maximumSize(100L)
                 .expireAfterWrite(StroomDuration.ofMinutes(10))
                 .build();
-        openAiModel = new OpenAIModelConfig();
     }
 
     @JsonCreator
-    public DashboardConfig(@JsonProperty("visualisationDocCache") final CacheConfig visualisationDocCache,
-                           @JsonProperty("openAIModel") final OpenAIModelConfig openAiModel) {
+    public DashboardConfig(@JsonProperty("visualisationDocCache") final CacheConfig visualisationDocCache) {
         this.visualisationDocCache = visualisationDocCache;
-        this.openAiModel = openAiModel;
     }
 
     @JsonProperty("visualisationDocCache")
@@ -52,16 +47,10 @@ public class DashboardConfig extends AbstractConfig implements IsStroomConfig {
         return visualisationDocCache;
     }
 
-    @JsonProperty("openAIModel")
-    public OpenAIModelConfig getOpenAiModel() {
-        return openAiModel;
-    }
-
     @Override
     public String toString() {
         return "DashboardConfig{" +
                "visualisationDocCache=" + visualisationDocCache +
-               ", openAiModel=" + openAiModel +
                '}';
     }
 }

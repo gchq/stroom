@@ -16,7 +16,7 @@
 
 package stroom.query.client.presenter;
 
-import stroom.ai.shared.QueryTableData;
+import stroom.ai.shared.QueryTableContext;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.annotation.shared.AnnotationDecorationFields;
@@ -1045,7 +1045,7 @@ public class QueryResultTablePresenter
                         .build();
                 AskStroomAiEvent.fire(this,
                         currentSearchModel.getCurrentNode(),
-                        new QueryTableData(queryKey.toString(), request));
+                        new QueryTableContext(queryKey.toString(), request));
             }
         }
     }

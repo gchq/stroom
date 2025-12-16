@@ -4,8 +4,7 @@
 package stroom.credentials.impl.db.jooq;
 
 
-import stroom.credentials.impl.db.jooq.tables.Credentials;
-import stroom.credentials.impl.db.jooq.tables.CredentialsSecret;
+import stroom.credentials.impl.db.jooq.tables.Credential;
 
 
 /**
@@ -15,12 +14,7 @@ import stroom.credentials.impl.db.jooq.tables.CredentialsSecret;
 public class Tables {
 
     /**
-     * The table <code>stroom.credentials</code>.
+     * The table <code>stroom.credential</code>.
      */
-    public static final Credentials CREDENTIALS = Credentials.CREDENTIALS;
-
-    /**
-     * The table <code>stroom.credentials_secret</code>.
-     */
-    public static final CredentialsSecret CREDENTIALS_SECRET = CredentialsSecret.CREDENTIALS_SECRET;
+    public static final Credential CREDENTIAL = Credential.CREDENTIAL;
 }

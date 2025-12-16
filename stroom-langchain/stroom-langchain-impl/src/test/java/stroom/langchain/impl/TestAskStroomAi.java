@@ -1,6 +1,6 @@
 package stroom.langchain.impl;
 
-import stroom.langchain.api.ChatMemoryConfig;
+import stroom.ai.shared.ChatMemoryConfig;
 import stroom.langchain.api.ChatMemoryService;
 import stroom.langchain.api.OpenAIService;
 import stroom.langchain.api.SimpleTokenCountEstimator;
@@ -8,7 +8,7 @@ import stroom.langchain.api.SummaryReducer;
 import stroom.langchain.api.TableQuery;
 import stroom.langchain.api.TableQueryMessages;
 import stroom.langchain.api.TableSummaryMessages;
-import stroom.openai.shared.OpenAIModelConfig;
+import stroom.ai.shared.AskStroomAIConfig;
 import stroom.util.date.DateUtil;
 
 import dev.langchain4j.memory.chat.TokenWindowChatMemory;
@@ -138,7 +138,7 @@ public class TestAskStroomAi {
 
         final TokenCountEstimator tokenCountEstimator = new SimpleTokenCountEstimator();
 
-        final OpenAIModelConfig modelConfig = new OpenAIModelConfig();
+        final AskStroomAIConfig modelConfig = new AskStroomAIConfig();
         final ChatMemoryService chatMemoryService = new ChatMemoryServiceImpl(ChatMemoryConfig::new);
         final TableQuery tableQueryService = AiServices.builder(TableQuery.class)
                 .chatModel(chatModel)
@@ -173,8 +173,8 @@ public class TestAskStroomAi {
         final String header = writeHeader(columns);
 
         // Batch and summarise user message responses into a combined summary
-        final int maxBatchSize = modelConfig.getMaximumBatchSize();
-        final int maximumRowCount = modelConfig.getMaximumTableInputRows();
+        final int maxBatchSize = modelConfig.getTableSummary().getMaximumBatchSize();
+        final int maximumRowCount = modelConfig.getTableSummary().getMaximumTableInputRows();
         final StringBuilder batch = new StringBuilder(header);
         int rowCount = 0;
 

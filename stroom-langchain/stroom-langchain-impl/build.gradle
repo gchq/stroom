@@ -2,6 +2,7 @@ ext.moduleName = 'stroom.langchain.impl'
 
 dependencies {
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-credentials:stroom-credentials-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
@@ -13,6 +14,7 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.dropwizard.client
     implementation libs.dropwizard.metrics.annotation
     implementation libs.eventLogging
     implementation libs.guice

@@ -20,6 +20,7 @@ import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
 import stroom.item.client.SelectionBox;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.form.client.CustomFileUpload;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -37,11 +38,9 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
     @UiField
     SelectionBox<String> type;
     @UiField
-    FileUpload fileUpload;
+    CustomFileUpload fileUpload;
     @UiField
     MyDateBox effective;
-    @UiField
-    FormPanel form;
     @UiField
     TextArea metaData;
 
@@ -63,12 +62,7 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
     }
 
     @Override
-    public FormPanel getForm() {
-        return form;
-    }
-
-    @Override
-    public FileUpload getFileUpload() {
+    public CustomFileUpload getFileUpload() {
         return fileUpload;
     }
 

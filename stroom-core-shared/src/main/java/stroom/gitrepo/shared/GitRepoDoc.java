@@ -46,8 +46,7 @@ import java.util.Objects;
         "contentStoreMeta",
         "contentStoreContentPackId",
         "url",
-        "username",
-        "password",
+        "credentialName",
         "branch",
         "path",
         "commit",
@@ -82,7 +81,7 @@ public class GitRepoDoc extends AbstractDoc {
     private String url = "";
 
     @JsonProperty
-    private String credentialsId = "";
+    private String credentialName = "";
 
     @JsonProperty
     private String branch = "";
@@ -108,7 +107,7 @@ public class GitRepoDoc extends AbstractDoc {
                       @JsonProperty("contentStoreMetadata") final ContentStoreMetadata contentStoreMetadata,
                       @JsonProperty("contentStoreContentPackId") final String contentStoreContentPackId,
                       @JsonProperty("url") final String url,
-                      @JsonProperty("credentialsId") final String credentialsId,
+                      @JsonProperty("credentialName") final String credentialName,
                       @JsonProperty("branch") final String branch,
                       @JsonProperty("path") final String path,
                       @JsonProperty("commit") final String commit,
@@ -122,7 +121,7 @@ public class GitRepoDoc extends AbstractDoc {
 
         // Git settings
         this.url = url;
-        this.credentialsId = credentialsId;
+        this.credentialName = credentialName;
         this.branch = branch;
         this.path = path;
         this.commit = commit;
@@ -132,8 +131,8 @@ public class GitRepoDoc extends AbstractDoc {
         if (this.url == null) {
             this.url = "";
         }
-        if (this.credentialsId == null) {
-            this.credentialsId = "";
+        if (this.credentialName == null) {
+            this.credentialName = "";
         }
         if (this.branch == null) {
             this.branch = "";
@@ -178,7 +177,7 @@ public class GitRepoDoc extends AbstractDoc {
                && Objects.equals(contentStoreMetadata, that.contentStoreMetadata)
                && Objects.equals(contentStoreContentPackId, that.contentStoreContentPackId)
                && Objects.equals(url, that.url)
-               && Objects.equals(credentialsId, that.credentialsId)
+               && Objects.equals(credentialName, that.credentialName)
                && Objects.equals(branch, that.branch)
                && Objects.equals(path, that.path)
                && Objects.equals(commit, that.commit)
@@ -192,7 +191,7 @@ public class GitRepoDoc extends AbstractDoc {
                 contentStoreMetadata,
                 contentStoreContentPackId,
                 url,
-                credentialsId,
+                credentialName,
                 branch,
                 path,
                 commit,
@@ -249,19 +248,19 @@ public class GitRepoDoc extends AbstractDoc {
         this.url = url;
     }
 
-    public String getCredentialsId() {
-        return credentialsId;
+    public String getCredentialName() {
+        return credentialName;
     }
 
-    public void setCredentialsId(final String id) {
-        this.credentialsId = id;
+    public void setCredentialName(final String name) {
+        this.credentialName = name;
     }
 
     /**
      * @return true if this GitRepoDoc needs credentials to push to Git. false if not.
      */
     public boolean needsCredentials() {
-        return credentialsId != null && !credentialsId.isBlank();
+        return credentialName != null && !credentialName.isBlank();
     }
 
     public String getBranch() {
@@ -293,7 +292,6 @@ public class GitRepoDoc extends AbstractDoc {
     }
 
     public void setAutoPush(final Boolean autoPush) {
-        // Objects.requireNonNullElse() not defined for GWT
         if (autoPush == null) {
             this.autoPush = Boolean.FALSE;
         } else {
@@ -312,7 +310,7 @@ public class GitRepoDoc extends AbstractDoc {
                + contentStoreMetadata + ",\n"
                + contentStoreContentPackId + ",\n"
                + url + ",\n  "
-               + credentialsId + ",\n  "
+               + credentialName + ",\n  "
                + branch + "\n  "
                + path + "\n  "
                + commit + "\n  "
@@ -333,7 +331,7 @@ public class GitRepoDoc extends AbstractDoc {
         private ContentStoreMetadata contentStoreMetadata;
         private String contentStoreContentPackId;
         private String url = "";
-        private String credentialsId = "";
+        private String credentialName = "";
         private String branch = "";
         private String path = "";
         private String commit = "";
@@ -348,7 +346,7 @@ public class GitRepoDoc extends AbstractDoc {
             this.contentStoreMetadata = gitRepoDoc.contentStoreMetadata;
             this.contentStoreContentPackId = gitRepoDoc.contentStoreContentPackId;
             this.url = gitRepoDoc.url;
-            this.credentialsId = gitRepoDoc.credentialsId;
+            this.credentialName = gitRepoDoc.credentialName;
             this.branch = gitRepoDoc.branch;
             this.path = gitRepoDoc.path;
             this.commit = gitRepoDoc.commit;
@@ -375,8 +373,8 @@ public class GitRepoDoc extends AbstractDoc {
             return self();
         }
 
-        public Builder credentialsId(final String credentialsId) {
-            this.credentialsId = credentialsId;
+        public Builder credentialName(final String credentialName) {
+            this.credentialName = credentialName;
             return self();
         }
 
@@ -418,7 +416,7 @@ public class GitRepoDoc extends AbstractDoc {
                     contentStoreMetadata,
                     contentStoreContentPackId,
                     url,
-                    credentialsId,
+                    credentialName,
                     branch,
                     path,
                     commit,

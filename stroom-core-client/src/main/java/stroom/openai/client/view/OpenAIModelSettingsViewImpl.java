@@ -16,7 +16,9 @@
 
 package stroom.openai.client.view;
 
+import stroom.credentials.shared.Credential;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.item.client.SelectionBox;
 import stroom.openai.client.presenter.OpenAIModelSettingsPresenter.OpenAIModelSettingsView;
 import stroom.openai.client.presenter.OpenAIModelSettingsUiHandlers;
 import stroom.svg.shared.SvgImage;
@@ -33,7 +35,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class OpenAIModelSettingsViewImpl extends ViewWithUiHandlers<OpenAIModelSettingsUiHandlers>
+public class OpenAIModelSettingsViewImpl
+        extends ViewWithUiHandlers<OpenAIModelSettingsUiHandlers>
         implements OpenAIModelSettingsView, ReadOnlyChangeHandler {
 
     private final Widget widget;
@@ -41,7 +44,7 @@ public class OpenAIModelSettingsViewImpl extends ViewWithUiHandlers<OpenAIModelS
     @UiField
     TextBox baseUrl;
     @UiField
-    TextBox apiKey;
+    SelectionBox<Credential> apiKey;
     @UiField
     TextBox modelId;
     @UiField
@@ -74,13 +77,8 @@ public class OpenAIModelSettingsViewImpl extends ViewWithUiHandlers<OpenAIModelS
     }
 
     @Override
-    public String getApiKey() {
-        return apiKey.getValue();
-    }
-
-    @Override
-    public void setApiKey(final String authToken) {
-        this.apiKey.setValue(authToken);
+    public SelectionBox<Credential> getApiKeySelectionBox() {
+        return apiKey;
     }
 
     @Override
@@ -123,7 +121,7 @@ public class OpenAIModelSettingsViewImpl extends ViewWithUiHandlers<OpenAIModelS
     }
 
     @UiHandler("apiKey")
-    public void onApiKey(final ValueChangeEvent<String> event) {
+    public void onApiKeyValueChange(@SuppressWarnings("unused") final ValueChangeEvent<Credential> e) {
         fireChange();
     }
 

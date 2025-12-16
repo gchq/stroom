@@ -16,6 +16,9 @@
 
 package stroom.langchain.impl;
 
+import stroom.credentials.api.StoredSecret;
+import stroom.credentials.api.StoredSecrets;
+import stroom.credentials.shared.AccessTokenSecret;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.langchain.api.OpenAIModelStore;
@@ -51,16 +54,23 @@ public class OpenAIServiceImpl implements OpenAIService {
 
     private final Provider<OpenAIModelStore> openAIModelStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
+    private final Provider<StoredSecrets> storedSecretsProvider;
 
     @Inject
     OpenAIServiceImpl(final Provider<OpenAIModelStore> openAIModelStoreProvider,
-                      final Provider<DocumentResourceHelper> documentResourceHelperProvider) {
+                      final Provider<DocumentResourceHelper> documentResourceHelperProvider,
+                      final Provider<StoredSecrets> storedSecretsProvider) {
         this.openAIModelStoreProvider = openAIModelStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
+        this.storedSecretsProvider = storedSecretsProvider;
     }
 
     @Override
     public Model getModel(final OpenAIModelDoc modelDoc) {
+        /// curl https://api.openai.com/v1/models \
+        ///   -H "Authorization: Bearer $OPENAI_API_KEY"
+
+
         final OpenAIOkHttpClient.Builder clientBuilder = OpenAIOkHttpClient.builder()
                 .fromEnv();
 
@@ -69,17 +79,29 @@ public class OpenAIServiceImpl implements OpenAIService {
             clientBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
-        if (modelDoc.getApiKey() != null) {
-            // Provide a bearer token
-            clientBuilder.credential(BearerTokenCredential.create(modelDoc.getApiKey()));
-        } else {
-            clientBuilder.credential(BearerTokenCredential.create(""));
-        }
+        final String apiKey = getApiKey(modelDoc);
+        // Provide a bearer token
+        clientBuilder.credential(BearerTokenCredential.create(apiKey));
 
         final OpenAIClient client = clientBuilder.build();
         return client.models().list().items().stream()
                 .filter(model -> modelDoc.getModelId().equals(model.id()))
                 .findFirst().orElseThrow();
+    }
+
+    private String getApiKey(final OpenAIModelDoc doc) {
+        final String apiKeyName = doc.getApiKey();
+        if (NullSafe.isNonBlankString(apiKeyName)) {
+            final StoredSecret storedSecret = storedSecretsProvider.get().get(apiKeyName);
+            if (storedSecret != null) {
+                if (storedSecret.secret() instanceof final AccessTokenSecret accessTokenSecret) {
+                    if (accessTokenSecret.getAccessToken() != null) {
+                        return accessTokenSecret.getAccessToken();
+                    }
+                }
+            }
+        }
+        return "";
     }
 
     @Override
@@ -89,7 +111,7 @@ public class OpenAIServiceImpl implements OpenAIService {
 
     @Override
     public ChatModel getChatModel(final OpenAIModelDoc modelDoc) {
-        return getChatModel(modelDoc.getModelId(), modelDoc.getBaseUrl(), modelDoc.getApiKey());
+        return getChatModel(modelDoc.getModelId(), modelDoc.getBaseUrl(), getApiKey(modelDoc));
     }
 
     @Override
@@ -98,6 +120,10 @@ public class OpenAIServiceImpl implements OpenAIService {
         // Ref: https://github.com/langchain4j/langchain4j/issues/3682
         final HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1);
+
+//                .sslContext()authenticator();
+
+
         final JdkHttpClientBuilder jdkHttpClientBuilder = JdkHttpClient.builder()
                 .httpClientBuilder(httpClientBuilder);
 
@@ -128,10 +154,8 @@ public class OpenAIServiceImpl implements OpenAIService {
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
-        if (NullSafe.isNonEmptyString(modelDoc.getApiKey())) {
-            // Provide a bearer token
-            modelBuilder.apiKey(modelDoc.getApiKey());
-        }
+        // Provide a bearer token
+        modelBuilder.apiKey(getApiKey(modelDoc));
 
         return modelBuilder.build();
     }
@@ -146,12 +170,10 @@ public class OpenAIServiceImpl implements OpenAIService {
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
-        if (NullSafe.isNonEmptyString(modelDoc.getApiKey())) {
-            // Provide a bearer token
-            modelBuilder.apiKey(modelDoc.getApiKey());
-        } else {
-            modelBuilder.apiKey("dummy_api_key");
-        }
+        modelBuilder.apiKey(getApiKey(modelDoc));
+//        } else {
+//            modelBuilder.apiKey("dummy_api_key");
+//        }
 
         return modelBuilder.build();
     }
@@ -166,12 +188,11 @@ public class OpenAIServiceImpl implements OpenAIService {
             modelBuilder.baseUrl(modelDoc.getBaseUrl());
         }
 
-        if (NullSafe.isNonEmptyString(modelDoc.getApiKey())) {
-            // Provide a bearer token
-            modelBuilder.apiKey(modelDoc.getApiKey());
-        } else {
-            modelBuilder.apiKey("dummy_api_key");
-        }
+        // Provide a bearer token
+        modelBuilder.apiKey(getApiKey(modelDoc));
+//        } else {
+//            modelBuilder.apiKey("dummy_api_key");
+//        }
 
         return modelBuilder.build();
     }

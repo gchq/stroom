@@ -17,7 +17,7 @@
 
 package stroom.dashboard.client.table;
 
-import stroom.ai.shared.DashboardTableData;
+import stroom.ai.shared.DashboardTableContext;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.annotation.shared.AnnotationDecorationFields;
@@ -624,7 +624,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
                 AskStroomAiEvent.fire(this,
                         currentSearchModel.getCurrentNode(),
-                        new DashboardTableData(
+                        new DashboardTableContext(
                                 currentSearchModel.getCurrentQueryKey().toString(),
                                 dashboardSearchRequest));
             }

@@ -16,7 +16,7 @@
 
 package stroom.data.client.event;
 
-import stroom.ai.shared.AskStroomAiData;
+import stroom.ai.shared.AskStroomAiContext;
 import stroom.data.client.event.AskStroomAiEvent.Handler;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -28,16 +28,16 @@ public class AskStroomAiEvent extends GwtEvent<Handler> {
     private static Type<Handler> TYPE;
 
     private final String node;
-    private final AskStroomAiData data;
+    private final AskStroomAiContext data;
 
     private AskStroomAiEvent(final String node,
-                             final AskStroomAiData data) {
+                             final AskStroomAiContext data) {
         this.node = node;
         this.data = data;
     }
 
     public static void fire(final HasHandlers source,
-                            final AskStroomAiData data) {
+                            final AskStroomAiContext data) {
         if (TYPE != null) {
             final AskStroomAiEvent event = new AskStroomAiEvent(null, data);
             source.fireEvent(event);
@@ -46,7 +46,7 @@ public class AskStroomAiEvent extends GwtEvent<Handler> {
 
     public static void fire(final HasHandlers source,
                             final String node,
-                            final AskStroomAiData data) {
+                            final AskStroomAiContext data) {
         if (TYPE != null) {
             final AskStroomAiEvent event = new AskStroomAiEvent(node, data);
             source.fireEvent(event);
@@ -69,7 +69,7 @@ public class AskStroomAiEvent extends GwtEvent<Handler> {
         return node;
     }
 
-    public AskStroomAiData getData() {
+    public AskStroomAiContext getData() {
         return data;
     }
 

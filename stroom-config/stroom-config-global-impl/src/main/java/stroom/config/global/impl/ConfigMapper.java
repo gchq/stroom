@@ -44,6 +44,7 @@ import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
+import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.StroomDuration;
 import stroom.util.xml.ParserConfig;
 import stroom.util.xml.SAXParserSettings;
@@ -795,6 +796,7 @@ public class ConfigMapper {
                                     Enum.class.isAssignableFrom(type) ||
                                     Path.class.isAssignableFrom(type) ||
                                     StroomDuration.class.isAssignableFrom(type) ||
+                                    SimpleDuration.class.isAssignableFrom(type) ||
                                     ByteSize.class.isAssignableFrom(type);
 
         LOGGER.trace("isSupportedPropertyType({}), returning: {}", type, isSupported);
@@ -880,7 +882,6 @@ public class ConfigMapper {
                 .orElse(null);
     }
 
-    // pkg private for testing
     static String convertToString(final Object value) {
         final List<String> availableDelimiters = new ArrayList<>(VALID_DELIMITERS_LIST);
         return convertToString(value, availableDelimiters);
@@ -1028,6 +1029,8 @@ public class ConfigMapper {
                 return Path.of(value);
             } else if (StroomDuration.class.isAssignableFrom(type)) {
                 return StroomDuration.parse(value);
+            } else if (SimpleDuration.class.isAssignableFrom(type)) {
+                return SimpleDuration.parse(value);
             } else if (ByteSize.class.isAssignableFrom(type)) {
                 return ByteSize.parse(value);
             }
@@ -1528,5 +1531,9 @@ public class ConfigMapper {
         VALIDATE,
         // default the value if null, eg. a null int becomes 0
         DEFAULT
+    }
+
+    public Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> getObjectInfoMap() {
+        return objectInfoMap;
     }
 }

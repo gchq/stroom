@@ -1,6 +1,10 @@
 package stroom.credentials.impl.db;
 
+import stroom.collection.mock.MockCollectionModule;
 import stroom.credentials.impl.CredentialsModule;
+import stroom.dictionary.mock.MockWordListProviderModule;
+import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.resource.impl.MockResourceModule;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserGroupsService;
@@ -18,6 +22,10 @@ public class TestModule extends AbstractModule {
         install(new CredentialsDbModule());
         install(new CredentialsModule());
         install(new DbTestModule());
+        install(new MockCollectionModule());
+        install(new MockWordListProviderModule());
+        install(new MockDocRefInfoModule());
+        install(new MockResourceModule());
 
         bind(SecurityContext.class).to(MockSecurityContext.class);
         bind(DocumentPermissionService.class).to(MockDocumentPermissionService.class);

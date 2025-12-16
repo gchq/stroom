@@ -31,13 +31,13 @@ import stroom.importexport.client.presenter.ImportUtil;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceKey;
+import stroom.widget.form.client.CustomFileUpload;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
@@ -67,9 +67,9 @@ public class DataUploadPresenter
         this.dataTypeUiManager = dataTypeUiManager;
         this.restFactory = restFactory;
 
-        view.getForm().setAction(ImportUtil.getImportFileURL());
-        view.getForm().setEncoding(FormPanel.ENCODING_MULTIPART);
-        view.getForm().setMethod(FormPanel.METHOD_POST);
+        view.getFileUpload().setAction(ImportUtil.getImportFileURL());
+        view.getFileUpload().setEncoding(FormPanel.ENCODING_MULTIPART);
+        view.getFileUpload().setMethod(FormPanel.METHOD_POST);
 
         final AbstractSubmitCompleteHandler submitCompleteHandler = new AbstractSubmitCompleteHandler("Uploading Data",
                 this) {
@@ -115,8 +115,8 @@ public class DataUploadPresenter
             }
         };
 
-        registerHandler(getView().getForm().addSubmitHandler(submitCompleteHandler));
-        registerHandler(getView().getForm().addSubmitCompleteHandler(submitCompleteHandler));
+        registerHandler(getView().getFileUpload().addSubmitHandler(submitCompleteHandler));
+        registerHandler(getView().getFileUpload().addSubmitCompleteHandler(submitCompleteHandler));
     }
 
     public boolean valid() {
@@ -144,7 +144,7 @@ public class DataUploadPresenter
     }
 
     private void submit() {
-        getView().getForm().submit();
+        getView().getFileUpload().submit();
     }
 
     public void show(final MetaPresenter streamPresenter, final DocRef feedRef) {
@@ -212,8 +212,6 @@ public class DataUploadPresenter
 
     public interface DataUploadView extends View, Focus {
 
-        FormPanel getForm();
-
         void setType(final String type);
 
         SelectionBox<String> getType();
@@ -222,6 +220,6 @@ public class DataUploadPresenter
 
         String getMetaData();
 
-        FileUpload getFileUpload();
+        CustomFileUpload getFileUpload();
     }
 }

@@ -17,10 +17,14 @@
 package stroom.openai.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.credentials.client.presenter.CredentialClient;
+import stroom.credentials.client.presenter.CredentialListModel;
+import stroom.credentials.shared.Credential;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
+import stroom.item.client.SelectionBox;
 import stroom.openai.client.presenter.OpenAIModelSettingsPresenter.OpenAIModelSettingsView;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.openai.shared.OpenAIModelResource;
@@ -39,16 +43,21 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
     private static final OpenAIModelResource OPEN_AI_MODEL_RESOURCE = GWT.create(OpenAIModelResource.class);
 
     private final RestFactory restFactory;
+    private final CredentialClient credentialClient;
 
     @Inject
     public OpenAIModelSettingsPresenter(
             final EventBus eventBus,
             final OpenAIModelSettingsView view,
-            final RestFactory restFactory) {
+            final RestFactory restFactory,
+            final CredentialClient credentialClient) {
         super(eventBus, view);
 
         this.restFactory = restFactory;
-
+        this.credentialClient = credentialClient;
+        final CredentialListModel credentialListModel = new CredentialListModel(eventBus, credentialClient);
+        credentialListModel.setTaskMonitorFactory(this);
+        view.getApiKeySelectionBox().setModel(credentialListModel);
         view.setUiHandlers(this);
     }
 
@@ -77,15 +86,23 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
     @Override
     protected void onRead(final DocRef docRef, final OpenAIModelDoc model, final boolean readOnly) {
         getView().setBaseUrl(model.getBaseUrl());
-        getView().setApiKey(model.getApiKey());
+        if (model.getApiKey() != null) {
+            credentialClient.getCredentialByName(model.getApiKey(), credential ->
+                    getView().getApiKeySelectionBox().setValue(credential), this);
+        } else {
+            getView().getApiKeySelectionBox().setValue(null);
+        }
         getView().setModelId(model.getModelId());
         getView().setMaxContextWindowTokens(model.getMaxContextWindowTokens());
     }
 
     @Override
     protected OpenAIModelDoc onWrite(final OpenAIModelDoc model) {
+        final Credential credential = getView().getApiKeySelectionBox().getValue();
         model.setBaseUrl(getView().getBaseUrl());
-        model.setApiKey(getView().getApiKey());
+        model.setApiKey(credential == null
+                ? null
+                : credential.getName());
         model.setModelId(getView().getModelId());
         model.setMaxContextWindowTokens(getView().getMaxContextWindowTokens());
 
@@ -99,9 +116,7 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
 
         void setBaseUrl(String baseUrl);
 
-        String getApiKey();
-
-        void setApiKey(String authToken);
+        SelectionBox<Credential> getApiKeySelectionBox();
 
         String getModelId();
 

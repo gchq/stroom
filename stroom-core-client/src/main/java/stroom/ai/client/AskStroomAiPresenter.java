@@ -18,27 +18,32 @@ package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiProxy;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
-import stroom.ai.shared.AskStroomAiData;
+import stroom.ai.shared.AskStroomAIConfig;
+import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
-import stroom.ai.shared.AskStroomAiResource;
 import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.event.AskStroomAiEvent;
 import stroom.dispatch.client.RestError;
-import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.entity.client.presenter.MarkdownConverter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.openai.shared.OpenAIModelDoc;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenter;
@@ -52,11 +57,12 @@ public class AskStroomAiPresenter
         implements AskStroomAiUiHandlers, AskStroomAiEvent.Handler {
 
     private static final String MARKDOWN_SECTION_BREAK = "\n\n---\n\n";
-    private static final AskStroomAiResource RESOURCE = GWT.create(AskStroomAiResource.class);
+    private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final MarkdownConverter markdownConverter;
-    private final RestFactory restFactory;
+    private final AskStroomAiClient askStroomAiClient;
+    private final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider;
     private String node;
-    private AskStroomAiData data;
+    private AskStroomAiContext data;
 
     private boolean showing;
 
@@ -64,13 +70,44 @@ public class AskStroomAiPresenter
     public AskStroomAiPresenter(final EventBus eventBus,
                                 final AskStroomAiView view,
                                 final AskStroomAiProxy askStroomAiProxy,
+                                final DocSelectionBoxPresenter docSelectionBoxPresenter,
                                 final MarkdownConverter markdownConverter,
-                                final RestFactory restFactory) {
+                                final AskStroomAiClient askStroomAiClient,
+                                final ClientSecurityContext clientSecurityContext,
+                                final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider) {
         super(eventBus, view, askStroomAiProxy);
         this.markdownConverter = markdownConverter;
-        this.restFactory = restFactory;
+        this.askStroomAiClient = askStroomAiClient;
+        this.askStroomAiConfigPresenterProvider = askStroomAiConfigPresenterProvider;
+        this.docSelectionBoxPresenter = docSelectionBoxPresenter;
 
+        getView().setModelRefSelection(docSelectionBoxPresenter.getView());
+        docSelectionBoxPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
+        docSelectionBoxPresenter.setRequiredPermissions(DocumentPermission.USE);
         view.setUiHandlers(this);
+
+        // Only allow administrators to set the default model.
+        view.allowSetDefault(clientSecurityContext.hasAppPermission(AppPermission.MANAGE_PROPERTIES_PERMISSION));
+
+        // Initiate the selection box presenter with the default model if one is set.
+        askStroomAiClient.getConfig(config -> {
+            if (config.getModelRef() != null) {
+                docSelectionBoxPresenter.setSelectedEntityReference(config.getModelRef(), true);
+            }
+        }, this);
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(docSelectionBoxPresenter.addDataSelectionHandler(event ->
+                askStroomAiClient.getConfig(config -> {
+                    final AskStroomAIConfig newConfig = config
+                            .copy()
+                            .modelRef(docSelectionBoxPresenter.getSelectedEntityReference())
+                            .build();
+                    askStroomAiClient.setConfig(newConfig);
+                }, this)));
     }
 
     @Override
@@ -101,6 +138,11 @@ public class AskStroomAiPresenter
     }
 
     @Override
+    public void onChangeConfig() {
+        askStroomAiConfigPresenterProvider.get().show();
+    }
+
+    @Override
     public void onDockBehaviourChange(final DockBehaviour dockBehaviour) {
 
     }
@@ -111,9 +153,18 @@ public class AskStroomAiPresenter
     }
 
     @Override
-    public void setContext(final String node, final AskStroomAiData data) {
+    public void setContext(final String node, final AskStroomAiContext data) {
         this.node = node;
         this.data = data;
+    }
+
+    @Override
+    public void onSetDefaultModel() {
+        final DocRef selected = docSelectionBoxPresenter.getSelectedEntityReference();
+        if (selected != null) {
+            askStroomAiClient.setDefaultModel(selected, success -> {
+            }, this);
+        }
     }
 
     @Override
@@ -125,26 +176,22 @@ public class AskStroomAiPresenter
         final Element markdownContainer = getView().getMarkdownContainer();
         markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
 
-        final AskStroomAiRequest request = new AskStroomAiRequest(data, message);
-        restFactory
-                .create(RESOURCE)
-                .method(res -> res.askStroomAi(
-                        node,
-                        request))
-                .onSuccess(response -> {
-                    onMessageReceived(response.getMessage());
-                    getView().setSendButtonLoadingState(false);
-                })
-                .onFailure(error -> {
-                    showError(error, "Stroom AI request failed", () -> {
+        askStroomAiClient.getConfig(config -> {
+            final AskStroomAiRequest request = new AskStroomAiRequest(config, data, message);
+            askStroomAiClient.sendMessage(node,
+                    request,
+                    response -> {
+                        onMessageReceived(response.getMessage());
                         getView().setSendButtonLoadingState(false);
-                    });
-                })
-                .taskMonitorFactory(this)
-                .exec();
+                    }, error ->
+                            showError(error, "Stroom AI request failed", () ->
+                                    getView().setSendButtonLoadingState(false)), this);
+        }, this);
     }
 
-    private void showError(final RestError error, final String message, final AlertCallback callback) {
+    private void showError(final RestError error,
+                           final String message,
+                           final AlertCallback callback) {
         AlertEvent.fireError(
                 AskStroomAiPresenter.this,
                 message + " - " + error.getMessage(),
@@ -189,15 +236,19 @@ public class AskStroomAiPresenter
 
     public interface AskStroomAiView extends View, Focus, HasUiHandlers<AskStroomAiUiHandlers> {
 
+        void allowSetDefault(boolean allow);
+
+        void setModelRefSelection(View view);
+
         Element getMarkdownContainer();
 
         String getMessage();
 
         void setSendButtonLoadingState(final boolean enabled);
 
-        void setDockBehaviour(final DockBehaviour dockBehaviour);
-
-        DockBehaviour getDockBehaviour();
+//        void setDockBehaviour(final DockBehaviour dockBehaviour);
+//
+//        DockBehaviour getDockBehaviour();
     }
 
     public static class DockBehaviour {

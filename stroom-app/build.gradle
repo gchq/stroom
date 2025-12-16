@@ -75,7 +75,6 @@ dependencies {
     implementation project(':stroom-config:stroom-config-global-impl-db-jooq')
     implementation project(':stroom-core')
     implementation project(':stroom-core-shared')
-    implementation project(':stroom-credentials:stroom-credentials-api')
     implementation project(':stroom-credentials:stroom-credentials-impl')
     implementation project(':stroom-credentials:stroom-credentials-impl-db')
     implementation project(':stroom-credentials:stroom-credentials-impl-db-jooq')

@@ -25,19 +25,27 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class AskStroomAiRequest {
 
     @JsonProperty
-    private final AskStroomAiData data;
+    private final AskStroomAIConfig config;
+    @JsonProperty
+    private final AskStroomAiContext context;
     @JsonProperty
     private final String message;
 
     @JsonCreator
-    public AskStroomAiRequest(@JsonProperty("data") final AskStroomAiData data,
+    public AskStroomAiRequest(@JsonProperty("config") final AskStroomAIConfig config,
+                              @JsonProperty("context") final AskStroomAiContext context,
                               @JsonProperty("message") final String message) {
-        this.data = data;
+        this.config = config;
+        this.context = context;
         this.message = message;
     }
 
-    public AskStroomAiData getData() {
-        return data;
+    public AskStroomAIConfig getConfig() {
+        return config;
+    }
+
+    public AskStroomAiContext getContext() {
+        return context;
     }
 
     public String getMessage() {
