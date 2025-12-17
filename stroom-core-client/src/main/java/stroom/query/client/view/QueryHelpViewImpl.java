@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,8 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+
+import java.util.function.Supplier;
 
 public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> implements QueryHelpView {
 
@@ -79,6 +81,11 @@ public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> i
         insertButton.setEnabled(enable);
     }
 
+    @Override
+    public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
+        selectionList.registerPopupTextProvider(popupTextSupplier);
+    }
+
     @UiHandler("copyButton")
     public void onCopyClick(final ClickEvent event) {
         getUiHandlers().onCopy();
@@ -88,6 +95,10 @@ public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> i
     public void onInsertClick(final ClickEvent event) {
         getUiHandlers().onInsert();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, QueryHelpViewImpl> {
 

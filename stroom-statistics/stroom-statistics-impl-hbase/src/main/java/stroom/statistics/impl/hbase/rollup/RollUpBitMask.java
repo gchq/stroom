@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 
 package stroom.statistics.impl.hbase.rollup;
-
-import stroom.bytebuffer.hbase.Bytes;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,11 +64,9 @@ public class RollUpBitMask {
     }
 
     private final short mask;
-    private final byte[] maskAsBytes;
 
     private RollUpBitMask(final short mask) {
         this.mask = mask;
-        this.maskAsBytes = Bytes.toBytes(mask);
     }
 
     /**
@@ -138,28 +134,6 @@ public class RollUpBitMask {
             rolledUpTagPositions.add(pos);
         }
         return fromTagPositions(rolledUpTagPositions);
-    }
-
-    /**
-     * @param allTags      String containing all tags in any order delimited by comma,
-     *                     e.g. "tag1,tag3,tag2"
-     * @param rolledUpTags String containing just those tags that are to be rolled up in
-     *                     any order e.g. "tag3,tag2"
-     * @return The byte value of the mask
-     */
-    public static byte[] byteValueFromTagList(final String allTags, final String rolledUpTags) {
-        return fromRolledupTagList(allTags, rolledUpTags).asBytes();
-    }
-
-    /**
-     * @param allTags      String containing all tags in any order delimited by comma,
-     *                     e.g. "tag1,tag3,tag2"
-     * @param rolledUpTags String containing just those tags that are to be rolled up in
-     *                     any order e.g. "tag3,tag2"
-     * @return The int value of the mask
-     */
-    public static int intValueFromTagList(final String allTags, final String rolledUpTags) {
-        return fromRolledupTagList(allTags, rolledUpTags).asShort();
     }
 
     /**
@@ -259,16 +233,6 @@ public class RollUpBitMask {
         // System.out.println(String.format("%15s",
         // Integer.toBinaryString(tempMask)).replace(' ', '0'));
 
-    }
-
-    /**
-     * Constructor
-     *
-     * @param bytes The byte array to convert from
-     * @return A {@link RollUpBitMask} object built from the byte array
-     */
-    public static RollUpBitMask fromBytes(final byte[] bytes) {
-        return new RollUpBitMask(Bytes.toShort(bytes));
     }
 
     /**
@@ -529,17 +493,6 @@ public class RollUpBitMask {
         return RollUpBitMask.fromTagPositions(new TreeSet<>(rolledUpFieldPositions));
     }
 
-    public short asShort() {
-        return this.mask;
-    }
-
-    /**
-     * @return The mask as a byte array
-     */
-    public byte[] asBytes() {
-        return this.maskAsBytes;
-    }
-
     /**
      * Output has mask position zero on the right
      */
@@ -550,29 +503,16 @@ public class RollUpBitMask {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + mask;
-        result = prime * result + Arrays.hashCode(maskAsBytes);
-        return result;
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final RollUpBitMask that = (RollUpBitMask) o;
+        return mask == that.mask;
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final RollUpBitMask other = (RollUpBitMask) obj;
-        if (mask != other.mask) {
-            return false;
-        }
-        return Arrays.equals(maskAsBytes, other.maskAsBytes);
+    public int hashCode() {
+        return Objects.hashCode(mask);
     }
 }

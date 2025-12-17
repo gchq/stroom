@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ public class QuickFilter extends FlowPanel
     private Supplier<SafeHtml> popupTextSupplier;
     private String lastInput = "";
     private boolean updateOnValueChange = true;
+    private HelpPopup helpPopup = null;
 
     private final Timer filterRefreshTimer = new Timer() {
         @Override
@@ -77,7 +78,7 @@ public class QuickFilter extends FlowPanel
         clearButton = new InlineSvgButton();
         clearButton.setSvg(SvgImage.CLEAR);
         clearButton.setTitle("Clear Filter");
-        clearButton.addStyleName("clear info");
+        clearButton.addStyleName("clear");
 
         helpButton = new InlineSvgButton();
         helpButton.setSvg(SvgImage.HELP_OUTLINE);
@@ -97,20 +98,26 @@ public class QuickFilter extends FlowPanel
     }
 
     private void showHelpPopup() {
-        final SafeHtml popupText = Optional.ofNullable(popupTextSupplier)
-                .map(Supplier::get)
-                .filter(safeHtml -> !safeHtml.asString().isEmpty())
-                .orElse(DEFAULT_POPUP_TEXT);
+        if (helpPopup != null) {
+            helpPopup.hide();
+            helpPopup = null;
+        } else {
+            final SafeHtml popupText = Optional.ofNullable(popupTextSupplier)
+                    .map(Supplier::get)
+                    .filter(safeHtml -> !safeHtml.asString().isEmpty())
+                    .orElse(DEFAULT_POPUP_TEXT);
 
-        final HelpPopup popup = new HelpPopup(popupText);
-        popup.setStyleName("quickFilter-tooltip");
-        popup.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
+            final HelpPopup popup = new HelpPopup(popupText);
+            popup.setStyleName("quickFilter-tooltip");
+            popup.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
 
-            // Position it below the filter
-            popup.setPopupPosition(
-                    getAbsoluteLeft() + 4,
-                    getAbsoluteTop() + 26);
-        });
+                // Position it below the filter
+                popup.setPopupPosition(
+                        getAbsoluteLeft() + 4,
+                        getAbsoluteTop() + 26);
+            });
+            this.helpPopup = popup;
+        }
     }
 
     private void onValueChange() {

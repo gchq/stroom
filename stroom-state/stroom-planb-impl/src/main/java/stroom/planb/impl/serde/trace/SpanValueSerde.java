@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.impl.serde.trace;
 
 import stroom.bytebuffer.ByteBufferUtils;
@@ -180,9 +196,9 @@ public class SpanValueSerde implements Serde<SpanValue> {
                         : 0));
 
             } else if (anyValue.getIntValue() != null) {
-                result = ensure(output, 1 + Integer.BYTES);
-                result.put(ValueType.INTEGER.getPrimitiveValue());
-                result.putInt(anyValue.getIntValue());
+                result = ensure(output, 1 + Long.BYTES);
+                result.put(ValueType.LONG.getPrimitiveValue());
+                result.putLong(anyValue.getIntValue());
 
             } else if (anyValue.getDoubleValue() != null) {
                 result = ensure(output, 1 + Double.BYTES);
@@ -240,8 +256,8 @@ public class SpanValueSerde implements Serde<SpanValue> {
         } else if (type == ValueType.BOOLEAN.getPrimitiveValue()) {
             return AnyValue.boolValue(input.get() == 1);
 
-        } else if (type == ValueType.INTEGER.getPrimitiveValue()) {
-            return AnyValue.intValue(input.getInt());
+        } else if (type == ValueType.LONG.getPrimitiveValue()) {
+            return AnyValue.intValue(input.getLong());
 
         } else if (type == ValueType.DOUBLE.getPrimitiveValue()) {
             return AnyValue.doubleValue(input.getDouble());
@@ -565,6 +581,9 @@ public class SpanValueSerde implements Serde<SpanValue> {
         } else if (type == ValueType.INTEGER.getPrimitiveValue()) {
             ByteBufferUtils.skip(input, Integer.BYTES);
 
+        } else if (type == ValueType.LONG.getPrimitiveValue()) {
+            ByteBufferUtils.skip(input, Long.BYTES);
+
         } else if (type == ValueType.DOUBLE.getPrimitiveValue()) {
             ByteBufferUtils.skip(input, Double.BYTES);
 
@@ -754,6 +773,9 @@ public class SpanValueSerde implements Serde<SpanValue> {
                 ByteBufferUtils.skip(input, 1);
 
             } else if (type == ValueType.INTEGER.getPrimitiveValue()) {
+                ByteBufferUtils.skip(input, Integer.BYTES);
+
+            } else if (type == ValueType.LONG.getPrimitiveValue()) {
                 ByteBufferUtils.skip(input, Integer.BYTES);
 
             } else if (type == ValueType.DOUBLE.getPrimitiveValue()) {

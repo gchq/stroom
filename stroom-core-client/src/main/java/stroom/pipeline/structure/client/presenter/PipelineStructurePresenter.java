@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -412,12 +412,11 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                     int j = 0;
                     for (final PipelineElementType pipelineElementType : entry.getValue()) {
                         if (StructureValidationUtil.isValidChildType(parentType, pipelineElementType, childCount)) {
-                            final String type = pipelineElementType.getType();
                             final SvgImage icon = pipelineElementType.getIcon();
                             final Item item = new IconMenuItem.Builder()
                                     .priority(j++)
                                     .icon(icon)
-                                    .text(type)
+                                    .text(pipelineElementType.getDisplayValue())
                                     .command(new AddPipelineElementCommand(pipelineElementType))
                                     .build();
                             children.add(item);
@@ -673,7 +672,6 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         setDirty(true);
     }
 
-
     // --------------------------------------------------------------------------------
 
 
@@ -743,7 +741,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
                 // We need to suggest a unique name for the element
                 final Set<String> existingNames = pipelineTreePresenter.getNames();
-                final String suggestedNameBase = elementType.getType().replaceAll("([A-Z][a-z])", " $1");
+                final String suggestedNameBase = elementType.getDisplayValue();
                 String suggestedName = suggestedNameBase;
 
                 int suffix = 2;

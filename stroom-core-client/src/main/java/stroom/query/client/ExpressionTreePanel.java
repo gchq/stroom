@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import stroom.pipeline.structure.client.view.Box;
 import stroom.pipeline.structure.client.view.TreePanel;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.htree.client.BracketConnectorRenderer;
 import stroom.widget.htree.client.ConnectorRenderer;
 import stroom.widget.htree.client.LayeredCanvas;
@@ -60,10 +61,11 @@ public class ExpressionTreePanel extends TreePanel<Item> {
 
     public ExpressionTreePanel(final Provider<DocSelectionBoxPresenter> docRefProvider,
                                final Provider<UserRefSelectionBoxPresenter> userRefProvider,
+                               final UiConfigCache uiConfigCache,
                                final boolean utc) {
 
         operatorEditor = new OperatorEditor();
-        termEditor = new TermEditor(docRefProvider, userRefProvider);
+        termEditor = new TermEditor(docRefProvider, userRefProvider, uiConfigCache);
         termEditor.setUtc(utc);
 
         final FlowPanel panel = new FlowPanel();

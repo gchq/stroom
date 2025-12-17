@@ -1,8 +1,30 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.string;
 
+import stroom.util.PredicateUtil;
 import stroom.util.shared.NullSafe;
 
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.List;
 import java.util.Objects;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 public class PatternUtil {
@@ -71,6 +93,52 @@ public class PatternUtil {
         return isCaseSensitive
                 ? Pattern.compile(patternStr)
                 : Pattern.compile(patternStr, Pattern.CASE_INSENSITIVE);
+    }
+
+    public static <T> Predicate<T> createPredicate(final List<String> nameFilters,
+                                                   final Function<T, String> toStringFunc,
+                                                   final boolean allowWildCards,
+                                                   final boolean isCompleteMatch,
+                                                   final boolean isCaseSensitive) {
+
+        if (NullSafe.isEmptyCollection(nameFilters)) {
+            return t -> false;
+        } else {
+            Objects.requireNonNull(toStringFunc);
+            return nameFilters.stream()
+                    .map(nameFilter -> {
+                        final Predicate<T> predicate;
+                        if (allowWildCards && PatternUtil.containsWildCards(nameFilter)) {
+                            final Pattern pattern = PatternUtil.createPatternFromWildCardFilter(
+                                    nameFilter, isCompleteMatch, isCaseSensitive);
+                            predicate = item ->
+                                    pattern.matcher(NullSafe.get(item, toStringFunc)).matches();
+                        } else {
+                            if (isCompleteMatch) {
+                                if (isCaseSensitive) {
+                                    predicate = item ->
+                                            nameFilter.equals(NullSafe.get(item, toStringFunc));
+                                } else {
+                                    predicate = item ->
+                                            nameFilter.equalsIgnoreCase(NullSafe.get(item, toStringFunc));
+                                }
+                            } else {
+                                if (isCaseSensitive) {
+                                    predicate = item ->
+                                            NullSafe.test(item, toStringFunc, str -> str.contains(nameFilter));
+                                } else {
+                                    predicate = item ->
+                                            NullSafe.test(item,
+                                                    toStringFunc,
+                                                    str -> StringUtils.containsIgnoreCase(str, nameFilter));
+                                }
+                            }
+                        }
+                        return predicate;
+                    })
+                    .reduce(PredicateUtil::orPredicates)
+                    .orElse(val -> false);
+        }
     }
 
     /**

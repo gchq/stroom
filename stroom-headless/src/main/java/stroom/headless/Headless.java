@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,10 @@ import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProviderImpl;
+import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.xml.XMLUtil;
 
 import com.google.inject.Guice;
@@ -48,6 +50,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.UncheckedIOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -57,12 +60,38 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 
 /**
- * Command line tool to process some files from a proxy stroom.
+ * <p>
+ * <strong>Stroom-Headless</strong>
+ * </p><p>
+ * A cut-down and headless version of Stroom for processing data using a pipeline.
+ * </p><p>
+ * It ingests one or more ZIP files in proxy ZIP format, processes all contained data using the Pipeline(s)
+ * that correspond to the Feed name and outputs the result to a file.
+ * </p><p>
+ * Arguments:
+ * <ul>
+ *     <li><strong>input</strong> (mandatory) - The path of the directory containing the input data in proxy ZIP format.
+ *     All ZIP files found in this directory will be processed. Will recurse into sub-directories.
+ *     The meta for the data in the ZIP file(s) must contain a Feed key. The content or config ZIP must then
+ *     contain Pipelines with the same name(s) as all Feed keys in the input data.</li>
+ *     <li><strong>output</strong> (mandatory) - The path of the output file to create. The output of the
+ *     pipeline process (for all input files) will be appended to this file. The file will be deleted if it
+ *     already exists.</li>
+ *     <li><strong>config</strong> (optional) - The path to a Stroom content pack ZIP file containing the Pipeline(s)
+ *     and associated content (e.g. Schemas, XSLTs, TextConverters, etc.).</li>
+ *     <li><strong>content</strong> (mandatory) - The path to a directory where the Stroom content will be
+ *     imported into or read from. If the 'config' argument is not supplied, content must be present in
+ *     this directory.</li>
+ *     <li><strong>tmp</strong> (mandatory) - The path to a directory to use as a temporary directory.</li>
+ * </ul>
+ * </p>
  */
 public class Headless extends AbstractCommandLineTool {
 
@@ -78,7 +107,6 @@ public class Headless extends AbstractCommandLineTool {
     private Path outputFile;
     private Path configFile;
     private Path contentDir;
-    private Path tmpDir;
 
     @Inject
     private HomeDirProviderImpl homeDirProvider;
@@ -119,51 +147,96 @@ public class Headless extends AbstractCommandLineTool {
 
     @Override
     protected void checkArgs() {
-        if (input == null) {
-            failArg("input", "required");
+        if (NullSafe.isBlankString(input)) {
+            failMissingMandatoryArg("input");
         }
-        if (output == null) {
-            failArg("output", "required");
+        if (NullSafe.isBlankString(output)) {
+            failMissingMandatoryArg("output");
         }
-        if (config == null) {
-            failArg("config", "required");
+        if (NullSafe.isBlankString(content)) {
+            failMissingMandatoryArg("content");
         }
-        if (content == null) {
-            failArg("content", "required");
-        }
-        if (tmp == null) {
-            failArg("tmp", "required");
+        if (NullSafe.isBlankString(tmp)) {
+            failMissingMandatoryArg("tmp");
         }
     }
 
     private void init() {
         inputDir = Paths.get(input);
         outputFile = Paths.get(output);
-        configFile = Paths.get(config);
         contentDir = Paths.get(content);
-        tmpDir = Paths.get(tmp);
 
-        if (!Files.isDirectory(inputDir)) {
-            throw new RuntimeException("Input directory \"" + FileUtil.getCanonicalPath(inputDir) +
-                    "\" cannot be found!");
+        checkIsDir("Input", inputDir);
+        checkIsDir("Output", outputFile.getParent());
+        if (NullSafe.isBlankString(config)) {
+            configFile = null;
+            // No config arg, so content must already be present
+            checkContentIsPresent();
+            LOGGER.info("No config file provided, using existing content in {}",
+                    FileUtil.getCanonicalPath(contentDir));
+        } else {
+            configFile = Paths.get(config);
+            checkIsFile("Config", configFile);
         }
-        if (!Files.isDirectory(outputFile.getParent())) {
-            throw new RuntimeException("Output file \"" + FileUtil.getCanonicalPath(outputFile.getParent())
-                    + "\" parent directory cannot be found!");
-        }
-        if (!Files.isRegularFile(configFile)) {
-            throw new RuntimeException("Config file \"" + FileUtil.getCanonicalPath(configFile) +
-                    "\" cannot be found!");
-        }
-        if (!Files.isDirectory(contentDir)) {
-            throw new RuntimeException("Content dir \"" + FileUtil.getCanonicalPath(contentDir) +
-                    "\" cannot be found!");
-        }
+        checkIsDir("Content", contentDir);
 
+        final Path tmpDir = Paths.get(tmp);
         // Make sure tmp dir exists and is empty.
-        FileUtil.mkdirs(tmpDir);
         FileUtil.deleteFile(outputFile);
+        FileUtil.mkdirs(tmpDir);
         FileUtil.deleteContents(tmpDir);
+    }
+
+    private void checkContentIsPresent() {
+        try (Stream<Path> pathStream = Files.list(contentDir)) {
+            final long count = pathStream.count();
+            if (count == 0) {
+                throw new RuntimeException(LogUtil.message(
+                        "Content directory '{}' is empty. Expecting it to contain Stroom content. " +
+                        "A content pack ZIP file can be loaded using the 'config' argument.",
+                        FileUtil.getCanonicalPath(contentDir)));
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private void checkIsDir(final String name,
+                            final Path path) {
+        if (!Files.exists(path)) {
+            throw new RuntimeException(LogUtil.message("{} directory '{}' does not exist.",
+                    name,
+                    FileUtil.getCanonicalPath(path)));
+        }
+        if (!Files.isDirectory(path)) {
+            throw new RuntimeException(LogUtil.message("{} directory '{}' is not a directory.",
+                    name,
+                    FileUtil.getCanonicalPath(path)));
+        }
+        if (!Files.isReadable(path)) {
+            throw new RuntimeException(LogUtil.message("{} directory '{}' is not readable.",
+                    name,
+                    FileUtil.getCanonicalPath(path)));
+        }
+    }
+
+    private void checkIsFile(final String name,
+                             final Path path) {
+        if (!Files.exists(path)) {
+            throw new RuntimeException(LogUtil.message("{} file '{}' does not exist.",
+                    name,
+                    FileUtil.getCanonicalPath(path)));
+        }
+        if (!Files.isRegularFile(path)) {
+            throw new RuntimeException(LogUtil.message("{} file '{}' is not a file.",
+                    name,
+                    FileUtil.getCanonicalPath(path)));
+        }
+        if (!Files.isReadable(path)) {
+            throw new RuntimeException(LogUtil.message("{} file '{}' is not readable.",
+                    name,
+                    FileUtil.getCanonicalPath(path)));
+        }
     }
 
     @Override
@@ -173,12 +246,8 @@ public class Headless extends AbstractCommandLineTool {
             init();
 
             final Path tempDir = Paths.get(tmp);
-            final String path = FileUtil.getCanonicalPath(tempDir);
-            System.setProperty(TempDirProviderImpl.PROP_STROOM_TEMP, path);
-            System.setProperty(HomeDirProviderImpl.PROP_STROOM_HOME, path);
-
             // Create the Guice injector and inject members.
-            createInjector();
+            createInjector(tempDir, tempDir);
 
             process();
         } finally {
@@ -191,8 +260,9 @@ public class Headless extends AbstractCommandLineTool {
 
         pipelineScopeRunnable.scopeRunnable(this::processInPipelineScope);
 
+        LOGGER.info("Output written to {}", FileUtil.getCanonicalPath(outputFile));
         LOGGER.info("Processing completed in "
-                + ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
+                    + ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
     }
 
     private void processInPipelineScope() {
@@ -200,7 +270,9 @@ public class Headless extends AbstractCommandLineTool {
         fsPersistenceConfig.setPath(contentDir.toAbsolutePath().toString());
 
         // Read the configuration.
-        readConfig();
+        if (configFile != null) {
+            readConfig();
+        }
 
         OutputStreamWriter outputStreamWriter = null;
         try {
@@ -247,7 +319,9 @@ public class Headless extends AbstractCommandLineTool {
         try {
             // Loop over all of the data files in the repository.
             try {
-                Files.walkFileTree(inputDir,
+                final AtomicInteger fileCount = new AtomicInteger();
+                Files.walkFileTree(
+                        inputDir,
                         EnumSet.of(FileVisitOption.FOLLOW_LINKS),
                         Integer.MAX_VALUE,
                         new AbstractFileVisitor() {
@@ -256,6 +330,7 @@ public class Headless extends AbstractCommandLineTool {
                                 try {
                                     if (file.toString().endsWith(".zip")) {
                                         process(headlessFilter, file);
+                                        fileCount.incrementAndGet();
                                     }
                                 } catch (final RuntimeException e) {
                                     LOGGER.error(e.getMessage(), e);
@@ -263,6 +338,7 @@ public class Headless extends AbstractCommandLineTool {
                                 return super.visitFile(file, attrs);
                             }
                         });
+                LOGGER.info("Processed {} ZIP files", fileCount.get());
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }
@@ -271,10 +347,10 @@ public class Headless extends AbstractCommandLineTool {
         }
     }
 
-    private void process(final HeadlessFilter headlessFilter, final Path path) {
-        LOGGER.info("Processing: " + FileUtil.getCanonicalPath(path));
+    private void process(final HeadlessFilter headlessFilter, final Path zipFile) {
+        LOGGER.info("Processing: {}", FileUtil.getCanonicalPath(zipFile));
 
-        try (final StroomZipFile stroomZipFile = new StroomZipFile(path)) {
+        try (final StroomZipFile stroomZipFile = new StroomZipFile(zipFile)) {
             final List<String> baseNames = stroomZipFile.getBaseNames();
 
             // Process each base file in a consistent order
@@ -298,10 +374,11 @@ public class Headless extends AbstractCommandLineTool {
     private void readConfig() {
         LOGGER.info("Reading configuration from: " + FileUtil.getCanonicalPath(configFile));
         importExportService.importConfig(configFile, ImportSettings.auto(), new ArrayList<>());
+        LOGGER.info("Configuration imported into: " + FileUtil.getCanonicalPath(contentDir));
     }
 
-    private void createInjector() {
-        final Injector injector = Guice.createInjector(new CliModule());
+    private void createInjector(final Path homeDir, final Path tempDir) {
+        final Injector injector = Guice.createInjector(new CliModule(homeDir, tempDir));
         injector.injectMembers(this);
     }
 }

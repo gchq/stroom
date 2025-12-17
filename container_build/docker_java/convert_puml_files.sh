@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 
+#
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 set -eo pipefail
 shopt -s globstar
 
@@ -16,7 +32,7 @@ setup_echo_colours() {
     BLUE2=''
     DGREY=''
     NC='' # No Colour
-  else 
+  else
     RED='\033[1;31m'
     GREEN='\033[1;32m'
     YELLOW='\033[1;33m'
@@ -30,7 +46,7 @@ setup_echo_colours() {
 debug_value() {
   local name="$1"; shift
   local value="$1"; shift
-  
+
   if [ "${IS_DEBUG}" = true ]; then
     echo -e "${DGREY}DEBUG ${name}: ${value}${NC}"
   fi
@@ -38,7 +54,7 @@ debug_value() {
 
 debug() {
   local str="$1"; shift
-  
+
   if [ "${IS_DEBUG}" = true ]; then
     echo -e "${DGREY}DEBUG ${str}${NC}"
   fi
@@ -53,7 +69,7 @@ convert_file() {
   #   Then we can see if the .puml has changed and only regen it if there is
   #   no .puml.svg or the sha1 is different. This would speed up the process
   #   when we have lots more images in the site.
-  
+
   local puml_filename
   puml_filename="$(basename "${puml_file}")"
 
@@ -108,7 +124,7 @@ convert_file() {
       failed_count=$(( failed_count + 1 ))
       # When it errors it seems to still create an svg so delete it if there
       rm -f "${generated_svg_file}"
-    else 
+    else
       # Now rename the file so we can distinguish puml generated svgs from
       # other svgs in the gitignore
       mv "${generated_svg_file}" "${renamed_svg_file}"
@@ -148,7 +164,7 @@ main() {
       local puml_file="${file_or_dir}"
       convert_file "${puml_file}"
     else
-      # Not a file so assume it 
+      # Not a file so assume it
       # remove any trailing slash
       local dir="${file_or_dir%/}"
 
