@@ -101,7 +101,8 @@ public class AskStroomAIService {
         if (request.getContext() instanceof final DashboardTableContext dashboardTableContext) {
             final Function<OffsetRange, DashboardSearchResponse> dataProvider = range -> {
                 DashboardSearchRequest searchRequest = dashboardTableContext.getSearchRequest();
-                final ComponentResultRequest componentResultRequest = searchRequest.getComponentResultRequests().getFirst();
+                final ComponentResultRequest componentResultRequest =
+                        searchRequest.getComponentResultRequests().getFirst();
                 if (componentResultRequest instanceof TableResultRequest tableResultRequest) {
                     tableResultRequest = tableResultRequest.copy().requestedRange(range).build();
                     searchRequest = dashboardTableContext.getSearchRequest()
@@ -440,14 +441,20 @@ public class AskStroomAIService {
     }
 
     public Boolean setDefaultTableSummaryConfig(final TableSummaryConfig config) {
-        globalConfigProvider.get().setInt(config, TableSummaryConfig.PROP_NAME_MAXIMUM_BATCH_SIZE, config.getMaximumBatchSize());
-        globalConfigProvider.get().setInt(config, TableSummaryConfig.PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS, config.getMaximumTableInputRows());
+        globalConfigProvider.get().setInt(config,
+                TableSummaryConfig.PROP_NAME_MAXIMUM_BATCH_SIZE,
+                config.getMaximumBatchSize());
+        globalConfigProvider.get().setInt(config,
+                TableSummaryConfig.PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS,
+                config.getMaximumTableInputRows());
         return true;
     }
 
     public Boolean setDefaultChatMemoryConfigConfig(final ChatMemoryConfig config) {
         globalConfigProvider.get().setInt(config, ChatMemoryConfig.PROP_NAME_TOKEN_LIMIT, config.getTokenLimit());
-        globalConfigProvider.get().setString(config, ChatMemoryConfig.PROP_NAME_TIME_TO_LIVE, config.getTimeToLive().toString());
+        globalConfigProvider.get().setString(config,
+                ChatMemoryConfig.PROP_NAME_TIME_TO_LIVE,
+                config.getTimeToLive().toString());
         return true;
     }
 }

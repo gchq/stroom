@@ -64,7 +64,7 @@ public class ApacheHttpClient implements HttpClient {
     private void handleServerSentEvents(final ClassicHttpResponse response,
                                         final ServerSentEventParser parser,
                                         final ServerSentEventListener listener) throws IOException {
-            parser.parse(response.getEntity().getContent(), listener);
+        parser.parse(response.getEntity().getContent(), listener);
     }
 
     private ClassicHttpRequest createApacheRequest(final HttpRequest request) {

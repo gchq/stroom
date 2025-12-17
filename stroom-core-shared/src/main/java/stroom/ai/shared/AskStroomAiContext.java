@@ -13,7 +13,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = QueryTableContext.class, name = "queryTable"),
         @JsonSubTypes.Type(value = GeneralTableContext.class, name = "generalTable")
 })
-public sealed abstract class AskStroomAiContext permits DashboardTableContext, QueryTableContext, GeneralTableContext {
+public abstract sealed class AskStroomAiContext permits DashboardTableContext, QueryTableContext, GeneralTableContext {
+
     @JsonProperty
     private final String chatMemoryId;
 

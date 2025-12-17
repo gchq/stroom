@@ -17,15 +17,15 @@
 package stroom.query.impl;
 
 import stroom.ai.shared.AskStroomAIConfig;
+import stroom.ai.shared.AskStroomAiRequest;
+import stroom.ai.shared.AskStroomAiResource;
+import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.ChatMemoryConfig;
 import stroom.ai.shared.TableSummaryConfig;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
-import stroom.ai.shared.AskStroomAiRequest;
-import stroom.ai.shared.AskStroomAiResource;
-import stroom.ai.shared.AskStroomAiResponse;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;

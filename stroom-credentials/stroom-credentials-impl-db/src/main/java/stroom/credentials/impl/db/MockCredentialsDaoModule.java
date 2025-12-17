@@ -50,6 +50,7 @@ public class MockCredentialsDaoModule extends AbstractModule {
         private final Map<String, StoredSecret> uuidToCred = new HashMap<>();
         private final Map<String, StoredSecret> nameToCred = new HashMap<>();
 
+        @SuppressWarnings("checkstyle:LineLength")
         @Override
         public ResultPage<CredentialWithPerms> findCredentialsWithPermissions(final FindCredentialRequest request,
                                                                               final Function<Credential, CredentialWithPerms> permissionDecorator) {

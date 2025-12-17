@@ -52,15 +52,6 @@ public class AskStroomAiClient {
         }
     }
 
-    private void getDefaultConfig(final Consumer<AskStroomAIConfig> consumer, final TaskMonitorFactory taskMonitorFactory) {
-        restFactory
-                .create(RESOURCE)
-                .method(AskStroomAiResource::getDefaultConfig)
-                .onSuccess(consumer)
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
-
     void setDefaultModel(final DocRef modelRef,
                          final Consumer<Boolean> consumer,
                          final TaskMonitorFactory taskMonitorFactory) {

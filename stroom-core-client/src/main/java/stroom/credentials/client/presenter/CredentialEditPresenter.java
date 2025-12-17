@@ -136,7 +136,8 @@ public class CredentialEditPresenter
                             if (valid) {
                                 // Store or update the secret
                                 final PutCredentialRequest request = credentialSettingsPresenter.write();
-                                credentialClient.storeCredential(request, result -> {
+                                credentialClient.storeCredential(request,
+                                        result -> {
                                             consumer.accept(result);
                                             e.hide();
                                         }, new DefaultErrorHandler(this, e::reset),

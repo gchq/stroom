@@ -9,6 +9,7 @@ import dev.langchain4j.data.message.UserMessage;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("all")
 public class TableQueryMessages {
 
 //    private static final String SYSTEM_MESSAGE = """

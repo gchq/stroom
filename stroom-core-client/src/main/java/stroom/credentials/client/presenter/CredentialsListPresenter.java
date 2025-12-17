@@ -155,36 +155,20 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Initialise the columns in the data grid.
      */
     private void initColumns(final MyDataGrid<CredentialWithPerms> grid) {
-        grid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(this::getCredentialsName)
-                        .build(),
-                DataGridUtil.headingBuilder("Name")
-                        .withToolTip("Name of credentials")
-                        .build(),
+        grid.addResizableColumn(DataGridUtil.textColumnBuilder(this::getCredentialsName).build(),
+                DataGridUtil.headingBuilder("Name").withToolTip("Name of credentials").build(),
                 280);
 
-        grid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(this::getCredentialsType)
-                        .build(),
-                DataGridUtil.headingBuilder("Credential Type")
-                        .withToolTip("Type of credential")
-                        .build(),
+        grid.addResizableColumn(DataGridUtil.textColumnBuilder(this::getCredentialsType).build(),
+                DataGridUtil.headingBuilder("Credential Type").withToolTip("Type of credential").build(),
                 150);
 
-        grid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(this::getKeyStoreType)
-                        .build(),
-                DataGridUtil.headingBuilder("Key Store Type")
-                        .withToolTip("Type of keystore")
-                        .build(),
+        grid.addResizableColumn(DataGridUtil.textColumnBuilder(this::getKeyStoreType).build(),
+                DataGridUtil.headingBuilder("Key Store Type").withToolTip("Type of keystore").build(),
                 150);
 
-        grid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(this::getCredentialsExpires)
-                        .build(),
-                DataGridUtil.headingBuilder("Expires")
-                        .withToolTip("When these credentials expire")
-                        .build(),
+        grid.addResizableColumn(DataGridUtil.textColumnBuilder(this::getCredentialsExpires).build(),
+                DataGridUtil.headingBuilder("Expires").withToolTip("When these credentials expire").build(),
                 190);
 
         grid.addEndColumn(new EndColumn<>());
@@ -201,8 +185,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      * Provides the expiry date of the credentials to the data grid column.
      */
     private String getCredentialsExpires(final CredentialWithPerms cwp) {
-        return NullSafe.getOrElse(
-                cwp,
+        return NullSafe.getOrElse(cwp,
                 CredentialWithPerms::getCredential,
                 Credential::getExpiryTimeMs,
                 dateTimeFormatter::format,
@@ -217,8 +200,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     }
 
     private String getKeyStoreType(final CredentialWithPerms cwp) {
-        return NullSafe.getOrElse(
-                cwp,
+        return NullSafe.getOrElse(cwp,
                 CredentialWithPerms::getCredential,
                 Credential::getKeyStoreType,
                 KeyStoreType::getDisplayValue,
@@ -228,17 +210,16 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
     /**
      * Sets up the data provider for the list of credentials.
      */
-    private RestDataProvider<CredentialWithPerms, ResultPage<CredentialWithPerms>>
-    createDataProvider(final EventBus eventBus,
-                       final PagerView view) {
+    @SuppressWarnings("checkstyle:LineLength")
+    private RestDataProvider<CredentialWithPerms, ResultPage<CredentialWithPerms>> createDataProvider(final EventBus eventBus,
+                                                                                                      final PagerView view) {
         return new RestDataProvider<>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<CredentialWithPerms>> dataConsumer,
                                 final RestErrorHandler restErrorHandler) {
                 final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
-                final FindCredentialRequest request = new FindCredentialRequest(
-                        pageRequest,
+                final FindCredentialRequest request = new FindCredentialRequest(pageRequest,
                         null,
                         null,
                         DocumentPermission.VIEW);
@@ -276,11 +257,10 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
         // Get notified when data has loaded and load up the first item
         dataGrid.addLoadingStateChangeHandler(event -> {
-            if (event.getLoadingState() == LoadingState.LOADED
-                || event.getLoadingState() == LoadingState.PARTIALLY_LOADED) {
+            if (event.getLoadingState() == LoadingState.LOADED ||
+                event.getLoadingState() == LoadingState.PARTIALLY_LOADED) {
                 if (defaultSelection) {
-                    if (gridSelectionModel.getSelected() == null
-                        && dataGrid.getRowCount() > 0) {
+                    if (gridSelectionModel.getSelected() == null && dataGrid.getRowCount() > 0) {
                         final CredentialWithPerms cwp = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
                         gridSelectionModel.setSelected(cwp);
                     }
@@ -353,11 +333,8 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      */
     private void handleAddButtonClick() {
         credentialClient.createDocRef(docRef -> {
-            credentialEditPresenterProvider.get().show(
-                    docRef,
-                    null,
-                    CreationState.NEW_CREDENTIALS,
-                    this::afterEdit);
+            credentialEditPresenterProvider.get()
+                    .show(docRef, null, CreationState.NEW_CREDENTIALS, this::afterEdit);
         }, this);
     }
 
@@ -372,12 +349,15 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      */
     private void handleDeleteButtonClick() {
         final CredentialWithPerms selectedCwp = gridSelectionModel.getSelected();
-        ConfirmEvent.fire(this, "Are you sure you want to delete the credentials '" +
-                                selectedCwp.getCredential().getName() + "' ?", ok -> {
-            if (ok) {
-                deleteCredentials(selectedCwp);
-            }
-        });
+        ConfirmEvent.fire(this,
+                "Are you sure you want to delete the credentials '" +
+                selectedCwp.getCredential().getName() +
+                "' ?",
+                ok -> {
+                    if (ok) {
+                        deleteCredentials(selectedCwp);
+                    }
+                });
     }
 
     /**
@@ -387,15 +367,14 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
      */
     private void deleteCredentials(final CredentialWithPerms selectedCwp) {
         if (selectedCwp != null) {
-            credentialClient.deleteCredentials(selectedCwp.getCredential().getUuid(),
-                    result -> {
-                        // Reload the list & select the first item
-                        dataProvider.refresh();
-                        final CredentialWithPerms firstItem = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
-                        if (firstItem != null) {
-                            gridSelectionModel.setSelected(firstItem);
-                        }
-                    }, this);
+            credentialClient.deleteCredentials(selectedCwp.getCredential().getUuid(), result -> {
+                // Reload the list & select the first item
+                dataProvider.refresh();
+                final CredentialWithPerms firstItem = dataGrid.getVisibleItem(FIRST_ITEM_INDEX);
+                if (firstItem != null) {
+                    gridSelectionModel.setSelected(firstItem);
+                }
+            }, this);
         }
     }
 
@@ -407,8 +386,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
 
         // Check that the user can edit these credentials
         if (cwp.isEdit()) {
-            credentialEditPresenterProvider.get().show(
-                    cwp.getCredential().asDocRef(),
+            credentialEditPresenterProvider.get().show(cwp.getCredential().asDocRef(),
                     cwp,
                     CreationState.OLD_CREDENTIALS,
                     this::afterEdit);

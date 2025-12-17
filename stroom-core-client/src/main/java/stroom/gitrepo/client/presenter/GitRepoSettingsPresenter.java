@@ -205,18 +205,16 @@ public class GitRepoSettingsPresenter
         if (gitRepoDoc != null) {
             final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(commitDialog);
             commitDialog.setupDialog(builder);
-            builder.onHideRequest(e -> {
+            builder
+                    .onHideRequest(e -> {
                         if (e.isOk()) {
                             // OK pressed so check if the dialog is valid
                             if (commitDialog.isValid()) {
                                 e.hide();
-                                requestGitRepoPush(taskMonitorFactory,
-                                        commitDialog.getView().getCommitMessage());
+                                requestGitRepoPush(taskMonitorFactory, commitDialog.getView().getCommitMessage());
                             } else {
                                 // Something is wrong - tell user what it is and reset the dialog
-                                AlertEvent.fireWarn(commitDialog,
-                                        commitDialog.getValidationMessage(),
-                                        e::reset);
+                                AlertEvent.fireWarn(commitDialog, commitDialog.getValidationMessage(), e::reset);
                             }
                         } else {
                             // Cancel pressed

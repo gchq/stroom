@@ -9,6 +9,7 @@ import dev.langchain4j.data.message.UserMessage;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("all")
 public class TableSummaryMessages {
 
     private static final String SYSTEM_MESSAGE = "You merge partial answers into a unified, concise summary.";

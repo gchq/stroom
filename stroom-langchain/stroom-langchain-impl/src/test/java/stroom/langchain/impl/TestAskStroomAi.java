@@ -1,5 +1,6 @@
 package stroom.langchain.impl;
 
+import stroom.ai.shared.AskStroomAIConfig;
 import stroom.ai.shared.ChatMemoryConfig;
 import stroom.langchain.api.ChatMemoryService;
 import stroom.langchain.api.OpenAIService;
@@ -8,7 +9,6 @@ import stroom.langchain.api.SummaryReducer;
 import stroom.langchain.api.TableQuery;
 import stroom.langchain.api.TableQueryMessages;
 import stroom.langchain.api.TableSummaryMessages;
-import stroom.ai.shared.AskStroomAIConfig;
 import stroom.util.date.DateUtil;
 
 import dev.langchain4j.memory.chat.TokenWindowChatMemory;
@@ -128,7 +128,7 @@ public class TestAskStroomAi {
         final String apiKey = System.getProperty("OPEN_API_TEST_KEY");
         final String modelId = "gpt-4o";
 
-        final OpenAIService openAIService = new OpenAIServiceImpl(null, null);
+        final OpenAIService openAIService = new OpenAIServiceImpl(null, null, null);
         final ChatModel chatModel = openAIService.getChatModel(modelId, baseUrl, apiKey);
 
         final String chatMemoryId = UUID.randomUUID().toString();
@@ -256,7 +256,7 @@ public class TestAskStroomAi {
         private final String aiQuery;
         private final TableQuery tableQuery;
         private final SummaryReducer summaryReducer;
-                private final String tableChatMemoryId;
+        private final String tableChatMemoryId;
         private final String summaryChatMemoryId;
         private String cumulativeSummary = "";
 

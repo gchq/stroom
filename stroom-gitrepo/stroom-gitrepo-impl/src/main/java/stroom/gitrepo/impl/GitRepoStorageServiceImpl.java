@@ -119,7 +119,9 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
      */
     private final StoredSecrets storedSecrets;
 
-    /** System temporary directory for SSH home and SSH directories. Not used. */
+    /**
+     * System temporary directory for SSH home and SSH directories. Not used.
+     */
     private static final File tempDir;
 
     /**
@@ -195,9 +197,9 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
      * @param gitRepoDoc    The document that we're pushing the button on.
      *                      Must not be null.
      * @param commitMessage The Git commit message. Must not be null.
-     * @param calledFromUi True if the method is being called from the UI over
-     *                     REST, false if being called from a Job.
-     *                     Affects how some errors are handled.
+     * @param calledFromUi  True if the method is being called from the UI over
+     *                      REST, false if being called from a Job.
+     *                      Affects how some errors are handled.
      * @return The export summary. Might return if the export hasn't yet taken
      * place.
      * @throws IOException if something goes wrong
@@ -299,9 +301,10 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
 
     /**
      * Adds a message to the list of messages, logging the message at the appropriate level.
+     *
      * @param messages The list of messages
      * @param severity How severe the issue is
-     * @param message The message to add / log.
+     * @param message  The message to add / log.
      */
     private void addMessage(final List<Message> messages,
                             final Severity severity,
@@ -589,7 +592,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
     /**
      * Returns the credentials to log into Git.
      *
-     * @param gitRepoDoc Where we get the credential ID from. Must not be null.
+     * @param gitRepoDoc       Where we get the credential ID from. Must not be null.
      * @param transportCommand Where to put the credentials. Accepts any kind of TransportCommand.
      */
     private void setGitCreds(final GitRepoDoc gitRepoDoc, final TransportCommand<?, ?> transportCommand)
@@ -630,10 +633,10 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                     }
                     case KEY_PAIR -> {
                         if (storedSecret.secret() instanceof final KeyPairSecret keyPairSecret) {
-                        transportCommand.setTransportConfigCallback(
-                                new CredentialsJgitSshTransportCallback(storedSecrets,
-                                        tempDir,
-                                        credentialsId));
+                            transportCommand.setTransportConfigCallback(
+                                    new CredentialsJgitSshTransportCallback(storedSecrets,
+                                            tempDir,
+                                            credentialsId));
                         }
                     }
                     default -> {
@@ -745,6 +748,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
 
     /**
      * Generates an error message by walking the causes of an exception.
+     *
      * @param e The root exception to look at.
      * @return The error messages from all the causes of the exception.
      */
@@ -764,8 +768,9 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
      * Determines whether updates are available, by looking at the latest
      * commit in the downloaded data from Git and comparing it to the stored
      * value.
-     * @param messages A list of messages to add to. Can be null.
-     *                 If present then a diff will be inserted as a sequence of messages.
+     *
+     * @param messages   A list of messages to add to. Can be null.
+     *                   If present then a diff will be inserted as a sequence of messages.
      * @param gitWorkDir The directory that is the root of the repo.
      * @return An auto-closeable Git object to use when accessing the repo.
      * @throws IOException if something goes wrong.
@@ -827,6 +832,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
     /**
      * Returns the current commit name for the currently cloned code
      * - whatever is in the local Git repo on disk.
+     *
      * @param git The Git instance to query. Must not be null.
      * @return The string that identifies the commit. Never null.
      * @throws GitAPIException if something goes wrong.
@@ -841,11 +847,12 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
 
     /**
      * Populates the messages with a diff between the two commit hashes.
-     * @param messages The list of messages to add to. Must not be null.
-     * @param git Represents the Git repo. Must not be null.
+     *
+     * @param messages            The list of messages to add to. Must not be null.
+     * @param git                 Represents the Git repo. Must not be null.
      * @param gitRemoteCommitName The hash of the commit we've already got.
      *                            Might be null.
-     * @param repoCommitName The latest hash available in the remote store.
+     * @param repoCommitName      The latest hash available in the remote store.
      */
     private void generateGitDiff(final List<String> messages,
                                  final Git git,
@@ -897,7 +904,8 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
 
     /**
      * Checks if any updates are available in the Git Repo.
-     * @param messages List of messages; used to return the diff. Can be null.
+     *
+     * @param messages   List of messages; used to return the diff. Can be null.
      * @param gitRepoDoc The thing we want to check for updates. Must not be null.
      * @return true if updates are available, false if not.
      * @throws IOException if something goes wrong.
@@ -973,8 +981,9 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
 
         /**
          * Constructor.
+         *
          * @param location Where to create the temporary directory.
-         * @param prefix The start of the directory name.
+         * @param prefix   The start of the directory name.
          */
         public AutoDeletingTempDirectory(final Path location, final String prefix)
                 throws IOException {
@@ -998,6 +1007,7 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
 
         /**
          * Automatically deletes the temporary directory.
+         *
          * @throws IOException if something goes wrong.
          */
         @Override
