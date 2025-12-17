@@ -91,8 +91,8 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
     @Override
     protected void onRead(final DocRef docRef, final OpenAIModelDoc model, final boolean readOnly) {
         getView().setBaseUrl(model.getBaseUrl());
-        if (model.getApiKey() != null) {
-            credentialClient.getCredentialByName(model.getApiKey(), credential ->
+        if (model.getApiKeyName() != null) {
+            credentialClient.getCredentialByName(model.getApiKeyName(), credential ->
                     getView().getApiKeySelectionBox().setValue(credential), this);
         } else {
             getView().getApiKeySelectionBox().setValue(null);
@@ -105,7 +105,7 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
     protected OpenAIModelDoc onWrite(final OpenAIModelDoc model) {
         final Credential credential = getView().getApiKeySelectionBox().getValue();
         model.setBaseUrl(getView().getBaseUrl());
-        model.setApiKey(credential == null
+        model.setApiKeyName(credential == null
                 ? null
                 : credential.getName());
         model.setModelId(getView().getModelId());

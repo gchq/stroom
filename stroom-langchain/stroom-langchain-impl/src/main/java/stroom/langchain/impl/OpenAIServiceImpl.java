@@ -90,7 +90,10 @@ public class OpenAIServiceImpl implements OpenAIService {
     }
 
     private String getApiKey(final OpenAIModelDoc doc) {
-        final String apiKeyName = doc.getApiKey();
+        return getApiKey(doc.getApiKeyName());
+    }
+
+    private String getApiKey(final String apiKeyName) {
         if (NullSafe.isNonBlankString(apiKeyName)) {
             final StoredSecret storedSecret = storedSecretsProvider.get().get(apiKeyName);
             if (storedSecret != null) {
@@ -115,7 +118,9 @@ public class OpenAIServiceImpl implements OpenAIService {
     }
 
     @Override
-    public ChatModel getChatModel(final String modelId, final String baseUrl, final String apiKey) {
+    public ChatModel getChatModel(final String modelId, final String baseUrl, final String apiKeyName) {
+        final String apiKey = getApiKey(apiKeyName);
+
         // Need to specify HTTP 1.1 for vLLM interoperability
         // Ref: https://github.com/langchain4j/langchain4j/issues/3682
         final HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()

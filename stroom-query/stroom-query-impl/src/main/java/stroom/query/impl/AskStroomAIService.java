@@ -212,7 +212,7 @@ public class AskStroomAIService {
         }
 
         return openAIService.getChatModel(openAIModelDoc.getModelId(),
-                openAIModelDoc.getBaseUrl(), openAIModelDoc.getApiKey());
+                openAIModelDoc.getBaseUrl(), openAIModelDoc.getApiKeyName());
     }
 
     /**
