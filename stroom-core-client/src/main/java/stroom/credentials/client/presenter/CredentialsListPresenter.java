@@ -222,6 +222,7 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
                 final FindCredentialRequest request = new FindCredentialRequest(pageRequest,
                         null,
                         null,
+                        null,
                         DocumentPermission.VIEW);
                 credentialClient.findCredentialsWithPermissions(request, dataConsumer, restErrorHandler, view);
             }

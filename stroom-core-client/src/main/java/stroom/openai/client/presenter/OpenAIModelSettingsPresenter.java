@@ -20,6 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.credentials.client.presenter.CredentialClient;
 import stroom.credentials.client.presenter.CredentialListModel;
 import stroom.credentials.shared.Credential;
+import stroom.credentials.shared.CredentialType;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -35,6 +36,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Set;
 import java.util.UUID;
 
 public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIModelSettingsView, OpenAIModelDoc>
@@ -55,7 +57,10 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
 
         this.restFactory = restFactory;
         this.credentialClient = credentialClient;
-        final CredentialListModel credentialListModel = new CredentialListModel(eventBus, credentialClient);
+        final CredentialListModel credentialListModel = new CredentialListModel(
+                eventBus,
+                credentialClient,
+                Set.of(CredentialType.ACCESS_TOKEN));
         credentialListModel.setTaskMonitorFactory(this);
         view.getApiKeySelectionBox().setModel(credentialListModel);
         view.setUiHandlers(this);
@@ -105,7 +110,6 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
                 : credential.getName());
         model.setModelId(getView().getModelId());
         model.setMaxContextWindowTokens(getView().getMaxContextWindowTokens());
-
         return model;
     }
 

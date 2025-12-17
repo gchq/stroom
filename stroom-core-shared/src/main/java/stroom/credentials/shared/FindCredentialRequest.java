@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
 public class FindCredentialRequest extends BaseCriteria {
@@ -24,20 +25,28 @@ public class FindCredentialRequest extends BaseCriteria {
     @JsonProperty
     private final String filter;
     @JsonProperty
+    private final Set<CredentialType> credentialTypes;
+    @JsonProperty
     private final DocumentPermission requiredPermission;
 
     @JsonCreator
     public FindCredentialRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                  @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                                  @JsonProperty("filter") final String filter,
+                                 @JsonProperty("credentialTypes") final Set<CredentialType> credentialTypes,
                                  @JsonProperty("requiredPermission") final DocumentPermission requiredPermission) {
         super(pageRequest, sortList);
         this.filter = filter;
+        this.credentialTypes = credentialTypes;
         this.requiredPermission = requiredPermission;
     }
 
     public String getFilter() {
         return filter;
+    }
+
+    public Set<CredentialType> getCredentialTypes() {
+        return credentialTypes;
     }
 
     public DocumentPermission getRequiredPermission() {

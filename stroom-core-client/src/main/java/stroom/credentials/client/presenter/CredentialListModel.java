@@ -1,6 +1,7 @@
 package stroom.credentials.client.presenter;
 
 import stroom.credentials.shared.Credential;
+import stroom.credentials.shared.CredentialType;
 import stroom.credentials.shared.FindCredentialRequest;
 import stroom.item.client.SelectionListModel;
 import stroom.item.client.SimpleSelectionItemWrapper;
@@ -18,6 +19,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -29,13 +31,16 @@ public class CredentialListModel
 
     private final EventBus eventBus;
     private final CredentialClient credentialClient;
+    private final Set<CredentialType> credentialTypes;
     private FindCredentialRequest lastCriteria;
     private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
 
     public CredentialListModel(final EventBus eventBus,
-                               final CredentialClient credentialClient) {
+                               final CredentialClient credentialClient,
+                               final Set<CredentialType> credentialTypes) {
         this.eventBus = eventBus;
         this.credentialClient = credentialClient;
+        this.credentialTypes = credentialTypes;
     }
 
     @Override
@@ -48,6 +53,7 @@ public class CredentialListModel
                 pageRequest,
                 FindCredentialRequest.DEFAULT_SORT_LIST,
                 filter,
+                credentialTypes,
                 DocumentPermission.VIEW);
 
         // Only fetch if the request has changed.

@@ -445,12 +445,13 @@ public class GlobalConfigService implements GlobalConfig {
         final String defaultValue = configProperty.getDefaultValue().orElse(null);
 
         // If the value is the same as the default value then revert to the default value.
+        final ConfigProperty updatedProperty;
         if (Objects.equals(defaultValue, value)) {
-            configProperty.setDatabaseOverrideValue(OverrideValue.unSet(null));
+            updatedProperty = configProperty.copy().databaseOverrideValue(OverrideValue.unSet(null)).build();
         } else {
-            configProperty.setDatabaseOverrideValue(value);
+            updatedProperty = configProperty.copy().databaseOverrideValue(value).build();
         }
-        update(configProperty);
+        update(updatedProperty);
     }
 
     @Override

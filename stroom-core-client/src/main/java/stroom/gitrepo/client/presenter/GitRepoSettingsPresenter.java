@@ -21,6 +21,7 @@ import stroom.credentials.client.presenter.CredentialClient;
 import stroom.credentials.client.presenter.CredentialListModel;
 import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
 import stroom.credentials.shared.Credential;
+import stroom.credentials.shared.CredentialType;
 import stroom.credentials.shared.CredentialsResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -40,6 +41,8 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.Set;
 
 /**
  * Provides the main functionality on the client behind the GitRepo Settings tab.
@@ -121,7 +124,8 @@ public class GitRepoSettingsPresenter
         this.credentialsManagerDialog = credentialsManagerDialog;
         this.hasCredentialsAppPermission = securityContext.hasAppPermission(AppPermission.CREDENTIALS);
         view.setHasCredentialsAppPermission(this.hasCredentialsAppPermission);
-        final CredentialListModel credentialListModel = new CredentialListModel(eventBus, credentialClient);
+        final CredentialListModel credentialListModel = new CredentialListModel(eventBus, credentialClient,
+                Set.of(CredentialType.KEY_PAIR, CredentialType.USERNAME_PASSWORD, CredentialType.ACCESS_TOKEN));
         credentialListModel.setTaskMonitorFactory(this);
         view.getCredentialSelectionBox().setModel(credentialListModel);
     }

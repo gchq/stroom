@@ -16,6 +16,7 @@
 
 package stroom.config.global.shared;
 
+import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.PropertyPath;
@@ -455,14 +456,14 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
     @Override
     public String toString() {
         return "ConfigProperty{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", defaultValue='" + defaultValue + '\'' +
-                ", databaseOverrideValue='" + databaseOverrideValue + '\'' +
-                ", yamlOverrideValue='" + yamlOverrideValue + '\'' +
-                ", effectiveValue='" + getEffectiveValue() + '\'' +
-                ", source='" + getSource() + '\'' +
-                '}';
+               "id=" + id +
+               ", name='" + name + '\'' +
+               ", defaultValue='" + defaultValue + '\'' +
+               ", databaseOverrideValue='" + databaseOverrideValue + '\'' +
+               ", yamlOverrideValue='" + yamlOverrideValue + '\'' +
+               ", effectiveValue='" + getEffectiveValue() + '\'' +
+               ", source='" + getSource() + '\'' +
+               '}';
     }
 
     @Override
@@ -475,21 +476,21 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
         }
         final ConfigProperty that = (ConfigProperty) o;
         return editable == that.editable &&
-                password == that.password &&
-                requireRestart == that.requireRestart &&
-                requireUiRestart == that.requireUiRestart &&
-                Objects.equals(id, that.id) &&
-                Objects.equals(version, that.version) &&
-                Objects.equals(createTimeMs, that.createTimeMs) &&
-                Objects.equals(createUser, that.createUser) &&
-                Objects.equals(updateTimeMs, that.updateTimeMs) &&
-                Objects.equals(updateUser, that.updateUser) &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(defaultValue, that.defaultValue) &&
-                Objects.equals(databaseOverrideValue, that.databaseOverrideValue) &&
-                Objects.equals(yamlOverrideValue, that.yamlOverrideValue) &&
-                Objects.equals(description, that.description) &&
-                Objects.equals(dataTypeName, that.dataTypeName);
+               password == that.password &&
+               requireRestart == that.requireRestart &&
+               requireUiRestart == that.requireUiRestart &&
+               Objects.equals(id, that.id) &&
+               Objects.equals(version, that.version) &&
+               Objects.equals(createTimeMs, that.createTimeMs) &&
+               Objects.equals(createUser, that.createUser) &&
+               Objects.equals(updateTimeMs, that.updateTimeMs) &&
+               Objects.equals(updateUser, that.updateUser) &&
+               Objects.equals(name, that.name) &&
+               Objects.equals(defaultValue, that.defaultValue) &&
+               Objects.equals(databaseOverrideValue, that.databaseOverrideValue) &&
+               Objects.equals(yamlOverrideValue, that.yamlOverrideValue) &&
+               Objects.equals(description, that.description) &&
+               Objects.equals(dataTypeName, that.dataTypeName);
     }
 
     @Override
@@ -541,4 +542,183 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
         }
     }
 
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static Builder builder(final ConfigProperty copy) {
+        return new Builder(copy);
+    }
+
+    public static class Builder extends AbstractBuilder<ConfigProperty, ConfigProperty.Builder> {
+
+        private Integer id;
+        private Integer version;
+        private Long createTimeMs;
+        private String createUser;
+        private Long updateTimeMs;
+        private String updateUser;
+        private PropertyPath name;
+        private String defaultValue;
+        private OverrideValue<String> databaseOverrideValue;
+        private OverrideValue<String> yamlOverrideValue;
+        private String description;
+        private boolean editable;
+        private boolean password;
+        private boolean requireRestart;
+        private boolean requireUiRestart;
+        private String dataTypeName;
+
+        private Builder() {
+            this.databaseOverrideValue = OverrideValue.unSet(String.class);
+            this.yamlOverrideValue = OverrideValue.unSet(String.class);
+        }
+
+        private Builder(final ConfigProperty copy) {
+            this.id = copy.id;
+            this.version = copy.version;
+            this.createTimeMs = copy.createTimeMs;
+            this.createUser = copy.createUser;
+            this.updateTimeMs = copy.updateTimeMs;
+            this.updateUser = copy.updateUser;
+            this.name = copy.name;
+            this.defaultValue = copy.defaultValue;
+            this.databaseOverrideValue = copy.databaseOverrideValue;
+            this.yamlOverrideValue = copy.yamlOverrideValue;
+            this.description = copy.description;
+            this.editable = copy.editable;
+            this.password = copy.password;
+            this.requireRestart = copy.requireRestart;
+            this.requireUiRestart = copy.requireUiRestart;
+            this.dataTypeName = copy.dataTypeName;
+        }
+
+        public Builder id(final Integer id) {
+            this.id = id;
+            return self();
+        }
+
+        public Builder version(final Integer version) {
+            this.version = version;
+            return self();
+        }
+
+        public Builder createTimeMs(final Long createTimeMs) {
+            this.createTimeMs = createTimeMs;
+            return self();
+        }
+
+        public Builder createUser(final String createUser) {
+            this.createUser = createUser;
+            return self();
+        }
+
+        public Builder updateTimeMs(final Long updateTimeMs) {
+            this.updateTimeMs = updateTimeMs;
+            return self();
+        }
+
+        public Builder updateUser(final String updateUser) {
+            this.updateUser = updateUser;
+            return self();
+        }
+
+        public Builder name(final PropertyPath name) {
+            this.name = name;
+            return self();
+        }
+
+        public Builder name(final String propertyPathString) {
+            this.name = PropertyPath.fromPathString(propertyPathString);
+            return self();
+        }
+
+        public Builder defaultValue(final String defaultValue) {
+            this.defaultValue = defaultValue;
+            return self();
+        }
+
+        public Builder databaseOverrideValue(final OverrideValue<String> databaseOverrideValue) {
+            this.databaseOverrideValue = databaseOverrideValue != null
+                    ? databaseOverrideValue
+                    : OverrideValue.unSet(String.class);
+            return self();
+        }
+
+        public Builder databaseOverrideValue(final String databaseOverrideValue) {
+            this.databaseOverrideValue = OverrideValue.with(databaseOverrideValue);
+            return self();
+        }
+
+        public Builder yamlOverrideValue(final OverrideValue<String> yamlOverrideValue) {
+            this.yamlOverrideValue = yamlOverrideValue != null
+                    ? yamlOverrideValue
+                    : OverrideValue.unSet(String.class);
+            return self();
+        }
+
+        public Builder yamlOverrideValue(final String yamlOverrideValue) {
+            this.yamlOverrideValue = OverrideValue.with(yamlOverrideValue);
+            return self();
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder editable(final boolean editable) {
+            this.editable = editable;
+            return self();
+        }
+
+        public Builder password(final boolean password) {
+            this.password = password;
+            return self();
+        }
+
+        public Builder requireRestart(final boolean requireRestart) {
+            this.requireRestart = requireRestart;
+            return self();
+        }
+
+        public Builder requireUiRestart(final boolean requireUiRestart) {
+            this.requireUiRestart = requireUiRestart;
+            return self();
+        }
+
+        public Builder dataTypeName(final String dataTypeName) {
+            this.dataTypeName = dataTypeName;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public ConfigProperty build() {
+            return new ConfigProperty(
+                    id,
+                    version,
+                    createTimeMs,
+                    createUser,
+                    updateTimeMs,
+                    updateUser,
+                    name,
+                    defaultValue,
+                    databaseOverrideValue,
+                    yamlOverrideValue,
+                    description,
+                    editable,
+                    password,
+                    requireRestart,
+                    requireUiRestart,
+                    dataTypeName);
+        }
+    }
 }

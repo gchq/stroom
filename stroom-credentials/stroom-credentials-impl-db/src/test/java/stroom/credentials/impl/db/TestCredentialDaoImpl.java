@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Set;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -127,9 +129,10 @@ public class TestCredentialDaoImpl {
         return new FindCredentialRequest(
                 PageRequest.unlimited(),
                 null,
+                null,
                 credentialType == null
                         ? null
-                        : "Type:" + credentialType.name(),
+                        : Set.of(credentialType),
                 null);
     }
 

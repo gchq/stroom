@@ -43,6 +43,7 @@ import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.JSON;
 import org.jooq.Record;
+import org.jooq.impl.DSL;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -117,6 +118,17 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
                 .create(fieldProvider, request.getFilter());
         optionalExpressionOperator.ifPresent(expressionOperator ->
                 conditions.add(expressionMapper.apply(expressionOperator)));
+
+        if (!NullSafe.isEmptyCollection(request.getCredentialTypes())) {
+            final List<Condition> types = request.getCredentialTypes().stream().map(credentialType ->
+                    CREDENTIAL.CRENDENTIAL_TYPE.eq(credentialType.name())).toList();
+            if (types.size() > 1) {
+                conditions.add(DSL.or(types));
+            } else {
+                conditions.add(types.getFirst());
+            }
+        }
+
         return conditions;
     }
 
