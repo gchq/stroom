@@ -163,7 +163,7 @@ mockito-core = { module = "org.mockito:mockito-core" } # version controlled by d
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter" } # version controlled by dropwizard-dependencies
 mysql-connector-java = { module = "com.mysql:mysql-connector-j", version = "9.4.0" }
 langchain4j = { module = "dev.langchain4j:langchain4j", version.ref = "langchain4j" }
-langchain4j-http-client-jdk = { module = "dev.langchain4j:langchain4j-http-client-jdk", version.ref = "langchain4j" }
+#langchain4j-http-client-jdk = { module = "dev.langchain4j:langchain4j-http-client-jdk", version.ref = "langchain4j" }
 langchain4j-open-ai = { module = "dev.langchain4j:langchain4j-open-ai", version.ref = "langchain4j" }
 langchain4j-cohere = { module = "dev.langchain4j:langchain4j-cohere", version.ref = "langchain4j-cohere" }
 langchain4j-jina = { module = "dev.langchain4j:langchain4j-jina", version.ref = "langchain4j-jina" }

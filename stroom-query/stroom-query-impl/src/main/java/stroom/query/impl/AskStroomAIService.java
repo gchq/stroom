@@ -211,8 +211,7 @@ public class AskStroomAIService {
             throw new RuntimeException("Default OpenAI API doc cannot be found");
         }
 
-        return openAIService.getChatModel(openAIModelDoc.getModelId(),
-                openAIModelDoc.getBaseUrl(), openAIModelDoc.getApiKeyName());
+        return openAIService.getChatModel(openAIModelDoc);
     }
 
     /**

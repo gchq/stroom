@@ -9,6 +9,7 @@ import stroom.langchain.api.SummaryReducer;
 import stroom.langchain.api.TableQuery;
 import stroom.langchain.api.TableQueryMessages;
 import stroom.langchain.api.TableSummaryMessages;
+import stroom.openai.shared.OpenAIModelDoc;
 import stroom.util.date.DateUtil;
 
 import dev.langchain4j.memory.chat.TokenWindowChatMemory;
@@ -128,8 +129,25 @@ public class TestAskStroomAi {
         final String apiKey = System.getProperty("OPEN_API_TEST_KEY");
         final String modelId = "gpt-4o";
 
-        final OpenAIService openAIService = new OpenAIServiceImpl(null, null, null);
-        final ChatModel chatModel = openAIService.getChatModel(modelId, baseUrl, apiKey);
+        final OpenAIService openAIService = new OpenAIServiceImpl(
+                null,
+                null,
+                null,
+                null);
+        final OpenAIModelDoc modelDoc = new OpenAIModelDoc(
+                UUID.randomUUID().toString(),
+                "test",
+                "1",
+                System.currentTimeMillis(),
+                System.currentTimeMillis(),
+                "test",
+                "test",
+                null,
+                baseUrl,
+                apiKey,
+                modelId,
+                1000);
+        final ChatModel chatModel = openAIService.getChatModel(modelDoc);
 
         final String chatMemoryId = UUID.randomUUID().toString();
         final String tableChatMemoryId = TABLE_CHAT_MEMORY_KEY + "/" + chatMemoryId;

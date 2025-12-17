@@ -38,7 +38,6 @@ dependencies {
     implementation libs.jakarta.inject
     implementation libs.jakarta.json.api
     implementation libs.langchain4j
-    implementation libs.langchain4j.http.client.jdk
     implementation libs.langchain4j.cohere
     implementation libs.langchain4j.jina
     implementation libs.langchain4j.open.ai

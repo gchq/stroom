@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.pipeline.xsltfunctions;
+package stroom.app;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.pipeline.PipelineConfig;
+import stroom.util.http.HttpClientCache;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.http.HttpClientFactory;
 import stroom.util.logging.LambdaLogger;
@@ -34,9 +35,9 @@ import org.apache.hc.core5.io.CloseMode;
 import java.util.UUID;
 
 @Singleton
-public class HttpClientCache {
+public class HttpClientCacheImpl implements HttpClientCache {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HttpClientCache.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HttpClientCacheImpl.class);
 
     private static final String CACHE_NAME = "Http Client Cache";
 
@@ -44,9 +45,9 @@ public class HttpClientCache {
     private final HttpClientFactory httpClientFactory;
 
     @Inject
-    public HttpClientCache(final CacheManager cacheManager,
-                           final Provider<PipelineConfig> pipelineConfigProvider,
-                           final HttpClientFactory httpClientFactory) {
+    public HttpClientCacheImpl(final CacheManager cacheManager,
+                               final Provider<PipelineConfig> pipelineConfigProvider,
+                               final HttpClientFactory httpClientFactory) {
         this.httpClientFactory = httpClientFactory;
         cache = cacheManager.createLoadingCache(
                 CACHE_NAME,

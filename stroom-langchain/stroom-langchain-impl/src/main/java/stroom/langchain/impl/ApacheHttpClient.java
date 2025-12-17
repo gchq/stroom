@@ -68,51 +68,43 @@ public class ApacheHttpClient implements HttpClient {
     }
 
     private ClassicHttpRequest createApacheRequest(final HttpRequest request) {
-        final ClassicHttpRequest apacheRequest;
         final String method = request.method().name();
         final String url = request.url();
 
-        switch (method.toUpperCase(Locale.ROOT)) {
-            case "GET":
-                apacheRequest = new HttpGet(url);
-                break;
-            case "POST":
+        final ClassicHttpRequest apacheRequest = switch (method.toUpperCase(Locale.ROOT)) {
+            case "GET" -> new HttpGet(url);
+            case "POST" -> {
                 final HttpPost post = new HttpPost(url);
                 if (request.body() != null) {
                     post.setEntity(new StringEntity(request.body(), ContentType.APPLICATION_JSON));
                 }
-                apacheRequest = post;
-                break;
-            case "PUT":
+                yield post;
+            }
+            case "PUT" -> {
                 final HttpPut put = new HttpPut(url);
                 if (request.body() != null) {
                     put.setEntity(new StringEntity(request.body(), ContentType.APPLICATION_JSON));
                 }
-                apacheRequest = put;
-                break;
-            case "DELETE":
-                apacheRequest = new HttpDelete(url);
-                break;
-            case "PATCH":
+                yield put;
+            }
+            case "DELETE" -> new HttpDelete(url);
+            case "PATCH" -> {
                 final HttpPatch patch = new HttpPatch(url);
                 if (request.body() != null) {
                     patch.setEntity(new StringEntity(request.body(), ContentType.APPLICATION_JSON));
                 }
-                apacheRequest = patch;
-                break;
-            case "HEAD":
-                apacheRequest = new HttpHead(url);
-                break;
-            case "OPTIONS":
-                apacheRequest = new HttpOptions(url);
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported HTTP method: " + method);
-        }
+                yield patch;
+            }
+            case "HEAD" -> new HttpHead(url);
+            case "OPTIONS" -> new HttpOptions(url);
+            default -> throw new IllegalArgumentException("Unsupported HTTP method: " + method);
+        };
 
         // Add headers
         if (request.headers() != null) {
-            request.headers().forEach(apacheRequest::addHeader);
+            request.headers().forEach((key, values) ->
+                    values.forEach(value ->
+                            apacheRequest.addHeader(key, value)));
         }
 
         return apacheRequest;

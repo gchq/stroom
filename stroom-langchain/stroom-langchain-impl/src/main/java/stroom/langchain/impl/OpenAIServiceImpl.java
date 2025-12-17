@@ -24,14 +24,11 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.langchain.api.OpenAIModelStore;
 import stroom.langchain.api.OpenAIService;
 import stroom.openai.shared.OpenAIModelDoc;
+import stroom.util.http.HttpClientCache;
+import stroom.util.http.HttpClientConfiguration;
 import stroom.util.shared.NullSafe;
 
-import com.openai.client.OpenAIClient;
-import com.openai.client.okhttp.OpenAIOkHttpClient;
-import com.openai.credential.BearerTokenCredential;
-import com.openai.models.models.Model;
-import dev.langchain4j.http.client.jdk.JdkHttpClient;
-import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
+import dev.langchain4j.http.client.HttpClientBuilder;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.cohere.CohereScoringModel;
 import dev.langchain4j.model.cohere.CohereScoringModel.CohereScoringModelBuilder;
@@ -46,8 +43,13 @@ import dev.langchain4j.model.scoring.ScoringModel;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
 
-import java.net.http.HttpClient;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 @Singleton
 public class OpenAIServiceImpl implements OpenAIService {
@@ -55,38 +57,78 @@ public class OpenAIServiceImpl implements OpenAIService {
     private final Provider<OpenAIModelStore> openAIModelStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
     private final Provider<StoredSecrets> storedSecretsProvider;
+    private final Provider<HttpClientCache> httpClientCacheProvider;
 
     @Inject
     OpenAIServiceImpl(final Provider<OpenAIModelStore> openAIModelStoreProvider,
                       final Provider<DocumentResourceHelper> documentResourceHelperProvider,
-                      final Provider<StoredSecrets> storedSecretsProvider) {
+                      final Provider<StoredSecrets> storedSecretsProvider,
+                      final Provider<HttpClientCache> httpClientCacheProvider) {
         this.openAIModelStoreProvider = openAIModelStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.storedSecretsProvider = storedSecretsProvider;
+        this.httpClientCacheProvider = httpClientCacheProvider;
     }
 
     @Override
-    public Model getModel(final OpenAIModelDoc modelDoc) {
-        /// curl https://api.openai.com/v1/models \
-        ///   -H "Authorization: Bearer $OPENAI_API_KEY"
+    public String getModel(final OpenAIModelDoc modelDoc) {
+        try {
+            /// curl https://api.openai.com/v1/models \
+            ///   -H "Authorization: Bearer $OPENAI_API_KEY"
 
 
-        final OpenAIOkHttpClient.Builder clientBuilder = OpenAIOkHttpClient.builder()
-                .fromEnv();
+            final HttpClientCache httpClientCache = httpClientCacheProvider.get();
+            final HttpClientConfiguration httpClientConfiguration = new HttpClientConfiguration();
+            final HttpClient httpClient = httpClientCache.get(httpClientConfiguration);
 
-        if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
-            // Override the base URL
-            clientBuilder.baseUrl(modelDoc.getBaseUrl());
+
+            final String url = getUrl(modelDoc, "models");
+            final String apiKey = getApiKey(modelDoc);
+
+            final HttpGet httpGet = new HttpGet(url);
+            httpGet.addHeader("Content-Type", "application/audit");
+            if (NullSafe.isNonBlankString(apiKey)) {
+                httpGet.addHeader("Authorization", "Bearer " + apiKey);
+            }
+
+            return httpClient.execute(httpGet, response -> {
+//                        final StringBuilder sb = new StringBuilder()
+//                    .append("Model ID: ")
+//                    .append(model.id())
+//                    .append("\nCreated: ")
+//                    .append(DateUtil.createNormalDateTimeString(model.created()))
+//                    .append("\nOwner: ")
+//                    .append(model.ownedBy())
+//                    .append("\nValid: ")
+//                    .append(model.isValid());
+
+                if (response.getCode() != 200) {
+                    return response.toString();
+                }
+
+                final byte[] bytes = response.getEntity().getContent().readAllBytes();
+                return new String(bytes, StandardCharsets.UTF_8);
+            });
+
+//        final OpenAIOkHttpClient.Builder clientBuilder = OpenAIOkHttpClient.builder()
+//                .fromEnv();
+//
+//        if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
+//            // Override the base URL
+//            clientBuilder.baseUrl(modelDoc.getBaseUrl());
+//        }
+//
+//        final String apiKey = getApiKey(modelDoc);
+//        // Provide a bearer token
+//        clientBuilder.credential(BearerTokenCredential.create(apiKey));
+//
+//        final OpenAIClient client = clientBuilder.build();
+//        return client.models().list().items().stream()
+//                .filter(model -> modelDoc.getModelId().equals(model.id()))
+//                .findFirst().orElseThrow();
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
-
-        final String apiKey = getApiKey(modelDoc);
-        // Provide a bearer token
-        clientBuilder.credential(BearerTokenCredential.create(apiKey));
-
-        final OpenAIClient client = clientBuilder.build();
-        return client.models().list().items().stream()
-                .filter(model -> modelDoc.getModelId().equals(model.id()))
-                .findFirst().orElseThrow();
     }
 
     private String getApiKey(final OpenAIModelDoc doc) {
@@ -107,6 +149,17 @@ public class OpenAIServiceImpl implements OpenAIService {
         return "";
     }
 
+    private String getUrl(final OpenAIModelDoc modelDoc, final String path) {
+        String url = Objects.requireNonNullElse(modelDoc.getBaseUrl(), "https://api.openai.com/v1");
+        if (!url.endsWith("/")) {
+            url = url + "/";
+        }
+        if (NullSafe.isNonBlankString(path)) {
+            url = url + path;
+        }
+        return url;
+    }
+
     @Override
     public OpenAIModelDoc getOpenAIModelDoc(final DocRef docRef) {
         return documentResourceHelperProvider.get().read(openAIModelStoreProvider.get(), docRef);
@@ -114,45 +167,53 @@ public class OpenAIServiceImpl implements OpenAIService {
 
     @Override
     public ChatModel getChatModel(final OpenAIModelDoc modelDoc) {
-        return getChatModel(modelDoc.getModelId(), modelDoc.getBaseUrl(), getApiKey(modelDoc));
-    }
-
-    @Override
-    public ChatModel getChatModel(final String modelId, final String baseUrl, final String apiKeyName) {
-        final String apiKey = getApiKey(apiKeyName);
+        final String apiKey = getApiKey(modelDoc.getApiKeyName());
 
         // Need to specify HTTP 1.1 for vLLM interoperability
         // Ref: https://github.com/langchain4j/langchain4j/issues/3682
-        final HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
-                .version(HttpClient.Version.HTTP_1_1);
+//        final HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
+//                .version(HttpClient.Version.HTTP_1_1);
+//
+////                .sslContext()authenticator();
 
-//                .sslContext()authenticator();
+//        final HttpClientConfiguration httpClientConfiguration = new HttpClientConfiguration();
+//        final CloseableHttpClient httpClient = httpClientFactoryProvider.get().get(modelName, httpClientConfiguration);
 
+//        final ApacheHttpClientBuilder jdkHttpClientBuilder = JdkHttpClient.builder()
+//                .httpClientBuilder(httpClientBuilder)
+//
+//              ;
 
-        final JdkHttpClientBuilder jdkHttpClientBuilder = JdkHttpClient.builder()
+        final HttpClientBuilder httpClientBuilder = getClientBuilder(modelDoc);
+        final OpenAiChatModelBuilder modelBuilder = OpenAiChatModel.builder()
+                .modelName(modelDoc.getModelId())
+                .apiKey(apiKey)
                 .httpClientBuilder(httpClientBuilder);
 
-        final OpenAiChatModelBuilder modelBuilder = OpenAiChatModel.builder()
-                .modelName(modelId)
-                .baseUrl(baseUrl)
-                .apiKey(apiKey)
-                .httpClientBuilder(jdkHttpClientBuilder);
+        if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
+            // Override the base URL
+            modelBuilder.baseUrl(modelDoc.getBaseUrl());
+        }
 
         return modelBuilder.build();
     }
 
     @Override
     public EmbeddingModel getEmbeddingModel(final OpenAIModelDoc modelDoc) {
+        final String apiKey = getApiKey(modelDoc.getApiKeyName());
+
         // Need to specify HTTP 1.1 for vLLM interoperability
         // Ref: https://github.com/langchain4j/langchain4j/issues/3682
-        final HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
-                .version(HttpClient.Version.HTTP_1_1);
-        final JdkHttpClientBuilder jdkHttpClientBuilder = JdkHttpClient.builder()
-                .httpClientBuilder(httpClientBuilder);
+//        final HttpClient.Builder httpClientBuilder = HttpClient.newBuilder()
+//                .version(HttpClient.Version.HTTP_1_1);
+//        final JdkHttpClientBuilder jdkHttpClientBuilder = JdkHttpClient.builder()
+//                .httpClientBuilder(httpClientBuilder);
 
+        final HttpClientBuilder httpClientBuilder = getClientBuilder(modelDoc);
         final OpenAiEmbeddingModelBuilder modelBuilder = OpenAiEmbeddingModel.builder()
                 .modelName(modelDoc.getModelId())
-                .httpClientBuilder(jdkHttpClientBuilder);
+                .apiKey(apiKey)
+                .httpClientBuilder(httpClientBuilder);
 
         if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
             // Override the base URL
@@ -163,6 +224,13 @@ public class OpenAIServiceImpl implements OpenAIService {
         modelBuilder.apiKey(getApiKey(modelDoc));
 
         return modelBuilder.build();
+    }
+
+    private HttpClientBuilder getClientBuilder(final OpenAIModelDoc modelDoc) {
+        final HttpClientConfiguration httpClientConfiguration = new HttpClientConfiguration();
+        final HttpClientCache httpClientCache = httpClientCacheProvider.get();
+        final HttpClient httpClient = httpClientCache.get(httpClientConfiguration);
+        return new ApacheHttpClientBuilder(httpClient, httpClientConfiguration);
     }
 
     @Override
