@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import stroom.util.io.DirProvidersModule;
 import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.PathConfig;
+import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.DefaultLoggingFilter;
 import stroom.util.logging.LambdaLogger;
@@ -94,6 +95,8 @@ public class App extends Application<Config> {
     private BuildInfo buildInfo;
     @Inject
     private HomeDirProvider homeDirProvider;
+    @Inject
+    private PathCreator pathCreator;
     @Inject
     private TempDirProvider tempDirProvider;
     @Inject
@@ -262,11 +265,14 @@ public class App extends Application<Config> {
 
     private void showInfo(final Config configuration) {
         Objects.requireNonNull(buildInfo);
+        final ProxyConfig proxyConfig = configuration.getProxyConfig();
 
-        final String forwaders = configuration.getProxyConfig().streamAllForwarders()
+        final String forwaders = proxyConfig.streamAllForwarders()
                 .map(forwarderConfig -> {
                     final String name = forwarderConfig.getName();
-                    final String destination = forwarderConfig.getDestinationDescription();
+                    final String destination = forwarderConfig.getDestinationDescription(
+                            proxyConfig.getDownstreamHostConfig(),
+                            pathCreator);
                     final String state = forwarderConfig.isEnabled()
                             ? ""
                             : " DISABLED";
@@ -282,7 +288,7 @@ public class App extends Application<Config> {
                 .sorted()
                 .collect(Collectors.joining("\n"));
         final IdpType idpType = NullSafe.get(
-                configuration.getProxyConfig(),
+                proxyConfig,
                 ProxyConfig::getProxySecurityConfig,
                 ProxySecurityConfig::getAuthenticationConfig,
                 ProxyAuthenticationConfig::getOpenIdConfig,

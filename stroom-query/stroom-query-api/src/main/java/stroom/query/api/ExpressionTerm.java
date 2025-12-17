@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -255,7 +255,7 @@ public final class ExpressionTerm extends ExpressionItem {
                 "equals (case sensitive)"),
         NOT_EQUALS_CASE_SENSITIVE("!==",
                 "!==",
-                "equals (case sensitive)"),
+                "not equals (case sensitive)"),
         STARTS_WITH_CASE_SENSITIVE("=^",
                 "starts with (CS)",
                 "starts with (case sensitive)"),

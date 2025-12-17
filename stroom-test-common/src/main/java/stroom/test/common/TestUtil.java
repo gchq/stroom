@@ -1,8 +1,25 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.test.common;
 
 import stroom.test.common.DynamicTestBuilder.InitialBuilder;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.AsciiTable.TableBuilder;
@@ -21,6 +38,10 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.mockito.Mockito;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -51,8 +72,21 @@ public class TestUtil {
         // Static Utils only
     }
 
+    public static List<Path> createPaths(final Path rootDir, final Path... paths) {
+        return NullSafe.stream(paths)
+                .map(aPath -> {
+                    final Path path = aPath.isAbsolute()
+                            ? aPath
+                            : rootDir.resolve(aPath);
+                    FileUtil.ensureDirExists(path);
+                    return path;
+                })
+                .toList();
+    }
+
     /**
-     * Build a {@link Provider} for a mocked class.
+     * Build a {@link Provider} that will provide a mock for the supplied class.
+     * Useful for constructors whose arguments are all providers.
      */
     public static <T> Provider<T> mockProvider(final Class<T> type) {
         return () -> Mockito.mock(type);
@@ -405,6 +439,27 @@ public class TestUtil {
         outputConsumer.accept(LogUtil.message("Summary (iterations: {}, values in nanos):\n{}",
                 ModelStringUtil.formatCsv(iterations),
                 tableStr));
+    }
+
+    /**
+     * Will create the passed files as empty files, ensuring their parent directories exist first.
+     * Will throw if the file already exists.
+     */
+    public static void createFiles(final Path... files) {
+        NullSafe.stream(files)
+                .forEach(file -> {
+                    try {
+                        final Path parent = Objects.requireNonNull(
+                                file.getParent(),
+                                file + " has no parent");
+                        Files.createDirectories(parent);
+                        Files.createFile(file);
+                    } catch (final IOException e) {
+                        throw new UncheckedIOException(e);
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
     }
 
 

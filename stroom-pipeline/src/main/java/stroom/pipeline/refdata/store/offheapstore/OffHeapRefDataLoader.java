@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore;
@@ -455,25 +454,32 @@ public class OffHeapRefDataLoader implements RefDataLoader {
     private void transferStagedEntries() {
         checkCurrentState(LoaderState.STAGED);
 
-        transferStagedEntriesTimer = DurationTimer.start();
-        try (final BatchingWriteTxn destBatchingWriteTxn = refStoreLmdbEnv.openBatchingWriteTxn(maxPutsBeforeCommit)) {
-            // We now hold the single write lock for the main ref store
+        final int putsToStagingStoreCount = putsToStagingStoreCounter.get();
+        LOGGER.debug("transferStagedEntries() - putsToStagingStoreCount: {}", putsToStagingStoreCount);
 
-            updateTaskContextInfoSupplier("Loading staged entries");
-            transferStagedKeyValueEntries(destBatchingWriteTxn);
-            transferStagedRangeValueEntries(destBatchingWriteTxn);
+        if (putsToStagingStoreCount > 0) {
+            transferStagedEntriesTimer = DurationTimer.start();
+            try (final BatchingWriteTxn destBatchingWriteTxn = refStoreLmdbEnv.openBatchingWriteTxn(
+                    maxPutsBeforeCommit)) {
+                // We now hold the single write lock for the main ref store
+                updateTaskContextInfoSupplier("Loading staged entries");
+                transferStagedKeyValueEntries(destBatchingWriteTxn);
+                transferStagedRangeValueEntries(destBatchingWriteTxn);
 
-            // Final commit
-            destBatchingWriteTxn.commit();
+                // Final commit
+                destBatchingWriteTxn.commit();
+            }
+            transferStagedEntriesTimer.stop();
+
+            LOGGER.debug(() -> LogUtil.getDurationMessage(
+                    LogUtil.message(
+                            "Transfer of {} entries from staging store to ref data store for pipe",
+                            ModelStringUtil.formatCsv(putsToStagingStoreCounter), getPipelineNameStr()),
+                    transferStagedEntriesTimer.get(),
+                    putsToStagingStoreCounter.get()));
+        } else {
+            updateTaskContextInfoSupplier("No staged entries");
         }
-        transferStagedEntriesTimer.stop();
-
-        LOGGER.debug(() -> LogUtil.getDurationMessage(
-                LogUtil.message(
-                        "Transfer of {} entries from staging store to ref data store for pipe",
-                        ModelStringUtil.formatCsv(putsToStagingStoreCounter), getPipelineNameStr()),
-                transferStagedEntriesTimer.get(),
-                putsToStagingStoreCounter.get()));
     }
 
     private <K> boolean isAppendableData(final BatchingWriteTxn batchingWriteTxn,
@@ -484,14 +490,14 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         final Optional<UID> optMaxUidInDb = entryStoreDb.getMaxUid(batchingWriteTxn.getTxn(), pooledUidBuffer);
         final Set<UID> stagedUids = offHeapStagingStore.getStagedUids();
 
-        if (stagedUids.isEmpty()) {
-            throw new RuntimeException(LogUtil.message(
-                    "We should have at least one staged UID, else how did we get here"));
-        }
-
         final boolean isAppendable;
-        if (optMaxUidInDb.isEmpty()) {
+        if (stagedUids.isEmpty()) {
+            LOGGER.debug("isAppendableData() - No staged UIDs");
+            // Return value doesn't really matter as there is nothing to append/put
+            isAppendable = true;
+        } else if (optMaxUidInDb.isEmpty()) {
             // Totally empty DB, so we are appending
+            LOGGER.debug("isAppendableData() - Empty optMaxUidInDb");
             isAppendable = true;
         } else {
             final UID maxUidInDb = optMaxUidInDb.get();

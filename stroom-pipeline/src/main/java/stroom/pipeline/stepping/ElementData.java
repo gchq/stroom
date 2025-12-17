@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,12 @@ package stroom.pipeline.stepping;
 
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
 
 public class ElementData {
-    private final String elementId;
+
+    private final ElementId elementId;
     private final PipelineElementType elementType;
     private Object input;
     private Object output;
@@ -29,12 +31,12 @@ public class ElementData {
     private boolean formatOutput;
     private Indicators indicators;
 
-    public ElementData(final String elementId, final PipelineElementType elementType) {
+    public ElementData(final ElementId elementId, final PipelineElementType elementType) {
         this.elementId = elementId;
         this.elementType = elementType;
     }
 
-    public String getElementId() {
+    public ElementId getElementId() {
         return elementId;
     }
 
@@ -96,8 +98,8 @@ public class ElementData {
     @Override
     public String toString() {
         return "ElementData{" +
-                "elementId='" + elementId + '\'' +
-                ", maxSeverity=" + indicators.getMaxSeverity() +
-                '}';
+               "elementId='" + elementId + '\'' +
+               ", maxSeverity=" + indicators.getMaxSeverity() +
+               '}';
     }
 }

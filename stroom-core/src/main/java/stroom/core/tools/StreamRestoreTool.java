@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -224,10 +224,10 @@ public class StreamRestoreTool extends DatabaseTool {
                     }
                     final String type = stringTokenizer.nextToken();
                     final String date = stringTokenizer.nextToken() +
-                            "/" +
-                            stringTokenizer.nextToken() +
-                            "/" +
-                            stringTokenizer.nextToken();
+                                        "/" +
+                                        stringTokenizer.nextToken() +
+                                        "/" +
+                                        stringTokenizer.nextToken();
 
                     final String file = line.substring(line.lastIndexOf("/"));
                     final String feed = file.substring(1, file.indexOf("="));
@@ -333,7 +333,7 @@ public class StreamRestoreTool extends DatabaseTool {
     }
 
     private Map<String, String> readAttributes(final String line, final String streamType, final String feedId) {
-        final HashMap<String, String> rtnMap = new HashMap<>();
+        final Map<String, String> rtnMap = new HashMap<>();
 
         final StringTokenizer stringTokenizer = new StringTokenizer(line, "/");
         final StringBuilder volumePath = new StringBuilder();
@@ -371,7 +371,7 @@ public class StreamRestoreTool extends DatabaseTool {
 
         // Inspect File? (Expensive)
         if ((streamType == null || streamType.equals(rtnMap.get(STREAM_TYPE_PATH)))
-                && (feedId == null || feedId.equals(rtnMap.get(FEED_ID)))) {
+            && (feedId == null || feedId.equals(rtnMap.get(FEED_ID)))) {
             final Path file = Paths.get(line);
             rtnMap.put(CREATE_TIME, rtnMap.get(DATE_PATH) + getTime(file, datePart));
         }
@@ -430,7 +430,7 @@ public class StreamRestoreTool extends DatabaseTool {
                 }
 
                 if (processStreamType.equals(streamAttributes.get(STREAM_TYPE_PATH))
-                        && (processFeedId == null || processFeedId.equals(streamAttributes.get(FEED_ID)))) {
+                    && (processFeedId == null || processFeedId.equals(streamAttributes.get(FEED_ID)))) {
                     if (action == 'd') {
                         if (mock) {
                             writeLine("rm " + line);
@@ -523,10 +523,10 @@ public class StreamRestoreTool extends DatabaseTool {
                     keyCount.getKey().toString(),
                     KEY_PAD,
                     ' ') +
-                    Strings.padStart(
-                            ModelStringUtil.formatCsv(keyCount.getCount()),
-                            COUNT_PAD,
-                            ' '));
+                      Strings.padStart(
+                              ModelStringUtil.formatCsv(keyCount.getCount()),
+                              COUNT_PAD,
+                              ' '));
         }
         writeLine("========================");
         return list;
@@ -559,7 +559,7 @@ public class StreamRestoreTool extends DatabaseTool {
         @Override
         public String toString() {
             return Strings.padEnd(getKey().toString(), KEY_PAD, ' ') +
-                    Strings.padStart(ModelStringUtil.formatCsv(getCount()), COUNT_PAD, ' ');
+                   Strings.padStart(ModelStringUtil.formatCsv(getCount()), COUNT_PAD, ' ');
         }
     }
 

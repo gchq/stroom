@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -228,17 +228,17 @@ public class Processor implements HasAuditInfo, HasUuid {
     @Override
     public String toString() {
         return "Processor{" +
-                "id=" + id +
-                ", version=" + version +
-                ", createTimeMs=" + createTimeMs +
-                ", createUser='" + createUser + '\'' +
-                ", updateTimeMs=" + updateTimeMs +
-                ", updateUser='" + updateUser + '\'' +
-                ", processorType='" + processorType + '\'' +
-                ", pipelineUuid='" + pipelineUuid + '\'' +
-                ", enabled=" + enabled +
-                ", deleted=" + deleted +
-                '}';
+               "id=" + id +
+               ", version=" + version +
+               ", createTimeMs=" + createTimeMs +
+               ", createUser='" + createUser + '\'' +
+               ", updateTimeMs=" + updateTimeMs +
+               ", updateUser='" + updateUser + '\'' +
+               ", processorType='" + processorType + '\'' +
+               ", pipelineUuid='" + pipelineUuid + '\'' +
+               ", enabled=" + enabled +
+               ", deleted=" + deleted +
+               '}';
     }
 
     @Override
@@ -256,5 +256,21 @@ public class Processor implements HasAuditInfo, HasUuid {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    /**
+     * @return A new {@link DocRef} for this document's type with the supplied uuid.
+     */
+    public static DocRef getDocRef(final String uuid) {
+        return DocRef.builder(ENTITY_TYPE)
+                .uuid(uuid)
+                .build();
+    }
+
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(ENTITY_TYPE);
     }
 }

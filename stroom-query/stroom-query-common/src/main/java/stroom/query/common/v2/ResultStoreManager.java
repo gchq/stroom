@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,11 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Severity;
 import stroom.util.shared.UserRef;
 import stroom.util.time.StroomDuration;
 
@@ -168,10 +170,6 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
         } catch (final InterruptedException | ExecutionException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
-    }
-
-    public record RequestAndStore(SearchRequest searchRequest, ResultStore resultStore) {
-
     }
 
     public RequestAndStore getResultStore(final SearchRequest searchRequest) {
@@ -355,6 +353,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                                 Collections.emptyList(),
                                 new OffsetRange(0, 0),
                                 0L,
+                                null,
                                 null))
                         .collect(Collectors.toList());
             } else {
@@ -365,8 +364,9 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                     request.getKey(),
                     Collections.emptyList(),
                     results,
-                    Collections.singletonList(e.getMessage()),
-                    true);
+                    null,
+                    true,
+                    Collections.singletonList(new ErrorMessage(Severity.ERROR, e.getMessage())));
         }
     }
 
@@ -403,7 +403,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
                 request.getKey().toString(),
                 searchResponse.getResults(),
                 searchResponse.complete(),
-                searchResponse.getErrors(),
+                searchResponse.getErrorMessages(),
                 resultInfo);
     }
 
@@ -620,5 +620,13 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
 
     public void put(final QueryKey queryKey, final ResultStore resultStore) {
         resultStoreMap.put(queryKey, resultStore);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public record RequestAndStore(SearchRequest searchRequest, ResultStore resultStore) {
+
     }
 }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.core.receive;
 
 import stroom.meta.api.StandardHeaderArguments;
@@ -103,7 +119,8 @@ public class AutoContentCreationConfig
             "Whether the auto-creation of content on data receipt is enabled or not. " +
             "If enabled, Stroom will automatically create content such as Feeds/XSLTs/Pipelines on receipt of " +
             "a data stream. The property 'templatesPath' will contain content to be used as templates for " +
-            "auto-creation.")
+            "auto-creation. Content will only be created if a Content Template rule matches the attributes " +
+            "on the incoming data.")
     public boolean isEnabled() {
         return enabled;
     }
@@ -113,14 +130,18 @@ public class AutoContentCreationConfig
             "The templated path to a folder in the Stroom explorer tree where Stroom will auto-create " +
             "content. If it doesn't exist it will be created. Content will be created in a sub-folder of this " +
             "folder with a name derived from the system name of the received data. By default this is " +
-            "'Feeds/${accountid}'.")
+            "'Feeds/${accountid}'. " +
+            "If this property is set in the YAML file, use single quotes to prevent the " +
+            "variables being expanded when the config file is loaded.")
     public String getDestinationExplorerPathTemplate() {
         return destinationExplorerPathTemplate;
     }
 
     @JsonPropertyDescription(
             "When Stroom auto-creates a feed, it will create a user group with a " +
-            "name derived from this template. Default value is 'grp-${accountid}'.")
+            "name derived from this template. Default value is 'grp-${accountid}'. " +
+            "If this property is set in the YAML file, use single quotes to prevent the " +
+            "variables being expanded when the config file is loaded.")
     public String getGroupTemplate() {
         return groupTemplate;
     }
@@ -128,7 +149,9 @@ public class AutoContentCreationConfig
     @JsonPropertyDescription(
             "If set, when Stroom auto-creates a feed, it will create an additional user group with a " +
             "name derived from this template. This is in addition to the user group defined by 'groupTemplate'." +
-            "If not set, only the latter user group will be created. Default value is 'grp-${accountid}-sandbox'.")
+            "If not set, only the latter user group will be created. Default value is 'grp-${accountid}-sandbox'. " +
+            "If this property is set in the YAML file, use single quotes to prevent the " +
+            "variables being expanded when the config file is loaded.")
     public String getAdditionalGroupTemplate() {
         return additionalGroupTemplate;
     }

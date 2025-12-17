@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.search.elastic.suggest;
 
 import stroom.query.api.datasource.FieldType;
@@ -80,8 +96,8 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
     }
 
     private Suggestions querySuggestions(final FetchSuggestionsRequest request,
-                                          final ElasticIndexDoc elasticIndex,
-                                          final ElasticsearchClient elasticClient) {
+                                         final ElasticIndexDoc elasticIndex,
+                                         final ElasticsearchClient elasticClient) {
         final QueryField field = request.getField();
         final String query = request.getText();
 
@@ -93,7 +109,7 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
                 // Only generate suggestions for text and keyword fields
                 return Suggestions.EMPTY;
             }
-            final var searchRequest = SearchRequest.of(s -> s
+            final SearchRequest searchRequest = SearchRequest.of(s -> s
                     .index(elasticIndex.getIndexName())
                     .suggest(suggest -> suggest
                             .suggesters("suggest", FieldSuggester.of(suggester -> suggester
@@ -116,7 +132,7 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
                     .toList());
         } catch (final IOException | RuntimeException e) {
             LOGGER.error(() -> "Failed to retrieve search suggestions for field: " + field.getFldName() +
-                    ". " + e.getMessage(), e);
+                               ". " + e.getMessage(), e);
             return Suggestions.EMPTY;
         }
     }

@@ -1,19 +1,17 @@
 /*
+ * Copyright 2016-2025 Crown Copyright
  *
- *   Copyright 2017 Crown Copyright
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package stroom.security.identity.db;
@@ -31,7 +29,6 @@ import stroom.security.identity.shared.Account;
 import stroom.security.identity.shared.AccountFields;
 import stroom.security.identity.shared.AccountResultPage;
 import stroom.security.identity.shared.FindAccountRequest;
-import stroom.security.shared.User;
 import stroom.util.ResultPageFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -289,35 +286,18 @@ class AccountDaoImpl implements AccountDao {
     public CredentialValidationResult validateCredentials(final String userId, final String password) {
         if (Strings.isNullOrEmpty(userId)
             || Strings.isNullOrEmpty(password)) {
-            return new CredentialValidationResult(false, true, false, false, false, false);
+            return new CredentialValidationResult(
+                    false, true, false, false, false, false);
         }
 
-        Optional<AccountRecord> optionalRecord = JooqUtil.contextResult(identityDbConnProvider, context -> context
+        // Is this is a login by the default local 'admin' account, then that should have already been created
+        // by AdminAccountBootstrap
+        final Optional<AccountRecord> optRecord = JooqUtil.contextResult(identityDbConnProvider, context -> context
                 .selectFrom(ACCOUNT)
                 .where(ACCOUNT.USER_ID.eq(userId))
                 .fetchOptional());
 
-        // Create the admin account if it doesn't exist.
-        if (optionalRecord.isEmpty() && User.ADMIN_USER_SUBJECT_ID.equals(userId)) {
-            final long now = System.currentTimeMillis();
-            final Account account = new Account();
-            account.setUserId(User.ADMIN_USER_SUBJECT_ID);
-            account.setNeverExpires(true);
-            account.setForcePasswordChange(true);
-            account.setCreateTimeMs(now);
-            account.setCreateUser("INTERNAL_PROCESSING_USER");
-            account.setUpdateTimeMs(now);
-            account.setUpdateUser("INTERNAL_PROCESSING_USER");
-            account.setEnabled(true);
-            tryCreate(account, User.ADMIN_USER_SUBJECT_ID);
-
-            optionalRecord = JooqUtil.contextResult(identityDbConnProvider, context -> context
-                    .selectFrom(ACCOUNT)
-                    .where(ACCOUNT.USER_ID.eq(userId))
-                    .fetchOptional());
-        }
-
-        if (optionalRecord.isEmpty()) {
+        if (optRecord.isEmpty()) {
             LOGGER.debug("Request to log in with invalid user id: " + userId);
             return new CredentialValidationResult(
                     false,
@@ -328,7 +308,7 @@ class AccountDaoImpl implements AccountDao {
                     false);
         }
 
-        final AccountRecord record = optionalRecord.get();
+        final AccountRecord record = optRecord.get();
         final boolean isPasswordCorrect = PasswordHashUtil.checkPassword(password, record.getPasswordHash());
         final boolean isDisabled = !record.getEnabled();
         final boolean isInactive = record.getInactive();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,15 +24,12 @@ import com.google.gwt.user.client.DOM;
 public class LinkTabBar extends AbstractTabBar {
 
     public LinkTabBar() {
-        final Element element = DOM.createDiv();
-        element.setClassName("linkTabBar");
+        getElement().setClassName("linkTabBar");
 
         final Element text = DOM.createDiv();
         text.setClassName("linkTabBar-hiddenText");
         text.setInnerText("A");
-        element.appendChild(text);
-
-        setElement(element);
+        getElement().appendChild(text);
     }
 
     @Override

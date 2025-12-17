@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 package stroom.docstore.api;
 
 import stroom.docref.DocRef;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 
 public interface DocumentResourceHelper {
 
-    <D extends Doc> D read(DocumentActionHandler<D> documentActionHandler, DocRef docRef);
+    <D extends AbstractDoc> D read(DocumentActionHandler<D> documentActionHandler, DocRef docRef);
 
-    <D extends Doc> D update(DocumentActionHandler<D> documentActionHandler, D doc);
+    <D extends AbstractDoc> D update(DocumentActionHandler<D> documentActionHandler, D doc);
 }

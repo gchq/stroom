@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,6 @@ import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -711,30 +710,32 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     public SystemInfoResult getSystemInfo() {
 
         final Volumes volumes = getCurrentVolumes();
-
-        // Need to wrap with optional as Map.ofEntries does not support null values.
-        final var volInfoList = volumes
+        final List<Map<String, Object>> volInfoList = volumes
                 .getMap()
                 .values()
                 .stream()
                 .flatMap(List::stream)
-                .map(vol -> Map.ofEntries(
-                        new SimpleEntry<>("path", Optional.ofNullable(getAbsVolumePath(vol))),
-                        new SimpleEntry<>("limit", Optional.ofNullable(vol.getByteLimit())),
-                        new SimpleEntry<>("state", Optional.ofNullable(vol.getStatus())),
-                        new SimpleEntry<>("free", Optional.ofNullable(NullSafe.get(
-                                vol.getVolumeState(),
-                                FsVolumeState::getBytesFree))),
-                        new SimpleEntry<>("total", Optional.ofNullable(NullSafe.get(
-                                vol.getVolumeState(),
-                                FsVolumeState::getBytesTotal))),
-                        new SimpleEntry<>("used", Optional.ofNullable(NullSafe.get(
-                                vol.getVolumeState(),
-                                FsVolumeState::getBytesUsed))),
-                        new SimpleEntry<>("dbStateUpdateTime", Optional.ofNullable(NullSafe.get(
-                                vol.getVolumeState(),
-                                FsVolumeState::getUpdateTimeMs,
-                                DateUtil::createNormalDateTimeString)))))
+                .map(vol -> {
+                    // Use HashMap so we can cope with null values
+                    final Map<String, Object> map = new HashMap<>();
+                    map.put("path", getAbsVolumePath(vol));
+                    map.put("limit", vol.getByteLimit());
+                    map.put("state", vol.getStatus());
+                    map.put("free", NullSafe.get(
+                            vol.getVolumeState(),
+                            FsVolumeState::getBytesFree));
+                    map.put("total", NullSafe.get(
+                            vol.getVolumeState(),
+                            FsVolumeState::getBytesTotal));
+                    map.put("used", NullSafe.get(
+                            vol.getVolumeState(),
+                            FsVolumeState::getBytesUsed));
+                    map.put("dbStateUpdateTime", NullSafe.get(
+                            vol.getVolumeState(),
+                            FsVolumeState::getUpdateTimeMs,
+                            DateUtil::createNormalDateTimeString));
+                    return map;
+                })
                 .toList();
 
         return SystemInfoResult.builder(this)

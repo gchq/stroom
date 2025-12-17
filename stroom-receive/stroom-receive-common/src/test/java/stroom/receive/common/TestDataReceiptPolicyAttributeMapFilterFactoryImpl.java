@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.receive.common;
 
 import stroom.dictionary.api.WordListProvider;
@@ -80,6 +96,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         () -> mockReceiveActionMetricsRecorder);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                .uuid(UUID.randomUUID().toString())
                 .build();
 
         final Map<String, DictionaryDoc> uuidToDictMap = Map.of();
@@ -107,6 +124,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         () -> mockReceiveActionMetricsRecorder);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                .uuid(UUID.randomUUID().toString())
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
                         .withExpression(ExpressionOperator.builder()
@@ -151,6 +169,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
 
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                .uuid(UUID.randomUUID().toString())
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
                         .withAction(ReceiveAction.REJECT)
@@ -200,6 +219,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         () -> mockReceiveActionMetricsRecorder);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                .uuid(UUID.randomUUID().toString())
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
                         .withAction(ReceiveAction.DROP)
@@ -252,6 +272,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
 
         int ruleNo = 0;
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                .uuid(UUID.randomUUID().toString())
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(++ruleNo)
                         .withAction(ReceiveAction.RECEIVE)
@@ -326,6 +347,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         () -> mockReceiveActionMetricsRecorder);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                .uuid(UUID.randomUUID().toString())
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
                         .withAction(ReceiveAction.DROP)
@@ -380,6 +402,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                         () -> mockReceiveActionMetricsRecorder);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                .uuid(UUID.randomUUID().toString())
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
                         .withAction(ReceiveAction.DROP)
@@ -450,6 +473,7 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
                 FEED_5);
 
         final ReceiveDataRules receiveDataRules = ReceiveDataRules.builder()
+                .uuid(UUID.randomUUID().toString())
                 .addRule(ReceiveDataRule.builder()
                         .withRuleNumber(1)
                         .withAction(ReceiveAction.DROP)
@@ -542,12 +566,11 @@ class TestDataReceiptPolicyAttributeMapFilterFactoryImpl {
 
     private DictionaryDoc createDict(final String name,
                                      final String... lines) {
-        final DictionaryDoc dict = new DictionaryDoc();
-        dict.setUuid(UUID.randomUUID().toString());
-        dict.setName(name);
-        dict.setType(DictionaryDoc.TYPE);
-        dict.setData(String.join("\n", lines));
-        return dict;
+        return DictionaryDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name(name)
+                .data(String.join("\n", lines))
+                .build();
     }
 
     private ReceiveDataRule createReceiveAllRule() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,15 @@ public class ResourceKey {
                        @JsonProperty("name") final String name) {
         this.key = key;
         this.name = name;
+    }
+
+    /**
+     * Creates a {@link ResourceKey} containing on the key UUID.
+     * Only for use as a map key as equals/hashcode only use key.
+     */
+    public static ResourceKey createSearchKey(final String key) {
+        // name is not used in the equals/hash
+        return new ResourceKey(key, null);
     }
 
     public ResourceKey(final Map<String, String> map) {

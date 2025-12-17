@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.document.client.event.CloseSelectedDocumentEvent;
 import stroom.document.client.event.CopyDocumentEvent;
 import stroom.document.client.event.CreateDocumentEvent;
 import stroom.document.client.event.DeleteDocumentEvent;
@@ -104,6 +105,8 @@ import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseOtherTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseSavedTabsEvent;
 import stroom.widget.tab.client.event.RequestCloseTabEvent;
+import stroom.widget.tab.client.event.RequestCloseTabsEvent;
+import stroom.widget.tab.client.event.RequestMoveTabEvent;
 import stroom.widget.tab.client.event.ShowTabMenuEvent;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.Future;
@@ -117,6 +120,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -125,6 +129,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.inject.Singleton;
 
@@ -337,7 +342,13 @@ public class DocumentPluginEventManager extends Plugin {
                         event.isForceOpen(),
                         event.isFullScreen(),
                         event.getSelectedTab().orElse(null),
+                        event.getCallbackOnOpen(),
                         explorerListener)));
+
+        registerHandler(getEventBus().addHandler(CloseSelectedDocumentEvent.getType(), event -> {
+            RequestCloseTabEvent.fire(DocumentPluginEventManager.this, selectedTab, event.runOnClose(),
+                    event.resizeTabBar());
+        }));
 
         // 8.2. Handle entity copy events.
         registerHandler(getEventBus().addHandler(CopyDocumentEvent.getType(), event -> copy(
@@ -487,17 +498,28 @@ public class DocumentPluginEventManager extends Plugin {
         // Handle the context menu for open tabs
         registerHandler(getEventBus().addHandler(ShowTabMenuEvent.getType(), event -> {
             final List<Item> menuItems = new ArrayList<>();
+            int priority = 0;
+            menuItems.add(createCloseMenuItem(++priority, event.getTabData()));
+            menuItems.add(createCloseOthersMenuItem(++priority, event.getTabData()));
+            menuItems.add(createCloseSavedMenuItem(++priority, event.getTabData()));
+            menuItems.add(createCloseAllMenuItem(++priority, event.getTabData()));
+            menuItems.add(createCloseLeftMenu(++priority, event.getTabData(), event.getTabList()));
+            menuItems.add(createCloseRightMenu(++priority, event.getTabData(), event.getTabList()));
 
-            menuItems.add(createCloseMenuItem(1, event.getTabData()));
-            menuItems.add(createCloseOthersMenuItem(2, event.getTabData()));
-            menuItems.add(createCloseSavedMenuItem(3, event.getTabData()));
-            menuItems.add(createCloseAllMenuItem(4, event.getTabData()));
-            menuItems.add(new Separator(5));
-            menuItems.add(createSaveMenuItem(6, event.getTabData()));
-            menuItems.add(createSaveAllMenuItem(8));
-            menuItems.add(new Separator(9));
-            menuItems.add(createLocateMenuItem(10, event.getTabData()));
-            menuItems.add(addToFavouritesMenuItem(11, event.getTabData()));
+            menuItems.add(new Separator(++priority));
+
+            menuItems.add(createSaveMenuItem(++priority, event.getTabData()));
+            menuItems.add(createSaveAllMenuItem(++priority));
+
+            menuItems.add(new Separator(++priority));
+
+            menuItems.add(createMoveFirstMenu(++priority, event.getTabData(), event.getTabList()));
+            menuItems.add(createMoveLastMenu(++priority, event.getTabData(), event.getTabList()));
+
+            menuItems.add(new Separator(++priority));
+
+            menuItems.add(createLocateMenuItem(++priority, event.getTabData()));
+            menuItems.add(addToFavouritesMenuItem(++priority, event.getTabData()));
 
             ShowMenuEvent
                     .builder()
@@ -741,6 +763,7 @@ public class DocumentPluginEventManager extends Plugin {
                      final boolean forceOpen,
                      final boolean fullScreen,
                      final CommonDocLinkTab selectedLinkTab,
+                     final Consumer<MyPresenterWidget<?>> callbackOnOpen,
                      final TaskMonitorFactory taskMonitorFactory) {
         if (docRef != null && docRef.getType() != null) {
             final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
@@ -761,6 +784,7 @@ public class DocumentPluginEventManager extends Plugin {
                                         forceOpen,
                                         fullScreen,
                                         selectedLinkTab,
+                                        callbackOnOpen,
                                         new DefaultTaskMonitorFactory(this));
                                 highlight(decoratedDocRef, explorerListener);
                             }
@@ -1184,6 +1208,62 @@ public class DocumentPluginEventManager extends Plugin {
                 .build();
     }
 
+    private MenuItem createCloseLeftMenu(final int priority, final TabData selectedTab, final List<TabData> tabs) {
+        final int indexOfSelectedTab = tabs.indexOf(selectedTab);
+        final Predicate<TabData> toLeft = t -> tabs.indexOf(t) < indexOfSelectedTab;
+        final List<TabData> tabsToLeft = getTabs(tabs, toLeft);
+
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.CLOSE)
+                .iconColour(IconColour.RED)
+                .text("Close Tabs to the Left")
+                .enabled(isTabItemSelected(selectedTab) && !tabsToLeft.isEmpty())
+                .command(() -> RequestCloseTabsEvent.fire(DocumentPluginEventManager.this,
+                        tabsToLeft.toArray(new TabData[0])))
+                .build();
+    }
+
+    private MenuItem createCloseRightMenu(final int priority, final TabData selectedTab, final List<TabData> tabs) {
+        final int indexOfSelectedTab = tabs.indexOf(selectedTab);
+        final Predicate<TabData> toRight = t -> tabs.indexOf(t) > indexOfSelectedTab;
+        final List<TabData> tabsToRight = getTabs(tabs, toRight);
+
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.CLOSE)
+                .iconColour(IconColour.RED)
+                .text("Close Tabs to the Right")
+                .enabled(isTabItemSelected(selectedTab) && !tabsToRight.isEmpty())
+                .command(() -> RequestCloseTabsEvent.fire(DocumentPluginEventManager.this,
+                        tabsToRight.toArray(new TabData[0])))
+                .build();
+    }
+
+    private MenuItem createMoveFirstMenu(final int priority, final TabData selectedTab, final List<TabData> tabs) {
+        final boolean isFirstTab = tabs.indexOf(selectedTab) == 0;
+
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.STEP_BACKWARD)
+                .text("Move First")
+                .enabled(isTabItemSelected(selectedTab) && !isFirstTab)
+                .command(() -> RequestMoveTabEvent.fire(DocumentPluginEventManager.this, selectedTab, 0))
+                .build();
+    }
+
+    private MenuItem createMoveLastMenu(final int priority, final TabData selectedTab, final List<TabData> tabs) {
+        final boolean isLastTab = tabs.indexOf(selectedTab) == tabs.size() - 1;
+
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.STEP_FORWARD)
+                .text("Move Last")
+                .enabled(isTabItemSelected(selectedTab) && !isLastTab)
+                .command(() -> RequestMoveTabEvent.fire(DocumentPluginEventManager.this, selectedTab, tabs.size() - 1))
+                .build();
+    }
+
     private MenuItem createSaveMenuItem(final int priority, final TabData selectedTab) {
         return new IconMenuItem.Builder()
                 .priority(priority)
@@ -1579,6 +1659,11 @@ public class DocumentPluginEventManager extends Plugin {
 
     private boolean isTabItemSelected(final TabData tabData) {
         return tabData != null;
+    }
+
+    private List<TabData> getTabs(final List<TabData> tabs,
+                                  final Predicate<TabData> predicate) {
+        return tabs.stream().filter(predicate).collect(Collectors.toList());
     }
 
     private boolean isDirty(final TabData tabData) {

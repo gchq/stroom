@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.pipeline.stepping.client.presenter;
 
 import stroom.data.table.client.MyCellTable;
 import stroom.pipeline.shared.XPathFilter;
+import stroom.pipeline.shared.XPathFilter.SearchType;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
@@ -122,9 +123,9 @@ public class SteppingFilterPresenter extends
                             ? BASE_CLASS + "-filterOn"
                             : BASE_CLASS + "-filterOff";
 
-            // Pipe element ID column
+            // Pipe element name column
             final Column<PipelineElement, String> textColumn = DataGridUtil.textColumnBuilder(
-                            PipelineElement::getId)
+                            PipelineElement::getDisplayName)
                     .withStyleName(BASE_CLASS + "-textCell")
                     .build();
             elementChooser.addColumn(textColumn);
@@ -177,6 +178,7 @@ public class SteppingFilterPresenter extends
 
     private void addXPathFilter() {
         final XPathFilter xPathFilter = new XPathFilter();
+        xPathFilter.setSearchType(SearchType.ALL);
         xPathFilter.setMatchType(XPathFilter.DEFAULT_MATCH_TYPE);
 
         final HidePopupRequestEvent.Handler handler = e -> {

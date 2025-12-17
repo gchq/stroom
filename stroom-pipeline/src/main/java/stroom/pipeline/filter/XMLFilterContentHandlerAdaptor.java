@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.pipeline.filter;
 
 import stroom.pipeline.factory.Processor;
 import stroom.task.api.Terminator;
+import stroom.util.shared.ElementId;
 
 import org.xml.sax.ContentHandler;
 
@@ -52,12 +53,12 @@ public class XMLFilterContentHandlerAdaptor extends ContentHandlerAdaptor implem
     }
 
     @Override
-    public String getElementId() {
+    public ElementId getElementId() {
         return null;
     }
 
     @Override
-    public void setElementId(final String elementId) {
+    public void setElementId(final ElementId elementId) {
     }
 
     @Override

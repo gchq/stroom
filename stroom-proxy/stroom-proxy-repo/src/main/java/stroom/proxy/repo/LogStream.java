@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.repo;
 
 import stroom.meta.api.AttributeMap;
@@ -14,6 +30,7 @@ import org.slf4j.Logger;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -32,8 +49,15 @@ public class LogStream {
         final List<String> metaKeys = logStreamConfigProvider.get().getMetaKeys();
         if (NullSafe.hasItems(metaKeys)) {
             final Map<String, String> map = new LinkedHashMap<>(metaKeys.size());
-            metaKeys.forEach(key ->
-                    map.put(key, attributeMap.get(key)));
+            final Map<String, String> keyMap = attributeMap.getKeyMap();
+            metaKeys.forEach(key -> {
+                final String originalKey = keyMap.get(key.toLowerCase(Locale.ROOT));
+                if (originalKey != null) {
+                    map.put(originalKey, attributeMap.get(originalKey));
+                } else {
+                    map.put(key, null);
+                }
+            });
             return map;
         } else {
             return Collections.emptyMap();

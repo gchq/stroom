@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ package stroom.util.io;
 
 import stroom.test.common.TestUtil;
 
+import com.google.inject.TypeLiteral;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -26,6 +29,10 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,6 +67,33 @@ class TestSimplePathCreator {
     }
 
     @TestFactory
+    Stream<DynamicTest> testFindVars2() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withListOutputItemType(String.class)
+                .withTestFunction(testCase -> {
+                    final String[] vars = new SimplePathCreator(() -> null, () -> null)
+                            .findVars(testCase.getInput());
+                    if (vars == null) {
+                        return null;
+                    } else {
+                        return Arrays.asList(vars);
+                    }
+                })
+                .withSimpleEqualityAssertion()
+                .addThrowsCase(null, NullPointerException.class)
+                .addCase("", Collections.emptyList())
+                .addCase("foo", Collections.emptyList())
+                .addCase("${}", List.of(""))
+                .addCase("${x}", List.of("x"))
+                .addCase("${abc}", List.of("abc"))
+                .addCase("x${abc}y", List.of("abc"))
+                .addCase("x${abc}y${def}", List.of("abc", "def"))
+                .addCase("x${abc}y${def}z${abc}", List.of("abc", "def", "abc"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testContainsVars() {
         final PathCreator pathCreator = new SimplePathCreator(() -> null, () -> null);
         return TestUtil.buildDynamicTestStream()
@@ -81,6 +115,58 @@ class TestSimplePathCreator {
                 .addCase("foo${foo}", true)
                 .addCase("${foo}${bar}", true)
                 .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testReplace() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<String, String>>() {
+                })
+                .withOutputType(String.class)
+                .withTestFunction(testCase ->
+                        new SimplePathCreator(() -> null, () -> null)
+                                .replace(
+                                        testCase.getInput()._1,
+                                        testCase.getInput()._2,
+                                        () -> "foo"))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of("", "abc"), "")
+                .addCase(Tuple.of("abc", "abc"), "abc")
+                .addCase(Tuple.of("${abc}", "abc"), "foo")
+                .addCase(Tuple.of("x${abc}y", "abc"), "xfooy")
+                .addCase(Tuple.of("x${abc}y${abc}", "abc"), "xfooyfoo")
+                .addCase(Tuple.of("x${abc}y${def}", "abc"), "xfooy${def}")
+                .addThrowsCase(Tuple.of(null, "abc"), NullPointerException.class)
+                .build();
+    }
+
+    @Test
+    void testReplace_recursion() {
+        String str = "${abc}";
+        str = doReplace(str, "abc", () -> "${def}");
+        assertThat(str)
+                .isEqualTo("${def}");
+        str = doReplace(str, "def", () -> "foo");
+        assertThat(str)
+                .isEqualTo("foo");
+    }
+
+    @Test
+    void testReplace_badChars() {
+        String str = "${abc}";
+        str = doReplace(str, "abc", () -> "$");
+        assertThat(str)
+                .isEqualTo("$");
+        str = doReplace(str, "def", () -> "foo");
+        assertThat(str)
+                .isEqualTo("$");
+    }
+
+    private String doReplace(final String str,
+                             final String var,
+                             final Supplier<String> replacementSupplier) {
+        return new SimplePathCreator(() -> null, () -> null)
+                .replace(str, var, replacementSupplier);
     }
 
     @Test

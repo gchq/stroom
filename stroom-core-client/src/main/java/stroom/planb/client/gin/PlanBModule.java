@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ import stroom.planb.client.presenter.TemporalRangeStateSettingsPresenter;
 import stroom.planb.client.presenter.TemporalRangeStateSettingsPresenter.TemporalRangeStateSettingsView;
 import stroom.planb.client.presenter.TemporalStateSettingsPresenter;
 import stroom.planb.client.presenter.TemporalStateSettingsPresenter.TemporalStateSettingsView;
+import stroom.planb.client.presenter.TraceSettingsPresenter;
+import stroom.planb.client.presenter.TraceSettingsPresenter.TraceSettingsView;
 import stroom.planb.client.view.HistogramSettingsViewImpl;
 import stroom.planb.client.view.MetricSettingsViewImpl;
 import stroom.planb.client.view.PlanBSettingsViewImpl;
@@ -43,6 +45,7 @@ import stroom.planb.client.view.SessionSettingsViewImpl;
 import stroom.planb.client.view.StateSettingsViewImpl;
 import stroom.planb.client.view.TemporalRangeStateSettingsViewImpl;
 import stroom.planb.client.view.TemporalStateSettingsViewImpl;
+import stroom.planb.client.view.TraceSettingsViewImpl;
 
 public class PlanBModule extends PluginModule {
 
@@ -75,5 +78,8 @@ public class PlanBModule extends PluginModule {
         bindPresenterWidget(MetricSettingsPresenter.class,
                 MetricSettingsView.class,
                 MetricSettingsViewImpl.class);
+        bindPresenterWidget(TraceSettingsPresenter.class,
+                TraceSettingsView.class,
+                TraceSettingsViewImpl.class);
     }
 }

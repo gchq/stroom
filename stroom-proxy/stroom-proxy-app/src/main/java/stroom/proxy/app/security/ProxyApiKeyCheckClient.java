@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.security;
 
 import stroom.proxy.app.AbstractDownstreamClient;
@@ -15,17 +31,23 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserDesc;
 
+import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheck.Result;
+import com.codahale.metrics.health.HealthCheck.ResultBuilder;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.Response.StatusType;
 
+import java.time.Instant;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
+@Singleton
 public class ProxyApiKeyCheckClient extends AbstractDownstreamClient implements HasHealthCheck {
 
     // This api key will never exist as it is malformed, but we can make sure the resource
@@ -37,6 +59,7 @@ public class ProxyApiKeyCheckClient extends AbstractDownstreamClient implements 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxyApiKeyCheckClient.class);
 
     private final Provider<DownstreamHostConfig> downstreamHostConfigProvider;
+    private final AtomicLong lastSuccessfulCall = new AtomicLong(0);
 
     @Inject
     public ProxyApiKeyCheckClient(
@@ -72,9 +95,11 @@ public class ProxyApiKeyCheckClient extends AbstractDownstreamClient implements 
                     } else {
                         LOGGER.debug("fetchApiKeyValidity() - No response entity from {}", url);
                     }
+                    lastSuccessfulCall.set(System.currentTimeMillis());
                 } else if (statusInfo.getStatusCode() == Status.NOT_FOUND.getStatusCode()) {
                     LOGGER.debug("fetchApiKeyValidity() - Not Found exception from {}", url);
                     optUserDesc = Optional.empty();
+                    lastSuccessfulCall.set(System.currentTimeMillis());
                 } else {
                     LOGGER.error("Error fetching API Key validity using url '{}', " +
                                  "got response {} - {}, request: {}",
@@ -89,23 +114,34 @@ public class ProxyApiKeyCheckClient extends AbstractDownstreamClient implements 
         return optUserDesc;
     }
 
+    private Instant getLastSuccessfulCall() {
+        final long epochMs = lastSuccessfulCall.get();
+        return epochMs != 0
+                ? Instant.ofEpochMilli(epochMs)
+                : null;
+    }
+
     @Override
     public Result getHealth() {
         LOGGER.debug("getHealth() called");
+        final ResultBuilder builder = HealthCheck.Result.builder();
+        HealthCheckUtils.addTime(builder, "lastSuccessfulCall", getLastSuccessfulCall());
         if (!isDownstreamEnabled()) {
-            return HealthCheckUtils.healthy("Downstream host disabled");
+            builder.healthy()
+                    .withMessage("Downstream host disabled");
         } else {
             try {
-                try (final Response response = getResponse(builder ->
-                        builder.post(Entity.json(HEALTH_CHECK_REQUEST)))) {
+                try (final Response response = getResponse(requestBuilder ->
+                        requestBuilder.post(Entity.json(HEALTH_CHECK_REQUEST)))) {
 
-                    return HealthCheckUtils.fromResponse(response, Status.NO_CONTENT)
-                            .build();
+                    HealthCheckUtils.fromResponse(builder, response, Status.NO_CONTENT, getFullUrl());
                 }
             } catch (final Throwable e) {
                 LOGGER.error("API Key check unhealthy: {}", LogUtil.exceptionMessage(e));
-                return Result.unhealthy(e);
+                builder.unhealthy(e)
+                        .withDetail("url", getFullUrl());
             }
         }
+        return builder.build();
     }
 }

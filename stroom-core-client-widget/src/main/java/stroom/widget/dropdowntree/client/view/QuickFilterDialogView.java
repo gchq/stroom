@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,4 +28,6 @@ public interface QuickFilterDialogView extends View, Focus, HasUiHandlers<QuickF
     void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
 
     void setDataView(View view);
+
+    void setText(String text, boolean fireEvents);
 }

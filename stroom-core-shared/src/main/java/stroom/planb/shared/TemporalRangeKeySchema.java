@@ -1,6 +1,23 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.shared;
 
 import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -17,7 +34,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class TemporalRangeKeySchema extends RangeKeySchema {
 
-    public static final TemporalPrecision DEFAULT_TEMPORAL_PRECISION = TemporalPrecision.MILLISECOND;
+    private static final TemporalPrecision DEFAULT_TEMPORAL_PRECISION = TemporalPrecision.MILLISECOND;
 
     @JsonProperty
     private final TemporalPrecision temporalPrecision;
@@ -26,7 +43,7 @@ public class TemporalRangeKeySchema extends RangeKeySchema {
     public TemporalRangeKeySchema(@JsonProperty("rangeType") final RangeType rangeType,
                                   @JsonProperty("temporalPrecision") final TemporalPrecision temporalPrecision) {
         super(rangeType);
-        this.temporalPrecision = temporalPrecision;
+        this.temporalPrecision = NullSafe.requireNonNullElse(temporalPrecision, DEFAULT_TEMPORAL_PRECISION);
     }
 
     public TemporalPrecision getTemporalPrecision() {
@@ -56,7 +73,8 @@ public class TemporalRangeKeySchema extends RangeKeySchema {
     @Override
     public String toString() {
         return "TemporalRangeKeySchema{" +
-               "temporalPrecision=" + temporalPrecision +
+               "rangeType=" + rangeType +
+               ", temporalPrecision=" + temporalPrecision +
                '}';
     }
 
@@ -69,8 +87,10 @@ public class TemporalRangeKeySchema extends RangeKeySchema {
         }
 
         public Builder(final TemporalRangeKeySchema schema) {
-            this.rangeType = schema.rangeType;
-            this.temporalPrecision = schema.temporalPrecision;
+            if (schema != null) {
+                this.rangeType = schema.rangeType;
+                this.temporalPrecision = schema.temporalPrecision;
+            }
         }
 
         public Builder rangeType(final RangeType rangeType) {
@@ -90,9 +110,7 @@ public class TemporalRangeKeySchema extends RangeKeySchema {
 
         @Override
         public TemporalRangeKeySchema build() {
-            return new TemporalRangeKeySchema(
-                    rangeType,
-                    temporalPrecision);
+            return new TemporalRangeKeySchema(rangeType, temporalPrecision);
         }
     }
 }

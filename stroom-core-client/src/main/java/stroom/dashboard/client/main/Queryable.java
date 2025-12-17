@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import stroom.query.api.ResultStoreInfo;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.ErrorMessage;
 
 import java.util.List;
 
@@ -36,7 +37,7 @@ public interface Queryable {
 
     boolean getSearchState();
 
-    List<String> getCurrentErrors();
+    List<ErrorMessage> getCurrentErrors();
 
     void setQueryInfo(QueryInfo queryInfo);
 

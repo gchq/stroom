@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,16 @@
 package stroom.dashboard.client.query;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.FireAlertEventFunction;
 import stroom.core.client.LocationManager;
 import stroom.core.client.event.WindowCloseEvent;
-import stroom.dashboard.client.main.AbstractComponentPresenter;
+import stroom.dashboard.client.main.AbstractRefreshableComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.IndexLoader;
-import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.main.SearchModel;
+import stroom.dashboard.client.query.QueryPresenter.QueryView;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
@@ -66,8 +67,11 @@ import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.ErrorMessages;
+import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -78,7 +82,6 @@ import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -89,8 +92,8 @@ import java.util.List;
 import java.util.Objects;
 
 public class QueryPresenter
-        extends AbstractComponentPresenter<QueryPresenter.QueryView>
-        implements HasDirtyHandlers, Queryable, SearchStateListener, SearchErrorListener {
+        extends AbstractRefreshableComponentPresenter<QueryView>
+        implements HasDirtyHandlers, SearchStateListener, SearchErrorListener {
 
     public static final String TAB_TYPE = "query-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
@@ -119,11 +122,10 @@ public class QueryPresenter
     private final ButtonView historyButton;
     private final ButtonView favouriteButton;
     private final ButtonView downloadQueryButton;
-    private final ButtonView warningsButton;
-    private List<String> currentErrors;
+    private final InlineSvgButton errorsButton;
+    private ErrorMessages currentErrors;
     private ButtonView processButton;
     private boolean initialised;
-    private Timer autoRefreshTimer;
     private boolean queryOnOpen;
     private QueryInfo queryInfo;
     private ExpressionOperator currentSelectionQuery;
@@ -196,8 +198,9 @@ public class QueryPresenter
             processButton = view.addButtonLeft(SvgPresets.PROCESS.enabled(true));
         }
 
-        warningsButton = view.addButtonRight(SvgPresets.ALERT.title("Show Warnings"));
-        setWarningsVisible(false);
+        errorsButton = new InlineSvgButton();
+        view.addButtonRight(errorsButton);
+        setErrorsVisible(false);
 
         searchModel = new SearchModel(
                 eventBus,
@@ -269,9 +272,9 @@ public class QueryPresenter
                 }
             }));
         }
-        registerHandler(warningsButton.addClickHandler(event -> {
+        registerHandler(errorsButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                showWarnings();
+                showErrors();
             }
         }));
         registerHandler(indexLoader.addChangeDataHandler(event ->
@@ -354,14 +357,30 @@ public class QueryPresenter
     }
 
     @Override
-    public void onError(final List<String> errors) {
-        currentErrors = errors;
-        setWarningsVisible(currentErrors != null && !currentErrors.isEmpty());
+    public void onError(final List<ErrorMessage> errors) {
+        currentErrors = new ErrorMessages(errors);
+        setErrorsVisible(!currentErrors.isEmpty());
+        if (!currentErrors.isEmpty()) {
+            setErrorSeverity(currentErrors.getHighestSeverity());
+        }
+    }
+
+    private void setErrorSeverity(final Severity severity) {
+        if (Severity.FATAL_ERROR.equals(severity) || Severity.ERROR.equals(severity)) {
+            errorsButton.setSvg(SvgImage.ERROR);
+            errorsButton.setTitle("Show Errors");
+        } else if (Severity.WARNING.equals(severity)) {
+            errorsButton.setSvg(SvgImage.ALERT);
+            errorsButton.setTitle("Show Warning");
+        } else if (Severity.INFO.equals(severity)) {
+            errorsButton.setSvg(SvgImage.INFO);
+            errorsButton.setTitle("Show Messages");
+        }
     }
 
     @Override
-    public List<String> getCurrentErrors() {
-        return currentErrors;
+    public List<ErrorMessage> getCurrentErrors() {
+        return currentErrors.getErrorMessages();
     }
 
     private void setButtonsEnabled() {
@@ -531,15 +550,31 @@ public class QueryPresenter
                 .exec();
     }
 
-    private void showWarnings() {
-        if (currentErrors != null && !currentErrors.isEmpty()) {
-            final String msg = currentErrors.size() == 1
-                    ? ("The following warning was created while running this search:")
-                    : ("The following " + currentErrors.size()
-                       + " warnings have been created while running this search:");
-            final String errors = String.join("\n", currentErrors);
-            AlertEvent.fireWarn(this, msg, errors, null);
+    private void showErrors() {
+        if (!currentErrors.isEmpty()) {
+            if (currentErrors.containsAny(Severity.FATAL_ERROR, Severity.ERROR)) {
+                fireAlertEvent(AlertEvent::fireError, "error", Severity.FATAL_ERROR, Severity.ERROR);
+            } else if (currentErrors.containsAny(Severity.WARNING)) {
+                fireAlertEvent(AlertEvent::fireWarn, "warning", Severity.WARNING);
+            } else if (currentErrors.containsAny(Severity.INFO)) {
+                fireAlertEvent(AlertEvent::fireInfo, "message", Severity.INFO);
+            }
         }
+    }
+
+    private void fireAlertEvent(final FireAlertEventFunction fireAlertEventFunction,
+                           final String messageType, final Severity...severity) {
+        final List<String> messages = currentErrors.get(severity);
+        final String msg = getMessage(messageType, messages.size());
+        final String errorMessages = String.join("\n", messages);
+        fireAlertEventFunction.apply(this, msg, errorMessages, null);
+    }
+
+    private String getMessage(final String messageType, final int numberOfMessages) {
+        return numberOfMessages == 1
+                ? ("The following " + messageType + " was created while running this search:")
+                : ("The following " + numberOfMessages
+                   + " " + messageType + "s have been created while running this search:");
     }
 
     @Override
@@ -563,10 +598,7 @@ public class QueryPresenter
 
     @Override
     public void stop() {
-        if (autoRefreshTimer != null) {
-            autoRefreshTimer.cancel();
-            autoRefreshTimer = null;
-        }
+        cancelRefresh();
         searchModel.stop();
     }
 
@@ -575,7 +607,8 @@ public class QueryPresenter
         return searchModel.isSearching();
     }
 
-    private void run(final boolean incremental,
+    @Override
+    public void run(final boolean incremental,
                      final boolean storeHistory) {
         run(incremental, storeHistory, null);
     }
@@ -591,7 +624,7 @@ public class QueryPresenter
             currentErrors = null;
             expressionPresenter.clearSelection();
 
-            setWarningsVisible(false);
+            setErrorsVisible(false);
 
             // Write expression.
             final ExpressionOperator root = expressionPresenter.write();
@@ -623,7 +656,7 @@ public class QueryPresenter
             currentErrors = null;
             expressionPresenter.clearSelection();
 
-            setWarningsVisible(false);
+            setErrorsVisible(false);
 
             // Write expression.
             ExpressionOperator root = expressionPresenter.write();
@@ -759,6 +792,21 @@ public class QueryPresenter
         return searchModel;
     }
 
+    @Override
+    public boolean isSearching() {
+        return searchModel.isSearching();
+    }
+
+    @Override
+    public boolean isInitialised() {
+        return initialised;
+    }
+
+    @Override
+    public Automate getAutomate() {
+        return getQuerySettings().getAutomate();
+    }
+
     public void setExpression(final ExpressionOperator root) {
         expressionPresenter.read(root);
     }
@@ -770,42 +818,6 @@ public class QueryPresenter
         // If this is the end of a query then schedule a refresh.
         if (!searching) {
             scheduleRefresh();
-        }
-    }
-
-    private void scheduleRefresh() {
-        // Schedule auto refresh after a query has finished.
-        if (autoRefreshTimer != null) {
-            autoRefreshTimer.cancel();
-        }
-        autoRefreshTimer = null;
-
-        final Automate automate = getQuerySettings().getAutomate();
-        if (initialised && automate.isRefresh()) {
-            try {
-                final String interval = automate.getRefreshInterval();
-                int millis = ModelStringUtil.parseDurationString(interval).intValue();
-
-                // Ensure that the refresh interval is not less than 10 seconds.
-                millis = Math.max(millis, TEN_SECONDS);
-
-                autoRefreshTimer = new Timer() {
-                    @Override
-                    public void run() {
-                        if (!initialised) {
-                            stop();
-                        } else {
-                            // Make sure search is currently inactive before we attempt to execute a new query.
-                            if (!searchModel.isSearching()) {
-                                QueryPresenter.this.run(false, false);
-                            }
-                        }
-                    }
-                };
-                autoRefreshTimer.schedule(millis);
-            } catch (final RuntimeException e) {
-                // Ignore as we cannot display this error now.
-            }
         }
     }
 
@@ -894,10 +906,8 @@ public class QueryPresenter
         }
     }
 
-    private void setWarningsVisible(final boolean show) {
-        warningsButton.asWidget().getElement().getStyle().setOpacity(show
-                ? 1
-                : 0);
+    private void setErrorsVisible(final boolean show) {
+        errorsButton.asWidget().getElement().getStyle().setOpacity(show ? 1 : 0);
     }
 
     @Override
@@ -919,6 +929,8 @@ public class QueryPresenter
         ButtonView addButtonLeft(Preset preset);
 
         ButtonView addButtonRight(Preset preset);
+
+        void addButtonRight(final ButtonView button);
 
         void setExpressionView(View view);
 

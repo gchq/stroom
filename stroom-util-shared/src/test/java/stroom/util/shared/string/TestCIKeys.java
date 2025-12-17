@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,7 +139,7 @@ class TestCIKeys {
 
         final int count = 5_000;
         final Map<String, String> concurrentMap = new ConcurrentHashMap<>();
-        final Map<String, String> copyOnWriteMap = CopyOnWriteMap.newHashMap();
+        final Map<String, String> copyOnWriteMap = new CopyOnWriteMap<>();
         final List<String> uuids = IntStream.rangeClosed(1, count)
                 .boxed()
                 .map(i -> UUID.randomUUID().toString())

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,10 @@ package stroom.dashboard.impl;
 
 import stroom.query.api.Sort;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.io.Serializable;
@@ -30,7 +32,9 @@ public class VisField implements Serializable {
 
     private static final long serialVersionUID = 1272545271946712570L;
 
+    @JsonProperty
     private String id;
+    @JsonProperty
     private Sort sort;
 
     public VisField() {
@@ -40,7 +44,9 @@ public class VisField implements Serializable {
         this(id, null);
     }
 
-    public VisField(final String id, final Sort sort) {
+    @JsonCreator
+    public VisField(@JsonProperty("id") final String id,
+                    @JsonProperty("sort") final Sort sort) {
         this.id = id;
         this.sort = sort;
     }
@@ -96,8 +102,8 @@ public class VisField implements Serializable {
     @Override
     public String toString() {
         return "VisField{" +
-                "id='" + id + '\'' +
-                ", sort=" + sort +
-                '}';
+               "id='" + id + '\'' +
+               ", sort=" + sort +
+               '}';
     }
 }

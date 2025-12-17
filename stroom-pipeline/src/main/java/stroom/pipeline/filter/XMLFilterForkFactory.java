@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@ package stroom.pipeline.filter;
 
 import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.factory.Target;
+import stroom.util.shared.ElementId;
 
 public final class XMLFilterForkFactory {
     private XMLFilterForkFactory() {
         // Utility class.
     }
 
-    public static XMLFilter addTarget(final String elementId, final XMLFilter existing, final Target target) {
+    public static XMLFilter addTarget(final ElementId elementId, final XMLFilter existing, final Target target) {
         XMLFilter newFilter = existing;
 
         if (target == null) {
@@ -61,7 +62,7 @@ public final class XMLFilterForkFactory {
         return newFilter;
     }
 
-    public static XMLFilter setTarget(final String elementId, final Target target) {
+    public static XMLFilter setTarget(final ElementId elementId, final Target target) {
         XMLFilter newFilter = NullXMLFilter.INSTANCE;
 
         if (target != null) {

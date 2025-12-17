@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,8 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
 
     String BASE_PATH = "/dashboard" + ResourcePaths.V1;
 
-    String DOWNLOAD_SEARCH_RESULTS_PATH_PATH = "/downloadSearchResults";
+    String DOWNLOAD_SEARCH_RESULTS_PATH_PART = "/downloadSearchResults";
+    String ASK_STROOM_AI_PATH_PART = "/askStroomAi";
     String SEARCH_PATH_PART = "/search";
     String COLUMN_VALUES_PATH_PART = "/columnValues";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
@@ -80,7 +81,7 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
             DashboardSearchRequest request);
 
     @POST
-    @Path(DOWNLOAD_SEARCH_RESULTS_PATH_PATH + NODE_NAME_PATH_PARAM)
+    @Path(DOWNLOAD_SEARCH_RESULTS_PATH_PART + NODE_NAME_PATH_PARAM)
     @Operation(
             summary = "Download search results",
             operationId = "downloadDashboardSearchResultsNode")
@@ -89,13 +90,32 @@ public interface DashboardResource extends RestResource, DirectRestService, Fetc
             @Parameter(description = "request", required = true) DownloadSearchResultsRequest request);
 
     @POST
-    @Path(DOWNLOAD_SEARCH_RESULTS_PATH_PATH)
+    @Path(DOWNLOAD_SEARCH_RESULTS_PATH_PART)
     @Operation(
             summary = "Download search results",
             operationId = "downloadDashboardSearchResultsLocal")
     default ResourceGeneration downloadSearchResults(
             @Parameter(description = "request", required = true) final DownloadSearchResultsRequest request) {
         return downloadSearchResults(null, request);
+    }
+
+    @POST
+    @Path(ASK_STROOM_AI_PATH_PART + NODE_NAME_PATH_PARAM)
+    @Operation(
+            summary = "Ask Stroom AI a question relating to the current search context",
+            operationId = "askStroomAi")
+    AskStroomAiResponse askStroomAi(
+            @PathParam("nodeName") String nodeName,
+            @Parameter(description = "request", required = true) final AskStroomAiRequest request);
+
+    @POST
+    @Path(ASK_STROOM_AI_PATH_PART)
+    @Operation(
+            summary = "Ask Stroom AI a question relating to the current search context",
+            operationId = "askStroomAi")
+    default AskStroomAiResponse askStroomAi(
+            @Parameter(description = "request", required = true) final AskStroomAiRequest request) {
+        return askStroomAi(null, request);
     }
 
     @POST

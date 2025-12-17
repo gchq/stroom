@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.security.client.presenter;
@@ -66,10 +65,10 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
                                     .filter(user -> !user.isEnabled())
                                     .collect(Collectors.toList());
                             final Optional<User> nextSelection = result.stream().findFirst();
-                            if (disabled.size() > 0) {
+                            if (!disabled.isEmpty()) {
                                 ConfirmEvent.fire(this,
                                         "Some deleted users already exist with the same names, " +
-                                                "would you like to restore them?",
+                                        "would you like to restore them?",
                                         ok -> {
                                             if (ok) {
                                                 enable(disabled, consumer, event, nextSelection, taskMonitorFactory);

@@ -1,0 +1,13 @@
+{
+  "type" : "Feed",
+  "uuid" : "3c0e577f-aab4-4ab5-84f4-70ce7ca2864a",
+  "name" : "IMP_EXP_TEST_FEED",
+  "version" : "cae56f71-118c-4159-8fdb-16a2dd34f99b",
+  "description" : "This is my description",
+  "classification" : "A classification",
+  "encoding" : "UTF-8",
+  "contextEncoding" : "UTF-8",
+  "reference" : true,
+  "streamType" : "Raw Reference",
+  "status" : "RECEIVE"
+}

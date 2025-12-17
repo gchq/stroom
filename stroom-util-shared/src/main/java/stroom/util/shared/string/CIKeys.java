@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ package stroom.util.shared.string;
 import stroom.util.shared.concurrent.CopyOnWriteMap;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * A set of static common {@link CIKey} instances
@@ -34,150 +36,315 @@ public class CIKeys {
     // object creation for common ones.
     // The cost of a hashmap get is less than the combined cost of CIKey object creation and
     // the toLowerCase call.
-    // Have to use a thread-safe map impl as multiple threads will call internCommonKey(..).
-    // Use CopyOnWriteMaps so there is no perf hit on the reads and because writes will be few.
-    private static final Map<String, CIKey> KEY_TO_COMMON_CIKEY_MAP = CopyOnWriteMap.newHashMap();
-    private static final Map<String, CIKey> LOWER_KEY_TO_COMMON_CIKEY_MAP = CopyOnWriteMap.newHashMap();
+    // These maps use CopyOnWriteMap because they are pretty much write once, ready MANY
+    // so are as close to a hashmap as we can get
+    private static final Map<String, CIKey> KEY_TO_COMMON_CIKEY_MAP;
+    private static final Map<String, CIKey> LOWER_KEY_TO_COMMON_CIKEY_MAP;
 
-    public static final CIKey EMPTY = internCommonKey("");
+    public static final CIKey EMPTY;
 
     // Upper camel case keys
-    public static final CIKey ACCOUNT_ID = internCommonKey("AccountId");
-    public static final CIKey ACCOUNT_NAME = internCommonKey("AccountName");
-    public static final CIKey CONTEXT_FORMAT = internCommonKey("ContextFormat");
-    public static final CIKey COMPONENT = internCommonKey("Component");
-    public static final CIKey COMPRESSION = internCommonKey("Compression");
-    public static final CIKey DURATION = internCommonKey("Duration");
-    public static final CIKey EFFECTIVE_TIME = internCommonKey("EffectiveTime");
-    public static final CIKey END = internCommonKey("End");
-    public static final CIKey EVENT_ID = internCommonKey("EventId");
-    public static final CIKey EVENT_TIME = internCommonKey("EventTime");
-    public static final CIKey FEED = internCommonKey("Feed");
-    public static final CIKey FORMAT = internCommonKey("Format");
-    public static final CIKey FORWARD_ERROR = internCommonKey("ForwardError");
-    public static final CIKey FILES = internCommonKey("Files");
-    public static final CIKey GUID = internCommonKey("GUID");
-    public static final CIKey ID = internCommonKey("Id");
-    public static final CIKey INDEX = internCommonKey("Index");
-    public static final CIKey INSERT_TIME = internCommonKey("InsertTime");
-    public static final CIKey KEY = internCommonKey("Key");
-    public static final CIKey KEY_END = internCommonKey("KeyEnd");
-    public static final CIKey KEY_START = internCommonKey("KeyStart");
-    public static final CIKey NAME = internCommonKey("Name");
-    public static final CIKey NODE = internCommonKey("Node");
-    public static final CIKey PARTITION = internCommonKey("Partition");
-    public static final CIKey PIPELINE = internCommonKey("Pipeline");
-    public static final CIKey PROXY_FORWARD_ID = internCommonKey("ProxyForwardId");
-    public static final CIKey RECEIVED_PATH = internCommonKey("ReceivedPath");
-    public static final CIKey RECEIVED_TIME = internCommonKey("ReceivedTime");
-    public static final CIKey RECEIVED_TIME_HISTORY = internCommonKey("ReceivedTimeHistory");
-    public static final CIKey REMOTE_ADDRESS = internCommonKey("RemoteAddress");
-    public static final CIKey REMOTE_CERT_EXPIRY = internCommonKey("RemoteCertExpiry");
-    public static final CIKey REMOTE_FILE = internCommonKey("RemoteFile");
-    public static final CIKey REMOTE_HOST = internCommonKey("RemoteHost");
-    public static final CIKey REMOTE_DN = internCommonKey("RemoteDn");
-    public static final CIKey SCHEMA = internCommonKey("Schema");
-    public static final CIKey SCHEMA_VERSION = internCommonKey("SchemaVersion");
-    public static final CIKey START = internCommonKey("Start");
-    public static final CIKey STATUS = internCommonKey("Status");
-    public static final CIKey STREAM_ID = internCommonKey("StreamId");
-    public static final CIKey STREAM_SIZE = internCommonKey("StreamSize");
-    public static final CIKey SUBJECT = internCommonKey("Subject");
-    public static final CIKey TERMINAL = internCommonKey("Terminal");
-    public static final CIKey TIME = internCommonKey("Time");
-    public static final CIKey TITLE = internCommonKey("Title");
-    public static final CIKey TYPE = internCommonKey("Type");
-    public static final CIKey UPLOAD_USERNAME = internCommonKey("UploadUsername");
-    public static final CIKey UPLOAD_USER_ID = internCommonKey("UploadUserId");
-    public static final CIKey USER = internCommonKey("User");
-    public static final CIKey UUID = internCommonKey("UUID");
-    public static final CIKey VALUE = internCommonKey("Value");
-    public static final CIKey VALUE_TYPE = internCommonKey("ValueType");
+    public static final CIKey ACCOUNT_ID;
+    public static final CIKey ACCOUNT_NAME;
+    public static final CIKey CLASSIFICATION;
+    public static final CIKey CONTEXT_FORMAT;
+    public static final CIKey CONTEXT_ENCODING;
+    public static final CIKey COMPONENT;
+    public static final CIKey COMPRESSION;
+    public static final CIKey DURATION;
+    public static final CIKey EFFECTIVE_TIME;
+    public static final CIKey ENCODING;
+    public static final CIKey END;
+    public static final CIKey ENVIRONMENT;
+    public static final CIKey EVENT_ID;
+    public static final CIKey EVENT_TIME;
+    public static final CIKey FEED;
+    public static final CIKey FORMAT;
+    public static final CIKey FORWARD_ERROR;
+    public static final CIKey FILES;
+    public static final CIKey GUID;
+    public static final CIKey ID;
+    public static final CIKey INDEX;
+    public static final CIKey INSERT_TIME;
+    public static final CIKey KEY;
+    public static final CIKey KEY_END;
+    public static final CIKey KEY_START;
+    public static final CIKey NAME;
+    public static final CIKey NODE;
+    public static final CIKey PARTITION;
+    public static final CIKey PIPELINE;
+    public static final CIKey PROXY_FORWARD_ID;
+    public static final CIKey RECEIVED_PATH;
+    public static final CIKey RECEIVED_TIME;
+    public static final CIKey RECEIVED_TIME_HISTORY;
+    public static final CIKey REMOTE_ADDRESS;
+    public static final CIKey REMOTE_CERT_EXPIRY;
+    public static final CIKey REMOTE_FILE;
+    public static final CIKey REMOTE_HOST;
+    public static final CIKey REMOTE_DN;
+    public static final CIKey SCHEMA;
+    public static final CIKey SCHEMA_VERSION;
+    public static final CIKey START;
+    public static final CIKey STATUS;
+    public static final CIKey STREAM_ID;
+    public static final CIKey STREAM_SIZE;
+    public static final CIKey SUBJECT;
+    public static final CIKey SYSTEM;
+    public static final CIKey TERMINAL;
+    public static final CIKey TIME;
+    public static final CIKey TITLE;
+    public static final CIKey TYPE;
+    public static final CIKey UPLOAD_USERNAME;
+    public static final CIKey UPLOAD_USER_ID;
+    public static final CIKey USER;
+    public static final CIKey UUID;
+    public static final CIKey VALUE;
+    public static final CIKey VALUE_TYPE;
 
     // Lower case keys
-    public static final CIKey ACCEPT = internCommonKey("accept");
-    public static final CIKey CONNECTION = internCommonKey("connection");
-    public static final CIKey EXPECT = internCommonKey("expect");
+    public static final CIKey ACCEPT;
+    public static final CIKey CONNECTION;
+    public static final CIKey EXPECT;
 
     // kebab case keys
-    public static final CIKey CONTENT___ENCODING = internCommonKey("content-encoding");
-    public static final CIKey CONTENT___LENGTH = internCommonKey("content-length");
-    public static final CIKey TRANSFER___ENCODING = internCommonKey("transfer-encoding");
-    public static final CIKey USER___AGENT = internCommonKey("user-agent");
-    public static final CIKey X___FORWARDED___FOR = internCommonKey("X-Forwarded-For");
+    public static final CIKey CONTENT___ENCODING;
+    public static final CIKey CONTENT___LENGTH;
+    public static final CIKey TRANSFER___ENCODING;
+    public static final CIKey USER___AGENT;
+    public static final CIKey X___FORWARDED___FOR;
 
     // Upper sentence case keys
-    public static final CIKey ANALYTIC__RULE = internCommonKey("Analytic Rule");
-    public static final CIKey CREATE__TIME = internCommonKey("Create Time");
-    public static final CIKey CREATE__TIME__MS = internCommonKey("Create Time Ms");
-    public static final CIKey DOC__COUNT = internCommonKey("Doc Count");
-    public static final CIKey EFFECTIVE__TIME = internCommonKey("Effective Time");
-    public static final CIKey END__TIME = internCommonKey("End Time");
-    public static final CIKey END__TIME__MS = internCommonKey("End Time Ms");
-    public static final CIKey ERROR__COUNT = internCommonKey("Error Count");
-    public static final CIKey FATAL__ERROR__COUNT = internCommonKey("Fatal Error Count");
-    public static final CIKey FILE__SIZE = internCommonKey("File Size");
-    public static final CIKey INDEX__NAME = internCommonKey("Index Name");
-    public static final CIKey INFO__COUNT = internCommonKey("Info Count");
-    public static final CIKey LAST__COMMIT = internCommonKey("Last Commit");
-    public static final CIKey META__ID = internCommonKey("Meta Id");
-    public static final CIKey PARENT__CREATE__TIME = internCommonKey("Parent Create Time");
-    public static final CIKey PARENT__FEED = internCommonKey("Parent Feed");
-    public static final CIKey PARENT__ID = internCommonKey("Parent Id");
-    public static final CIKey PARENT__STATUS = internCommonKey("Parent Status");
-    public static final CIKey PIPELINE__NAME = internCommonKey("Pipeline Name");
-    public static final CIKey PROCESSOR__DELETED = internCommonKey("Processor Deleted");
-    public static final CIKey PROCESSOR__ENABLED = internCommonKey("Processor Enabled");
-    public static final CIKey PROCESSOR__FILTER__DELETED = internCommonKey("Processor Filter Deleted");
-    public static final CIKey PROCESSOR__FILTER__ENABLED = internCommonKey("Processor Filter Enabled");
-    public static final CIKey PROCESSOR__FILTER__ID = internCommonKey("Processor Filter Id");
-    public static final CIKey PROCESSOR__FILTER__LAST__POLL__MS = internCommonKey("Processor Filter Last Poll Ms");
-    public static final CIKey PROCESSOR__FILTER__PRIORITY = internCommonKey("Processor Filter Priority");
-    public static final CIKey PROCESSOR__FILTER__UUID = internCommonKey("Processor Filter UUID");
-    public static final CIKey PROCESSOR__ID = internCommonKey("Processor Id");
-    public static final CIKey PROCESSOR__PIPELINE = internCommonKey("Processor Pipeline");
-    public static final CIKey PROCESSOR__TASK__ID = internCommonKey("Processor Task Id");
-    public static final CIKey PROCESSOR__TYPE = internCommonKey("Processor Type");
-    public static final CIKey PROCESSOR__UUID = internCommonKey("Processor UUID");
-    public static final CIKey RAW__SIZE = internCommonKey("Raw Size");
-    public static final CIKey READ__COUNT = internCommonKey("Read Count");
-    public static final CIKey START__TIME = internCommonKey("Start Time");
-    public static final CIKey START__TIME__MS = internCommonKey("Start Time Ms");
-    public static final CIKey STATUS__TIME = internCommonKey("Status Time");
-    public static final CIKey STATUS__TIME__MS = internCommonKey("Status Time Ms");
-    public static final CIKey TASK__ID = internCommonKey("Task Id");
-    public static final CIKey VOLUME__GROUP = internCommonKey("Volume Group");
-    public static final CIKey VOLUME__PATH = internCommonKey("Volume Path");
-    public static final CIKey WARNING__COUNT = internCommonKey("Warning Count");
-    public static final CIKey WRITE__COUNT = internCommonKey("Write Count");
+    public static final CIKey ANALYTIC__RULE;
+    public static final CIKey CREATE__TIME;
+    public static final CIKey CREATE__TIME__MS;
+    public static final CIKey DOC__COUNT;
+    public static final CIKey EFFECTIVE__TIME;
+    public static final CIKey END__TIME;
+    public static final CIKey END__TIME__MS;
+    public static final CIKey ERROR__COUNT;
+    public static final CIKey FATAL__ERROR__COUNT;
+    public static final CIKey FILE__SIZE;
+    public static final CIKey INDEX__NAME;
+    public static final CIKey INFO__COUNT;
+    public static final CIKey LAST__COMMIT;
+    public static final CIKey META__ID;
+    public static final CIKey PARENT__CREATE__TIME;
+    public static final CIKey PARENT__FEED;
+    public static final CIKey PARENT__ID;
+    public static final CIKey PARENT__STATUS;
+    public static final CIKey PIPELINE__NAME;
+    public static final CIKey PROCESSOR__DELETED;
+    public static final CIKey PROCESSOR__ENABLED;
+    public static final CIKey PROCESSOR__FILTER__DELETED;
+    public static final CIKey PROCESSOR__FILTER__ENABLED;
+    public static final CIKey PROCESSOR__FILTER__ID;
+    public static final CIKey PROCESSOR__FILTER__LAST__POLL__MS;
+    public static final CIKey PROCESSOR__FILTER__PRIORITY;
+    public static final CIKey PROCESSOR__FILTER__UUID;
+    public static final CIKey PROCESSOR__ID;
+    public static final CIKey PROCESSOR__PIPELINE;
+    public static final CIKey PROCESSOR__TASK__ID;
+    public static final CIKey PROCESSOR__TYPE;
+    public static final CIKey PROCESSOR__UUID;
+    public static final CIKey RAW__SIZE;
+    public static final CIKey READ__COUNT;
+    public static final CIKey START__TIME;
+    public static final CIKey START__TIME__MS;
+    public static final CIKey STATUS__TIME;
+    public static final CIKey STATUS__TIME__MS;
+    public static final CIKey TASK__ID;
+    public static final CIKey VOLUME__GROUP;
+    public static final CIKey VOLUME__PATH;
+    public static final CIKey WARNING__COUNT;
+    public static final CIKey WRITE__COUNT;
 
     // Reference Data fields
-    public static final CIKey FEED__NAME = internCommonKey("Feed Name");
-    public static final CIKey LAST__ACCESSED__TIME = internCommonKey("Last Accessed Time");
-    public static final CIKey MAP__NAME = internCommonKey("Map Name");
-    public static final CIKey PART__NUMBER = internCommonKey("Part Number");
-    public static final CIKey PIPELINE__VERSION = internCommonKey("Pipeline Version");
-    public static final CIKey PROCESSING__STATE = internCommonKey("Processing State");
-    public static final CIKey REFERENCE__LOADER__PIPELINE = internCommonKey("Reference Loader Pipeline");
-    public static final CIKey STREAM__ID = internCommonKey("Stream ID");
-    public static final CIKey VALUE__REFERENCE__COUNT = internCommonKey("Value Reference Count");
+    public static final CIKey FEED__NAME;
+    public static final CIKey LAST__ACCESSED__TIME;
+    public static final CIKey MAP__NAME;
+    public static final CIKey PART__NUMBER;
+    public static final CIKey PIPELINE__VERSION;
+    public static final CIKey PROCESSING__STATE;
+    public static final CIKey REFERENCE__LOADER__PIPELINE;
+    public static final CIKey STREAM__ID;
+    public static final CIKey VALUE__REFERENCE__COUNT;
 
     // Annotations keys
-    public static final CIKey ANNO_ASSIGNED_TO = internCommonKey("annotation:AssignedTo");
-    public static final CIKey ANNO_COMMENT = internCommonKey("annotation:Comment");
-    public static final CIKey ANNO_CREATED_BY = internCommonKey("annotation:CreatedBy");
-    public static final CIKey ANNO_CREATED_ON = internCommonKey("annotation:CreatedOn");
-    public static final CIKey ANNO_HISTORY = internCommonKey("annotation:History");
-    public static final CIKey ANNO_ID = internCommonKey("annotation:Id");
-    public static final CIKey ANNO_STATUS = internCommonKey("annotation:Status");
-    public static final CIKey ANNO_SUBJECT = internCommonKey("annotation:Subject");
-    public static final CIKey ANNO_TITLE = internCommonKey("annotation:Title");
-    public static final CIKey ANNO_UPDATED_BY = internCommonKey("annotation:UpdatedBy");
-    public static final CIKey ANNO_UPDATED_ON = internCommonKey("annotation:UpdatedOn");
+    public static final CIKey ANNO_ASSIGNED_TO;
+    public static final CIKey ANNO_COMMENT;
+    public static final CIKey ANNO_CREATED_BY;
+    public static final CIKey ANNO_CREATED_ON;
+    public static final CIKey ANNO_HISTORY;
+    public static final CIKey ANNO_ID;
+    public static final CIKey ANNO_STATUS;
+    public static final CIKey ANNO_SUBJECT;
+    public static final CIKey ANNO_TITLE;
+    public static final CIKey ANNO_UPDATED_BY;
+    public static final CIKey ANNO_UPDATED_ON;
 
-    public static final CIKey UNDERSCORE_EVENT_ID = internCommonKey("__event_id__");
-    public static final CIKey UNDERSCORE_STREAM_ID = internCommonKey("__stream_id__");
-    public static final CIKey UNDERSCORE_TIME = internCommonKey("__time__");
+    public static final CIKey UNDERSCORE_EVENT_ID;
+    public static final CIKey UNDERSCORE_STREAM_ID;
+    public static final CIKey UNDERSCORE_TIME;
+
+    static {
+        // Temporary maps to capture all the entries
+        final Map<String, CIKey> keyToCiKeyMap = new HashMap<>();
+        final Map<String, CIKey> lowerKeyToCiKeyMap = new HashMap<>();
+
+        final Function<String, CIKey> func = key ->
+                internCommonKey(key, keyToCiKeyMap, lowerKeyToCiKeyMap);
+
+        EMPTY = func.apply("");
+
+        // Upper camel case keys
+        ACCOUNT_ID = func.apply("AccountId");
+        ACCOUNT_NAME = func.apply("AccountName");
+        CLASSIFICATION = func.apply("Classification");
+        CONTEXT_FORMAT = func.apply("ContextFormat");
+        CONTEXT_ENCODING = func.apply("ContextEncoding");
+        COMPONENT = func.apply("Component");
+        COMPRESSION = func.apply("Compression");
+        DURATION = func.apply("Duration");
+        EFFECTIVE_TIME = func.apply("EffectiveTime");
+        ENCODING = func.apply("Encoding");
+        END = func.apply("End");
+        ENVIRONMENT = func.apply("Environment");
+        EVENT_ID = func.apply("EventId");
+        EVENT_TIME = func.apply("EventTime");
+        FEED = func.apply("Feed");
+        FORMAT = func.apply("Format");
+        FORWARD_ERROR = func.apply("ForwardError");
+        FILES = func.apply("Files");
+        GUID = func.apply("GUID");
+        ID = func.apply("Id");
+        INDEX = func.apply("Index");
+        INSERT_TIME = func.apply("InsertTime");
+        KEY = func.apply("Key");
+        KEY_END = func.apply("KeyEnd");
+        KEY_START = func.apply("KeyStart");
+        NAME = func.apply("Name");
+        NODE = func.apply("Node");
+        PARTITION = func.apply("Partition");
+        PIPELINE = func.apply("Pipeline");
+        PROXY_FORWARD_ID = func.apply("ProxyForwardId");
+        RECEIVED_PATH = func.apply("ReceivedPath");
+        RECEIVED_TIME = func.apply("ReceivedTime");
+        RECEIVED_TIME_HISTORY = func.apply("ReceivedTimeHistory");
+        REMOTE_ADDRESS = func.apply("RemoteAddress");
+        REMOTE_CERT_EXPIRY = func.apply("RemoteCertExpiry");
+        REMOTE_FILE = func.apply("RemoteFile");
+        REMOTE_HOST = func.apply("RemoteHost");
+        REMOTE_DN = func.apply("RemoteDn");
+        SCHEMA = func.apply("Schema");
+        SCHEMA_VERSION = func.apply("SchemaVersion");
+        START = func.apply("Start");
+        STATUS = func.apply("Status");
+        STREAM_ID = func.apply("StreamId");
+        STREAM_SIZE = func.apply("StreamSize");
+        SUBJECT = func.apply("Subject");
+        SYSTEM = func.apply("System");
+        TERMINAL = func.apply("Terminal");
+        TIME = func.apply("Time");
+        TITLE = func.apply("Title");
+        TYPE = func.apply("Type");
+        UPLOAD_USERNAME = func.apply("UploadUsername");
+        UPLOAD_USER_ID = func.apply("UploadUserId");
+        USER = func.apply("User");
+        UUID = func.apply("UUID");
+        VALUE = func.apply("Value");
+        VALUE_TYPE = func.apply("ValueType");
+
+        // Lower case keys
+        ACCEPT = func.apply("accept");
+        CONNECTION = func.apply("connection");
+        EXPECT = func.apply("expect");
+
+        // kebab case keys
+        CONTENT___ENCODING = func.apply("content-encoding");
+        CONTENT___LENGTH = func.apply("content-length");
+        TRANSFER___ENCODING = func.apply("transfer-encoding");
+        USER___AGENT = func.apply("user-agent");
+        X___FORWARDED___FOR = func.apply("X-Forwarded-For");
+
+        // Upper sentence case keys
+        ANALYTIC__RULE = func.apply("Analytic Rule");
+        CREATE__TIME = func.apply("Create Time");
+        CREATE__TIME__MS = func.apply("Create Time Ms");
+        DOC__COUNT = func.apply("Doc Count");
+        EFFECTIVE__TIME = func.apply("Effective Time");
+        END__TIME = func.apply("End Time");
+        END__TIME__MS = func.apply("End Time Ms");
+        ERROR__COUNT = func.apply("Error Count");
+        FATAL__ERROR__COUNT = func.apply("Fatal Error Count");
+        FILE__SIZE = func.apply("File Size");
+        INDEX__NAME = func.apply("Index Name");
+        INFO__COUNT = func.apply("Info Count");
+        LAST__COMMIT = func.apply("Last Commit");
+        META__ID = func.apply("Meta Id");
+        PARENT__CREATE__TIME = func.apply("Parent Create Time");
+        PARENT__FEED = func.apply("Parent Feed");
+        PARENT__ID = func.apply("Parent Id");
+        PARENT__STATUS = func.apply("Parent Status");
+        PIPELINE__NAME = func.apply("Pipeline Name");
+        PROCESSOR__DELETED = func.apply("Processor Deleted");
+        PROCESSOR__ENABLED = func.apply("Processor Enabled");
+        PROCESSOR__FILTER__DELETED = func.apply("Processor Filter Deleted");
+        PROCESSOR__FILTER__ENABLED = func.apply("Processor Filter Enabled");
+        PROCESSOR__FILTER__ID = func.apply("Processor Filter Id");
+        PROCESSOR__FILTER__LAST__POLL__MS = func.apply("Processor Filter Last Poll Ms");
+        PROCESSOR__FILTER__PRIORITY = func.apply("Processor Filter Priority");
+        PROCESSOR__FILTER__UUID = func.apply("Processor Filter UUID");
+        PROCESSOR__ID = func.apply("Processor Id");
+        PROCESSOR__PIPELINE = func.apply("Processor Pipeline");
+        PROCESSOR__TASK__ID = func.apply("Processor Task Id");
+        PROCESSOR__TYPE = func.apply("Processor Type");
+        PROCESSOR__UUID = func.apply("Processor UUID");
+        RAW__SIZE = func.apply("Raw Size");
+        READ__COUNT = func.apply("Read Count");
+        START__TIME = func.apply("Start Time");
+        START__TIME__MS = func.apply("Start Time Ms");
+        STATUS__TIME = func.apply("Status Time");
+        STATUS__TIME__MS = func.apply("Status Time Ms");
+        TASK__ID = func.apply("Task Id");
+        VOLUME__GROUP = func.apply("Volume Group");
+        VOLUME__PATH = func.apply("Volume Path");
+        WARNING__COUNT = func.apply("Warning Count");
+        WRITE__COUNT = func.apply("Write Count");
+
+        // Reference Data fields
+        FEED__NAME = func.apply("Feed Name");
+        LAST__ACCESSED__TIME = func.apply("Last Accessed Time");
+        MAP__NAME = func.apply("Map Name");
+        PART__NUMBER = func.apply("Part Number");
+        PIPELINE__VERSION = func.apply("Pipeline Version");
+        PROCESSING__STATE = func.apply("Processing State");
+        REFERENCE__LOADER__PIPELINE = func.apply("Reference Loader Pipeline");
+        STREAM__ID = func.apply("Stream ID");
+        VALUE__REFERENCE__COUNT = func.apply("Value Reference Count");
+
+        // Annotations keys
+        ANNO_ASSIGNED_TO = func.apply("annotation:AssignedTo");
+        ANNO_COMMENT = func.apply("annotation:Comment");
+        ANNO_CREATED_BY = func.apply("annotation:CreatedBy");
+        ANNO_CREATED_ON = func.apply("annotation:CreatedOn");
+        ANNO_HISTORY = func.apply("annotation:History");
+        ANNO_ID = func.apply("annotation:Id");
+        ANNO_STATUS = func.apply("annotation:Status");
+        ANNO_SUBJECT = func.apply("annotation:Subject");
+        ANNO_TITLE = func.apply("annotation:Title");
+        ANNO_UPDATED_BY = func.apply("annotation:UpdatedBy");
+        ANNO_UPDATED_ON = func.apply("annotation:UpdatedOn");
+
+        UNDERSCORE_EVENT_ID = func.apply("__event_id__");
+        UNDERSCORE_STREAM_ID = func.apply("__stream_id__");
+        UNDERSCORE_TIME = func.apply("__time__");
+
+        // Now populate our master maps
+        // We have to split the declaration and the assignment to avoid a full map copy for each key.
+        // This way we only have one copy.
+        KEY_TO_COMMON_CIKEY_MAP = new CopyOnWriteMap<>(keyToCiKeyMap);
+        LOWER_KEY_TO_COMMON_CIKEY_MAP = new CopyOnWriteMap<>(lowerKeyToCiKeyMap);
+    }
 
     private CIKeys() {
     }
@@ -218,6 +385,12 @@ public class CIKeys {
      * </p>
      */
     static CIKey internCommonKey(final String key) {
+        return internCommonKey(key, KEY_TO_COMMON_CIKEY_MAP, LOWER_KEY_TO_COMMON_CIKEY_MAP);
+    }
+
+    private static CIKey internCommonKey(final String key,
+                                         final Map<String, CIKey> keyToCiKeyMap,
+                                         final Map<String, CIKey> lowerKeyToCiKeyMap) {
         final CIKey ciKey;
 
         if (key == null) {
@@ -225,17 +398,21 @@ public class CIKeys {
             return null;
         } else {
             // Someone else may have already interned this key so check first
-            final CIKey existingCIKey = KEY_TO_COMMON_CIKEY_MAP.get(key);
+            final CIKey existingCIKey = keyToCiKeyMap.get(key);
             if (existingCIKey != null) {
                 // Already interned
                 ciKey = existingCIKey;
             } else {
                 if (key.isEmpty()) {
-                    ciKey = addCommonKey(CIKey.EMPTY_STRING);
+                    ciKey = addCommonKey(CIKey.EMPTY_STRING, keyToCiKeyMap, lowerKeyToCiKeyMap);
                 } else {
-                    // Ensure we are using string pool instances for both
+                    // Ensure we are using string pool instances for both to cut
+                    // down on strings held in memory
                     final String k = key.intern();
-                    ciKey = addCommonKey(new CIKey(k, CIKey.toLowerCase(k).intern()));
+                    ciKey = addCommonKey(
+                            new CIKey(k, CIKey.toLowerCase(k).intern()),
+                            keyToCiKeyMap,
+                            lowerKeyToCiKeyMap);
                 }
             }
         }
@@ -243,16 +420,23 @@ public class CIKeys {
     }
 
     /**
-     * Package private for testing only
+     * For test use
      */
-    static synchronized CIKey addCommonKey(final CIKey ciKey) {
+    static CIKey addCommonKey(final CIKey ciKey) {
+        return addCommonKey(ciKey, KEY_TO_COMMON_CIKEY_MAP, LOWER_KEY_TO_COMMON_CIKEY_MAP);
+    }
+
+    private static CIKey addCommonKey(final CIKey ciKey,
+                                      final Map<String, CIKey> keyToCiKeyMap,
+                                      final Map<String, CIKey> lowerKeyToCiKeyMap) {
         // recheck under lock, so we can be sure the two maps contain the same instance
-        CIKey commonCiKey = KEY_TO_COMMON_CIKEY_MAP.get(ciKey.get());
+        CIKey commonCiKey = keyToCiKeyMap.get(ciKey.get());
         if (commonCiKey == null) {
+
             // Add it to our static maps, so we can get a common CIKey either from its
             // exact case or its lower case form.
-            KEY_TO_COMMON_CIKEY_MAP.put(ciKey.get(), ciKey);
-            LOWER_KEY_TO_COMMON_CIKEY_MAP.put(ciKey.getAsLowerCase(), ciKey);
+            keyToCiKeyMap.put(ciKey.get(), ciKey);
+            lowerKeyToCiKeyMap.put(ciKey.getAsLowerCase(), ciKey);
             commonCiKey = ciKey;
         }
         return commonCiKey;

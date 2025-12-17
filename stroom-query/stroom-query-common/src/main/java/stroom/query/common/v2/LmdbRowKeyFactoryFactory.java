@@ -1,13 +1,29 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.lmdb.stream.LmdbKeyRange;
 import stroom.query.api.TimeFilter;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.StoredValues;
 
 import com.esotericsoftware.kryo.io.ByteBufferInput;
 import com.esotericsoftware.kryo.io.Input;
-import org.lmdbjava.KeyRange;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -64,8 +80,8 @@ public class LmdbRowKeyFactoryFactory {
         }
     }
 
-    public static KeyRange<ByteBuffer> all() {
-        return KeyRange.all();
+    public static LmdbKeyRange all() {
+        return LmdbKeyRange.all();
     }
 
     /**
@@ -108,14 +124,14 @@ public class LmdbRowKeyFactoryFactory {
         }
 
         @Override
-        public void createChildKeyRange(final Key parentKey, final Consumer<KeyRange<ByteBuffer>> consumer) {
+        public void createChildKeyRange(final Key parentKey, final Consumer<LmdbKeyRange> consumer) {
             consumer.accept(all());
         }
 
         @Override
         public void createChildKeyRange(final Key parentKey,
                                         final TimeFilter timeFilter,
-                                        final Consumer<KeyRange<ByteBuffer>> consumer) {
+                                        final Consumer<LmdbKeyRange> consumer) {
             if (timeFilter != null) {
                 throw new RuntimeException("Time filtering is not supported by this key factory");
             }
@@ -176,14 +192,14 @@ public class LmdbRowKeyFactoryFactory {
         }
 
         @Override
-        public void createChildKeyRange(final Key parentKey, final Consumer<KeyRange<ByteBuffer>> consumer) {
+        public void createChildKeyRange(final Key parentKey, final Consumer<LmdbKeyRange> consumer) {
             consumer.accept(all());
         }
 
         @Override
         public void createChildKeyRange(final Key parentKey,
                                         final TimeFilter timeFilter,
-                                        final Consumer<KeyRange<ByteBuffer>> consumer) {
+                                        final Consumer<LmdbKeyRange> consumer) {
             if (timeFilter != null) {
                 throw new RuntimeException("Time filtering is not supported by this key factory");
             }
@@ -247,14 +263,14 @@ public class LmdbRowKeyFactoryFactory {
         }
 
         @Override
-        public void createChildKeyRange(final Key parentKey, final Consumer<KeyRange<ByteBuffer>> consumer) {
+        public void createChildKeyRange(final Key parentKey, final Consumer<LmdbKeyRange> consumer) {
             consumer.accept(all());
         }
 
         @Override
         public void createChildKeyRange(final Key parentKey,
                                         final TimeFilter timeFilter,
-                                        final Consumer<KeyRange<ByteBuffer>> consumer) {
+                                        final Consumer<LmdbKeyRange> consumer) {
             if (timeFilter == null) {
                 consumer.accept(all());
             } else {
@@ -265,7 +281,7 @@ public class LmdbRowKeyFactoryFactory {
                     start.flip();
                     stop.putLong(timeFilter.getTo() + 1);
                     stop.flip();
-                    consumer.accept(KeyRange.closedOpen(start, stop));
+                    consumer.accept(LmdbKeyRange.builder().start(start).stop(stop, false).build());
                 } finally {
                     byteBufferFactory.release(start);
                     byteBufferFactory.release(stop);
@@ -332,14 +348,14 @@ public class LmdbRowKeyFactoryFactory {
         }
 
         @Override
-        public void createChildKeyRange(final Key parentKey, final Consumer<KeyRange<ByteBuffer>> consumer) {
+        public void createChildKeyRange(final Key parentKey, final Consumer<LmdbKeyRange> consumer) {
             consumer.accept(all());
         }
 
         @Override
         public void createChildKeyRange(final Key parentKey,
                                         final TimeFilter timeFilter,
-                                        final Consumer<KeyRange<ByteBuffer>> consumer) {
+                                        final Consumer<LmdbKeyRange> consumer) {
             if (timeFilter == null) {
                 consumer.accept(all());
             } else {
@@ -350,7 +366,7 @@ public class LmdbRowKeyFactoryFactory {
                     start.flip();
                     stop.putLong(timeFilter.getTo() + 1);
                     stop.flip();
-                    consumer.accept(KeyRange.closedOpen(start, stop));
+                    consumer.accept(LmdbKeyRange.builder().start(start).stop(stop, false).build());
                 } finally {
                     byteBufferFactory.release(start);
                     byteBufferFactory.release(stop);
@@ -378,7 +394,7 @@ public class LmdbRowKeyFactoryFactory {
      */
     static class NestedGroupedLmdbRowKeyFactory implements LmdbRowKeyFactory {
 
-        private static final KeyRange<ByteBuffer> ZERO_DEPTH_KEY_RANGE;
+        private static final LmdbKeyRange ZERO_DEPTH_KEY_RANGE;
 
         static {
             final ByteBuffer start = ByteBuffer.allocateDirect(Byte.BYTES);
@@ -387,7 +403,7 @@ public class LmdbRowKeyFactoryFactory {
             final ByteBuffer stop = ByteBuffer.allocateDirect(Byte.BYTES);
             stop.put((byte) 1);
             stop.flip();
-            ZERO_DEPTH_KEY_RANGE = KeyRange.closedOpen(start, stop);
+            ZERO_DEPTH_KEY_RANGE = LmdbKeyRange.builder().start(start).stop(stop, false).build();
         }
 
         private final ByteBufferFactory byteBufferFactory;
@@ -462,8 +478,8 @@ public class LmdbRowKeyFactoryFactory {
         }
 
         @Override
-        public void createChildKeyRange(final Key parentKey, final Consumer<KeyRange<ByteBuffer>> consumer) {
-            KeyRange<ByteBuffer> keyRange = ZERO_DEPTH_KEY_RANGE;
+        public void createChildKeyRange(final Key parentKey, final Consumer<LmdbKeyRange> consumer) {
+            LmdbKeyRange keyRange = ZERO_DEPTH_KEY_RANGE;
 
             // If this is a grouping key then we need to add the depth first.
             final int depth = parentKey.getDepth();
@@ -501,7 +517,7 @@ public class LmdbRowKeyFactoryFactory {
                     stop.putLong(groupHashes[groupHashes.length - 1] + 1);
                 }
                 stop.flip();
-                keyRange = KeyRange.closedOpen(start, stop);
+                keyRange = LmdbKeyRange.builder().start(start).stop(stop, false).build();
             }
 
             consumer.accept(keyRange);
@@ -510,7 +526,7 @@ public class LmdbRowKeyFactoryFactory {
         @Override
         public void createChildKeyRange(final Key parentKey,
                                         final TimeFilter timeFilter,
-                                        final Consumer<KeyRange<ByteBuffer>> consumer) {
+                                        final Consumer<LmdbKeyRange> consumer) {
             if (timeFilter != null) {
                 throw new RuntimeException("Time filtering is not supported by this key factory");
             }
@@ -547,7 +563,7 @@ public class LmdbRowKeyFactoryFactory {
      */
     static class NestedTimeGroupedLmdbRowKeyFactory implements LmdbRowKeyFactory {
 
-        private static final KeyRange<ByteBuffer> ZERO_DEPTH_KEY_RANGE;
+        private static final LmdbKeyRange ZERO_DEPTH_KEY_RANGE;
 
         static {
             final ByteBuffer start = ByteBuffer.allocateDirect(Byte.BYTES);
@@ -556,7 +572,7 @@ public class LmdbRowKeyFactoryFactory {
             final ByteBuffer stop = ByteBuffer.allocateDirect(Byte.BYTES);
             stop.put((byte) 1);
             stop.flip();
-            ZERO_DEPTH_KEY_RANGE = KeyRange.closedOpen(start, stop);
+            ZERO_DEPTH_KEY_RANGE = LmdbKeyRange.builder().start(start).stop(stop, false).build();
         }
 
         private final ByteBufferFactory byteBufferFactory;
@@ -635,9 +651,9 @@ public class LmdbRowKeyFactoryFactory {
         }
 
         @Override
-        public void createChildKeyRange(final Key parentKey, final Consumer<KeyRange<ByteBuffer>> consumer) {
+        public void createChildKeyRange(final Key parentKey, final Consumer<LmdbKeyRange> consumer) {
             // Create a first level child group key. <DEPTH = 0>
-            KeyRange<ByteBuffer> keyRange = ZERO_DEPTH_KEY_RANGE;
+            LmdbKeyRange keyRange = ZERO_DEPTH_KEY_RANGE;
 
             // If this is a grouping key then we need to add the depth first.
             final int depth = parentKey.getDepth();
@@ -677,7 +693,7 @@ public class LmdbRowKeyFactoryFactory {
                     stop.putLong(groupHashes[groupHashes.length - 1] + 1);
                 }
                 stop.flip();
-                keyRange = KeyRange.closedOpen(start, stop);
+                keyRange = LmdbKeyRange.builder().start(start).stop(stop, false).build();
             }
 
             consumer.accept(keyRange);
@@ -686,12 +702,12 @@ public class LmdbRowKeyFactoryFactory {
         @Override
         public void createChildKeyRange(final Key parentKey,
                                         final TimeFilter timeFilter,
-                                        final Consumer<KeyRange<ByteBuffer>> consumer) {
+                                        final Consumer<LmdbKeyRange> consumer) {
             if (timeFilter == null) {
                 createChildKeyRange(parentKey, consumer);
 
             } else {
-                final KeyRange<ByteBuffer> keyRange;
+                final LmdbKeyRange keyRange;
 
                 // If this is a grouping key then we need to add the depth first.
                 final int depth = parentKey.getDepth();
@@ -710,7 +726,7 @@ public class LmdbRowKeyFactoryFactory {
                     stop.put(childDepth);
                     stop.putLong(timeFilter.getTo() + 1);
                     stop.flip();
-                    keyRange = KeyRange.closedOpen(start, stop);
+                    keyRange = LmdbKeyRange.builder().start(start).stop(stop, false).build();
                 } else {
                     // Calculate all group hashes.
                     final long[] groupHashes = new long[parentKey.getKeyParts().size()];
@@ -741,7 +757,7 @@ public class LmdbRowKeyFactoryFactory {
                         stop.putLong(groupHashes[groupHashes.length - 1] + 1);
                     }
                     stop.flip();
-                    keyRange = KeyRange.closedOpen(start, stop);
+                    keyRange = LmdbKeyRange.builder().start(start).stop(stop, false).build();
                 }
 
                 consumer.accept(keyRange);

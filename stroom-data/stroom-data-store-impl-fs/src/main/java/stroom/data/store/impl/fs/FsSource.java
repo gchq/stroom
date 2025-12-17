@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
 
     private final FsPathHelper fileSystemStreamPathHelper;
     private final Map<String, FsSource> childMap = new HashMap<>();
-    private final HashMap<String, SegmentInputStreamProvider> inputStreamMap = new HashMap<>(10);
+    private final Map<String, SegmentInputStreamProvider> inputStreamMap = new HashMap<>(10);
     private final Path volumePath;
     private final String streamType;
     private final FsSource parent;

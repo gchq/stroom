@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,11 @@ public class QueryViewImpl extends ViewImpl implements QueryView, RequiresResize
     @Override
     public ButtonView addButtonRight(final Preset preset) {
         return buttonPanelRight.addButton(preset);
+    }
+
+    @Override
+    public void addButtonRight(final ButtonView button) {
+        buttonPanelRight.addButton(button);
     }
 
     @Override

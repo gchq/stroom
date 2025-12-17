@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package stroom.data.store.util;
 
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
+import stroom.data.retention.api.DataRetentionRulesProvider;
+import stroom.data.retention.shared.DataRetentionRules;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.node.mock.MockNodeServiceModule;
@@ -65,6 +67,7 @@ public class ToolModule extends AbstractModule {
         bind(PathCreator.class).to(SimplePathCreator.class);
         bind(PathConfig.class).to(StroomPathConfig.class);
         bind(Metrics.class).toInstance(new MetricsImpl(new MetricRegistry()));
+        bind(DataRetentionRulesProvider.class).toInstance(() -> null);
         install(new DirProvidersModule());
     }
 

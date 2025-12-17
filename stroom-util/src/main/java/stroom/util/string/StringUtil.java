@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -299,6 +299,85 @@ public class StringUtil {
                 return str;
             } else {
                 return new String(outputArray, 0, endIdxInc - startIdxInc + 1);
+            }
+        }
+    }
+
+    /**
+     * Much faster than using string length.
+     * Positive values only.
+     *
+     * @return The number of digits in value, e.g. returns 1 for value 1, 2 for 99, etc.
+     */
+    public static int getDigitCount(final long value) {
+        if (value < 0) {
+            throw new IllegalArgumentException("Positive values only, value: " + value);
+        }
+        if (value < 10_000_000_000L) { // 1 to 10 digits
+            if (value < 100_000L) { // 1 to 5 digits
+                if (value < 100L) {
+                    if (value < 10L) {
+                        return 1;
+                    } else {
+                        return 2;
+                    }
+                } else {
+                    if (value < 1_000L) {
+                        return 3;
+                    } else if (value < 10_000L) {
+                        return 4;
+                    } else {
+                        return 5;
+                    }
+                }
+            } else { // 6 to 10 digits
+                if (value < 10_000_000L) {
+                    if (value < 1_000_000L) {
+                        return 6;
+                    } else {
+                        return 7;
+                    }
+                } else {
+                    if (value < 100_000_000L) {
+                        return 8;
+                    } else if (value < 1_000_000_000L) {
+                        return 9;
+                    } else {
+                        return 10;
+                    }
+                }
+            }
+        } else { // 11 to 19 digits
+            if (value < 100_000_000_000_000L) { // 11 to 14 digits
+                if (value < 1_000_000_000_000L) {
+                    if (value < 100_000_000_000L) {
+                        return 11;
+                    } else {
+                        return 12;
+                    }
+                } else {
+                    if (value < 10_000_000_000_000L) {
+                        return 13;
+                    } else {
+                        return 14;
+                    }
+                }
+            } else { // 15 to 19 digits
+                if (value < 10_000_000_000_000_000L) {
+                    if (value < 1_000_000_000_000_000L) {
+                        return 15;
+                    } else {
+                        return 16;
+                    }
+                } else {
+                    if (value < 100_000_000_000_000_000L) {
+                        return 17;
+                    } else if (value < 1_000_000_000_000_000_000L) {
+                        return 18;
+                    } else {
+                        return 19;
+                    }
+                }
             }
         }
     }

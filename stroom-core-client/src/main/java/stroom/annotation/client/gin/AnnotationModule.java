@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,6 +56,8 @@ import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
 import stroom.annotation.client.LinkedEventViewImpl;
 import stroom.annotation.client.MultiChooserPresenter;
 import stroom.core.client.gin.PluginModule;
+import stroom.explorer.client.presenter.AbstractFindPresenter;
+import stroom.explorer.client.view.FindViewImpl;
 
 public class AnnotationModule extends PluginModule {
 
@@ -82,6 +84,7 @@ public class AnnotationModule extends PluginModule {
                 ChangeAssignedToViewImpl.class);
         bindPresenterWidget(DurationPresenter.class, DurationView.class, DurationViewImpl.class);
         bindPresenterWidget(CommentEditPresenter.class, CommentEditView.class, CommentEditViewImpl.class);
+        bindSharedView(AbstractFindPresenter.FindView.class, FindViewImpl.class);
 
         bindSharedView(ChooserView.class, ChooserViewImpl.class);
         bind(ChooserPresenter.class);

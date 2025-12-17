@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package stroom.pipeline.xsltfunctions;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Location;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
@@ -171,7 +172,7 @@ abstract class StroomExtensionFunctionCall {
 
     void log(final XPathContext context, final Severity severity, final String message, final Throwable e) {
         final Location location = getLocation(context);
-        errorReceiver.log(severity, location, getClass().getSimpleName(), message, e);
+        errorReceiver.log(severity, location, new ElementId(getClass().getSimpleName()), message, e);
     }
 
     private Location getLocation(final XPathContext context) {

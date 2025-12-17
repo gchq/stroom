@@ -1,4 +1,20 @@
 /*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * Copyright 2010 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -20,27 +36,19 @@ import stroom.dashboard.client.table.FilterCell.ViewData;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
 import stroom.util.shared.NullSafe;
+import stroom.widget.util.client.Templates;
 
 import com.google.gwt.cell.client.AbstractInputCell;
 import com.google.gwt.cell.client.ValueUpdater;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 
 public class FilterCell
         extends AbstractInputCell<Column, ViewData> {
-
-    interface Template extends SafeHtmlTemplates {
-
-        @Template("<input type=\"text\" value=\"{0}\"></input>")
-        SafeHtml input(String value);
-    }
 
     /**
      * The {@code ViewData} for this cell.
@@ -138,8 +146,6 @@ public class FilterCell
         }
     }
 
-    private static Template template;
-
     private final FilterCellManager filterCellManager;
 
     /**
@@ -148,9 +154,6 @@ public class FilterCell
     public FilterCell(final FilterCellManager filterCellManager) {
         super(BrowserEvents.CHANGE, BrowserEvents.KEYUP);
         this.filterCellManager = filterCellManager;
-        if (template == null) {
-            template = GWT.create(Template.class);
-        }
     }
 
     @Override
@@ -198,9 +201,9 @@ public class FilterCell
                 ? viewData.getCurrentValue()
                 : value;
         if (s != null) {
-            sb.append(template.input(s));
+            sb.append(Templates.input(s));
         } else {
-            sb.append(template.input(""));
+            sb.append(Templates.input(""));
         }
     }
 

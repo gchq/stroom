@@ -2,7 +2,7 @@
   <configuration default="false" name="Stroom Create Admin Identity Account" type="Application" factoryName="Application" singleton="false">
     <option name="MAIN_CLASS_NAME" value="stroom.app.App" />
     <module name="stroom.stroom-app.main" />
-    <option name="PROGRAM_PARAMETERS" value="create_account ../local.yml --user admin --password admin --email a@abc.com --neverExpires --noPasswordChange --firstName Joe --lastName Bloggs" />
+    <option name="PROGRAM_PARAMETERS" value="create_account ../local.yml --user admin --password admin --email a@abc.com --neverExpires --noPasswordChange --firstName Ad --lastName Min" />
     <option name="VM_PARAMETERS" value="--add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED -Devent.logging.validate=true" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/stroom-app" />
     <method v="2">

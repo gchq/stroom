@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata;
@@ -50,6 +49,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
@@ -137,12 +137,13 @@ class ReferenceDataLoadTaskHandler {
                 // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission
                 // on can be read.
                 securityContext.useAsRead(() -> {
-                    errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
+                    errorReceiver = new ErrorReceiverIdDecorator(
+                            new ElementId(getClass().getSimpleName()), storedErrorReceiver);
                     errorReceiverProxy.setErrorReceiver(errorReceiver);
 
                     LOGGER.debug("Loading reference data: {}", refStreamDefinition);
                     taskContext.info(() -> LogUtil.message(
-                            "Loading reference data stream {}:{}",
+                            "Loading reference data stream_id={}, part={}",
                             refStreamDefinition.getStreamId(),
                             refStreamDefinition.getPartNumber()));
 
@@ -213,7 +214,7 @@ class ReferenceDataLoadTaskHandler {
         final RefDataStore refDataStore = refDataStoreFactory.getOffHeapStore(refStreamDefinition);
 
         taskContext.info(() -> LogUtil.message(
-                "Loading reference data stream {}:{} - Acquiring stream lock",
+                "Loading reference data stream_id={}, part={}, Acquiring stream lock",
                 refStreamDefinition.getStreamId(),
                 refStreamDefinition.getPartNumber()));
 
@@ -221,7 +222,7 @@ class ReferenceDataLoadTaskHandler {
             // we are now blocking any other thread loading the same refStreamDefinition
             // and know that this stream has not already been loaded.
             taskContext.info(() -> LogUtil.message(
-                    "Loading reference data stream {}:{} - Starting stream processing",
+                    "Loading reference data stream_id={}, part={}, Starting stream processing",
                     refStreamDefinition.getStreamId(),
                     refStreamDefinition.getPartNumber()));
 
@@ -366,7 +367,7 @@ class ReferenceDataLoadTaskHandler {
             if (msg == null && e != null) {
                 msg = e.toString();
             }
-            errorReceiver.log(severity, null, getClass().getSimpleName(), msg, e);
+            errorReceiver.log(severity, null, new ElementId(getClass().getSimpleName()), msg, e);
         }
     }
 }

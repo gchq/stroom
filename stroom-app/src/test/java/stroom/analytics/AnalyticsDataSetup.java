@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics;
 
 import stroom.data.shared.StreamTypeNames;
@@ -28,7 +44,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.CommonTranslationTestHelper;
-import stroom.test.ContentImportService;
+import stroom.test.ContentStoreTestSetup;
 import stroom.test.StoreCreationTool;
 import stroom.test.common.ProjectPathUtil;
 import stroom.util.io.StreamUtil;
@@ -58,7 +74,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Singleton
 public class AnalyticsDataSetup {
 
-    private final ContentImportService contentImportService;
+    private final ContentStoreTestSetup contentStoreTestSetup;
     private final CommonTranslationTestHelper commonTranslationTestHelper;
     private final StoreCreationTool storeCreationTool;
     private final ViewStore viewStore;
@@ -73,7 +89,7 @@ public class AnalyticsDataSetup {
     private DocRef detections;
 
     @Inject
-    public AnalyticsDataSetup(final ContentImportService contentImportService,
+    public AnalyticsDataSetup(final ContentStoreTestSetup contentStoreTestSetup,
                               final CommonTranslationTestHelper commonTranslationTestHelper,
                               final StoreCreationTool storeCreationTool,
                               final ViewStore viewStore,
@@ -84,7 +100,7 @@ public class AnalyticsDataSetup {
                               final ProcessorService processorService,
                               final ProcessorFilterService processorFilterService,
                               final IndexShardManager indexShardManager) {
-        this.contentImportService = contentImportService;
+        this.contentStoreTestSetup = contentStoreTestSetup;
         this.commonTranslationTestHelper = commonTranslationTestHelper;
         this.storeCreationTool = storeCreationTool;
         this.viewStore = viewStore;
@@ -98,7 +114,7 @@ public class AnalyticsDataSetup {
     }
 
     final void setup() {
-        contentImportService.importStandardPacks();
+        contentStoreTestSetup.installStandardPacks();
 
         final Path resourcePath = ProjectPathUtil.resolveDir("stroom-app")
                 .resolve("src")

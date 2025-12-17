@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package stroom.event.logging.rs.impl;
 
 import stroom.event.logging.api.EventActionDecorator;
-import stroom.event.logging.impl.LoggingConfig;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
@@ -103,13 +102,13 @@ public class ContainerResourceInfo {
     public String getTypeId() {
         //If method annotation provided use that on its own
         if ((getMethod().getAnnotation(AutoLogged.class) != null) &&
-                (!getMethod().getAnnotation(AutoLogged.class).typeId().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
+            (!getMethod().getAnnotation(AutoLogged.class).typeId().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
             return getMethod().getAnnotation(AutoLogged.class).typeId();
         }
         String resourcePrefix = getResourceClass().getSimpleName();
         if ((getResourceClass().getAnnotation(AutoLogged.class) != null) &&
-                (!getResourceClass().getAnnotation(AutoLogged.class).typeId()
-                        .equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
+            (!getResourceClass().getAnnotation(AutoLogged.class).typeId()
+                    .equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
             resourcePrefix = getResourceClass().getAnnotation(AutoLogged.class).typeId();
         }
 
@@ -118,7 +117,7 @@ public class ContainerResourceInfo {
 
     public String getVerbFromAnnotations() {
         if ((getMethod().getAnnotation(AutoLogged.class) != null) &&
-                (!getMethod().getAnnotation(AutoLogged.class).verb().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
+            (!getMethod().getAnnotation(AutoLogged.class).verb().equals(AutoLogged.ALLOCATE_AUTOMATICALLY))) {
             return getMethod().getAnnotation(AutoLogged.class).verb();
         }
         return null;
@@ -192,27 +191,27 @@ public class ContainerResourceInfo {
                     methodName, firstCamelCasePart));
 
             if ("get".equals(firstCamelCasePart)
-                    || "fetch".equals(firstCamelCasePart)
-                    || "read".equals(firstCamelCasePart)
-                    || "view".equals(firstCamelCasePart)) {
+                || "fetch".equals(firstCamelCasePart)
+                || "read".equals(firstCamelCasePart)
+                || "view".equals(firstCamelCasePart)) {
                 return OperationType.VIEW;
             } else if ("create".equals(firstCamelCasePart)) {
                 return OperationType.CREATE;
             } else if ("delete".equals(firstCamelCasePart)) {
                 return OperationType.DELETE;
             } else if ("update".equals(firstCamelCasePart)
-                    || "save".equals(firstCamelCasePart)
-                    || "set".equals(firstCamelCasePart)) {
+                       || "save".equals(firstCamelCasePart)
+                       || "set".equals(firstCamelCasePart)) {
                 return OperationType.UPDATE;
             } else if ("find".equals(firstCamelCasePart)
-                    || "search".equals(firstCamelCasePart)
-                    || "list".equals(firstCamelCasePart)) {
+                       || "search".equals(firstCamelCasePart)
+                       || "list".equals(firstCamelCasePart)) {
                 return OperationType.SEARCH;
             } else if ("import".equals(firstCamelCasePart)
-                    || "upload".equals(firstCamelCasePart)) {
+                       || "upload".equals(firstCamelCasePart)) {
                 return OperationType.IMPORT;
             } else if ("export".equals(firstCamelCasePart)
-                    || "download".equals(firstCamelCasePart)) {
+                       || "download".equals(firstCamelCasePart)) {
                 return OperationType.EXPORT;
             } else if ("copy".equals(firstCamelCasePart)) {
                 return OperationType.COPY;
@@ -222,7 +221,7 @@ public class ContainerResourceInfo {
         }
     }
 
-    public boolean shouldLog(final LoggingConfig config) {
+    public boolean shouldLog() {
         final OperationType op = getOperationType();
 //        if (OperationType.MANUALLY_LOGGED.equals(op)) {
 //            LOGGER.debug("{}, not logging request", OperationType.MANUALLY_LOGGED);
@@ -232,7 +231,7 @@ public class ContainerResourceInfo {
 ////            return true;
 //        } else
 //
-        if (OperationType.UNLOGGED.equals(op)) {
+        if (op == OperationType.UNLOGGED) {
             LOGGER.debug("{}, not logging request", OperationType.UNLOGGED);
             return false;
         } else if (securityContext.isProcessingUser()) {
@@ -254,12 +253,12 @@ public class ContainerResourceInfo {
     @Override
     public String toString() {
         return "ContainerResourceInfo{" +
-                "uri=" + requestContext.getUriInfo().getRequestUri() +
-                ", user=" + securityContext.getUserIdentityForAudit() +
-                ", requestContext=" + requestContext +
-                ", operationType=" + operationType +
-                ", eventActionDecoratorClass=" + eventActionDecoratorClass +
-                ", autologgerAnnotationPresent=" + autologgerAnnotationPresent +
-                '}';
+               "uri=" + requestContext.getUriInfo().getRequestUri() +
+               ", user=" + securityContext.getUserIdentityForAudit() +
+               ", requestContext=" + requestContext +
+               ", operationType=" + operationType +
+               ", eventActionDecoratorClass=" + eventActionDecoratorClass +
+               ", autologgerAnnotationPresent=" + autologgerAnnotationPresent +
+               '}';
     }
 }

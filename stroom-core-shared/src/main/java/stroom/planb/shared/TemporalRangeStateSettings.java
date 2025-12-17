@@ -1,4 +1,22 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.shared;
+
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -38,9 +56,9 @@ public final class TemporalRangeStateSettings extends AbstractPlanBSettings {
                                       @JsonProperty("keySchema") final TemporalRangeKeySchema keySchema,
                                       @JsonProperty("valueSchema") final StateValueSchema valueSchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.condense = condense;
-        this.keySchema = keySchema;
-        this.valueSchema = valueSchema;
+        this.condense = NullSafe.requireNonNullElse(condense, new DurationSetting.Builder().build());
+        this.keySchema = NullSafe.requireNonNullElse(keySchema, new TemporalRangeKeySchema.Builder().build());
+        this.valueSchema = NullSafe.requireNonNullElse(valueSchema, new StateValueSchema.Builder().build());
     }
 
     public DurationSetting getCondense() {
@@ -83,7 +101,8 @@ public final class TemporalRangeStateSettings extends AbstractPlanBSettings {
     @Override
     public String toString() {
         return "TemporalRangedStateSettings{" +
-               "condense=" + condense +
+               super.toString() +
+               ", condense=" + condense +
                ", keySchema=" + keySchema +
                ", valueSchema=" + valueSchema +
                '}';
@@ -100,9 +119,11 @@ public final class TemporalRangeStateSettings extends AbstractPlanBSettings {
 
         public Builder(final TemporalRangeStateSettings settings) {
             super(settings);
-            this.condense = settings.condense;
-            this.keySchema = settings.keySchema;
-            this.valueSchema = settings.valueSchema;
+            if (settings != null) {
+                this.condense = settings.condense;
+                this.keySchema = settings.keySchema;
+                this.valueSchema = settings.valueSchema;
+            }
         }
 
         public Builder condense(final DurationSetting condense) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.docref.DocRef;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
@@ -325,7 +325,7 @@ public class PlanBShardInfoServiceImpl implements Searchable {
             final String field = fields[i];
             if (field.equals(PlanBShardInfoFields.NAME_FIELD.getFldName())) {
                 values[i] = optionalPlanBDoc
-                        .map(Doc::getName)
+                        .map(AbstractDoc::getName)
                         .orElse(null);
             } else if (field.equals(PlanBShardInfoFields.SCHEMA_TYPE_FIELD.getFldName())) {
                 values[i] = optionalPlanBDoc

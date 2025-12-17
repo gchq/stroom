@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Severity;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -597,7 +598,7 @@ public class MapDataStore implements DataStore {
         }
 
         private void logTruncation() {
-            dataStore.errorConsumer.add(() ->
+            dataStore.errorConsumer.add(Severity.WARNING, () ->
                     "Truncating data for vis '" +
                     dataStore.componentId +
                     "' to " +

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.proxy.repo.FeedKey;
@@ -13,16 +29,43 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+/**
+ * <p>
+ * Util methods for working with a folder structure that maps an ID (long) to a path such
+ * that no directory has more than 1000 items in it.
+ * </p>
+ * <p>
+ * The first directory level indicates the depth of the directories it contains.
+ * that no directory has more than 1000 items in it.
+ * </p>
+ * <p>
+ * The leaf directory has a name that is the full ID, zero padded to a multiple of 3 digits.
+ * e.g. 001, 002300123, etc.
+ * </p>
+ * <p>
+ * All intermediate directories (if present) will have a 3 digit name with a value of 000 -> 999.
+ * </p>
+ * <ul>
+ *     <li>{@code <rootDir>/0/001/} - ID: 1</li>
+ *     <li>{@code <rootDir>/0/999/} - ID: 999</li>
+ *     <li>{@code <rootDir>/1/001/001000/} - ID: 1,000</li>
+ *     <li>{@code <rootDir>/1/001/001999/} - ID: 1,999</li>
+ *     <li>{@code <rootDir>/1/002/002000/} - ID: 2,000</li>
+ *     <li>{@code <rootDir>/2/002/300/002300123/} - ID: 2,300,123</li>
+ *     <li>{@code <rootDir>/6/009/223/372/036/854/775/009223372036854775807/} - ID: 9,223,372,036,854,775,807
+ *     ({@link Long#MAX_VALUE})</li>
+ * </ul>
+ */
 public class DirUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DirUtil.class);
@@ -64,9 +107,19 @@ public class DirUtil {
         return dir;
     }
 
+    /**
+     * e.g.
+     * <pre>
+     * 123 -> 0
+     * 123456 -> 1
+     * 123456789 -> 2
+     * </pre>
+     *
+     * @return The depth of the id if it were represented as a path
+     */
     private static int calculateDepth(final long id) {
-        final String idString = StringIdUtil.idToString(id);
-        return calculateDepth(idString);
+        final int digitCount = StringIdUtil.getDigitCountAsId(id);
+        return (digitCount / 3) - 1;
     }
 
     private static int calculateDepth(final String idString) {
@@ -184,15 +237,15 @@ public class DirUtil {
             final int lastNameIdx = nameCount - 1;
             final String leafPart = path.getName(lastNameIdx).toString();
             final int leafLen = leafPart.length();
-            LOGGER.trace("path: {}, nameCount: {}, lastNameIdx: {}, leafPart: {}, leafLen: {}",
+            LOGGER.trace("isValidLeafPath() - path: {}, nameCount: {}, lastNameIdx: {}, leafPart: {}, leafLen: {}",
                     path, nameCount, lastNameIdx, leafPart, leafLen);
             if (!isValidLeafPart(leafPart)) {
-                LOGGER.trace("Invalid leafPart: {}", leafPart);
+                LOGGER.trace("isValidLeafPath() - Invalid leafPart: {}", leafPart);
                 return false;
             } else {
                 final Path expectedPath = createPath(Path.of(""), leafPart);
                 if (!path.endsWith(expectedPath)) {
-                    LOGGER.trace("path {} doesn't end with expectedPath {}", path, expectedPath);
+                    LOGGER.trace("isValidLeafPath() - path {} doesn't end with expectedPath {}", path, expectedPath);
                     return false;
                 } else {
                     return true;
@@ -220,7 +273,7 @@ public class DirUtil {
             final int lastNameIdx = nameCount - 1;
             final String leafPart = path.getName(lastNameIdx).toString();
             final int leafLen = leafPart.length();
-            LOGGER.trace("path: {}, nameCount: {}, lastNameIdx: {}, leafPart: {}, leafLen: {}",
+            LOGGER.trace("isValidLeafOrBranchPath path: {}, nameCount: {}, lastNameIdx: {}, leafPart: {}, leafLen: {}",
                     path, nameCount, lastNameIdx, leafPart, leafLen);
             if (isValidDepthPart(leafPart)) {
                 // The depth part
@@ -298,48 +351,37 @@ public class DirUtil {
      * Get the ID for the dir matching mode in the root directory, i.e. the directory
      * that contains the depth paths.
      */
-    private static long getDirIdFromRoot(final Path rootPath, final Mode mode) {
+    static long getDirIdFromRoot(final Path rootPath, final Mode mode) {
         LOGGER.debug("getLastDirId - path: {}, mode: {}", rootPath, mode);
 
         final List<DirId> depthDirs = findDirs(rootPath, mode, DirUtil::isValidDepthPath);
         DirId dirId = null;
-        final AtomicReference<Path> incompletePath = new AtomicReference<>();
+        // Only 0-6 of these depthDirs
         for (final DirId depthDirId : depthDirs) {
             final Path depthDir = depthDirId.dir;
             LOGGER.debug("Checking depthPath: '{}'", depthDir);
-            dirId = getDirId(depthDir, mode, incompletePath);
+            dirId = getDirId(rootPath, depthDir, mode);
             if (dirId != null) {
                 // Found it
                 break;
             } else {
-                incompletePath.set(depthDir);
+                // Incomplete branch
+                final Long id = getIdFromIncompleteBranch(rootPath, depthDir, mode);
+                dirId = NullSafe.get(id, anId -> new DirId(depthDir, anId));
             }
-        }
-
-        if (dirId != null && incompletePath.get() != null && mode == Mode.MAX) {
-            // In MAX mode we are scanning in reverse order, so we must have found
-            // an incomplete path BEFORE the valid leaf path. This means we have at least one
-            // DirId but an incomplete branch belonging to a higher DirId. Thus, we can't be
-            // sure what the max ID is as it must have been higher than dirId.
-            // If dirId == null then we have an empty root, so hopefully it is ok.
-            throw new IllegalStateException(
-                    LogUtil.message(
-                            "Incomplete directory ID path found '{}'. This implies that " +
-                            "an ID has previously been allocated with this branch so we cannot be sure what the " +
-                            "maximum ID is.", LogUtil.path(incompletePath.get())));
         }
 
         LOGGER.debug("getDirIdFromRoot - returning dirId {}", dirId);
         return NullSafe.getOrElse(dirId, DirId::num, 0L);
     }
 
-    private static DirId getDirId(final Path path, final Mode mode, final AtomicReference<Path> incompletePath) {
-        LOGGER.trace("getLastDirId - path: {}, mode: {}", path, mode);
+    private static DirId getDirId(final Path rootDir, final Path path, final Mode mode) {
+        LOGGER.trace("getDirId - path: {}, mode: {}", path, mode);
 
-        LOGGER.trace("Checking depthPath: '{}'", path);
+        LOGGER.trace("getDirId() - Checking depthPath: '{}'", path);
         final Predicate<Path> pathPredicate = DirUtil::isValidLeafOrBranchPath;
         final List<DirId> dirs = findDirs(path, mode, pathPredicate);
-        LOGGER.trace(() -> LogUtil.message("Found {} dirs in {}", dirs.size(), path));
+        LOGGER.trace(() -> LogUtil.message("getDirId() - Found {} dirs in {}", dirs.size(), path));
         DirId dirId = null;
         if (!dirs.isEmpty()) {
             for (final DirId aDirId : dirs) {
@@ -348,46 +390,121 @@ public class DirUtil {
                     dirId = aDirId;
                 } else {
                     // Is a branch so recurse in
-                    dirId = getDirId(aDirId.dir, mode, incompletePath);
+                    dirId = getDirId(rootDir, aDirId.dir, mode);
+                    if (dirId == null) {
+                        // Is incomplete branch
+                        final Long id = getIdFromIncompleteBranch(rootDir, aDirId.dir, mode);
+                        dirId = NullSafe.get(id, anId -> new DirId(path, anId));
+                    }
                 }
                 if (dirId != null) {
                     break;
                 }
             }
+        } else {
+            // Is incomplete branch
+            final Long id = getIdFromIncompleteBranch(rootDir, path, mode);
+            dirId = NullSafe.get(id, anId -> new DirId(path, anId));
         }
-        if (dirId == null && isValidLeafOrBranchPath(path)) {
-            // No leaf or child branch found so this path is incomplete
-            // Just record the first case we find
-            incompletePath.compareAndSet(null, path);
-        }
-//        if (mode == Mode.MAX && dirId == null) {
-//            // It is less of an issue for MIN as there is no risk of using the same ID as a partial branch.
-//            throw new IllegalStateException(
-//                    LogUtil.message(
-//                            "Incomplete directory ID path found '{}'. This implies that " +
-//                            "an ID has previously been allocated with this branch so we cannot be sure what the " +
-//                            "maximum ID is.", LogUtil.path(path)));
-//        }
-        LOGGER.trace("getDirId - returning dirId {}", dirId);
+        LOGGER.trace("getDirId() - returning dirId {}", dirId);
         return dirId;
     }
 
     /**
-     * MUST be called within a try-with-resources block.
-     * Find all direct child directories in path.
+     * IDs are in blocks of 1000 (0-999) so return the lowest ID in the next block of 1000, e.g.
+     * <pre>
+     * 123 -> 1000
+     * 999 -> 1000
+     * 1000 -> 2000
+     * 1001 -> 2000
+     * </pre>
      */
-    private static Stream<Path> findDirectories(final Path path) throws IOException {
+    static long getIdInNextBlock(final long id) {
+        final long remainder = id % 1000;
+        return remainder == 0
+                ? id + 1000
+                : id + (1000 - remainder);
+    }
+
+    static long getNumberInDir(final long id) {
+        return id % 1000;
+    }
+
+    static Long getIdFromIncompleteBranch(final Path rootDir,
+                                          final Path path,
+                                          final Mode mode) {
+        final Path relPath = rootDir.relativize(path);
+        final Iterator<Path> iterator = relPath.iterator();
+        final int depth;
+        int currDepth;
+        long id = 0;
+        if (iterator.hasNext()) {
+            final Path depthPart = iterator.next();
+            if (isValidDepthPath(depthPart)) {
+                depth = Integer.parseInt(depthPart.getFileName().toString());
+                currDepth = depth;
+            } else {
+                return null;
+            }
+        } else {
+            return null;
+        }
+
+        // Now iterate over the remaining parts
+        while (iterator.hasNext()) {
+            final Path pathPart = iterator.next();
+            final String pathPartStr = pathPart.getFileName().toString();
+            if (isValidBranchPart(pathPartStr)) {
+                final long value = Long.parseLong(pathPartStr);
+                final long delta = ((long) Math.pow(1000, currDepth)) * value;
+                id += delta;
+//            LOGGER.info("Real  - currDepth: {}, value: {}, delta: {}, id: {}, mode: {}",
+//                    ModelStringUtil.formatCsv(currDepth),
+//                    ModelStringUtil.formatCsv(value),
+//                    ModelStringUtil.formatCsv(delta),
+//                    id,
+//                    mode);
+                currDepth--;
+            }
+        }
+        while (currDepth >= 0) {
+            final long delta;
+            if (mode == Mode.MIN) {
+                if (currDepth != 0 && currDepth == depth) {
+                    delta = (long) Math.pow(1000, currDepth);
+                } else {
+                    delta = 0;
+                }
+            } else {
+                delta = ((long) Math.pow(1000, currDepth)) * 999;
+            }
+            id += delta;
+//            LOGGER.info("Guess - currDepth: {}, delta: {}, id: {}, mode: {}",
+//                    ModelStringUtil.formatCsv(currDepth),
+//                    ModelStringUtil.formatCsv(delta),
+//                    id,
+//                    mode);
+            currDepth--;
+        }
+        return id;
+    }
+
+    /**
+     * Find all direct child directories in path.
+     * MUST be called within a try-with-resources block.
+     */
+    static Stream<Path> findDirectories(final Path path) throws IOException {
         //noinspection resource // try-with-resources is handled by the caller
         return Files.find(path,
                         1,
                         (aPath, basicFileAttributes) -> {
-                            LOGGER.trace(() -> LogUtil.message("aPath: {}, isDirectory {}",
+                            LOGGER.trace(() -> LogUtil.message("findDirectories() - aPath: {}, isDirectory {}",
                                     aPath, basicFileAttributes.isDirectory()));
                             if (basicFileAttributes.isDirectory()) {
                                 return true;
                             } else {
                                 LOGGER.warn(() -> LogUtil.message(
-                                        "Found unexpected file '{}'. It will be ignored.",
+                                        "findDirectories() - Found unexpected file '{}'. It will be ignored.",
                                         LogUtil.path(aPath)));
                                 return false;
                             }
@@ -404,7 +521,7 @@ public class DirUtil {
                                            final Predicate<String> filenamePredicate,
                                            final boolean warnIfInvalid) {
 
-        LOGGER.trace("find - path: {}, mode: {}", path, mode);
+        LOGGER.trace("findDir() - path: {}, mode: {}", path, mode);
         try (final Stream<Path> dirStream = findDirectories(path)) {
 
             final Stream<DirId> dirIdStream = dirStream.map(
@@ -465,16 +582,15 @@ public class DirUtil {
             return dirStream.map(
                             aPath -> {
                                 final DirId dirId;
-                                final String fileNamePart = aPath.getFileName().toString();
-
                                 if (pathPredicate.test(aPath)) {
                                     // Parse numeric part of dir.
+                                    final String fileNamePart = aPath.getFileName().toString();
                                     final OptionalLong optNum = parse(fileNamePart);
                                     if (optNum.isPresent()) {
                                         dirId = new DirId(aPath, optNum.getAsLong());
                                     } else {
                                         LOGGER.warn(() -> LogUtil.message(
-                                                "Found unexpected non-numeric directory '{}' in '{}' " +
+                                                "findDirs() - Found unexpected non-numeric directory '{}' in '{}' " +
                                                 "when looking for the minimum directory ID. " +
                                                 "It will be ignored.",
                                                 LogUtil.path(aPath), LogUtil.path(path)));
@@ -492,6 +608,21 @@ public class DirUtil {
                     .toList();
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+
+    public static Long pathToId(final Path path) {
+        if (path == null) {
+            return null;
+        } else if (isValidLeafPath(path)) {
+            final String fileNamePart = path.getFileName().toString();
+            if (NullSafe.isNonBlankString(fileNamePart)) {
+                return Long.parseLong(fileNamePart);
+            } else {
+                return null;
+            }
+        } else {
+            return null;
         }
     }
 
@@ -551,11 +682,24 @@ public class DirUtil {
         return sb.toString();
     }
 
+    /**
+     * Creates a provider of unique paths such that each directory never contains more than 999 items.
+     * <p>
+     * See also {@link NumberedDirProvider} for a non-nested directory structure.
+     * </p>
+     * <p>
+     * e.g. {@code root_path/2/333/555/333555777}
+     * </p>
+     */
+    public static NestedNumberedDirProvider createNestedNumberedDirProvider(final Path root) {
+        return new NestedNumberedDirProvider(root);
+    }
+
 
     // --------------------------------------------------------------------------------
 
 
-    private enum Mode {
+    enum Mode {
         MIN,
         MAX,
         ;

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl.db;
 
 import stroom.db.util.ExpressionMapper;
@@ -11,7 +27,6 @@ import stroom.security.impl.UserCache;
 import stroom.security.impl.apikey.ApiKeyDao;
 import stroom.security.impl.apikey.ApiKeyService.DuplicateApiKeyException;
 import stroom.security.impl.db.jooq.tables.records.ApiKeyRecord;
-import stroom.security.shared.ApiKeyHashAlgorithm;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashAlgorithm;
@@ -342,7 +357,7 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                 .withName(record.get(API_KEY.NAME))
                 .withComments(record.get(API_KEY.COMMENTS))
                 .withEnabled(record.get(API_KEY.ENABLED))
-                .withHashAlgorithm(ApiKeyHashAlgorithm.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                .withHashAlgorithm(HashAlgorithm.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
                         record.get(API_KEY.HASH_ALGORITHM)))
                 .build();
     }

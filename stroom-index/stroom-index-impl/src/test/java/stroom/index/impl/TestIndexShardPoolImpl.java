@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,12 +126,13 @@ class TestIndexShardPoolImpl extends StroomUnitTest {
         final SimpleExecutor simpleExecutor = new SimpleExecutor(threadSize);
 
         for (int i = 0; i < numberOfIndexes; i++) {
-            final LuceneIndexDoc index = new LuceneIndexDoc();
-            index.setUuid("uuid" + i);
-            index.setName("index " + i);
-            index.setFields(indexFields);
-            index.setMaxDocsPerShard(maxDocumentsPerIndexShard);
-            index.setShardsPerPartition(shardsPerPartition);
+            final LuceneIndexDoc index = LuceneIndexDoc.builder()
+                    .uuid("uuid" + i)
+                    .name("index " + i)
+                    .fields(indexFields)
+                    .maxDocsPerShard(maxDocumentsPerIndexShard)
+                    .shardsPerPartition(shardsPerPartition)
+                    .build();
             luceneIndexDocCache.put(new DocRef(LuceneIndexDoc.TYPE, "uuid" + i), index);
 
             for (int j = 0; j < jobSize; j++) {

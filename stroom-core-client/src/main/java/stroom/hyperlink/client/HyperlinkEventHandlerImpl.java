@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.hyperlink.client;
 
 import stroom.alert.client.event.ConfirmEvent;
@@ -9,6 +25,7 @@ import stroom.core.client.event.CloseContentEvent;
 import stroom.data.client.presenter.DataViewType;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.data.client.presenter.ShowDataEvent;
+import stroom.document.client.event.CloseSelectedDocumentEvent;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.pipeline.shared.SourceLocation;
@@ -94,7 +111,14 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
             if (hyperlinkType != null) {
                 switch (hyperlinkType) {
                     case DASHBOARD: {
-                        ShowDashboardEvent.fire(this, event.getContext(), href);
+                        final HyperlinkTargetType target = hyperlink.getTargetType();
+                        if (HyperlinkTargetType.SELF.equals(target)) {
+                            CloseSelectedDocumentEvent.fire(this,
+                                    () -> ShowDashboardEvent.fire(this, event.getContext(), href),
+                                    false);
+                        } else {
+                            ShowDashboardEvent.fire(this, event.getContext(), href);
+                        }
                         break;
                     }
                     case TAB: {

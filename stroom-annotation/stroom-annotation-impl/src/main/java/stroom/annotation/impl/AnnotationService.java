@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.explorer.impl.PermissionChangeService;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.FindFieldCriteria;
@@ -52,7 +51,6 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserGroupsService;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
@@ -75,6 +73,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public class AnnotationService implements Searchable, AnnotationCreator, HasUserDependencies {
@@ -88,7 +87,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     private final Provider<DocumentPermissionService> documentPermissionServiceProvider;
     private final Provider<AnnotationConfig> annotationConfigProvider;
     private final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider;
-    private final Provider<PermissionChangeService> permissionChangeServiceProvider;
     private final Provider<UserGroupsService> userGroupsServiceProvider;
     private final EntityEventBus entityEventBus;
 
@@ -100,7 +98,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                       final Provider<DocumentPermissionService> documentPermissionServiceProvider,
                       final Provider<AnnotationConfig> annotationConfigProvider,
                       final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider,
-                      final Provider<PermissionChangeService> permissionChangeServiceProvider,
                       final Provider<UserGroupsService> userGroupsServiceProvider,
                       final EntityEventBus entityEventBus) {
         this.annotationDao = annotationDao;
@@ -110,7 +107,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         this.documentPermissionServiceProvider = documentPermissionServiceProvider;
         this.annotationConfigProvider = annotationConfigProvider;
         this.expressionPredicateFactoryProvider = expressionPredicateFactoryProvider;
-        this.permissionChangeServiceProvider = permissionChangeServiceProvider;
         this.userGroupsServiceProvider = userGroupsServiceProvider;
         this.entityEventBus = entityEventBus;
     }
@@ -215,8 +211,16 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         expression = expressionFilter.copy(expression);
         criteria.setExpression(expression);
 
-        annotationDao.search(criteria, fieldIndex, consumer, uuid ->
-                securityContext.hasDocumentPermission(new DocRef(Annotation.TYPE, uuid), DocumentPermission.VIEW));
+        final Predicate<String> viewPermissionPredicate = getViewPermissionPredicate();
+        annotationDao.search(criteria, fieldIndex, consumer, viewPermissionPredicate);
+    }
+
+    private Predicate<String> getViewPermissionPredicate() {
+        if (securityContext.isAdmin()) {
+            return uuid -> true;
+        }
+        return uuid -> securityContext
+                .hasDocumentPermission(new DocRef(Annotation.TYPE, uuid), DocumentPermission.VIEW);
     }
 
     private UserRef getCurrentUser() {
@@ -438,12 +442,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         return filterValues(annotationConfigProvider.get().getStandardComments(), filter);
     }
 
-    public Boolean changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
-        permissionChangeServiceProvider.get().changeDocumentPermissions(request);
-        fireGenericEntityChangeEvent();
-        return Boolean.TRUE;
-    }
-
     public void performDataRetention() {
         // First mark annotations as deleted if they haven't been updated since their data retention time.
         annotationDao.markDeletedByDataRetention();
@@ -473,15 +471,8 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request) {
         checkAppPermission();
-        if (securityContext.isAdmin()) {
-            return annotationTagDao.findAnnotationTags(request);
-        }
-        List<AnnotationTag> list = annotationTagDao.findAnnotationTags(request).getValues();
-        list = list.stream()
-                .filter(at -> securityContext.hasDocumentPermission(
-                        new DocRef(AnnotationTag.TYPE, at.getUuid()), DocumentPermission.VIEW))
-                .toList();
-        return ResultPage.createUnboundedList(list);
+        final Predicate<String> viewPermissionPredicate = getViewPermissionPredicate();
+        return annotationTagDao.findAnnotationTags(request, viewPermissionPredicate);
     }
 
     public AnnotationEntry fetchAnnotationEntry(final FetchAnnotationEntryRequest request) {

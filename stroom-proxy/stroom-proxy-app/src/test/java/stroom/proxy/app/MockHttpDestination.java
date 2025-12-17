@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app;
 
 import stroom.data.zip.StroomZipFileType;
@@ -6,6 +22,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
+import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.proxy.repo.AggregatorConfig;
@@ -69,8 +86,6 @@ public class MockHttpDestination {
 
     private static final int DEFAULT_STROOM_PORT = 8080;
 
-    public static final String STATUS_PATH_PART = "/status";
-
     // Can be changed by subclasses, e.g. if one test is noisy but others are not
     private volatile boolean isRequestLoggingEnabled = true;
     private volatile boolean isHeaderLoggingEnabled = true;
@@ -124,10 +139,20 @@ public class MockHttpDestination {
                 .build();
     }
 
-    public void setupLivenessEndpoint(final Function<MappingBuilder, MappingBuilder> livenessBuilderFunc) {
+    public void setupLivenessEndpoint(final boolean isLive) {
+        LOGGER.info("Setup WireMock POST stub for {} (isLive: {}", getStatusPath(), isLive);
+        if (isLive) {
+            setupLivenessEndpoint(mappingBuilder ->
+                    mappingBuilder.willReturn(WireMock.ok()));
+        } else {
+            setupLivenessEndpoint(mappingBuilder ->
+                    mappingBuilder.willReturn(WireMock.notFound()));
+        }
+    }
+
+    private void setupLivenessEndpoint(final Function<MappingBuilder, MappingBuilder> livenessBuilderFunc) {
         final String path = getStatusPath();
         WireMock.stubFor(livenessBuilderFunc.apply(WireMock.get(path)));
-        LOGGER.info("Setup WireMock POST stub for {}", path);
     }
 
     public void setupStroomStubs(final Function<MappingBuilder, MappingBuilder> datafeedBuilderFunc) {
@@ -171,7 +196,7 @@ public class MockHttpDestination {
     }
 
     private static String getStatusPath() {
-        return ResourcePaths.buildUnauthenticatedServletPath(STATUS_PATH_PART);
+        return ResourcePaths.buildUnauthenticatedServletPath(ProxyStatusServlet.PATH_PART);
     }
 
     private void dumpWireMockEvent(final ServeEvent serveEvent) {
@@ -184,7 +209,7 @@ public class MockHttpDestination {
         final String responseBody = getResponseBodyAsString(response);
 
         LOGGER.info("""
-                        Received event:
+                        Received event: (datafeed request count: {})
                         --------------------------------------------------------------------------------
                         request: {} {}
                         {}
@@ -196,6 +221,7 @@ public class MockHttpDestination {
                         Body:
                         {}
                         --------------------------------------------------------------------------------""",
+                dataFeedRequests.size(),
                 request.getMethod(),
                 request.getUrl(),
                 requestHeaders,
@@ -475,12 +501,16 @@ public class MockHttpDestination {
         return ForwardHttpPostConfig.builder()
                 .enabled(true)
                 .instant(instant)
-                .forwardUrl("http://localhost:"
-                            + MockHttpDestination.DEFAULT_STROOM_PORT
-                            + getDataFeedPath())
+//                .forwardUrl("http://localhost:"
+//                            + MockHttpDestination.DEFAULT_STROOM_PORT
+//                            + getDataFeedPath())
                 .name("Mock Stroom datafeed")
+                // If stroom hits this before the stub is created, then it thinks it is non-live
+                // so take ages to notice it is live once the stub is in place
+                .livenessCheckEnabled(false)
                 .build();
     }
+
 
     public static String getLivenessCheckUrl() {
         return "http://localhost:"
@@ -500,7 +530,7 @@ public class MockHttpDestination {
 //                null);
     }
 
-    static DownstreamHostConfig createDownstreamHostConfig() {
+    public static DownstreamHostConfig createDownstreamHostConfig() {
         return DownstreamHostConfig.builder()
                 .withEnabled(true)
                 .withScheme("http")

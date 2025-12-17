@@ -1,16 +1,31 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.docstore.impl.fs;
 
 import stroom.docref.DocRef;
 import stroom.docstore.impl.Persistence;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.util.json.JsonUtil;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
@@ -20,8 +35,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFSPersistence {
-
-    private static final Charset CHARSET = StandardCharsets.UTF_8;
 
     @Test
     void test() throws IOException {
@@ -37,10 +50,14 @@ class TestFSPersistence {
             persistence.delete(docRef);
         }
 
-        final GenericDoc doc = new GenericDoc();
-        doc.setType(docRef.getType());
-        doc.setUuid(docRef.getUuid());
-        doc.setName(docRef.getName());
+        final GenericDoc doc = new GenericDoc(
+                docRef.getUuid(),
+                docRef.getName(),
+                null,
+                null,
+                null,
+                null,
+                null);
         final ObjectMapper mapper = JsonUtil.getNoIndentMapper();
         byte[] bytes = mapper.writeValueAsBytes(doc);
 
@@ -87,7 +104,16 @@ class TestFSPersistence {
         persistence.delete(docRef);
     }
 
-    private static class GenericDoc extends Doc {
+    private static class GenericDoc extends AbstractDoc {
 
+        public GenericDoc(@JsonProperty("uuid") final String uuid,
+                          @JsonProperty("name") final String name,
+                          @JsonProperty("version") final String version,
+                          @JsonProperty("createTimeMs") final Long createTimeMs,
+                          @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                          @JsonProperty("createUser") final String createUser,
+                          @JsonProperty("updateUser") final String updateUser) {
+            super("GenericDoc", uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        }
     }
 }

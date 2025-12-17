@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.UUID;
 
 public class SolrIndexSettingsPresenter
         extends DocumentEditPresenter<SolrIndexSettingsView, SolrIndexDoc>
@@ -89,7 +90,7 @@ public class SolrIndexSettingsPresenter
     @Override
     public void onTestConnection(final TaskMonitorFactory taskMonitorFactory) {
         getView().setTestingConnection(true);
-        final SolrIndexDoc index = onWrite(new SolrIndexDoc());
+        final SolrIndexDoc index = onWrite(SolrIndexDoc.builder().uuid(UUID.randomUUID().toString()).build());
         restFactory
                 .create(SOLR_INDEX_RESOURCE)
                 .method(res -> res.solrConnectionTest(index))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.contentindex;
 
 import stroom.docref.DocRef;
+import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.DocContentHighlights;
 import stroom.explorer.shared.DocContentMatch;
 import stroom.explorer.shared.FetchHighlightsRequest;
@@ -34,6 +35,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Set;
@@ -79,6 +81,9 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
 
     private XsltDoc xsltDoc;
     private DocRef docRef;
+
+    @Mock
+    ExplorerNodeService explorerNodeService;
 
     @BeforeEach
     void setup() {
@@ -135,7 +140,8 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
                 this::getCurrentTestDir,
                 Set.of(xsltStore),
                 new MockSecurityContext(),
-                new SimpleTaskContextFactory());
+                new SimpleTaskContextFactory(),
+                explorerNodeService);
         contentIndex.reindex();
         contentIndex.flush();
 

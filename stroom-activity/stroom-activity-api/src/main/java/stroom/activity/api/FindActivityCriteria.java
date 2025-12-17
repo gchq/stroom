@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,8 +42,8 @@ public class FindActivityCriteria extends BaseCriteria {
     @JsonCreator
     public FindActivityCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                 @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                                @JsonProperty("userId") final UserRef userRef,
-                                @JsonProperty("name") final String filter) {
+                                @JsonProperty("userRef") final UserRef userRef,
+                                @JsonProperty("filter") final String filter) {
         super(pageRequest, sortList);
         this.userRef = userRef;
         this.filter = filter;

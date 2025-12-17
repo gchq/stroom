@@ -1,17 +1,41 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.language.functions;
 
 import stroom.util.xml.XMLUtil;
 
 import com.esotericsoftware.kryo.io.ByteBufferInputStream;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.sun.xml.fastinfoset.sax.SAXDocumentParser;
 import org.xml.sax.InputSource;
 
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Comparator;
+import java.util.Objects;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ValXml implements Val {
 
     private static final Comparator<Val> CASE_SENSITIVE_COMPARATOR = ValComparators.asGenericComparator(
@@ -24,19 +48,37 @@ public final class ValXml implements Val {
             ValComparators.GENERIC_CASE_INSENSITIVE_COMPARATOR);
 
     public static final Type TYPE = Type.XML;
+    @JsonProperty
+    private final String data;
+    @JsonIgnore
     private final byte[] bytes;
+    @JsonIgnore
     private String stringValue;
 
-    private ValXml(final byte[] bytes) {
-        this.bytes = bytes;
+    @JsonCreator
+    private ValXml(@JsonProperty("data") final String data) {
+        Objects.requireNonNull(data);
+        this.data = data;
+        this.bytes = Base64.getDecoder().decode(data);
     }
 
-    public byte[] getBytes() {
-        return bytes;
+    private ValXml(final byte[] bytes) {
+        Objects.requireNonNull(bytes);
+        this.data = Base64.getEncoder().encodeToString(bytes);
+        this.bytes = bytes;
     }
 
     public static ValXml create(final byte[] bytes) {
         return new ValXml(bytes);
+    }
+
+    public String getData() {
+        return data;
+    }
+
+    @JsonIgnore
+    public byte[] getBytes() {
+        return bytes;
     }
 
     @Override
@@ -84,7 +126,11 @@ public final class ValXml implements Val {
     @Override
     public String toString() {
         if (stringValue == null) {
-            stringValue = byteBufferToString(bytes);
+            try {
+                stringValue = byteBufferToString(bytes);
+            } catch (final RuntimeException e) {
+                stringValue = new String(bytes, StandardCharsets.UTF_8);
+            }
         }
         return stringValue;
     }

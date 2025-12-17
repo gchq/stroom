@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.pipeline.stepping.client.view;
 
 import stroom.item.client.SelectionBox;
 import stroom.pipeline.shared.XPathFilter.MatchType;
+import stroom.pipeline.shared.XPathFilter.SearchType;
 import stroom.pipeline.stepping.client.presenter.XPathFilterPresenter.XPathFilterView;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -41,7 +42,11 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     @UiField
     TextBox xPath;
     @UiField
+    FormGroup xPathContainer;
+    @UiField
     SelectionBox<MatchType> matchType;
+    @UiField
+    SelectionBox<SearchType> searchType;
     @UiField
     TextBox value;
     @UiField
@@ -53,7 +58,14 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
         matchType.addItems(MatchType.values());
         matchType.setValue(MatchType.EQUALS);
 
-//        matchType.addValueChangeHandler(event -> changeVisibility(event.getValue()));
+        searchType.addItems(SearchType.values());
+        searchType.setValue(SearchType.ALL);
+
+        updateXPathVisibility();
+    }
+
+    private void updateXPathVisibility() {
+        xPathContainer.setVisible(SearchType.XPATH.equals(searchType.getValue()));
     }
 
     @Override
@@ -68,7 +80,12 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
 
     @Override
     public String getXPath() {
-        return xPath.getText();
+        final SearchType selected = searchType.getValue();
+        return switch (selected) {
+            case XPATH -> xPath.getText();
+            case ALL -> "//*";
+            default -> "";
+        };
     }
 
     @Override
@@ -85,6 +102,17 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
     public void setMatchType(final MatchType matchType) {
         this.matchType.setValue(matchType);
         changeVisibility(matchType);
+    }
+
+    @Override
+    public SearchType getSearchType() {
+        return searchType.getValue();
+    }
+
+    @Override
+    public void setSearchType(final SearchType searchType) {
+        this.searchType.setValue(searchType);
+        updateXPathVisibility();
     }
 
     @Override
@@ -109,10 +137,26 @@ public class XPathFilterViewImpl extends ViewImpl implements XPathFilterView {
 
     private void changeVisibility(final MatchType matchType) {
         final boolean visible = matchType == MatchType.CONTAINS ||
-                matchType == MatchType.EQUALS ||
-                matchType == MatchType.NOT_EQUALS;
+                                matchType == MatchType.EQUALS ||
+                                matchType == MatchType.NOT_EQUALS ||
+                                matchType == MatchType.NOT_CONTAINS;
         valueContainer.setVisible(visible);
         ignoreCaseContainer.setVisible(visible);
+    }
+
+    @UiHandler("searchType")
+    public void onSearchTypeChange(final ValueChangeEvent<SearchType> e) {
+        final SearchType selected = e.getValue();
+        switch (selected) {
+            case ALL:
+                xPathContainer.setVisible(false);
+                break;
+            case XPATH:
+                xPathContainer.setVisible(true);
+                xPath.setText("//");
+                break;
+        }
+        updateXPathVisibility();
     }
 
     @UiHandler("matchType")

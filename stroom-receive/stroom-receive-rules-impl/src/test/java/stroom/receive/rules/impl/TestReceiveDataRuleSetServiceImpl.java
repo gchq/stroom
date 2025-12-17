@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.receive.rules.impl;
 
 import stroom.dictionary.api.WordListProvider;
@@ -89,7 +105,8 @@ class TestReceiveDataRuleSetServiceImpl {
 
         Mockito.when(mockReceiveDataRuleSetStore.getOrCreate())
                 .thenReturn(ReceiveDataRules.builder()
-                        .withUpdateTimeMs(Instant.now().toEpochMilli())
+                        .uuid(UUID.randomUUID().toString())
+                        .updateTimeMs(Instant.now().toEpochMilli())
                         .build());
 
         final HashedReceiveDataRules hashedReceiveDataRules = service.getHashedReceiveDataRules();
@@ -127,7 +144,8 @@ class TestReceiveDataRuleSetServiceImpl {
         int ruleNo = 0;
         Mockito.when(mockReceiveDataRuleSetStore.getOrCreate())
                 .thenReturn(ReceiveDataRules.builder()
-                        .withUpdateTimeMs(Instant.now().toEpochMilli())
+                        .uuid(UUID.randomUUID().toString())
+                        .updateTimeMs(Instant.now().toEpochMilli())
                         .addRule(ReceiveDataRule.builder()
                                 .withRuleNumber(++ruleNo)
                                 .withEnabled(true)
@@ -254,7 +272,8 @@ class TestReceiveDataRuleSetServiceImpl {
         int ruleNo = 0;
         Mockito.when(mockReceiveDataRuleSetStore.getOrCreate())
                 .thenReturn(ReceiveDataRules.builder()
-                        .withUpdateTimeMs(Instant.now().toEpochMilli())
+                        .uuid(UUID.randomUUID().toString())
+                        .updateTimeMs(Instant.now().toEpochMilli())
                         .addRule(ReceiveDataRule.builder()
                                 .withRuleNumber(++ruleNo)
                                 .withEnabled(true)
@@ -358,10 +377,10 @@ class TestReceiveDataRuleSetServiceImpl {
     private DictionaryDoc createDict(final String name,
                                      final DictionaryDoc importedDoc,
                                      final String... lines) {
-        final DictionaryDoc dict = new DictionaryDoc();
-        dict.setUuid(UUID.randomUUID().toString());
-        dict.setName(name);
-        dict.setType(DictionaryDoc.TYPE);
+        final DictionaryDoc dict = DictionaryDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name(name)
+                .build();
         if (importedDoc != null) {
             dict.setImports(List.of(importedDoc.asDocRef()));
         }

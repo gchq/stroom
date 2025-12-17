@@ -1,14 +1,26 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.cluster.lock.impl.db;
 
 import stroom.cluster.lock.api.ClusterLockService;
-import stroom.job.api.ScheduledJobsBinder;
-import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.guice.RestResourcesBinder;
 import stroom.util.shared.Clearable;
 
 import com.google.inject.AbstractModule;
-import jakarta.inject.Inject;
 
 public class ClusterLockModule extends AbstractModule {
 
@@ -17,41 +29,8 @@ public class ClusterLockModule extends AbstractModule {
         super.configure();
 
         bind(ClusterLockService.class).to(ClusterLockServiceImpl.class);
-        bind(ClusterLockResource.class).to(ClusterLockResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(DbClusterLock.class);
-
-        RestResourcesBinder.create(binder())
-                .bind(ClusterLockResourceImpl.class);
-
-        ScheduledJobsBinder.create(binder())
-                .bindJobTo(UnlockOldLocks.class, builder -> builder
-                        .name("Unlock old locks")
-                        .description("Every 10 minutes try and unlock/remove any locks that " +
-                                "we hold that have not been refreshed by their owner for 10 minutes.")
-                        .managed(false)
-                        .frequencySchedule("10m"))
-                .bindJobTo(KeepAlive.class, builder -> builder
-                        .name("Keep alive")
-                        .description("Keeps a locks alive")
-                        .managed(false)
-                        .frequencySchedule("1m"));
-    }
-
-    private static class UnlockOldLocks extends RunnableWrapper {
-
-        @Inject
-        UnlockOldLocks(final ClusterLockClusterHandler clusterLockClusterHandler) {
-            super(clusterLockClusterHandler::unlockOldLocks);
-        }
-    }
-
-    private static class KeepAlive extends RunnableWrapper {
-
-        @Inject
-        KeepAlive(final ClusterLockServiceImpl clusterLockService) {
-            super(clusterLockService::keepAlive);
-        }
     }
 }

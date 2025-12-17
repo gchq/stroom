@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@
 
 package stroom.dashboard.client.table.gin;
 
+import stroom.dashboard.client.table.AskStroomAiPresenter;
+import stroom.dashboard.client.table.AskStroomAiPresenter.AskStroomAiView;
+import stroom.dashboard.client.table.AskStroomAiViewImpl;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter;
 import stroom.dashboard.client.table.BasicTableSettingsPresenter.BasicTableSettingsView;
 import stroom.dashboard.client.table.BasicTableSettingsViewImpl;
@@ -81,6 +84,7 @@ public class TableModule extends AbstractPresenterModule {
         bindPresenterWidget(ColumnFilterPresenter.class, ColumnFilterView.class, ColumnFilterViewImpl.class);
         bindPresenterWidget(DownloadPresenter.class, DownloadView.class, DownloadViewImpl.class);
         bindPresenterWidget(RenameColumnPresenter.class, RenameColumnView.class, RenameColumnViewImpl.class);
+        bindPresenterWidget(AskStroomAiPresenter.class, AskStroomAiView.class, AskStroomAiViewImpl.class);
 
         bindPresenterWidget(
                 EditExpressionPresenter.class,

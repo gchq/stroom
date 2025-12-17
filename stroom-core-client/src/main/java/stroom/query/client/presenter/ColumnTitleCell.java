@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package stroom.query.client.presenter;
 
 import stroom.query.api.Column;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -29,15 +31,16 @@ public class ColumnTitleCell extends AbstractCell<Column> {
     public void render(final Context context,
                        final Column column,
                        final SafeHtmlBuilder sb) {
-        ColumnHeaderHtmlUtil.write(column, sb);
+        final HtmlBuilder hb = new HtmlBuilder(sb);
+        ColumnHeaderHtmlUtil.write(column, hb);
 
         // Add value filter button.
-        String className = "svgIcon column-valueFilterIcon";
-        if (column.getColumnValueSelection() != null && column.getColumnValueSelection().isEnabled()) {
-            className += " icon-colour__blue";
-        }
-        sb.appendHtmlConstant("<div class=\"column-valueFilter\">");
-        sb.append(SvgImageUtil.toSafeHtml(SvgImage.VALUE_FILTER, className));
-        sb.appendHtmlConstant("</div>");
+        hb.div(div -> {
+            String className = "svgIcon column-valueFilterIcon";
+            if (column.getColumnValueSelection() != null && column.getColumnValueSelection().isEnabled()) {
+                className += " icon-colour__blue";
+            }
+            div.append(SvgImageUtil.toSafeHtml(SvgImage.VALUE_FILTER, className));
+        }, Attribute.className("column-valueFilter"));
     }
 }

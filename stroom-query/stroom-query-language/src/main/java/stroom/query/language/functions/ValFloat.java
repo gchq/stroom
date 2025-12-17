@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +19,32 @@ package stroom.query.language.functions;
 import stroom.util.concurrent.LazyBoolean;
 import stroom.util.concurrent.LazyValue;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.math.DoubleMath;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.Objects;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ValFloat implements ValNumber {
 
     private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
             ValFloat.class, ValComparators.AS_FLOAT_COMPARATOR);
 
     public static final Type TYPE = Type.FLOAT;
+    @JsonProperty
     private final float value;
+    @JsonIgnore
     private final transient LazyValue<String> lazyStringValue;
+    @JsonIgnore
     private final transient LazyBoolean lazyHasFractionalPart;
 
-    private ValFloat(final float value) {
+    @JsonCreator
+    private ValFloat(@JsonProperty("value") final float value) {
         this.value = value;
         this.lazyStringValue = LazyValue.initialisedBy(this::deriveStringValue);
         this.lazyHasFractionalPart = LazyBoolean.initialisedBy(this::deriveHasFractionalPart);

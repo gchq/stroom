@@ -7,6 +7,12 @@ proxyConfig:
     maxUncompressedByteSize: "1.0G"
     splitSources: true
   contentDir: "content"
+  dirScanner:
+    dirs:
+    - "zip_file_ingest"
+    enabled: true
+    failureDir: "zip_file_ingest_failed"
+    scanFrequency: "PT1M"
   downstreamHost:
     apiKey: null
     apiKeyVerificationUrl: null
@@ -66,10 +72,11 @@ proxyConfig:
   - addOpenIdAccessToken: false
     apiKey: null
     enabled: true
+    forwardHeadersAdditionalAllowSet: []
     forwardUrl: null
     httpClient:
-      connectionRequestTimeout: "PT1M"
-      connectionTimeout: "PT1M"
+      connectionRequestTimeout: "PT3M"
+      connectionTimeout: "PT3M"
       cookiesEnabled: false
       keepAlive: "PT0S"
       maxConnections: 1024
@@ -77,11 +84,12 @@ proxyConfig:
       proxy: null
       retries: 0
       timeToLive: "PT1H"
-      timeout: "PT1M"
+      timeout: "PT3M"
       tls: null
       userAgent: null
       validateAfterInactivityPeriod: "PT0S"
     instant: false
+    livenessCheckEnabled: true
     livenessCheckUrl: null
     name: null
     queue:
@@ -131,6 +139,7 @@ proxyConfig:
     dataFeedKeyOwnerMetaKey: "AccountId"
     dataFeedKeysDir: "data_feed_keys"
     enabledAuthenticationTypes:
+    - "TOKEN"
     - "CERTIFICATE"
     fallbackReceiveAction: "RECEIVE"
     feedNameGenerationEnabled: false
@@ -140,6 +149,7 @@ proxyConfig:
     - "Format"
     - "Schema"
     feedNameTemplate: "${accountid}-${component}-${format}-${schema}"
+    maxRequestSize: null
     metaTypes:
     - "Context"
     - "Detections"
@@ -160,6 +170,8 @@ proxyConfig:
     authentication:
       authenticationRequired: true
       openId:
+        allowedAudiences: []
+        audienceClaimRequired: false
         authEndpoint: null
         clientCredentialsScopes:
         - "openid"
@@ -167,12 +179,14 @@ proxyConfig:
         clientSecret: null
         expectedSignerPrefixes: []
         formTokenRequest: true
+        fullNameClaimTemplate: "${name}"
         identityProviderType: "NO_IDP"
         issuer: null
         jwksUri: null
         logoutEndpoint: null
         logoutRedirectParamName: "post_logout_redirect_uri"
         openIdConfigurationEndpoint: null
+        publicKeyUriPattern: "https://public-keys.auth.elb.${awsRegion}.amazonaws.com/${keyId}"
         requestScopes:
         - "openid"
         - "email"
@@ -180,7 +194,6 @@ proxyConfig:
         uniqueIdentityClaim: "sub"
         userDisplayNameClaim: "preferred_username"
         validIssuers: []
-        validateAudience: true
   sqsConnectors:
   - awsProfileName: null
     awsRegionName: null

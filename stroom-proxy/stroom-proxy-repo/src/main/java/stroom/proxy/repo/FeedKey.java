@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.repo;
 
 import java.util.HashMap;
@@ -42,7 +58,7 @@ public final class FeedKey {
         if (obj == null || obj.getClass() != this.getClass()) {
             return false;
         }
-        final var that = (FeedKey) obj;
+        final FeedKey that = (FeedKey) obj;
         return Objects.equals(this.feed, that.feed) &&
                Objects.equals(this.type, that.type);
     }
@@ -82,18 +98,23 @@ public final class FeedKey {
      */
     public static class FeedKeyInterner {
 
-        private final Map<FeedKey, FeedKey> map = new HashMap<>();
+        // Fewer types than feeds so key on that first to reduce number of child maps
+        private final Map<String, Map<String, FeedKey>> typeToFeedToFeedKeyMap = new HashMap<>();
 
         private FeedKeyInterner() {
         }
 
         public FeedKey intern(final String feed, final String type) {
-            return intern(FeedKey.of(feed, type));
+            final Map<String, FeedKey> feedToFeedKeyMap = typeToFeedToFeedKeyMap.computeIfAbsent(
+                    type, k -> new HashMap<>());
+            return feedToFeedKeyMap.computeIfAbsent(feed, aFeed -> FeedKey.of(aFeed, type));
         }
 
         public FeedKey intern(final FeedKey feedKey) {
             if (feedKey != null) {
-                final FeedKey prevVal = map.putIfAbsent(feedKey, feedKey);
+                final FeedKey prevVal = typeToFeedToFeedKeyMap.computeIfAbsent(
+                                feedKey.type, k -> new HashMap<>())
+                        .putIfAbsent(feedKey.feed, feedKey);
                 return prevVal != null
                         ? prevVal
                         : feedKey;

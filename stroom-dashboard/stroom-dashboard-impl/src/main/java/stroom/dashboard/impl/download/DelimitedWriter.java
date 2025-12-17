@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.regex.Pattern;
 
-public class DelimitedWriter {
+public class DelimitedWriter implements AutoCloseable {
 
     private static final String NEW_LINE = "\n";
     private static final String QUOTE = "\"";
@@ -66,6 +66,7 @@ public class DelimitedWriter {
         writtenAnything = true;
     }
 
+    @Override
     public void close() throws IOException {
         writer.close();
     }

@@ -29,6 +29,7 @@
             <evt:Location>
                 <evt:Room>room11</evt:Room>
                 <evt:Desk>desk11</evt:Desk>
+                <evt:Value>value11</evt:Value>
             </evt:Location>
         </value>
     </reference>
@@ -42,6 +43,7 @@
             <evt:Location>
                 <evt:Room>room12</evt:Room>
                 <evt:Desk>desk12</evt:Desk>
+                <evt:Value>value12</evt:Value>
             </evt:Location>
         </value>
     </reference>
@@ -55,6 +57,7 @@
             <evt:Location>
                 <evt:Room>room13</evt:Room>
                 <evt:Desk>desk13</evt:Desk>
+                <evt:Value>value13</evt:Value>
             </evt:Location>
         </value>
     </reference>
@@ -68,6 +71,7 @@
             <evt:Location>
                 <evt:Room>room21</evt:Room>
                 <evt:Desk>desk21</evt:Desk>
+                <evt:Value>value21</evt:Value>
             </evt:Location>
         </value>
     </reference>
@@ -81,6 +85,7 @@
             <evt:Location>
                 <evt:Room>room22</evt:Room>
                 <evt:Desk>desk22</evt:Desk>
+                <evt:Value>value22</evt:Value>
             </evt:Location>
         </value>
     </reference>
@@ -94,6 +99,7 @@
             <evt:Location>
                 <evt:Room>room23</evt:Room>
                 <evt:Desk>desk23</evt:Desk>
+                <evt:Value>value23</evt:Value>
             </evt:Location>
         </value>
     </reference>

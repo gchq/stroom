@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,6 +105,7 @@ public class MainPresenter
                     }
                     if (uiConfig.getTheme() != null) {
                         getView().setBorderStyle(uiConfig.getTheme().getPageBorder());
+                        getView().setSelectedTabColour(uiConfig.getTheme().getSelectedTabColour());
                     }
                     getView().setBanner(uiConfig.getMaintenanceMessage());
                 }
@@ -225,6 +226,8 @@ public class MainPresenter
         void setBorderStyle(String style);
 
         void setBanner(String text);
+
+        void setSelectedTabColour(String colour);
     }
 
 

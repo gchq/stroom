@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.common.impl;
 
 import stroom.security.api.HasJwt;
@@ -8,6 +24,7 @@ import stroom.util.authentication.Refreshable;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.servlet.SessionUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.servlet.http.HttpSession;
@@ -91,8 +108,9 @@ public class UpdatableToken implements Refreshable, HasJwtClaims, HasJwt {
     /**
      * @return The time the token will expire (with a small buffer before the actual expiry included)
      */
+    @Override
     public Instant getExpireTime() {
-        return Instant.ofEpochMilli(mutableState.expireTimeWithBufferEpochMs);
+        return Instant.ofEpochMilli(mutableState.expireTimeEpochMs);
     }
 
     @Override
@@ -123,7 +141,7 @@ public class UpdatableToken implements Refreshable, HasJwtClaims, HasJwt {
             didWork = false;
         } else {
             synchronized (this) {
-                final FetchTokenResult fetchTokenResult = updateFunction.apply(this);
+                final FetchTokenResult fetchTokenResult = fetchToken();
                 if (fetchTokenResult != null) {
                     try {
                         this.mutableState = createMutableState(
@@ -143,6 +161,16 @@ public class UpdatableToken implements Refreshable, HasJwtClaims, HasJwt {
             }
         }
         return didWork;
+    }
+
+    private FetchTokenResult fetchToken() {
+        try {
+            return updateFunction.apply(this);
+        } catch (final Exception e) {
+            LOGGER.error("Error fetching token - {}. Enable DEBUG for stack trace.", LogUtil.exceptionMessage(e));
+            LOGGER.debug("Error fetching token - {}.", LogUtil.exceptionMessage(e), e);
+            throw e;
+        }
     }
 
     @Override
@@ -188,7 +216,9 @@ public class UpdatableToken implements Refreshable, HasJwtClaims, HasJwt {
                ", preferredUsername=" + NullSafe.get(mutableState.jwtClaims, claims ->
                 JwtUtil.getClaimValue(claims, OpenId.CLAIM__PREFERRED_USERNAME).orElse(null)) +
                ", expireTimeWithBuffer=" + Instant.ofEpochMilli(mutableState.expireTimeWithBufferEpochMs) +
-               ", timeTilExpire=" + Duration.between(Instant.now(), getExpireTime()) +
+               ", timeTilExpire=" + Duration.between(Instant.now(), Instant.ofEpochMilli(
+                mutableState.expireTimeWithBufferEpochMs())) +
+               ", session=" + SessionUtil.getSessionId(session) +
                '}';
     }
 

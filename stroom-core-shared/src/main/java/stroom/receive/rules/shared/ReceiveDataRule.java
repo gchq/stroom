@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.receive.rules.shared;
 
 
 import stroom.query.api.ExpressionOperator;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -58,6 +58,16 @@ public class ReceiveDataRule {
         this.enabled = enabled;
         this.expression = expression;
         this.action = Objects.requireNonNull(action);
+    }
+
+    @SerialisationTestConstructor
+    private ReceiveDataRule() {
+        this(1,
+                0L,
+                "test",
+                true,
+                ExpressionOperator.builder().build(),
+                ReceiveAction.RECEIVE);
     }
 
     private ReceiveDataRule(final Builder builder) {

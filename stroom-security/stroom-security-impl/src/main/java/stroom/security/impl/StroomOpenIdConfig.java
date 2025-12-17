@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl;
 
 import stroom.security.openid.api.AbstractOpenIdConfig;
@@ -37,11 +53,14 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
             @JsonProperty("clientSecret") final String clientSecret,
             @JsonProperty("requestScopes") final List<String> requestScopes,
             @JsonProperty("clientCredentialsScopes") final List<String> clientCredentialsScopes,
-            @JsonProperty("validateAudience") final boolean validateAudience,
+            @JsonProperty("allowedAudiences") final Set<String> allowedAudiences,
+            @JsonProperty("audienceClaimRequired") final Boolean audienceClaimRequired,
             @JsonProperty("validIssuers") final Set<String> validIssuers,
             @JsonProperty("uniqueIdentityClaim") final String uniqueIdentityClaim,
             @JsonProperty("userDisplayNameClaim") final String userDisplayNameClaim,
-            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes) {
+            @JsonProperty("fullNameClaimTemplate") final String fullNameClaimTemplate,
+            @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
+            @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern) {
         super(identityProviderType,
                 openIdConfigurationEndpoint,
                 issuer,
@@ -55,11 +74,14 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                 clientSecret,
                 requestScopes,
                 clientCredentialsScopes,
-                validateAudience,
+                allowedAudiences,
+                audienceClaimRequired,
                 validIssuers,
                 uniqueIdentityClaim,
                 userDisplayNameClaim,
-                expectedSignerPrefixes);
+                fullNameClaimTemplate,
+                expectedSignerPrefixes,
+                publicKeyUriPattern);
     }
 
     @RequiresRestart(RestartScope.SYSTEM)
@@ -94,10 +116,13 @@ public class StroomOpenIdConfig extends AbstractOpenIdConfig implements IsStroom
                 getClientId(),
                 getRequestScopes(),
                 getClientCredentialsScopes(),
-                isValidateAudience(),
+                getAllowedAudiences(),
+                isAudienceClaimRequired(),
                 getValidIssuers(),
                 getUniqueIdentityClaim(),
                 getUserDisplayNameClaim(),
-                getExpectedSignerPrefixes());
+                getFullNameClaimTemplate(),
+                getExpectedSignerPrefixes(),
+                getPublicKeyUriPattern());
     }
 }

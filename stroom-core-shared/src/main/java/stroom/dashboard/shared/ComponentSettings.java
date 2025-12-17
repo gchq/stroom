@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = ListInputComponentSettings.class, name = "list-input"),
         @JsonSubTypes.Type(value = TextInputComponentSettings.class, name = "text-input"),
         @JsonSubTypes.Type(value = EmbeddedQueryComponentSettings.class, name = "embedded-query"),
+        @JsonSubTypes.Type(value = TableFilterComponentSettings.class, name = "table-filter"),
 })
 @JsonInclude(Include.NON_NULL)
 public sealed interface ComponentSettings permits
@@ -44,7 +45,8 @@ public sealed interface ComponentSettings permits
         KeyValueInputComponentSettings,
         ListInputComponentSettings,
         TextInputComponentSettings,
-        EmbeddedQueryComponentSettings {
+        EmbeddedQueryComponentSettings,
+        TableFilterComponentSettings {
 
     AbstractBuilder<?, ?> copy();
 

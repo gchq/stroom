@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,6 +78,9 @@ public class StroomStreamException extends RuntimeException {
         } else if (ex instanceof AuthenticationException) {
             return new StroomStreamException(
                     StroomStatusCode.CLIENT_TOKEN_OR_CERT_NOT_AUTHENTICATED, attributeMap, ex.getMessage());
+        } else if (ex instanceof ContentTooLargeException) {
+            return new StroomStreamException(
+                    StroomStatusCode.CONTENT_TOO_LARGE, attributeMap, ex.getMessage());
         } else if (ex instanceof final StroomStreamException stroomStreamException) {
             return stroomStreamException;
         } else if (ex.getCause() != null) {

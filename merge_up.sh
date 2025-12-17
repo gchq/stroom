@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 
+#
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 # ***********************************************************************
 # A script to merge changes up the chain of release brances.
 # It will checkout the first branch in the chain and ensure commits
@@ -21,7 +37,7 @@ setup_echo_colours() {
     BLUE2=''
     DGREY=''
     NC='' # No Colour
-  else 
+  else
     RED='\033[1;31m'
     GREEN='\033[1;32m'
     YELLOW='\033[1;33m'
@@ -35,7 +51,7 @@ setup_echo_colours() {
 debug_value() {
   local name="$1"; shift
   local value="$1"; shift
-  
+
   if [ "${IS_DEBUG}" = true ]; then
     echo -e "${DGREY}DEBUG ${name}: ${value}${NC}"
   fi
@@ -43,7 +59,7 @@ debug_value() {
 
 debug() {
   local str="$1"; shift
-  
+
   if [ "${IS_DEBUG}" = true ]; then
     echo -e "${DGREY}DEBUG ${str}${NC}"
   fi
@@ -126,7 +142,7 @@ validate_inside_git_repo() {
 
 check_branch_exists() {
   local branch_name="$1"; shift
-  
+
   if ! git show-ref --quiet "refs/heads/${branch_name}"; then
     error "Branch ${branch_name} does not exist"
     exit 1
@@ -150,7 +166,7 @@ merge_branch_up() {
   local source_branch="${1:?source_branch not set}"; shift
   local dest_branch="${1:?dest_branch not set}"; shift
 
-  echo 
+  echo
   echo -e "${GREEN}--------------------------------------------------${NC}"
   echo -e "${GREEN}Merging up from ${BLUE}${source_branch}${GREEN}" \
     "to ${BLUE}${dest_branch}${NC}"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search;
@@ -106,13 +105,14 @@ class TestTagCloudSearch extends AbstractSearchTest {
                 "2016-01-02T00:00:00.000Z");
         final Query query = Query.builder().dataSource(indexRef).expression(expression.build()).build();
 
-        final ResultRequest tableResultRequest = new ResultRequest(componentId,
+        final ResultRequest tableResultRequest = new ResultRequest(componentId, null,
                 Collections.singletonList(tableSettings),
                 null,
                 null,
                 null,
                 ResultRequest.ResultStyle.TABLE,
                 Fetch.CHANGES,
+                null,
                 null);
 
         final List<ResultRequest> resultRequests = Collections.singletonList(tableResultRequest);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -42,11 +44,14 @@ import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.Record;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
 
 import static stroom.annotation.impl.db.jooq.tables.AnnotationTag.ANNOTATION_TAG;
 import static stroom.annotation.impl.db.jooq.tables.AnnotationTagLink.ANNOTATION_TAG_LINK;
@@ -151,25 +156,53 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                 .execute()) > 0;
     }
 
-    @Override
     public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request) {
+        return findAnnotationTags(request, uuid -> true);
+    }
+
+    @Override
+    public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request,
+                                                        final Predicate<String> uuidPredicate) {
+        final long offset = NullSafe.getOrElse(
+                request,
+                ExpressionCriteria::getPageRequest,
+                PageRequest::getOffset,
+                0);
+        final int length = NullSafe.getOrElse(
+                request,
+                ExpressionCriteria::getPageRequest,
+                PageRequest::getLength,
+                Integer.MAX_VALUE);
+        final long maxPos = offset + length;
         final Condition condition = expressionMapper.apply(request.getExpression());
-        final int limit = JooqUtil.getLimit(request.getPageRequest(), true);
-        final int offset = JooqUtil.getOffset(request.getPageRequest());
-        final List<AnnotationTag> list = JooqUtil.contextResult(connectionProvider, context -> context
-                        .select(ANNOTATION_TAG.ID,
-                                ANNOTATION_TAG.UUID,
-                                ANNOTATION_TAG.TYPE_ID,
-                                ANNOTATION_TAG.NAME,
-                                ANNOTATION_TAG.STYLE_ID)
-                        .from(ANNOTATION_TAG)
-                        .where(ANNOTATION_TAG.DELETED.isFalse())
-                        .and(condition)
-                        .offset(offset)
-                        .limit(limit)
-                        .fetch())
-                .map(this::mapToAnnotationTag);
-        return ResultPage.createCriterialBasedList(list, request);
+        final List<AnnotationTag> list = new ArrayList<>();
+        final AtomicLong count = new AtomicLong();
+        JooqUtil.context(connectionProvider, context -> context
+                .select(ANNOTATION_TAG.ID,
+                        ANNOTATION_TAG.UUID,
+                        ANNOTATION_TAG.TYPE_ID,
+                        ANNOTATION_TAG.NAME,
+                        ANNOTATION_TAG.STYLE_ID)
+                .from(ANNOTATION_TAG)
+                .where(ANNOTATION_TAG.DELETED.isFalse())
+                .and(condition)
+                .stream()
+                .forEach(record -> {
+                    final AnnotationTag annotationTag = mapToAnnotationTag(record);
+                    if (uuidPredicate.test(annotationTag.getUuid())) {
+                        final long pos = count.getAndIncrement();
+                        if (pos >= offset && pos < maxPos) {
+                            list.add(annotationTag);
+                        }
+                    }
+                }));
+        return new ResultPage<>(list, PageResponse
+                .builder()
+                .offset(offset)
+                .length(list.size())
+                .total(count.get())
+                .exact(true)
+                .build());
     }
 
     @Override

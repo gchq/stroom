@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl.apikey;
 
 import stroom.cache.api.CacheManager;
@@ -12,9 +28,9 @@ import stroom.security.impl.UserCache;
 import stroom.security.impl.UserDao;
 import stroom.security.impl.apikey.ApiKeyService.DuplicateApiKeyException;
 import stroom.security.mock.MockSecurityContext;
-import stroom.security.shared.ApiKeyHashAlgorithm;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.CreateHashedApiKeyResponse;
+import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.User;
 import stroom.test.common.TestUtil;
@@ -96,7 +112,7 @@ class TestApiKeyService {
                 "key1",
                 "some comments",
                 true,
-                ApiKeyHashAlgorithm.SHA3_256);
+                HashAlgorithm.SHA3_256);
 
         final HashedApiKey hashedApiKey = HashedApiKey.builder()
                 .build();
@@ -139,7 +155,7 @@ class TestApiKeyService {
                 "key1",
                 "some comments",
                 true,
-                ApiKeyHashAlgorithm.SHA3_256);
+                HashAlgorithm.SHA3_256);
 
         final HashedApiKey hashedApiKey = HashedApiKey.builder()
                 .build();
@@ -193,7 +209,7 @@ class TestApiKeyService {
                 "key1",
                 "some comments",
                 true,
-                ApiKeyHashAlgorithm.SHA3_256);
+                HashAlgorithm.SHA3_256);
 
         Assertions.assertThatThrownBy(() ->
                         apiKeyService.create(request))
@@ -215,7 +231,7 @@ class TestApiKeyService {
                 "key1",
                 "some comments",
                 true,
-                ApiKeyHashAlgorithm.SHA3_256);
+                HashAlgorithm.SHA3_256);
 
         final HashedApiKey hashedApiKey = HashedApiKey.builder()
                 .build();
@@ -264,7 +280,7 @@ class TestApiKeyService {
                 name,
                 "some comments",
                 true,
-                ApiKeyHashAlgorithm.SHA3_256);
+                HashAlgorithm.SHA3_256);
 
         final HashedApiKey hashedApiKey = HashedApiKey.builder()
                 .build();
@@ -401,17 +417,17 @@ class TestApiKeyService {
                 HashedApiKey.builder()
                         .withOwner(owner1.asRef())
                         .withApiKeyHash("another hash")
-                        .withHashAlgorithm(ApiKeyHashAlgorithm.BCRYPT)
+                        .withHashAlgorithm(HashAlgorithm.BCRYPT)
                         .build(),
                 HashedApiKey.builder()
                         .withOwner(owner2.asRef())
                         .withApiKeyHash("and another hash")
-                        .withHashAlgorithm(ApiKeyHashAlgorithm.ARGON_2)
+                        .withHashAlgorithm(HashAlgorithm.ARGON_2)
                         .build(),
                 HashedApiKey.builder()
                         .withOwner(owner3.asRef())
                         .withApiKeyHash(hash)
-                        .withHashAlgorithm(ApiKeyHashAlgorithm.SHA3_256)
+                        .withHashAlgorithm(HashAlgorithm.SHA3_256)
                         .build());
 
         Mockito.when(mockApiKeyDao.fetchValidApiKeysByPrefix(Mockito.anyString()))
@@ -469,17 +485,17 @@ class TestApiKeyService {
                 HashedApiKey.builder()
                         .withOwner(owner1)
                         .withApiKeyHash("another hash")
-                        .withHashAlgorithm(ApiKeyHashAlgorithm.BCRYPT)
+                        .withHashAlgorithm(HashAlgorithm.BCRYPT)
                         .build(),
                 HashedApiKey.builder()
                         .withOwner(owner2)
                         .withApiKeyHash("and another hash")
-                        .withHashAlgorithm(ApiKeyHashAlgorithm.ARGON_2)
+                        .withHashAlgorithm(HashAlgorithm.ARGON_2)
                         .build(),
                 HashedApiKey.builder()
                         .withOwner(owner3)
                         .withApiKeyHash("and yet another hash")
-                        .withHashAlgorithm(ApiKeyHashAlgorithm.SHA3_256)
+                        .withHashAlgorithm(HashAlgorithm.SHA3_256)
                         .build());
 
         Mockito.when(mockApiKeyDao.fetchValidApiKeysByPrefix(Mockito.anyString()))
@@ -493,11 +509,12 @@ class TestApiKeyService {
 
     @TestFactory
     Stream<DynamicTest> testHashAlgorithms() {
+        //noinspection VariableTypeCanBeExplicit
         final var builder = TestUtil.buildDynamicTestStream()
-                .withInputType(ApiKeyHashAlgorithm.class)
+                .withInputType(HashAlgorithm.class)
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    final ApiKeyHashAlgorithm hashAlgorithm = testCase.getInput();
+                    final HashAlgorithm hashAlgorithm = testCase.getInput();
                     long millis = 0;
                     long nanos = 0;
                     final int cnt = 10;
@@ -526,7 +543,7 @@ class TestApiKeyService {
                 })
                 .withSimpleEqualityAssertion();
 
-        for (final ApiKeyHashAlgorithm hashAlgorithm : ApiKeyHashAlgorithm.values()) {
+        for (final HashAlgorithm hashAlgorithm : HashAlgorithm.values()) {
             builder.addCase(hashAlgorithm, true);
         }
 
@@ -549,7 +566,7 @@ class TestApiKeyService {
                     return apiKeyGenerator.generateRandomApiKey();
                 })
                 .forEach(apiKey -> {
-                    final String hash = apiKeyService.computeApiKeyHash(apiKey, ApiKeyHashAlgorithm.SHA3_256);
+                    final String hash = apiKeyService.computeApiKeyHash(apiKey, HashAlgorithm.SHA3_256);
                     if (hashes.contains(hash)) {
                         clashCount.increment();
                     }

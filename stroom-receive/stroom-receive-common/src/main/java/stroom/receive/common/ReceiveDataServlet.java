@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,9 @@ import java.util.Enumeration;
 import java.util.Set;
 
 /**
+ * <p>
+ * The /datafeed servlet.
+ * </p>
  * <p>
  * Servlet that streams files to disk based on meta input arguments.
  * </p>

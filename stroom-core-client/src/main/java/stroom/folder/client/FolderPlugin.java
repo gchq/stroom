@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.folder.client;
@@ -87,24 +86,25 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
 
     @Override
     protected void showDocument(final DocRef docRef,
-                                final MyPresenterWidget<?> documentEditPresenter,
+                                final MyPresenterWidget<?> myPresenterWidget,
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
                                 final CommonDocLinkTab selectedTab,
+                                final Consumer<MyPresenterWidget<?>> callbackOnOpen,
                                 final TaskMonitorFactory taskMonitorFactory) {
-        if (documentEditPresenter instanceof FolderPresenter) {
-            ((FolderPresenter) documentEditPresenter).read(docRef);
-        } else if (documentEditPresenter instanceof FolderRootPresenter) {
-            ((FolderRootPresenter) documentEditPresenter).read();
+        if (myPresenterWidget instanceof FolderPresenter) {
+            ((FolderPresenter) myPresenterWidget).read(docRef);
+        } else if (myPresenterWidget instanceof FolderRootPresenter) {
+            ((FolderRootPresenter) myPresenterWidget).read();
         }
 
-        if (selectedTab != null && documentEditPresenter instanceof LinkTabPanelPresenter) {
-            ((LinkTabPanelPresenter) documentEditPresenter).selectCommonTab(selectedTab);
+        if (selectedTab != null && myPresenterWidget instanceof LinkTabPanelPresenter) {
+            ((LinkTabPanelPresenter) myPresenterWidget).selectCommonTab(selectedTab);
         }
 
         // Open the tab.
-        contentManager.open(closeHandler, tabData, documentEditPresenter);
+        contentManager.open(closeHandler, tabData, myPresenterWidget);
     }
 
     @Override

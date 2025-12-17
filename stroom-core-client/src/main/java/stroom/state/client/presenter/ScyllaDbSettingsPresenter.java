@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.state.client.presenter;
@@ -32,6 +31,8 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.UUID;
 
 public class ScyllaDbSettingsPresenter
         extends DocumentEditPresenter<ScyllaDbSettingsView, ScyllaDbDoc>
@@ -64,7 +65,7 @@ public class ScyllaDbSettingsPresenter
 
     @Override
     public void onTestConnection(final TaskMonitorFactory taskMonitorFactory) {
-        final ScyllaDbDoc cluster = onWrite(new ScyllaDbDoc());
+        final ScyllaDbDoc cluster = onWrite(ScyllaDbDoc.builder().uuid(UUID.randomUUID().toString()).build());
         restFactory
                 .create(SCYLLA_DB_RESOURCE)
                 .method(res -> res.testCluster(cluster))

@@ -78,8 +78,8 @@ logging:
     io.dropwizard: INFO
     # Logs useful information about the jetty server when booting stroom
     org.eclipse.jetty: INFO
-    # Logs REST request/responses with headers/payloads. Set this to OFF to turn disable that logging.
-    org.glassfish.jersey.logging.LoggingFeature: INFO
+    # Set this to INFO if you want to log all REST request/responses with headers/payloads.
+    org.glassfish.jersey.logging.LoggingFeature: OFF
     # Logs summary information about FlyWay database migrations
     org.flywaydb: INFO
     # Logger and appender for audit logs
@@ -202,6 +202,10 @@ appConfig:
     {% endif %}
 
   {% if distribution == "docker" %}
+  receive:
+    # Whether authentication is required for requests sent to /datafeed
+    authenticationRequired: {{ true | envVar('RECEIVE_AUTH_REQUIRED') }}
+
   security:
     authentication:
       openId:
@@ -210,6 +214,12 @@ appConfig:
         #            authentication on data receipt.
         # EXTERNAL_IDP - Usa an external IDP for receipt token auth and for outbound HTTP connections
         identityProviderType: "{{ 'INTERNAL_IDP' | envVar('IDENTITY_PROVIDER_TYPE') }}"
+    identity:
+      # Enable this for test environments using INTERNAL_IDP
+      autoCreateAdminAccountOnBoot: {{ false | envVar('AUTO_CREATE_ADMIN_ACCOUNT') }}
+      passwordPolicy:
+        forcePasswordChangeOnFirstLogin: {{ true | envVar('FORCE_PASSWORD_CHANGE_ON_FIRST_LOGIN') }}
+        minimumPasswordLength: {{ 8 | envVar('MIN_PASSWORD_LENGTH') }}
   {% endif %}
 
   statistics:

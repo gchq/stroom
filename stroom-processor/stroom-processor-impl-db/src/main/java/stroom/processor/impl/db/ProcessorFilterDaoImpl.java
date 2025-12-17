@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.processor.impl.db;
 
 import stroom.db.util.ExpressionMapper;
@@ -5,13 +21,17 @@ import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.impl.ProcessorFilterDao;
+import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
+import stroom.processor.shared.TaskStatus;
+import stroom.security.api.SecurityContext;
 import stroom.security.user.api.UserRefLookup;
+import stroom.util.AuditUtil;
 import stroom.util.exception.DataChangedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -27,10 +47,9 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.UpdateConditionStep;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
@@ -50,7 +69,7 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
@@ -64,14 +83,24 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     private final ProcessorDbConnProvider processorDbConnProvider;
     private final QueryDataSerialiser queryDataXMLSerialiser;
     private final ExpressionMapper expressionMapper;
+    private final SecurityContext securityContext;
+    private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDaoImpl;
+    private final Provider<ProcessorDaoImpl> processorDaoImplProvider;
 
     @Inject
     ProcessorFilterDaoImpl(final ProcessorDbConnProvider processorDbConnProvider,
                            final ExpressionMapperFactory expressionMapperFactory,
                            final QueryDataSerialiser queryDataXMLSerialiser,
-                           final Provider<UserRefLookup> userRefLookupProvider) {
+                           final Provider<UserRefLookup> userRefLookupProvider,
+                           final SecurityContext securityContext,
+                           final ProcessorFilterTrackerDaoImpl processorFilterTrackerDaoImpl,
+                           final Provider<ProcessorDaoImpl> processorDaoImplProvider) {
         this.processorDbConnProvider = processorDbConnProvider;
         this.queryDataXMLSerialiser = queryDataXMLSerialiser;
+        this.securityContext = securityContext;
+        this.processorFilterTrackerDaoImpl = processorFilterTrackerDaoImpl;
+        this.processorDaoImplProvider = processorDaoImplProvider;
+
         recordToProcessorFilterMapper = new RecordToProcessorFilterMapper(
                 queryDataXMLSerialiser,
                 userRefLookupProvider);
@@ -82,6 +111,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         expressionMapper.map(ProcessorFilterFields.PRIORITY, PROCESSOR_FILTER.PRIORITY, Integer::valueOf);
         expressionMapper.map(ProcessorFilterFields.ENABLED, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
         expressionMapper.map(ProcessorFilterFields.DELETED, PROCESSOR_FILTER.DELETED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFilterFields.EXPORT, PROCESSOR_FILTER.EXPORT, Boolean::valueOf);
         expressionMapper.map(ProcessorFilterFields.UUID, PROCESSOR_FILTER.UUID, value -> value);
         expressionMapper.map(ProcessorFilterFields.RUN_AS_USER, PROCESSOR_FILTER.RUN_AS_USER_UUID, value -> value);
 
@@ -169,6 +199,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         PROCESSOR_FILTER.REPROCESS,
                         PROCESSOR_FILTER.ENABLED,
                         PROCESSOR_FILTER.DELETED,
+                        PROCESSOR_FILTER.EXPORT,
                         PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS,
                         PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS,
                         PROCESSOR_FILTER.MAX_PROCESSING_TASKS,
@@ -186,6 +217,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         filter.isReprocess(),
                         filter.isEnabled(),
                         filter.isDeleted(),
+                        filter.isExport(),
                         filter.getMinMetaCreateTimeMs(),
                         filter.getMaxMetaCreateTimeMs(),
                         filter.getMaxProcessingTasks(),
@@ -209,6 +241,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .set(PROCESSOR_FILTER.REPROCESS, filter.isReprocess())
                 .set(PROCESSOR_FILTER.ENABLED, filter.isEnabled())
                 .set(PROCESSOR_FILTER.DELETED, filter.isDeleted())
+                .set(PROCESSOR_FILTER.EXPORT, filter.isExport())
                 .set(PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS, filter.getMinMetaCreateTimeMs())
                 .set(PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS, filter.getMaxMetaCreateTimeMs())
                 .set(PROCESSOR_FILTER.MAX_PROCESSING_TASKS, filter.getMaxProcessingTasks())
@@ -283,8 +316,78 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 logicallyDeleteOldFilters(deleteThreshold, context));
     }
 
+    @Override
+    public ProcessorFilter restoreProcessorFilter(final ProcessorFilter processorFilter,
+                                                  final boolean resetTracker) {
+        LOGGER.debug("restoreProcessorFilter() - processorFilter: {}, resetTracker: {}",
+                processorFilter, resetTracker);
+        Objects.requireNonNull(processorFilter);
+
+        return JooqUtil.transactionResult(processorDbConnProvider, txnContext -> {
+            if (processorFilter.isDeleted()) {
+                final Integer processorFilterTrackerId = NullSafe.get(processorFilter,
+                        ProcessorFilter::getProcessorFilterTracker,
+                        ProcessorFilterTracker::getId);
+
+                // Un-delete the parent processor if needs be
+                Processor processor = processorFilter.getProcessor();
+                if (processor.isDeleted()) {
+                    processor.setDeleted(false);
+                    processor = processorDaoImplProvider.get()
+                            .update(processor, txnContext);
+                    processorFilter.setProcessor(processor);
+                }
+
+                // We are un-deleting the filter so reset the tracker back to clean slate
+                if (processorFilterTrackerId != null && resetTracker) {
+                    resetTracker(processorFilter, txnContext);
+                }
+                processorFilter.setDeleted(false);
+                AuditUtil.stamp(securityContext.getUserIdentity(), processorFilter);
+                return updateFilter(txnContext, processorFilter);
+            } else {
+                LOGGER.debug("restoreProcessorFilter() - Processor filter is not in a deleted state {}",
+                        processorFilter);
+                return processorFilter;
+            }
+        });
+    }
+
+    private ProcessorFilterTracker resetTracker(final ProcessorFilter processorFilter,
+                                                final DSLContext context) {
+        final Integer processorFilterId = Objects.requireNonNull(processorFilter.getId());
+        final Integer taskCount = context.selectCount()
+                .from(PROCESSOR_TASK)
+                .where(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(processorFilterId))
+                .and(PROCESSOR_TASK.STATUS.notIn(List.of(
+                        TaskStatus.COMPLETE,
+                        TaskStatus.DELETED,
+                        TaskStatus.FAILED)))
+                .fetchOneInto(Integer.class);
+
+        // This shouldn't happen as all tasks are set to deleted when the processorFilter is
+        // logically deleted, but here just in case
+        if (taskCount != null && taskCount > 0) {
+            LOGGER.debug("resetTracker() - processorFilterId: {}, count: {}", processorFilterId, taskCount);
+            throw new RuntimeException(LogUtil.message(
+                    "Unable to reset tracker for filter {} as {} active tasks exist",
+                    processorFilter.getId(), taskCount));
+        }
+
+        final ProcessorFilterTracker existingTracker = processorFilter.getProcessorFilterTracker();
+        final Integer processorFilterTrackerId = existingTracker.getId();
+        // Reset the tracker to the state it would be in if it was just created fresh
+        final ProcessorFilterTracker tracker = new ProcessorFilterTracker();
+        tracker.setId(processorFilterTrackerId);
+        tracker.setStatus(ProcessorFilterTrackerStatus.CREATED);
+        tracker.setVersion(existingTracker.getVersion());
+        final int count = processorFilterTrackerDaoImpl.update(context, tracker);
+        LOGGER.debug("resetTracker() - processorFilterId: {}, count: {}", processorFilterTrackerId, count);
+        return tracker;
+    }
+
     public int logicallyDeleteOldFilters(final Instant deleteThreshold, final DSLContext context) {
-        final var query = context
+        final UpdateConditionStep<ProcessorFilterRecord> query = context
                 .update(PROCESSOR_FILTER)
                 .set(PROCESSOR_FILTER.DELETED, true)
                 .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
@@ -367,7 +470,8 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 }
             } catch (final DataAccessException e) {
                 if (e.getCause() instanceof final SQLIntegrityConstraintViolationException sqlEx) {
-                    LOGGER.debug("Expected constraint violation exception: " + sqlEx.getMessage(), e);
+                    LAMBDA_LOGGER.debug(() -> LogUtil.message("Expected constraint violation, dbKeys: {} - {}",
+                            dbKeys, LogUtil.exceptionMessage(e)), e);
                 } else {
                     throw e;
                 }

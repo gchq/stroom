@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,6 +167,37 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testEqualProperties_multipleGetters() {
+        final ABC obj1 = new ABC("a", "b", "c");
+        final ABC obj2 = new ABC("A", "b", "c");
+        final ABC obj3 = new ABC("a", "B", "c");
+        final ABC obj4 = new ABC("a", "b", "C");
+        final ABC obj5 = new ABC("a", null, "c");
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(
+                        new TypeLiteral<Tuple2<ABC, ABC>>() {
+                        })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.equalProperties(
+                                testCase.getInput()._1,
+                                testCase.getInput()._2,
+                                List.of(ABC::a, ABC::b, ABC::c)))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(obj1, obj1), true)
+                .addCase(Tuple.of(obj2, obj2), true)
+                .addCase(Tuple.of(obj3, obj3), true)
+                .addCase(Tuple.of(obj4, obj4), true)
+                .addCase(Tuple.of(obj5, obj5), true)
+                .addCase(Tuple.of(obj1, obj2), false)
+                .addCase(Tuple.of(obj1, obj3), false)
+                .addCase(Tuple.of(obj1, obj4), false)
+                .addCase(Tuple.of(obj1, obj5), false)
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testAllNull() {
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String[].class)
@@ -204,6 +235,7 @@ class TestNullSafe {
 
     @TestFactory
     Stream<DynamicTest> testAllNonNull_supplier() {
+        //noinspection unchecked
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<Supplier<Object>[]>() {
                 })
@@ -620,6 +652,24 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testIsEmptyResultPage() {
+        final ResultPage<String> emptyList = ResultPage.empty();
+        final ResultPage<String> nonEmptyList = ResultPage.createUnboundedList(List.of("foo", "bar"));
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<ResultPage<String>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.isEmptyResultPage(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, true)
+                .addCase(emptyList, true)
+                .addCase(nonEmptyList, false)
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testIsEmptyArray() {
         final String[] emptyArr = new String[0];
         final String[] nonEmptyArr = new String[]{"foo", "bar"};
@@ -644,6 +694,24 @@ class TestNullSafe {
 
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withOutputType(boolean.class)
+                .withTestFunction(testCase ->
+                        NullSafe.hasItems(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, false)
+                .addCase(emptyList, false)
+                .addCase(nonEmptyList, true)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testHasItems_resultPage() {
+        final ResultPage<String> emptyList = ResultPage.empty();
+        final ResultPage<String> nonEmptyList = ResultPage.createUnboundedList(List.of("foo", "bar"));
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<ResultPage<String>>() {
                 })
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase ->
@@ -693,9 +761,6 @@ class TestNullSafe {
 
     @TestFactory
     Stream<DynamicTest> testHasOneItem() {
-        final List<String> emptyList = Collections.emptyList();
-        final List<String> nonEmptyList = List.of("foo", "bar");
-
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<List<String>>() {
                 })
@@ -899,7 +964,8 @@ class TestNullSafe {
                         })
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    final var mapWrapper = testCase.getInput()._1;
+                    final MapWrapper mapWrapper = testCase.getInput()._1;
+                    //noinspection VariableTypeCanBeExplicit
                     final var getter = testCase.getInput()._2;
                     return NullSafe.isEmptyMap(mapWrapper, getter);
                 })
@@ -924,7 +990,8 @@ class TestNullSafe {
                         })
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    final var mapWrapper = testCase.getInput()._1;
+                    final MapWrapper mapWrapper = testCase.getInput()._1;
+                    //noinspection VariableTypeCanBeExplicit
                     final var getter = testCase.getInput()._2;
                     return NullSafe.hasEntries(mapWrapper, getter);
                 })
@@ -1178,8 +1245,8 @@ class TestNullSafe {
                 .withInputTypes(String.class, String.class)
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var str = testCase.getInput()._1;
-                    final var subStr = testCase.getInput()._2;
+                    final String str = testCase.getInput()._1;
+                    final String subStr = testCase.getInput()._2;
                     return NullSafe.contains(str, subStr);
                 })
                 .withSimpleEqualityAssertion()
@@ -1199,8 +1266,8 @@ class TestNullSafe {
                 .withInputTypes(String.class, String.class)
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var str = testCase.getInput()._1;
-                    final var subStr = testCase.getInput()._2;
+                    final String str = testCase.getInput()._1;
+                    final String subStr = testCase.getInput()._2;
                     return NullSafe.containsIgnoringCase(str, subStr);
                 })
                 .withSimpleEqualityAssertion()
@@ -1223,8 +1290,8 @@ class TestNullSafe {
                 })
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var collection = testCase.getInput()._1;
-                    final var item = testCase.getInput()._2;
+                    final Set<String> collection = testCase.getInput()._1;
+                    final String item = testCase.getInput()._2;
                     return NullSafe.collectionContains(collection, item);
                 })
                 .withSimpleEqualityAssertion()
@@ -1243,8 +1310,8 @@ class TestNullSafe {
                 })
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var map = testCase.getInput()._1;
-                    final var key = testCase.getInput()._2;
+                    final Map<String, String> map = testCase.getInput()._1;
+                    final String key = testCase.getInput()._2;
                     return NullSafe.containsKey(map, key);
                 })
                 .withSimpleEqualityAssertion()
@@ -1269,8 +1336,8 @@ class TestNullSafe {
                 })
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    final var stringWrapper = testCase.getInput()._1;
-                    final var getter = testCase.getInput()._2;
+                    final StringWrapper stringWrapper = testCase.getInput()._1;
+                    final Function<StringWrapper, String> getter = testCase.getInput()._2;
                     return NullSafe.isEmptyString(stringWrapper, getter);
                 })
                 .withSimpleEqualityAssertion()
@@ -1295,8 +1362,8 @@ class TestNullSafe {
                 })
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    final var stringWrapper = testCase.getInput()._1;
-                    final var getter = testCase.getInput()._2;
+                    final StringWrapper stringWrapper = testCase.getInput()._1;
+                    final Function<StringWrapper, String> getter = testCase.getInput()._2;
                     return NullSafe.isBlankString(stringWrapper, getter);
                 })
                 .withSimpleEqualityAssertion()
@@ -1354,7 +1421,7 @@ class TestNullSafe {
                 })
                 .withTestFunction(testCase -> {
                     final List<String> newList = NullSafe.stream(testCase.getInput())
-                            .peek(item -> counter.incrementAndGet())
+                            .peek(ignored -> counter.incrementAndGet())
                             .toList();
                     return Tuple.of(counter.get(), newList);
                 })
@@ -1374,9 +1441,8 @@ class TestNullSafe {
                 })
                 .withOutputType(int.class)
                 .withTestFunction(testCase -> {
-                    NullSafe.forEach(testCase.getInput(), item -> {
-                        counter.incrementAndGet();
-                    });
+                    NullSafe.forEach(testCase.getInput(), ignored ->
+                            counter.incrementAndGet());
                     return counter.get();
                 })
                 .withSimpleEqualityAssertion()
@@ -1398,9 +1464,8 @@ class TestNullSafe {
                 .withInputType(String[].class)
                 .withOutputType(int.class)
                 .withTestFunction(testCase -> {
-                    NullSafe.forEach(testCase.getInput(), item -> {
-                        counter.incrementAndGet();
-                    });
+                    NullSafe.forEach(testCase.getInput(), ignored ->
+                            counter.incrementAndGet());
                     return counter.get();
                 })
                 .withSimpleEqualityAssertion()
@@ -1422,7 +1487,7 @@ class TestNullSafe {
                 })
                 .withTestFunction(testCase -> {
                     final List<String> newList = NullSafe.stream(testCase.getInput())
-                            .peek(item -> counter.incrementAndGet())
+                            .peek(ignored -> counter.incrementAndGet())
                             .toList();
                     return Tuple.of(counter.get(), newList);
                 })
@@ -1442,10 +1507,9 @@ class TestNullSafe {
                 })
                 .withTestFunction(testCase ->
                         NullSafe.collection(testCase.getInput()))
-                .withAssertions(outcome -> {
-                    assertThat(outcome.getActualOutput())
-                            .containsExactlyInAnyOrderElementsOf(outcome.getExpectedOutput());
-                })
+                .withAssertions(outcome ->
+                        assertThat(outcome.getActualOutput())
+                                .containsExactlyInAnyOrderElementsOf(outcome.getExpectedOutput()))
                 .addCase(null, Collections.emptyList())
                 .addCase(Collections.emptyList(), Collections.emptyList())
                 .addCase(Collections.singleton("bar"), List.of("bar"))
@@ -1925,7 +1989,7 @@ class TestNullSafe {
     @TestFactory
     Stream<DynamicTest> testSupplyAndMap() {
         final Function<String, String> mapToNonNull = str -> str + "XXX";
-        final Function<String, String> mapToNull = str -> null;
+        final Function<String, String> mapToNull = ignored -> null;
 
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(new TypeLiteral<Tuple2<Supplier<String>, Function<String, String>>>() {
@@ -2275,12 +2339,11 @@ class TestNullSafe {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(inputType)
                 .withOutputType(Long.class)
-                .withTestFunction(testCase -> {
-                    return NullSafe.requireNonNull(
-                            testCase.getInput()._1,
-                            testCase.getInput()._2,
-                            () -> "Oh dear!").getLevelNo();
-                })
+                .withTestFunction(testCase ->
+                        NullSafe.requireNonNull(
+                                testCase.getInput()._1,
+                                testCase.getInput()._2,
+                                () -> "Oh dear!").getLevelNo())
                 .withSimpleEqualityAssertion()
                 .addCase(Tuple.of(nonNullLevel1, Level1::getNonNullLevel2), 2L)
                 .addThrowsCase(Tuple.of(nonNullLevel1, Level1::getNullLevel2), NullPointerException.class)
@@ -2300,13 +2363,12 @@ class TestNullSafe {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputType(inputType)
                 .withOutputType(Long.class)
-                .withTestFunction(testCase -> {
-                    return NullSafe.requireNonNull(
-                            testCase.getInput()._1,
-                            testCase.getInput()._2,
-                            testCase.getInput()._3,
-                            () -> "Oh dear!").getLevelNo();
-                })
+                .withTestFunction(testCase ->
+                        NullSafe.requireNonNull(
+                                testCase.getInput()._1,
+                                testCase.getInput()._2,
+                                testCase.getInput()._3,
+                                () -> "Oh dear!").getLevelNo())
                 .withSimpleEqualityAssertion()
                 .addCase(
                         Tuple.of(nonNullLevel1, Level1::getNonNullLevel2, Level2::getNonNullLevel3),
@@ -2394,7 +2456,7 @@ class TestNullSafe {
                 for (int j = 0; j < iterations; j++) {
                     final Level1 level1 = new Level1(j);
                     final long startNanos = System.nanoTime();
-                    final Level5 val = Optional.ofNullable(level1)
+                    final Level5 val = Optional.of(level1)
                             .map(Level1::getNonNullLevel2)
                             .map(Level2::getNonNullLevel3)
                             .map(Level3::getNonNullLevel4)
@@ -2419,10 +2481,11 @@ class TestNullSafe {
     @Test
     void testIsNullPerf() {
 
-        final TimedCase pureJavaCase = TimedCase.of("Pure java", (round, iterations) -> {
+        final TimedCase pureJavaCase = TimedCase.of("Pure java", (ignored, iterations) -> {
             final Level1 nonNullLevel1 = new Level1();
-            long i = 0;
+            long i;
             for (i = 0; i < iterations; i++) {
+                //noinspection ConstantValue // There for a fair comparison
                 if (nonNullLevel1 != null
                     && nonNullLevel1.getNonNullLevel2() != null
                     && nonNullLevel1.getNonNullLevel2().getNonNullLevel3() != null) {
@@ -2431,19 +2494,22 @@ class TestNullSafe {
             }
             System.out.println(i);
         });
-        final TimedCase nullSafeCase = TimedCase.of("NullSafe", (round, iterations) -> {
+
+        final TimedCase nullSafeCase = TimedCase.of("NullSafe", (ignored, iterations) -> {
             final Level1 nonNullLevel1 = new Level1();
-            long i = 0;
+            long i;
             for (i = 0; i < iterations; i++) {
                 if (NullSafe.nonNull(nonNullLevel1, Level1::getNonNullLevel2, Level2::getNonNullLevel3)) {
                     i++;
                 }
             }
         });
-        final TimedCase optCase = TimedCase.of("Optional", (round, iterations) -> {
+
+        final TimedCase optCase = TimedCase.of("Optional", (ignored, iterations) -> {
             final Level1 nonNullLevel1 = new Level1();
-            long i = 0;
+            long i;
             for (i = 0; i < iterations; i++) {
+                //noinspection OptionalOfNullableMisuse,ConstantValue // There for a fair comparison,
                 if (Optional.ofNullable(nonNullLevel1)
                         .map(Level1::getNonNullLevel2)
                         .map(Level2::getNonNullLevel3)
@@ -2468,7 +2534,8 @@ class TestNullSafe {
     void testGetPerf() {
         final int iters = 200_000_000;
         final Integer[] vals = new Integer[iters];
-        final String[] outputs = new String[iters];
+        @SuppressWarnings("MismatchedReadAndWriteOfArray") final String[] outputs = new String[iters];
+
         final Random random = new Random(123456);
         final int bound = 1_000;
         final int threshold = bound / 2;
@@ -2484,13 +2551,13 @@ class TestNullSafe {
         }
         LOGGER.info("null count: {}", LogUtil.withPercentage(nullsCount, iters));
 
-        final TestSetup testSetup = (rounds, iterations) -> {
+        final TestSetup testSetup = (ignored, iterations) -> {
             for (int i = 0; i < iterations; i++) {
                 outputs[i] = null;
             }
         };
 
-        final TimedCase pureJavaIfCase = TimedCase.of("Pure java if", (round, iterations) -> {
+        final TimedCase pureJavaIfCase = TimedCase.of("Pure java if", (ignored, iterations) -> {
             for (int i = 0; i < iterations; i++) {
                 final Integer val = vals[i];
                 if (val == null) {
@@ -2501,7 +2568,7 @@ class TestNullSafe {
             }
         });
 
-        final TimedCase pureJavaTernaryCase = TimedCase.of("Pure java ternary", (round, iterations) -> {
+        final TimedCase pureJavaTernaryCase = TimedCase.of("Pure java ternary", (ignored, iterations) -> {
             for (int i = 0; i < iterations; i++) {
                 final Integer val = vals[i];
                 outputs[i] = val != null
@@ -2510,7 +2577,7 @@ class TestNullSafe {
             }
         });
 
-        final TimedCase nullSafeCase = TimedCase.of("NullSafe", (round, iterations) -> {
+        final TimedCase nullSafeCase = TimedCase.of("NullSafe", (ignored, iterations) -> {
             for (int i = 0; i < iterations; i++) {
                 final Integer val = vals[i];
                 outputs[i] = NullSafe.get(val, Objects::toString);
@@ -2560,6 +2627,7 @@ class TestNullSafe {
             return level;
         }
 
+        @SuppressWarnings("unused")
         public Long getNullLevelNo() {
             return null;
         }
@@ -2578,6 +2646,7 @@ class TestNullSafe {
                 return false;
             }
             final Level1 level1 = (Level1) o;
+            //noinspection ConstantValue
             return id == level1.id && Objects.equals(nullLevel2, level1.nullLevel2) && Objects.equals(
                     nonNullLevel2,
                     level1.nonNullLevel2) && Objects.equals(level, level1.level);
@@ -2617,6 +2686,7 @@ class TestNullSafe {
             return level;
         }
 
+        @SuppressWarnings("unused")
         public Long getNullLevelNo() {
             return null;
         }
@@ -2635,6 +2705,7 @@ class TestNullSafe {
                 return false;
             }
             final Level2 level2 = (Level2) o;
+            //noinspection ConstantValue
             return id == level2.id && Objects.equals(nullLevel3, level2.nullLevel3) && Objects.equals(
                     nonNullLevel3,
                     level2.nonNullLevel3) && Objects.equals(level, level2.level);
@@ -2692,6 +2763,7 @@ class TestNullSafe {
                 return false;
             }
             final Level3 level3 = (Level3) o;
+            //noinspection ConstantValue
             return id == level3.id && Objects.equals(nullLevel4, level3.nullLevel4) && Objects.equals(
                     nonNullLevel4,
                     level3.nonNullLevel4) && Objects.equals(level, level3.level);
@@ -2719,6 +2791,7 @@ class TestNullSafe {
             nonNullLevel5 = new Level5(id);
         }
 
+        @SuppressWarnings("unused")
         public Level5 getNullLevel5() {
             return nullLevel5;
         }
@@ -2731,6 +2804,7 @@ class TestNullSafe {
             return level;
         }
 
+        @SuppressWarnings("unused")
         public Long getNullLevelNo() {
             return null;
         }
@@ -2740,6 +2814,7 @@ class TestNullSafe {
             return id + ":" + level;
         }
 
+        @SuppressWarnings("ConstantValue")
         @Override
         public boolean equals(final Object o) {
             if (this == o) {
@@ -2773,10 +2848,12 @@ class TestNullSafe {
             this.id = id;
         }
 
+        @SuppressWarnings("unused")
         public Long getLevelNo() {
             return level;
         }
 
+        @SuppressWarnings("unused")
         public Long getNullLevelNo() {
             return null;
         }
@@ -2860,24 +2937,21 @@ class TestNullSafe {
     private static class StringWrapper {
 
         private final String nullString = null;
-        private final String nonNullEmptyString = "";
-        private final String nonNullBlankString = " ";
-        private final String nonNullNonEmptyString = "foobar";
 
         public String getNullString() {
             return nullString;
         }
 
         public String getNonNullEmptyString() {
-            return nonNullEmptyString;
+            return "";
         }
 
         public String getNonNullBlankString() {
-            return nonNullBlankString;
+            return " ";
         }
 
         public String getNonNullNonEmptyString() {
-            return nonNullNonEmptyString;
+            return "foobar";
         }
     }
 
@@ -2885,10 +2959,17 @@ class TestNullSafe {
     // --------------------------------------------------------------------------------
 
 
-    private static enum TestEnum {
+    private enum TestEnum {
         A,
         B,
         C,
-        ;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record ABC(String a, String b, String c) {
+
     }
 }

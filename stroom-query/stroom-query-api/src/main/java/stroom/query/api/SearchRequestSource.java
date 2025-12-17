@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.api;
 
 import stroom.docref.DocRef;
@@ -9,6 +25,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class SearchRequestSource {
@@ -19,15 +37,19 @@ public class SearchRequestSource {
     private final DocRef ownerDocRef;
     @JsonProperty
     private final String componentId;
+    @JsonProperty
+    private final String componentName;
 
     @JsonCreator
     public SearchRequestSource(
             @JsonProperty("sourceType") final SourceType sourceType,
             @JsonProperty("ownerDocRef") final DocRef ownerDocRef,
-            @JsonProperty("componentId") final String componentId) {
+            @JsonProperty("componentId") final String componentId,
+            @JsonProperty("componentName") final String componentName) {
         this.sourceType = sourceType;
         this.ownerDocRef = ownerDocRef;
         this.componentId = componentId;
+        this.componentName = componentName;
     }
 
     public static SearchRequestSource createBasic() {
@@ -46,13 +68,35 @@ public class SearchRequestSource {
         return componentId;
     }
 
+    public String getComponentName() {
+        return componentName;
+    }
+
     @Override
     public String toString() {
         return "SearchRequestSource{" +
                 "sourceType=" + sourceType +
                 ", ownerDocRef='" + ownerDocRef + '\'' +
                 ", componentId='" + componentId + '\'' +
+                ", componentName='" + componentName  + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final SearchRequestSource that = (SearchRequestSource) o;
+        return sourceType == that.sourceType &&
+               Objects.equals(ownerDocRef, that.ownerDocRef) &&
+               Objects.equals(componentId, that.componentId) &&
+               Objects.equals(componentName, that.componentName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sourceType, ownerDocRef, componentId, componentName);
     }
 
     public static Builder builder() {
@@ -68,6 +112,7 @@ public class SearchRequestSource {
         private SourceType sourceType;
         private DocRef ownerDocRef;
         private String componentId;
+        private String componentName;
 
         private Builder() {
         }
@@ -76,6 +121,7 @@ public class SearchRequestSource {
             this.sourceType = searchRequestSource.sourceType;
             this.ownerDocRef = searchRequestSource.ownerDocRef;
             this.componentId = searchRequestSource.componentId;
+            this.componentName = searchRequestSource.componentName;
         }
 
         public Builder sourceType(final SourceType sourceType) {
@@ -93,11 +139,17 @@ public class SearchRequestSource {
             return this;
         }
 
+        public Builder componentName(final String componentName) {
+            this.componentName = componentName;
+            return this;
+        }
+
         public SearchRequestSource build() {
             return new SearchRequestSource(
                     sourceType,
                     ownerDocRef,
-                    componentId);
+                    componentId,
+                    componentName);
         }
     }
 

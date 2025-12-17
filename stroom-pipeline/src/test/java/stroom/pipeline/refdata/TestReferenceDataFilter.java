@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata;
@@ -107,6 +106,8 @@ class TestReferenceDataFilter extends StroomUnitTest {
     private static final String INPUT_FAST_INFOSET_VALUE_4 = BASE_PATH + "input_FastInfosetValue_4.xml";
     private static final String INPUT_FAST_INFOSET_VALUE_5 = BASE_PATH + "input_FastInfosetValue_5.xml";
     private static final String INPUT_FAST_INFOSET_VALUE_6 = BASE_PATH + "input_FastInfosetValue_6.xml";
+    private static final String INPUT_FAST_INFOSET_VALUE_7 = BASE_PATH + "input_FastInfosetValue_7.xml";
+    private static final String INPUT_FAST_INFOSET_VALUE_8 = BASE_PATH + "input_FastInfosetValue_8.xml";
 
     private static final int BUF_SIZE = 4096;
 
@@ -183,6 +184,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
                                                          "<evt:Location xmlns:evt=\"event-logging:3\">(.|\\n)*" +
                                                          "<evt:Room>room[0-9]+<\\/evt:Room>" +
                                                          "<evt:Desk>desk[0-9]+<\\/evt:Desk>" +
+                                                         "<evt:Value>value[0-9]+<\\/evt:Value>" +
                                                          "<\\/evt:Location>");
                 });
         final Pattern pattern = Pattern.compile("room[0-9]+");
@@ -225,6 +227,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
                                                          "<evt:Location xmlns:evt=\"event-logging:3\">(.|\\n)*" +
                                                          "<evt:Room>room[0-9]+<\\/evt:Room>" +
                                                          "<evt:Desk>desk[0-9]+<\\/evt:Desk>" +
+                                                         "<evt:Value>value[0-9]+<\\/evt:Value>" +
                                                          "<\\/evt:Location>");
                 });
         final Pattern pattern = Pattern.compile("room[0-9]+");
@@ -312,6 +315,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
                                                          "<Location xmlns=\"stroom\">(.|\\n)*" +
                                                          "<Room>room[0-9]+<\\/Room>" +
                                                          "<Desk>desk[0-9]+<\\/Desk>" +
+                                                         "<Value>value[0-9]+<\\/Value>" +
                                                          "<\\/Location>");
                 });
         final Pattern pattern = Pattern.compile("room[0-9]+");
@@ -353,6 +357,7 @@ class TestReferenceDataFilter extends StroomUnitTest {
                                                          "<Location xmlns=\"reference-data:2\">(.|\\n)*" +
                                                          "<Room>room[0-9]+<\\/Room>" +
                                                          "<Desk>desk[0-9]+<\\/Desk>" +
+                                                         "<Value>value[0-9]+<\\/Value>" +
                                                          "<\\/Location>");
                 });
         final Pattern pattern = Pattern.compile("room[0-9]+");
@@ -398,7 +403,8 @@ class TestReferenceDataFilter extends StroomUnitTest {
                                                          "xmlns:xxx=\"extra-namespace\">(.|\\n)*" +
                                                          "<s:Room xmlns:yyy=\"another-namespace\" attr1=\"123\" " +
                                                          "xxx:attr2=\"456\" yyy:attr3=\"789\">room[0-9]+<\\/s:Room>" +
-                                                         "<xxx:Desk>desk[0-9]+<\\/xxx:Desk><\\/Location>");
+                                                         "<xxx:Desk>desk[0-9]+<\\/xxx:Desk>" +
+                                                         "<xxx:Value>value[0-9]+<\\/xxx:Value><\\/Location>");
                 });
         final Pattern pattern = Pattern.compile("room[0-9]+");
 
@@ -408,6 +414,96 @@ class TestReferenceDataFilter extends StroomUnitTest {
                 .map(str -> {
                     final Matcher matcher = pattern.matcher(str);
                     assertThat(matcher.find()).isTrue();
+                    return matcher.group();
+                })
+                .collect(Collectors.toList());
+
+        assertThat(roomList)
+                .containsExactly("room11");
+    }
+
+    @Test
+    void testFastInfoset_7_KeyValues_nestedValueElements() {
+
+        final LoadedRefDataValues loadedRefDataValues = doTest(INPUT_FAST_INFOSET_VALUE_7, null);
+
+        assertThat(loadedRefDataValues.keyValueValues)
+                .extracting(StagingValue::getTypeId)
+                .containsOnly(FastInfosetValue.TYPE_ID);
+        assertThat(loadedRefDataValues.keyValueValues).hasSize(1);
+        assertThat(loadedRefDataValues.rangeValueValues).isEmpty();
+
+        loadedRefDataValues.keyValueValues.stream()
+                .map(FastInfosetValue::new)
+                .peek(fastInfosetValue -> {
+                    LOGGER.info("Dumping fastinfoset:\n{}", deserialise(fastInfosetValue));
+                })
+                .forEach(fastInfosetValue -> {
+
+                    consumeFastInfoset(fastInfosetValue, "" +
+                                                         "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                                                         "<Location xmlns=\"reference-data:2\">(.|\\n)*" +
+                                                         "<Room>room[0-9]+<\\/Room>" +
+                                                         "<Desk>desk[0-9]+<\\/Desk>" +
+                                                         "<Value>" +
+                                                         "<value>" +
+                                                         "<Value>nestedValue<\\/Value>" +
+                                                         "<\\/value>" +
+                                                         "<\\/Value>" +
+                                                         "<\\/Location>");
+                });
+        final Pattern pattern = Pattern.compile("room[0-9]+");
+
+        final List<String> roomList = loadedRefDataValues.keyValueValues.stream()
+                .map(FastInfosetValue::new)
+                .map(this::deserialise)
+                .map(str -> {
+                    final Matcher matcher = pattern.matcher(str);
+                    assertThat(matcher.find())
+                            .isTrue();
+                    return matcher.group();
+                })
+                .collect(Collectors.toList());
+
+        assertThat(roomList)
+                .containsExactly("room11");
+    }
+
+    @Test
+    void testFastInfoset_8_KeyValues_elmNameCaseInsensitivity() {
+
+        final LoadedRefDataValues loadedRefDataValues = doTest(INPUT_FAST_INFOSET_VALUE_8, null);
+
+        assertThat(loadedRefDataValues.keyValueValues)
+                .extracting(StagingValue::getTypeId)
+                .containsOnly(FastInfosetValue.TYPE_ID);
+        assertThat(loadedRefDataValues.keyValueValues).hasSize(1);
+        assertThat(loadedRefDataValues.rangeValueValues).isEmpty();
+
+        loadedRefDataValues.keyValueValues.stream()
+                .map(FastInfosetValue::new)
+                .peek(fastInfosetValue -> {
+                    LOGGER.info("Dumping fastinfoset:\n{}", deserialise(fastInfosetValue));
+                })
+                .forEach(fastInfosetValue -> {
+
+                    consumeFastInfoset(fastInfosetValue, "" +
+                                                         "<\\?xml version=\"1\\.0\" encoding=\"UTF-8\"\\?>" +
+                                                         "<Location xmlns=\"reference-data:2\">(.|\\n)*" +
+                                                         "<Room>room[0-9]+<\\/Room>" +
+                                                         "<Desk>desk[0-9]+<\\/Desk>" +
+                                                         "<value>value[0-9]+<\\/value>" +
+                                                         "<\\/Location>");
+                });
+        final Pattern pattern = Pattern.compile("room[0-9]+");
+
+        final List<String> roomList = loadedRefDataValues.keyValueValues.stream()
+                .map(FastInfosetValue::new)
+                .map(this::deserialise)
+                .map(str -> {
+                    final Matcher matcher = pattern.matcher(str);
+                    assertThat(matcher.find())
+                            .isTrue();
                     return matcher.group();
                 })
                 .collect(Collectors.toList());

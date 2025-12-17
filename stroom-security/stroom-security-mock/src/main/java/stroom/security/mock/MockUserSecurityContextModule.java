@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@ import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.UserDao;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.User;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.UserRef;
 
 import com.google.inject.AbstractModule;
@@ -35,6 +38,8 @@ import java.util.UUID;
  * `runAsUser` processor filter and other task execution.
  */
 public class MockUserSecurityContextModule extends AbstractModule {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MockUserSecurityContextModule.class);
 
     private static final String ADMINISTRATORS = "Administrators";
     private static final String ADMIN = "admin";
@@ -83,6 +88,8 @@ public class MockUserSecurityContextModule extends AbstractModule {
                     user.setUpdateTimeMs(System.currentTimeMillis());
                     final User created = userDao.create(user);
                     userDao.addUserToGroup(created.getUuid(), group.getUuid());
+                    LOGGER.info(() -> LogUtil.message("Created user with subjectId: {}, UUID: {}",
+                            user.getSubjectId(), user.getUuid()));
                     return created;
                 });
                 return persisted.asRef();

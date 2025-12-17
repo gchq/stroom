@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl;
 
 import stroom.security.common.impl.JwtContextFactory;
@@ -15,6 +31,7 @@ import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.HttpHeaders;
 import org.jose4j.jwa.AlgorithmConstraints;
+import org.jose4j.jwa.AlgorithmConstraints.ConstraintType;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jws.AlgorithmIdentifiers;
@@ -30,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Stream;
 
 class InternalJwtContextFactory implements JwtContextFactory {
@@ -170,17 +188,24 @@ class InternalJwtContextFactory implements JwtContextFactory {
                 .setRelaxVerificationKeyValidation() // relaxes key length requirement
                 .setJwsAlgorithmConstraints(// only allow the expected signature algorithm(s) in the given context
                         new AlgorithmConstraints(
-                                AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
+                                ConstraintType.PERMIT, // which is only RS256 here
                                 AlgorithmIdentifiers.RSA_USING_SHA256))
 //                .setExpectedIssuer(InternalIdpConfigurationProvider.INTERNAL_ISSUER);
                 .setExpectedIssuers(true, validIssuers);
 
-        if (openIdConfiguration.isValidateAudience()) {
-            // aud does not appear in access tokens by default it seems
-            builder.setExpectedAudience(openIdClientDetailsFactory.getClient().getClientId());
+        final Set<String> allowedAudiences = openIdConfiguration.getAllowedAudiences();
+        if (NullSafe.hasItems(allowedAudiences)) {
+            // The IDP may not supply the aud claim
+            builder.setExpectedAudience(
+                    openIdConfiguration.isAudienceClaimRequired(),
+                    allowedAudiences.toArray(String[]::new));
         } else {
             builder.setSkipDefaultAudienceValidation();
         }
+        LOGGER.debug("validIssuers: {}, allowedAudiences: {}, audienceClaimRequired: {}",
+                validIssuers,
+                allowedAudiences,
+                openIdConfiguration.isAudienceClaimRequired());
         return builder.build();
     }
 

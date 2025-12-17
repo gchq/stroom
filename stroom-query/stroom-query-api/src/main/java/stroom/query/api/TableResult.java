@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,6 +15,8 @@
  */
 
 package stroom.query.api;
+
+import stroom.util.shared.ErrorMessage;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -30,7 +32,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"componentId", "fields", "rows", "resultRange", "totalResults", "error"})
+@JsonPropertyOrder({"componentId", "fields", "rows", "resultRange", "totalResults", "errors", "errorMessages"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "Object for describing a set of results in a table form that supports grouped data")
 public final class TableResult extends Result {
@@ -57,8 +59,9 @@ public final class TableResult extends Result {
                        @JsonProperty("rows") final List<Row> rows,
                        @JsonProperty("resultRange") final OffsetRange resultRange,
                        @JsonProperty("totalResults") final Long totalResults,
-                       @JsonProperty("errors") final List<String> errors) {
-        super(componentId, errors);
+                       @JsonProperty("errors") final List<String> errors,
+                       @JsonProperty("errorMessages") final List<ErrorMessage> errorMessages) {
+        super(componentId, errors, errorMessages);
         this.fields = fields;
         this.rows = rows;
         this.resultRange = resultRange;
@@ -136,22 +139,22 @@ public final class TableResult extends Result {
         private String componentId;
         private List<Column> columns;
         private final List<Row> rows;
-        private List<String> errors;
         private OffsetRange resultRange;
         private Long totalResults;
+        private List<ErrorMessage> errorMessages;
 
         private TableResultBuilderImpl() {
             rows = new ArrayList<>();
-            errors = Collections.emptyList();
+            errorMessages = Collections.emptyList();
         }
 
         private TableResultBuilderImpl(final TableResult tableResult) {
             componentId = tableResult.getComponentId();
             columns = tableResult.fields;
             rows = new ArrayList<>(tableResult.rows);
-            errors = tableResult.getErrors();
             resultRange = tableResult.resultRange;
             totalResults = tableResult.totalResults;
+            errorMessages = tableResult.getErrorMessages();
         }
 
         public TableResultBuilderImpl componentId(final String componentId) {
@@ -172,8 +175,8 @@ public final class TableResult extends Result {
         }
 
         @Override
-        public TableResultBuilder errors(final List<String> errors) {
-            this.errors = errors;
+        public TableResultBuilder errorMessages(final List<ErrorMessage> errorMessages) {
+            this.errorMessages = errorMessages;
             return this;
         }
 
@@ -195,7 +198,8 @@ public final class TableResult extends Result {
             if (totalResults == null && rows != null) {
                 totalResults = (long) rows.size();
             }
-            return new TableResult(componentId, columns, rows, resultRange, totalResults, errors);
+            return new TableResult(componentId, columns, rows, resultRange, totalResults,
+                    Collections.emptyList(), errorMessages);
         }
     }
 }

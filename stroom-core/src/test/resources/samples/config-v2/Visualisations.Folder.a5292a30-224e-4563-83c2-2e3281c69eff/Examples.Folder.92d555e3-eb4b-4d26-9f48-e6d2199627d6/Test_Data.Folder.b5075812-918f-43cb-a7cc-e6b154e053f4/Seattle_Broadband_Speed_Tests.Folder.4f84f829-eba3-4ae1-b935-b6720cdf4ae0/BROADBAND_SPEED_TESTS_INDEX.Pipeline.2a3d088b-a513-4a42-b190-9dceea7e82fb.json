@@ -1,0 +1,25 @@
+{
+  "properties" : {
+    "add" : [ {
+      "element" : "xsltFilter",
+      "name" : "xslt",
+      "value" : {
+        "entity" : {
+          "type" : "XSLT",
+          "uuid" : "70d71b93-c466-4a59-b8ec-034d85f2e2b1",
+          "name" : "BROADBAND_SPEED_TESTS-EXTRACTION"
+        }
+      }
+    }, {
+      "element" : "indexingFilter",
+      "name" : "index",
+      "value" : {
+        "entity" : {
+          "type" : "Index",
+          "uuid" : "97228148-b412-4851-903d-4a05c7c81e8f",
+          "name" : "BROADBAND_SPEED_TESTS"
+        }
+      }
+    } ]
+  }
+}

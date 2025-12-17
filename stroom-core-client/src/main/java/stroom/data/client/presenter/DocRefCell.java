@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.data.client.presenter;
 
 import stroom.core.client.UrlParameters;
@@ -17,17 +33,15 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuItem;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
-import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
+import stroom.widget.util.client.Templates;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -51,13 +65,10 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
     private static final String HOVER_ICON_CLASS_NAME = "hoverIcon";
 
     private final EventBus eventBus;
-    private final boolean allowLinkByName;
     private final boolean showIcon;
     private final Function<T_ROW, SafeHtml> cellTextFunction;
     private final Function<T_ROW, DocRef> docRefFunction;
     private final Function<T_ROW, String> cssClassFunction;
-
-    private static volatile Template template;
 
     /**
      * @param showIcon         Set to true to show the type icon next to the text
@@ -66,22 +77,16 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
      * @param cssClassFunction Function to provide additional css class names.
      */
     private DocRefCell(final EventBus eventBus,
-                       final boolean allowLinkByName,
                        final boolean showIcon,
                        final Function<T_ROW, SafeHtml> cellTextFunction,
                        final Function<T_ROW, DocRef> docRefFunction,
                        final Function<T_ROW, String> cssClassFunction) {
         super(MOUSEDOWN);
         this.eventBus = eventBus;
-        this.allowLinkByName = allowLinkByName;
         this.showIcon = showIcon;
         this.cellTextFunction = cellTextFunction;
         this.docRefFunction = docRefFunction;
         this.cssClassFunction = cssClassFunction;
-
-        if (template == null) {
-            template = GWT.create(Template.class);
-        }
     }
 
     @Override
@@ -128,16 +133,6 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                     .build());
             menuItems.add(createCopyAsMenuItem(docRef, priority++));
 
-        } else {
-            final String text = cellTextFunction.apply(value).asString();
-            if (NullSafe.isNonBlankString(text)) {
-                menuItems.add(new IconMenuItem.Builder()
-                        .priority(1)
-                        .icon(SvgImage.COPY)
-                        .text("Copy")
-                        .command(() -> ClipboardUtil.copy(text))
-                        .build());
-            }
         }
         return menuItems.isEmpty()
                 ? null
@@ -188,7 +183,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
             if (additionalClasses != null) {
                 cssClasses += " " + additionalClasses;
             }
-            final SafeHtml textDiv = template.div(cssClasses, cellHtmlText);
+            final SafeHtml textDiv = Templates.div(cssClasses, cellHtmlText);
 
             final String containerClasses = String.join(
                     " ",
@@ -220,17 +215,17 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                         ICON_CLASS_NAME,
                         COPY_CLASS_NAME,
                         HOVER_ICON_CLASS_NAME);
-                sb.append(template.divWithToolTip(
+                sb.append(Templates.divWithTitle(
                         "Copy name '" + docRef.getName() + "' to clipboard",
                         copy));
 
-                if (docRef.getUuid() != null || allowLinkByName) {
+                if (docRef.getUuid() != null) {
                     final SafeHtml open = SvgImageUtil.toSafeHtml(
                             SvgImage.OPEN,
                             ICON_CLASS_NAME,
                             OPEN_CLASS_NAME,
                             HOVER_ICON_CLASS_NAME);
-                    sb.append(template.divWithToolTip(
+                    sb.append(Templates.divWithTitle(
                             "Open " + docRef.getType() + " " + docRef.getName() + " in new tab",
                             open));
                 }
@@ -297,31 +292,12 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                 .build();
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    /**
-     * Use {@link SafeHtmlUtil#getTemplate()} instead
-     */
-    @Deprecated
-    interface Template extends SafeHtmlTemplates {
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml div(String cssClass, SafeHtml content);
-
-        @Template("<div title=\"{0}\">{1}</div>")
-        SafeHtml divWithToolTip(String title, SafeHtml content);
-    }
-
-
     // --------------------------------------------------------------------------------
 
 
     public static class Builder<T> {
 
         private EventBus eventBus;
-        private boolean allowLinkByName = false;
         private boolean showIcon = false;
         private DocRef.DisplayType displayType = DisplayType.NAME;
         private Function<T, SafeHtml> cellTextFunction;
@@ -330,11 +306,6 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
         public Builder<T> eventBus(final EventBus eventBus) {
             this.eventBus = eventBus;
-            return this;
-        }
-
-        public Builder<T> allowLinkByName(final boolean allowLinkByName) {
-            this.allowLinkByName = allowLinkByName;
             return this;
         }
 
@@ -412,7 +383,6 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
             return new DocRefCell<>(
                     eventBus,
-                    allowLinkByName,
                     showIcon,
                     cellTextFunction,
                     docRefFunction,

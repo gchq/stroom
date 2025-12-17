@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.xsltfunctions;
 
 import stroom.pipeline.LocationFactory;
@@ -7,6 +23,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Location;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
@@ -60,7 +77,7 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
     @Captor
     private ArgumentCaptor<Throwable> throwableCaptor;
     @Captor
-    private ArgumentCaptor<String> elementIdCaptor;
+    private ArgumentCaptor<ElementId> elementIdCaptor;
 
     /**
      * Call the function with simple java objects as arguments. These will be converted
@@ -135,7 +152,7 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
     }
 
     /**
-     * Assert {@link ErrorReceiver#log(Severity, Location, String, String, Throwable)} is never called
+     * Assert {@link ErrorReceiver#log(Severity, Location, ElementId, String, Throwable)} is never called
      */
     protected void verifyNoLogCalls() {
         verifyLogCalls(0);
@@ -146,7 +163,7 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
     }
 
     /**
-     * Assert the number of times {@link ErrorReceiver#log(Severity, Location, String, String, Throwable)}
+     * Assert the number of times {@link ErrorReceiver#log(Severity, Location, ElementId, String, Throwable)}
      * is called and get all the call args.
      *
      * @param callCount Expected number of calls
@@ -381,12 +398,12 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
         private final Severity severity;
         private final String message;
         private final Location location;
-        private final String elementId;
+        private final ElementId elementId;
         private final Throwable throwable;
 
         public LogArgs(final Severity severity,
                        final Location location,
-                       final String elementId,
+                       final ElementId elementId,
                        final String message,
                        final Throwable throwable) {
             this.severity = severity;
@@ -408,7 +425,7 @@ public abstract class AbstractXsltFunctionTest<T extends StroomExtensionFunction
             return location;
         }
 
-        public String getElementId() {
+        public ElementId getElementId() {
             return elementId;
         }
 

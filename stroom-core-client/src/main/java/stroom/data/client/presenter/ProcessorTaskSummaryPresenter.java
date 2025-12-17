@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.processor.shared.ProcessorTaskSummary;
+import stroom.query.api.ExpressionOperator;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
@@ -117,9 +118,8 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         final Function<ProcessorTaskSummary, DocRef> pipelineExtractionFunction = ProcessorTaskSummary::getPipeline;
         DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Pipeline", pipelineExtractionFunction);
 
-        final Function<ProcessorTaskSummary, DocRef> feedExtractionFunction = row ->
-                new DocRef(FeedDoc.TYPE, null, row.getFeed());
-        DataGridUtil.addDocRefColumn(getEventBus(), dataGrid, "Feed", feedExtractionFunction);
+        final Function<ProcessorTaskSummary, String> feedExtractionFunction = ProcessorTaskSummary::getFeed;
+        DataGridUtil.addFeedColumn(getEventBus(), dataGrid, "Feed", feedExtractionFunction);
 
         dataGrid.addResizableColumn(
                 new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(),
@@ -160,22 +160,18 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
 
     private void setPipeline(final DocRef pipeline) {
         criteria.setExpression(ProcessorTaskExpressionUtil.createPipelineExpression(pipeline));
-        refresh();
     }
 
     private void setFeed(final DocRef feed) {
         criteria.setExpression(ProcessorTaskExpressionUtil.createFeedExpression(feed));
-        refresh();
     }
 
     private void setFolder(final DocRef folder) {
         criteria.setExpression(ProcessorTaskExpressionUtil.createFolderExpression(folder));
-        refresh();
     }
 
     private void setNullCriteria() {
         criteria.setExpression(null);
-        refresh();
     }
 
     @Override
@@ -189,6 +185,8 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         } else {
             setNullCriteria();
         }
+
+        refresh();
     }
 
     public void refresh() {
@@ -226,5 +224,10 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<PagerView>
         } else {
             dataProvider.refresh();
         }
+    }
+
+    public void setExpression(final ExpressionOperator expressionOperator) {
+        criteria.setExpression(expressionOperator);
+        refresh();
     }
 }

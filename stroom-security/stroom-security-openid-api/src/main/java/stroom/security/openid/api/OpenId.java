@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,10 @@ public class OpenId {
     public static final List<String> DEFAULT_CLIENT_CREDENTIALS_SCOPES = List.of(
             OpenId.SCOPE__OPENID);
 
+    /**
+     * A claim holding a set of audience values.
+     */
+    public static final String CLAIM__AUDIENCE = "aud";
     /**
      * Subject - Identifier for the End-User at the Issuer.
      * <p>

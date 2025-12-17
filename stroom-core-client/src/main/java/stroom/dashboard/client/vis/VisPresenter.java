@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -242,7 +242,7 @@ public class VisPresenter
 
         builder.tableId(tableId);
 
-        final Component component = getDashboardContext().getComponents().get(getVisSettings().getTableId());
+        final Component component = getDashboardContext().getComponents().get(tableId);
         if (component instanceof final TablePresenter tablePresenter) {
             final TableComponentSettings tableComponentSettings = tablePresenter
                     .getTableComponentSettings();
@@ -638,6 +638,9 @@ public class VisPresenter
     public ComponentResultRequest getResultRequest(final Fetch fetch) {
         final VisComponentSettings visComponentSettings = getVisSettings();
 
+        // make sure table settings up to date
+        updateTableId(visComponentSettings.getTableId());
+
         // Update table settings.
         return VisResultRequest
                 .builder()
@@ -706,8 +709,8 @@ public class VisPresenter
     }
 
     @Override
-    public List<ColumnRef> getColumns() {
-        return visSelectionModel.getColumns();
+    public List<ColumnRef> getColumnRefs() {
+        return visSelectionModel.getColumnRefs();
     }
 
     @Override

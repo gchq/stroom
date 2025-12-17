@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,12 +12,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.client.query;
 
-import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.dashboard.client.main.Components;
 import stroom.dashboard.shared.ComponentSelectionHandler;
@@ -26,6 +24,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.svg.client.Preset;
+import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -63,21 +62,15 @@ public class SelectionHandlerListPresenter
     private void initTableColumns() {
         // Enabled.
         final Column<ComponentSelectionHandler, TickBoxState> enabledColumn =
-                new Column<ComponentSelectionHandler, TickBoxState>(
-                        TickBoxCell.create(
-                                new TickBoxCell.NoBorderAppearance(),
-                                false,
-                                false,
-                                false)) {
-                    @Override
-                    public TickBoxState getValue(final ComponentSelectionHandler row) {
-                        if (row == null) {
-                            return null;
-                        }
-                        return TickBoxState.fromBoolean(row.isEnabled());
-                    }
-                };
-        dataGrid.addColumn(enabledColumn, "Enabled", ColumnSizeConstants.ENABLED_COL);
+                DataGridUtil.readOnlyTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(
+                                ComponentSelectionHandler::isEnabled))
+                        .centerAligned()
+                        .build();
+        dataGrid.addColumn(
+                enabledColumn,
+                DataGridUtil.headingBuilder("Enabled")
+                        .build(),
+                ColumnSizeConstants.ENABLED_COL);
 
         // Expression.
         final Column<ComponentSelectionHandler, String> expressionColumn =
@@ -87,7 +80,7 @@ public class SelectionHandlerListPresenter
                         return row.getExpression().toString();
                     }
                 };
-        dataGrid.addResizableColumn(expressionColumn, "Expression", 200);
+        dataGrid.addResizableColumn(expressionColumn, "Expression", 500);
 
         dataGrid.addEndColumn(new EndColumn<>());
     }

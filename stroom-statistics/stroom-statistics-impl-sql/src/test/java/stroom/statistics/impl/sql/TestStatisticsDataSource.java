@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -211,8 +212,9 @@ class TestStatisticsDataSource {
             statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(Collections.emptyList()));
         }
 
-        final StatisticStoreDoc sds = new StatisticStoreDoc();
-        sds.setConfig(statisticsDataSourceData);
-        return sds;
+        return StatisticStoreDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .config(statisticsDataSourceData)
+                .build();
     }
 }

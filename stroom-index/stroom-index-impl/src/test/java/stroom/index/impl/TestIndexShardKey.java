@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,10 @@ class TestIndexShardKey {
 
     @Test
     void testMultishard() {
-        final LuceneIndexDoc index = new LuceneIndexDoc();
-        index.setUuid(UUID.randomUUID().toString());
-        index.setShardsPerPartition(5);
+        final LuceneIndexDoc index = LuceneIndexDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .shardsPerPartition(5)
+                .build();
         final IndexShardKey indexShardKey = IndexShardKey.createKey(index);
 
         assertThat(indexShardKey.getIndexUuid()).isEqualTo(index.getUuid());

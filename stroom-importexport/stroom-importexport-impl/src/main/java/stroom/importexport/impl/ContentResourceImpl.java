@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.importexport.impl;
 
 import stroom.event.logging.api.StroomEventLoggingService;
@@ -56,10 +72,10 @@ public class ContentResourceImpl implements ContentResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentResourceImpl.class);
 
-    final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
-    final Provider<ContentService> contentServiceProvider;
-    final Provider<ExplorerNodeService> explorerNodeServiceProvider;
-    final Provider<SecurityContext> securityContextProvider;
+    private final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
+    private final Provider<ContentService> contentServiceProvider;
+    private final Provider<ExplorerNodeService> explorerNodeServiceProvider;
+    private final Provider<SecurityContext> securityContextProvider;
 
     @Inject
     ContentResourceImpl(final Provider<StroomEventLoggingService> eventLoggingServiceProvider,
@@ -110,6 +126,12 @@ public class ContentResourceImpl implements ContentResource {
                     e.getMessage()), e);
             throw new RuntimeException(e);
         }
+    }
+
+    @AutoLogged(OperationType.UNLOGGED) // This is a tidy up operation so no need to log it
+    @Override
+    public void abortImport(final ResourceKey resourceKey) {
+        contentServiceProvider.get().abortImport(resourceKey);
     }
 
     private ImportEventAction buildImportEventAction(final ImportConfigRequest importConfigRequest) {
@@ -239,4 +261,5 @@ public class ContentResourceImpl implements ContentResource {
                                  + "\"")
                         .build();
     }
+
 }

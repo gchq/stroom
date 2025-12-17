@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.api;
 
 import stroom.query.api.ExpressionOperator.Op;
@@ -25,8 +41,8 @@ class TestExpressionOperator {
                 .withInputTypes(String.class, ExpressionOperator.class)
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var field = testCase.getInput()._1;
-                    final var expressionItem = testCase.getInput()._2;
+                    final String field = testCase.getInput()._1;
+                    final ExpressionOperator expressionItem = testCase.getInput()._2;
                     return expressionItem.containsField(field);
                 })
                 .withSimpleEqualityAssertion()
@@ -74,9 +90,9 @@ class TestExpressionOperator {
                 .withInputTypes(String.class, String.class, ExpressionOperator.class)
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var field1 = testCase.getInput()._1;
-                    final var field2 = testCase.getInput()._2;
-                    final var expressionItem = testCase.getInput()._3;
+                    final String field1 = testCase.getInput()._1;
+                    final String field2 = testCase.getInput()._2;
+                    final ExpressionOperator expressionItem = testCase.getInput()._3;
                     return expressionItem.containsField(field1, field2);
                 })
                 .withSimpleEqualityAssertion()
@@ -117,8 +133,8 @@ class TestExpressionOperator {
                 })
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var predicate = testCase.getInput()._1;
-                    final var expressionItem = testCase.getInput()._2;
+                    final Predicate<ExpressionTerm> predicate = testCase.getInput()._1;
+                    final ExpressionOperator expressionItem = testCase.getInput()._2;
                     return expressionItem.containsTerm(predicate);
                 })
                 .withSimpleEqualityAssertion()
@@ -131,14 +147,14 @@ class TestExpressionOperator {
                         false)
 
                 .addCase(Tuple.of(
-                                        term -> term.getField().equals("foo"),
-                        ExpressionOperator.builder()
-                        .addTerm(ExpressionTerm.builder()
-                                .field("bar")
-                                .condition(Condition.EQUALS)
-                                .value("123")
-                                .build())
-                        .build()),
+                                term -> term.getField().equals("foo"),
+                                ExpressionOperator.builder()
+                                        .addTerm(ExpressionTerm.builder()
+                                                .field("bar")
+                                                .condition(Condition.EQUALS)
+                                                .value("123")
+                                                .build())
+                                        .build()),
                         false)
 
                 .addCase(Tuple.of(
@@ -154,13 +170,13 @@ class TestExpressionOperator {
 
                 .addCase(Tuple.of(
                                 term -> term.getField().equals("foo"),
-                        ExpressionOperator.builder()
-                        .addOperator(ExpressionOperator.builder()
-                                .addOperator(ExpressionOperator.builder()
-                                        .addTerm(ExpressionTerm.builder().field("foo").build())
-                                        .build())
-                                .build())
-                        .build()),
+                                ExpressionOperator.builder()
+                                        .addOperator(ExpressionOperator.builder()
+                                                .addOperator(ExpressionOperator.builder()
+                                                        .addTerm(ExpressionTerm.builder().field("foo").build())
+                                                        .build())
+                                                .build())
+                                        .build()),
                         true)
 
                 .build();

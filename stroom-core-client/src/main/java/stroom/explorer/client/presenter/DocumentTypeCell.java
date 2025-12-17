@@ -1,19 +1,32 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.explorer.client.presenter;
 
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.docstore.shared.DocumentType;
 import stroom.widget.util.client.SvgImageUtil;
+import stroom.widget.util.client.Templates;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 public class DocumentTypeCell extends AbstractCell<DocumentType> {
-
-    private static Template template;
 
     private final DocumentTypeSelectionModel selectionModel;
     private final TickBoxCell tickBoxCell;
@@ -21,9 +34,6 @@ public class DocumentTypeCell extends AbstractCell<DocumentType> {
     public DocumentTypeCell(final DocumentTypeSelectionModel selectionModel) {
 //        super("click");
         this.selectionModel = selectionModel;
-        if (template == null) {
-            template = GWT.create(Template.class);
-        }
         tickBoxCell = TickBoxCell.create(true, false);
     }
 
@@ -54,7 +64,7 @@ public class DocumentTypeCell extends AbstractCell<DocumentType> {
         if (item != null) {
             final SafeHtml iconHtml = SvgImageUtil.toSafeHtml(item.getIcon(), "explorerCell-icon");
 
-            final SafeHtml textHtml = template.text("explorerCell-text",
+            final SafeHtml textHtml = Templates.div("explorerCell-text",
                     SafeHtmlUtils.fromString(item.getType()));
 
             final SafeHtmlBuilder content = new SafeHtmlBuilder();
@@ -62,25 +72,12 @@ public class DocumentTypeCell extends AbstractCell<DocumentType> {
             content.append(iconHtml);
             content.append(textHtml);
 
-            sb.append(template.outer(content.toSafeHtml()));
+            sb.append(Templates.div("explorerCell", content.toSafeHtml()));
 
             // Possibly a bit hacky as the <hr> is part of the selected item, so it looks a bit odd.
             if (TypeFilterPresenter.SELECT_ALL_OR_NONE_DOCUMENT_TYPE.equals(item)) {
                 sb.appendHtmlConstant("<hr>");
             }
         }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    interface Template extends SafeHtmlTemplates {
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml text(String textClass, SafeHtml text);
-
-        @Template("<div class=\"explorerCell\">{0}</div>")
-        SafeHtml outer(SafeHtml content);
     }
 }

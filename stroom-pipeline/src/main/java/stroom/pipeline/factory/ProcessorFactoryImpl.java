@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -42,6 +43,8 @@ import java.util.concurrent.TimeUnit;
 class ProcessorFactoryImpl implements ProcessorFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFactoryImpl.class);
+    private static final ElementId MULTIWAY_ELEMENT_ID = new ElementId("MultiWayProcessor");
+
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -57,7 +60,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
 
     @Override
     public Processor create(final List<Processor> processors) {
-        if (processors == null || processors.size() == 0) {
+        if (processors == null || processors.isEmpty()) {
             return null;
         }
 
@@ -135,9 +138,17 @@ class ProcessorFactoryImpl implements ProcessorFactory {
             if (errorReceiver != null && !(t instanceof LoggedException)) {
                 try {
                     if (t.getMessage() != null) {
-                        errorReceiver.log(Severity.FATAL_ERROR, null, "MultiWayProcessor", t.getMessage(), t);
+                        errorReceiver.log(Severity.FATAL_ERROR,
+                                null,
+                                MULTIWAY_ELEMENT_ID,
+                                t.getMessage(),
+                                t);
                     } else {
-                        errorReceiver.log(Severity.FATAL_ERROR, null, "MultiWayProcessor", t.toString(), t);
+                        errorReceiver.log(Severity.FATAL_ERROR,
+                                null,
+                                MULTIWAY_ELEMENT_ID,
+                                t.toString(),
+                                t);
                     }
                 } catch (final RuntimeException e) {
                     // Ignore exception as we generated it.

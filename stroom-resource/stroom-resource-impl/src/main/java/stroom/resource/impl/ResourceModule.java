@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.job.api.ScheduledJobsBinder;
 import stroom.lifecycle.api.LifecycleBinder;
 import stroom.resource.api.ResourceStore;
 import stroom.util.RunnableWrapper;
+import stroom.util.guice.ServletBinder;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
@@ -28,40 +29,55 @@ public class ResourceModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ResourceStore.class).to(ResourceStoreImpl.class);
+        bind(ResourceStore.class).to(UserResourceStoreImpl.class);
+
+        ServletBinder.create(binder())
+                .bind(UserResourceStoreImpl.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(DeleteTempFile.class, builder -> builder
-                        .name("Delete temp file")
-                        .description("Deletes the resource store temporary file.")
+                        .name("Delete temp resource files")
+                        .description("Deletes resource store temporary files that are over one hour old.")
                         .managed(false)
-                        .frequencySchedule("1h"));
+                        .frequencySchedule("10m"));
 
         LifecycleBinder.create(binder())
                 .bindStartupTaskTo(ResourceStoreStartup.class)
                 .bindShutdownTaskTo(ResourceStoreShutdown.class);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class DeleteTempFile extends RunnableWrapper {
 
         @Inject
-        DeleteTempFile(final ResourceStoreImpl resourceStore) {
+        DeleteTempFile(final UserResourceStoreImpl resourceStore) {
             super(resourceStore::execute);
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ResourceStoreStartup extends RunnableWrapper {
 
         @Inject
-        ResourceStoreStartup(final ResourceStoreImpl resourceStore) {
+        ResourceStoreStartup(final UserResourceStoreImpl resourceStore) {
             super(resourceStore::startup);
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ResourceStoreShutdown extends RunnableWrapper {
 
         @Inject
-        ResourceStoreShutdown(final ResourceStoreImpl resourceStore) {
+        ResourceStoreShutdown(final UserResourceStoreImpl resourceStore) {
             super(resourceStore::shutdown);
         }
     }

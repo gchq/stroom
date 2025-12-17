@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public class FeedStoreImpl implements FeedStore {
                          final SecurityContext securityContext,
                          final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider) {
         this.fsVolumeGroupServiceProvider = fsVolumeGroupServiceProvider;
-        this.store = storeFactory.createStore(serialiser, FeedDoc.TYPE, FeedDoc.class);
+        this.store = storeFactory.createStore(serialiser, FeedDoc.TYPE, FeedDoc::builder);
         this.feedNameValidator = feedNameValidator;
         this.securityContext = securityContext;
         this.serialiser = serialiser;

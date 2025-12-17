@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search.solr.search;
@@ -28,6 +27,7 @@ import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.IndexField;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.IndexFieldCache;
+import stroom.query.language.token.InTermsUtil;
 
 import org.apache.lucene553.index.Term;
 import org.apache.lucene553.search.BooleanClause;
@@ -53,9 +53,7 @@ import java.util.regex.Pattern;
 public class SearchExpressionQueryBuilder {
 
     private static final String DELIMITER = ",";
-    private static final Pattern NON_WORD_OR_WILDCARD = Pattern.compile("[^a-zA-Z0-9+*?]");
     private static final Pattern NON_WORD = Pattern.compile("[^a-zA-Z0-9]");
-    private static final Pattern MULTIPLE_WILDCARD = Pattern.compile("[+]+");
     private static final Pattern MULTIPLE_SPACE = Pattern.compile("[ ]+");
 
     private final DocRef indexDocRef;
@@ -296,7 +294,7 @@ public class SearchExpressionQueryBuilder {
                     return getDictionary(fieldName, docRef, indexField, terms);
                 }
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFldType().getDisplayValue() + " field type");
+                                                     + indexField.getFldType().getDisplayValue() + " field type");
             }
         } else if (FieldType.DATE.equals(indexField.getFldType())) {
             switch (condition) {
@@ -364,7 +362,7 @@ public class SearchExpressionQueryBuilder {
                     return getDictionary(fieldName, docRef, indexField, terms);
                 }
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFldType().getDisplayValue() + " field type");
+                                                     + indexField.getFldType().getDisplayValue() + " field type");
             }
         } else {
             return switch (condition) {
@@ -374,9 +372,9 @@ public class SearchExpressionQueryBuilder {
                 case CONTAINS -> getContains(fieldName, value, indexField, terms);
                 case IN -> getIn(fieldName, value, indexField, terms);
                 case IN_DICTIONARY -> getDictionary(fieldName, docRef, indexField, terms);
-                case IS_DOC_REF -> getSubQuery(indexField, docRef.getUuid(), terms, false);
+                case IS_DOC_REF -> getSubQuery(indexField, docRef.getUuid(), terms);
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
-                        + indexField.getFldType().getDisplayValue() + " field type");
+                                                     + indexField.getFldType().getDisplayValue() + " field type");
             };
         }
     }
@@ -433,7 +431,7 @@ public class SearchExpressionQueryBuilder {
                               final String value,
                               final IndexField indexField,
                               final Set<String> terms) {
-        final Query query = getSubQuery(indexField, value, terms, false);
+        final Query query = getSubQuery(indexField, value, terms);
         return modifyOccurrence(query, Occur.MUST);
     }
 
@@ -441,8 +439,10 @@ public class SearchExpressionQueryBuilder {
                         final String value,
                         final IndexField indexField,
                         final Set<String> terms) {
-        final Query query = getSubQuery(indexField, value, terms, true);
-        return modifyOccurrence(query, Occur.SHOULD);
+        final Builder orTermsBuilder = new Builder();
+        InTermsUtil.getInTerms(value).forEach(val ->
+                orTermsBuilder.add(getSubQuery(indexField, val, terms), Occur.SHOULD));
+        return orTermsBuilder.build();
     }
 
     private Query modifyOccurrence(final Query query, final Occur occur) {
@@ -470,7 +470,7 @@ public class SearchExpressionQueryBuilder {
             } else if (FieldType.DATE.equals(indexField.getFldType())) {
                 query = getDateIn(fieldName, val);
             } else {
-                query = getSubQuery(indexField, val, terms, false);
+                query = getSubQuery(indexField, val, terms);
             }
 
             if (query != null) {
@@ -500,8 +500,9 @@ public class SearchExpressionQueryBuilder {
         };
     }
 
-    private Query getSubQuery(final IndexField field, final String value,
-                              final Set<String> terms, final boolean in) {
+    private Query getSubQuery(final IndexField field,
+                              final String value,
+                              final Set<String> terms) {
         Query query = null;
 
         // Store terms for hit highlighting.

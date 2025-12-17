@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.util.shared.ResultPage;
 
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public interface AnnotationTagDao {
 
@@ -32,7 +33,8 @@ public interface AnnotationTagDao {
 
     Boolean deleteAnnotationTag(AnnotationTag annotationTag);
 
-    ResultPage<AnnotationTag> findAnnotationTags(ExpressionCriteria request);
+    ResultPage<AnnotationTag> findAnnotationTags(ExpressionCriteria request,
+                                                 Predicate<String> uuidPredicate);
 
     Optional<AnnotationTag> findAnnotationTag(AnnotationTagType annotationTagType, String name);
 }

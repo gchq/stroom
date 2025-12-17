@@ -1,21 +1,37 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.docstore.api;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docref.HasFindDocsByName;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
+import stroom.docstore.shared.AbstractDoc.AbstractBuilder;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public interface Store<D extends Doc>
+public interface Store<D extends AbstractDoc>
         extends DocumentActionHandler<D>, HasFindDocsByName, ContentIndexable {
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
@@ -76,14 +92,9 @@ public interface Store<D extends Doc>
      */
     List<DocRef> list();
 
-    // This is only used to migrate pipelines. Do not use!!!
-    @Deprecated
-    void migratePipelines(Function<Map<String, byte[]>, Optional<Map<String, byte[]>>> function);
+    interface DocumentCreator<D extends AbstractDoc> {
 
-    interface DocumentCreator<D extends Doc> {
-
-        D create(final String type,
-                 final String uuid,
+        D create(final String uuid,
                  final String name,
                  final String version,
                  final Long createTime,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.BootstrapTestModule;
 import stroom.test.CommonTestControl;
-import stroom.test.ContentImportService;
+import stroom.test.ContentStoreTestSetup;
 import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
@@ -102,7 +102,7 @@ class TestInjectionPerformance {
                 Guice.createInjector(instances), "creating injector");
 
         final Class<?>[] toInject = {
-                ContentImportService.class,
+                ContentStoreTestSetup.class,
                 IndexShardManager.class,
                 IndexShardWriterCache.class,
                 VolumeCreator.class,

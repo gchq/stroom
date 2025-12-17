@@ -1,5 +1,23 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.processor.client.presenter;
 
+import stroom.data.client.presenter.OpenLinkUtil;
+import stroom.data.client.presenter.OpenLinkUtil.LinkType;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.Processor;
@@ -19,6 +37,7 @@ import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import javax.inject.Inject;
 
@@ -81,6 +100,8 @@ public class ProcessorInfoBuilder {
             tb.row("Updated By", filter.getUpdateUser());
             addRowDateString(tb, "Updated On", filter.getUpdateTimeMs());
 
+            tb.row("Export", filter.isExport() ? "True" : "False");
+
             if (ProcessorType.STREAMING_ANALYTIC.equals(filter.getProcessorType())) {
                 tb.row("Analytic Rule",
                         DocRefUtil.createSimpleDocRefString(filter.getPipeline()));
@@ -107,7 +128,10 @@ public class ProcessorInfoBuilder {
                 tb.row("Last Poll Age", tracker.getLastPollAge());
                 tb.row(SafeHtmlUtil.from("Last Poll Task Count"),
                         SafeHtmlUtil.from(tracker.getLastPollTaskCount()));
-                tb.row("Min Stream Id", String.valueOf(tracker.getMinMetaId()));
+
+                tb.row(SafeHtmlUtils.fromString("Min Stream Id"),
+                        OpenLinkUtil.render(String.valueOf(tracker.getMinMetaId()), LinkType.STREAM));
+
                 tb.row("Min Event Id", String.valueOf(tracker.getMinEventId()));
                 tb.row(SafeHtmlUtil.from("Total Tasks Created"),
                         SafeHtmlUtil.from(tracker.getMetaCount()));

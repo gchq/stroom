@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.structure.client.presenter;
@@ -159,9 +158,9 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
     }
 
     /**
-     * @return All the element IDs currently in the pipeline
+     * @return All the element names currently in the pipeline
      */
-    public Set<String> getIds() {
+    public Set<String> getNames() {
         final List<PipelineElement> pipelineElements = NullSafe.get(
                 pipelineModel,
                 PipelineModel::getPipelineLayer,
@@ -169,7 +168,7 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
                 PipelineData::getAddedElements);
 
         return NullSafe.stream(pipelineElements)
-                .map(PipelineElement::getId)
+                .map(PipelineElement::getDisplayName)
                 .collect(Collectors.toSet());
     }
 

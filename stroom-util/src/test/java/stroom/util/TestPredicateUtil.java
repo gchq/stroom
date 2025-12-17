@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util;
 
 import stroom.test.common.TestUtil;
@@ -101,8 +117,8 @@ class TestPredicateUtil {
                 .withInputTypes(String.class, String.class)
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var str = testCase.getInput()._1;
-                    final var subStr = testCase.getInput()._2;
+                    final String str = testCase.getInput()._1;
+                    final String subStr = testCase.getInput()._2;
                     final Predicate<String> predicate = PredicateUtil.caseSensitiveContainsPredicate(subStr);
                     return predicate.test(str);
                 })
@@ -122,8 +138,8 @@ class TestPredicateUtil {
                 .withInputTypes(String.class, String.class)
                 .withOutputType(Boolean.class)
                 .withTestFunction(testCase -> {
-                    final var str = testCase.getInput()._1;
-                    final var subStr = testCase.getInput()._2;
+                    final String str = testCase.getInput()._1;
+                    final String subStr = testCase.getInput()._2;
                     final Predicate<String> predicate = PredicateUtil.caseInsensitiveContainsPredicate(subStr);
                     return predicate.test(str);
                 })

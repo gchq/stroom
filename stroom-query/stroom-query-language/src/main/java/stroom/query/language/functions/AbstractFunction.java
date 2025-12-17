@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,11 @@ abstract class AbstractFunction implements Function, Appendable {
     @Override
     public void setParams(final Param[] params) throws ParseException {
         if (params.length < minParams || params.length > maxParams) {
-            throw new ParseException("Invalid number of parameters supplied for '" + name + "' + function", 0);
+            throw new ParseException(
+                    "Invalid number of parameters supplied for '" + name + "' function: expected " +
+                    (minParams == maxParams ? minParams : (minParams + " to " + maxParams)) +
+                    ", got " + params.length, 0);
         }
-
         this.params = params;
     }
 

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.api.datasource;
 
 import stroom.query.api.ExpressionTerm.Condition;
@@ -40,6 +56,11 @@ public enum ConditionSet {
             Condition.LESS_THAN,
             Condition.LESS_THAN_OR_EQUAL_TO),
     DEFAULT_KEYWORD(
+            Condition.EQUALS,
+            Condition.NOT_EQUALS,
+            Condition.IN,
+            Condition.IN_DICTIONARY),
+    DEFAULT_DENSE_VECTOR(
             Condition.EQUALS,
             Condition.NOT_EQUALS,
             Condition.IN,
@@ -189,6 +210,21 @@ public enum ConditionSet {
             Condition.IN),
 
     // UI Defaults.
+    ALL_UI_TEXT(
+            Condition.CONTAINS,
+            Condition.CONTAINS_CASE_SENSITIVE,
+            Condition.EQUALS,
+            Condition.EQUALS_CASE_SENSITIVE,
+            Condition.NOT_EQUALS,
+            Condition.NOT_EQUALS_CASE_SENSITIVE,
+            Condition.STARTS_WITH,
+            Condition.STARTS_WITH_CASE_SENSITIVE,
+            Condition.ENDS_WITH,
+            Condition.ENDS_WITH_CASE_SENSITIVE,
+            Condition.MATCHES_REGEX,
+            Condition.MATCHES_REGEX_CASE_SENSITIVE,
+            Condition.IN,
+            Condition.IN_DICTIONARY),
     UI_TEXT(
             Condition.EQUALS,
             Condition.NOT_EQUALS,
@@ -200,9 +236,49 @@ public enum ConditionSet {
             Condition.IN,
             Condition.IN_DICTIONARY,
             Condition.IS_DOC_REF),
+    ALL_UI_NUMERIC(
+            Condition.CONTAINS,
+            Condition.CONTAINS_CASE_SENSITIVE,
+            Condition.EQUALS,
+            Condition.EQUALS_CASE_SENSITIVE,
+            Condition.NOT_EQUALS,
+            Condition.NOT_EQUALS_CASE_SENSITIVE,
+            Condition.STARTS_WITH,
+            Condition.STARTS_WITH_CASE_SENSITIVE,
+            Condition.ENDS_WITH,
+            Condition.ENDS_WITH_CASE_SENSITIVE,
+            Condition.MATCHES_REGEX,
+            Condition.MATCHES_REGEX_CASE_SENSITIVE,
+            Condition.GREATER_THAN,
+            Condition.GREATER_THAN_OR_EQUAL_TO,
+            Condition.LESS_THAN,
+            Condition.LESS_THAN_OR_EQUAL_TO,
+            Condition.BETWEEN,
+            Condition.IN,
+            Condition.IN_DICTIONARY),
     UI_NUMERIC(
             Condition.EQUALS,
             Condition.NOT_EQUALS,
+            Condition.GREATER_THAN,
+            Condition.GREATER_THAN_OR_EQUAL_TO,
+            Condition.LESS_THAN,
+            Condition.LESS_THAN_OR_EQUAL_TO,
+            Condition.BETWEEN,
+            Condition.IN,
+            Condition.IN_DICTIONARY),
+    ALL_UI_DATE(
+            Condition.CONTAINS,
+            Condition.CONTAINS_CASE_SENSITIVE,
+            Condition.EQUALS,
+            Condition.EQUALS_CASE_SENSITIVE,
+            Condition.NOT_EQUALS,
+            Condition.NOT_EQUALS_CASE_SENSITIVE,
+            Condition.STARTS_WITH,
+            Condition.STARTS_WITH_CASE_SENSITIVE,
+            Condition.ENDS_WITH,
+            Condition.ENDS_WITH_CASE_SENSITIVE,
+            Condition.MATCHES_REGEX,
+            Condition.MATCHES_REGEX_CASE_SENSITIVE,
             Condition.GREATER_THAN,
             Condition.GREATER_THAN_OR_EQUAL_TO,
             Condition.LESS_THAN,
@@ -267,6 +343,9 @@ public enum ConditionSet {
             case IPV4_ADDRESS: {
                 return ConditionSet.DEFAULT_NUMERIC;
             }
+            case DENSE_VECTOR: {
+                return ConditionSet.DEFAULT_DENSE_VECTOR;
+            }
             case DOC_REF: {
                 return ConditionSet.DOC_REF_ALL;
             }
@@ -320,8 +399,11 @@ public enum ConditionSet {
             FieldType.LONG.equals(elasticIndexFieldType) ||
             FieldType.INTEGER.equals(elasticIndexFieldType)) {
             return ConditionSet.ELASTIC_NUMERIC;
+        } else if (FieldType.DENSE_VECTOR.equals(elasticIndexFieldType)) {
+            return ConditionSet.DEFAULT_DENSE_VECTOR;
+        } else {
+            return ConditionSet.ELASTIC_TEXT;
         }
-        return ConditionSet.ELASTIC_TEXT;
     }
 
     public static ConditionSet getUiDefaultConditions(final FieldType fieldType) {

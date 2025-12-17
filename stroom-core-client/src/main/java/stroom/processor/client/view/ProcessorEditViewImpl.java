@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.processor.client.view;
@@ -20,6 +19,7 @@ package stroom.processor.client.view;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -39,6 +39,8 @@ public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView
     MyDateBox minMetaCreateTimeMs;
     @UiField
     MyDateBox maxMetaCreateTimeMs;
+    @UiField
+    CustomCheckBox export;
     @UiField
     SimplePanel runAsUser;
 
@@ -78,6 +80,16 @@ public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView
     @Override
     public void setMaxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
         this.maxMetaCreateTimeMs.setMilliseconds(maxMetaCreateTimeMs);
+    }
+
+    @Override
+    public boolean isExport() {
+        return this.export.getValue();
+    }
+
+    @Override
+    public void setExport(final boolean export) {
+        this.export.setValue(export);
     }
 
     @Override

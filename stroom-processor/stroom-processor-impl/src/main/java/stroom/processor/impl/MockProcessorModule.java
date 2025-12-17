@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package stroom.processor.impl;
 
+import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.lock.mock.MockClusterLockService;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.util.guice.GuiceUtil;
@@ -34,6 +36,7 @@ public class MockProcessorModule extends AbstractModule {
         bind(ProcessorService.class).to(ProcessorServiceImpl.class);
         bind(ProcessorFilterDao.class).to(MockProcessorFilterDao.class);
         bind(ProcessorTaskDao.class).to(MockProcessorTaskDao.class);
+        bind(ClusterLockService.class).to(MockClusterLockService.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(MockProcessorDao.class)

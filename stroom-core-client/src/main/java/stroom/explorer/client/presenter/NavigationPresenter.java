@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,7 +205,11 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
         view.setUiHandlers(this);
 
-        explorerTree = new ExplorerTree(restFactory, getView().getTaskListener(), true, showAlertsBtn.getState());
+        explorerTree = new ExplorerTree(
+                restFactory,
+                getView().getTaskListener(),
+                true,
+                showAlertsBtn.getState());
 
         // Add views.
         uiConfigCache.get(uiConfig -> {

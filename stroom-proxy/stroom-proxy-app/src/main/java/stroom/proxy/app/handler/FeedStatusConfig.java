@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.receive.common.FeedStatusResourceV2;
@@ -57,6 +73,13 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
                 .build();
     }
 
+    @JsonPropertyDescription(
+            "The full url for the remote stroom/proxy that will perform the feed status checks. " +
+            "If the remote is a proxy, it must also be configured to use feed status checks " +
+            "so that it can obtain them from another stroom/proxy downstream to it. " +
+            "If not set the downstreamHost configuration will be combined with the default API " +
+            "path. Only set this property if you wish to use a non-default path " +
+            "or you want to use a different host/port/scheme to that defined in downstreamHost.")
     public String getFeedStatusUrl() {
         return feedStatusUrl;
     }

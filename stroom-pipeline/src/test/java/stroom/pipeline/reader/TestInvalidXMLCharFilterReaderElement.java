@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.reader;
 
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -6,6 +22,7 @@ import stroom.pipeline.factory.TakesReader;
 import stroom.pipeline.factory.Target;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ElementId;
 import stroom.util.string.ByteArrayBuilder;
 
 import com.google.common.io.CharStreams;
@@ -156,9 +173,9 @@ class TestInvalidXMLCharFilterReaderElement {
         invalidXMLCharFilterReader.setXmlVersion(new Xml10Chars().getXmlVersion());
         invalidXMLCharFilterReader.setWarnOnReplacement(logWarnings);
 
-        invalidXMLCharFilterReader.setElementId(invalidXMLCharFilterReader.getClass().getSimpleName());
+        invalidXMLCharFilterReader.setElementId(new ElementId(invalidXMLCharFilterReader.getClass().getSimpleName()));
         final TestTarget testTarget = new TestTarget();
-        testTarget.setElementId(testTarget.getClass().getSimpleName());
+        testTarget.setElementId(new ElementId(testTarget.getClass().getSimpleName()));
         invalidXMLCharFilterReader.setTarget(testTarget);
 
         invalidXMLCharFilterReader.createProcessors();

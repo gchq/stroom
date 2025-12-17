@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,7 +123,9 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 errorConsumer,
                 new ByteBufferFactoryImpl(),
                 new ExpressionPredicateFactory(),
-                AnnotationMapperFactory.NO_OP);
+                AnnotationMapperFactory.NO_OP,
+                //TODO: DS
+                null);
     }
 
     @Test

@@ -1,0 +1,43 @@
+{
+  "uuid" : "33cfa6ac-3fb9-41d9-b5b6-040bbf9f7129",
+  "queryData" : {
+    "dataSource" : {
+      "type" : "StreamStore",
+      "uuid" : "0",
+      "name" : "StreamStore"
+    },
+    "expression" : {
+      "type" : "operator",
+      "children" : [ {
+        "type" : "term",
+        "field" : "Feed",
+        "condition" : "EQUALS",
+        "value" : "TEST_CHARSETS_*"
+      }, {
+        "type" : "term",
+        "field" : "Type",
+        "condition" : "EQUALS",
+        "value" : "Raw Reference"
+      }, {
+        "type" : "operator",
+        "op" : "NOT",
+        "children" : [ {
+          "type" : "term",
+          "field" : "Feed",
+          "condition" : "EQUALS",
+          "value" : "TEST_CHARSETS_*NO_BOM*"
+        } ]
+      } ]
+    }
+  },
+  "priority" : 10,
+  "maxProcessingTasks" : 0,
+  "reprocess" : false,
+  "enabled" : true,
+  "deleted" : false,
+  "export" : true,
+  "processorType" : "PIPELINE",
+  "processorUuid" : "c7a1e3fd-11f7-4c1c-a0ee-2f53433605a1",
+  "pipelineUuid" : "fe116dc3-d937-45f3-ac74-fb718d5d5644",
+  "pipelineName" : "TEST_CHARSETS_BOM"
+}

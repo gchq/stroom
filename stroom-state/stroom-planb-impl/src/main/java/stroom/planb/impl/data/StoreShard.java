@@ -1,6 +1,23 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.impl.data;
 
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.db.Db;
@@ -55,6 +72,7 @@ class StoreShard implements Shard {
     private static final String COMPACTED_DIR_NAME = "compacted";
 
     private final ByteBuffers byteBuffers;
+    private final ByteBufferFactory byteBufferFactory;
     private final Provider<PlanBConfig> configProvider;
     private final Path shardDir;
     private final Path snapshotDir;
@@ -71,10 +89,12 @@ class StoreShard implements Shard {
     private volatile Instant lastSnapshotTime;
 
     public StoreShard(final ByteBuffers byteBuffers,
+                      final ByteBufferFactory byteBufferFactory,
                       final Provider<PlanBConfig> configProvider,
                       final StatePaths statePaths,
                       final PlanBDoc doc) {
         this.byteBuffers = byteBuffers;
+        this.byteBufferFactory = byteBufferFactory;
         this.configProvider = configProvider;
         this.doc = doc;
         lastWriteTime = Instant.now();
@@ -439,15 +459,13 @@ class StoreShard implements Shard {
     private void open() {
         if (!open) {
             if (Files.exists(shardDir)) {
-                LOGGER.info(() -> "Found local shard for '" + doc + "'");
-                db = PlanBDb.open(doc, shardDir, byteBuffers, false);
+                LOGGER.info(() -> "Found local shard for '" + doc.asDocRef() + "'");
+                db = PlanBDb.open(doc, shardDir, byteBuffers, byteBufferFactory, false);
                 open = true;
 
             } else {
                 // If this node is supposed to be a node that stores shards, but it doesn't have it, then error.
-                final String message = "Local Plan B shard not found for '" +
-                                       doc +
-                                       "'";
+                final String message = "Local Plan B shard not found for '" + doc.asDocRef() + "'";
                 LOGGER.error(() -> message);
                 throw new RuntimeException(message);
             }

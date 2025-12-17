@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import stroom.planb.impl.data.MergeProcessor;
 import stroom.planb.impl.data.PlanBRemoteQueryResourceImpl;
 import stroom.planb.impl.data.PlanBShardInfoServiceImpl;
 import stroom.planb.impl.data.ShardManager;
+import stroom.planb.impl.data.TracesRemoteQueryResourceImpl;
 import stroom.planb.impl.pipeline.PlanBElementModule;
 import stroom.planb.impl.pipeline.PlanBLookupImpl;
 import stroom.planb.impl.pipeline.StateProviderImpl;
@@ -71,7 +72,7 @@ public class PlanBModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(PlanBShardInfoServiceImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+        GuiceUtil.buildMapBinder(binder(), Searchable.class)
                 .addBinding(PlanBShardInfoServiceImpl.class);
 
         // State
@@ -94,7 +95,8 @@ public class PlanBModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(PlanBDocResourceImpl.class)
                 .bind(FileTransferResourceImpl.class)
-                .bind(PlanBRemoteQueryResourceImpl.class);
+                .bind(PlanBRemoteQueryResourceImpl.class)
+                .bind(TracesRemoteQueryResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(StateSearchProvider.class);

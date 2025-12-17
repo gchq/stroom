@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,11 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.data.retention.impl;
 
+import stroom.data.retention.api.DataRetentionRulesProvider;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docref.DocRef;
@@ -46,7 +46,7 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @Singleton
-class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
+class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRetentionRulesProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionRulesServiceImpl.class);
     private static final String POLICY_NAME = "Data Retention";
@@ -61,7 +61,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService {
         this.securityContext = securityContext;
         final DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(
                 DataRetentionRules.class);
-        this.store = storeFactory.createStore(serialiser, DataRetentionRules.TYPE, DataRetentionRules.class);
+        this.store = storeFactory.createStore(serialiser, DataRetentionRules.TYPE, DataRetentionRules::builder);
     }
 
     ////////////////////////////////////////////////////////////////////////

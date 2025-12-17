@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.entity.client.presenter;
@@ -28,10 +27,11 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
 
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -92,63 +92,61 @@ public class InfoDocumentPresenter
         final DocRef docRef = info.getDocRef();
         final ExplorerNode explorerNode = event.getExplorerNode();
 
-        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
+        final HtmlBuilder hb = new HtmlBuilder();
         if (info.getOtherInfo() != null) {
             final int index = info.getOtherInfo().indexOf(":");
             if (index != -1) {
                 appendLine(info.getOtherInfo().substring(0, index),
                         info.getOtherInfo().substring(index + 1),
-                        sb);
+                        hb);
             }
         }
 
-        appendLine("UUID", docRef.getUuid(), sb);
-        appendLine("Type", docRef.getType(), sb);
-        appendLine("Name", docRef.getName(), sb);
+        appendLine("UUID", docRef.getUuid(), hb);
+        appendLine("Type", docRef.getType(), hb);
+        appendLine("Name", docRef.getName(), hb);
 
         if (info.getCreateUser() != null) {
-            appendLine("Created By", info.getCreateUser(), sb);
+            appendLine("Created By", info.getCreateUser(), hb);
         }
         if (info.getCreateTime() != null) {
-            appendLine("Created On", dateTimeFormatter.format(info.getCreateTime()), sb);
+            appendLine("Created On", dateTimeFormatter.format(info.getCreateTime()), hb);
         }
         if (info.getUpdateUser() != null) {
-            appendLine("Updated By", info.getUpdateUser(), sb);
+            appendLine("Updated By", info.getUpdateUser(), hb);
         }
         if (info.getUpdateTime() != null) {
-            appendLine("Updated On", dateTimeFormatter.format(info.getUpdateTime()), sb);
+            appendLine("Updated On", dateTimeFormatter.format(info.getUpdateTime()), hb);
         }
         if (NullSafe.hasItems(explorerNode.getTags())) {
 //            final SafeHtmlBuilder sbInner = new SafeHtmlBuilder();
-            appendLine("Tags", "", sb);
+            appendLine("Tags", "", hb);
 //            appendKey("Tags", sbInner);
 
             final Set<String> tags = explorerNode.getTags();
             tags.stream()
                     .sorted()
                     .forEach(tag ->
-                            appendLine("\t", tag, sb));
+                            appendLine("\t", tag, hb));
 //            sb.append(CopyTextUtil.div("infoLine", sbInner.toSafeHtml()));
         }
 
-        getView().setInfo(sb.toSafeHtml());
+        getView().setInfo(hb.toSafeHtml());
 
         forceReveal();
     }
 
-    private void appendLine(final String key, final String value, final SafeHtmlBuilder sb) {
-        final SafeHtmlBuilder sbInner = new SafeHtmlBuilder();
-        appendKey(key, sbInner);
-        sbInner.append(CopyTextUtil.render(value));
-        sb.append(CopyTextUtil.div("infoLine", sbInner.toSafeHtml()));
+    private void appendLine(final String key, final String value, final HtmlBuilder hb) {
+        hb.div(d -> {
+            appendKey(key, d);
+            d.append(CopyTextUtil.render(value, false));
+        }, Attribute.className("infoLine"));
     }
 
-    private void appendKey(final String key, final SafeHtmlBuilder sb) {
-        sb.appendHtmlConstant("<b>");
-        sb.appendEscaped(key);
-        sb.appendHtmlConstant("</b>");
+    private void appendKey(final String key, final HtmlBuilder hb) {
+        hb.bold(key);
         if (!NullSafe.isBlankString(key)) {
-            sb.appendEscaped(": ");
+            hb.append(": ");
         }
     }
 
@@ -163,7 +161,6 @@ public class InfoDocumentPresenter
 
 
     // --------------------------------------------------------------------------------
-
 
     @ProxyCodeSplit
     public interface InfoDocumentProxy extends Proxy<InfoDocumentPresenter> {

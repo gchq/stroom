@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.analytics.client.presenter;
@@ -29,6 +28,8 @@ import stroom.entity.client.presenter.HasToolbar;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.QueryToolbarPresenter;
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.Severity;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -109,7 +110,8 @@ public class AnalyticDataShardsPresenter
                         queryToolbarPresenter.onSearching(false);
                     })
                     .onFailure(t -> {
-                        queryToolbarPresenter.onError(Collections.singletonList(t.getMessage()));
+                        queryToolbarPresenter.onError(
+                                Collections.singletonList(new ErrorMessage(Severity.ERROR, t.getMessage())));
                         queryToolbarPresenter.onSearching(false);
                     })
                     .taskMonitorFactory(this)

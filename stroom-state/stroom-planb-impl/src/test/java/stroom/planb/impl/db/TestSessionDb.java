@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.planb.impl.db;
@@ -53,6 +52,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -201,8 +201,8 @@ class TestSessionDb {
                 final KeyPrefix key = valueFunction.apply(i);
                 final Session session = db.getState(new SessionRequest(key, time));
                 assertThat(session).isNotNull();
-                assertThat(session.getPrefix().getVal().type()).isEqualTo(valueFunction.apply(i).getVal().type());
-//                assertThat(value).isEqualTo(expectedVal); // Values will not be the same due to key overwrite.
+                assertThat(session.getPrefix().getVal().type()).isEqualTo(key.getVal().type());
+                assertThat(session.getPrefix().getVal()).isEqualTo(key.getVal());
             }
         }
     }
@@ -304,6 +304,6 @@ class TestSessionDb {
     }
 
     private static PlanBDoc getDoc(final SessionSettings settings) {
-        return PlanBDoc.builder().name("test").settings(settings).build();
+        return PlanBDoc.builder().uuid(UUID.randomUUID().toString()).name("test").settings(settings).build();
     }
 }

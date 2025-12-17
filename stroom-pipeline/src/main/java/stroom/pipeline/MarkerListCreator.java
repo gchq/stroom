@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.pipeline;
 
 import stroom.pipeline.shared.FetchMarkerResult;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Expander;
 import stroom.util.shared.Marker;
 import stroom.util.shared.Severity;
@@ -76,7 +77,7 @@ public class MarkerListCreator {
     private void addLine(final String line, final Map<Severity, Integer> totals,
                          final Map<Severity, List<StoredError>> markers, final Severity[] expandedSeverities) {
         final String ln = line.trim();
-        if (ln.length() > 0) {
+        if (!ln.isEmpty()) {
             boolean added = false;
             for (final Severity severity : Severity.SEVERITIES) {
                 // Try and match the severity.
@@ -123,7 +124,7 @@ public class MarkerListCreator {
             int partIndex = -1;
             int lineNo = -1;
             int colNo = -1;
-            String elementId = null;
+            ElementId elementId = null;
             String message = line;
 
             final int locatorStart = line.indexOf('[');
@@ -133,9 +134,9 @@ public class MarkerListCreator {
                     final String locator = line.substring(locatorStart + 1, locatorEnd);
                     final int space = locator.indexOf(' ');
                     if (space == -1) {
-                        elementId = locator;
+                        elementId = new ElementId(locator);
                     } else {
-                        elementId = locator.substring(space + 1);
+                        elementId = new ElementId(locator.substring(space + 1));
 
                         final String[] parts = locator.substring(0, space).split(":");
                         if (parts.length == 2) {

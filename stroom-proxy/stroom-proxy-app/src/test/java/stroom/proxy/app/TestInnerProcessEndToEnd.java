@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app;
 
 import stroom.data.shared.StreamTypeNames;
@@ -116,7 +132,7 @@ class TestInnerProcessEndToEnd {
                       final Consumer<ReceiverFactory> sender) {
         try {
             final Path root = Files.createTempDirectory("stroom-proxy");
-            LOGGER.info("root: {}", root);
+            LOGGER.debug("root: {}", root);
             ProxyLifecycle proxyLifecycle = null;
             try {
                 FileUtil.deleteContents(root);
@@ -192,7 +208,7 @@ class TestInnerProcessEndToEnd {
                 final long maxId = DirUtil.getMaxDirId(storeDir);
 
                 final Snapshot snapshot = DirectorySnapshot.of(storeDir);
-                LOGGER.info("snapshot:\n{}", snapshot);
+                LOGGER.debug("snapshot:\n{}", snapshot);
 
                 // Cope with final rolling output (hence +1).
                 assertThat(maxId).isGreaterThanOrEqualTo(expectedOutputStreamCount);

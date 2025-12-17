@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import static stroom.index.shared.IndexConstants.EVENT_ID;
 import static stroom.index.shared.IndexConstants.STREAM_ID;
@@ -61,6 +62,7 @@ import static stroom.index.shared.IndexConstants.STREAM_ID;
 
 @ConfigurableElement(
         type = "XPathExtractionOutputFilter",
+        displayValue = "XPath Extraction Output Filter",
         category = Category.FILTER,
         roles = {
                 PipelineElementType.ROLE_TARGET},
@@ -85,7 +87,7 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
     private String secondLevelElementToCreateDocs = "";
     private int depth = 0;
 
-    private HashMap<String, String> prefixMappings = new HashMap<>();
+    private Map<String, String> prefixMappings = new HashMap<>();
     private XPathExecutable[] xPathExecutables = null;
 
     private String topLevelUri = null;

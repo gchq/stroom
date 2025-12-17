@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,17 @@ package stroom.config.global.client.view;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter.GlobalPropertyEditView;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditUiHandlers;
 import stroom.svg.client.Preset;
+import stroom.svg.shared.SvgImage;
+import stroom.util.client.ClipboardUtil;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
@@ -41,6 +46,8 @@ public final class GlobalPropertyEditViewImpl
 
     @UiField
     Label name;
+    @UiField
+    InlineSvgButton copyNameButton;
     @UiField
     TextArea description;
     @UiField
@@ -108,6 +115,8 @@ public final class GlobalPropertyEditViewImpl
                 getUiHandlers().onChangeOverrideValue();
             }
         });
+
+        copyNameButton.setSvg(SvgImage.COPY);
     }
 
     @Override
@@ -220,6 +229,11 @@ public final class GlobalPropertyEditViewImpl
     @Override
     public ButtonView addDataTypeHelpIcon(final Preset preset) {
         return dataTypeButtonPanel.addButton(preset);
+    }
+
+    @UiHandler("copyNameButton")
+    public void onCopyNameButton(final ClickEvent event) {
+        ClipboardUtil.copy(name.getText());
     }
 
     public interface Binder extends UiBinder<Widget, GlobalPropertyEditViewImpl> {

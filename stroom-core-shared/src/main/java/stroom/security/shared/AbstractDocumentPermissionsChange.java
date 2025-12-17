@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.shared;
 
 import stroom.docref.DocRef;
@@ -11,6 +27,7 @@ import stroom.security.shared.AbstractDocumentPermissionsChange.RemovePermission
 import stroom.security.shared.AbstractDocumentPermissionsChange.SetAllPermissionsFrom;
 import stroom.security.shared.AbstractDocumentPermissionsChange.SetDocumentUserCreatePermissions;
 import stroom.security.shared.AbstractDocumentPermissionsChange.SetPermission;
+import stroom.util.shared.SerialisationTestConstructor;
 import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -20,6 +37,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 
@@ -74,6 +92,11 @@ public abstract sealed class AbstractDocumentPermissionsChange permits
             this.permission = permission;
         }
 
+        @SerialisationTestConstructor
+        private SetPermission() {
+            this(UserRef.builder().build(), DocumentPermission.VIEW);
+        }
+
         public UserRef getUserRef() {
             return userRef;
         }
@@ -96,6 +119,11 @@ public abstract sealed class AbstractDocumentPermissionsChange permits
             this.userRef = userRef;
         }
 
+        @SerialisationTestConstructor
+        private RemovePermission() {
+            this(UserRef.builder().build());
+        }
+
         public UserRef getUserRef() {
             return userRef;
         }
@@ -116,6 +144,11 @@ public abstract sealed class AbstractDocumentPermissionsChange permits
             Objects.requireNonNull(documentType, "Null documentType");
             this.userRef = userRef;
             this.documentType = documentType;
+        }
+
+        @SerialisationTestConstructor
+        private AddDocumentUserCreatePermission() {
+            this(UserRef.builder().build(), "test");
         }
 
         public UserRef getUserRef() {
@@ -144,6 +177,11 @@ public abstract sealed class AbstractDocumentPermissionsChange permits
             this.documentType = documentType;
         }
 
+        @SerialisationTestConstructor
+        private RemoveDocumentUserCreatePermission() {
+            this(UserRef.builder().build(), "test");
+        }
+
         public UserRef getUserRef() {
             return userRef;
         }
@@ -170,6 +208,11 @@ public abstract sealed class AbstractDocumentPermissionsChange permits
             this.documentTypes = documentTypes;
         }
 
+        @SerialisationTestConstructor
+        private SetDocumentUserCreatePermissions() {
+            this(UserRef.builder().build(), Collections.emptySet());
+        }
+
         public UserRef getUserRef() {
             return userRef;
         }
@@ -192,6 +235,11 @@ public abstract sealed class AbstractDocumentPermissionsChange permits
             this.userRef = userRef;
         }
 
+        @SerialisationTestConstructor
+        private AddAllDocumentUserCreatePermissions() {
+            this(UserRef.builder().build());
+        }
+
         public UserRef getUserRef() {
             return userRef;
         }
@@ -207,6 +255,11 @@ public abstract sealed class AbstractDocumentPermissionsChange permits
         public RemoveAllDocumentUserCreatePermissions(@JsonProperty("userRef") final UserRef userRef) {
             Objects.requireNonNull(userRef, "Null user ref");
             this.userRef = userRef;
+        }
+
+        @SerialisationTestConstructor
+        private RemoveAllDocumentUserCreatePermissions() {
+            this(UserRef.builder().build());
         }
 
         public UserRef getUserRef() {
@@ -227,6 +280,11 @@ public abstract sealed class AbstractDocumentPermissionsChange permits
             this.sourceDocRef = sourceDocRef;
         }
 
+        @SerialisationTestConstructor
+        private AddAllPermissionsFrom() {
+            this(new DocRef("test", "test"));
+        }
+
         public DocRef getSourceDocRef() {
             return sourceDocRef;
         }
@@ -242,6 +300,11 @@ public abstract sealed class AbstractDocumentPermissionsChange permits
         public SetAllPermissionsFrom(@JsonProperty("sourceDocRef") final DocRef sourceDocRef) {
             Objects.requireNonNull(sourceDocRef, "Null sourceDocRef");
             this.sourceDocRef = sourceDocRef;
+        }
+
+        @SerialisationTestConstructor
+        private SetAllPermissionsFrom() {
+            this(new DocRef("test", "test"));
         }
 
         public DocRef getSourceDocRef() {

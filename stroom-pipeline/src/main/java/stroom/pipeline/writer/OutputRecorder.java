@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package stroom.pipeline.writer;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.stepping.Recorder;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.TextRange;
 
 import org.slf4j.Logger;
@@ -32,7 +33,7 @@ public class OutputRecorder extends AbstractDestinationProvider implements Recor
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OutputRecorder.class);
     private final MemoryDestination destination = new MemoryDestination();
-    private String elementId;
+    private ElementId elementId;
 
     @Override
     public void startProcessing() {
@@ -70,12 +71,12 @@ public class OutputRecorder extends AbstractDestinationProvider implements Recor
     }
 
     @Override
-    public String getElementId() {
+    public ElementId getElementId() {
         return elementId;
     }
 
     @Override
-    public void setElementId(final String elementId) {
+    public void setElementId(final ElementId elementId) {
         this.elementId = elementId;
     }
 

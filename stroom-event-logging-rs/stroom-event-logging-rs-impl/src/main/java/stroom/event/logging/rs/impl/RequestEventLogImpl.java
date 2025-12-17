@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ class RequestEventLogImpl implements RequestEventLog {
     @Override
     public void log(final RequestInfo requestInfo, @Nullable final Object responseEntity, final Throwable error) {
         final ContainerResourceInfo containerResourceInfo = requestInfo.getContainerResourceInfo();
-        if (!containerResourceInfo.shouldLog(config)) {
+        if (!containerResourceInfo.shouldLog()) {
             return;
         }
 

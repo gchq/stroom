@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.impl.data;
 
 import stroom.util.io.FileUtil;
@@ -151,15 +167,15 @@ public class DirUtil {
             final int lastNameIdx = nameCount - 1;
             final String leafPart = path.getName(lastNameIdx).toString();
             final int leafLen = leafPart.length();
-            LOGGER.trace("path: {}, nameCount: {}, lastNameIdx: {}, leafPart: {}, leafLen: {}",
+            LOGGER.trace("isValidLeafPath() - path: {}, nameCount: {}, lastNameIdx: {}, leafPart: {}, leafLen: {}",
                     path, nameCount, lastNameIdx, leafPart, leafLen);
             if (!isValidLeafPart(leafPart)) {
-                LOGGER.trace("Invalid leafPart: {}", leafPart);
+                LOGGER.trace("isValidLeafPath() - Invalid leafPart: {}", leafPart);
                 return false;
             } else {
                 final Path expectedPath = createPath(Path.of(""), leafPart);
                 if (!path.endsWith(expectedPath)) {
-                    LOGGER.trace("path {} doesn't end with expectedPath {}", path, expectedPath);
+                    LOGGER.trace("isValidLeafPath() - path {} doesn't end with expectedPath {}", path, expectedPath);
                     return false;
                 } else {
                     return true;
@@ -187,8 +203,13 @@ public class DirUtil {
             final int lastNameIdx = nameCount - 1;
             final String leafPart = path.getName(lastNameIdx).toString();
             final int leafLen = leafPart.length();
-            LOGGER.trace("path: {}, nameCount: {}, lastNameIdx: {}, leafPart: {}, leafLen: {}",
-                    path, nameCount, lastNameIdx, leafPart, leafLen);
+            LOGGER.trace(
+                    "isValidLeafOrBranchPath() - path: {}, nameCount: {}, lastNameIdx: {}, leafPart: {}, leafLen: {}",
+                    path,
+                    nameCount,
+                    lastNameIdx,
+                    leafPart,
+                    leafLen);
             if (isValidDepthPart(leafPart)) {
                 // The depth part
                 return true;
@@ -301,12 +322,12 @@ public class DirUtil {
     }
 
     private static DirId getDirId(final Path path, final Mode mode, final AtomicReference<Path> incompletePath) {
-        LOGGER.trace("getLastDirId - path: {}, mode: {}", path, mode);
+        LOGGER.trace("getDirId() - path: {}, mode: {}", path, mode);
 
-        LOGGER.trace("Checking depthPath: '{}'", path);
+        LOGGER.trace("getDirId() - depthPath: '{}'", path);
         final Predicate<Path> pathPredicate = DirUtil::isValidLeafOrBranchPath;
         final List<DirId> dirs = findDirs(path, mode, pathPredicate);
-        LOGGER.trace(() -> LogUtil.message("Found {} dirs in {}", dirs.size(), path));
+        LOGGER.trace(() -> LogUtil.message("getDirId() - Found {} dirs in {}", dirs.size(), path));
         DirId dirId = null;
         if (!dirs.isEmpty()) {
             for (final DirId aDirId : dirs) {
@@ -328,7 +349,7 @@ public class DirUtil {
             incompletePath.compareAndSet(null, path);
         }
 
-        LOGGER.trace("getDirId - returning dirId {}", dirId);
+        LOGGER.trace("getDirId() - returning dirId {}", dirId);
         return dirId;
     }
 
@@ -341,13 +362,13 @@ public class DirUtil {
         return Files.find(path,
                         1,
                         (aPath, basicFileAttributes) -> {
-                            LOGGER.trace(() -> LogUtil.message("aPath: {}, isDirectory {}",
+                            LOGGER.trace(() -> LogUtil.message("findDirectories() - aPath: {}, isDirectory {}",
                                     aPath, basicFileAttributes.isDirectory()));
                             if (basicFileAttributes.isDirectory()) {
                                 return true;
                             } else {
                                 LOGGER.warn(() -> LogUtil.message(
-                                        "Found unexpected file '{}'. It will be ignored.",
+                                        "findDirectories() - Found unexpected file '{}'. It will be ignored.",
                                         LogUtil.path(aPath)));
                                 return false;
                             }
@@ -368,7 +389,7 @@ public class DirUtil {
             case MIN -> DIR_ID_COMPARATOR_ASC;
             case MAX -> DIR_ID_COMPARATOR_DESC;
         };
-        LOGGER.trace("findDirs - path: {}, mode: {}", path, mode);
+        LOGGER.trace("findDirs() - path: {}, mode: {}", path, mode);
         try (final Stream<Path> dirStream = findDirectories(path)) {
             return dirStream.map(
                             aPath -> {

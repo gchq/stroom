@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,10 +29,13 @@ import stroom.query.client.presenter.FieldInfoSelectionItem;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.security.shared.DocumentPermission;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.StringUtil;
 import stroom.util.shared.UserRef;
 import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
@@ -85,7 +88,8 @@ public class TermEditor extends Composite {
     private FieldSelectionListModel fieldSelectionListModel;
 
     public TermEditor(final Provider<DocSelectionBoxPresenter> docRefProvider,
-                      final Provider<UserRefSelectionBoxPresenter> userRefProvider) {
+                      final Provider<UserRefSelectionBoxPresenter> userRefProvider,
+                      final UiConfigCache uiConfigCache) {
         final DocSelectionBoxPresenter docRefPresenter = docRefProvider.get();
         docRefPresenter.setRequiredPermissions(DocumentPermission.USE);
         docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
@@ -93,12 +97,7 @@ public class TermEditor extends Composite {
 
         this.docSelectionBoxPresenter = docRefPresenter;
         this.userRefSelectionBoxPresenter = userRefProvider.get();
-        if (docSelectionBoxPresenter != null) {
-            docRefWidget = docSelectionBoxPresenter.getWidget();
-        } else {
-            docRefWidget = new Label();
-        }
-
+        docRefWidget = docSelectionBoxPresenter.getWidget();
         docRefWidget.addStyleName(ITEM_CLASS_NAME);
         docRefWidget.addStyleName("docRef");
         docRefWidget.setVisible(false);
@@ -113,7 +112,7 @@ public class TermEditor extends Composite {
         userRefWidget.addStyleName("docRef");
         userRefWidget.setVisible(false);
 
-        fieldListBox = createFieldBox();
+        fieldListBox = createFieldBox(uiConfigCache);
         conditionListBox = createConditionBox();
 
         andLabel = createLabel(" and ");
@@ -174,17 +173,21 @@ public class TermEditor extends Composite {
         fieldListBox.setModel(fieldSelectionListModel);
     }
 
+    public void update(final Term term) {
+        final String value = term.getValue();
+        write(term);
+        term.setValue(value);
+        read(term);
+    }
+
     public void startEdit(final Term term) {
         if (!editing) {
             this.term = term;
-
             read(term);
-
             Scheduler.get().scheduleDeferred(() -> {
                 bind();
                 layout.setVisible(true);
             });
-
             editing = true;
         }
     }
@@ -214,11 +217,12 @@ public class TermEditor extends Composite {
 
     private void write(final Term term) {
         final QueryField selectedField = fieldListBox.getValue();
-        if (selectedField != null && conditionListBox.getValue() != null) {
+        final Condition condition = conditionListBox.getValue();
+        if (selectedField != null && condition != null) {
             DocRef docRef = null;
 
             term.setField(selectedField.getFldName());
-            term.setCondition(conditionListBox.getValue());
+            term.setCondition(condition);
 
             final StringBuilder sb = new StringBuilder();
             for (final Widget widget : activeWidgets) {
@@ -274,11 +278,20 @@ public class TermEditor extends Composite {
                 selected = Condition.IS_USER_REF;
             } else if (conditions.contains(Condition.USER_HAS_PERM)) {
                 selected = Condition.USER_HAS_PERM;
+            } else if (conditions.contains(Condition.CONTAINS)) {
+                selected = Condition.CONTAINS;
             } else if (conditions.contains(Condition.EQUALS)) {
                 selected = Condition.EQUALS;
             } else {
                 selected = conditions.get(0);
             }
+        }
+
+        // Make the condition box wider if needed.
+        if (conditions.contains(Condition.MATCHES_REGEX_CASE_SENSITIVE)) {
+            conditionListBox.addStyleName("condition-wide");
+        } else {
+            conditionListBox.removeStyleName("condition-wide");
         }
 
         conditionListBox.setValue(selected);
@@ -318,48 +331,34 @@ public class TermEditor extends Composite {
             setActiveWidgets();
         } else {
             switch (condition) {
-                // Could be text or date range
+                case EQUALS,
+                        NOT_EQUALS,
+                        LESS_THAN,
+                        LESS_THAN_OR_EQUAL_TO,
+                        GREATER_THAN,
+                        GREATER_THAN_OR_EQUAL_TO:
+                    enterTextOrDateMode(indexFieldType);
+                    break;
                 case BETWEEN:
                     enterTextOrDateRangeMode(indexFieldType);
                     break;
-                // Could be text or date value
-                case EQUALS:
-                case NOT_EQUALS:
-                case LESS_THAN:
-                case LESS_THAN_OR_EQUAL_TO:
-                case GREATER_THAN:
-                case GREATER_THAN_OR_EQUAL_TO:
-                    enterTextOrDateMode(indexFieldType);
-                    break;
-                // Text only values
-                case IN:
-                case CONTAINS:
-                case CONTAINS_CASE_SENSITIVE:
-                case EQUALS_CASE_SENSITIVE:
-                case ENDS_WITH:
-                case ENDS_WITH_CASE_SENSITIVE:
-                case STARTS_WITH:
-                case STARTS_WITH_CASE_SENSITIVE:
-                case MATCHES_REGEX:
-                case MATCHES_REGEX_CASE_SENSITIVE:
-                    enterTextMode();
-                    break;
-                // DocRef values
-                case IN_DICTIONARY:
-                case IN_FOLDER:
-                case IS_DOC_REF:
-                case OF_DOC_REF:
+                case IN_DICTIONARY,
+                        IN_FOLDER,
+                        IS_DOC_REF,
+                        OF_DOC_REF:
                     enterDocRefMode(field, condition);
                     break;
-                // UserRef values
-                case IS_USER_REF:
-                case USER_HAS_PERM:
-                case USER_HAS_OWNER:
-                case USER_HAS_DELETE:
-                case USER_HAS_EDIT:
-                case USER_HAS_VIEW:
-                case USER_HAS_USE:
+                case IS_USER_REF,
+                        USER_HAS_PERM,
+                        USER_HAS_OWNER,
+                        USER_HAS_DELETE,
+                        USER_HAS_EDIT,
+                        USER_HAS_VIEW,
+                        USER_HAS_USE:
                     enterUserRefMode(field, condition);
+                    break;
+                default:
+                    enterTextMode();
                     break;
             }
         }
@@ -517,7 +516,6 @@ public class TermEditor extends Composite {
                     fireDirty();
                 }
             }));
-
         }
 
         registerHandler(fieldListBox.addValueChangeHandler(event -> {
@@ -547,13 +545,17 @@ public class TermEditor extends Composite {
         registrations.add(handlerRegistration);
     }
 
-    private BaseSelectionBox<QueryField, FieldInfoSelectionItem> createFieldBox() {
+    private BaseSelectionBox<QueryField, FieldInfoSelectionItem> createFieldBox(final UiConfigCache uiConfigCache) {
         final BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox =
                 new BaseSelectionBox<QueryField, FieldInfoSelectionItem>();
         fieldListBox.addStyleName(ITEM_CLASS_NAME);
         fieldListBox.addStyleName(DROPDOWN_CLASS_NAME);
         fieldListBox.addStyleName("field");
         fieldListBox.addStyleName("termEditor-item");
+        uiConfigCache.get(uiConfig ->
+                NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl ->
+                        fieldListBox.registerPopupTextProvider(() ->
+                                QuickFilterTooltipUtil.createTooltip("Field Filter", helpUrl))));
         return fieldListBox;
     }
 

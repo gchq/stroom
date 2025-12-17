@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,6 +41,8 @@ import stroom.query.api.UserTimeZone;
 import stroom.query.test.util.ConsoleColour;
 import stroom.util.io.StreamUtil;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.Severity;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -86,7 +88,7 @@ class TestSerialisation {
                                         .name("name1")
                                         .expression("expression1")
                                         .sort(new Sort(1, Sort.SortDirection.ASCENDING))
-                                        .filter(new IncludeExcludeFilter("include1", "exclude1"))
+                                        .filter(new IncludeExcludeFilter("include1", "exclude1", null, null))
                                         .format(Format.builder()
                                                 .type(Type.NUMBER)
                                                 .settings(new NumberFormatSettings(1, false))
@@ -98,7 +100,7 @@ class TestSerialisation {
                                         .name("name2")
                                         .expression("expression2")
                                         .sort(new Sort(2, Sort.SortDirection.DESCENDING))
-                                        .filter(new IncludeExcludeFilter("include2", "exclude2"))
+                                        .filter(new IncludeExcludeFilter("include2", "exclude2", null, null))
                                         .format(Format.builder()
                                                 .type(Type.DATE_TIME)
                                                 .settings(createDateTimeFormat())
@@ -281,13 +283,15 @@ class TestSerialisation {
                 rows,
                 new OffsetRange(1, 2),
                 1L,
-                Collections.singletonList("tableResultError"));
+                Collections.singletonList("tableResultError"),
+                Collections.singletonList(new ErrorMessage(Severity.ERROR, "tableResultError")));
         return new SearchResponse(
                 new QueryKey("test_uuid"),
                 List.of("highlight1", "highlight2"),
                 List.of(tableResult, getVisResult1()),
                 Collections.singletonList("some error"),
-                false);
+                false,
+                Collections.singletonList(new ErrorMessage(Severity.ERROR, "some error")));
     }
 
     private FlatResult getVisResult1() {
@@ -328,7 +332,8 @@ class TestSerialisation {
         data.add(Arrays.asList("test7", 2.33, 74, "this7"));
 
         return new FlatResult("vis-1234", structure, data, 200L,
-                Collections.singletonList("visResultError"));
+                Collections.singletonList("visResultError"),
+                Collections.singletonList(new ErrorMessage(Severity.ERROR, "visResultError")));
     }
 
 //    private VisResult getVisResult2() {

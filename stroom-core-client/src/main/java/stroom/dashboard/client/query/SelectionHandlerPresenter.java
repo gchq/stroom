@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.client.query;
@@ -51,6 +50,8 @@ public class SelectionHandlerPresenter
         this.currentSelectionPresenter = currentSelectionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
         view.setCurrentSelection(currentSelectionPresenter.getView());
+
+        currentSelectionPresenter.setInsertHandler(editExpressionPresenter::insertValue);
     }
 
     @Override
@@ -72,7 +73,10 @@ public class SelectionHandlerPresenter
             editExpressionPresenter.read(componentSelectionHandler.getExpression());
         }
         getView().setEnabled(componentSelectionHandler.isEnabled());
-        currentSelectionPresenter.refresh();
+    }
+
+    void refreshSelection(final DashboardContext dashboardContext) {
+        currentSelectionPresenter.refresh(dashboardContext, true);
     }
 
     ComponentSelectionHandler write() {
@@ -96,10 +100,6 @@ public class SelectionHandlerPresenter
     public synchronized void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         super.setTaskMonitorFactory(taskMonitorFactory);
         fieldSelectionListModel.setTaskMonitorFactory(taskMonitorFactory);
-    }
-
-    public void setDashboardContext(final DashboardContext dashboardContext) {
-        currentSelectionPresenter.setDashboardContext(dashboardContext);
     }
 
     public interface SelectionHandlerView extends View, Focus {

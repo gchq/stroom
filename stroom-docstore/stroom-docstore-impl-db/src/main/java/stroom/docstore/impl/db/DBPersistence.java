@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,10 +52,22 @@ public class DBPersistence implements Persistence {
             WHERE type = ?
             AND uuid = ?""";
 
+    private static final String SELECT_EXTENSIONS_BY_TYPE_UUID_SQL = """
+            SELECT
+              id,
+              ext
+            FROM doc
+            WHERE type = ?
+            AND uuid = ?""";
+
     private static final String DELETE_BY_UUID_SQL = """
             DELETE FROM doc
             WHERE type = ?
             AND uuid = ?""";
+
+    private static final String DELETE_BY_ID_SQL = """
+            DELETE FROM doc
+            WHERE id = ?""";
 
     private static final String LIST_BY_TYPE_SQL = """
             SELECT DISTINCT
@@ -109,14 +121,6 @@ public class DBPersistence implements Persistence {
               ext,
               data)
             VALUES (?, ?, ?, ?, ?)""";
-
-    private static final String SELECT_ID_BY_TYPE_UUID_EXT_SQL = """
-            SELECT
-            id
-            FROM doc
-            WHERE type = ?
-            AND uuid = ?
-            AND ext = ?""";
 
     private final DataSource dataSource;
 
@@ -181,9 +185,11 @@ public class DBPersistence implements Persistence {
                     throw new RuntimeException("Document already exists with uuid=" + docRef.getUuid());
                 }
 
+                // Get existing ids.
+                final Map<String, Long> existingExtensionToIdMap = getExtensionIds(docRef);
                 data.forEach((ext, bytes) -> {
                     if (update) {
-                        final Long existingId = getId(connection, docRef, ext);
+                        final Long existingId = existingExtensionToIdMap.get(ext);
                         if (existingId != null) {
                             update(connection, existingId, docRef, ext, bytes);
                         } else {
@@ -191,6 +197,14 @@ public class DBPersistence implements Persistence {
                         }
                     } else {
                         save(connection, docRef, ext, bytes);
+                    }
+                });
+
+                // Remove any old extensions.
+                existingExtensionToIdMap.forEach((ext, id) -> {
+                    if (!data.containsKey(ext)) {
+                        LOGGER.debug("Deleting doc entry {}", id);
+                        delete(id);
                     }
                 });
 
@@ -206,6 +220,40 @@ public class DBPersistence implements Persistence {
             } finally {
                 // Turn auto commit back on.
                 connection.setAutoCommit(autoCommit);
+            }
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    private Map<String, Long> getExtensionIds(final DocRef docRef) {
+        // Get existing ids.
+        final Map<String, Long> existingExtensionToIdMap = new HashMap<>();
+        try (final Connection connection = dataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection
+                    .prepareStatement(SELECT_EXTENSIONS_BY_TYPE_UUID_SQL)) {
+                preparedStatement.setString(1, docRef.getType());
+                preparedStatement.setString(2, docRef.getUuid());
+
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        existingExtensionToIdMap.put(resultSet.getString(2), resultSet.getLong(1));
+                    }
+                }
+            }
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+        return existingExtensionToIdMap;
+    }
+
+    private void delete(final long id) {
+        try (final Connection connection = dataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(DELETE_BY_ID_SQL)) {
+                preparedStatement.setLong(1, id);
+                preparedStatement.execute();
             }
         } catch (final SQLException e) {
             LOGGER.debug(e.getMessage(), e);
@@ -295,25 +343,6 @@ public class DBPersistence implements Persistence {
         try (final PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ID_BY_TYPE_UUID_SQL)) {
             preparedStatement.setString(1, docRef.getType());
             preparedStatement.setString(2, docRef.getUuid());
-
-            try (final ResultSet resultSet = preparedStatement.executeQuery()) {
-                if (resultSet.next()) {
-                    return resultSet.getLong(1);
-                }
-            }
-        } catch (final SQLException e) {
-            LOGGER.debug(e.getMessage(), e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
-
-        return null;
-    }
-
-    private Long getId(final Connection connection, final DocRef docRef, final String ext) {
-        try (final PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ID_BY_TYPE_UUID_EXT_SQL)) {
-            preparedStatement.setString(1, docRef.getType());
-            preparedStatement.setString(2, docRef.getUuid());
-            preparedStatement.setString(3, ext);
 
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {

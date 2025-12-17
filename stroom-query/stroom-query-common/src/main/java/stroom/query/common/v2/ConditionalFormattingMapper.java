@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.common.v2;
 
 import stroom.query.api.Column;
@@ -23,23 +39,29 @@ public class ConditionalFormattingMapper implements ItemMapper {
     private final List<RuleAndMatcher> rules;
     private final ItemMapper parentMapper;
     private final boolean hidesRows;
+    private final String componentId;
+    private final String componentName;
 
-    private ConditionalFormattingMapper(final ErrorConsumer errorConsumer,
+    private ConditionalFormattingMapper(final String componentId, final String componentName,
+                                        final ErrorConsumer errorConsumer,
                                         final List<RuleAndMatcher> rules,
                                         final ItemMapper parentMapper,
                                         final boolean hidesRows) {
+        this.componentId = componentId;
+        this.componentName = componentName;
         this.errorConsumer = errorConsumer;
         this.rules = rules;
         this.parentMapper = parentMapper;
         this.hidesRows = hidesRows;
     }
 
-    public static ItemMapper create(final List<Column> newColumns,
-                                          final List<ConditionalFormattingRule> rules,
-                                          final DateTimeSettings dateTimeSettings,
-                                          final ExpressionPredicateFactory expressionPredicateFactory,
-                                          final ErrorConsumer errorConsumer,
-                                          final ItemMapper parentMapper) {
+    public static ItemMapper create(final String componentId, final String componentName,
+                                    final List<Column> newColumns,
+                                    final List<ConditionalFormattingRule> rules,
+                                    final DateTimeSettings dateTimeSettings,
+                                    final ExpressionPredicateFactory expressionPredicateFactory,
+                                    final ErrorConsumer errorConsumer,
+                                    final ItemMapper parentMapper) {
         // Create conditional formatting expression matcher.
         if (rules != null) {
             boolean hidesRows = parentMapper.hidesRows();
@@ -64,15 +86,17 @@ public class ConditionalFormattingMapper implements ItemMapper {
                         final Predicate<Values> predicate = optionalValuesPredicate.orElse(t -> true);
                         ruleAndMatchers.add(new RuleAndMatcher(rule, predicate));
                     } catch (final RuntimeException e) {
-                        throw new RuntimeException("Error evaluating conditional formatting rule: " +
-                                                   rule.getExpression() +
-                                                   " (" +
-                                                   e.getMessage() +
-                                                   ")", e);
+                        throw new RuntimeException(
+                                "Error evaluating conditional formatting rule" +
+                                (componentName == null
+                                        ? ""
+                                        : " on \"" + componentName + "\" [" + componentId + "]") +
+                                ": " + rule.getExpression() + " (" + e.getMessage() + ")", e);
                     }
                 }
 
                 return new ConditionalFormattingMapper(
+                        componentId, componentName,
                         errorConsumer,
                         ruleAndMatchers,
                         parentMapper,
@@ -115,10 +139,11 @@ public class ConditionalFormattingMapper implements ItemMapper {
                 }
             } catch (final RuntimeException e) {
                 final RuntimeException exception = new RuntimeException(
-                        "Error applying conditional formatting rule: " +
-                        ruleAndMatcher.rule.toString() +
-                        " - " +
-                        e.getMessage());
+                        "Error applying conditional formatting rule" +
+                        (componentName == null
+                                ? ""
+                                : " on \"" + componentName + "\" [" + componentId + "]") +
+                        ": " + ruleAndMatcher.rule.toString() + " - " + e.getMessage());
                 LOGGER.debug(exception.getMessage(), exception);
                 errorConsumer.add(exception);
             }
@@ -131,7 +156,7 @@ public class ConditionalFormattingMapper implements ItemMapper {
         return hidesRows;
     }
 
-    private record RuleAndMatcher(ConditionalFormattingRule rule, Predicate<Values> matcher) {
+    public record RuleAndMatcher(ConditionalFormattingRule rule, Predicate<Values> matcher) {
 
     }
 }

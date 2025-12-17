@@ -4,6 +4,10 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="event-logging:3 file://event-logging-v3.0.0.xsd"
         Version="3.0.0">
+   <MetaData>
+      <Entry Key="EffectiveTime" Value="2000-01-01T00:00:00.000Z"/>
+      <Entry Key="Feed" Value="HEADLESS-EVENTS"/>
+   </MetaData>
    <Event>
       <EventTime>
          <TimeCreated>2010-01-01T00:00:00.000Z</TimeCreated>
@@ -21,8 +25,8 @@
          <User>
             <Id>user1</Id>
          </User>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:00:00 +0000"/>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:00:00 +00:00"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:00:00 ~0430000"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:00:00 ~04300:00"/>
          <Data Name="LocalTime" Value="1 Jan 2010 00:00:00 Europe/London"/>
       </EventSource>
       <EventDetail>
@@ -56,8 +60,8 @@
          <User>
             <Id>user2</Id>
          </User>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:01:00 +0000"/>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:01:00 +00:00"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:01:00 ~0430000"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:01:00 ~04300:00"/>
          <Data Name="LocalTime" Value="1 Jan 2010 00:01:00 Europe/London"/>
       </EventSource>
       <EventDetail>
@@ -91,8 +95,8 @@
          <User>
             <Id>user3</Id>
          </User>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:02:00 +0000"/>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:02:00 +00:00"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:02:00 ~0430000"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:02:00 ~04300:00"/>
          <Data Name="LocalTime" Value="1 Jan 2010 00:02:00 Europe/London"/>
       </EventSource>
       <EventDetail>
@@ -126,8 +130,8 @@
          <User>
             <Id>user4</Id>
          </User>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:03:00 +0000"/>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:03:00 +00:00"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:03:00 ~0430000"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:03:00 ~04300:00"/>
          <Data Name="LocalTime" Value="1 Jan 2010 00:03:00 Europe/London"/>
       </EventSource>
       <EventDetail>
@@ -161,8 +165,8 @@
          <User>
             <Id>user5</Id>
          </User>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:04:00 +0000"/>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:04:00 +00:00"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:04:00 ~0430000"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:04:00 ~04300:00"/>
          <Data Name="LocalTime" Value="1 Jan 2010 00:04:00 Europe/London"/>
       </EventSource>
       <EventDetail>
@@ -196,8 +200,8 @@
          <User>
             <Id>user6</Id>
          </User>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:05:00 +0000"/>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:05:00 +00:00"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:05:00 ~0430000"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:05:00 ~04300:00"/>
          <Data Name="LocalTime" Value="1 Jan 2010 00:05:00 Europe/London"/>
       </EventSource>
       <EventDetail>
@@ -231,8 +235,8 @@
          <User>
             <Id>user7</Id>
          </User>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:06:00 +0000"/>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:06:00 +00:00"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:06:00 ~0430000"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:06:00 ~04300:00"/>
          <Data Name="LocalTime" Value="1 Jan 2010 00:06:00 Europe/London"/>
       </EventSource>
       <EventDetail>
@@ -266,8 +270,8 @@
          <User>
             <Id>user8</Id>
          </User>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:07:00 +0000"/>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:07:00 +00:00"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:07:00 ~0430000"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:07:00 ~04300:00"/>
          <Data Name="LocalTime" Value="1 Jan 2010 00:07:00 Europe/London"/>
       </EventSource>
       <EventDetail>
@@ -301,8 +305,8 @@
          <User>
             <Id>user9</Id>
          </User>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:08:00 +0000"/>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:08:00 +00:00"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:08:00 ~0430000"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:08:00 ~04300:00"/>
          <Data Name="LocalTime" Value="1 Jan 2010 00:08:00 Europe/London"/>
       </EventSource>
       <EventDetail>
@@ -336,8 +340,8 @@
          <User>
             <Id>user10</Id>
          </User>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:09:00 +0000"/>
-         <Data Name="LocalTime" Value="1 Jan 2010 00:09:00 +00:00"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:09:00 ~0430000"/>
+         <Data Name="LocalTime" Value="1 Jan 2010 00:09:00 ~04300:00"/>
          <Data Name="LocalTime" Value="1 Jan 2010 00:09:00 Europe/London"/>
       </EventSource>
       <EventDetail>

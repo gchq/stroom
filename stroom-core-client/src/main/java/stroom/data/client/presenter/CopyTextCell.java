@@ -1,13 +1,25 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.data.client.presenter;
 
 import stroom.data.grid.client.EventCell;
-import stroom.data.grid.client.HasContextMenus;
-import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
-import stroom.util.shared.NullSafe;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -20,12 +32,9 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static com.google.gwt.dom.client.BrowserEvents.MOUSEDOWN;
 
-public class CopyTextCell extends AbstractCell<String> implements HasHandlers, EventCell, HasContextMenus<String> {
+public class CopyTextCell extends AbstractCell<String> implements HasHandlers, EventCell {
 
     private final EventBus eventBus;
 
@@ -59,21 +68,6 @@ public class CopyTextCell extends AbstractCell<String> implements HasHandlers, E
     }
 
     @Override
-    public List<Item> getContextMenuItems(final Context context, final String value) {
-        if (NullSafe.isNonBlankString(value)) {
-            final List<Item> menuItems = new ArrayList<>();
-            menuItems.add(new IconMenuItem.Builder()
-                    .priority(1)
-                    .icon(SvgImage.COPY)
-                    .text("Copy")
-                    .command(() -> ClipboardUtil.copy(value))
-                    .build());
-            return menuItems;
-        }
-        return null;
-    }
-
-    @Override
     public void fireEvent(final GwtEvent<?> gwtEvent) {
         eventBus.fireEvent(gwtEvent);
     }
@@ -94,6 +88,6 @@ public class CopyTextCell extends AbstractCell<String> implements HasHandlers, E
 
     @Override
     public void render(final Context context, final String value, final SafeHtmlBuilder sb) {
-        CopyTextUtil.render(value, sb);
+        CopyTextUtil.render(value, new HtmlBuilder(sb), false);
     }
 }

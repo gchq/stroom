@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -79,7 +80,7 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
     private DocRef indexRef;
     private LuceneIndexDoc index;
     private final TimePartitionFactory timePartitionFactory = new TimePartitionFactory();
-    private final TreeMap<Long, TimePartition> timePartitionTreeMap = new TreeMap<>();
+    private final NavigableMap<Long, TimePartition> timePartitionTreeMap = new TreeMap<>();
     private final Map<Partition, IndexShardKey> indexShardKeyMap = new HashMap<>();
 
     private Locator locator;
@@ -212,8 +213,8 @@ class DynamicIndexingFilter extends AbstractFieldFilter {
                 if (currentEventTime != null) {
                     final Entry<Long, TimePartition> entry = timePartitionTreeMap.floorEntry(currentEventTime);
                     if (entry != null &&
-                            entry.getValue().getPartitionFromTime() <= currentEventTime &&
-                            entry.getValue().getPartitionToTime() > currentEventTime) {
+                        entry.getValue().getPartitionFromTime() <= currentEventTime &&
+                        entry.getValue().getPartitionToTime() > currentEventTime) {
                         partition = entry.getValue();
 
                     } else {

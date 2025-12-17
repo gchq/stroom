@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import java.util.Map;
 
 public final class LuceneVersionUtil {
 
-    public static final LuceneVersion CURRENT_LUCENE_VERSION = LuceneVersion.LUCENE_9_8_0;
+    public static final LuceneVersion CURRENT_LUCENE_VERSION = LuceneVersion.LUCENE_10_3_1;
 
     private static final Map<String, LuceneVersion> VERSION_MAP = new HashMap<>();
 

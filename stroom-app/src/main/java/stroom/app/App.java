@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
+import stroom.node.impl.NodeConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
@@ -54,6 +55,7 @@ import stroom.util.logging.DefaultLoggingFilter;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.servlet.SessionUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
@@ -88,7 +90,6 @@ public class App extends Application<Config> {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(App.class);
 
     private static final String APP_NAME = "Stroom";
-    public static final String SESSION_COOKIE_NAME = "STROOM_SESSION_ID";
 
     @Inject
     private HealthChecks healthChecks;
@@ -159,10 +160,10 @@ public class App extends Application<Config> {
 
         // Add the GWT UI assets.
         bootstrap.addBundle(new DynamicAssetsBundle(
-                "/ui",
+                ResourcePaths.UI_PATH,
                 ResourcePaths.UI_PATH,
                 "index.html",
-                "ui"));
+                ResourcePaths.UI_SERVLET_NAME));
 
         // Admin servlet for Prometheus to scrape (pull) metrics
 //        bootstrap.addBundle(new PrometheusBundle());
@@ -253,22 +254,16 @@ public class App extends Application<Config> {
 
         // Add health checks
         healthChecks.register();
-
         // Add filters
         filters.register();
-
         // Add servlets
         servlets.register();
-
         // Add admin port/path servlets. Needs to be called after healthChecks.register()
         adminServlets.register();
-
         // Add session listeners.
         sessionListeners.register();
-
         // Add all injectable rest resources.
         restResources.register();
-
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
 
@@ -278,12 +273,15 @@ public class App extends Application<Config> {
     }
 
     private void showNodeInfo(final Config configuration) {
-        LOGGER.info(""
-                    + "\n********************************************************************************"
-                    + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()
-                    + "\n  Stroom temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
-                    + "\n  Node name:     " + getNodeName(configuration.getYamlAppConfig())
-                    + "\n********************************************************************************");
+        LOGGER.info("""
+                        ********************************************************************************
+                          Stroom home:   {}
+                          Stroom temp:   {}
+                          Node name:     {}
+                        ********************************************************************************""",
+                homeDirProvider.get().toAbsolutePath().normalize(),
+                tempDirProvider.get().toAbsolutePath().normalize(),
+                getNodeName(configuration.getYamlAppConfig()));
     }
 
     private void warnAboutDefaultOpenIdCreds(final Config configuration, final Injector injector) {
@@ -320,11 +318,7 @@ public class App extends Application<Config> {
     }
 
     private String getNodeName(final AppConfig appConfig) {
-        return appConfig != null
-                ? (appConfig.getNodeConfig() != null
-                ? appConfig.getNodeConfig().getNodeName()
-                : null)
-                : null;
+        return NullSafe.get(appConfig, AppConfig::getNodeConfig, NodeConfig::getNodeName);
     }
 
     private void validateAppConfig(final Config config, final Path configFile) {
@@ -362,7 +356,9 @@ public class App extends Application<Config> {
         final SessionHandler sessionHandler = new SessionHandler();
         // We need to give our session cookie a name other than JSESSIONID, otherwise it might
         // clash with other services running on the same domain.
-        sessionHandler.setSessionCookie(SESSION_COOKIE_NAME);
+        sessionHandler.setSessionCookie(SessionUtil.STROOM_SESSION_COOKIE_NAME);
+        // In case we use URL encoding of the session ID, which we currently don't
+        sessionHandler.setSessionIdPathParameterName(SessionUtil.STROOM_SESSION_COOKIE_NAME);
         long maxInactiveIntervalSecs = NullSafe.getOrElse(
                 sessionConfig.getMaxInactiveInterval(),
                 StroomDuration::getDuration,

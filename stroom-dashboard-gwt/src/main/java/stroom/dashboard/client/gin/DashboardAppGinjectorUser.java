@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import stroom.about.client.gin.AboutModule;
 import stroom.activity.client.ActivityModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
+import stroom.annotation.client.gin.AnnotationGinjector;
 import stroom.annotation.client.gin.AnnotationModule;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.FullScreenPresenter;
@@ -74,7 +75,8 @@ public interface DashboardAppGinjectorUser extends
         UserPreferencesGinjector,
         VisGinjector,
         EmbeddedQueryGinjector,
-        ChangePasswordGinjector {
+        ChangePasswordGinjector,
+        AnnotationGinjector {
 
     // Default implementation of standard resources
     EventBus getEventBus();

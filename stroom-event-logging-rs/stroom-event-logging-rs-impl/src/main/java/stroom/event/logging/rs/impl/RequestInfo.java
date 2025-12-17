@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,9 @@ class RequestInfo {
     }
 
     public static boolean objectIsLoggable(final Object obj) {
-        return obj != null && !obj.getClass().getName().startsWith("java.") && !(obj instanceof Collection);
+        return obj != null
+               && !obj.getClass().getName().startsWith("java.")
+               && !(obj instanceof Collection);
     }
 
     public RequestInfo(final SecurityContext securityContext,
@@ -105,8 +107,8 @@ class RequestInfo {
         Object result = null;
 
         //Only required for update and delete operations
-        if (OperationType.UPDATE.equals(containerResourceInfo.getOperationType()) ||
-            OperationType.DELETE.equals(containerResourceInfo.getOperationType())) {
+        if (OperationType.UPDATE == containerResourceInfo.getOperationType() ||
+            OperationType.DELETE == containerResourceInfo.getOperationType()) {
             try {
                 final boolean templateHasAnId = template instanceof HasId ||
                                                 template instanceof HasIntegerId || template instanceof HasUuid;

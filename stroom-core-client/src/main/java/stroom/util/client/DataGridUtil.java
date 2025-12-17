@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.client;
 
 import stroom.cell.expander.client.ExpanderCell;
@@ -15,10 +31,13 @@ import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CopyTextCell;
 import stroom.data.client.presenter.DocRefCell;
+import stroom.data.client.presenter.FeedRefCell;
+import stroom.data.client.presenter.HasContextMenusCell;
 import stroom.data.client.presenter.UserRefCell;
 import stroom.data.grid.client.ColSpec;
 import stroom.data.grid.client.ColumnBuilder;
 import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.HasContextMenus;
 import stroom.data.grid.client.HeadingBuilder;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.docref.DocRef;
@@ -523,6 +542,27 @@ public class DataGridUtil {
         dataGrid.addColumn(colSpec);
     }
 
+    public static <T_ROW> void addFeedColumn(final EventBus eventBus,
+                                             final MyDataGrid<T_ROW> dataGrid,
+                                             final String name,
+                                             final Function<T_ROW, String> nameExtractionFunction) {
+        final Column<T_ROW, T_ROW> column = new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(Function.identity(),
+                () -> new FeedRefCell.Builder<T_ROW>()
+                        .eventBus(eventBus)
+                        .nameFunction(nameExtractionFunction)
+                        .showIcon(true)
+                        .build())
+                .build();
+
+        final ColSpec<T_ROW> colSpec = new ColSpec.Builder<T_ROW>()
+                .column(column)
+                .resizable(true)
+                .name(name)
+                .width(ColumnSizeConstants.BIG_COL)
+                .build();
+        dataGrid.addColumn(colSpec);
+    }
+
     /**
      * A builder for creating a column for a {@link DocRef} with hover icons to copy the name of the doc
      * and to open the doc.
@@ -533,8 +573,7 @@ public class DataGridUtil {
     @SuppressWarnings("checkstyle:LineLength")
     public static <T_ROW> ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>> docRefColumnBuilder(
             final Function<T_ROW, DocRef> docRefExtractionFunction,
-            final EventBus eventBus,
-            final boolean allowLinkByName) {
+            final EventBus eventBus) {
 
         Objects.requireNonNull(docRefExtractionFunction);
 
@@ -544,7 +583,21 @@ public class DataGridUtil {
                         .Builder<T_ROW>()
                         .eventBus(eventBus)
                         .docRefFunction(docRefExtractionFunction)
-                        .allowLinkByName(allowLinkByName)
+                        .build());
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>> feedRefColumnBuilder(
+            final Function<T_ROW, String> nameExtractionFunction,
+            final EventBus eventBus) {
+
+        Objects.requireNonNull(nameExtractionFunction);
+
+        return new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(
+                Function.identity(),
+                () -> new FeedRefCell
+                        .Builder<T_ROW>()
+                        .eventBus(eventBus)
+                        .nameFunction(nameExtractionFunction)
                         .build());
     }
 
@@ -573,6 +626,12 @@ public class DataGridUtil {
     public static <T_ROW> ColumnBuilder<T_ROW, SafeHtml, Cell<SafeHtml>> htmlColumnBuilder(
             final Function<T_ROW, SafeHtml> valueExtractor) {
         return new ColumnBuilder<T_ROW, SafeHtml, Cell<SafeHtml>>(valueExtractor, SafeHtmlCell::new);
+    }
+
+    public static <T_ROW> ColumnBuilder<
+            T_ROW, SafeHtml, HasContextMenusCell<SafeHtml>> hasContextMenusColumnBuilder(
+            final Function<T_ROW, SafeHtml> valueExtractor, final HasContextMenus<SafeHtml> hasContextMenus) {
+        return new ColumnBuilder<>(valueExtractor, () -> new HasContextMenusCell<>(hasContextMenus));
     }
 
     public static <T_ROW> ColumnBuilder<T_ROW, Preset, Cell<Preset>> svgPresetColumnBuilder(

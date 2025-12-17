@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.pipeline.errorhandler;
 
+import stroom.util.shared.ElementId;
 import stroom.util.shared.ErrorType;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Location;
@@ -36,7 +37,7 @@ public class LoggingErrorReceiver implements ErrorReceiver, ErrorStatistics {
 
     // elementId => Indicators
 //    private final Map<String, Indicators> indicatorsMap = new HashMap<>();
-    private final Map<String, Map<ErrorType, Indicators>> indicatorsMap = new ConcurrentHashMap<>();
+    private final Map<ElementId, Map<ErrorType, Indicators>> indicatorsMap = new ConcurrentHashMap<>();
     private final Map<Severity, StoredErrorStats> statsMap = new ConcurrentHashMap<>();
 
 //    public LoggingErrorReceiver() {
@@ -50,7 +51,7 @@ public class LoggingErrorReceiver implements ErrorReceiver, ErrorStatistics {
     @Override
     public void log(final Severity severity,
                     final Location location,
-                    final String elementId,
+                    final ElementId elementId,
                     final String message,
                     final ErrorType errorType,
                     final Throwable e) {
@@ -83,7 +84,7 @@ public class LoggingErrorReceiver implements ErrorReceiver, ErrorStatistics {
     /**
      * All indicators for the element
      */
-    public Indicators getIndicators(final String elementId) {
+    public Indicators getIndicators(final ElementId elementId) {
         return NullSafe.get(
                 indicatorsMap.get(elementId),
                 subMap -> Indicators.combine(subMap.values()));
@@ -92,7 +93,7 @@ public class LoggingErrorReceiver implements ErrorReceiver, ErrorStatistics {
     /**
      * All indicators for the element of type errorType
      */
-    public Indicators getIndicators(final String elementId, final ErrorType errorType) {
+    public Indicators getIndicators(final ElementId elementId, final ErrorType errorType) {
         return NullSafe.get(
                 indicatorsMap.get(elementId),
                 subMap -> subMap.get(errorType));
@@ -181,7 +182,7 @@ public class LoggingErrorReceiver implements ErrorReceiver, ErrorStatistics {
     /**
      * @return Map of elementId => {@link Indicators}
      */
-    public Map<String, Indicators> getIndicatorsMap() {
+    public Map<ElementId, Indicators> getIndicatorsMap() {
         return indicatorsMap.entrySet()
                 .stream()
                 .map(entry ->

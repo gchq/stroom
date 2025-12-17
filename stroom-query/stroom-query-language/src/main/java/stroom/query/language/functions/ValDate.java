@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,29 @@ package stroom.query.language.functions;
 
 import stroom.util.concurrent.LazyValue;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.Objects;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ValDate implements ValNumber {
 
     private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
             ValDate.class, ValComparators.AS_LONG_COMPARATOR);
 
     public static final Type TYPE = Type.DATE;
+    @JsonProperty
     private final long epochMs;
+    @JsonIgnore
     private final transient LazyValue<String> lazyStringValue;
 
-    private ValDate(final long epochMs) {
+    @JsonCreator
+    private ValDate(@JsonProperty("epochMs") final long epochMs) {
         this.epochMs = epochMs;
         this.lazyStringValue = LazyValue.initialisedBy(this::deriveStringValue);
     }

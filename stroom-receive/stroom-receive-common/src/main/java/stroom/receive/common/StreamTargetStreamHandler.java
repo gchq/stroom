@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.receive.common;
@@ -75,7 +74,7 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
     private final VolumeGroupNameProvider volumeGroupNameProvider;
     private final String typeName;
     private final AttributeMap globalAttributeMap;
-    private final HashSet<Meta> streamSet;
+    private final Set<Meta> streamSet;
     private final StroomZipEntries stroomZipEntries;
     private final Map<String, Target> targetMap = new HashMap<>();
     private final ByteArrayOutputStream tempByteArrayOutputStream = new ByteArrayOutputStream();
@@ -126,7 +125,7 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
 
         // If the base name changes then reset and we will treat this as a new layer.
         final boolean requiresNewLayer = layer.hasType(stroomZipFileType) || (lastBaseName != null &&
-                !lastBaseName.equals(baseName));
+                                                                              !lastBaseName.equals(baseName));
         if (requiresNewLayer) {
             reset();
             if (singleEntry) {

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.client.view;
 
 import stroom.item.client.SelectionBox;
@@ -5,7 +21,7 @@ import stroom.preferences.client.UserPreferencesManager;
 import stroom.security.client.presenter.EditApiKeyPresenter.EditApiKeyView;
 import stroom.security.client.presenter.EditApiKeyPresenter.Mode;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
-import stroom.security.shared.ApiKeyHashAlgorithm;
+import stroom.security.shared.HashAlgorithm;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.ClipboardUtil;
 import stroom.widget.button.client.ButtonPanel;
@@ -48,7 +64,7 @@ public class EditApiKeyViewImpl
     @UiField
     MyDateBox expiresOnDateBox;
     @UiField
-    SelectionBox<ApiKeyHashAlgorithm> hashAlgorithmSelectionBox;
+    SelectionBox<HashAlgorithm> hashAlgorithmSelectionBox;
     @UiField
     CustomCheckBox enabledCheckBox;
 
@@ -76,8 +92,8 @@ public class EditApiKeyViewImpl
         widget.addAttachHandler(event -> focus());
 //        this.uiConfigCache = uiConfigCache;
 
-        hashAlgorithmSelectionBox.addItems(Arrays.stream(ApiKeyHashAlgorithm.values())
-                .sorted(Comparator.comparing(ApiKeyHashAlgorithm::getDisplayValue))
+        hashAlgorithmSelectionBox.addItems(Arrays.stream(HashAlgorithm.values())
+                .sorted(Comparator.comparing(HashAlgorithm::getDisplayValue))
                 .collect(Collectors.toList()));
 
 //        ownerSelectionBox.setDisplayValueFunction(UserName::getUserIdentityForAudit);
@@ -226,12 +242,12 @@ public class EditApiKeyViewImpl
     }
 
     @Override
-    public void setHashAlgorithm(final ApiKeyHashAlgorithm hashAlgorithm) {
+    public void setHashAlgorithm(final HashAlgorithm hashAlgorithm) {
         hashAlgorithmSelectionBox.setValue(hashAlgorithm);
     }
 
     @Override
-    public ApiKeyHashAlgorithm getHashAlgorithm() {
+    public HashAlgorithm getHashAlgorithm() {
         return hashAlgorithmSelectionBox.getValue();
     }
 

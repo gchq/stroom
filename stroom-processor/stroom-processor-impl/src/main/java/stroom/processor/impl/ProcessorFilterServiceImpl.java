@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,6 +142,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         // Blank tracker
         processorFilter.setReprocess(request.isReprocess());
         processorFilter.setEnabled(request.isEnabled());
+        processorFilter.setExport(request.isExport());
         processorFilter.setPriority(calculatedPriority);
         processorFilter.setMaxProcessingTasks(request.getMaxProcessingTasks());
         processorFilter.setProcessor(processor);
@@ -153,15 +154,19 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
     }
 
     private void setRunAs(final CreateProcessFilterRequest request, final ProcessorFilter filter) {
-        filter.setRunAsUser(NullSafe.getOrElse(request,
+        filter.setRunAsUser(NullSafe.getOrElseGet(
+                request,
                 CreateProcessFilterRequest::getRunAsUser,
-                securityContext.getUserRef()));
+                securityContext::getUserRef));
     }
 
     @Override
-    public ProcessorFilter importFilter(final Processor processor,
+    public ProcessorFilter importFilter(final ProcessorFilter existingProcessorFilter,
+                                        final Processor processor,
                                         final DocRef processorFilterDocRef,
                                         final CreateProcessFilterRequest request) {
+        LOGGER.debug("importFilter() - processorFilterDocRef: {}, existingProcessorFilter: {}",
+                processorFilterDocRef, existingProcessorFilter);
         // Check the user has read permissions on the pipeline.
         final DocRef pipelineDocRef = DocRef
                 .builder()
@@ -181,10 +186,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         }
 
         // now create the filter and tracker
-        final ProcessorFilter processorFilter = new ProcessorFilter();
+        final ProcessorFilter processorFilter = Objects.requireNonNullElseGet(
+                existingProcessorFilter,
+                ProcessorFilter::new);
+
         AuditUtil.stamp(securityContext, processorFilter);
         processorFilter.setReprocess(request.isReprocess());
         processorFilter.setEnabled(request.isEnabled());
+        processorFilter.setExport(request.isExport());
         processorFilter.setPriority(calculatedPriority);
         processorFilter.setMaxProcessingTasks(request.getMaxProcessingTasks());
         processorFilter.setProcessor(processor);
@@ -196,7 +205,13 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
             processorFilter.setUuid(processorFilterDocRef.getUuid());
         }
 
-        return create(processorFilter);
+        if (existingProcessorFilter != null) {
+            LOGGER.debug("importFilter() - updating {}", processorFilter);
+            return update(processorFilter);
+        } else {
+            LOGGER.debug("importFilter() - creating {}", processorFilter);
+            return create(processorFilter);
+        }
     }
 
     private void checkRunAs(final ProcessorFilter processorFilter) {
@@ -445,6 +460,15 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
             LOGGER.trace(e::getMessage, e);
         }
         return Optional.empty();
+    }
+
+    @Override
+    public ProcessorFilter restore(final DocRef processorFilterDocRef, final boolean resetTracker) {
+        final ProcessorFilter processorFilter = fetchByUuid(processorFilterDocRef.getUuid())
+                .orElseThrow(() ->
+                        new RuntimeException("No processor filter found for docRef " + processorFilterDocRef));
+
+        return processorFilterDao.restoreProcessorFilter(processorFilter, resetTracker);
     }
 
     @Override

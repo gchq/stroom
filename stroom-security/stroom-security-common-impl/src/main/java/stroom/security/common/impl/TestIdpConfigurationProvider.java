@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.common.impl;
 
 import stroom.security.openid.api.AbstractOpenIdConfig;
@@ -12,6 +28,7 @@ import jakarta.inject.Singleton;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -74,7 +91,13 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
     }
 
     @Override
-    public boolean isValidateAudience() {
+    public Set<String> getAllowedAudiences() {
+        showWarning();
+        return Collections.emptySet();
+    }
+
+    @Override
+    public boolean isAudienceClaimRequired() {
         showWarning();
         return false;
     }
@@ -91,6 +114,11 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
 
     @Override
     public String getUserDisplayNameClaim() {
+        throw new UnsupportedOperationException("Not supported for this implementation");
+    }
+
+    @Override
+    public String getFullNameClaimTemplate() {
         throw new UnsupportedOperationException("Not supported for this implementation");
     }
 
@@ -130,6 +158,11 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
         throw new UnsupportedOperationException("Not supported for this implementation");
     }
 
+    @Override
+    public String getPublicKeyUriPattern() {
+        throw new UnsupportedOperationException("Not supported for this implementation");
+    }
+
     private void showWarning() {
         // Show a warning every 5mins or so to remind people it is totally insecure
         final Instant now = Instant.now();
@@ -137,8 +170,8 @@ public class TestIdpConfigurationProvider implements IdpConfigurationProvider {
             synchronized (this) {
                 if (now.isAfter(nextWarningTime)) {
                     LOGGER.warn("Using default and publicly available Open ID authentication credentials. " +
-                            "This is totally insecure! Set property " + AbstractOpenIdConfig.PROP_NAME_IDP_TYPE +
-                            " to " + IdpType.EXTERNAL_IDP + "/" + IdpType.INTERNAL_IDP + ".");
+                                "This is totally insecure! Set property " + AbstractOpenIdConfig.PROP_NAME_IDP_TYPE +
+                                " to " + IdpType.EXTERNAL_IDP + "/" + IdpType.INTERNAL_IDP + ".");
                     nextWarningTime = Instant.now().plus(TIME_BETWEEN_WARNINGS);
                 }
             }

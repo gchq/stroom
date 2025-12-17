@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -43,7 +43,9 @@ import java.util.Objects;
         "conditionalFormattingRules",
         "modelVersion",
         "visSettings",
-        "applyValueFilters"})
+        "applyValueFilters",
+        "maxStringFieldLength",
+        "overrideMaxStringFieldLength"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "An object to describe how the query results should be returned, including which fields " +
         "should be included and what sorting, grouping, filtering, limiting, etc. should be applied")
@@ -110,6 +112,12 @@ public final class TableSettings {
     @JsonProperty
     private final Boolean applyValueFilters;
 
+    @JsonProperty
+    private final Integer maxStringFieldLength;
+
+    @JsonProperty
+    private final Boolean overrideMaxStringFieldLength;
+
     public TableSettings(
             final String queryId,
             final List<Column> columns,
@@ -122,7 +130,9 @@ public final class TableSettings {
             final Boolean showDetail,
             final List<ConditionalFormattingRule> conditionalFormattingRules,
             final QLVisSettings visSettings,
-            final Boolean applyValueFilters) {
+            final Boolean applyValueFilters,
+            final Integer maxStringFieldLength,
+            final Boolean overrideMaxStringFieldLength) {
         this.queryId = queryId;
         this.fields = columns;
         this.window = window;
@@ -135,6 +145,8 @@ public final class TableSettings {
         this.conditionalFormattingRules = conditionalFormattingRules;
         this.visSettings = visSettings;
         this.applyValueFilters = applyValueFilters;
+        this.maxStringFieldLength = maxStringFieldLength;
+        this.overrideMaxStringFieldLength = overrideMaxStringFieldLength;
     }
 
     @SuppressWarnings("checkstyle:LineLength")
@@ -152,7 +164,9 @@ public final class TableSettings {
             @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules,
             @JsonProperty("modelVersion") final String modelVersion, // deprecated modelVersion.
             @JsonProperty("visSettings") final QLVisSettings visSettings,
-            @JsonProperty("applyValueFilters") final Boolean applyValueFilters) {
+            @JsonProperty("applyValueFilters") final Boolean applyValueFilters,
+            @JsonProperty("maxStringFieldLength") final Integer maxStringFieldLength,
+            @JsonProperty("overrideMaxStringFieldLength") final Boolean overrideMaxStringFieldLength) {
         this.queryId = queryId;
         this.fields = fields;
         this.window = window;
@@ -166,6 +180,8 @@ public final class TableSettings {
         this.modelVersion = modelVersion;
         this.visSettings = visSettings;
         this.applyValueFilters = applyValueFilters;
+        this.maxStringFieldLength = maxStringFieldLength;
+        this.overrideMaxStringFieldLength = overrideMaxStringFieldLength;
     }
 
     public String getQueryId() {
@@ -234,6 +250,18 @@ public final class TableSettings {
         return applyValueFilters == Boolean.TRUE;
     }
 
+    public Integer getMaxStringFieldLength() {
+        return maxStringFieldLength;
+    }
+
+    public Boolean getOverrideMaxStringFieldLength() {
+        return overrideMaxStringFieldLength;
+    }
+
+    public boolean overrideMaxStringFieldLength() {
+        return overrideMaxStringFieldLength == Boolean.TRUE;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -255,7 +283,9 @@ public final class TableSettings {
                 Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
                 Objects.equals(modelVersion, that.modelVersion) &&
                 Objects.equals(visSettings, that.visSettings) &&
-                Objects.equals(applyValueFilters, that.applyValueFilters);
+                Objects.equals(applyValueFilters, that.applyValueFilters) &&
+                Objects.equals(maxStringFieldLength, that.maxStringFieldLength) &&
+                Objects.equals(overrideMaxStringFieldLength, that.overrideMaxStringFieldLength);
     }
 
     @Override
@@ -273,7 +303,9 @@ public final class TableSettings {
                 conditionalFormattingRules,
                 modelVersion,
                 visSettings,
-                applyValueFilters);
+                applyValueFilters,
+                maxStringFieldLength,
+                overrideMaxStringFieldLength);
     }
 
     @Override
@@ -290,6 +322,8 @@ public final class TableSettings {
                 ", conditionalFormattingRules=" + conditionalFormattingRules +
                 ", visSettings=" + visSettings +
                 ", applyValueFilters='" + applyValueFilters + '\'' +
+                ", maxStringFieldLength=" + maxStringFieldLength +
+                ", overrideMaxStringFieldLength=" + overrideMaxStringFieldLength +
                 '}';
     }
 
@@ -318,6 +352,8 @@ public final class TableSettings {
         private List<ConditionalFormattingRule> conditionalFormattingRules;
         private QLVisSettings visSettings;
         private Boolean applyValueFilters;
+        private Integer maxStringFieldLength;
+        private Boolean overrideMaxStringFieldLength;
 
         private Builder() {
         }
@@ -341,6 +377,8 @@ public final class TableSettings {
                     : new ArrayList<>(tableSettings.getConditionalFormattingRules());
             this.visSettings = tableSettings.visSettings;
             this.applyValueFilters = tableSettings.applyValueFilters;
+            this.maxStringFieldLength = tableSettings.maxStringFieldLength;
+            this.overrideMaxStringFieldLength = tableSettings.overrideMaxStringFieldLength;
         }
 
         /**
@@ -485,6 +523,16 @@ public final class TableSettings {
             return this;
         }
 
+        public Builder maxStringFieldLength(final Integer maxStringFieldLength) {
+            this.maxStringFieldLength = maxStringFieldLength;
+            return this;
+        }
+
+        public Builder overrideMaxStringFieldLength(final Boolean overrideMaxStringFieldLength) {
+            this.overrideMaxStringFieldLength = overrideMaxStringFieldLength;
+            return this;
+        }
+
         public TableSettings build() {
             return new TableSettings(
                     queryId,
@@ -498,7 +546,9 @@ public final class TableSettings {
                     showDetail,
                     conditionalFormattingRules,
                     visSettings,
-                    applyValueFilters);
+                    applyValueFilters,
+                    maxStringFieldLength,
+                    overrideMaxStringFieldLength);
         }
     }
 }

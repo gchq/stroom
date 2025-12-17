@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.impl.serde.val;
 
 import stroom.bytebuffer.ByteBufferUtils;
@@ -17,6 +33,7 @@ import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValShort;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValXml;
+import stroom.util.shared.NullSafe;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -26,24 +43,12 @@ import java.util.function.Function;
 
 public class ValSerdeUtil {
 
-//    public static int getLength(final Val val) {
-//        return switch (val.type()) {
-//            case NULL -> 1;
-//            case BOOLEAN -> 2;
-//            case BYTE -> 1 + Byte.BYTES;
-//            case SHORT -> 1 + Short.BYTES;
-//            case INTEGER -> 1 + Integer.BYTES;
-//            case LONG -> 1 + Long.BYTES;
-//            case FLOAT -> 1 + Float.BYTES;
-//            case DOUBLE -> 1 + Double.BYTES;
-//            case DATE -> 1 + Long.BYTES;
-//            case STRING -> 1 + val.toString().getBytes(StandardCharsets.UTF_8).length;
-//            case ERR -> 1 + val.toString().getBytes(StandardCharsets.UTF_8).length;
-//            case DURATION -> 1 + Long.BYTES;
-//            case XML -> 1 + ((ValXml) val).getByteBuffer().limit();
-//        };
-//    }
+    private static final byte[] EMPTY_BYTES = new byte[0];
 
+    public static byte[] getBytes(final Val val) {
+        final String string = val.toString();
+        return NullSafe.getOrElse(string, str -> str.getBytes(StandardCharsets.UTF_8), EMPTY_BYTES);
+    }
 
     public static <R> R write(final Val val,
                               final ByteBuffers byteBuffers,

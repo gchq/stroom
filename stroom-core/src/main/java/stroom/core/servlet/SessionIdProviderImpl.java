@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 package stroom.core.servlet;
 
 import stroom.util.servlet.SessionIdProvider;
+import stroom.util.servlet.SessionUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 
 class SessionIdProviderImpl implements SessionIdProvider {
 
@@ -37,14 +37,6 @@ class SessionIdProviderImpl implements SessionIdProvider {
      */
     @Override
     public String get() {
-        final HttpServletRequest request = httpServletRequestProvider.get();
-        if (request != null) {
-            final HttpSession httpSession = request.getSession(false);
-            if (httpSession != null) {
-                return httpSession.getId();
-            }
-        }
-
-        return null;
+        return SessionUtil.getSessionId(httpServletRequestProvider.get());
     }
 }

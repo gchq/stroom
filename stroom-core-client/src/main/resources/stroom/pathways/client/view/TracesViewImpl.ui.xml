@@ -1,0 +1,19 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max">
+        <form:FormGroup identity="dataSource" label="Data Source" addStyleNames="form-padding">
+            <g:SimplePanel ui:field="dataSource"/>
+        </form:FormGroup>
+        <g:Label ui:field="label"/>
+        <g:ThinSplitLayoutPanel styleName="max default-min-sizes">
+            <g:north size="400">
+                <g:SimplePanel ui:field="topWidget" styleName="max"/>
+            </g:north>
+            <g:center>
+                <g:SimplePanel ui:field="bottomWidget" styleName="max"/>
+            </g:center>
+        </g:ThinSplitLayoutPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

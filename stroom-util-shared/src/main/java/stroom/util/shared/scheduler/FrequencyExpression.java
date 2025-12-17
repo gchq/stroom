@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,13 @@ import java.util.Objects;
 public class FrequencyExpression {
 
     @JsonProperty
-    private String name;
+    private final String name;
     @JsonProperty
-    private String expression;
+    private final String expression;
 
     @JsonCreator
     public FrequencyExpression(@JsonProperty("name") final String name,
-                               @JsonProperty("to") final String expression) {
+                               @JsonProperty("expression") final String expression) {
         this.name = name;
         this.expression = expression;
     }

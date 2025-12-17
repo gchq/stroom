@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,14 @@
 
 package stroom.query.language.functions;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Comparator;
 import java.util.Objects;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ValBoolean implements Val {
 
     private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
@@ -27,9 +32,11 @@ public final class ValBoolean implements Val {
     public static final Type TYPE = Type.BOOLEAN;
     static final ValBoolean TRUE = new ValBoolean(true);
     static final ValBoolean FALSE = new ValBoolean(false);
+    @JsonProperty
     private final boolean value;
 
-    private ValBoolean(final boolean value) {
+    @JsonCreator
+    private ValBoolean(@JsonProperty("value") final boolean value) {
         this.value = value;
     }
 

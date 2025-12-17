@@ -1,20 +1,37 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl;
 
 import stroom.config.common.UriFactory;
 import stroom.security.api.UserIdentity;
 import stroom.security.common.impl.AuthenticationState;
-import stroom.security.common.impl.UserIdentitySessionUtil;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.servlet.SessionUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.core.UriBuilder;
 
 import java.net.URI;
@@ -43,11 +60,16 @@ class OpenIdManager {
         this.uriFactory = uriFactory;
     }
 
-    public String redirect(final HttpServletRequest request,
-                           final String code,
-                           final String stateId,
-                           final String postAuthRedirectUri) {
-        String redirectUri = null;
+    public RedirectUrl redirect(final HttpServletRequest request,
+                                final String code,
+                                final String stateId,
+                                final String postAuthRedirectUri) {
+        RedirectUrl redirectUri = null;
+        LOGGER.debug("redirect() - requestURI: {}, code: {}, stateId: {}, postAuthRedirectUri: {}",
+                request.getRequestURI(),
+                code,
+                stateId,
+                postAuthRedirectUri);
 
         // Retrieve state if we have a state id param.
         final Optional<AuthenticationState> optionalState = getState(stateId);
@@ -60,11 +82,13 @@ class OpenIdManager {
         // If we aren't doing back channel check yet or the back channel check failed then proceed with front channel.
         if (redirectUri == null) {
             // Restore the initiating URI as needed for logout.
-            redirectUri = optionalState
+            final String url = optionalState
                     .map(state -> frontChannelOIDC(state.getInitiatingUri(), state.isPrompt()))
                     .orElse(frontChannelOIDC(postAuthRedirectUri, false));
+            redirectUri = RedirectUrl.create(url);
         }
 
+        LOGGER.debug("redirect() - redirectUri: {}", redirectUri);
         return redirectUri;
     }
 
@@ -97,34 +121,40 @@ class OpenIdManager {
         return createAuthUri(endpoint, clientId, state);
     }
 
-    private String backChannelOIDC(final HttpServletRequest request,
-                                   final String code,
-                                   final AuthenticationState state) {
+    private RedirectUrl backChannelOIDC(final HttpServletRequest request,
+                                        final String code,
+                                        final AuthenticationState state) {
         Objects.requireNonNull(code, "Null code");
-
-        String redirectUri;
+        RedirectUrl redirectUri;
 
         // If we have a state id then this should be a return from the auth service.
-        LOGGER.debug(() -> LogUtil.message("We have the following backChannelOIDC state: {}", state));
+        LOGGER.debug(() -> LogUtil.message("backChannelOIDC() - state: {}, sessionId: {}, cookies: {}",
+                state,
+                NullSafe.get(request.getSession(false), HttpSession::getId),
+                request.getCookies()));
 
         try {
             final Optional<UserIdentity> optionalUserIdentity =
                     userIdentityFactory.getAuthFlowUserIdentity(request, code, state);
 
+            LOGGER.debug("backChannelOIDC() - optionalUserIdentity after back channel auth: {}", optionalUserIdentity);
+
             if (optionalUserIdentity.isPresent()) {
-                // Set the token in the session.
-                UserIdentitySessionUtil.set(request, optionalUserIdentity.get());
+                // Set the token in the session so that when we re-direct to the initiating page (i.e. '/')
+                // we will have the identity in session so won't go back round the code flow loop
 
                 // Successful login, so redirect to the original URL held in the state.
-                LOGGER.info(() -> "Redirecting to initiating URI: " + state.getInitiatingUri());
-                redirectUri = state.getInitiatingUri();
+                final String uri = state.getInitiatingUri();
+                LOGGER.debug(() -> LogUtil.message(
+                        "backChannelOIDC() - Using browser refresh to redirect to initiating URI: {}", uri));
+                redirectUri = RedirectUrl.createWithRefresh(uri);
             } else {
-                LOGGER.debug("No userIdentity so redirect to error page");
-                redirectUri = createErrorUri("Authentication failed");
+                redirectUri = RedirectUrl.create(createErrorUri("Authentication failed"));
+                LOGGER.debug("backChannelOIDC() - No userIdentity so redirect to error page: {}", redirectUri);
             }
         } catch (final Exception e) {
-            LOGGER.debug("backChannelOIDC() - {}", e.getMessage(), e);
-            redirectUri = createErrorUri(e.getMessage());
+            LOGGER.debug("backChannelOIDC() - Error: {}", LogUtil.exceptionMessage(e), e);
+            redirectUri = RedirectUrl.create(createErrorUri(e.getMessage()));
         }
 
         return redirectUri;
@@ -134,32 +164,21 @@ class OpenIdManager {
      * This method attempts to get a token from the request headers and, if present, use that to login.
      */
     public Optional<UserIdentity> loginWithRequestToken(final HttpServletRequest request) {
+        LOGGER.debug(() -> LogUtil.message("loginWithRequestToken() - session: {}",
+                SessionUtil.getSessionId(request)));
         if (userIdentityFactory.hasAuthenticationToken(request)) {
-            return userIdentityFactory.getApiUserIdentity(request);
+            final Optional<UserIdentity> optApiUserIdentity = userIdentityFactory.getApiUserIdentity(request);
+            if (LOGGER.isDebugEnabled()) {
+                final UserIdentity userIdentity = optApiUserIdentity.get();
+                LOGGER.debug("loginWithRequestToken() - Returning {} {}",
+                        LogUtil.getSimpleClassName(userIdentity),
+                        userIdentity);
+            }
+            return optApiUserIdentity;
         } else {
             LOGGER.trace("No token on request. This is valid for API calls from the front-end");
             return Optional.empty();
         }
-    }
-
-    public Optional<UserIdentity> getOrSetSessionUser(final HttpServletRequest request,
-                                                      final Optional<UserIdentity> userIdentity) {
-        Optional<UserIdentity> result = userIdentity;
-
-        if (userIdentity.isEmpty()) {
-            // Provide identity from the session if we are allowing this to happen.
-            result = UserIdentitySessionUtil.get(request.getSession(false));
-
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("User identity from session: [{}]", result.orElse(null));
-            }
-
-        } else if (UserIdentitySessionUtil.requestHasSessionCookie(request)) {
-            // Set the user ref in the session.
-            UserIdentitySessionUtil.set(request.getSession(true), userIdentity.get());
-        }
-
-        return result;
     }
 
     public String logout(final String postAuthRedirectUri) {
@@ -234,5 +253,35 @@ class OpenIdManager {
         final String uriStr = uriBuilder.build().toString();
         LOGGER.debug("Sending user to error screen with uri: {}", uriStr);
         return uriStr;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public record RedirectUrl(String redirectUrl, RedirectMode redirectMode) {
+
+        public RedirectUrl(final String redirectUrl, final RedirectMode redirectMode) {
+            this.redirectUrl = redirectUrl;
+            this.redirectMode = Objects.requireNonNullElse(redirectMode, RedirectMode.REDIRECT);
+        }
+
+        static RedirectUrl create(final String url) {
+            return new RedirectUrl(url, RedirectMode.REDIRECT);
+        }
+
+        static RedirectUrl createWithRefresh(final String url) {
+            return new RedirectUrl(url, RedirectMode.REFRESH);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum RedirectMode {
+        REDIRECT,
+        REFRESH,
+        ;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -171,11 +171,16 @@ class ScheduledTaskExecutor {
         int unManagedTaskCount = 0;
         final boolean isThisNodeEnabled = isThisNodeEnabled();
         for (final ScheduledJob scheduledJob : scheduledJobsMap.keySet()) {
+            LOGGER.trace(() -> LogUtil.message(
+                    "execute() - name: '{}', managed: {}, isThisNodeEnabled: {}, enabled: {}, schedule: {}",
+                    scheduledJob.getName(), scheduledJob.isManaged(), isThisNodeEnabled,
+                    scheduledJob.isEnabled(), scheduledJob.getSchedule()));
+
             // Managed jobs don't run on disabled nodes, but un-managed do as they are things
             // like lock keep-alive and meta flush which still need to happen
             if (isThisNodeEnabled || !scheduledJob.isManaged()) {
+                final String taskName = scheduledJob.getName();
                 try {
-                    final String taskName = scheduledJob.getName();
                     final ScheduledJobFunction function = create(scheduledJob);
                     if (function != null) {
                         if (scheduledJob.isManaged()) {
@@ -189,7 +194,8 @@ class ScheduledTaskExecutor {
                                 LOGGER.logDurationIfDebugEnabled(
                                         function, () -> scheduledJobToStr(scheduledJob));
                             } catch (final RuntimeException e) {
-                                LOGGER.error("Error executing task '{}'", taskName, e);
+                                LOGGER.error("Error executing task '{}' - {}",
+                                        taskName, LogUtil.exceptionMessage(e), e);
                             }
                         });
 
@@ -197,9 +203,18 @@ class ScheduledTaskExecutor {
                                 .runAsync(runnable, executor)
                                 .whenComplete((r, t) ->
                                         function.getRunning().set(false));
+                    } else {
+                        LOGGER.trace(() -> LogUtil.message(
+                                "execute() - Not executing {}", scheduledJobToStr(scheduledJob)));
                     }
                 } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.error("Error executing {} - {}. Enable DEBUG for stack trace.",
+                            scheduledJobToStr(scheduledJob), LogUtil.exceptionMessage(e));
+                    LOGGER.debug(() -> LogUtil.message(
+                                    "Error executing {} - {}",
+                                    scheduledJobToStr(scheduledJob),
+                                    LogUtil.exceptionMessage(e)),
+                            e);
                 }
             } else {
                 LOGGER.debug(() -> LogUtil.message("Ignoring [{}] as this node '{}' is disabled",

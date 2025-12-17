@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search.solr;
@@ -66,16 +65,13 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     private static final Pattern VALID_FIELD_NAME_PATTERN = Pattern.compile(SolrIndexField.VALID_FIELD_NAME_PATTERN);
 
     private final Store<SolrIndexDoc> store;
-    private final SecurityContext securityContext;
     private final SolrIndexClientCache solrIndexClientCache;
 
     @Inject
     SolrIndexStoreImpl(final StoreFactory storeFactory,
-                       final SecurityContext securityContext,
                        final SolrIndexClientCache solrIndexClientCache,
                        final SolrIndexSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, SolrIndexDoc.TYPE, SolrIndexDoc.class);
-        this.securityContext = securityContext;
+        this.store = storeFactory.createStore(serialiser, SolrIndexDoc.TYPE, SolrIndexDoc::builder);
         this.solrIndexClientCache = solrIndexClientCache;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,14 @@
 
 package stroom.planb.shared;
 
+import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -45,7 +46,7 @@ import java.util.Objects;
         "settings"
 })
 @JsonInclude(Include.NON_NULL)
-public class PlanBDoc extends Doc {
+public class PlanBDoc extends AbstractDoc {
 
     public static final String TYPE = "PlanB";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.PLAN_B_DOCUMENT_TYPE;
@@ -57,15 +58,8 @@ public class PlanBDoc extends Doc {
     @JsonProperty
     private final AbstractPlanBSettings settings;
 
-    public PlanBDoc() {
-        description = null;
-        stateType = null;
-        settings = null;
-    }
-
     @JsonCreator
     public PlanBDoc(
-            @JsonProperty("type") final String type,
             @JsonProperty("uuid") final String uuid,
             @JsonProperty("name") final String name,
             @JsonProperty("version") final String version,
@@ -76,7 +70,7 @@ public class PlanBDoc extends Doc {
             @JsonProperty("description") final String description,
             @JsonProperty("stateType") final StateType stateType,
             @JsonProperty("settings") final AbstractPlanBSettings settings) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.stateType = stateType;
         this.settings = settings;
@@ -92,12 +86,6 @@ public class PlanBDoc extends Doc {
 
     public AbstractPlanBSettings getSettings() {
         return settings;
-    }
-
-    @JsonIgnore
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     @Override
@@ -127,19 +115,29 @@ public class PlanBDoc extends Doc {
 
     @Override
     public String toString() {
-        return "StateDoc{" +
-               "description='" + description + '\'' +
+        return "PlanBDoc{" +
+               "type='" + getType() + '\'' +
+               ", uuid='" + getUuid() + '\'' +
+               ", name='" + getName() + '\'' +
+               ", description='" + description + '\'' +
                ", stateType=" + stateType +
                ", settings=" + settings +
                '}';
     }
 
-    public static Builder builder() {
-        return new Builder();
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(TYPE);
     }
 
     public Builder copy() {
         return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 
     public static class Builder extends AbstractBuilder<PlanBDoc, PlanBDoc.Builder> {
@@ -181,7 +179,6 @@ public class PlanBDoc extends Doc {
         @Override
         public PlanBDoc build() {
             return new PlanBDoc(
-                    type,
                     uuid,
                     name,
                     version,

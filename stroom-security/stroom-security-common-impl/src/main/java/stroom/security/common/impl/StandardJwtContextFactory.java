@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.common.impl;
 
 import stroom.security.api.exception.AuthenticationException;
@@ -6,6 +22,7 @@ import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.concurrent.CachedValue;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
 import stroom.util.json.JsonUtil;
@@ -13,6 +30,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.string.TemplateUtil;
+import stroom.util.string.TemplateUtil.Templator;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
@@ -75,6 +94,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StandardJwtContextFactory.class);
 
     // TODO: 24/02/2023 These header keys ought to be in config
+    //  Do as part of https://github.com/gchq/stroom/issues/5070
     /**
      * The access token from the token endpoint, in plain text.
      */
@@ -91,6 +111,8 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     static final String SIGNER_HEADER_KEY = "signer";
     static final String AMZN_OIDC_SIGNER_SPLIT_CHAR = ":";
     static final Pattern AMZN_REGION_PATTERN = Pattern.compile("^[a-z0-9-]+$");
+    static final String AWS_REGION_TEMPLATE_VARIABLE = "awsRegion";
+    static final String KEY_ID_TEMPLATE_VARIABLE = "keyId";
 
     private static final String AUTHORIZATION_HEADER = HttpHeaders.AUTHORIZATION;
 
@@ -102,6 +124,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     // Stateful things
     // Not clear whether AWS re-uses public keys or not so this may not be needed
     private volatile LoadingCache<String, PublicKey> awsPublicKeyCache = null; // uri => publicKey
+    private final CachedValue<Templator, String> awsPublicKeyUriTemplator;
 
     @Inject
     public StandardJwtContextFactory(final Provider<OpenIdConfiguration> openIdConfigurationProvider,
@@ -112,11 +135,18 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         this.openIdPublicKeysSupplier = openIdPublicKeysSupplier;
         this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.jerseyClientFactory = jerseyClientFactory;
+
+        this.awsPublicKeyUriTemplator = CachedValue.builder()
+                .withMaxCheckIntervalMinutes(1)
+                .withStateSupplier(() ->
+                        NullSafe.nonBlankStringElse(openIdConfigurationProvider.get().getPublicKeyUriPattern(),
+                                AbstractOpenIdConfig.DEFAULT_AWS_PUBLIC_KEY_URI_TEMPLATE))
+                .withValueFunction(template -> TemplateUtil.parseTemplate(template))
+                .build();
     }
 
     private LoadingCache<String, PublicKey> createAwsPublicKeyCache() {
         LOGGER.info("Creating cache for AWS public keys");
-        // TODO: 24/02/2023 Probably ought to come from config
         // Need to use caffeine rather than StroomCache as this is used in proxy which
         // doesn't have it
         final LoadingCache<String, PublicKey> awsPublicKeyCache;
@@ -360,8 +390,12 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                         ? "<ERROR userDisplayNameClaim not configured>"
                         : JwtUtil.getClaimValue(jwtContext, userDisplayNameClaim).orElse(null);
 
-                LOGGER.debug(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}'",
-                        uniqueIdentityClaim, uniqueId, userDisplayNameClaim, displayName));
+                LOGGER.debug(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}', aud: '{}'",
+                        uniqueIdentityClaim,
+                        uniqueId,
+                        userDisplayNameClaim,
+                        displayName,
+                        JwtUtil.getClaimValue(jwtContext, OpenId.CLAIM__AUDIENCE)));
             }
 
             // TODO : @66 Check against blacklist to see if token has been revoked. Blacklist
@@ -435,8 +469,6 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                 ? new String[]{defaultOpenIdCredentials.getOauth2Issuer()}
                 : getValidIssuers();
 
-        LOGGER.debug("Expecting issuers: {}", (Object) validIssuers);
-
         final JwtConsumerBuilder builder = new JwtConsumerBuilder()
                 .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account
                 //                                   for clock skew
@@ -449,20 +481,28 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 //                                AlgorithmIdentifiers.RSA_USING_SHA256))
                 .setExpectedIssuers(true, validIssuers);
 
-        if (openIdConfiguration.isValidateAudience()) {
-            // aud does not appear in access tokens by default it seems so make the check optional
-            final String clientId = useTestCreds
-                    ? defaultOpenIdCredentials.getOauth2ClientId()
-                    : openIdConfiguration.getClientId();
-            builder.setExpectedAudience(clientId);
+        final Set<String> allowedAudiences = openIdConfiguration.getAllowedAudiences();
+        if (NullSafe.hasItems(allowedAudiences)) {
+            // The IDP may not supply the aud claim
+            builder.setExpectedAudience(
+                    openIdConfiguration.isAudienceClaimRequired(),
+                    allowedAudiences.toArray(String[]::new));
         } else {
             builder.setSkipDefaultAudienceValidation();
         }
+        LOGGER.debug("validIssuers: {}, allowedAudiences: {}, audienceClaimRequired: {}, useTestCreds: {}",
+                validIssuers,
+                allowedAudiences,
+                openIdConfiguration.isAudienceClaimRequired(),
+                useTestCreds);
         return builder.build();
     }
 
     private PublicKey getAwsPublicKey(final JwsParts jwsParts) {
-        final String uri = getAwsPublicKeyUri(jwsParts, openIdConfigurationProvider.get().getExpectedSignerPrefixes());
+        final String uri = getAwsPublicKeyUri(
+                jwsParts,
+                openIdConfigurationProvider.get().getExpectedSignerPrefixes(),
+                awsPublicKeyUriTemplator.getValue());
 
         // Lazy initialise the cache and its timer in case we never deal with aws keys
         if (awsPublicKeyCache == null) {
@@ -478,7 +518,8 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 
     // pkg private for testing
     static String getAwsPublicKeyUri(final JwsParts jwsParts,
-                                     final Set<String> expectedSignerPrefixes) {
+                                     final Set<String> expectedSignerPrefixes,
+                                     final Templator publicKeyUriTemplator) {
 
         final Map<String, String> headerValues = jwsParts.getHeaderValues(
                 SIGNER_HEADER_KEY,
@@ -514,15 +555,22 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                     AbstractOpenIdConfig.PROP_NAME_EXPECTED_SIGNER_PREFIXES));
         }
 
-        final String keyId = Optional.ofNullable(headerValues.get(OpenId.KEY_ID))
-                .orElseThrow(() -> new RuntimeException(LogUtil.message("Missing '{}' key in jws header {}",
-                        OpenId.KEY_ID, jwsParts.header)));
+        final String keyId = NullSafe.string(headerValues.get(OpenId.KEY_ID));
+        if (NullSafe.isBlankString(keyId)) {
+            throw new RuntimeException(LogUtil.message("Missing '{}' key in jws header {}",
+                    OpenId.KEY_ID, jwsParts.header));
+        }
+        final String awsRegion = NullSafe.string(extractAwsRegionFromSigner(signer));
 
-        final String awsRegion = extractAwsRegionFromSigner(signer);
+        final String publicKeyUri = publicKeyUriTemplator.buildGenerator()
+                .addReplacement(AWS_REGION_TEMPLATE_VARIABLE, awsRegion)
+                .addReplacement(KEY_ID_TEMPLATE_VARIABLE, keyId)
+                .generate();
 
-        // TODO: 24/02/2023 Ought to come from config
-        return LogUtil.message("https://public-keys.auth.elb.{}.amazonaws.com/{}",
-                awsRegion, keyId);
+        LOGGER.debug("publicKeyUriTemplator: '{}', awsRegion: '{}', keyId: '{}', publicKeyUri: '{}'",
+                publicKeyUriTemplator, awsRegion, keyId, publicKeyUri);
+
+        return publicKeyUri;
     }
 
     private static String extractAwsRegionFromSigner(final String signer) {
@@ -561,26 +609,37 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         // Don't use injected WebTargetFactory as that slaps a token on which we don't want in
         // this case as it is an unauthenticated endpoint
         final WebTarget target = client.target(uri);
-        final Response res = target
-                .request()
-                .get();
-        final int status = res.getStatus();
-        if (status == HttpStatus.OK_200) {
-            final String pubKey = res.readEntity(String.class);
-            LOGGER.debug("Received public key '{}'", pubKey);
+        try {
+            final Response res = target
+                    .request()
+                    .get();
+            final int status = res.getStatus();
+            if (status == HttpStatus.OK_200) {
+                final String pubKey = res.readEntity(String.class);
+                LOGGER.debug("Received public key '{}'", pubKey);
 
-            // The public key is PEM format.
-            return decodePublicKey(pubKey, "EC");
-        } else {
-            throw new AuthenticationException(LogUtil.message(
-                    "Unable to retrieve public key from uri: '{}', status: {}, response: '{}'",
+                // The public key is PEM format.
+                return decodeAwsPublicKey(pubKey, "EC");
+            } else {
+                final String msg = LogUtil.message(
+                        "Unable to retrieve AWS public key from uri: '{}', status: {}, response: '{}'",
+                        uri,
+                        status,
+                        LogUtil.swallowExceptions(() -> res.readEntity(String.class)));
+                LOGGER.error(msg);
+                throw new AuthenticationException();
+            }
+        } catch (final AuthenticationException e) {
+            final String msg = LogUtil.message(
+                    "Error retrieving AWS public key from uri: '{}' - {}",
                     uri,
-                    status,
-                    LogUtil.swallowExceptions(() -> res.readEntity(String.class))));
+                    LogUtil.exceptionMessage(e));
+            LOGGER.error(msg, e);
+            throw new AuthenticationException(msg, e);
         }
     }
 
-    private PublicKey decodePublicKey(final String pem, final String alg) {
+    private PublicKey decodeAwsPublicKey(final String pem, final String alg) {
         PublicKey publicKey = null;
 
         try {
@@ -597,7 +656,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
             publicKey = keyFactory.generatePublic(keySpec);
 
         } catch (final RuntimeException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-            LOGGER.error("decodePublicKey() - alg: {}, message: {}", alg, LogUtil.exceptionMessage(e), e);
+            LOGGER.error("decodeAwsPublicKey() - alg: {}, message: {}", alg, LogUtil.exceptionMessage(e), e);
         }
 
         return publicKey;

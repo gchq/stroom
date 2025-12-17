@@ -1,6 +1,21 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.annotation.impl.db;
 
-import stroom.annotation.impl.AnnotationDao;
 import stroom.annotation.shared.AddTag;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationFields;
@@ -43,6 +58,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,7 +70,7 @@ class TestAnnotationDaoImpl {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestAnnotationDaoImpl.class);
 
     @Inject
-    private AnnotationDao annotationDao;
+    private AnnotationDaoImpl annotationDao;
     @Inject
     private AnnotationTagDaoImpl annotationTagDao;
 
@@ -62,6 +78,7 @@ class TestAnnotationDaoImpl {
     void setup() {
         Guice.createInjector(new TestModule()).injectMembers(this);
         annotationTagDao.clear();
+        annotationDao.clear();
     }
 
     @Test
@@ -90,6 +107,92 @@ class TestAnnotationDaoImpl {
                 .getAnnotationByDocRef(annotation.asDocRef());
         assertThat(optionalAnnotation).isPresent();
         assertThat(optionalAnnotation.get()).isEqualTo(annotation);
+    }
+
+    @Test
+    void testAnnotationLabels() {
+        final UserRef currentUser = new UserRef(
+                "1234",
+                "test",
+                "test",
+                "test",
+                false,
+                true);
+        final AnnotationTag label1 = createLabel("Label1");
+        final AnnotationTag label2 = createLabel("Label2");
+        final AnnotationTag label3 = createLabel("Label3");
+
+        final Annotation annotation1 = createAnnotation(currentUser);
+        final Annotation annotation2 = createAnnotation(currentUser);
+
+        addTag(currentUser, annotation1, label1);
+        addTag(currentUser, annotation1, label2);
+        addTag(currentUser, annotation2, label2);
+        addTag(currentUser, annotation2, label3);
+
+        testSearch(ExpressionOperator.builder().build(), List.of("Label1|Label2", "Label2|Label3"));
+
+        // Test equals 1.
+        testSearch(ExpressionOperator
+                .builder()
+                .addTerm(AnnotationFields.LABEL, Condition.EQUALS, "Label1")
+                .build(), List.of("Label1|Label2"));
+
+        // Test equals 2.
+        testSearch(ExpressionOperator
+                .builder()
+                .addTerm(AnnotationFields.LABEL, Condition.EQUALS, "Label3")
+                .build(), List.of("Label2|Label3"));
+
+        // Test not equals 1.
+        testSearch(ExpressionOperator
+                .builder()
+                .addTerm(AnnotationFields.LABEL, Condition.NOT_EQUALS, "Label1")
+                .build(), List.of("Label2|Label3"));
+
+        // Test not equals 2.
+        testSearch(ExpressionOperator
+                .builder()
+                .addTerm(AnnotationFields.LABEL, Condition.NOT_EQUALS, "Label3")
+                .build(), List.of("Label1|Label2"));
+
+        // Test not equals 3.
+        testSearch(ExpressionOperator
+                .builder()
+                .addTerm(AnnotationFields.LABEL, Condition.NOT_EQUALS, "Label2")
+                .build(), List.of());
+    }
+
+    private void testSearch(final ExpressionOperator expressionOperator,
+                            final List<String> expectedLabels) {
+        final FieldIndex fieldIndex = new FieldIndex();
+        fieldIndex.create(AnnotationFields.ID);
+        fieldIndex.create(AnnotationFields.LABEL);
+        List<Val[]> list = new ArrayList<>();
+        annotationDao.search(new ExpressionCriteria(
+                expressionOperator), fieldIndex, list::add, uuid -> true);
+        assertThat(list.size()).isEqualTo(expectedLabels.size());
+        // Sort by id.
+        list = list.stream().sorted(Comparator.comparing(vals -> vals[0].toLong())).toList();
+        for (int i = 0; i < expectedLabels.size(); i++) {
+            assertThat(list.get(i)[1].toString()).isEqualTo(expectedLabels.get(i));
+        }
+    }
+
+    private Annotation createAnnotation(final UserRef currentUser) {
+        final CreateAnnotationRequest createAnnotationRequest1 = CreateAnnotationRequest
+                .builder()
+                .title("Test Title")
+                .subject("Test Subject")
+                .build();
+        return annotationDao
+                .createAnnotation(createAnnotationRequest1, currentUser);
+    }
+
+    private void addTag(final UserRef currentUser, final Annotation annotation, final AnnotationTag tag) {
+        final SingleAnnotationChangeRequest request =
+                new SingleAnnotationChangeRequest(annotation.asDocRef(), new AddTag(tag));
+        annotationDao.change(request, currentUser);
     }
 
     @Test
@@ -155,7 +258,6 @@ class TestAnnotationDaoImpl {
         annotation = annotationDao.getAnnotationById(annotation.getId()).orElseThrow();
 
         final List<Val> expectedValues = List.of(
-                ValLong.create(1),
                 ValString.create(annotation.getUuid()),
                 ValDate.create(annotation.getCreateTimeMs()),
                 ValString.create(annotation.getCreateUser()),
@@ -176,7 +278,12 @@ class TestAnnotationDaoImpl {
 
         // Try all fields first.
         final FieldIndex fieldIndex = new FieldIndex();
-        AnnotationFields.FIELDS.forEach(field -> fieldIndex.create(field.getFldName()));
+        final List<QueryField> filteredFields = AnnotationFields.FIELDS
+                .stream()
+                .filter(field -> !field.equals(AnnotationFields.ID_FIELD))
+                .toList();
+
+        filteredFields.forEach(field -> fieldIndex.create(field.getFldName()));
         final List<Val[]> list = new ArrayList<>();
         annotationDao.search(new ExpressionCriteria(), fieldIndex, list::add, uuid -> true);
         assertThat(list.size()).isOne();
@@ -187,8 +294,8 @@ class TestAnnotationDaoImpl {
         }
 
         // Test each field individually.
-        for (int i = 0; i < AnnotationFields.FIELDS.size(); i++) {
-            final QueryField field = AnnotationFields.FIELDS.get(i);
+        for (int i = 0; i < filteredFields.size(); i++) {
+            final QueryField field = filteredFields.get(i);
             final FieldIndex fieldIndex2 = new FieldIndex();
             fieldIndex2.create(field.getFldName());
             final List<Val[]> list2 = new ArrayList<>();
@@ -201,7 +308,6 @@ class TestAnnotationDaoImpl {
 
         // Test each query term.
         final List<String> queryValues = List.of(
-                "1",
                 annotation.getUuid(),
                 ValDate.create(annotation.getCreateTimeMs()).toString(),
                 annotation.getCreateUser(),
@@ -220,8 +326,8 @@ class TestAnnotationDaoImpl {
                 "1",
                 "TEST_FEED_NAME");
 
-        for (int i = 0; i < AnnotationFields.FIELDS.size() && i < queryValues.size(); i++) {
-            final QueryField field = AnnotationFields.FIELDS.get(i);
+        for (int i = 0; i < filteredFields.size() && i < queryValues.size(); i++) {
+            final QueryField field = filteredFields.get(i);
             final FieldIndex fieldIndex2 = new FieldIndex();
             fieldIndex2.create(field.getFldName());
             final List<Val[]> list2 = new ArrayList<>();
@@ -252,8 +358,8 @@ class TestAnnotationDaoImpl {
         }
 
         // Test each query term with no matching result field.
-        for (int i = 0; i < AnnotationFields.FIELDS.size() && i < queryValues.size(); i++) {
-            final QueryField field = AnnotationFields.FIELDS.get(i);
+        for (int i = 0; i < filteredFields.size() && i < queryValues.size(); i++) {
+            final QueryField field = filteredFields.get(i);
             final FieldIndex fieldIndex2 = new FieldIndex();
             fieldIndex2.create(AnnotationFields.UUID);
             final List<Val[]> list2 = new ArrayList<>();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.processor.impl;
@@ -209,20 +208,20 @@ public class DataProcessorTaskHandler {
 
     private void log(final TaskContext taskContext, final Meta meta, final Processor destStreamProcessor) {
         if (destStreamProcessor.getPipelineUuid() != null) {
-            taskContext.info(() -> "Stream " +
+            taskContext.info(() -> "meta_id=" +
                     meta.getId() +
-                    " " +
+                    ", created=" +
                     DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
-                    " " +
+                    ", processor type=" +
                     destStreamProcessor.getProcessorType() +
-                    " " +
+                    ", pipeline uuid=" +
                     destStreamProcessor.getPipelineUuid());
         } else {
-            taskContext.info(() -> "Stream " +
+            taskContext.info(() -> "meta_id=" +
                     meta.getId() +
-                    " " +
+                    ", created=" +
                     DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
-                    " " +
+                    ", processor type=" +
                     destStreamProcessor.getProcessorType());
         }
     }

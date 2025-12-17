@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,22 @@
 
 package stroom.pipeline.errorhandler;
 
+import stroom.util.shared.ElementId;
 import stroom.util.shared.ErrorType;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
 public class ErrorReceiverIdDecorator implements ErrorReceiver {
-    private final String id;
+    private final ElementId id;
     private final ErrorReceiver errorReceiver;
 
-    public ErrorReceiverIdDecorator(final String id, final ErrorReceiver errorReceiver) {
+    public ErrorReceiverIdDecorator(final ElementId id, final ErrorReceiver errorReceiver) {
         this.id = id;
         this.errorReceiver = errorReceiver;
     }
 
     @Override
-    public void log(final Severity severity, final Location location, final String elementId, final String message,
+    public void log(final Severity severity, final Location location, final ElementId elementId, final String message,
                     final ErrorType errorType, final Throwable e) {
         final String msg = MessageUtil.getMessage(message, e);
         errorReceiver.log(severity, location, id, elementId + " - " + msg, errorType, e);

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
@@ -5,10 +21,10 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.EditApiKeyPresenter.EditApiKeyView;
-import stroom.security.shared.ApiKeyHashAlgorithm;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.CreateHashedApiKeyRequest;
+import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
@@ -96,7 +112,7 @@ public class EditApiKeyPresenter
             if (Mode.PRE_CREATE.equals(mode)) {
                 getView().setHashAlgorithm(NullSafe.requireNonNullElse(
                         uiConfigCache.getDefaultApiKeyHashAlgorithm(),
-                        ApiKeyHashAlgorithm.DEFAULT));
+                        HashAlgorithm.DEFAULT));
             }
             ShowPopupEvent.builder(this)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -345,8 +361,8 @@ public class EditApiKeyPresenter
 
         void reset(Long milliseconds);
 
-        void setHashAlgorithm(ApiKeyHashAlgorithm hashAlgorithm);
+        void setHashAlgorithm(HashAlgorithm hashAlgorithm);
 
-        ApiKeyHashAlgorithm getHashAlgorithm();
+        HashAlgorithm getHashAlgorithm();
     }
 }

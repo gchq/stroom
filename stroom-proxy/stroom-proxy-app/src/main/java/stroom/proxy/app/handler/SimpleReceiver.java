@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
@@ -10,6 +26,8 @@ import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStream.EventType;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
+import stroom.receive.common.InputStreamUtils;
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.StroomStreamException;
 import stroom.security.api.CommonSecurityContext;
 import stroom.util.io.FileUtil;
@@ -18,6 +36,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.slf4j.Logger;
@@ -41,6 +60,7 @@ public class SimpleReceiver implements Receiver {
     private static final String META_FILE_NAME = "0000000001.meta";
     private static final String DATA_FILE_NAME = "0000000001.dat";
 
+    private final ReceiveDataConfig receiveDataConfig;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final NumberedDirProvider receivingDirProvider;
     private final CommonSecurityContext commonSecurityContext;
@@ -53,11 +73,13 @@ public class SimpleReceiver implements Receiver {
                           final DataDirProvider dataDirProvider,
                           final CommonSecurityContext commonSecurityContext,
                           final LogStream logStream,
-                          final DropReceiver dropReceiver) {
+                          final DropReceiver dropReceiver,
+                          final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.commonSecurityContext = commonSecurityContext;
         this.logStream = logStream;
         this.dropReceiver = dropReceiver;
+        this.receiveDataConfig = receiveDataConfigProvider.get();
 
         // Make receiving zip dir.
         final Path receivingDir = dataDirProvider.get().resolve(DirNames.RECEIVING_SIMPLE);
@@ -118,12 +140,14 @@ public class SimpleReceiver implements Receiver {
                     // Deal with GZIP compression.
                     final String compression = attributeMap.get(StandardHeaderArguments.COMPRESSION);
                     final InputStream in = StandardHeaderArguments.COMPRESSION_GZIP.equalsIgnoreCase(compression)
-                            ? new GzipCompressorInputStream(bufferedInputStream)
+                                ? new GzipCompressorInputStream(bufferedInputStream, true)
                             : bufferedInputStream;
 
                     // Write the .dat file in the zip
-                    bytesRead = zipWriter.writeStream(DATA_FILE_NAME, in);
-
+                    try (final InputStream boundedInputStream = InputStreamUtils.getBoundedInputStream(
+                            in, receiveDataConfig.getMaxRequestSize())) {
+                        bytesRead = zipWriter.writeStream(DATA_FILE_NAME, boundedInputStream);
+                    }
 
                     final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
                     final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);

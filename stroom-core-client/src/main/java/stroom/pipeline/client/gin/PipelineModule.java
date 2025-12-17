@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,10 @@ import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
 import stroom.processor.client.view.BatchProcessorFilterEditViewImpl;
 import stroom.processor.client.view.ProcessorEditViewImpl;
 import stroom.processor.client.view.ProcessorViewImpl;
+import stroom.processor.task.client.ProcessorTaskPlugin;
+import stroom.processor.task.client.presenter.ProcessorTaskPresenter;
+import stroom.processor.task.client.presenter.ProcessorTaskPresenter.ProcessorTaskView;
+import stroom.processor.task.client.view.ProcessorTaskViewImpl;
 
 import com.google.inject.Singleton;
 
@@ -121,6 +125,10 @@ public class PipelineModule extends PluginModule {
                 BatchProcessorFilterEditPresenter.class,
                 BatchProcessorFilterEditView.class,
                 BatchProcessorFilterEditViewImpl.class);
+
+        bindPlugin(ProcessorTaskPlugin.class);
+        bindPresenterWidget(ProcessorTaskPresenter.class, ProcessorTaskView.class,
+                ProcessorTaskViewImpl.class);
 
         bind(EditorMenuPresenter.class).in(Singleton.class);
     }

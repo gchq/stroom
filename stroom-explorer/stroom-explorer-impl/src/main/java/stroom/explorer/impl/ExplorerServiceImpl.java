@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -181,6 +181,9 @@ class ExplorerServiceImpl
                         OpenItemsImpl.create(criteria.getEnsureVisible()));
             }
 
+            // Add favourites nodes to the master tree model.
+            buildFavouritesNode(masterTreeModelClone);
+
             // See if we need to open any more folders to see nodes we want to ensure are visible.
             final Set<ExplorerNodeKey> forcedOpenItems = getForcedOpenItems(masterTreeModelClone, criteria);
 
@@ -217,7 +220,6 @@ class ExplorerServiceImpl
                 .stream()
                 .map(DocRef::getUuid)
                 .collect(Collectors.toSet());
-        buildFavouritesNode(masterTreeModelClone);
 
         final FilteredTreeModel filteredModel = new FilteredTreeModel(
                 masterTreeModelClone.getId(),
@@ -243,7 +245,7 @@ class ExplorerServiceImpl
                 metrics);
 
         // Sort the tree model
-        filteredModel.sort(this::getPriority);
+        filteredModel.sort();
 
         // If the name filter has changed then we want to temporarily expand all nodes.
         final Set<ExplorerNodeKey> temporaryOpenItems;
@@ -599,7 +601,6 @@ class ExplorerServiceImpl
         if (criteria.getMinDepth() != null && criteria.getMinDepth() > 0) {
             forceMinDepthOpen(masterTreeModel, forcedOpen, null, null,
                     criteria.getMinDepth(), 1);
-            forcedOpen.add(ExplorerConstants.FAVOURITES_NODE.getUniqueKey());
         }
 
         return forcedOpen;
@@ -1062,10 +1063,11 @@ class ExplorerServiceImpl
         remappings.values().forEach(newExplorerNode -> {
             final ExplorerActionHandler handler = explorerActionHandlers.getHandler(newExplorerNode.getType());
             if (handler != null) {
-                final HashMap<DocRef, DocRef> docRefRemappings = new HashMap<>();
-                for (final var remapping : remappings.entrySet()) {
-                    docRefRemappings.put(remapping.getKey().getDocRef(), remapping.getValue().getDocRef());
-                }
+                final Map<DocRef, DocRef> docRefRemappings = remappings.entrySet()
+                        .stream()
+                        .collect(Collectors.toMap(
+                                entry -> entry.getKey().getDocRef(),
+                                entry -> entry.getValue().getDocRef()));
                 handler.remapDependencies(newExplorerNode.getDocRef(), docRefRemappings);
             }
         });
@@ -1401,7 +1403,7 @@ class ExplorerServiceImpl
         explorerNodes.forEach(explorerNode ->
                 EntityEvent.fire(entityEventBus, explorerNode.getDocRef(), EntityAction.PRE_DELETE));
 
-        final HashSet<ExplorerNode> deleted = new HashSet<>();
+        final Set<ExplorerNode> deleted = new HashSet<>();
         explorerNodes.forEach(explorerNode -> {
             // Check this document hasn't already been deleted.
             if (!deleted.contains(explorerNode)) {
@@ -1420,7 +1422,7 @@ class ExplorerServiceImpl
     }
 
     private void recursiveDelete(final List<ExplorerNode> explorerNodes,
-                                 final HashSet<ExplorerNode> deleted,
+                                 final Set<ExplorerNode> deleted,
                                  final List<ExplorerNode> resultDocRefs,
                                  final StringBuilder resultMessage) {
         explorerNodes.forEach(explorerNode -> {

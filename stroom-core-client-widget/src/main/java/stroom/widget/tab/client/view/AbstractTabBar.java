@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.widget.tab.client.view;
 
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.ShowMenuEvent.Handler;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -41,23 +42,25 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
-public abstract class AbstractTabBar extends Widget implements TabBar, RequiresResize {
+public abstract class AbstractTabBar extends FlowPanel implements TabBar, RequiresResize {
 
     private final Map<TabData, AbstractTab> tabWidgetMap = new HashMap<>();
-    private final List<TabData> tabPriority = new ArrayList<>();
-    private final List<TabData> tabs = new ArrayList<>();
+    private final ArrayList<TabData> tabs = new ArrayList<>();
     private final List<TabData> visibleTabs = new ArrayList<>();
     private TabData selectedTab;
     private TabData keyboardSelectedTab;
@@ -85,6 +88,13 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     @Override
     public void addTab(final TabData tabData) {
+        final int insertIndex;
+        if (selectedTab == null || tabs.isEmpty()) {
+            insertIndex = tabs.size();
+        } else {
+            insertIndex = indexOf(selectedTab) + 1;
+        }
+
         if (tabs.isEmpty()) {
             keyboardSelectedTab = tabData;
         }
@@ -95,10 +105,9 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
         final AbstractTab tab = createTab(tabData);
         makeInvisible(tab.getElement());
-        getElement().appendChild(tab.getElement());
+        insert(tab, insertIndex);
         tabWidgetMap.put(tabData, tab);
-        tabs.add(tabData);
-        tabPriority.add(tabData);
+        tabs.add(insertIndex, tabData);
 
         onResize();
         updateTabCount();
@@ -106,22 +115,88 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     @Override
     public void removeTab(final TabData tabData) {
+        removeTab(tabData, true);
+    }
+
+    @Override
+    public void removeTab(final TabData tabData, final boolean resize) {
         final Widget tab = tabWidgetMap.get(tabData);
         if (tab != null) {
+            final int minVisibleTab = visibleTabs.isEmpty() ? -1 : indexOf(visibleTabs.get(0));
+            final int maxVisibleTab = visibleTabs.isEmpty() ? -1 : indexOf(visibleTabs.get(visibleTabs.size() - 1));
+            final int tabsSize = tabs.size() - 1;
+            final int tabIndex = tabs.indexOf(tabData);
+
             makeInvisible(tab.getElement());
-            getElement().removeChild(tab.getElement());
+            remove(tab);
             tabWidgetMap.remove(tabData);
             tabs.remove(tabData);
-            tabPriority.remove(tabData);
 
-            if (!tabPriority.isEmpty()) {
-                keyboardSelectedTab = tabPriority.get(0);
-                fireTabSelection(tabPriority.get(0));
-                onResize();
+            final int nextSelected = Math.max(0, tabIndex - 1);
+
+            if (resize) {
+                if (!tabs.isEmpty()) {
+                    if (tabData == selectedTab) {
+                        // select tab on the left of the removed tab
+                        keyboardSelectedTab = tabs.get(nextSelected);
+                        fireTabSelection(tabs.get(nextSelected));
+                    }
+
+                    visibleTabs.clear();
+
+                    if (maxVisibleTab < tabsSize) {
+                        // keep current lhs tab if there are non-visible tabs to the right
+                        onResize(minVisibleTab);
+                    } else if (minVisibleTab > 0) {
+                        // or move left one tab if there are non-visible tabs to the left
+                        onResize(minVisibleTab - 1);
+                    } else if (maxVisibleTab == tabsSize) {
+                        // or keep lhs tab if there are no non-visible tabs to show
+                        onResize(minVisibleTab);
+                    } else {
+                        // otherwise calculate out the new visible tabs
+                        onResize();
+                    }
+                } else {
+                    selectTab(null);
+                }
+                updateTabCount();
             } else {
-                selectTab(null);
+                selectedTab = tabs.get(nextSelected);
             }
-            updateTabCount();
+        }
+    }
+
+    @Override
+    public void moveTab(final TabData tabData, final int tabPos) {
+        final Widget tabWidget = tabWidgetMap.get(tabData);
+        if (tabWidget != null) {
+            final int minVisibleTab = indexOf(visibleTabs.get(0));
+            final int maxVisibleTab = indexOf(visibleTabs.get(visibleTabs.size() - 1));
+
+            final boolean tabPosVisible = tabPos >= minVisibleTab && tabPos <= maxVisibleTab;
+            // clear out visible tabs so we display the moved tab in the correct place
+            if (!tabPosVisible) {
+                visibleTabs.clear();
+            }
+
+            final int startIndex = tabPosVisible
+                    ? minVisibleTab
+                    : -1;
+
+            remove(tabWidget);
+            tabWidgetMap.remove(tabData);
+            tabs.remove(tabData);
+
+            final AbstractTab tab = createTab(tabData);
+            insert(tab, tabPos);
+            tabWidgetMap.put(tabData, tab);
+            tabs.add(tabPos, tabData);
+
+            onResize(startIndex);
+
+            keyboardSelectTab(tabData);
+            fireTabSelection(tabData);
         }
     }
 
@@ -130,13 +205,12 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         getElement().removeAllChildren();
         tabWidgetMap.clear();
         tabs.clear();
-        tabPriority.clear();
 
         onResize();
         updateTabCount();
     }
 
-    private void keyboardSelectTab(final TabData tabData) {
+    protected void keyboardSelectTab(final TabData tabData) {
         keyboardSelectedTab = tabData;
         onResize();
     }
@@ -155,12 +229,8 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
             selectedTab = tabData;
             keyboardSelectedTab = tabData;
             if (selectedTab != null) {
-                tabPriority.remove(tabData);
-
                 final AbstractTab tab = getTab(selectedTab);
-                if (tab != null) {
-                    tabPriority.add(0, tabData);
-                } else {
+                if (tab == null) {
                     selectedTab = null;
                 }
             }
@@ -184,113 +254,59 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         onResize();
     }
 
+    private int indexOf(final TabData tabData) {
+        if (tabData == null) {
+            return 0;
+        }
+
+        return Math.max(tabs.indexOf(tabData), 0);
+    }
+
     @Override
     public void onResize() {
+        onResize(-1);
+    }
+
+    private void onResize(final int startIndex) {
 //        GWT.log("onResize");
+        overflowTabCount = 0;
 
-        Element tabIndexElement = null;
+        // Figure out how many tabs are not visible because they overflow the bar width.
+        if (getElement().getOffsetWidth() > 0) {
 
-        // Clear all visible tabs.
-        visibleTabs.clear();
+            Set<TabData> displayableTabs = new HashSet<>();
 
-        final int tabGap = getTabGap();
-        final int selectorWidth = getTabSelector().getOffsetWidth();
+            if (startIndex != -1 || visibleTabs.contains(selectedTab)) {
+                // use the given start index or the current one if we are already showing the selected tab
+                final int newStartIndex = startIndex == -1
+                        ? indexOf(visibleTabs.get(0))
+                        : startIndex;
+                displayableTabs = getDisplayableTabs(newStartIndex);
 
-        // Figure out how many tabs are not visible because they overflow the bar
-        // width.
-        int remaining = getElement().getOffsetWidth();
-        if (remaining > 0) {
-            overflowTabCount = 0;
+            } else {
+                // otherwise loop through from the start and find which tabs to show
+                // if the selected tab is over halfway through then show it on the rhs
+                final int indexOfSelectedTab = indexOf(selectedTab);
+                final int newStartIndex = indexOfSelectedTab < tabs.size() / 2
+                        ? indexOfSelectedTab
+                        : 0;
 
-            // Find the index of the last displayable tab.
-            final Set<TabData> displayable = new HashSet<>();
-            boolean overflow = false;
-            for (int i = 0; i < tabPriority.size(); i++) {
-                final TabData tabData = tabPriority.get(i);
-                final AbstractTab tab = getTab(tabData);
-
-                // Ignore tabs that have been deliberately hidden.
-                if (tab != null && !tab.isHidden()) {
-                    if (!overflow) {
-                        remaining -= tab.getOffsetWidth();
-                        if (i > 0) {
-                            final Element separator = addSeparator();
-                            if (separator != null) {
-                                remaining -= separator.getOffsetWidth();
-                            }
-                            remaining -= tabGap;
-                        }
-
-                        // We will require more space to the right of the tab if
-                        // we need to show the tab selector.
-                        int requiredSpace = 0;
-                        if (i < tabPriority.size() - 1) {
-                            requiredSpace = selectorWidth;
-                        }
-
-                        if (remaining < requiredSpace) {
-                            overflow = true;
-                            overflowTabCount++;
-                        } else {
-                            displayable.add(tabData);
-                        }
-
-                    } else {
-                        overflowTabCount++;
+                for (int i = newStartIndex; i < tabs.size(); i++) {
+                    displayableTabs = getDisplayableTabs(i);
+                    if (selectedTab == null || displayableTabs.contains(selectedTab)) {
+                        break;
                     }
                 }
             }
+
+            final int tabCount = tabs.stream().map(this::getTab).filter(Predicate.not(AbstractTab::isHidden))
+                    .collect(Collectors.toSet()).size();
+            overflowTabCount = tabCount - displayableTabs.size();
 
             // Remove any separators that might be present.
             removeSeparators();
 
-            // Loop through the tabs in display order and make them visible if
-            // they are prioritised.
-            int x = 0;
-            for (final TabData tabData : tabs) {
-                final AbstractTab tab = getTab(tabData);
-
-                // Deal with tabs that have been deliberately hidden.
-                boolean visible = false;
-                if (tab != null && !tab.isHidden() && displayable.contains(tabData)) {
-                    if (x > 0) {
-                        final Element separator = addSeparator();
-                        if (separator != null) {
-                            separator.getStyle().setLeft(x, Unit.PX);
-                            x += separator.getOffsetWidth();
-                        }
-                    }
-
-                    visible = true;
-                    makeVisible(tab.getElement(), x);
-                    visibleTabs.add(tabData);
-                    x += tab.getOffsetWidth() + tabGap;
-
-                    if (keyboardSelectedTab == null && overflowTabCount == 0) {
-                        keyboardSelectedTab = tabData;
-                    }
-                }
-
-                if (!visible) {
-                    makeInvisible(tab.getElement());
-                }
-
-                if (visible && tabData.equals(keyboardSelectedTab)) {
-                    tabIndexElement = tab.getElement();
-                }
-
-                tab.setKeyboardSelected(visible && tabData.equals(keyboardSelectedTab));
-                tab.setSelected(visible && tabData.equals(selectedTab));
-            }
-
-            if (!visibleTabs.contains(keyboardSelectedTab)) {
-                if (overflowTabCount > 0) {
-                    keyboardSelectedTab = null;
-                }
-            }
-
-            x += 2;
-            setOverflowTabCount(x, overflowTabCount);
+            Element tabIndexElement = buildTabBar(displayableTabs);
 
             if (tabIndexElement == null) {
                 tabIndexElement = getTabSelector().getElement();
@@ -298,6 +314,107 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
             switchTabIndexElement(tabIndexElement);
         }
+    }
+
+    private Element buildTabBar(final Set<TabData> displayableTabs) {
+        Element tabIndexElement = null;
+
+        final int tabGap = getTabGap();
+
+        // Clear all visible tabs.
+        visibleTabs.clear();
+
+        // Loop through the tabs in display order and make them visible
+        int x = 0;
+        for (final TabData tabData : tabs) {
+            final AbstractTab tab = getTab(tabData);
+
+            // Deal with tabs that have been deliberately hidden.
+            boolean visible = false;
+            if (tab != null && !tab.isHidden() && displayableTabs.contains(tabData)) {
+                if (x > 0) {
+                    final Element separator = addSeparator();
+                    if (separator != null) {
+                        separator.getStyle().setLeft(x, Unit.PX);
+                        x += separator.getOffsetWidth();
+                    }
+                }
+
+                visible = true;
+                makeVisible(tab.getElement(), x);
+                visibleTabs.add(tabData);
+                x += tab.getOffsetWidth() + tabGap;
+
+                if (keyboardSelectedTab == null && overflowTabCount == 0) {
+                    keyboardSelectedTab = tabData;
+                }
+            }
+
+            if (!visible) {
+                makeInvisible(tab.getElement());
+            }
+
+            if (visible && tabData.equals(keyboardSelectedTab)) {
+                tabIndexElement = tab.getElement();
+            }
+
+            tab.setKeyboardSelected(visible && tabData.equals(keyboardSelectedTab));
+            tab.setSelected(visible && tabData.equals(selectedTab));
+        }
+
+        if (!visibleTabs.contains(keyboardSelectedTab)) {
+            if (overflowTabCount > 0) {
+                keyboardSelectedTab = null;
+            }
+        }
+
+        x += 2;
+        setOverflowTabCount(x, overflowTabCount);
+
+        return tabIndexElement;
+    }
+
+    private Set<TabData> getDisplayableTabs(final int startIndex) {
+        final int selectorWidth = getTabSelector().getOffsetWidth();
+        int remaining = getElement().getOffsetWidth();
+        final int tabGap = getTabGap();
+
+        final Set<TabData> displayableTabs = new HashSet<>();
+        boolean overflow = false;
+        for (int i = startIndex; i < tabs.size(); i++) {
+            final TabData tabData = tabs.get(i);
+            final AbstractTab tab = getTab(tabData);
+
+            // Ignore tabs that have been deliberately hidden.
+            if (tab != null && !tab.isHidden()) {
+                if (!overflow) {
+                    remaining -= tab.getOffsetWidth();
+                    if (i > 0) {
+                        final Element separator = addSeparator();
+                        if (separator != null) {
+                            remaining -= separator.getOffsetWidth();
+                        }
+                        remaining -= tabGap;
+                    }
+
+                    // We will require more space to the right of the tab if
+                    // we need to show the tab selector.
+                    int requiredSpace = 0;
+                    if (i < tabs.size() - 1) {
+                        requiredSpace = selectorWidth;
+                    }
+
+                    if (remaining < requiredSpace) {
+                        overflow = true;
+                    } else {
+                        displayableTabs.add(tabData);
+                    }
+                }
+            }
+        }
+
+//        GWT.log(startIndex + " " + displayableTabs.stream().map(TabData::getLabel).collect(Collectors.toList()));
+        return displayableTabs;
     }
 
     @Override
@@ -347,7 +464,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         return doc.activeElement;
     }-*/;
 
-    private Element addSeparator() {
+    protected Element addSeparator() {
         final Element separator = createSeparator();
         if (separator != null) {
             if (separators == null) {
@@ -469,7 +586,7 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                 final TabData targetTabData = getTargetTabData(target);
                 if (targetTabData != null) {
                     ShowTabMenuEvent.fire(this,
-                            targetTabData,
+                            targetTabData, tabs,
                             new PopupPosition(event.getClientX(), event.getClientY()));
                 }
             }
@@ -572,50 +689,20 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         relativeRect = relativeRect.grow(3);
         final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);
 
-        final List<TabData> tabsNotShown = new ArrayList<>();
-        final List<TabData> tabsShown = new ArrayList<>();
+        final int indexOfSelectedTab = indexOf(selectedTab);
 
-        final List<TabData> tabList = new ArrayList<>();
-        for (final TabData tabData : tabPriority) {
-            final AbstractTab tab = getTab(tabData);
-            if (tab != null && !tab.isHidden()) {
-                tabList.add(tabData);
-            }
-        }
-
-        for (int i = tabList.size() - overflowTabCount; i < tabList.size(); i++) {
-            tabsNotShown.add(tabList.get(i));
-        }
-        for (int i = 0; i < tabList.size() - overflowTabCount; i++) {
-            tabsShown.add(tabList.get(i));
-        }
-
-        final TabItemComparator comparator = new TabItemComparator();
-        tabsNotShown.sort(comparator);
-        tabsShown.sort(comparator);
+        final List<TabData> tabsNotShownToLeft = getTabsNotShown(t -> indexOf(t) < indexOfSelectedTab);
+        final List<TabData> tabsNotShownToRight = getTabsNotShown(t -> indexOf(t) > indexOfSelectedTab);
 
         final List<Item> menuItems = new ArrayList<>();
 
-        for (final TabData tabData : tabsNotShown) {
-            menuItems.add(new IconMenuItem.Builder()
-                    .priority(0)
-                    .icon(tabData.getIcon())
-                    .text(new SafeHtmlBuilder()
-                            .appendHtmlConstant("<b>")
-                            .appendEscaped(tabData.getLabel())
-                            .appendHtmlConstant("</b>")
-                            .toSafeHtml())
-                    .command(() -> fireTabSelection(tabData))
-                    .build());
+        tabsNotShownToLeft.stream().map(this::toIconMenuItem).forEach(menuItems::add);
+
+        if (!tabsNotShownToLeft.isEmpty() && !tabsNotShownToRight.isEmpty()) {
+            menuItems.add(new Separator(0));
         }
-        for (final TabData tabData : tabsShown) {
-            menuItems.add(new IconMenuItem.Builder()
-                    .priority(0)
-                    .icon(tabData.getIcon())
-                    .text(tabData.getLabel())
-                    .command(() -> fireTabSelection(tabData))
-                    .build());
-        }
+
+        tabsNotShownToRight.stream().map(this::toIconMenuItem).forEach(menuItems::add);
 
         ShowMenuEvent
                 .builder()
@@ -625,7 +712,30 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
                 .fire(this);
     }
 
-    private void fireTabSelection(final TabData tabData) {
+    private List<TabData> getTabsNotShown(final Predicate<TabData> predicate) {
+        return tabs.stream()
+                .filter(Predicate.not(visibleTabs::contains))
+                .filter(t -> !getTab(t).isHidden())
+                .filter(predicate == null
+                        ? t -> true
+                        : predicate)
+                .collect(Collectors.toList());
+    }
+
+    private Item toIconMenuItem(final TabData tabData) {
+        return new IconMenuItem.Builder()
+                .priority(0)
+                .icon(tabData.getIcon())
+                .text(new SafeHtmlBuilder()
+                        .appendHtmlConstant("<b>")
+                        .appendEscaped(tabData.getLabel())
+                        .appendHtmlConstant("</b>")
+                        .toSafeHtml())
+                .command(() -> fireTabSelection(tabData))
+                .build();
+    }
+
+    protected void fireTabSelection(final TabData tabData) {
         if (tabData != null && tabData != selectedTab) {
             SelectionEvent.fire(this, tabData);
         }
@@ -681,6 +791,14 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
         return tabs;
     }
 
+    protected Optional<TabData> getTabData(final AbstractTab tab) {
+        return tabWidgetMap.entrySet()
+                .stream()
+                .filter(entry -> tab.equals(entry.getValue()))
+                .map(Map.Entry::getKey)
+                .findFirst();
+    }
+
     public List<TabData> getVisibleTabs() {
         return visibleTabs;
     }
@@ -696,17 +814,5 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
 
     protected int getTabGap() {
         return 0;
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class TabItemComparator implements Comparator<TabData> {
-
-        @Override
-        public int compare(final TabData o1, final TabData o2) {
-            return o1.getLabel().compareTo(o2.getLabel());
-        }
     }
 }

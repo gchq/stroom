@@ -1,5 +1,22 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.dispatch.client;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
@@ -167,7 +184,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                         .getOrElse(error, RestError::getMethod, Method::getResponse, Response::getStatusCode, -1);
                 if (statusCode == Response.SC_UNAUTHORIZED) {
                     // Reload as we have been logged out.
-                    Console.log(() -> "Unauthorised request, assuming user session is invalid, reloading...");
+                    Console.info(() -> "Unauthorised request, assuming user session is invalid, reloading...");
                     Location.reload();
                 } else {
                     innerErrorHandler.onError(error);
@@ -216,22 +233,27 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         }
 
         @Override
-        public void onFailure(final Method method, final Throwable throwable) {
+        public void onSuccess(final Method method, final R response) {
             try {
-                errorHandler.onError(new RestError(method, throwable));
+                if (resultConsumer != null) {
+                    resultConsumer.accept(response);
+                }
             } catch (final Throwable t) {
-                new DefaultErrorHandler(hasHandlers, null).onError(new RestError(method, t));
+                Console.debug(t.toString());
+                if (method != null && method.getRequest() != null) {
+                    Console.debug(method.getRequest().toString());
+                }
+                Console.error("Error processing successful response: " + response);
+                AlertEvent.fireErrorFromException(hasHandlers, t, null);
             } finally {
                 taskMonitor.onEnd(task);
             }
         }
 
         @Override
-        public void onSuccess(final Method method, final R response) {
+        public void onFailure(final Method method, final Throwable throwable) {
             try {
-                if (resultConsumer != null) {
-                    resultConsumer.accept(response);
-                }
+                errorHandler.onError(new RestError(method, throwable));
             } catch (final Throwable t) {
                 new DefaultErrorHandler(hasHandlers, null).onError(new RestError(method, t));
             } finally {

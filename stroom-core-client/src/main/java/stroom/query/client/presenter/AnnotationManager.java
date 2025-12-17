@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -206,7 +206,7 @@ public class AnnotationManager implements HasHandlers {
                             eventIdList.add(new EventId(streamId, eventId));
                         }
                     } catch (final RuntimeException e) {
-                        Console.log(e::getMessage, e);
+                        Console.error(e::getMessage, e);
                     }
                 }
 

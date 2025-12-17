@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl.db;
 
 import stroom.db.util.ExpressionMapper;
@@ -6,6 +22,7 @@ import stroom.db.util.JooqUtil;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
 import stroom.security.impl.UserDao;
+import stroom.security.impl.db.jooq.tables.PermissionDocCreate;
 import stroom.security.shared.FindUserContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
@@ -45,6 +62,10 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.jooq.impl.DSL.val;
+import static stroom.security.impl.db.jooq.Tables.PERMISSION_APP;
+import static stroom.security.impl.db.jooq.Tables.PERMISSION_DOC;
+import static stroom.security.impl.db.jooq.Tables.PERMISSION_DOC_CREATE;
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER_ARCHIVE;
 import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUP;
@@ -255,6 +276,62 @@ public class UserDaoImpl implements UserDao {
                 securityDbConnProvider,
                 context ->
                         update(context, user));
+    }
+
+    @Override
+    public void copyGroupsAndPermissions(final String fromUserUuid, final String toUserUuid) {
+        JooqUtil.transaction(securityDbConnProvider, txnContext -> {
+
+            LOGGER.debug("Copy groups and permissions from: {} to: {}", fromUserUuid, toUserUuid);
+
+            final int numberGroups = txnContext.insertInto(STROOM_USER_GROUP)
+                    .columns(STROOM_USER_GROUP.USER_UUID, STROOM_USER_GROUP.GROUP_UUID)
+                    .select(txnContext.select(val(toUserUuid), STROOM_USER_GROUP.GROUP_UUID)
+                            .from(STROOM_USER_GROUP)
+                            .where(STROOM_USER_GROUP.USER_UUID.eq(fromUserUuid)))
+                    .onDuplicateKeyUpdate()
+                    .set(STROOM_USER_GROUP.USER_UUID, val(toUserUuid))
+                    .execute();
+
+            final int numberAppPermissions = txnContext.insertInto(PERMISSION_APP)
+                    .columns(PERMISSION_APP.USER_UUID, PERMISSION_APP.PERMISSION_ID)
+                    .select(txnContext.select(val(toUserUuid), PERMISSION_APP.PERMISSION_ID)
+                            .from(PERMISSION_APP)
+                            .where(PERMISSION_APP.USER_UUID.eq(fromUserUuid)))
+                    .onDuplicateKeyUpdate()
+                    .set(PERMISSION_APP.USER_UUID, val(toUserUuid))
+                    .execute();
+
+            final int numberDocPermissions = txnContext.insertInto(PERMISSION_DOC)
+                    .columns(PERMISSION_DOC.USER_UUID, PERMISSION_DOC.DOC_UUID, PERMISSION_DOC.PERMISSION_ID)
+                    .select(txnContext.select(val(toUserUuid), PERMISSION_DOC.DOC_UUID, PERMISSION_DOC.PERMISSION_ID)
+                            .from(PERMISSION_DOC)
+                            .where(PERMISSION_DOC.USER_UUID.eq(fromUserUuid)))
+                    .onDuplicateKeyUpdate()
+                    .set(PERMISSION_DOC.USER_UUID, val(toUserUuid))
+                    .execute();
+
+            final int numberDocCreatePermissions = txnContext.insertInto(PERMISSION_DOC_CREATE)
+                    .columns(PermissionDocCreate.PERMISSION_DOC_CREATE.DOC_UUID,
+                            PermissionDocCreate.PERMISSION_DOC_CREATE.USER_UUID,
+                            PermissionDocCreate.PERMISSION_DOC_CREATE.DOC_TYPE_ID)
+                    .select(txnContext.select(PERMISSION_DOC_CREATE.DOC_UUID, val(toUserUuid),
+                            PERMISSION_DOC_CREATE.DOC_TYPE_ID)
+                            .from(PERMISSION_DOC_CREATE)
+                            .where(PERMISSION_DOC_CREATE.USER_UUID.eq(fromUserUuid)))
+                    .onDuplicateKeyUpdate()
+                    .set(PERMISSION_DOC_CREATE.USER_UUID, val(toUserUuid))
+                    .execute();
+
+            LOGGER.debug("""
+                            Groups and permissions copied.
+                            Groups: {}
+                            App Permissions: {}
+                            Doc Permissions: {}
+                            Doc Create Permissions: {}""",
+                    numberGroups, numberAppPermissions, numberDocPermissions, numberDocCreatePermissions);
+
+        });
     }
 
     private User update(final DSLContext context, final User user) {

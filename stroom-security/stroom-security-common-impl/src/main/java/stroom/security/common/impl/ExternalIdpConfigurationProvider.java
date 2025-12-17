@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.common.impl;
 
 import stroom.security.api.exception.AuthenticationException;
@@ -99,16 +115,10 @@ public class ExternalIdpConfigurationProvider
         } else {
             // Hit the config endpoint to check the IDP is accessible.
             // Even if we already have the config from it, if we can't see the IDP we have problems.
+            resultBuilder.withDetail("url", configurationEndpoint);
             try {
-                resultBuilder.withDetail("configUri", configurationEndpoint);
-                final OpenIdConfigurationResponse response = fetchOpenIdConfigurationResponse(
-                        configurationEndpoint, abstractOpenIdConfig);
-                if (response != null) {
-                    resultBuilder.healthy();
-                } else {
-                    resultBuilder.unhealthy()
-                            .withMessage("Null response");
-                }
+                fetchOpenIdConfigurationResponse(configurationEndpoint, abstractOpenIdConfig);
+                resultBuilder.healthy();
             } catch (final Exception e) {
                 resultBuilder.unhealthy(e)
                         .withMessage("Error fetching Open ID Connect configuration from " +
@@ -341,8 +351,13 @@ public class ExternalIdpConfigurationProvider
     }
 
     @Override
-    public boolean isValidateAudience() {
-        return localOpenIdConfigProvider.get().isValidateAudience();
+    public Set<String> getAllowedAudiences() {
+        return localOpenIdConfigProvider.get().getAllowedAudiences();
+    }
+
+    @Override
+    public boolean isAudienceClaimRequired() {
+        return localOpenIdConfigProvider.get().isAudienceClaimRequired();
     }
 
     @Override
@@ -361,6 +376,11 @@ public class ExternalIdpConfigurationProvider
     }
 
     @Override
+    public String getFullNameClaimTemplate() {
+        return localOpenIdConfigProvider.get().getFullNameClaimTemplate();
+    }
+
+    @Override
     public String getLogoutRedirectParamName() {
         return localOpenIdConfigProvider.get().getLogoutRedirectParamName();
     }
@@ -368,5 +388,10 @@ public class ExternalIdpConfigurationProvider
     @Override
     public Set<String> getExpectedSignerPrefixes() {
         return localOpenIdConfigProvider.get().getExpectedSignerPrefixes();
+    }
+
+    @Override
+    public String getPublicKeyUriPattern() {
+        return localOpenIdConfigProvider.get().getPublicKeyUriPattern();
     }
 }

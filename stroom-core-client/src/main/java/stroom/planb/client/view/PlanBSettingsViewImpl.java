@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ public class PlanBSettingsViewImpl
         stateType.addItem(StateType.SESSION);
         stateType.addItem(StateType.HISTOGRAM);
         stateType.addItem(StateType.METRIC);
+        stateType.addItem(StateType.TRACE);
         stateType.setValue(StateType.TEMPORAL_STATE);
     }
 

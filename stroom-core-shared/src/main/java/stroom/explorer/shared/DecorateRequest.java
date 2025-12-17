@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -42,6 +43,12 @@ public class DecorateRequest {
                     @JsonProperty("requiredPermissions") final Set<DocumentPermission> requiredPermissions) {
         this.docRef = Objects.requireNonNull(docRef);
         this.requiredPermissions = requiredPermissions;
+    }
+
+    @SerialisationTestConstructor
+    private DecorateRequest() {
+        this.docRef = new DocRef("test", "test");
+        this.requiredPermissions = null;
     }
 
     public static DecorateRequest create(final DocRef docRef) {

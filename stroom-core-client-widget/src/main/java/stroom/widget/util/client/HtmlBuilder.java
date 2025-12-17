@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.widget.util.client;
 
 
@@ -120,6 +136,10 @@ public class HtmlBuilder {
         return elem(textContent, ELEMENT_P, attributes);
     }
 
+    public HtmlBuilder span(final String textContent, final Attribute... attributes) {
+        return elem(textContent, ELEMENT_SPAN, attributes);
+    }
+
     public HtmlBuilder span(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
         return elem(content, ELEMENT_SPAN, attributes);
     }
@@ -156,20 +176,27 @@ public class HtmlBuilder {
     // END ELEMENTS
     // -----------------------------------------------
 
-    private HtmlBuilder elem(final String textContent,
-                             final SafeHtml elementName,
-                             final Attribute... attributes) {
+    public HtmlBuilder elem(final String textContent,
+                            final SafeHtml elementName,
+                            final Attribute... attributes) {
         return elem(htmlBuilder -> htmlBuilder.append(textContent), elementName, attributes);
     }
 
-    private HtmlBuilder elem(final Consumer<HtmlBuilder> content,
-                             final SafeHtml elementName,
-                             final Attribute... attributes) {
+    public HtmlBuilder elem(final Consumer<HtmlBuilder> content,
+                            final SafeHtml elementName,
+                            final Attribute... attributes) {
         openElement(elementName, attributes);
         // Allow for empty elements
         if (content != null) {
             content.accept(this);
         }
+        closeElement(elementName);
+        return this;
+    }
+
+    public HtmlBuilder elem(final SafeHtml elementName,
+                            final Attribute... attributes) {
+        openElement(elementName, attributes);
         closeElement(elementName);
         return this;
     }
@@ -308,6 +335,10 @@ public class HtmlBuilder {
 
         public static Attribute title(final String name) {
             return new Attribute("title", name);
+        }
+
+        public static Attribute id(final String name) {
+            return new Attribute("id", name);
         }
     }
 }

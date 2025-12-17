@@ -1,8 +1,25 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.shared;
 
 
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
 
@@ -77,17 +94,18 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
                 @JsonProperty("displayName") final String displayName,
                 @JsonProperty("fullName") final String fullName,
                 @JsonProperty("enabled") final boolean enabled) {
+        // Ensure we always have trimmed user identity values
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
         this.createUser = createUser;
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
-        this.subjectId = subjectId;
+        this.subjectId = NullSafe.get(subjectId, String::trim);
         this.uuid = uuid;
         this.group = group;
-        this.displayName = displayName;
-        this.fullName = fullName;
+        this.displayName = NullSafe.get(displayName, String::trim);
+        this.fullName = NullSafe.get(fullName, String::trim);
         this.enabled = enabled;
     }
 
@@ -167,7 +185,7 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
      * See {@link User#getSubjectId()}
      */
     public void setSubjectId(final String subjectId) {
-        this.subjectId = subjectId;
+        this.subjectId = NullSafe.get(subjectId, String::trim);
     }
 
     /**
@@ -185,7 +203,7 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
      * See {@link User#getDisplayName()}
      */
     public void setDisplayName(final String displayName) {
-        this.displayName = displayName;
+        this.displayName = NullSafe.get(displayName, String::trim);
     }
 
     /**
@@ -206,7 +224,7 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
      * See {@link User#getFullName()}
      */
     public void setFullName(final String fullName) {
-        this.fullName = fullName;
+        this.fullName = NullSafe.get(fullName, String::trim);
     }
 
     /**

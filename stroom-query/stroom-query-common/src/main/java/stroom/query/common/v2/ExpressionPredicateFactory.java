@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.query.common.v2;
@@ -128,7 +127,7 @@ public class ExpressionPredicateFactory {
                 .orElse(scoreComparator);
 
         return stream
-                .map(t -> new ScoredObject<T>(t, scoringPredicate.score(t))) // Wrap and score
+                .map(t -> new ScoredObject<>(t, scoringPredicate.score(t))) // Wrap and score
                 .filter(scoredObject -> scoredObject.score.matches) // Filter scored
                 .sorted(comparator) // Sort by score.
                 .map(scoredObject -> scoredObject.t); // Unwrap
@@ -453,9 +452,9 @@ public class ExpressionPredicateFactory {
         return switch (term.getCondition()) {
             case EQUALS -> StringEquals.create(term, stringExtractor);
             case EQUALS_CASE_SENSITIVE -> StringEqualsCaseSensitive.create(term, stringExtractor);
+            case NOT_EQUALS -> NotPredicate.create(StringEquals.create(term, stringExtractor));
             case NOT_EQUALS_CASE_SENSITIVE -> NotPredicate.create(
                     StringEqualsCaseSensitive.create(term, stringExtractor));
-            case NOT_EQUALS -> NotPredicate.create(StringEquals.create(term, stringExtractor));
             case CONTAINS -> StringContains.create(term, stringExtractor);
             case CONTAINS_CASE_SENSITIVE -> StringContainsCaseSensitive.create(term, stringExtractor);
             case GREATER_THAN -> StringGreaterThan.create(term, stringExtractor);
@@ -1599,9 +1598,7 @@ public class ExpressionPredicateFactory {
 
         private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
                                                                 final Function<T, String> extractionFunction) {
-            return ifValue(term, () -> {
-                return new StringGreaterThan<T>(term, term.getValue(), extractionFunction);
-            });
+            return ifValue(term, () -> new StringGreaterThan<T>(term, term.getValue(), extractionFunction));
         }
 
         @Override
@@ -1624,9 +1621,7 @@ public class ExpressionPredicateFactory {
 
         private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
                                                                 final Function<T, String> extractionFunction) {
-            return ifValue(term, () -> {
-                return new StringGreaterThanOrEqual<T>(term, term.getValue(), extractionFunction);
-            });
+            return ifValue(term, () -> new StringGreaterThanOrEqual<>(term, term.getValue(), extractionFunction));
         }
 
         @Override
@@ -1649,9 +1644,7 @@ public class ExpressionPredicateFactory {
 
         private static <T> Optional<ScoringPredicate<T>> create(final ExpressionTerm term,
                                                                 final Function<T, String> extractionFunction) {
-            return ifValue(term, () -> {
-                return new StringLessThan<T>(term, term.getValue(), extractionFunction);
-            });
+            return ifValue(term, () -> new StringLessThan<T>(term, term.getValue(), extractionFunction));
         }
 
         @Override

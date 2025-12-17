@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.impl;
 
 import stroom.analytics.rule.impl.AnalyticRuleStore;
@@ -7,6 +23,7 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.FindAnalyticDataShardCriteria;
 import stroom.analytics.shared.GetAnalyticShardDataRequest;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb2.LmdbEnv;
@@ -90,6 +107,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final AnnotationMapperFactory annotationMapperFactory;
     private final AnalyticRuleStore analyticRuleStore;
+    final WordListProvider wordListProvider;
 
     @Inject
     public AnalyticDataStores(final LmdbEnvDirFactory lmdbEnvDirFactory,
@@ -103,7 +121,8 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                               final SecurityContext securityContext,
                               final ByteBufferFactory bufferFactory,
                               final ExpressionPredicateFactory expressionPredicateFactory,
-                              final AnnotationMapperFactory annotationMapperFactory) {
+                              final AnnotationMapperFactory annotationMapperFactory,
+                              final WordListProvider wordListProvider) {
         this.lmdbEnvDirFactory = lmdbEnvDirFactory;
         this.analyticRuleStore = analyticRuleStore;
         this.analyticStoreConfigProvider = analyticStoreConfigProvider;
@@ -115,6 +134,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
         this.bufferFactory = bufferFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.annotationMapperFactory = annotationMapperFactory;
+        this.wordListProvider = wordListProvider;
 
         this.analyticResultStoreDir = getLocalDir(analyticStoreConfigProvider.get(), pathCreator);
 
@@ -301,7 +321,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                 errorConsumer,
                 bufferFactory,
                 expressionPredicateFactory,
-                annotationMapperFactory);
+                annotationMapperFactory, wordListProvider);
     }
 
     @Override
@@ -320,7 +340,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
                         list.add(new ResultStoreInfo(
                                 new SearchRequestSource(SourceType.TABLE_BUILDER_ANALYTIC,
                                         docRef,
-                                        null),
+                                        null, null),
                                 searchRequest.getKey(),
                                 null,
                                 analyticRuleDoc.getCreateTimeMs(),

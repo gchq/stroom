@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app;
 
 import stroom.proxy.app.event.EventStoreConfig;
@@ -52,6 +68,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public static final String PROP_NAME_RECEIPT_POLICY = "receiptPolicy";
     public static final String PROP_NAME_EVENT_STORE = "eventStore";
     public static final String PROP_NAME_AGGREGATOR = "aggregator";
+    public static final String PROP_NAME_DIR_SCANNER = "dirScanner";
     public static final String PROP_NAME_FORWARD_FILE_DESTINATIONS = "forwardFileDestinations";
     public static final String PROP_NAME_FORWARD_HTTP_DESTINATIONS = "forwardHttpDestinations";
     public static final String PROP_NAME_LOG_STREAM = "logStream";
@@ -73,6 +90,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     private final DownstreamHostConfig downstreamHostConfig;
     private final EventStoreConfig eventStoreConfig;
     private final AggregatorConfig aggregatorConfig;
+    private final DirScannerConfig dirScannerConfig;
     private final List<ForwardFileConfig> forwardFileDestinations;
     private final List<ForwardHttpPostConfig> forwardHttpDestinations;
     private final LogStreamConfig logStreamConfig;
@@ -91,6 +109,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                 new DownstreamHostConfig(),
                 new EventStoreConfig(),
                 new AggregatorConfig(),
+                new DirScannerConfig(),
                 new ArrayList<>(),
                 new ArrayList<>(),
                 new LogStreamConfig(),
@@ -112,6 +131,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
             @JsonProperty(PROP_NAME_DOWNSTREAM_HOST) final DownstreamHostConfig downstreamHostConfig,
             @JsonProperty(PROP_NAME_EVENT_STORE) final EventStoreConfig eventStoreConfig,
             @JsonProperty(PROP_NAME_AGGREGATOR) final AggregatorConfig aggregatorConfig,
+            @JsonProperty(PROP_NAME_DIR_SCANNER) final DirScannerConfig dirScannerConfig,
             @JsonProperty(PROP_NAME_FORWARD_FILE_DESTINATIONS) final List<ForwardFileConfig> forwardFileDestinations,
             @JsonProperty(PROP_NAME_FORWARD_HTTP_DESTINATIONS) final List<ForwardHttpPostConfig> forwardHttpDestinations,
             @JsonProperty(PROP_NAME_LOG_STREAM) final LogStreamConfig logStreamConfig,
@@ -130,6 +150,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         this.downstreamHostConfig = Objects.requireNonNullElseGet(downstreamHostConfig, DownstreamHostConfig::new);
         this.eventStoreConfig = Objects.requireNonNullElseGet(eventStoreConfig, EventStoreConfig::new);
         this.aggregatorConfig = Objects.requireNonNullElseGet(aggregatorConfig, AggregatorConfig::new);
+        this.dirScannerConfig = dirScannerConfig;
         this.forwardFileDestinations = NullSafe.list(forwardFileDestinations);
         this.forwardHttpDestinations = NullSafe.list(forwardHttpDestinations);
         this.logStreamConfig = Objects.requireNonNullElseGet(logStreamConfig, LogStreamConfig::new);
@@ -198,6 +219,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         return aggregatorConfig;
     }
 
+    @JsonProperty(PROP_NAME_DIR_SCANNER)
+    public DirScannerConfig getDirScannerConfig() {
+        return dirScannerConfig;
+    }
+
     @RequiresProxyRestart
     @JsonProperty(PROP_NAME_FORWARD_FILE_DESTINATIONS)
     public List<ForwardFileConfig> getForwardFileDestinations() {
@@ -235,34 +261,6 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
     public List<SqsConnectorConfig> getSqsConnectors() {
         return sqsConnectors;
     }
-
-    // TOKEN id Oauth or API key, so this validation is wrong
-//    @JsonIgnore
-//    @SuppressWarnings("unused")
-//    @ValidationMethod(message = "identityProviderType must be set to EXTERNAL_IDP if enabledAuthenticationTypes " +
-//                                "contains 'TOKEN'")
-//    public boolean isTokenAuthenticationEnabledValid() {
-//        LOGGER.info("enabledAuthenticationTypes: {}, idpType: {}",
-//                NullSafe.get(receiveDataConfig, ReceiveDataConfig::getEnabledAuthenticationTypes),
-//                NullSafe.get(proxySecurityConfig,
-//                        ProxySecurityConfig::getAuthenticationConfig,
-//                        ProxyAuthenticationConfig::getOpenIdConfig,
-//                        AbstractOpenIdConfig::getIdentityProviderType));
-//
-//        if (NullSafe.test(
-//                receiveDataConfig,
-//                config -> config.isAuthenticationTypeEnabled(AuthenticationType.TOKEN))) {
-//
-//            return NullSafe.test(
-//                    proxySecurityConfig,
-//                    ProxySecurityConfig::getAuthenticationConfig,
-//                    ProxyAuthenticationConfig::getOpenIdConfig,
-//                    AbstractOpenIdConfig::getIdentityProviderType,
-//                    idpType -> idpType == IdpType.EXTERNAL_IDP);
-//        } else {
-//            return true;
-//        }
-//    }
 
     @JsonIgnore
     @SuppressWarnings("unused")
@@ -408,13 +406,14 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
         private DownstreamHostConfig downstreamHostConfig;
         private EventStoreConfig eventStoreConfig = new EventStoreConfig();
         private AggregatorConfig aggregatorConfig = new AggregatorConfig();
+        private DirScannerConfig dirScannerConfig = new DirScannerConfig();
         private final List<ForwardFileConfig> forwardFileDestinations = new ArrayList<>();
         private final List<ForwardHttpPostConfig> forwardHttpDestinations = new ArrayList<>();
         private LogStreamConfig logStreamConfig = new LogStreamConfig();
         private FeedStatusConfig feedStatusConfig = new FeedStatusConfig();
         private ThreadConfig threadConfig = new ThreadConfig();
         private ProxySecurityConfig proxySecurityConfig = new ProxySecurityConfig();
-        private List<SqsConnectorConfig> sqsConnectors = new ArrayList<>();
+        private final List<SqsConnectorConfig> sqsConnectors = new ArrayList<>();
 
         private Builder() {
 
@@ -462,6 +461,11 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
 
         public Builder aggregatorConfig(final AggregatorConfig aggregatorConfig) {
             this.aggregatorConfig = aggregatorConfig;
+            return this;
+        }
+
+        public Builder dirScannerConfig(final DirScannerConfig dirScannerConfig) {
+            this.dirScannerConfig = dirScannerConfig;
             return this;
         }
 
@@ -527,6 +531,7 @@ public class ProxyConfig extends AbstractConfig implements IsProxyConfig {
                     downstreamHostConfig,
                     eventStoreConfig,
                     aggregatorConfig,
+                    dirScannerConfig,
                     forwardFileDestinations,
                     forwardHttpDestinations,
                     logStreamConfig,

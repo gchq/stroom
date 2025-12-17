@@ -1,8 +1,25 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl;
 
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.security.mock.MockSecurityContext;
 import stroom.security.shared.SessionListResponse;
 import stroom.security.shared.SessionResource;
 import stroom.task.api.SimpleTaskContextFactory;
@@ -29,6 +46,7 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
     private final Map<String, SessionListService> sessionListServiceMap = new HashMap<>();
 
     private static final int BASE_PORT = 7030;
+
 
     public TestSessionListListener() {
         super(createNodeList(BASE_PORT));
@@ -119,7 +137,9 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
                 nodeInfo,
                 nodeService,
                 new SimpleTaskContextFactory(),
-                webTargetFactory());
+                webTargetFactory(),
+                Mockito.mock(StroomUserIdentityFactory.class),
+                new MockSecurityContext());
 
         sessionListServiceMap.put(node.getNodeName(), sessionListService);
 
@@ -128,6 +148,7 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
                 TestUtil.mockProvider(HttpServletRequest.class),
                 TestUtil.mockProvider(AuthenticationEventLog.class),
                 () -> sessionListService,
-                TestUtil.mockProvider(StroomUserIdentityFactory.class));
+                TestUtil.mockProvider(StroomUserIdentityFactory.class),
+                MockSecurityContext::new);
     }
 }

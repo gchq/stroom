@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,8 @@ import stroom.query.client.presenter.SearchStateListener;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.Severity;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
@@ -155,14 +157,14 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
         // Destroy the previous search and ready all components for a new search to begin.
         reset(DestroyReason.NO_LONGER_NEEDED);
 
-        // If we are resuming then set the node and query key.
-        currentNode = resumeNode;
-        currentQueryKey = resumeQueryKey;
-
         final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
         if (resultComponentMap != null) {
             final DocRef dataSourceRef = indexLoader.getLoadedDataSourceRef();
             if (dataSourceRef != null && expression != null) {
+                // If we are resuming then set the node and query key.
+                currentNode = resumeNode;
+                currentQueryKey = resumeQueryKey;
+
                 // Copy the expression.
                 final ExpressionOperator currentExpression = ExpressionUtil.copyOperator(expression);
                 currentSearch = Search
@@ -283,7 +285,8 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
                 .onFailure(throwable -> {
                     try {
                         if (queryKey.equals(currentQueryKey)) {
-                            setErrors(Collections.singletonList(throwable.toString()));
+                            setErrors(Collections.singletonList(
+                                    new ErrorMessage(Severity.ERROR, throwable.toString())));
                         }
                     } catch (final RuntimeException e) {
                         GWT.log(e.getMessage());
@@ -345,19 +348,32 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
 //                        GWT.log(response.toString());
 
                         if (search == currentSearch) {
-                            currentQueryKey = response.getQueryKey();
-                            currentNode = response.getNode();
+                            if (response != null) {
+                                currentQueryKey = response.getQueryKey();
+                                currentNode = response.getNode();
 
-                            try {
-                                update(response);
-                            } catch (final RuntimeException e) {
-                                GWT.log(e.getMessage());
-                            }
+                                try {
+                                    update(response);
+                                } catch (final RuntimeException e) {
+                                    GWT.log(e.getMessage());
+                                }
 
-                            if (polling) {
-                                poll(Fetch.CHANGES, false);
+                                if (polling) {
+                                    poll(Fetch.CHANGES, false);
+                                }
+                            } else {
+                                // Tell all components if we are complete.
+                                // Stop the spinner from spinning and tell components that they
+                                // no longer want data.
+                                resultComponents.values().forEach(ResultComponent::endSearch);
+
+                                // Let the query presenter know search is inactive.
+                                setSearching(false);
+
+                                // If we have completed search then stop the task spinner.
+                                polling = false;
                             }
-                        } else {
+                        } else if (response != null) {
                             deleteStore(response.getNode(), response.getQueryKey(), DestroyReason.NO_LONGER_NEEDED);
                         }
                     })
@@ -366,7 +382,8 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
 
                         try {
                             if (search == currentSearch) {
-                                setErrors(Collections.singletonList(throwable.toString()));
+                                setErrors(Collections.singletonList(
+                                        new ErrorMessage(Severity.ERROR, throwable.toString())));
                                 polling = false;
                             }
                         } catch (final RuntimeException e) {
@@ -424,7 +441,7 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
             resultComponents.values().forEach(ResultComponent::endSearch);
         }
 
-        setErrors(response.getErrors());
+        setErrors(response.getErrorMessages());
 
         if (response.isComplete()) {
             // Let the query presenter know search is inactive.
@@ -435,7 +452,7 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
         }
     }
 
-    private void setErrors(final List<String> errors) {
+    private void setErrors(final List<ErrorMessage> errors) {
         errorListeners.forEach(listener -> listener.onError(errors));
     }
 

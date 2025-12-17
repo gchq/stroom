@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
  * converted to {@link CIKey} on the fly.
  * </p>
  */
+@SuppressWarnings("checkstyle:IllegalType")
 public class CIHashMap<V> extends HashMap<CIKey, V> {
 
     @SuppressWarnings("rawtypes")

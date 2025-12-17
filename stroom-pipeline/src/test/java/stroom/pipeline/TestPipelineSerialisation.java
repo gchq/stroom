@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.shared.data.PipelineElements;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
@@ -30,7 +29,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPipelineSerialisation {
 
-    private static final PipelineElementType ELEM_TYPE = new PipelineElementType("TestElement", null,
+    private static final PipelineElementType ELEM_TYPE = new PipelineElementType(
+            "TestElement",
+            "Test Element",
+            null,
             new String[]{PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, null);
 
     @Test
@@ -43,7 +45,7 @@ class TestPipelineSerialisation {
     @Test
     void testElements() {
         final PipelineData pipelineData = new PipelineDataBuilder()
-                .addElement(new PipelineElement("test1", ELEM_TYPE.getType()))
+                .addElement(new PipelineElement("test1", ELEM_TYPE.getType(), "test1Name", null))
                 .build();
         final String string = JsonUtil.writeValueAsString(pipelineData);
         assertThat(string.trim()).isEqualTo("""
@@ -51,7 +53,8 @@ class TestPipelineSerialisation {
                   "elements" : {
                     "add" : [ {
                       "id" : "test1",
-                      "type" : "TestElement"
+                      "type" : "TestElement",
+                      "name" : "test1Name"
                     } ]
                   }
                 }""");

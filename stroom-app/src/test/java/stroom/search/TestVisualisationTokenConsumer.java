@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import stroom.search.impl.EventSearchTaskHandler;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.impl.ExecutorProviderImpl;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.ContentImportService;
+import stroom.test.ContentStoreTestSetup;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -58,14 +58,14 @@ public class TestVisualisationTokenConsumer extends AbstractCoreIntegrationTest 
     @Inject
     private ExpressionContextFactory expressionContextFactory;
     @Inject
-    private ContentImportService contentImportService;
+    private ContentStoreTestSetup contentStoreTestSetup;
 
 
     @BeforeEach
     void setup() {
         if (!doneSetup) {
             commonIndexingTestHelper.setup();
-            contentImportService.importVisualisations();
+            contentStoreTestSetup.installVisualisations();
             doneSetup = true;
         }
     }

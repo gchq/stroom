@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,14 @@ package stroom.query.language.functions;
 
 import stroom.util.shared.NullSafe;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Comparator;
 import java.util.Objects;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ValErr implements Val {
 
     public static final String PREFIX = "ERR: ";
@@ -35,9 +40,11 @@ public final class ValErr implements Val {
 
     public static final ValErr INSTANCE = new ValErr("Unknown");
     public static final Type TYPE = Type.ERR;
+    @JsonProperty
     private final String message;
 
-    private ValErr(final String message) {
+    @JsonCreator
+    private ValErr(@JsonProperty("message") final String message) {
         this.message = message;
     }
 

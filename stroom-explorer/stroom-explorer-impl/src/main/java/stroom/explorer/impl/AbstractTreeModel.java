@@ -1,12 +1,29 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.explorer.impl;
 
+import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeInfo;
 import stroom.util.shared.NullSafe;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -299,14 +316,44 @@ public abstract class AbstractTreeModel<K> {
         return parentKeyToChildNodesMap.get(parentKey);
     }
 
-    public void sort(final ToIntFunction<ExplorerNode> priorityExtractor) {
+    public void sort() {
         final Map<K, Set<ExplorerNode>> newChildMap = new HashMap<>();
         parentKeyToChildNodesMap.forEach((key, children) -> newChildMap.put(key, children
                 .stream()
-                .sorted(Comparator
-                        .comparingInt(priorityExtractor)
-                        .thenComparing(ExplorerNode::getType)
-                        .thenComparing(ExplorerNode::getName))
+                .sorted((o1, o2) -> {
+                    // If the types are the same then just compare by name.
+                    if (o1.getType().equals(o2.getType())) {
+                        return o1.getName().compareToIgnoreCase(o2.getName());
+                    }
+
+                    // If both types are folders or git repos then just compare by name.
+                    if (ExplorerConstants.isFolder(o1)) {
+                        if (ExplorerConstants.isFolder(o2)) {
+                            return o1.getName().compareToIgnoreCase(o2.getName());
+                        } else {
+                            return -1;
+                        }
+                    } else if (ExplorerConstants.isFolder(o2)) {
+                        return 1;
+                    }
+
+                    // Make sure favourites appear first in the tree.
+                    if (ExplorerConstants.isFavouritesNode(o1)) {
+                        return -1;
+                    } else if (ExplorerConstants.isFavouritesNode(o2)) {
+                        return 1;
+                    }
+
+                    // Then followed by system.
+                    if (ExplorerConstants.isSystemNode(o1)) {
+                        return -1;
+                    } else if (ExplorerConstants.isSystemNode(o2)) {
+                        return 1;
+                    }
+
+                    // If type priority is the same then compare by name.
+                    return o1.getName().compareToIgnoreCase(o2.getName());
+                })
                 .collect(Collectors.toCollection(LinkedHashSet::new))));
 
         parentKeyToChildNodesMap = newChildMap;

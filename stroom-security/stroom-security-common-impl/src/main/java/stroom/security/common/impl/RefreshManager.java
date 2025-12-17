@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.common.impl;
 
 import stroom.util.authentication.Refreshable;
@@ -6,13 +22,17 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 
+import com.google.common.base.Throwables;
 import io.dropwizard.lifecycle.Managed;
 import jakarta.inject.Singleton;
 
+import java.net.SocketException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -27,6 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class RefreshManager implements Managed {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RefreshManager.class);
+    private static final Duration DELAY_AFTER_FAILURE = Duration.ofSeconds(30);
 
     private final BlockingQueue<DelayedRefreshable> delayQueue = new DelayQueue<>();
     // Quicker to check this than iterating over the queue
@@ -36,11 +57,11 @@ public class RefreshManager implements Managed {
     private ExecutorService refreshExecutorService = null;
 
     public RefreshManager() {
-
     }
 
     /**
-     * Remove this refreshable from being managed by {@link RefreshManager}
+     * Remove this refreshable from being managed by {@link RefreshManager}.
+     * Is a no-op if the refreshable is not present or has already been removed.
      */
     public void remove(final Refreshable refreshable) {
         if (refreshable != null && !isShutdownInProgress.get()) {
@@ -59,30 +80,53 @@ public class RefreshManager implements Managed {
         }
     }
 
+    public void addOrUpdate(final Refreshable refreshable) {
+        addOrUpdate(refreshable, null);
+    }
+
     /**
      * Register the refreshable so that its refreshing gets managed. Can be called many times
      * for the same {@link Refreshable}, e.g. to notify the {@link RefreshManager} that it was
      * refreshed externally.
      */
-    public void addOrUpdate(final Refreshable refreshable) {
+    public void addOrUpdate(final Refreshable refreshable, final Duration forcedDelay) {
         // No point adding stuff if we are shutting down
         if (refreshable != null && !isShutdownInProgress.get()) {
             //noinspection SynchronizationOnLocalVariableOrMethodParameter
             synchronized (refreshable) {
-                // Assume this refreshable has the latest state so remove any existing items on the
-                // queue for this refreshable
-                remove(refreshable);
-
                 // Spawn a new DelayedRefreshable that takes a snapshot of the token's expiry
                 // as we can't mutate the times being used by the delay queue
-                final DelayedRefreshable delayedRefreshable = new DelayedRefreshable(refreshable);
+                final DelayedRefreshable newDelayedRefreshable = new DelayedRefreshable(refreshable, forcedDelay);
 
-                delayQueue.add(delayedRefreshable);
-                uuidsInQueue.add(refreshable.getUuid());
+                final DelayedRefreshable queuedDelayedRefreshable = findInQueue(newDelayedRefreshable)
+                        .orElse(null);
+                // Only replace items if the expiry is longer than the existing one
+                if (queuedDelayedRefreshable == null
+                    || newDelayedRefreshable.compareTo(queuedDelayedRefreshable) > 0) {
+                    remove(refreshable);
 
-                LOGGER.debug(() -> LogUtil.message("Added {}", itemToString(delayedRefreshable)));
+                    delayQueue.add(newDelayedRefreshable);
+                    uuidsInQueue.add(refreshable.getUuid());
+
+                    LOGGER.debug(() -> LogUtil.message("Added {}", itemToString(newDelayedRefreshable)));
+                } else {
+                    // Not in the queue or it has a later expire-time than refreshable so do nothing
+                    LOGGER.debug("Not adding {}, queuedDelayedRefreshable: {}, newDelayedRefreshable: {}",
+                            refreshable,
+                            NullSafe.get(queuedDelayedRefreshable, DelayedRefreshable::getDelayAsDuration),
+                            newDelayedRefreshable.getDelayAsDuration());
+                }
             }
         }
+    }
+
+    private Optional<DelayedRefreshable> findInQueue(final DelayedRefreshable delayedRefreshable) {
+        return delayQueue.stream()
+                .filter(aDelayedRefreshable ->
+                        Objects.equals(
+                                aDelayedRefreshable.getRefreshableUuid(),
+                                delayedRefreshable.getRefreshableUuid()))
+                .findFirst();
     }
 
     private void consumeFromQueue() {
@@ -91,11 +135,10 @@ public class RefreshManager implements Managed {
             // checking of shutdown state
             final DelayedRefreshable delayedRefreshable = delayQueue.poll(2, TimeUnit.SECONDS);
             if (delayedRefreshable != null) {
+                final Refreshable refreshable = delayedRefreshable.getRefreshable();
                 try {
-                    final Refreshable refreshable = delayedRefreshable.getRefreshable();
                     // We've removed it from the queue so keep the set in sync with the queue.
                     uuidsInQueue.remove(refreshable.getUuid());
-
 
                     if (refreshable.isActive()) {
                         // It is possible that someone getting the token has triggered a synchronous refresh,
@@ -116,9 +159,7 @@ public class RefreshManager implements Managed {
                     }
 
                 } catch (final Exception e) {
-                    LOGGER.error("Error consuming {} - {}",
-                            itemToString(delayedRefreshable), LogUtil.exceptionMessage(e), e);
-                    // We have to log, swallow and carry on, else our single thread dies
+                    handleRefreshException(delayedRefreshable, e);
                 }
             }
         } catch (final InterruptedException e) {
@@ -127,12 +168,37 @@ public class RefreshManager implements Managed {
         }
     }
 
+    private void handleRefreshException(final DelayedRefreshable delayedRefreshable,
+                                        final Exception e) {
+        try {
+            final Throwable rootCause = Throwables.getRootCause(e);
+            // SocketException is a super of ConnectionException
+            if (rootCause instanceof SocketException) {
+                LOGGER.error("Socket/connection error when refreshing {} - {}. (Enable DEBUG for stack trace.)",
+                        itemToString(delayedRefreshable), LogUtil.exceptionMessage(e));
+                LOGGER.debug("Socket/connection error when refreshing {} - {}.",
+                        itemToString(delayedRefreshable), LogUtil.exceptionMessage(e), e);
+                // Re-queue the item with a forced delay in the hope the IDP comes back
+                addOrUpdate(delayedRefreshable.getRefreshable(), DELAY_AFTER_FAILURE);
+            } else {
+                LOGGER.error("Error when refreshing {} - {}. (Enable DEBUG for stack trace.)",
+                        itemToString(delayedRefreshable), LogUtil.exceptionMessage(e));
+                LOGGER.debug("Error when refreshing {} - {}.",
+                        itemToString(delayedRefreshable), LogUtil.exceptionMessage(e), e);
+            }
+        } catch (final Exception ex) {
+            // We have to log, swallow and carry on, else our single thread dies
+            LOGGER.error("Error adding item {} - {}",
+                    itemToString(delayedRefreshable), LogUtil.exceptionMessage(e), e);
+        }
+    }
+
     private String itemToString(final DelayedRefreshable delayedRefreshable) {
         if (delayedRefreshable != null) {
             final Refreshable refreshable = delayedRefreshable.getRefreshable();
             return LogUtil.message("item {} ({}) of type {} from refresh queue, " +
-                            "expireTime: {} ({}), expireTimeWithBuffer: {} ({}), queue size after: {}, " +
-                            "item detail: {}",
+                                   "expireTime: {} ({}), expireTimeWithBuffer: {} ({}), queue size after: {}, " +
+                                   "item detail: {}",
                     System.identityHashCode(refreshable),
                     System.identityHashCode(delayedRefreshable),
                     refreshable.getClass().getSimpleName(),
@@ -154,8 +220,8 @@ public class RefreshManager implements Managed {
     private String itemToString(final Refreshable refreshable) {
         if (refreshable != null) {
             return LogUtil.message("item {} of type {} from refresh queue, " +
-                            "expireTime: {} ({}), expireTimeWithBuffer: {} ({}), queue size after: {}, " +
-                            "item detail: {}",
+                                   "expireTime: {} ({}), expireTimeWithBuffer: {} ({}), queue size after: {}, " +
+                                   "item detail: {}",
                     System.identityHashCode(refreshable),
                     refreshable.getClass().getSimpleName(),
                     LogUtil.instant(refreshable.getExpireTimeEpochMs()),
@@ -175,34 +241,42 @@ public class RefreshManager implements Managed {
 
     @Override
     public void start() throws Exception {
-        if (refreshExecutorService == null) {
-            LOGGER.info("Initialising RefreshManager executor");
-            refreshExecutorService = Executors.newSingleThreadExecutor();
-            refreshExecutorService.submit(() -> {
-                final Thread currentThread = Thread.currentThread();
-                LOGGER.debug(() -> "Started RefreshManager on thread " + currentThread.getName());
-                isStarted.set(true);
-                while (!currentThread.isInterrupted() && !isShutdownInProgress.get()) {
-                    consumeFromQueue();
-                }
-                LOGGER.info(() -> LogUtil.message(
-                        "RefreshManager refresh thread {} finishing (isInterrupted: {}, isShutdownInProgress: {})",
-                        currentThread.getName(), currentThread.isInterrupted(), isShutdownInProgress.get()));
-            });
+        try {
+            if (refreshExecutorService == null) {
+                LOGGER.info("Initialising RefreshManager executor");
+                refreshExecutorService = Executors.newSingleThreadExecutor();
+                refreshExecutorService.submit(() -> {
+                    final Thread currentThread = Thread.currentThread();
+                    LOGGER.debug(() -> "Started RefreshManager on thread " + currentThread.getName());
+                    isStarted.set(true);
+                    while (!currentThread.isInterrupted() && !isShutdownInProgress.get()) {
+                        consumeFromQueue();
+                    }
+                    LOGGER.info(() -> LogUtil.message(
+                            "RefreshManager refresh thread {} finishing (isInterrupted: {}, isShutdownInProgress: {})",
+                            currentThread.getName(), currentThread.isInterrupted(), isShutdownInProgress.get()));
+                });
+            }
+        } catch (final Exception e) {
+            LOGGER.error("Error starting - {}", LogUtil.exceptionMessage(e));
         }
     }
 
     @Override
     public void stop() throws Exception {
-        isShutdownInProgress.set(true);
-        // If we are shutting down we don't care about items on the queue, so bin them
-        delayQueue.clear();
-        if (refreshExecutorService != null) {
-            LOGGER.info("Shutting down RefreshManager executor");
-            refreshExecutorService.shutdownNow();
-            // No need to wait for termination the stuff on the queue has no value once
-            // we are shutting down
-            LOGGER.info("Successfully shut down RefreshManager executor");
+        try {
+            isShutdownInProgress.set(true);
+            // If we are shutting down we don't care about items on the queue, so bin them
+            delayQueue.clear();
+            if (refreshExecutorService != null) {
+                LOGGER.info("Shutting down RefreshManager executor");
+                refreshExecutorService.shutdownNow();
+                // No need to wait for termination the stuff on the queue has no value once
+                // we are shutting down
+                LOGGER.info("Successfully shut down RefreshManager executor");
+            }
+        } catch (final Exception e) {
+            LOGGER.error("Error stopping - {}", LogUtil.exceptionMessage(e));
         }
     }
 
@@ -232,22 +306,25 @@ public class RefreshManager implements Managed {
         private final Refreshable refreshable;
 
         DelayedRefreshable(final Refreshable refreshable) {
+            this(refreshable, null);
+        }
+
+        /**
+         * Use this constructor in cases where there has been an error refreshing the refreshable
+         * so, we want to re-queue it with a delay that is un-related to the expire-time on the
+         * refreshable.
+         */
+        DelayedRefreshable(final Refreshable refreshable, final Duration delay) {
             Objects.requireNonNull(refreshable);
-            this.refreshable = Objects.requireNonNull(refreshable);
-            // We need to snapshot the expireTime as that is mutable on the Refreshable
+            this.refreshable = refreshable;
             this.expireTimeEpochMs = refreshable.getExpireTimeEpochMs();
-
-            // We want to refresh items in the background slightly before the buffer threshold is reached
-            // as other people will be calling refreshIfRequired, so we want the refresh to have happened already
-//            long bufferMs;
-//            if (refreshable.getRefreshBufferMs() > 0) {
-////                bufferMs = (long) (1.1 * refreshable.getRefreshBufferMs());
-//                bufferMs = refreshable.getRefreshBufferMs();
-//            } else {
-//                bufferMs = 0;
-//            }
-
-            this.expireTimeWithBufferEpochMs = refreshable.getExpireTimeWithBufferEpochMs(RefreshMode.EAGER);
+            if (delay != null) {
+                this.expireTimeWithBufferEpochMs = Instant.now()
+                        .plus(Objects.requireNonNull(delay))
+                        .toEpochMilli();
+            } else {
+                this.expireTimeWithBufferEpochMs = refreshable.getExpireTimeWithBufferEpochMs(RefreshMode.EAGER);
+            }
             LOGGER.debug(() -> LogUtil.message(
                     "expireTimeEpoch: {}, refreshBuffer: {}, expireTimeWithBufferEpoch: {}",
                     LogUtil.instant(expireTimeEpochMs),
@@ -255,6 +332,7 @@ public class RefreshManager implements Managed {
 //                    Duration.ofMillis(bufferMs),
                     LogUtil.instant(expireTimeWithBufferEpochMs)));
         }
+
 
         public String getRefreshableUuid() {
             return refreshable.getUuid();
@@ -271,6 +349,10 @@ public class RefreshManager implements Managed {
                     ModelStringUtil.formatCsv(diffMs),
                     Duration.ofMillis(diffMs) + ")"));
             return unit.convert(diffMs, TimeUnit.MILLISECONDS);
+        }
+
+        private Duration getDelayAsDuration() {
+            return Duration.between(Instant.now(), Instant.ofEpochMilli(expireTimeWithBufferEpochMs));
         }
 
         @Override
@@ -290,10 +372,10 @@ public class RefreshManager implements Managed {
         @Override
         public String toString() {
             return "DelayedRefreshable{" +
-                    "expireTimeWithBufferEpoch=" + LogUtil.instant(expireTimeWithBufferEpochMs) +
-                    "expireTimeEpoch=" + LogUtil.instant(expireTimeWithBufferEpochMs) +
-                    ", refreshable=" + refreshable +
-                    '}';
+                   "expireTimeWithBufferEpoch=" + LogUtil.instant(expireTimeWithBufferEpochMs) +
+                   "expireTimeEpoch=" + LogUtil.instant(expireTimeWithBufferEpochMs) +
+                   ", refreshable=" + refreshable +
+                   '}';
         }
 
         @Override

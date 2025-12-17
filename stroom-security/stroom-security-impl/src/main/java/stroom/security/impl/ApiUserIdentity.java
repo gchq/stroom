@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl;
 
 import stroom.security.api.HasJwt;
@@ -15,6 +31,10 @@ import org.jose4j.jwt.consumer.JwtContext;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * {@link UserIdentity} that is created for API requests (that have JWT in the Authorisation header)
+ * and UI requests that have come via an AWS ALB (i.e. using the x-amzn-oidc-data header).
+ */
 class ApiUserIdentity implements UserIdentity, HasSessionId, HasUserRef, HasJwtClaims, HasJwt {
 
     private final UserRef userRef;
@@ -22,9 +42,8 @@ class ApiUserIdentity implements UserIdentity, HasSessionId, HasUserRef, HasJwtC
     private final JwtContext jwtContext;
 
     /**
-     * @param userUuid    The stroom_user UUID
-     * @param subjectId   The unique ID on the IDP, i.e. the 'sub' claim
-     * @param displayName
+     * @param userUuid  The stroom_user UUID
+     * @param subjectId The unique ID on the IDP, i.e. the 'sub' claim
      */
     ApiUserIdentity(final String userUuid,
                     final String subjectId,

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.http;
 
 import stroom.util.shared.AbstractBuilder;
@@ -32,6 +48,16 @@ import java.util.Objects;
 public class HttpClientConfiguration extends AbstractConfig implements IsStroomConfig, IsProxyConfig {
 
     public static final String PROP_NAME_TLS = "tls";
+    public static final StroomDuration DEFAULT_TIMEOUT = StroomDuration.ofMinutes(3);
+    public static final StroomDuration DEFAULT_CONNECTION_TIMEOUT = StroomDuration.ofMinutes(3);
+    public static final StroomDuration DEFAULT_CONNECTION_REQUEST_TIMEOUT = StroomDuration.ofMinutes(3);
+    public static final StroomDuration DEFAULT_TIME_TO_LIVE = StroomDuration.ofHours(1);
+    public static final boolean DEFAULT_COOKIES_ENABLED = false;
+    public static final int DEFAULT_MAX_CONNECTIONS = 1_024;
+    public static final int DEFAULT_MAX_CONNECTIONS_PER_ROUTE = 1_024;
+    public static final StroomDuration DEFAULT_KEEP_ALIVE = StroomDuration.ZERO;
+    public static final int DEFAULT_RETRIES = 0;
+    public static final StroomDuration DEFAULT_VALIDATE_AFTER_INACTIVITY_PERIOD = StroomDuration.ZERO;
 
     @NotNull
     private final StroomDuration timeout;
@@ -75,20 +101,19 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
     //    @Valid
     private final HttpTlsConfiguration tlsConfiguration;
 
-
     public HttpClientConfiguration() {
-        timeout = StroomDuration.ofMinutes(3);
-        connectionTimeout = StroomDuration.ofMinutes(3);
-        connectionRequestTimeout = StroomDuration.ofMinutes(3);
-        timeToLive = StroomDuration.ofHours(1);
-        cookiesEnabled = false;
-        maxConnections = 1024;
-        maxConnectionsPerRoute = 1024;
-        keepAlive = StroomDuration.ZERO;
-        retries = 0;
+        timeout = DEFAULT_TIMEOUT;
+        connectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
+        connectionRequestTimeout = DEFAULT_CONNECTION_REQUEST_TIMEOUT;
+        timeToLive = DEFAULT_TIME_TO_LIVE;
+        cookiesEnabled = DEFAULT_COOKIES_ENABLED;
+        maxConnections = DEFAULT_MAX_CONNECTIONS;
+        maxConnectionsPerRoute = DEFAULT_MAX_CONNECTIONS_PER_ROUTE;
+        keepAlive = DEFAULT_KEEP_ALIVE;
+        retries = DEFAULT_RETRIES;
         userAgent = null;
         proxyConfiguration = null;
-        validateAfterInactivityPeriod = StroomDuration.ZERO;
+        validateAfterInactivityPeriod = DEFAULT_VALIDATE_AFTER_INACTIVITY_PERIOD;
         tlsConfiguration = null;
     }
 
@@ -99,7 +124,7 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
             @JsonProperty("connectionTimeout") final StroomDuration connectionTimeout,
             @JsonProperty("connectionRequestTimeout") final StroomDuration connectionRequestTimeout,
             @JsonProperty("timeToLive") final StroomDuration timeToLive,
-            @JsonProperty("cookiesEnabled") final boolean cookiesEnabled,
+            @JsonProperty("cookiesEnabled") final Boolean cookiesEnabled,
             @JsonProperty("maxConnections") final Integer maxConnections,
             @JsonProperty("maxConnectionsPerRoute") final Integer maxConnectionsPerRoute,
             @JsonProperty("keepAlive") final StroomDuration keepAlive,
@@ -109,26 +134,21 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
             @JsonProperty("validateAfterInactivityPeriod") final StroomDuration validateAfterInactivityPeriod,
             @Nullable @JsonProperty(PROP_NAME_TLS) final HttpTlsConfiguration tlsConfiguration) {
 
-        this.timeout = Objects
-                .requireNonNullElse(timeout, StroomDuration.ofMillis(500));
-        this.connectionTimeout = Objects
-                .requireNonNullElse(connectionTimeout, StroomDuration.ofMillis(500));
-        this.connectionRequestTimeout = Objects
-                .requireNonNullElse(connectionRequestTimeout, StroomDuration.ofMillis(500));
-        this.timeToLive = Objects
-                .requireNonNullElse(timeToLive, StroomDuration.ofHours(1));
-        this.cookiesEnabled = cookiesEnabled;
-        this.maxConnections = Objects
-                .requireNonNullElse(maxConnections, 1024);
-        this.maxConnectionsPerRoute = Objects
-                .requireNonNullElse(maxConnectionsPerRoute, 1024);
-        this.keepAlive = Objects
-                .requireNonNullElse(keepAlive, StroomDuration.ZERO);
+        this.timeout = Objects.requireNonNullElse(timeout, DEFAULT_TIMEOUT);
+        this.connectionTimeout = Objects.requireNonNullElse(connectionTimeout, DEFAULT_CONNECTION_TIMEOUT);
+        this.connectionRequestTimeout = Objects.requireNonNullElse(
+                connectionRequestTimeout, DEFAULT_CONNECTION_REQUEST_TIMEOUT);
+        this.timeToLive = Objects.requireNonNullElse(timeToLive, DEFAULT_TIME_TO_LIVE);
+        this.cookiesEnabled = Objects.requireNonNullElse(cookiesEnabled, DEFAULT_COOKIES_ENABLED);
+        this.maxConnections = Objects.requireNonNullElse(maxConnections, DEFAULT_MAX_CONNECTIONS);
+        this.maxConnectionsPerRoute = Objects.requireNonNullElse(
+                maxConnectionsPerRoute, DEFAULT_MAX_CONNECTIONS_PER_ROUTE);
+        this.keepAlive = Objects.requireNonNullElse(keepAlive, DEFAULT_KEEP_ALIVE);
         this.retries = retries;
         this.userAgent = userAgent;
         this.proxyConfiguration = proxyConfiguration;
-        this.validateAfterInactivityPeriod = Objects
-                .requireNonNullElse(validateAfterInactivityPeriod, StroomDuration.ZERO);
+        this.validateAfterInactivityPeriod = Objects.requireNonNullElse(
+                validateAfterInactivityPeriod, DEFAULT_VALIDATE_AFTER_INACTIVITY_PERIOD);
         this.tlsConfiguration = tlsConfiguration;
     }
 

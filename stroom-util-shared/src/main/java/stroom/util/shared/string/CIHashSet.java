@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 /**
  * A {@link HashSet} containing case-insensitive {@link CIKey} string values.
  */
+@SuppressWarnings("checkstyle:IllegalType")
 public class CIHashSet extends HashSet<CIKey> {
 
     public CIHashSet(final Collection<String> collection) {

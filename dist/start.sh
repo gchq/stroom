@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 #
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#
 # Starts Stroom (Proxy)
 
 # trap ctrl-c and call ctrl_c()
@@ -39,7 +55,7 @@ kill_log_tailing() {
   if [ -n "${pid}" ]; then
     set +e
     # kill -0 returns true if the process is still alive
-    while kill -0 "${pid}" >/dev/null 2>&1; do 
+    while kill -0 "${pid}" >/dev/null 2>&1; do
       sleep 1
     done
     set -e
@@ -84,15 +100,15 @@ wait_for_200_response() {
 start_stroom() {
 
   # Ensure files and dirs exist for later tailing
-  ensure_file_exists "${PATH_TO_START_LOG}" 
+  ensure_file_exists "${PATH_TO_START_LOG}"
 
   if [[ ! "${APP_NAME}" =~ [Pp]roxy ]]; then
-    ensure_file_exists "${PATH_TO_MIGRATION_LOG}" 
+    ensure_file_exists "${PATH_TO_MIGRATION_LOG}"
   fi
 
-  ensure_file_exists "${PATH_TO_APP_LOG}" 
+  ensure_file_exists "${PATH_TO_APP_LOG}"
   # Ensure dir exists for an OOM heap dumps to go into
-  ensure_dir_exists "${HEAP_DUMP_DIR}" 
+  ensure_dir_exists "${HEAP_DUMP_DIR}"
 
   # stroom and proxy both use this script and the same jar so use absolute
   # paths to distinguish the two processes when using the 'ps' command.
@@ -217,25 +233,25 @@ check_or_create_pid_file() {
 
     if [ "${PID}" = '' ]; then # If the pid file is empty for some reason
       start_stroom
-    else 
+    else
       if ps -p "${PID}" > /dev/null # Check if the PID is a running process
       then
         warn "${APP_NAME} is already running (pid: ${BLUE}$PID${NC}). Use" \
           "${BLUE}restart.sh${NC} if you want to start it."
         # echo -e "${RED}Warning:${NC} ${GREEN}${APP_NAME}${NC} is already running (pid: ${BLUE}$PID${NC}). Use ${BLUE}restart.sh${NC} if you want to start it."
-      else 
+      else
         warn "There was an instance of ${APP_NAME} running but it looks like"\
           "it wasn't stopped gracefully.\nYou might want to check the logs" \
           "in ${BLUE}${PATH_TO_APP_LOG}${NC}.\nIf you are certain it is" \
           "not running delete the file ${BLUE}${STROOM_PID_FILE}${NC}"
-        echo 
+        echo
         read -n1 -r -p \
           "Would you like to start a new instance? (y/n)" start_new_instance
         echo -e ''
         if [ "${start_new_instance}" = 'y' ]; then
           rm "${STROOM_PID_FILE}"
           start_stroom
-        else 
+        else
           info "${APP_NAME} will not be started."
         fi
       fi
@@ -265,17 +281,17 @@ main() {
   while getopts ":mhq" arg; do
     # shellcheck disable=SC2034
     case $arg in
-      h ) 
+      h )
         echo_usage
         exit 0
         ;;
-      m )  
-        MONOCHROME=true 
+      m )
+        MONOCHROME=true
         ;;
-      q )  
-        do_tailing=false 
+      q )
+        do_tailing=false
         ;;
-      * ) 
+      * )
         invalid_arguments
         ;;  # getopts already reported the illegal option
     esac

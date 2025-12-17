@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.processor.api;
@@ -44,7 +43,8 @@ public interface ProcessorFilterService
 
     List<ReprocessDataInfo> reprocess(CreateProcessFilterRequest request);
 
-    ProcessorFilter importFilter(Processor processor,
+    ProcessorFilter importFilter(ProcessorFilter existingProcessorFilter,
+                                 Processor processor,
                                  DocRef processorFilterDocRef,
                                  CreateProcessFilterRequest request);
 
@@ -63,4 +63,6 @@ public interface ProcessorFilterService
     ProcessorFilterRow getRow(ProcessorFilter processorFilter);
 
     Optional<String> getPipelineName(ProcessorType processorType, String uuid);
+
+    ProcessorFilter restore(DocRef processorFilterDocRef, final boolean resetTracker);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.core.receive;
@@ -116,7 +115,7 @@ class FeedStatusServiceImpl implements FeedStatusService {
                                 LOGGER.debug("Content auto-creation disabled");
                             }
                         } else {
-                            LOGGER.debug("Can't auto-create");
+                            LOGGER.debug("Feed {} exists with status {}", feedName, feedStatus);
                         }
                         LOGGER.debug("feedName: {}, userDesc: {}, feedStatus: {}, ",
                                 feedName, userDesc, feedStatus);

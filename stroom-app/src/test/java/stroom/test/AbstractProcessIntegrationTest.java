@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 public abstract class AbstractProcessIntegrationTest extends StroomIntegrationTest {
 
     @Inject
-    private ContentImportService contentImportService;
+    @SuppressWarnings("unused")
+    private ContentStoreTestSetup contentStoreTestSetup;
 
     @BeforeEach
     final void importSchemas() {
-        contentImportService.importStandardPacks();
+        contentStoreTestSetup.installStandardPacks();
     }
 }

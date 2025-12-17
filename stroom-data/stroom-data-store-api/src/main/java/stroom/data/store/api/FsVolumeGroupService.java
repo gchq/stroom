@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import java.util.Optional;
 public interface FsVolumeGroupService {
 
     String ENTITY_TYPE = "FS_VOLUME_GROUP";
-    DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, null, null);
+    DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, ENTITY_TYPE, ENTITY_TYPE);
 
     List<String> getNames();
 

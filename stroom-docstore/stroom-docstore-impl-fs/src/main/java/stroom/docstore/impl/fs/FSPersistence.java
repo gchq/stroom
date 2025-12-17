@@ -1,14 +1,31 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.docstore.impl.fs;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.Persistence;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.util.io.PathCreator;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.string.EncodingUtil;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -43,14 +60,11 @@ public class FSPersistence implements Persistence, Clearable {
     private final Path dir;
     private final ObjectMapper objectMapper;
 
+    @SuppressWarnings("unused")
     @Inject
     public FSPersistence(final FSPersistenceConfig config, final PathCreator pathCreator) {
         this(pathCreator.toAppPath(config.getPath()));
     }
-
-//    public FSPersistence(final String dir, final PathCreator pathCreator) {
-//        this(pathCreator.toAppPath(dir));
-//    }
 
     public FSPersistence(final Path absoluteDir) {
         try {
@@ -225,7 +239,16 @@ public class FSPersistence implements Persistence, Clearable {
         return Optional.empty();
     }
 
-    private static class GenericDoc extends Doc {
+    private static class GenericDoc extends AbstractDoc {
 
+        public GenericDoc(@JsonProperty("uuid") final String uuid,
+                          @JsonProperty("name") final String name,
+                          @JsonProperty("version") final String version,
+                          @JsonProperty("createTimeMs") final Long createTimeMs,
+                          @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                          @JsonProperty("createUser") final String createUser,
+                          @JsonProperty("updateUser") final String updateUser) {
+            super("GenericDoc", uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        }
     }
 }

@@ -1,5 +1,23 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
+import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.app.DataDirProvider;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
@@ -17,6 +35,8 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -76,7 +96,8 @@ public class Aggregator {
                 final Path tempDir = tempAggregatesDirProvider.get();
                 final FileGroup outputFileGroup = new FileGroup(tempDir);
                 final AtomicLong count = new AtomicLong();
-                final AtomicBoolean doneMeta = new AtomicBoolean();
+                final AttributeMap commonHeaders = new AttributeMap();
+                final AtomicBoolean doneFirstMeta = new AtomicBoolean();
                 // Get a buffer to help us transfer data.
                 final byte[] buffer = LocalByteBuffer.get();
 
@@ -84,15 +105,29 @@ public class Aggregator {
                     FileUtil.forEachChild(dir, fileGroupDir -> {
                         final FileGroup fileGroup = new FileGroup(fileGroupDir);
 
-                        // Output meta if this is the first.
-                        if (!doneMeta.get()) {
-                            try {
-                                Files.copy(fileGroup.getMeta(), outputFileGroup.getMeta());
-                                doneMeta.set(true);
-                            } catch (final IOException e) {
-                                LOGGER.error(e::getMessage, e);
-                                throw new UncheckedIOException(e);
+                        // Combine common header keys and values.
+                        try {
+                            if (doneFirstMeta.compareAndSet(false, true)) {
+                                // Load initial common headers from the first meta.
+                                AttributeMapUtil.read(fileGroup.getMeta(), commonHeaders);
+                            } else {
+                                // Remove headers that don't exist or are different in subsequent meta files.
+                                final AttributeMap headers = new AttributeMap();
+                                AttributeMapUtil.read(fileGroup.getMeta(), headers);
+                                final Iterator<Map.Entry<String, String>> iterator =
+                                        commonHeaders.entrySet().iterator();
+                                while (iterator.hasNext()) {
+                                    final Map.Entry<String, String> entry = iterator.next();
+                                    final String otherValue = headers.get(entry.getKey());
+                                    // If this header is different then remove the common header.
+                                    if (!Objects.equals(entry.getValue(), otherValue)) {
+                                        iterator.remove();
+                                    }
+                                }
                             }
+                        } catch (final IOException e) {
+                            LOGGER.error(e::getMessage, e);
+                            throw new UncheckedIOException(e);
                         }
 
                         try (final ZipFile zipFile = ZipUtil.createZipFile(fileGroup.getZip())) {
@@ -122,6 +157,14 @@ public class Aggregator {
                             throw new UncheckedIOException(e);
                         }
                     });
+
+                    // Now write the common header arguments to the aggregate meta file.
+                    try {
+                        AttributeMapUtil.write(commonHeaders, outputFileGroup.getMeta());
+                    } catch (final IOException e) {
+                        LOGGER.error(e::getMessage, e);
+                        throw new UncheckedIOException(e);
+                    }
                 }
 
                 // We have finished the merge so transfer the new item to be forwarded.

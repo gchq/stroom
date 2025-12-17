@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.shared;
 
 import java.util.ArrayList;
@@ -57,6 +73,11 @@ public interface ResourcePaths {
     String V1 = "/v1";
     String V2 = "/v2";
     String V3 = "/v3";
+
+    String UI_SERVLET_NAME = "UI";
+    String STROOM_SERVLET_NAME = "StroomServlet";
+    String SIGN_IN_SERVLET_NAME = "SignInServlet";
+    String SESSION_LIST_SERVLET_NAME = "SessionListServlet";
 
 
     static String addLegacyUnauthenticatedServletPrefix(final String... parts) {

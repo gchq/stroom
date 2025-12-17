@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.pipeline.reader;
 
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
@@ -37,7 +38,7 @@ public class FindReplaceFilter extends FilterReader {
     private final int bufferSize;
     private final LocationFactory locationFactory;
     private final ErrorReceiver errorReceiver;
-    private final String elementId;
+    private final ElementId elementId;
 
     private int inputOffset;
     private int replacementCount;
@@ -59,7 +60,7 @@ public class FindReplaceFilter extends FilterReader {
                               final int bufferSize,
                               final LocationFactory locationFactory,
                               final ErrorReceiver errorReceiver,
-                              final String elementId) {
+                              final ElementId elementId) {
         super(reader);
         this.bufferSize = Math.max(MIN_SIZE, bufferSize);
         this.locationFactory = locationFactory;
@@ -580,7 +581,7 @@ public class FindReplaceFilter extends FilterReader {
         private int bufferSize;
         private LocationFactory locationFactory;
         private ErrorReceiver errorReceiver;
-        private String elementId;
+        private ElementId elementId;
 
         private Builder() {
         }
@@ -632,7 +633,7 @@ public class FindReplaceFilter extends FilterReader {
             return this;
         }
 
-        public Builder elementId(final String elementId) {
+        public Builder elementId(final ElementId elementId) {
             this.elementId = elementId;
             return this;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 
 package stroom.pipeline;
 
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
 public interface ErrorWriter {
-    void log(Severity severity, Location location, String elementId, String message);
+    void log(Severity severity, Location location, ElementId elementId, String message);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ public class SearchRequestTestData {
                         .name("name1")
                         .expression("expression1")
                         .sort(new Sort(1, Sort.SortDirection.ASCENDING))
-                        .filter(new IncludeExcludeFilter("include1", "exclude1"))
+                        .filter(new IncludeExcludeFilter("include1", "exclude1", null, null))
                         .format(Format.builder()
                                 .type(Format.Type.NUMBER)
                                 .settings(new NumberFormatSettings(
@@ -88,7 +88,7 @@ public class SearchRequestTestData {
                         .name("name2")
                         .expression("expression2")
                         .sort(new Sort(2, Sort.SortDirection.DESCENDING))
-                        .filter(new IncludeExcludeFilter("include2", "exclude2"))
+                        .filter(new IncludeExcludeFilter("include2", "exclude2", null, null))
                         .format(Format.builder()
                                 .type(Type.DATE_TIME)
                                 .settings(createDateTimeFormat())

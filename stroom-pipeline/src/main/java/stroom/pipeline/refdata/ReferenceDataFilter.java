@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,7 +155,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private String mapName;
     private String key;
     private boolean insideValueElement;
-    private String valueElementUri = null;
+    private int valueElementDepthLevel = -1;
     private boolean haveSeenXmlInValueElement = false;
     private Long rangeFrom;
     private Long rangeTo;
@@ -186,7 +186,6 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         this.refDataLoaderHolder = refDataLoaderHolder;
         this.stagingValueOutputStream = stagingValueOutputStream;
     }
-
 
     @Override
     public void startProcessing() {
@@ -348,6 +347,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
             LOGGER.trace("startElement {} {} {}, level:{}", uri, localName, qName, depthLevel);
 
             if (insideValueElement) {
+                LOGGER.trace("Inside reference value element {} {} {}, level:{}", uri, localName, qName, depthLevel);
                 // We are on an element somewhere inside the /referenceData/reference/value element
                 recordHavingSeenXmlContent();
 
@@ -397,12 +397,14 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
                 fastInfosetStartElement(localName, uri, qName, atts);
             } else if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
+                LOGGER.trace("Reference value start element found, {} {} {}, level:{}",
+                        uri, localName, qName, depthLevel);
                 // We are no inside /referenceData/reference/value element, so we must be starting
                 // the /referenceData/reference/value element.
                 insideValueElement = true;
-                // Capture the namespace URI of the reference value element in case the value element
+                // Capture the depth of the reference value element in case the value element
                 // contains an XML ref value that also contains an element called 'value'
-                valueElementUri = uri;
+                valueElementDepthLevel = depthLevel;
                 stagingValueOutputStream.clear();
             }
         } finally {
@@ -453,13 +455,17 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         try {
-            LOGGER.trace("endElement {} {} {} level:{}", uri, localName, qName, depthLevel);
+            LOGGER.trace("endElement {} {} {} level:{}, valueElementDepthLevel: {}, insideValueElement: {}",
+                    uri, localName, qName, depthLevel, valueElementDepthLevel, insideValueElement);
 
             insideElement = false;
             if (insideValueElement
-                && Objects.equals(valueElementUri, uri)
-                && Objects.equals(VALUE_ELEMENT, localName)) {
+                && depthLevel == valueElementDepthLevel
+                && VALUE_ELEMENT.equalsIgnoreCase(localName)) {
                 // The end of /referenceData/reference/value element.
+                // We check the depth to make sure it is the right </value> element and not one nested inside
+                // the reference value. Can't test with namespace as the schema supports no namespace inside
+                // the value
                 handleValueEndElement();
             } else if (insideValueElement) {
                 // We are somewhere inside the /referenceData/reference/value element
@@ -534,7 +540,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
     private void handleValueEndElement() throws SAXException {
         insideValueElement = false;
-        valueElementUri = null;
+        valueElementDepthLevel = -1;
 
         if (haveSeenXmlInValueElement) {
             // Complete the fastInfoSet serialisation to stagingValueOutputStream

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,15 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.UserIdentitySessionUtil;
+import stroom.security.impl.OpenIdManager.RedirectUrl;
 import stroom.security.openid.api.OpenId;
+import stroom.util.authentication.HasExpiry;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.net.UrlUtils;
+import stroom.util.servlet.SessionUtil;
+import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.AuthenticationBypassChecker;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
@@ -44,10 +48,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Filter to avoid posts to the wrong place (e.g. the root of the app)
@@ -56,12 +62,6 @@ import java.util.Set;
 class SecurityFilter implements Filter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SecurityFilter.class);
-
-    private static final Set<String> STATIC_RESOURCE_EXTENSIONS = Set.of(
-            ".js", ".js.map", ".css", ".css.map", ".htm", ".html", ".json", ".png",
-            ".jpg", ".gif", ".ico", ".svg", ".ttf", ".woff", ".woff2");
-
-    private static final String SIGN_IN_URL_PATH = ResourcePaths.buildServletPath(ResourcePaths.SIGN_IN_PATH);
 
     private final UriFactory uriFactory;
     private final SecurityContext securityContext;
@@ -115,10 +115,13 @@ class SecurityFilter implements Filter {
             throws IOException, ServletException {
 
         LOGGER.debug(() ->
-                LogUtil.message("Filtering request uri: {}, servletPath: {}, servletName: {}",
+                LogUtil.message("Filtering request uri: {}, servletPath: {}, servletName: {}, " +
+                                "session: {}, getQueryString: '{}'",
                         request.getRequestURI(),
                         request.getServletPath(),
-                        NullSafe.get(request.getHttpServletMapping(), HttpServletMapping::getServletName)));
+                        NullSafe.get(request.getHttpServletMapping(), HttpServletMapping::getServletName),
+                        SessionUtil.getSessionId(request),
+                        request.getQueryString()));
 
         // Log the request for debug purposes.
         RequestLog.log(request);
@@ -127,119 +130,167 @@ class SecurityFilter implements Filter {
         final String fullPath = request.getRequestURI();
         final String servletName = NullSafe.get(request.getHttpServletMapping(), HttpServletMapping::getServletName);
 
-        if (request.getMethod().equalsIgnoreCase(HttpMethod.OPTIONS)) {
+        if (HttpMethod.OPTIONS.equalsIgnoreCase(request.getMethod())) {
             // We need to allow CORS preflight requests
             LOGGER.debug("Passing on OPTIONS request to next filter, servletName: {}, fullPath: {}, servletPath: {}",
                     servletName, fullPath, servletPath);
             chain.doFilter(request, response);
-        } else if (isStaticResource(fullPath, servletPath)) {
-            LOGGER.debug("Static content, servletName: {}, fullPath: {}, servletPath: {}",
-                    servletName, fullPath, servletPath);
+        } else if (isStaticResource(fullPath, servletPath, servletName)) {
             chain.doFilter(request, response);
+        } else if (shouldBypassAuthentication(request, fullPath, servletPath, servletName)) {
+            LOGGER.debug("Running as proc user for unauthenticated resource, servletName: {}, " +
+                         "fullPath: {}, servletPath: {}", servletName, fullPath, servletPath);
+            // Some paths don't need authentication. If that is the case then proceed as proc user.
+            securityContext.asProcessingUser(() ->
+                    process(request, response, chain));
         } else {
-            LOGGER.debug(() -> LogUtil.message("Session ID {}, request URI {}",
-                    Optional.ofNullable(request.getSession(false))
-                            .map(HttpSession::getId)
-                            .orElse("-"),
-                    request.getRequestURI() + Optional.ofNullable(request.getQueryString())
-                            .map(str -> "/" + str)
-                            .orElse("")));
+            // First see if a previous call has placed a userIdentity in session
+            Optional<UserIdentity> optUserIdentity = UserIdentitySessionUtil.getUserFromSession(
+                    SessionUtil.getExistingSession(request));
+            logUserIdentityToDebug(optUserIdentity, fullPath, servletPath, "from session");
 
-            Optional<UserIdentity> optUserIdentity;
+            // Check if the underlying claims/token have expired. The expiry time of some impls
+            // may get refreshed over time, so we may never hit it. When code flow is handled by
+            // AWS ALB we will expire, so will just get the latest token from headers which the
+            // ALB will be refreshing.
+            optUserIdentity = optUserIdentity.map(userIdentity -> {
+                if (userIdentity instanceof final HasExpiry hasExpiry) {
+                    if (hasExpiry.hasExpired()) {
+                        LOGGER.info("UserIdentity {} obtained from session has expired, expiry: {}. " +
+                                    "Will attempt to re-authenticate using headers or will initiate code-flow.",
+                                userIdentityToString(userIdentity), hasExpiry.getExpireTime());
+                        // Clear the identity, so we have to re-acquire it from headers or code flow
+                        return null;
+                    } else {
+                        LOGGER.debug(() -> LogUtil.message("UserIdentity {} obtained from session expires in {}",
+                                userIdentityToString(userIdentity), hasExpiry.getTimeTilExpired()));
+                    }
+                }
+                return userIdentity;
+            });
 
-            // Api requests that are not from the front-end should have a token.
-            // Also request from an AWS ALB will have an ALB signed token containing the claims
-            // Need to do this first, so we get a fresh token from AWS ALB rather than using a stale
-            // one from session.
-            optUserIdentity = openIdManager.loginWithRequestToken(request);
-            if (LOGGER.isDebugEnabled()) {
-                logUserIdentityToDebug(
-                        optUserIdentity, fullPath, "after trying to login with request token");
-            }
-
-            // If no user from header token, see if we have one in session already.
-            optUserIdentity = openIdManager.getOrSetSessionUser(request, optUserIdentity);
-            if (LOGGER.isDebugEnabled()) {
-                logUserIdentityToDebug(optUserIdentity, fullPath, "from session");
+            // API requests that are not from the front-end should have a token.
+            // Also requests from an AWS ALB will have an ALB signed token containing the claims
+            if (optUserIdentity.isEmpty()) {
+                optUserIdentity = openIdManager.loginWithRequestToken(request);
+                logUserIdentityToDebug(optUserIdentity, fullPath, servletPath, "from request token");
             }
 
             if (optUserIdentity.isPresent()) {
                 final UserIdentity userIdentity = optUserIdentity.get();
-                LOGGER.debug(() -> LogUtil.message("Setting user in session, user: {} {}, path: {}",
-                        userIdentity.getClass().getSimpleName(),
-                        userIdentity,
-                        fullPath));
-                // Set the identity in session if we have a session and cookie
-                if (UserIdentitySessionUtil.requestHasSessionCookie(request)) {
-                    UserIdentitySessionUtil.set(request, userIdentity);
+
+                // Now we have the session make note of the user-agent for logging and sessionListServlet duties
+                UserAgentSessionUtil.setUserAgentInSession(request);
+
+                // If OIDC code flow has been handled by the AWS ALB then the session won't have been
+                // created by our code flow code. Thus, ensure we have a session with the user in it
+                if (isStroomUIServlet(servletName)) {
+                    SessionUtil.getOrCreateSession(request, aSession -> {
+                        LOGGER.info("Creating session {} for user {}, fullPath: {}, servlet: {}",
+                                aSession.getId(), userIdentity, fullPath, servletName);
+                        UserIdentitySessionUtil.setUserInSession(aSession, userIdentity);
+                    });
                 }
 
                 // Now handle the request as this user
                 securityContext.asUser(userIdentity, () ->
                         process(request, response, chain));
-
-            } else if (shouldBypassAuthentication(request, fullPath, servletPath, servletName)) {
-                LOGGER.debug("Running as proc user for unauthenticated servletName: {}, " +
-                             "fullPath: {}, servletPath: {}", servletName, fullPath, servletPath);
-                // Some paths don't need authentication. If that is the case then proceed as proc user.
-                securityContext.asProcessingUser(() ->
-                        process(request, response, chain));
-
-            } else if (isApiRequest(servletPath)) {
+            } else if (isStroomUIServlet(servletName)) {
+                doOpenIdFlow(request, response, fullPath);
+            } else {
                 // If we couldn't log in with a token or couldn't get a token then error as this is an API call
                 // or no login flow is possible/expected.
                 LOGGER.debug("No user identity so responding with UNAUTHORIZED for servletName: {}, " +
                              "fullPath: {}, servletPath: {}", servletName, fullPath, servletPath);
                 response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
+            }
+        }
+    }
 
-            } else {
-                // No identity found and not an unauthenticated servlet/api so assume it is
-                // a UI request. Thus instigate an OpenID authentication flow
-                try {
-                    final String postAuthRedirectUri = getPostAuthRedirectUri(request);
+    private boolean isStroomUIServlet(final String servletName) {
+        return Objects.equals(ResourcePaths.STROOM_SERVLET_NAME, servletName)
+               || Objects.equals(ResourcePaths.SESSION_LIST_SERVLET_NAME, servletName);
+    }
 
-                    final String code = UrlUtils.getLastParam(request, OpenId.CODE);
-                    final String stateId = UrlUtils.getLastParam(request, OpenId.STATE);
-                    final String redirectUri = openIdManager.redirect(request, code, stateId, postAuthRedirectUri);
-                    LOGGER.debug("Code flow UI request so redirecting to IDP, " +
-                                 "redirectUri: {}, postAuthRedirectUri: {}, path: {}",
-                            redirectUri, postAuthRedirectUri, fullPath);
+    private void doOpenIdFlow(final HttpServletRequest request,
+                              final HttpServletResponse response,
+                              final String fullPath) throws IOException {
+        // No identity found and not an unauthenticated servlet/api so assume it is
+        // a UI request. Thus instigate an OpenID authentication flow
+        try {
+            final String postAuthRedirectUri = getPostAuthRedirectUri(request);
+            final String code = UrlUtils.getLastParam(request, OpenId.CODE);
+            final String stateId = UrlUtils.getLastParam(request, OpenId.STATE);
+            final RedirectUrl redirectUri = openIdManager.redirect(
+                    request, code, stateId, postAuthRedirectUri);
+            LOGGER.debug("Doing code flow postAuthRedirectUri: {}, code: {}, stateId: {}, redirectUri: {}",
+                    postAuthRedirectUri, code, stateId, redirectUri);
+            // HTTP 1.1.
+            response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+            // HTTP 1.0.
+            response.setHeader("Pragma", "no-cache");
+            // Proxies.
+            response.setHeader("Expires", "0");
 
-                    // HTTP 1.1.
-                    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-                    // HTTP 1.0.
-                    response.setHeader("Pragma", "no-cache");
-                    // Proxies.
-                    response.setHeader("Expires", "0");
+            switch (redirectUri.redirectMode()) {
+                case REFRESH -> {
+                    // If the session has only just been created, and we do a normal redirect,
+                    // then the browser will never get the session cookie as the response is terminated
+                    // for the redirect. Thus, the session ID will not be known at the redirect URI.
+                    // A refresh will ensure the cookie is set.
+                    LOGGER.debug("Responding with a http-equiv refresh to {}", redirectUri);
+                    response.setContentType(ContentType.TEXT_HTML.getMimeType());
+                    try (final PrintWriter responseWriter = response.getWriter()) {
+                        responseWriter.print("<html>");
+                        responseWriter.print("<head>");
+                        responseWriter.print("<meta http-equiv=\"refresh\" content=\"0; URL='");
+                        responseWriter.print(redirectUri.redirectUrl());
+                        responseWriter.print("'\" />");
+                        responseWriter.print("</html>");
+                        responseWriter.print("</head>");
+                    }
+                }
+                case REDIRECT -> {
+                    // Do a standard http redirect, e.g. to the IDP
+                    final String url = redirectUri.redirectUrl();
+                    LOGGER.debug("Code flow UI request so redirecting to:, " +
+                                 "redirectUri: {}, url: {}, postAuthRedirectUri: {}, path: {}",
+                            redirectUri, url, postAuthRedirectUri, fullPath);
 
                     response.setStatus(HttpServletResponse.SC_TEMPORARY_REDIRECT);
-                    response.setHeader("Location", redirectUri);
-
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                    throw e;
+                    response.setHeader("Location", url);
                 }
             }
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw e;
         }
     }
 
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void logUserIdentityToDebug(final Optional<UserIdentity> optUserIdentity,
                                         final String fullPath,
+                                        final String servletName,
                                         final String msg) {
-        LOGGER.debug("User identity ({}): {} path: {}",
+        LOGGER.debug(() -> LogUtil.message("User identity ({}): {}, fullPath: {}, servletName: {}",
                 msg,
-                optUserIdentity.map(
-                                identity -> {
-                                    final String id = identity.getDisplayName() != null
-                                            ? identity.subjectId() + " (" + identity.getDisplayName() + ")"
-                                            : identity.subjectId();
-                                    return LogUtil.message("'{}' {}",
-                                            id,
-                                            identity.getClass().getSimpleName());
-                                })
+                optUserIdentity.map(this::userIdentityToString)
                         .orElse("<empty>"),
-                fullPath);
+                fullPath,
+                servletName));
+    }
+
+    private String userIdentityToString(final UserIdentity userIdentity) {
+        if (userIdentity == null) {
+            return "";
+        } else {
+            final String id = userIdentity.getDisplayName() != null
+                    ? userIdentity.subjectId() + " (" + userIdentity.getDisplayName() + ")"
+                    : userIdentity.subjectId();
+            return LogUtil.message("'{}' {}",
+                    id,
+                    userIdentity.getClass().getSimpleName());
+        }
     }
 
     private String getPostAuthRedirectUri(final HttpServletRequest request) {
@@ -255,31 +306,18 @@ class SecurityFilter implements Filter {
         return uriFactory.publicUri(originalPath).toString();
     }
 
-    private boolean isStaticResource(final String fullPath, final String servletPath) {
+    private boolean isStaticResource(final String fullPath,
+                                     final String servletPath,
+                                     final String servletName) {
         // Test for internal IdP sign in request.
-        if (servletPath.startsWith(SIGN_IN_URL_PATH)) {
+        if (ResourcePaths.UI_SERVLET_NAME.equals(servletName)
+            || ResourcePaths.SIGN_IN_SERVLET_NAME.equals(servletName)) {
+            LOGGER.debug("Unauthenticated static content, servletName: {}, fullPath: {}, servletPath: {}",
+                    servletName, fullPath, servletPath);
             return true;
+        } else {
+            return false;
         }
-
-        int index = fullPath.lastIndexOf(".");
-        if (index > 0) {
-            String extension = fullPath.substring(index).toLowerCase();
-            if (STATIC_RESOURCE_EXTENSIONS.contains(extension)) {
-                return true;
-            } else {
-                // Handle stuff like .css.map
-                index = fullPath.lastIndexOf(".", index - 1);
-                if (index > 0) {
-                    extension = fullPath.substring(index).toLowerCase();
-                    return STATIC_RESOURCE_EXTENSIONS.contains(extension);
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isApiRequest(final String servletPath) {
-        return servletPath.startsWith(ResourcePaths.API_ROOT_PATH);
     }
 
     private boolean shouldBypassAuthentication(final HttpServletRequest servletRequest,
@@ -291,17 +329,6 @@ class SecurityFilter implements Filter {
             shouldBypass = false;
         } else {
             shouldBypass = authenticationBypassChecker.isUnauthenticated(servletName, servletPath, fullPath);
-        }
-
-        if (LOGGER.isDebugEnabled()) {
-            if (shouldBypass) {
-                LOGGER.debug("Bypassing authentication for servletName: {}, fullPath: {}, servletPath: {}",
-                        NullSafe.get(
-                                servletRequest.getHttpServletMapping(),
-                                HttpServletMapping::getServletName),
-                        fullPath,
-                        servletPath);
-            }
         }
         return shouldBypass;
     }
@@ -318,5 +345,16 @@ class SecurityFilter implements Filter {
 
     @Override
     public void destroy() {
+    }
+
+    private Optional<HttpSession> ensureSessionIfCookiePresent(final HttpServletRequest request) {
+        if (SessionUtil.requestHasSessionCookie(request)) {
+            final HttpSession session = SessionUtil.getOrCreateSession(request, newSession ->
+                    LOGGER.debug(() -> LogUtil.message(
+                            "ensureSessionIfCookiePresent() - Created new session {}, request URL",
+                            SessionUtil.getSessionId(newSession), request.getRequestURI())));
+            return Optional.of(session);
+        }
+        return Optional.empty();
     }
 }

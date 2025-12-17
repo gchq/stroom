@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -79,9 +80,10 @@ class TestIndexShardIO extends StroomUnitTest {
     void testOpenCloseManyWrite() throws IOException {
         final IndexVolume volume = new IndexVolume();
         volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
-        final LuceneIndexDoc index = new LuceneIndexDoc();
-        index.setUuid(UUID.randomUUID().toString());
-        index.setName("Test");
+        final LuceneIndexDoc index = LuceneIndexDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("Test")
+                .build();
 
         final IndexShard idx1 = new IndexShard();
         idx1.setId(1L);
@@ -108,9 +110,10 @@ class TestIndexShardIO extends StroomUnitTest {
 
     @Test
     void testOpenCloseManyReadWrite() throws IOException {
-        final LuceneIndexDoc index = new LuceneIndexDoc();
-        index.setUuid(UUID.randomUUID().toString());
-        index.setName("Test");
+        final LuceneIndexDoc index = LuceneIndexDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("Test")
+                .build();
 
         final IndexVolume volume = new IndexVolume();
         volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
@@ -287,9 +290,10 @@ class TestIndexShardIO extends StroomUnitTest {
 
     @Test
     void testFailToCloseAndReopen() throws IOException {
-        final LuceneIndexDoc index = new LuceneIndexDoc();
-        index.setUuid(UUID.randomUUID().toString());
-        index.setName("Test");
+        final LuceneIndexDoc index = LuceneIndexDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("Test")
+                .build();
 
         final IndexVolume volume = new IndexVolume();
         volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
@@ -319,9 +323,10 @@ class TestIndexShardIO extends StroomUnitTest {
 
     @Test
     void testFailToCloseFlushAndReopen() throws IOException {
-        final LuceneIndexDoc index = new LuceneIndexDoc();
-        index.setUuid(UUID.randomUUID().toString());
-        index.setName("Test");
+        final LuceneIndexDoc index = LuceneIndexDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("Test")
+                .build();
 
         final IndexVolume volume = new IndexVolume();
         volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
@@ -350,9 +355,10 @@ class TestIndexShardIO extends StroomUnitTest {
 
     @Test
     void testWriteLoadsNoFlush() throws IOException {
-        final LuceneIndexDoc index = new LuceneIndexDoc();
-        index.setUuid(UUID.randomUUID().toString());
-        index.setName("Test");
+        final LuceneIndexDoc index = LuceneIndexDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("Test")
+                .build();
 
         final IndexVolume volume = new IndexVolume();
         final Path testDir = Files.createTempDirectory("stroom");
@@ -369,7 +375,7 @@ class TestIndexShardIO extends StroomUnitTest {
 
         Long lastSize = null;
 
-        final HashSet<Integer> flushSet = new HashSet<>();
+        final Set<Integer> flushSet = new HashSet<>();
 
         for (int i = 1; i <= 100; i++) {
             writer.addDocument(buildDocument(i));

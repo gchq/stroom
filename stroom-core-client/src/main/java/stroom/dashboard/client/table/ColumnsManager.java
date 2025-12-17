@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,12 @@ import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.cellview.client.SortIcon;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,8 +58,9 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class ColumnsManager implements HeadingListener, FilterCellManager {
+public class ColumnsManager implements HeadingListener, FilterCellManager, HasHandlers {
 
+    private final EventBus eventBus;
     private final TablePresenter tablePresenter;
     private final Provider<RenameColumnPresenter> renameColumnPresenterProvider;
     private final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider;
@@ -67,13 +71,17 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
     private int currentMenuColIndex = -1;
     private int currentFilterColIndex = -1;
     private boolean moving;
+    private final Map<String, String> currentQuickFilters = new HashMap<>();
 
-    public ColumnsManager(final TablePresenter tablePresenter,
+
+    public ColumnsManager(final EventBus eventBus,
+                          final TablePresenter tablePresenter,
                           final Provider<RenameColumnPresenter> renameColumnPresenterProvider,
                           final Provider<ColumnFunctionEditorPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
                           final TableFilterPresenter tableFilterPresenter,
                           final ColumnValuesFilterPresenter columnValuesFilterPresenter) {
+        this.eventBus = eventBus;
         this.tablePresenter = tablePresenter;
         this.renameColumnPresenterProvider = renameColumnPresenterProvider;
         this.expressionPresenterProvider = expressionPresenterProvider;
@@ -96,7 +104,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
                     if (currentMenuColIndex == colIndex) {
                         HideMenuEvent
                                 .builder()
-                                .fire(tablePresenter);
+                                .fire(this);
                     }
                     if (currentFilterColIndex == colIndex) {
                         columnValuesFilterPresenter.hide();
@@ -104,6 +112,20 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
                 }
             }
         }
+    }
+
+    public int getColumnIndex(final Column column) {
+        final List<Column> columns = getColumns();
+        int index = columnsStartIndex;
+        for (final Column col : columns) {
+            if (col.isVisible()) {
+                if (col.getId().equals(column.getId())) {
+                    return index;
+                }
+                index++;
+            }
+        }
+        return -1;
     }
 
     @Override
@@ -117,7 +139,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
             final Heading heading = headingSupplier.get();
             if (heading != null && heading.getColIndex() >= columnsStartIndex) {
                 final int colIndex = heading.getColIndex();
-
+                final HasHandlers columnsManager = this;
                 final Column column = getColumn(colIndex);
                 if (column != null) {
                     new Timer() {
@@ -133,17 +155,26 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
 
                             } else if (isFilterButton) {
                                 currentFilterColIndex = colIndex;
+                                columnValuesFilterPresenter.setNameFilter(currentQuickFilters.get(column.getId()));
+                                final ColumnValuesDataSupplier dataSupplier = tablePresenter
+                                        .getDataSupplier(column, null);
                                 columnValuesFilterPresenter.show(
-                                        button,
+                                        () -> button,
                                         th,
-                                        tablePresenter.getDataSupplier(column),
-                                        hideEvent -> resetFilterColIndex(),
+                                        column,
+                                        () -> dataSupplier,
+                                        hideEvent -> {
+                                            currentQuickFilters.put(
+                                                    column.getId(),
+                                                    columnValuesFilterPresenter.getNameFilter());
+                                            resetFilterColIndex();
+                                        },
                                         column.getColumnValueSelection(),
                                         ColumnsManager.this);
                             }
 
                             if (currentMenuColIndex == colIndex) {
-                                HideMenuEvent.builder().fire(tablePresenter);
+                                HideMenuEvent.builder().fire(columnsManager);
 
                             } else if (!isFilterButton) {
                                 currentMenuColIndex = colIndex;
@@ -160,7 +191,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
                                         .popupPosition(popupPosition)
                                         .addAutoHidePartner(th)
                                         .onHide(e2 -> resetMenuColIndex())
-                                        .fire(tablePresenter);
+                                        .fire(columnsManager);
                             }
                         }
                     }.schedule(0);
@@ -707,7 +738,10 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
                             && ((column.getFilter().getIncludes() != null
                                  && !column.getFilter().getIncludes().trim().isEmpty())
                                 || (column.getFilter().getExcludes() != null
-                                    && !column.getFilter().getExcludes().trim().isEmpty()))) ||
+                                    && !column.getFilter().getExcludes().trim().isEmpty())
+                                || !column.getFilter().getIncludeDictionaries().isEmpty()
+                                || !column.getFilter().getExcludeDictionaries().isEmpty())
+                           ) ||
                            (column.getColumnFilter() != null
                             && ((column.getColumnFilter().getFilter() != null
                                  && !column.getColumnFilter().getFilter().trim().isEmpty()))))
@@ -796,5 +830,10 @@ public class ColumnsManager implements HeadingListener, FilterCellManager {
                 .text("Remove")
                 .command(() -> deleteColumn(column))
                 .build();
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        eventBus.fireEvent(event);
     }
 }

@@ -1,0 +1,5 @@
+name=Example Solr index
+path=/Indexes/Solr Index/Example Solr index
+type=Pipeline
+uuid=8c9b1d43-ccb0-4050-89d9-3aa0980d60ed
+version=V2

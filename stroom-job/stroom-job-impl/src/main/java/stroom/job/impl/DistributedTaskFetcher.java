@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ import java.util.function.Supplier;
 public class DistributedTaskFetcher {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DistributedTaskFetcher.class);
+    public static final String JOB_NAME = "Fetch new tasks";
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
     private final AtomicBoolean stopping = new AtomicBoolean();
@@ -93,13 +94,14 @@ public class DistributedTaskFetcher {
      * the executors.
      */
     void shutdown() {
+        LOGGER.info("Shutting down '{}' job", JOB_NAME);
         try {
             stopping.set(true);
-            Thread.sleep(1000);
-
+            // Not sure why this is here
+            Thread.sleep(1_000);
         } catch (final InterruptedException e) {
-            LOGGER.debug(e::getMessage, e);
-
+            LOGGER.debug(() ->
+                    LogUtil.message("shutdown() - Interrupted - {}", LogUtil.exceptionMessage(e), e));
             // Continue to interrupt this thread.
             Thread.currentThread().interrupt();
         }
@@ -111,7 +113,18 @@ public class DistributedTaskFetcher {
     public void execute() {
         if (running.compareAndSet(false, true)) {
             final Executor executor = executorProvider.get();
-            executor.execute(this::fetch);
+            LOGGER.info("Starting '{}' job", JOB_NAME);
+            executor.execute(() -> {
+                try {
+                    // All being well, this method won't complete until shutdown() is called as
+                    // it will keep calling doFetch in a loop, however we need to allow for it failing.
+                    fetch();
+                } finally {
+                    LOGGER.info("'{}' job stopped", JOB_NAME);
+                    // Mark as not running so the ScheduledTaskExecutor can execute it again in 10s or so
+                    running.set(false);
+                }
+            });
         }
     }
 
@@ -158,11 +171,12 @@ public class DistributedTaskFetcher {
                 }
             });
         } catch (final RuntimeException e) {
-            LOGGER.error("Unable to fetch task!", e);
+            LOGGER.error("Error while fetching tasks - {}", LogUtil.exceptionMessage(e), e);
         }
     }
 
     private int doFetch(final TaskContext taskContext) {
+        LOGGER.trace("doFetch()");
         int executingTaskCount = 0;
         info(taskContext, () -> "Starting task fetch");
 
