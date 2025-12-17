@@ -177,7 +177,8 @@ public class OpenAIServiceImpl implements OpenAIService {
 ////                .sslContext()authenticator();
 
 //        final HttpClientConfiguration httpClientConfiguration = new HttpClientConfiguration();
-//        final CloseableHttpClient httpClient = httpClientFactoryProvider.get().get(modelName, httpClientConfiguration);
+//        final CloseableHttpClient httpClient =
+//        httpClientFactoryProvider.get().get(modelName, httpClientConfiguration);
 
 //        final ApacheHttpClientBuilder jdkHttpClientBuilder = JdkHttpClient.builder()
 //                .httpClientBuilder(httpClientBuilder)
