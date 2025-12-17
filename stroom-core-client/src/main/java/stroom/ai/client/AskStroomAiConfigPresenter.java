@@ -20,8 +20,10 @@ import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
 import stroom.ai.shared.AskStroomAIConfig;
 import stroom.ai.shared.ChatMemoryConfig;
 import stroom.ai.shared.TableSummaryConfig;
+import stroom.alert.client.event.AlertEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -48,6 +50,7 @@ public class AskStroomAiConfigPresenter
                                       final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
         this.askStroomAiClient = askStroomAiClient;
+        view.setUiHandlers(this);
 
         // Only allow administrators to set the default model.
         view.allowSetDefault(clientSecurityContext.hasAppPermission(AppPermission.MANAGE_PROPERTIES_PERMISSION));
@@ -88,11 +91,12 @@ public class AskStroomAiConfigPresenter
     }
 
     @Override
-    public void onSetDefault() {
+    public void onSetDefault(final TaskMonitorFactory taskMonitorFactory) {
         askStroomAiClient.setDefaultChatMemoryConfigConfig(writeChatMemoryConfig(), success -> {
-        }, this);
-        askStroomAiClient.setDefaultTableSummaryConfig(writeTableSummaryConfig(), success -> {
-        }, this);
+            askStroomAiClient.setDefaultTableSummaryConfig(writeTableSummaryConfig(), success2 -> {
+                AlertEvent.fireInfo(AskStroomAiConfigPresenter.this, "Default table config updated", null);
+            }, taskMonitorFactory);
+        }, taskMonitorFactory);
     }
 
     public void readTableSummaryConfig(final TableSummaryConfig config) {

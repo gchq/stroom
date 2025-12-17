@@ -3,7 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:l="urn:import:stroom.item.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:p="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="askStroomAiViewImpl max default-min-sizes dock-container-vertical">
 <!--        <form:FormGroup identity="dockTypeSelectionBox" label="Dock Type">-->
 <!--            <l:SelectionBox ui:field="dockTypeSelectionBox"/>-->
@@ -20,7 +21,11 @@
         </g:FlowPanel>
         <g:FlowPanel styleName="dock-min askStroomAiViewImpl-bottom">
             <g:SimplePanel ui:field="modelRef"/>
-            <b:Button ui:field="setDefaultModel" text="Set Default" width="200px" addStyleNames="allow-focus"/>
+            <b:Button ui:field="setDefaultModel"
+                      text="Set Default"
+                      width="150px"
+                      addStyleNames="allow-focus"/>
+            <p:InlineSvgButton ui:field="configure" addStyleNames="allow-focus"/>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

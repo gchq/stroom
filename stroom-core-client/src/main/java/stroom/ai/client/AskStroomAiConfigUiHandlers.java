@@ -16,9 +16,11 @@
 
 package stroom.ai.client;
 
+import stroom.task.client.TaskMonitorFactory;
+
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface AskStroomAiConfigUiHandlers extends UiHandlers {
 
-    void onSetDefault();
+    void onSetDefault(TaskMonitorFactory taskMonitorFactory);
 }

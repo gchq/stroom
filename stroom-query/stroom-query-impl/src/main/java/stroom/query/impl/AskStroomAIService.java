@@ -59,6 +59,8 @@ public class AskStroomAIService {
     private final OpenAIModelStore openAIModelStore;
     private final Provider<AskStroomAIConfig> defaultConfigProvider;
     private final Provider<GlobalConfig> globalConfigProvider;
+    private final Provider<TableSummaryConfig> tableSummaryConfigProvider;
+    private final Provider<ChatMemoryConfig> chatMemoryConfigProvider;
 
     @Inject
     public AskStroomAIService(final OpenAIService openAIService,
@@ -67,7 +69,9 @@ public class AskStroomAIService {
                               final QueryService queryService,
                               final OpenAIModelStore openAIModelStore,
                               final Provider<AskStroomAIConfig> defaultConfigProvider,
-                              final Provider<GlobalConfig> globalConfigProvider) {
+                              final Provider<GlobalConfig> globalConfigProvider,
+                              final Provider<TableSummaryConfig> tableSummaryConfigProvider,
+                              final Provider<ChatMemoryConfig> chatMemoryConfigProvider) {
         this.openAIService = openAIService;
         this.chatMemoryService = chatMemoryService;
         this.dashboardService = dashboardService;
@@ -75,6 +79,8 @@ public class AskStroomAIService {
         this.openAIModelStore = openAIModelStore;
         this.defaultConfigProvider = defaultConfigProvider;
         this.globalConfigProvider = globalConfigProvider;
+        this.tableSummaryConfigProvider = tableSummaryConfigProvider;
+        this.chatMemoryConfigProvider = chatMemoryConfigProvider;
     }
 
     /**
@@ -441,18 +447,22 @@ public class AskStroomAIService {
     }
 
     public Boolean setDefaultTableSummaryConfig(final TableSummaryConfig config) {
-        globalConfigProvider.get().setInt(config,
+        final TableSummaryConfig defaultTableSummaryConfig = tableSummaryConfigProvider.get();
+        globalConfigProvider.get().setInt(defaultTableSummaryConfig,
                 TableSummaryConfig.PROP_NAME_MAXIMUM_BATCH_SIZE,
                 config.getMaximumBatchSize());
-        globalConfigProvider.get().setInt(config,
+        globalConfigProvider.get().setInt(defaultTableSummaryConfig,
                 TableSummaryConfig.PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS,
                 config.getMaximumTableInputRows());
         return true;
     }
 
     public Boolean setDefaultChatMemoryConfigConfig(final ChatMemoryConfig config) {
-        globalConfigProvider.get().setInt(config, ChatMemoryConfig.PROP_NAME_TOKEN_LIMIT, config.getTokenLimit());
-        globalConfigProvider.get().setString(config,
+        final ChatMemoryConfig defaultChatMemoryConfig = chatMemoryConfigProvider.get();
+        globalConfigProvider.get().setInt(defaultChatMemoryConfig,
+                ChatMemoryConfig.PROP_NAME_TOKEN_LIMIT,
+                config.getTokenLimit());
+        globalConfigProvider.get().setString(defaultChatMemoryConfig,
                 ChatMemoryConfig.PROP_NAME_TIME_TO_LIVE,
                 config.getTimeToLive().toString());
         return true;

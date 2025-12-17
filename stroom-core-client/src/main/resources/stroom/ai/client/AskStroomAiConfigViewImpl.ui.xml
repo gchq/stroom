@@ -19,8 +19,9 @@
                         label="Chat Memory TTL">
             <d:DurationPicker ui:field="memoryTimeToLive"/>
         </form:FormGroup>
-        <b:Button addStyleNames="allow-focus"
-                  ui:field="setDefault"
-                  text="Set Default"/>
+        <b:Button ui:field="setDefault"
+                  text="Set Default"
+                  width="200px"
+                  addStyleNames="allow-focus"/>
     </g:FlowPanel>
 </ui:UiBinder>

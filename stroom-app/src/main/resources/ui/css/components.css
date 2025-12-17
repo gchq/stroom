@@ -1125,6 +1125,7 @@
 .askStroomAiViewImpl-bottom {
     display: flex;
     gap: var(--control__padding--horizontal);
+    align-items: center;
 }
 
 .askStroomAiViewImpl-bottom button.Button {

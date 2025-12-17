@@ -17,7 +17,9 @@
 package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
+import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
+import stroom.widget.button.client.InlineSvgButton;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -56,6 +58,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     Button setDefaultModel;
     @UiField
     Button clearHistory;
+    @UiField
+    InlineSvgButton configure;
 
     @Inject
     public AskStroomAiViewImpl(final Binder binder) {
@@ -78,6 +82,8 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
 //        dockLocationSelectionBox.setValue(DockLocation.RIGHT);
 
         setDefaultModel.setVisible(false);
+
+        configure.setSvg(SvgImage.SETTINGS);
     }
 
     @Override
@@ -173,7 +179,14 @@ public class AskStroomAiViewImpl extends ViewWithUiHandlers<AskStroomAiUiHandler
     @UiHandler("setDefaultModel")
     public void onSetDefaultModel(final ClickEvent event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onSetDefaultModel();
+            getUiHandlers().onSetDefaultModel(setDefaultModel);
+        }
+    }
+
+    @UiHandler("configure")
+    public void onConfigure(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChangeConfig();
         }
     }
 

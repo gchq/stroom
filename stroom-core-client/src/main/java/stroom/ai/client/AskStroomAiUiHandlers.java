@@ -18,6 +18,7 @@ package stroom.ai.client;
 
 import stroom.ai.client.AskStroomAiPresenter.DockBehaviour;
 import stroom.ai.shared.AskStroomAiContext;
+import stroom.task.client.TaskMonitorFactory;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 
@@ -25,7 +26,7 @@ public interface AskStroomAiUiHandlers extends UiHandlers {
 
     void setContext(String node, AskStroomAiContext data);
 
-    void onSetDefaultModel();
+    void onSetDefaultModel(TaskMonitorFactory taskMonitorFactory);
 
     void onSendMessage(String message);
 

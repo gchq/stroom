@@ -118,7 +118,7 @@ public class AskStroomAiConfigViewImpl
     @UiHandler("setDefault")
     public void onSetDefaultClick(final ClickEvent event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onSetDefault();
+            getUiHandlers().onSetDefault(setDefault);
         }
     }
 

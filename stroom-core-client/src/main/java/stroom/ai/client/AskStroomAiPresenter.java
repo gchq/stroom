@@ -33,6 +33,7 @@ import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
+import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -159,11 +160,15 @@ public class AskStroomAiPresenter
     }
 
     @Override
-    public void onSetDefaultModel() {
+    public void onSetDefaultModel(final TaskMonitorFactory taskMonitorFactory) {
         final DocRef selected = docSelectionBoxPresenter.getSelectedEntityReference();
         if (selected != null) {
             askStroomAiClient.setDefaultModel(selected, success -> {
-            }, this);
+                AlertEvent.fireInfo(
+                        AskStroomAiPresenter.this,
+                        "Default model set to '" + selected.getDisplayValue() + "'",
+                        null);
+            }, taskMonitorFactory);
         }
     }
 
