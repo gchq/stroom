@@ -16,9 +16,130 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.aws.s3.impl.S3Manager;
+import stroom.aws.s3.shared.AwsBasicCredentials;
+import stroom.aws.s3.shared.S3ClientConfig;
+import stroom.cache.impl.CacheManagerImpl;
+import stroom.cache.impl.TemplateCacheImpl;
+import stroom.data.shared.StreamTypeNames;
+import stroom.meta.api.AttributeMap;
+import stroom.meta.shared.Meta;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.Range;
+
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import software.amazon.awssdk.core.ResponseInputStream;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.PutObjectResponse;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@Disabled // Needs minio running
 public class TestS3Manager {
 
-//    @Test
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestS3Manager.class);
+
+    @Test
+    void testHead(@TempDir final Path tempDir) throws IOException {
+
+        final String uuid = UUID.randomUUID().toString();
+        S3ClientConfig s3ClientConfig = getS3ClientConfig();
+        s3ClientConfig = s3ClientConfig.copy()
+                .keyPattern(s3ClientConfig.getKeyPattern() + "/" + uuid)
+                .build();
+
+        final S3Manager s3Manager = new S3Manager(
+                new TemplateCacheImpl(new CacheManagerImpl()),
+                s3ClientConfig);
+        final Path file = tempDir.resolve("test.txt");
+
+        Files.writeString(file,
+                "This just some text to pad out the file",
+                StandardOpenOption.CREATE,
+                StandardOpenOption.WRITE);
+
+        final long size = Files.size(file);
+        final Meta meta = new Meta();
+        meta.setId(123_456L);
+        meta.setTypeName(StreamTypeNames.RAW_EVENTS);
+        final AttributeMap attributeMap = new AttributeMap();
+
+        try {
+            final PutObjectResponse response = s3Manager.upload(meta, attributeMap, file);
+            assertThat(response.size())
+                    .isNull();  // Not present for a new upload
+
+            final long fileSize = s3Manager.getFileSize(meta, null);
+            assertThat(fileSize)
+                    .isEqualTo(size);
+        } finally {
+            deleteFile(s3Manager, meta);
+        }
+    }
+
+    @Test
+    void getRange(@TempDir final Path tempDir) throws IOException {
+        final String uuid = UUID.randomUUID().toString();
+        S3ClientConfig s3ClientConfig = getS3ClientConfig();
+        s3ClientConfig = s3ClientConfig.copy()
+                .keyPattern(s3ClientConfig.getKeyPattern() + "/" + uuid)
+                .build();
+
+        final S3Manager s3Manager = new S3Manager(
+                new TemplateCacheImpl(new CacheManagerImpl()),
+                s3ClientConfig);
+        final Path file = tempDir.resolve("test.txt");
+
+        Files.writeString(file,
+                "This just some text to pad out the file",
+                StandardOpenOption.CREATE,
+                StandardOpenOption.WRITE);
+
+        final long size = Files.size(file);
+        final Meta meta = new Meta();
+        meta.setId(123_456L);
+        meta.setTypeName(StreamTypeNames.RAW_EVENTS);
+        final AttributeMap attributeMap = new AttributeMap();
+
+        try {
+            final PutObjectResponse response = s3Manager.upload(meta, attributeMap, file);
+
+            final ResponseInputStream<GetObjectResponse> response2 = s3Manager.getByteRange(
+                    meta, null, Range.of(10L, 20L));
+
+            final byte[] bytes = response2.readAllBytes();
+            assertThat(bytes)
+                    .hasSize(10);
+            final String str = new String(bytes, StandardCharsets.UTF_8);
+            assertThat(str)
+                    .isEqualTo("some text ");
+        } finally {
+            deleteFile(s3Manager, meta);
+        }
+    }
+
+    private static void deleteFile(final S3Manager s3Manager, final Meta meta) {
+        try {
+            s3Manager.delete(meta);
+            LOGGER.debug("Deleted stream {}", meta.getId());
+        } catch (final Exception e) {
+            LOGGER.debug("Error deleting stream {}: {}", meta.getId(), LogUtil.exceptionMessage(e));
+        }
+    }
+
+
+    //    @Test
 //    void testUploadMultipart() throws IOException {
 //        final S3Manager s3Manager = new S3Manager();
 //        final Meta meta = Meta.builder()
@@ -87,4 +208,21 @@ public class TestS3Manager {
 //        final String out = Files.readString(dest);
 //        assertThat(out).isEqualTo(in);
 //    }
+
+    private static S3ClientConfig getS3ClientConfig() {
+        return S3ClientConfig
+                .builder()
+                .credentials(AwsBasicCredentials
+                        .builder()
+                        .accessKeyId("minioadmin")
+                        .secretAccessKey("minioadmin")
+                        .build())
+                .region("us-east-1")
+                .endpointOverride("http://127.0.0.1:9000")
+                .multipart(true)
+                .createBuckets(true)
+                .bucketName("test-bucket")
+                .keyPattern("${feed}/${type}/${year}/${idPadded}")
+                .build();
+    }
 }

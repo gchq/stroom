@@ -64,7 +64,7 @@ abstract class BlockGZIPInput extends InputStream implements SeekableInputStream
      */
     boolean checkedIndex = false;
     /**
-     * Used a a buffer to read longs into
+     * Used a buffer to read longs into
      */
     private final byte[] longRawBuffer = new byte[BlockGZIPConstants.LONG_BYTES];
     private final LongBuffer longBuffer = ByteBuffer.wrap(longRawBuffer).asLongBuffer();

@@ -91,6 +91,13 @@ public interface MetaService {
      */
     int updateStatus(FindMetaCriteria criteria, Status currentStatus, Status status);
 
+    /**
+     * Get the meta stored on the database for the stream identified by meta.
+     *
+     * @param meta The stream to get attributes for.
+     * @return An {@link AttributeMap} containing the attributes, or an empty {@link AttributeMap}
+     */
+    AttributeMap getAttributes(Meta meta);
 
     /**
      * Add some additional attributes to meta data.
@@ -166,7 +173,7 @@ public interface MetaService {
      */
     default boolean isRaw(final String typeName) {
         return typeName != null
-                && getRawTypes().contains(typeName);
+               && getRawTypes().contains(typeName);
     }
 
     /**

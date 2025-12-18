@@ -17,21 +17,11 @@
 package stroom.data.store.impl.fs.s3v2;
 
 
-/**
- * Defines the location of a compressed frame in a segmented Zstd file.
- *
- * @param position       The position of the compressed frame (in byte terms) within the file/stream.
- *                       Zero based. <strong>Not</strong> the same as the frameIdx.
- * @param compressedSize The length of the compressed frame in bytes.
- * @param originalSize   The un-compressed size of the compressed frame.
- */
-public record FrameLocation(long position, long compressedSize, long originalSize) {
+import java.util.Objects;
 
-    long getToInc() {
-        return position + compressedSize - 1;
-    }
+public record StreamTypePair(String streamType, String childStreamType) {
 
-    long getToExc() {
-        return position + compressedSize;
+    public StreamTypePair {
+        Objects.requireNonNull(streamType, "streamType must not be null");
     }
 }

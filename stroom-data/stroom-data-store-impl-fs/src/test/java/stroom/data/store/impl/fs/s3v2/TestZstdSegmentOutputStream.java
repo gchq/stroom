@@ -34,23 +34,22 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestSegmentedZstdOutputStream {
+class TestZstdSegmentOutputStream {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSegmentedZstdOutputStream.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestZstdSegmentOutputStream.class);
 
     private static final int COMPRESSION_LEVEL = 7;
     private static final long RANDOM_SEED = 57294857573L;
-    private List<String> lines;
 
     @Test
     void test_noDict() throws IOException {
         final int iterations = 10;
-        lines = new ArrayList<>(iterations);
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final Faker faker = new Faker(new Random(RANDOM_SEED));
         final List<String> data = new ArrayList<>(iterations);
@@ -59,7 +58,7 @@ class TestSegmentedZstdOutputStream {
             generateTestData(faker, i, data, dataBytes);
         }
 
-        try (final SegmentOutputStream segmentOutputStream = new SegmentedZstdOutputStream(
+        try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
                 byteArrayOutputStream,
                 null,
                 COMPRESSION_LEVEL)) {
@@ -70,13 +69,13 @@ class TestSegmentedZstdOutputStream {
 
         try (final ZstdDecompressCtx zstdDecompressCtx = new ZstdDecompressCtx()) {
             // Make sure we can decompress the whole thing with no knowledge of the frames
-            final int originalSize = lines.stream()
+            final int originalSize = data.stream()
                     .mapToInt(str -> str.getBytes(StandardCharsets.UTF_8).length)
                     .sum();
             final byte[] decompressed = zstdDecompressCtx.decompress(compressedBytes, originalSize);
             final String decompressedStr = new String(decompressed, StandardCharsets.UTF_8);
 
-            for (final String line : lines) {
+            for (final String line : data) {
                 assertThat(decompressedStr)
                         .contains(line);
             }
@@ -86,14 +85,19 @@ class TestSegmentedZstdOutputStream {
             final ByteBuffer compressedBuffer = ByteBuffer.allocateDirect(compressedBytes.length);
             ByteBufferUtils.copy(ByteBuffer.wrap(compressedBytes), compressedBuffer);
 
-            assertThat(SegmentedZstdUtil.isSeekable(compressedBuffer))
+            assertThat(ZstdSegmentUtil.isSeekable(compressedBuffer))
                     .isTrue();
+            final ZstdSeekTable zstdSeekTable = ZstdSeekTable.parse(compressedBuffer)
+                    .orElseThrow();
+            assertThat(zstdSeekTable.isEmpty())
+                    .isEqualTo(false);
 
             // Try and retrieve each event individually and check it matches what we expect
             for (int i = 0; i < data.size(); i++) {
                 LOGGER.debug("i: {}, len: {}", i, dataBytes.get(i).length);
                 final String expected = data.get(i);
-                final String actual = getEvent(compressedBuffer, i, zstdDecompressCtx, decompressedBuffer);
+                final String actual = getEvent(
+                        zstdSeekTable, compressedBuffer, i, zstdDecompressCtx, decompressedBuffer);
                 assertThat(actual)
                         .isEqualTo(expected);
             }
@@ -101,9 +105,55 @@ class TestSegmentedZstdOutputStream {
     }
 
     @Test
+    void test_oneSegment() throws IOException {
+        final int iterations = 1;
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        final Faker faker = new Faker(new Random(RANDOM_SEED));
+        final List<String> data = new ArrayList<>(iterations);
+        final List<byte[]> dataBytes = new ArrayList<>(iterations);
+        for (int i = 0; i < iterations; i++) {
+            generateTestData(faker, i, data, dataBytes);
+        }
+
+        try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
+                byteArrayOutputStream,
+                null,
+                COMPRESSION_LEVEL)) {
+
+            writeDataToStream(dataBytes, segmentOutputStream);
+        }
+        final byte[] compressedBytes = byteArrayOutputStream.toByteArray();
+
+        try (final ZstdDecompressCtx zstdDecompressCtx = new ZstdDecompressCtx()) {
+            // Make sure we can decompress the whole thing with no knowledge of the frames
+            final int originalSize = data.stream()
+                    .mapToInt(str -> str.getBytes(StandardCharsets.UTF_8).length)
+                    .sum();
+            final byte[] decompressed = zstdDecompressCtx.decompress(compressedBytes, originalSize);
+            final String decompressedStr = new String(decompressed, StandardCharsets.UTF_8);
+
+            for (final String line : data) {
+                assertThat(decompressedStr)
+                        .contains(line);
+            }
+
+            final ByteBuffer decompressedBuffer = ByteBuffer.allocateDirect(500);
+
+            final ByteBuffer compressedBuffer = ByteBuffer.allocateDirect(compressedBytes.length);
+            ByteBufferUtils.copy(ByteBuffer.wrap(compressedBytes), compressedBuffer);
+
+            assertThat(ZstdSegmentUtil.isSeekable(compressedBuffer))
+                    .isFalse();
+
+            final Optional<ZstdSeekTable> optZstdSeekTable = ZstdSeekTable.parse(compressedBuffer);
+            assertThat(optZstdSeekTable)
+                    .isEmpty();
+        }
+    }
+
+    @Test
     void test_withDict() throws IOException {
         final int iterations = 200;
-        lines = new ArrayList<>(iterations);
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final Faker faker = new Faker(new Random(RANDOM_SEED));
         final List<String> data = new ArrayList<>(iterations);
@@ -113,7 +163,8 @@ class TestSegmentedZstdOutputStream {
             generateTestData(faker, i, data, dataBytes);
         }
 
-        final ZstdDictTrainer zstdDictTrainer = new ZstdDictTrainer(10000, 1000, COMPRESSION_LEVEL);
+        final ZstdDictTrainer zstdDictTrainer = new ZstdDictTrainer(
+                10_000, 1_000, COMPRESSION_LEVEL);
         dataBytes.forEach(zstdDictTrainer::addSample);
         final byte[] dict;
         try {
@@ -123,7 +174,7 @@ class TestSegmentedZstdOutputStream {
         }
         final ZstdDictionary zstdDictionary = new ZstdDictionary(UUID.randomUUID().toString(), dict);
 
-        try (final SegmentOutputStream segmentOutputStream = new SegmentedZstdOutputStream(
+        try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
                 byteArrayOutputStream,
                 zstdDictionary,
                 COMPRESSION_LEVEL)) {
@@ -133,17 +184,18 @@ class TestSegmentedZstdOutputStream {
 
         final byte[] compressedBytes = byteArrayOutputStream.toByteArray();
 
+
         try (final ZstdDictDecompress zstdDictDecompress = new ZstdDictDecompress(zstdDictionary.getDictionaryBytes());
                 final ZstdDecompressCtx zstdDecompressCtx = new ZstdDecompressCtx()) {
             zstdDecompressCtx.loadDict(zstdDictDecompress);
             // Make sure we can decompress the whole thing with no knowledge of the frames
-            final int originalSize = lines.stream()
+            final int originalSize = data.stream()
                     .mapToInt(str -> str.getBytes(StandardCharsets.UTF_8).length)
                     .sum();
             final byte[] decompressed = zstdDecompressCtx.decompress(compressedBytes, originalSize);
             final String decompressedStr = new String(decompressed, StandardCharsets.UTF_8);
 
-            for (final String line : lines) {
+            for (final String line : data) {
                 assertThat(decompressedStr)
                         .contains(line);
             }
@@ -153,21 +205,25 @@ class TestSegmentedZstdOutputStream {
             final ByteBuffer compressedBuffer = ByteBuffer.allocateDirect(compressedBytes.length);
             ByteBufferUtils.copy(ByteBuffer.wrap(compressedBytes), compressedBuffer);
 
-            assertThat(SegmentedZstdUtil.isSeekable(compressedBuffer))
+            assertThat(ZstdSegmentUtil.isSeekable(compressedBuffer))
                     .isTrue();
+
+            final ZstdSeekTable zstdSeekTable = ZstdSeekTable.parse(compressedBuffer)
+                    .orElseThrow();
 
             // Try and retrieve each event individually and check it matches what we expect
             for (int i = 0; i < data.size(); i++) {
                 LOGGER.debug("i: {}, len: {}", i, dataBytes.get(i).length);
                 final String expected = data.get(i);
-                final String actual = getEvent(compressedBuffer, i, zstdDecompressCtx, decompressedBuffer);
+                final String actual = getEvent(
+                        zstdSeekTable, compressedBuffer, i, zstdDecompressCtx, decompressedBuffer);
                 assertThat(actual)
                         .isEqualTo(expected);
             }
         }
     }
 
-    private static void writeDataToStream(final List<byte[]> dataBytes, final SegmentOutputStream segmentOutputStream)
+    static void writeDataToStream(final List<byte[]> dataBytes, final SegmentOutputStream segmentOutputStream)
             throws IOException {
         for (int i = 0; i < dataBytes.size(); i++) {
             final byte[] bytes = dataBytes.get(i);
@@ -178,10 +234,10 @@ class TestSegmentedZstdOutputStream {
         }
     }
 
-    private void generateTestData(final Faker faker,
-                                  final int iteration,
-                                  final List<String> data,
-                                  final List<byte[]> dataBytes) throws IOException {
+    static void generateTestData(final Faker faker,
+                                 final int iteration,
+                                 final List<String> data,
+                                 final List<byte[]> dataBytes) {
 
         final int remainder = iteration % 3;
         String str;
@@ -195,19 +251,20 @@ class TestSegmentedZstdOutputStream {
         str = "<quote>" + str + "</quote>";
         // Dup[licate the str on each line so it can compress better with no dict
 //        str = str + str + str + str;
-        lines.add(str);
         final byte[] bytes = str.getBytes(StandardCharsets.UTF_8);
 //            LOGGER.info("str: {}", str);
         data.add(str);
         dataBytes.add(bytes);
     }
 
-    private String getEvent(final ByteBuffer compressedBuffer,
+    private String getEvent(final ZstdSeekTable zstdSeekTable,
+                            final ByteBuffer compressedBuffer,
                             final int eventIdx,
                             final ZstdDecompressCtx zstdDecompressCtx,
                             final ByteBuffer decompressedBuffer) {
 
-        final FrameLocation frameLocation = SegmentedZstdUtil.getFrameLocation(compressedBuffer, eventIdx);
+        final FrameLocation frameLocation = zstdSeekTable.getFrameLocation(eventIdx);
+//        final FrameLocation frameLocation = ZstdSegmentUtil.getFrameLocation(compressedBuffer, eventIdx);
         final long compressedIdx = frameLocation.position();
         final long compressedLen = frameLocation.compressedSize();
         final long originalSize = frameLocation.originalSize();

@@ -17,7 +17,7 @@
 package stroom.data.store.impl.fs.s3v2;
 
 import stroom.data.store.api.SegmentOutputStream;
-import stroom.util.io.NoCloseOutputStream;
+import stroom.util.io.IgnoreCloseOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -45,7 +45,7 @@ import java.util.Objects;
  * and thus will result in poor compression rates given the potentially small segment sizes.
  * </p>
  * <p>
- * {@link SegmentedZstdOutputStream} only supports on level of segmenting, e.g. segmenting
+ * {@link ZstdSegmentOutputStream} only supports on level of segmenting, e.g. segmenting
  * on raw stream parts, or on cooked stream records, not both.
  * </p>
  * <pre>
@@ -70,9 +70,9 @@ import java.util.Objects;
  * F == frameCount (4 byte int)               ∖
  * B == bitfield (1 byte)                     | - Footer
  * M == seek table magic number (4 byte int)  /
- * Frames:                      0               1               2               3
+ * FrameIdx:                    0               1               2               3
  * < compressed frames >mmmmssssCCCCCCCCUUUUUUUUCCCCCCCCUUUUUUUUCCCCCCCCUUUUUUUUCCCCCCCCUUUUUUUUFFFFBMMMM
- * 0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
+ * 012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901
  * 0         1         2         3         4         5         6         7         8         9
  * </pre>
  * <p>
@@ -87,9 +87,9 @@ import java.util.Objects;
  * </a>
  * </p>
  */
-public class SegmentedZstdOutputStream extends SegmentOutputStream {
+public class ZstdSegmentOutputStream extends SegmentOutputStream {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SegmentedZstdOutputStream.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZstdSegmentOutputStream.class);
 
     //    public static final ByteBuffer SEEKABLE_MAGIC_NUMBER_BUFFER = ByteBuffer.wrap(SEEKABLE_MAGIC_NUMBER);
     public static final int DEFAULT_COMPRESSION_LEVEL = 5;
@@ -113,25 +113,26 @@ public class SegmentedZstdOutputStream extends SegmentOutputStream {
     // Tracks the position of the start index of the current segment, in un-compressed terms.
     private long lastBoundary = 0;
 
-    public SegmentedZstdOutputStream(final OutputStream dataOutputStream,
-                                     final ZstdDictionary zstdDictionary) {
+    public ZstdSegmentOutputStream(final OutputStream dataOutputStream,
+                                   final ZstdDictionary zstdDictionary) {
         this(dataOutputStream, zstdDictionary, DEFAULT_COMPRESSION_LEVEL);
     }
 
-    public SegmentedZstdOutputStream(final OutputStream dataOutputStream) {
+    public ZstdSegmentOutputStream(final OutputStream dataOutputStream) {
         this(dataOutputStream, null, DEFAULT_COMPRESSION_LEVEL);
     }
 
-    public SegmentedZstdOutputStream(final OutputStream dataOutputStream,
-                                     final ZstdDictionary zstdDictionary,
-                                     final int compressionLevel) {
+    public ZstdSegmentOutputStream(final OutputStream dataOutputStream,
+                                   final ZstdDictionary zstdDictionary,
+                                   final int compressionLevel) {
         Objects.requireNonNull(dataOutputStream);
         validateCompressionLevel(compressionLevel);
 
         this.dataOutputStream = dataOutputStream;
-        // Wrap the delegate dataOutputStream in a NoCloseOutputStream so that we can close the ZstdOutputStream
-        // without closing the underlying output streams.
-        this.compressedBytesCountingOutputStream = new CountingOutputStream(new NoCloseOutputStream(dataOutputStream));
+        // Wrap the delegate dataOutputStream in a IgnoreCloseOutputStream so that we can
+        // close the ZstdOutputStream without closing the underlying output streams.
+        this.compressedBytesCountingOutputStream = new CountingOutputStream(
+                new IgnoreCloseOutputStream(dataOutputStream));
         this.compressionLevel = compressionLevel;
         this.zstdDictionary = zstdDictionary;
     }
@@ -165,12 +166,21 @@ public class SegmentedZstdOutputStream extends SegmentOutputStream {
         zstdOutputStream = createZstdOutputStream();
     }
 
+    @Override
+    public void addSegment(final long position) throws IOException {
+        // Method doesn't appear to be used anyway, so just throw
+        throw new UnsupportedOperationException("addSegment(position) is not supported");
+    }
+
+
     private void closeSegment() throws IOException {
         // Ensure all uncompressed bytes are compressed and the frame closed
-        zstdOutputStream.flush();
-        zstdOutputStream.close(); // This won't close its delegate, compressedBytesCountingOutputStream
-        compressedBytesCountingOutputStream.flush();
-        zstdOutputStream = null;
+        if (zstdOutputStream != null) {
+            zstdOutputStream.flush();
+            zstdOutputStream.close(); // This won't close its delegate, compressedBytesCountingOutputStream
+            compressedBytesCountingOutputStream.flush();
+            zstdOutputStream = null;
+        }
 
         final long segmentUncompressedSize = position - lastBoundary;
         if (segmentUncompressedSize > 0) {
@@ -179,7 +189,7 @@ public class SegmentedZstdOutputStream extends SegmentOutputStream {
                     compressedBytesCountingOutputStream.getCount(),
                     segmentUncompressedSize);
             frameInfoList.add(frameInfo);
-            LOGGER.debug("closeSegment() - adding frameInfo {}, segmentUncompressedSize: {}, " +
+            LOGGER.trace("closeSegment() - adding frameInfo {}, segmentUncompressedSize: {}, " +
                          "currentSegmentIndex: {}, lastBoundary: {}, position: {}",
                     frameInfo, segmentUncompressedSize, currentSegmentIndex, lastBoundary, position);
             currentSegmentIndex++;
@@ -192,15 +202,19 @@ public class SegmentedZstdOutputStream extends SegmentOutputStream {
         // Format of a generic skippable frame is
         // <4 byte magic number><4 byte size of payload (LE)><payload>
 
+        // --- Seek table frame header ---
+
         // Write the magic number that identifies this frame to Zstd as a skippable one
-        compressedBytesCountingOutputStream.write(ZstdConstants.SKIPPABLE_FRAME_HEADER);
+        compressedBytesCountingOutputStream.write(ZstdConstants.SKIPPABLE_FRAME_MAGIC_NUMBER);
 
         // Determine how big the seek table is (including footer)
         final int frameCount = frameInfoList.size();
-        final int framePayloadSize = SegmentedZstdUtil.calculateFramePayloadSize(frameCount);
+        final int framePayloadSize = ZstdSegmentUtil.calculateSeekTableFramePayloadSize(frameCount);
         LOGGER.debug("writeSeekTable() - frameCount: {}, framePayloadSize: {}", frameCount, framePayloadSize);
         // Write the payload size so Zstd knows how far to skip
         writeLEInteger(framePayloadSize, compressedBytesCountingOutputStream);
+
+        // --- Seek table frame entries ---
 
         // Write one entry describing each frame
         for (final FrameInfo frameInfo : frameInfoList) {
@@ -208,7 +222,7 @@ public class SegmentedZstdOutputStream extends SegmentOutputStream {
             writeLELong(frameInfo.uncompressedSize(), compressedBytesCountingOutputStream);
         }
 
-        // Now write the seek table frame footer
+        // --- Seek table frame footer ---
 
         // Frame count, so know how big our seek table is
         writeLEInteger(frameInfoList.size(), compressedBytesCountingOutputStream);
@@ -222,16 +236,11 @@ public class SegmentedZstdOutputStream extends SegmentOutputStream {
     }
 
     private void writeLEInteger(final long val, final OutputStream outputStream) throws IOException {
-        SegmentedZstdUtil.writeLEInteger(val, fourByteBuffer, outputStream);
+        ZstdSegmentUtil.writeLEInteger(val, fourByteBuffer, outputStream);
     }
 
     private void writeLELong(final long val, final OutputStream outputStream) throws IOException {
-        SegmentedZstdUtil.writeLELong(val, eightByteBuffer, outputStream);
-    }
-
-    @Override
-    public void addSegment(final long position) throws IOException {
-        throw new UnsupportedOperationException("addSegment(position) is not supported");
+        ZstdSegmentUtil.writeLELong(val, eightByteBuffer, outputStream);
     }
 
     @Override
@@ -276,7 +285,9 @@ public class SegmentedZstdOutputStream extends SegmentOutputStream {
     public void close() throws IOException {
         closeSegment();
         // Write the segment info to the delegate stream
-        writeSeekTable();
+        if (frameInfoList.size() > 1) {
+            writeSeekTable();
+        }
         compressedBytesCountingOutputStream.flush();
         // Close the underlying
         dataOutputStream.close();

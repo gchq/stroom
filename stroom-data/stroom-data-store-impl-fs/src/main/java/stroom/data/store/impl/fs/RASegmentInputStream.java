@@ -66,18 +66,6 @@ public class RASegmentInputStream extends SegmentInputStream {
     private long windowSegmentCount = 0;
     private long totalSegmentCount;
 
-//    RASegmentInputStream(final InputStream data,
-//                         final InputStream inputStream) {
-//        this(data, inputStream);
-//    }
-//
-//    RASegmentInputStream(final InputStream data,
-//                         final InputStream inputStream,
-//                         final long byteStart,
-//                         final long byteEnd) {
-//        this(data, () -> inputStream, byteStart, byteEnd);
-//    }
-
     public RASegmentInputStream(final InputStream data, final InputStream indexInputStream) {
         try {
             this.data = data;
@@ -715,13 +703,16 @@ public class RASegmentInputStream extends SegmentInputStream {
             return midPointSegment;
         }
         return segmentAtByteOffset(findBytePos, midPointSegment, workingUpperSegment, lowerBound);
-
     }
 
     @Override
     public long size() {
         return windowByteEnd - windowByteStart;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ByteRange {
 

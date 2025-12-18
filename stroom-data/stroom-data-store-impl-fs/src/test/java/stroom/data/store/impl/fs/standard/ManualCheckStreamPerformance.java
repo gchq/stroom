@@ -203,10 +203,18 @@ abstract class ManualCheckStreamPerformance {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface TimedAction {
 
         long newTimedAction() throws IOException;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class BlockGzipManualCheckStreamPerformance extends ManualCheckStreamPerformance {
 
@@ -245,6 +253,10 @@ abstract class ManualCheckStreamPerformance {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class UncompressedCheckStreamPerformance extends ManualCheckStreamPerformance {
 
         Path tempFile;
@@ -274,6 +286,10 @@ abstract class ManualCheckStreamPerformance {
         public void onCloseOutput(final OutputStream arg0) {
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class GzipCheckStreamPerformance extends ManualCheckStreamPerformance {
 

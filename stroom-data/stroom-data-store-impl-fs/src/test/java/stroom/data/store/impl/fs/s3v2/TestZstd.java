@@ -105,7 +105,7 @@ public class TestZstd {
             final ByteBuffer compressedBuffer = ByteBuffer.allocateDirect(compressedBytes.length);
             ByteBufferUtils.copy(ByteBuffer.wrap(compressedBytes), compressedBuffer);
 
-            assertThat(SegmentedZstdUtil.isSeekable(compressedBuffer))
+            assertThat(ZstdSegmentUtil.isSeekable(compressedBuffer))
                     .isTrue();
 
             // Try and retrieve each event individually and check it matches what we expect
@@ -202,7 +202,7 @@ public class TestZstd {
         // <4 byte magic number><4 byte size of payload (LE)><payload>
         // See https://github.com/facebook/zstd/blob/release/doc/zstd_compression_format.md#skippable-frames
 
-        final long payloadSize = SegmentedZstdUtil.calculateFramePayloadSize(frameInfoList.size());
+        final long payloadSize = ZstdSegmentUtil.calculateSeekTableFramePayloadSize(frameInfoList.size());
 
         // Write the skippable frame header
 
@@ -231,11 +231,11 @@ public class TestZstd {
     }
 
     private void writeLEInteger(final long val, final OutputStream outputStream) throws IOException {
-        SegmentedZstdUtil.writeLEInteger(val, fourByteBuffer, outputStream);
+        ZstdSegmentUtil.writeLEInteger(val, fourByteBuffer, outputStream);
     }
 
     private void writeLELong(final long val, final OutputStream outputStream) throws IOException {
-        SegmentedZstdUtil.writeLELong(val, eightByteBuffer, outputStream);
+        ZstdSegmentUtil.writeLELong(val, eightByteBuffer, outputStream);
     }
 
 //    public static long getUnsignedInt(final ByteBuffer byteBuffer) {
@@ -296,7 +296,7 @@ public class TestZstd {
                             final ZstdDecompressCtx zstdDecompressCtx,
                             final ByteBuffer decompressedBuffer) {
 
-        final FrameLocation frameLocation = SegmentedZstdUtil.getFrameLocation(compressedBuffer, frameIdx);
+        final FrameLocation frameLocation = ZstdSegmentUtil.getFrameLocation(compressedBuffer, frameIdx);
         final long compressedIdx = frameLocation.position();
         final long compressedLen = frameLocation.compressedSize();
         final long originalSize = frameLocation.originalSize();

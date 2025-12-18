@@ -26,7 +26,22 @@ public class ZstdConstants {
      * See <a href="https://github.com/facebook/zstd/blob/release/doc/zstd_compression_format.md#skippable-frames">
      * skippable-frames</a>
      */
-    public static final byte[] SKIPPABLE_FRAME_HEADER = new byte[]{0x5E, 0x2A, 0x4D, 0x18};
+    public static final byte[] SKIPPABLE_FRAME_MAGIC_NUMBER = new byte[]{0x5E, 0x2A, 0x4D, 0x18};
+    public static final ByteBuffer SKIPPABLE_FRAME_MAGIC_NUMBER_BUFFER = ByteBuffer.wrap(SKIPPABLE_FRAME_MAGIC_NUMBER);
+
+    /**
+     * Number of bytes for {@link ZstdConstants#SKIPPABLE_FRAME_MAGIC_NUMBER}
+     */
+    public static final int SKIPPABLE_FRAME_MAGIC_NUMBER_SIZE = SKIPPABLE_FRAME_MAGIC_NUMBER.length;
+
+    /**
+     * The size of a skippable frame header in bytes.
+     * <pre>
+     * < skippable frame magic number > < frame payload size (int LE) >
+     * </pre>
+     */
+    public static final int SKIPPABLE_FRAME_HEADER_SIZE = SKIPPABLE_FRAME_MAGIC_NUMBER_SIZE
+                                                          + Integer.BYTES;
 
     /**
      * Identifies a file as being a seekable Zstd file.
@@ -34,6 +49,19 @@ public class ZstdConstants {
      * zstd_seekable_compression_format</a>
      */
     public static final byte[] SEEKABLE_MAGIC_NUMBER = new byte[]{(byte) 0xB1, (byte) 0xEA, (byte) 0x92, (byte) 0x8F};
+
+    /**
+     * Number of bytes for {@link ZstdConstants#SEEKABLE_MAGIC_NUMBER}
+     */
+    public static final int SEEKABLE_MAGIC_NUMBER_SIZE = SEEKABLE_MAGIC_NUMBER.length;
+
+    /**
+     * The position of the frame count value in the skippable frame
+     * <strong>relative to the END of the byte[]/buffer/stream</strong>.
+     */
+    public static final int FRAME_COUNT_RELATIVE_POSITION = -1 * (SEEKABLE_MAGIC_NUMBER_SIZE
+                                                                  + 1
+                                                                  + Integer.BYTES);
 
     /**
      * A read-only {@link ByteBuffer} that wraps {@link ZstdConstants#SEEKABLE_MAGIC_NUMBER}
@@ -47,12 +75,12 @@ public class ZstdConstants {
      * <4b frame count LE><1b table descriptor><4b seekable magic number LE>
      * </pre>
      */
-    public static final int SEEKABLE_FOOTER_BYTES = 9;
+    public static final int SEEKABLE_FOOTER_SIZE = Integer.BYTES + 1 + SEEKABLE_MAGIC_NUMBER_SIZE;
 
     /**
      * Number of bytes in an entry in the seek table within a seekable frame.
      */
-    public static final int SEEK_TABLE_ENTRY_BYTES = Long.BYTES + Long.BYTES;
+    public static final int SEEK_TABLE_ENTRY_SIZE = Long.BYTES + Long.BYTES;
 
     private ZstdConstants() {
         // Constants only

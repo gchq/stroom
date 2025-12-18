@@ -21,7 +21,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
 import java.nio.file.Path;
-import java.util.regex.Pattern;
 
 /**
  * <p>
@@ -31,8 +30,6 @@ import java.util.regex.Pattern;
 public final class FsPrefixUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsPrefixUtil.class);
-
-    private static final Pattern LEADING_ZEROS = Pattern.compile("^0*");
 
     private static final String START_PREFIX = "000";
     private static final int PAD_SIZE = 3;
@@ -47,16 +44,17 @@ public final class FsPrefixUtil {
     public static String padId(final Long current) {
         if (current == null) {
             return START_PREFIX;
+        } else {
+            String output = Long.toString(current);
+            final int remainder = output.length() % PAD_SIZE;
+            output = switch (remainder) {
+                case 0 -> output;
+                case 1 -> "00" + output;
+                case 2 -> "0" + output;
+                default -> throw new IllegalStateException("Unexpected value: " + remainder);
+            };
+            return output;
         }
-
-        final StringBuilder sb = new StringBuilder();
-        sb.append(current);
-
-        while ((sb.length() % PAD_SIZE) != 0) {
-            sb.insert(0, "0");
-        }
-
-        return sb.toString();
     }
 
     /**
@@ -68,10 +66,18 @@ public final class FsPrefixUtil {
         if (NullSafe.isBlankString(paddedId)) {
             return -1L;
         } else {
-            final String dePaddedId = LEADING_ZEROS.matcher(paddedId)
-                    .replaceFirst("");
+            final int len = paddedId.length();
+            int startIdx = 0;
+            while (startIdx < len) {
+                if (paddedId.charAt(startIdx) == '0') {
+                    startIdx++;
+                } else {
+                    break;
+                }
+            }
+            final String dePaddedId = paddedId.substring(startIdx);
             if (dePaddedId.isBlank()) {
-                return 0;
+                return 0L;
             } else {
                 try {
                     return Long.parseLong(dePaddedId);

@@ -28,6 +28,7 @@ import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.s3v1.S3Store;
 import stroom.data.store.impl.fs.s3v1.S3Target;
+import stroom.data.store.impl.fs.s3v2.S3ZstdStore;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.data.store.impl.fs.standard.FsPathHelper;
@@ -71,6 +72,7 @@ class FsStore implements Store, AttributeMapFactory {
     private final DataVolumeService dataVolumeService;
     private final PathCreator pathCreator;
     private final S3Store s3Store;
+    private final S3ZstdStore s3ZstdStore;
 
     @Inject
     FsStore(final FsPathHelper fileSystemStreamPathHelper,
@@ -78,13 +80,15 @@ class FsStore implements Store, AttributeMapFactory {
             final FsVolumeService volumeService,
             final DataVolumeService dataVolumeService,
             final PathCreator pathCreator,
-            final S3Store s3Store) {
+            final S3Store s3Store,
+            final S3ZstdStore s3ZstdStore) {
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.metaService = metaService;
         this.volumeService = volumeService;
         this.dataVolumeService = dataVolumeService;
         this.pathCreator = pathCreator;
         this.s3Store = s3Store;
+        this.s3ZstdStore = s3ZstdStore;
     }
 
     @Override
@@ -111,7 +115,7 @@ class FsStore implements Store, AttributeMapFactory {
         final Target target = switch (volumeType) {
             case STANDARD -> createFsTarget(dataVolume, meta);
             case S3_V1 -> s3Store.getTarget(dataVolume, meta);
-            case S3_V2 -> throw new UnsupportedOperationException("S3v2 volume is not yet supported");
+            case S3_V2 -> s3ZstdStore.getTarget(dataVolume, meta);
             case null -> throw new UnsupportedOperationException(LogUtil.message(
                     "Null volume type for metaId: {}, volumeId {}",
                     dataVolume.getMetaId(), dataVolume.getVolume().getId()));
@@ -205,7 +209,7 @@ class FsStore implements Store, AttributeMapFactory {
                     yield FsSource.create(fileSystemStreamPathHelper, meta, volumePath, meta.getTypeName());
                 }
                 case S3_V1 -> s3Store.getSource(dataVolume, meta);
-                case S3_V2 -> throw new UnsupportedOperationException("S3v2 volume is not yet supported");
+                case S3_V2 -> s3ZstdStore.getSource(dataVolume, meta);
                 case null -> throw new UnsupportedOperationException("Null volume type for metaId: " + meta.getId());
             };
             LOGGER.debug(() -> LogUtil.message("openSource() - returning target: {}, volumeId: {}, meta: {}",

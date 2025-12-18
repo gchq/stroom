@@ -44,6 +44,7 @@ public abstract class SegmentInputStream extends SizeAwareInputStream {
 
     /**
      * Includes a specific segment number when reading from this input stream.
+     * Zero based.
      */
     public abstract void include(long segment);
 
@@ -57,6 +58,7 @@ public abstract class SegmentInputStream extends SizeAwareInputStream {
      * Excludes a specific segment number when reading from this input stream.
      * Initially all segments are included so setting this will exclude only the
      * specified segment.
+     * Zero based.
      */
     public abstract void exclude(long segment);
 

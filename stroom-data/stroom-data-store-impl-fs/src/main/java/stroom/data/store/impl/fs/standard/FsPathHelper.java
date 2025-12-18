@@ -142,7 +142,7 @@ public class FsPathHelper {
     }
 
     /**
-     * Return back a output stream for a given stream type and file.
+     * Return back an output stream for a given stream type and file.
      */
     public OutputStream getOutputStream(final String streamTypeName, final Path file)
             throws IOException {
@@ -215,8 +215,7 @@ public class FsPathHelper {
         final String feedPath = fileSystemFeedPaths.getOrCreatePath(meta.getFeedName());
         final String paddedId = FsPrefixUtil.padId(meta.getId());
 
-        final String fileName = "" +
-                                feedPath +
+        final String fileName = feedPath +
                                 FILE_SEPARATOR_CHAR +
                                 paddedId +
                                 "." +

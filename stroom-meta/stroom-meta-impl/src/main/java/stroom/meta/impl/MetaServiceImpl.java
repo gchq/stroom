@@ -254,6 +254,17 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
     }
 
     @Override
+    public AttributeMap getAttributes(final Meta meta) {
+        Objects.requireNonNull(meta);
+        final Map<Long, Map<String, String>> map = metaValueDao.getAttributes(List.of(meta));
+        return NullSafe.getOrElseGet(
+                map,
+                aMap -> aMap.get(meta.getId()),
+                AttributeMap::new,
+                AttributeMap::new);
+    }
+
+    @Override
     public void addAttributes(final Meta meta, final AttributeMap attributes) {
         metaValueDao.addAttributes(meta, attributes);
     }

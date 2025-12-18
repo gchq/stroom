@@ -194,6 +194,10 @@ public class MockStore implements Store, Clearable, AttributeMapFactory {
         return new AttributeMap();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class SeekableByteArrayInputStream extends ByteArrayInputStream implements SeekableInputStream {
 
         SeekableByteArrayInputStream(final byte[] bytes) {

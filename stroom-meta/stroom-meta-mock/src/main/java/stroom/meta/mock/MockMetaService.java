@@ -151,6 +151,11 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
+    public AttributeMap getAttributes(final Meta meta) {
+        return new AttributeMap();
+    }
+
+    @Override
     public void addAttributes(final Meta meta, final AttributeMap attributes) {
         // Do nothing.
     }

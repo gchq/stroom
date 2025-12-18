@@ -1,0 +1,277 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.data.store.impl.fs.s3v2;
+
+
+import stroom.bytebuffer.ByteBufferUtils;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
+import java.nio.ByteBuffer;
+import java.util.Objects;
+import java.util.Optional;
+
+/**
+ * Encapsulates a seek table from a skippable frame.
+ * Provides methods for getting the {@link FrameLocation} for a given frameIdx.
+ */
+public class ZstdSeekTable {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZstdSeekTable.class);
+
+    static final ZstdSeekTable EMPTY = new ZstdSeekTable(0, ByteBuffer.wrap(new byte[0]));
+
+    private final int frameCount;
+    /**
+     * Holds all the entries as a series of these pairs.
+     * <pre>
+     * < cumulativeCompressedSize 8 byte LE > < uncompressedSize 8 byte LE >
+     * </pre>
+     */
+    private final ByteBuffer seekTableEntriesBuffer;
+
+//    private ZstdSeekTable(final int frameCount, final byte[] seekTableEntries) {
+//        this.frameCount = frameCount;
+//        if (frameCount < 0) {
+//            throw new IllegalArgumentException(LogUtil.message("Expecting frameCount {} to be >=0", frameCount));
+//        }
+//        Objects.requireNonNull(seekTableEntries);
+//        if (seekTableEntries.length % ZstdConstants.SEEK_TABLE_ENTRY_SIZE != 0) {
+//            throw new IllegalArgumentException(LogUtil.message(
+//                    "Expecting seekTableEntries.length {} to be a multiple of {}",
+//                    seekTableEntries.length, ZstdConstants.SEEK_TABLE_ENTRY_SIZE));
+//        }
+//        this.seekTableEntriesBuffer = ByteBuffer.wrap(seekTableEntries);
+//    }
+
+    private ZstdSeekTable(final int frameCount, final ByteBuffer seekTableEntries) {
+        this.frameCount = frameCount;
+        if (frameCount < 0) {
+            throw new IllegalArgumentException(LogUtil.message("Expecting frameCount {} to be >=0", frameCount));
+        }
+        Objects.requireNonNull(seekTableEntries);
+        if (seekTableEntries.remaining() % ZstdConstants.SEEK_TABLE_ENTRY_SIZE != 0) {
+            throw new IllegalArgumentException(LogUtil.message(
+                    "Expecting seekTableEntries.remaining {} to be a multiple of {}",
+                    seekTableEntries.remaining(), ZstdConstants.SEEK_TABLE_ENTRY_SIZE));
+        }
+        this.seekTableEntriesBuffer = seekTableEntries;
+    }
+
+    public static Optional<ZstdSeekTable> parse(final ByteBuffer byteBuffer) {
+        return parse(byteBuffer, true);
+    }
+
+    /**
+     * @param byteBuffer         The {@link ByteBuffer} to parse the seek table from.
+     * @param copyBufferContents If true, the seek table part of byteBuffer will be copied.
+     * @return A new {@link ZstdSeekTable} instance.
+     * @throws InsufficientSeekTableDataException If byteBuffer is not large enough to include all the
+     *                                            seek table skippable frame.
+     * @throws InvalidSeekTableDataException      For any error parsing the {@link ZstdSeekTable} from byteBuffer.
+     */
+    public static Optional<ZstdSeekTable> parse(final ByteBuffer byteBuffer,
+                                                final boolean copyBufferContents) {
+        Objects.requireNonNull(byteBuffer);
+        final Optional<ZstdSeekTable> optZstdSeekTable;
+        if (!ZstdSegmentUtil.isSeekable(byteBuffer)) {
+            // May just be a bog-standard zstd file with no frames and therefore no seek table frame.
+            LOGGER.debug("parse() - No seekable magic number");
+            optZstdSeekTable = Optional.empty();
+        } else {
+            // If byteBuffer doesn't cover all the seek table frame we should at least have enough to
+            // read the frame count so the call can some back with the correct amount of data to parse.
+            final int frameCount = readFrameCount(byteBuffer);
+
+            if (frameCount == 0) {
+                LOGGER.debug("parse() - No frames");
+                optZstdSeekTable = Optional.of(EMPTY);
+            } else {
+                final int seekTableFrameSize = ZstdSegmentUtil.calculateSeekTableFrameSize(frameCount);
+                try {
+                    final int dataLength = byteBuffer.remaining();
+                    if (dataLength < seekTableFrameSize) {
+                        throw new InsufficientSeekTableDataException(seekTableFrameSize, dataLength);
+                    }
+
+                    checkIsSkippableFrame(byteBuffer, seekTableFrameSize);
+                    final int seekTableSize = ZstdSegmentUtil.calculateSeekTableSize(frameCount);
+                    // This is the table + footer
+                    final int seekTablePayloadSize = ZstdSegmentUtil.calculateSeekTableFramePayloadSize(frameCount);
+                    final int seekTablePosition = byteBuffer.limit()
+                                                  - seekTablePayloadSize;
+                    // Slice just the table part
+                    final ByteBuffer seekTableBuffer = byteBuffer.slice(seekTablePosition, seekTableSize);
+                    if (copyBufferContents) {
+                        final byte[] seekTableEntries = new byte[seekTableSize];
+                        final ByteBuffer seekTableBufferCopy = ByteBuffer.wrap(seekTableEntries);
+                        ByteBufferUtils.copy(seekTableBuffer, seekTableBufferCopy);
+                        optZstdSeekTable = Optional.of(new ZstdSeekTable(frameCount, seekTableBufferCopy));
+                    } else {
+                        optZstdSeekTable = Optional.of(new ZstdSeekTable(frameCount, seekTableBuffer));
+                    }
+                    LOGGER.debug(() -> LogUtil.message("parse() - frameCount: {}, seekTableFrameSize",
+                            frameCount, seekTableFrameSize));
+                } catch (final InsufficientSeekTableDataException | InvalidSeekTableDataException e) {
+                    throw e;
+                } catch (final RuntimeException e) {
+                    throw new InvalidSeekTableDataException(LogUtil.message(
+                            "Error parsing ZstdSeekTable with frameCount: {} - {}",
+                            frameCount, LogUtil.exceptionMessage(e)), e);
+                }
+            }
+        }
+        return optZstdSeekTable;
+    }
+
+    private static void checkIsSkippableFrame(final ByteBuffer byteBuffer, final long seekTableFrameSize) {
+        final int skippableMagicNumberOffset = Math.toIntExact(byteBuffer.limit() - seekTableFrameSize);
+        final boolean isSkippableFrame = ByteBufferUtils.equals(
+                ZstdConstants.SKIPPABLE_FRAME_MAGIC_NUMBER_BUFFER,
+                0,
+                byteBuffer,
+                skippableMagicNumberOffset,
+                ZstdConstants.SKIPPABLE_FRAME_MAGIC_NUMBER_SIZE);
+        if (!isSkippableFrame) {
+            throw new InvalidSeekTableDataException("Skippable frame magic number not found at position "
+                                                    + skippableMagicNumberOffset);
+        }
+    }
+
+//    private static void checkIsSeekableFile(final ByteBuffer byteBuffer) {
+//        final boolean isSeekableFile = isIsSeekableFile(byteBuffer);
+//        if (!isSeekableFile) {
+//            throw new InvalidSeekTableDataException("Seekable magic number not found at end of file");
+//        }
+//    }
+//
+//    private static boolean isIsSeekableFile(final ByteBuffer byteBuffer) {
+//        return ByteBufferUtils.equals(ZstdConstants.SEEKABLE_MAGIC_NUMBER_BUFFER,
+//                0,
+//                byteBuffer,
+//                byteBuffer.limit() - ZstdConstants.SEEKABLE_MAGIC_NUMBER_SIZE,
+//                ZstdConstants.SEEKABLE_MAGIC_NUMBER_SIZE);
+//    }
+
+    private static int readFrameCount(final ByteBuffer byteBuffer) {
+        final int frameCountPosition = byteBuffer.limit() + ZstdConstants.FRAME_COUNT_RELATIVE_POSITION;
+        try {
+            // Frame count is an unsigned int. If we have so many frames that we overflow an int then we
+            // probably have bigger issues as all the ByteBuffer and byte[] api are int based for positions.
+            return Math.toIntExact(ZstdSegmentUtil.getUnsignedIntLE(byteBuffer, frameCountPosition));
+        } catch (final Exception e) {
+            throw new InvalidSeekTableDataException(LogUtil.message(
+                    "Error reading frameCount from position {} - {}",
+                    frameCountPosition, LogUtil.exceptionMessage(e)), e);
+        }
+    }
+
+    public boolean isEmpty() {
+        return frameCount == 0;
+    }
+
+    public int getFrameCount() {
+        return frameCount;
+    }
+
+    public FrameLocation getFrameLocation(final int frameIdx) {
+        if (frameIdx < 0 || frameIdx >= frameCount) {
+            throw new IllegalArgumentException(LogUtil.message("Invalid frameIdx {} for frameCount: {}.",
+                    frameIdx, frameCount));
+        }
+        final int entryIdx = getEntryIdx(frameIdx);
+        final FrameInfo frameInfo = ZstdSegmentUtil.getFrameInfo(seekTableEntriesBuffer, frameIdx, entryIdx);
+
+        final FrameLocation frameLocation;
+        if (frameIdx == 0) {
+            frameLocation = new FrameLocation(
+                    0L,
+                    (int) frameInfo.cumulativeCompressedSize(),
+                    frameInfo.uncompressedSize());
+        } else {
+            final int prevFrameIdx = frameIdx - 1;
+            final long prevEntryIdx = getEntryIdx(prevFrameIdx);
+            final FrameInfo prevFrameInfo = ZstdSegmentUtil.getFrameInfo(
+                    seekTableEntriesBuffer, prevFrameIdx, prevEntryIdx);
+            final long compressedFrameSize = frameInfo.cumulativeCompressedSize()
+                                             - prevFrameInfo.cumulativeCompressedSize();
+            frameLocation = new FrameLocation(
+                    prevFrameInfo.cumulativeCompressedSize(),
+                    compressedFrameSize,
+                    frameInfo.uncompressedSize());
+        }
+        LOGGER.debug("getFrameLocation() - frameIdx {}, frameLocation: {}", frameIdx, frameLocation);
+        return frameLocation;
+    }
+
+    /**
+     * The position of the entry relative to the start of the seek table entries.
+     */
+    private static int getEntryIdx(final int frameIdx) {
+        return frameIdx * ZstdConstants.SEEK_TABLE_ENTRY_SIZE;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class InvalidSeekTableDataException extends RuntimeException {
+
+        public InvalidSeekTableDataException(final String message) {
+            super(message);
+        }
+
+        public InvalidSeekTableDataException(final String message, final Throwable cause) {
+            super(message, cause);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class InsufficientSeekTableDataException extends RuntimeException {
+
+        private final long requiredSeekTableFrameSize;
+        private final long actualSeekTableFrameSize;
+
+        public InsufficientSeekTableDataException(final long requiredSeekTableFrameSize,
+                                                  final long actualSeekTableFrameSize) {
+            super(LogUtil.message("Insufficient data for complete seek table frame. Expected: {}, actual: {}",
+                    requiredSeekTableFrameSize, actualSeekTableFrameSize));
+            this.requiredSeekTableFrameSize = requiredSeekTableFrameSize;
+            this.actualSeekTableFrameSize = actualSeekTableFrameSize;
+        }
+
+        public long getRequiredSeekTableFrameSize() {
+            return requiredSeekTableFrameSize;
+        }
+
+        public long getActualSeekTableFrameSize() {
+            return actualSeekTableFrameSize;
+        }
+
+        @Override
+        public String toString() {
+            return "InsufficientSeekTableDataException{" +
+                   "expectedSeekTableFrameSize=" + requiredSeekTableFrameSize +
+                   ", message=" + getMessage() +
+                   '}';
+        }
+    }
+}

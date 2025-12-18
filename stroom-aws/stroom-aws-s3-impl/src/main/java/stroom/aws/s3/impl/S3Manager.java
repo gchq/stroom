@@ -63,6 +63,8 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
@@ -548,22 +550,51 @@ public class S3Manager {
         logResponse("Created bucket: ", bucketName, null, response);
     }
 
+    /**
+     * Get part of an S3 object, defined by a contiguous byte range.
+     *
+     * @param meta            The {@link Meta} the object belongs to.
+     * @param childStreamType The child stream type, or null if this is not a child stream.
+     * @param byteRange       The range of bytes to fetch.
+     * @return The repose containing the byte range.
+     */
     public ResponseInputStream<GetObjectResponse> getByteRange(final Meta meta,
+                                                               final String childStreamType,
                                                                final Range<Long> byteRange) {
         Objects.requireNonNull(meta);
         Objects.requireNonNull(byteRange);
         final String bucketName = createBucketName(getBucketNamePattern(), meta);
-        final String key = createKey(getKeyNamePattern(), meta);
+        final String key = createKey(getKeyNamePattern(), meta, childStreamType);
         final GetObjectRequest request = GetObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
                 .range(rangeToHttpString(byteRange))
                 .build();
 
-        logRequest("Downloading: ", bucketName, key, request);
+        logRequest("GET (range) : ", bucketName, key, byteRange, request);
 
         try (final S3Client s3Client = createClient(s3ClientConfig)) {
             return s3Client.getObject(request);
+        } catch (final RuntimeException e) {
+            error("Error getting: ", bucketName, key, byteRange, e);
+            throw e;
+        }
+    }
+
+    public long getFileSize(final Meta meta, final String childStreamType) {
+        Objects.requireNonNull(meta);
+        final String bucketName = createBucketName(getBucketNamePattern(), meta);
+        final String key = createKey(getKeyNamePattern(), meta);
+        final HeadObjectRequest request = HeadObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .build();
+
+        logRequest("HEAD: ", bucketName, key, request);
+
+        try (final S3Client s3Client = createClient(s3ClientConfig)) {
+            final HeadObjectResponse headObjectResponse = s3Client.headObject(request);
+            return Objects.requireNonNullElse(headObjectResponse.contentLength(), 0L);
         } catch (final RuntimeException e) {
             error("Error downloading: ", bucketName, key, e);
             throw e;
@@ -579,7 +610,7 @@ public class S3Manager {
         if (range.getFrom() > toInc) {
             throw new IllegalArgumentException("Invalid range: " + range);
         }
-        final String str = "bytes=" + range.getFrom() + "-" + range.getTo();
+        final String str = "bytes=" + range.getFrom() + "-" + toInc;
         LOGGER.debug("rangeToHttpString() - returning: {}", str);
         return str;
     }
@@ -680,6 +711,10 @@ public class S3Manager {
     }
 
     public String createKey(final String keyPattern, final Meta meta) {
+        return createKey(keyPattern, meta, null);
+    }
+
+    public String createKey(final String keyPattern, final Meta meta, final String childStreamType) {
         final Template template = templateCache.getTemplate(keyPattern);
         final ZonedDateTime zonedDateTime =
                 ZonedDateTime.ofInstant(Instant.ofEpochMilli(meta.getCreateMs()), ZoneOffset.UTC);
@@ -762,6 +797,15 @@ public class S3Manager {
         LOGGER.trace(() -> message + getDebugIdentity(bucketName, key) + ", request=" + request);
     }
 
+    private void logRequest(final String message,
+                            final String bucketName,
+                            final String key,
+                            final Range<Long> range,
+                            final S3Request request) {
+        LOGGER.debug(() -> message + getDebugIdentity(bucketName, key) + ", range=" + range);
+        LOGGER.trace(() -> message + getDebugIdentity(bucketName, key) + ", range=" + range + ", request=" + request);
+    }
+
     private void logResponse(final String message,
                              final String bucketName,
                              final String key,
@@ -788,6 +832,17 @@ public class S3Manager {
                            getDebugIdentity(bucketName, key) +
                            ", message=" +
                            e.getMessage(), e);
+    }
+
+    private void error(final String message,
+                       final String bucketName,
+                       final String key,
+                       final Range<Long> range,
+                       final Exception e) {
+        LOGGER.error(() -> message +
+                           getDebugIdentity(bucketName, key) +
+                           ", range=" + range +
+                           ", message=" + e.getMessage(), e);
     }
 
     private String getDebugIdentity(final String bucketName,

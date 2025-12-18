@@ -30,6 +30,9 @@ import java.util.Objects;
  * Class that holds a range of some number type. A null upper or lower bound
  * means an open ended range. The upper bound is not included i.e. [0..10) means
  * 0,1,2,3,4,5,6,7,8,9 or this can be represented by the toString [0..9]
+ * <p>
+ * From is inclusive, to is exclusive.
+ * </p>
  */
 @JsonPropertyOrder({
         "from",
@@ -255,8 +258,8 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
         }
         final Range<?> range = (Range<?>) o;
         return Objects.equals(from, range.from) &&
-                Objects.equals(to, range.to) &&
-                matchNull == range.matchNull;
+               Objects.equals(to, range.to) &&
+               matchNull == range.matchNull;
     }
 
     @Override
