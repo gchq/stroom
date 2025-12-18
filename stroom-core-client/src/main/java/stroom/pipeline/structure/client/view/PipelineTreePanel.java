@@ -192,10 +192,11 @@ public class PipelineTreePanel extends TreePanel<PipelineElement> {
     }
 
     public int getTreeHeight() {
-        if (renderer == null) {
+        if (renderer == null || renderer.getBounds() == null) {
             return 0;
         }
-        return canvas.getOffsetHeight();
+
+        return (int) renderer.getBounds().getHeight();
     }
 
     public void setDisabledElements(final List<PipelineElement> disabledElements) {

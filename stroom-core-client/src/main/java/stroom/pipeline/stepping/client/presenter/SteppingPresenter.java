@@ -32,7 +32,6 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
-import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
 import stroom.pipeline.shared.SharedElementData;
@@ -77,6 +76,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -108,7 +108,7 @@ import java.util.stream.Collectors;
 
 public class SteppingPresenter
         extends MyPresenterWidget<SteppingPresenter.SteppingView>
-        implements HasDirtyHandlers, ClassificationUiHandlers, ChangeDataEvent.ChangeDataHandler<ResultPage<MetaRow>> {
+        implements HasDirtyHandlers, ClassificationUiHandlers {
 
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
 
@@ -122,7 +122,7 @@ public class SteppingPresenter
     private final SteppingFilterPresenter steppingFilterPresenter;
     private final PipelineElementTypesFactory pipelineElementTypesFactory;
     private final RestFactory restFactory;
-    private final SteppingMetaListPresenter metaListPresenter;
+    private final SteppingMetaListPresenter steppingMetaListPresenter;
     private final Provider<ExpressionPresenter> streamListFilterPresenterProvider;
     private final ExpressionValidator expressionValidator;
     // elementId => ElementPresenter
@@ -157,7 +157,7 @@ public class SteppingPresenter
                              final StepControlPresenter stepControlPresenter,
                              final SteppingFilterPresenter steppingFilterPresenter,
                              final PipelineElementTypesFactory pipelineElementTypesFactory,
-                             final SteppingMetaListPresenter metaListPresenter,
+                             final Provider<SteppingMetaListPresenter> metaListPresenterProvider,
                              final Provider<ExpressionPresenter> streamListFilterPresenterProvider,
                              final ExpressionValidator expressionValidator) {
         super(eventBus, view);
@@ -170,7 +170,7 @@ public class SteppingPresenter
         this.stepControlPresenter = stepControlPresenter;
         this.steppingFilterPresenter = steppingFilterPresenter;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
-        this.metaListPresenter = metaListPresenter;
+        this.steppingMetaListPresenter = metaListPresenterProvider.get();
         this.streamListFilterPresenterProvider = streamListFilterPresenterProvider;
         this.expressionValidator = expressionValidator;
 
@@ -222,11 +222,9 @@ public class SteppingPresenter
         stepToolbar.add(stepMessage);
         getView().addWidgetLeft(stepToolbar);
 
-        streamListFilter = metaListPresenter.add(SvgPresets.FILTER);
+        streamListFilter = steppingMetaListPresenter.add(SvgPresets.FILTER);
 
-        sourcePresenter.getView().setMetaListContainerView(metaListPresenter.getWidget());
-
-        metaListPresenter.setExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION, metaListPresenter::refresh);
+        sourcePresenter.getView().setMetaListContainerView(steppingMetaListPresenter.getWidget());
     }
 
     @Override
@@ -244,8 +242,12 @@ public class SteppingPresenter
                     final PipelineElement selectedElement = getSelectedPipeElement();
                     onSelect(selectedElement);
                 }));
-        registerHandler(stepLocationLinkPresenter.addStepControlHandler(event ->
-                step(event.getStepType(), event.getStepLocation())));
+        registerHandler(stepLocationLinkPresenter.addStepControlHandler(event -> {
+            step(event.getStepType(), event.getStepLocation());
+            final StepLocation stepLocation = event.getStepLocation();
+            final Meta meta = Meta.builder().id(stepLocation.getMetaId()).build();
+            steppingMetaListPresenter.getSelectionModel().setSelected(new MetaRow(meta, null, null));
+        }));
         registerHandler(stepControlPresenter.addStepControlHandler(event ->
                 step(event.getStepType(), event.getStepLocation())));
         registerHandler(stepControlPresenter.addChangeFilterHandler(event ->
@@ -259,12 +261,20 @@ public class SteppingPresenter
             }
         }));
 
-        registerHandler(metaListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            final MetaRow selectedRow = metaListPresenter.getSelected();
+        registerHandler(steppingMetaListPresenter.getSelectionModel().addSelectionHandler(event -> {
+            final MetaRow selectedRow = steppingMetaListPresenter.getSelected();
             if (selectedRow != null) {
-                final Meta selectedMeta = metaListPresenter.getSelected().getMeta();
-                read(pipelineDoc, StepType.REFRESH, new StepLocation(selectedMeta.getId(), 0, 0),
+                final Meta selectedMeta = steppingMetaListPresenter.getSelected().getMeta();
+                beginStepping(StepType.REFRESH, new StepLocation(selectedMeta.getId(), 0, 0),
                         selectedMeta, null);
+            }
+        }));
+
+        registerHandler(steppingMetaListPresenter.addChangeDataHandler(event -> {
+            if (event.getData().size() == 1) {
+                final MetaRow metaRow = event.getData().getFirst();
+                steppingMetaListPresenter.getSelectionModel().setSelected(metaRow, new SelectionType(), false);
+                stepLocationLinkPresenter.setStepLocation(new StepLocation(metaRow.getMeta().getId(), 0, 0));
             }
         }));
 
@@ -333,7 +343,7 @@ public class SteppingPresenter
                     .fire();
         }));
 
-        metaListPresenter.addChangeDataHandler(this);
+//        steppingMetaListPresenter.setExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION, () -> {});
     }
 
     public void setExpression(final ExpressionOperator expression) {
@@ -343,23 +353,20 @@ public class SteppingPresenter
         getCriteria().obtainPageRequest().setOffset(0);
 
         // Clear the current selection and get a new list of streams.
-        metaListPresenter.getSelectionModel().clear();
-        metaListPresenter.refresh();
+        steppingMetaListPresenter.getSelectionModel().clear();
+        refreshMetaList();
     }
 
     public void setMetaListExpression(final ExpressionOperator expressionOperator) {
-        metaListPresenter.setExpression(expressionOperator, metaListPresenter::refresh);
+        steppingMetaListPresenter.setExpression(expressionOperator, this::refreshMetaList);
     }
 
-    @Override
-    public void onChange(final ChangeDataEvent<ResultPage<MetaRow>> event) {
-        if (event.getData().size() == 1) {
-            metaListPresenter.getSelectionModel().setSelected(metaListPresenter.getResultPage().getFirst());
-        }
+    public ResultPage<MetaRow> getMetaList() {
+        return steppingMetaListPresenter.getResultPage();
     }
 
     private FindMetaCriteria getCriteria() {
-        return metaListPresenter.getCriteria();
+        return steppingMetaListPresenter.getCriteria();
     }
 
     private ElementPresenter getCurrentElementPresenter() {
@@ -638,20 +645,31 @@ public class SteppingPresenter
                 elementData.isFormatOutput());
     }
 
-    public void read(final PipelineDoc pipelineDoc,
-                     final StepType stepType,
+    public void setPipelineDoc(final PipelineDoc pipelineDoc) {
+        this.pipelineDoc = pipelineDoc;
+    }
+
+    public void refreshMetaList() {
+        steppingMetaListPresenter.refresh();
+    }
+
+    public void beginStepping(final StepType stepType,
                      final StepLocation stepLocation,
                      final Meta stream,
                      final String childStreamType) {
         this.meta = stream;
-        this.pipelineDoc = pipelineDoc;
 
         if (meta == null) {
-            if (metaListPresenter.getSelected() == null) {
+            if (steppingMetaListPresenter.getSelected() == null) {
                 sourcePresenter.clear();
+
+                if (steppingMetaListPresenter.getResultPage() == null) {
+                    refreshMetaList();
+                }
+
                 return;
             }
-            meta = metaListPresenter.getSelected().getMeta();
+            meta = steppingMetaListPresenter.getSelected().getMeta();
         }
 
         // Load the stream.
@@ -776,6 +794,9 @@ public class SteppingPresenter
     private void step(final StepType stepType,
                       final StepLocation stepLocation) {
         if (!busyTranslating) {
+            if (pipelineModel == null) {
+                throw new RuntimeException("PipelineModel not set");
+            }
             busyTranslating = true;
             stepMessage.getElement().setInnerHTML("Stepping...");
             stepMessage.setVisible(true);
@@ -784,10 +805,8 @@ public class SteppingPresenter
             // Set a null session UUID as this is a new stepping session.
             requestBuilder.sessionUuid(null);
 
-            if (pipelineModel != null) {
-                final PipelineData pipelineData = pipelineModel.diff();
-                pipelineDoc.setPipelineData(pipelineData);
-            }
+            final PipelineData pipelineData = pipelineModel.diff();
+            pipelineDoc.setPipelineData(pipelineData);
             requestBuilder.pipelineDoc(pipelineDoc);
 
             // If we are stepping to the first or last record then clear all
@@ -982,7 +1001,9 @@ public class SteppingPresenter
                 } else {
                     sourcePresenter.setSourceLocationUsingHighlight(result.getStepData().getSourceLocation());
                 }
+            }
 
+            if (result.getFoundLocation() != null) {
                 // We found a record so update the display to indicate the
                 // record that was found and update the request with the new
                 // position ready for the next step.

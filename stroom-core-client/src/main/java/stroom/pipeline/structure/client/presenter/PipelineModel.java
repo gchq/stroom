@@ -620,17 +620,8 @@ public class    PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     }
 
     public List<PipelineElement> getPipelineElements(final Predicate<PipelineElement> predicate) {
-        return getPipelineData().getElements().getAdd().stream()
+        return getCombinedData().getElements().values().stream()
                 .filter(predicate)
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public String toString() {
-        return "PipelineModel{" +
-               "combinedData=" + combinedData +
-               ", pipelineLayer=" + pipelineLayer +
-               ", elementTypes=" + elementTypes +
-               '}';
     }
 }

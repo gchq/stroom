@@ -28,6 +28,7 @@ import stroom.entity.client.presenter.TabContentProvider.TabProvider;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
+import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
@@ -49,11 +50,12 @@ import stroom.widget.util.client.MouseUtil;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import javax.inject.Provider;
 
 public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView, PipelineDoc>
-        implements ChangeDataHandler<PipelineModel> {
+        implements ChangeDataHandler<PipelineModel>, HasChangeDataHandlers<PipelineModel> {
 
     public static final TabData DATA = new TabDataImpl("Data");
     public static final TabData STRUCTURE = new TabDataImpl("Structure");
@@ -70,10 +72,11 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
     private final PipelineElementTypesFactory pipelineElementTypesFactory;
     private final PipelineModelFactory pipelineModelFactory;
 
+    private PipelineModel pipelineModel;
+
     private boolean isAdmin;
     private boolean hasManageProcessorsPermission;
     private boolean initSize = false;
-    private PipelineDoc pipelineDoc;
     private final InlineSvgToggleButton steppingModeButton;
 
     @Inject
@@ -119,15 +122,6 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
             protected SteppingPresenter createPresenter() {
                 return steppingPresenter;
             }
-
-            @Override
-            public void onRead(final SteppingPresenter presenter,
-                               final DocRef docRef,
-                               final PipelineDoc document,
-                               final boolean readOnly) {
-                presenter.read(document, StepType.REFRESH, new StepLocation(0, 0, 0),
-                        null, null);
-            }
         };
 
         pipelineStructurePresenter = structurePresenterProvider.get();
@@ -143,6 +137,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
                                final DocRef docRef,
                                final PipelineDoc document,
                                final boolean readOnly) {
+//                presenter.setPipelineModel(pipelineModel);
                 presenter.read(docRef, document, readOnly);
             }
         };
@@ -235,25 +230,25 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
         }));
     }
 
-    public void setSteppingMode(final boolean steppingMode) {
-        setSteppingMode(steppingMode, StepType.REFRESH, new StepLocation(0, 0, 0),
-                null, null);
+    public void beginStepping(final StepType stepType, final StepLocation stepLocation,
+                              final Meta meta, final String childStreamType) {
+        steppingPresenter.beginStepping(stepType, stepLocation, meta, childStreamType);
     }
 
-    public void setSteppingMode(final boolean steppingMode, final StepType stepType, final StepLocation stepLocation,
-                                final Meta meta, final String childStreamType) {
+    public void setSteppingMode(final boolean steppingMode) {
         if (steppingMode) {
-            if (pipelineModel != null) {
-                steppingPresenter.setPipelineModel(pipelineModel);
-            }
 
             replaceTab(STRUCTURE, steppingTabProvider);
+
+            if (isDirty()) {
+                steppingPresenter.setPipelineModel(pipelineModel);
+                beginStepping(StepType.REFRESH, new StepLocation(0, 0, 0),
+                        null, null);
+            }
+
             if (!initSize) {
                 initSize = true;
                 steppingPresenter.resize();
-            }
-            if (isDirty()) {
-                steppingPresenter.read(pipelineDoc, stepType, stepLocation, meta, childStreamType);
             }
         } else {
             replaceTab(STRUCTURE, structureTabProvider);
@@ -309,23 +304,23 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
         return DOCUMENTATION;
     }
 
-    private PipelineModel pipelineModel;
-
     @Override
     protected void onRead(final DocRef docRef, final PipelineDoc document, final boolean readOnly) {
         super.onRead(docRef, document, readOnly);
+        steppingPresenter.setPipelineDoc(document);
+    }
 
-        this.pipelineDoc = document;
-
+    public void initPipelineModel() {
         pipelineElementTypesFactory.get(this, elementTypes ->
-            pipelineModelFactory.get(this, docRef, elementTypes, model -> {
-                this.pipelineModel = model;
-                if (model != null) {
-                    model.addChangeDataHandler(this);
-                }
-                pipelineStructurePresenter.setPipelineModel(pipelineModel);
-                steppingPresenter.setPipelineModel(pipelineModel);
-            })
+                pipelineModelFactory.get(this, docRef, elementTypes, model -> {
+                    if (pipelineModel == null) {
+                        this.pipelineModel = model;
+                        pipelineModel.addChangeDataHandler(this);
+                        pipelineStructurePresenter.setPipelineModel(pipelineModel);
+                        steppingPresenter.setPipelineModel(pipelineModel);
+                    }
+                    ChangeDataEvent.fire(this, model);
+                })
         );
     }
 
@@ -335,7 +330,12 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
         return pipelineStructurePresenter.onWrite(document);
     }
 
-    public void setExpression(final ExpressionOperator expressionOperator) {
+    public void setMetaListExpression(final ExpressionOperator expressionOperator) {
         steppingPresenter.setMetaListExpression(expressionOperator);
+    }
+
+    @Override
+    public HandlerRegistration addChangeDataHandler(final ChangeDataHandler<PipelineModel> handler) {
+        return getEventBus().addHandlerToSource(ChangeDataEvent.getType(), this, handler);
     }
 }

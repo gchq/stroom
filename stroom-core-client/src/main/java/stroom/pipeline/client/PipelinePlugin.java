@@ -17,12 +17,14 @@
 package stroom.pipeline.client;
 
 import stroom.core.client.ContentManager;
+import stroom.data.client.presenter.ExpressionValidator;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
+import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.meta.shared.FindMetaCriteria;
@@ -50,12 +52,13 @@ import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
 import javax.inject.Singleton;
 
 @Singleton
-public class PipelinePlugin extends DocumentPlugin<PipelineDoc> implements BeginPipelineSteppingEvent.Handler {
+public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
 
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
@@ -99,7 +102,25 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> implements Begin
             pipelinePresenter.getProcessorPresenter().refresh(event.getProcessorFilter());
         }));
 
-        registerHandler(getEventBus().addHandler(BeginPipelineSteppingEvent.getType(), this));
+        registerHandler(getEventBus().addHandler(BeginPipelineSteppingEvent.getType(), this::onBeginStepping));
+    }
+
+    @Override
+    public MyPresenterWidget<?> open(final DocRef docRef,
+                                     final boolean forceOpen,
+                                     final boolean fullScreen,
+                                     final CommonDocLinkTab selectedLinkTab,
+                                     Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                     final TaskMonitorFactory taskMonitorFactory) {
+        if (callbackOnOpen == null) {
+            callbackOnOpen = presenter -> {
+                final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;
+                pipelinePresenter.setMetaListExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION);
+                pipelinePresenter.initPipelineModel();
+            };
+        }
+
+        return super.open(docRef, forceOpen, fullScreen, selectedLinkTab, callbackOnOpen, taskMonitorFactory);
     }
 
     @Override
@@ -146,8 +167,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> implements Begin
         return DocRefUtil.create(document);
     }
 
-    @Override
-    public void onBegin(final BeginPipelineSteppingEvent event) {
+    public void onBeginStepping(final BeginPipelineSteppingEvent event) {
         final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Step With");
         chooser.setIncludedTypes(PipelineDoc.TYPE);
@@ -220,9 +240,15 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> implements Begin
         open(pipeline, true, false,
                 null, presenter -> {
                     final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;
-                    pipelinePresenter.setExpression(MetaExpressionUtil.createDataIdExpression(meta.getId()));
+                    // Only begin stepping when the pipeline model has been set up
+                    pipelinePresenter.addChangeDataHandler(event -> {
+                        pipelinePresenter.setMetaListExpression(
+                                MetaExpressionUtil.createDataIdExpression(meta.getId()));
+                        pipelinePresenter.setSteppingMode(true);
+                        pipelinePresenter.beginStepping(stepType, stepLocation, meta, childStreamType);
+                    });
 
-                    pipelinePresenter.setSteppingMode(true, stepType, stepLocation, meta, childStreamType);
+                    pipelinePresenter.initPipelineModel();
                 }, new DefaultTaskMonitorFactory(this));
     }
 }

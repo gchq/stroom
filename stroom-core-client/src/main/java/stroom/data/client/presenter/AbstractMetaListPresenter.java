@@ -145,7 +145,7 @@ public abstract class AbstractMetaListPresenter
         addColumns(allowSelectAll);
 
         criteria = new FindMetaCriteria();
-        dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus) {
+        dataProvider = new RestDataProvider<>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<MetaRow>> dataConsumer,
@@ -182,7 +182,7 @@ public abstract class AbstractMetaListPresenter
 
     @Override
     public HandlerRegistration addChangeDataHandler(final ChangeDataHandler<ResultPage<MetaRow>> handler) {
-        return getEventBus().addHandler(ChangeDataEvent.getType(), handler);
+        return getEventBus().addHandlerToSource(ChangeDataEvent.getType(), this, handler);
     }
 
     protected ResultPage<MetaRow> onProcessData(final ResultPage<MetaRow> data) {
