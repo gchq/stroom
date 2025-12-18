@@ -68,6 +68,8 @@ import stroom.folder.client.gin.FolderGinjector;
 import stroom.folder.client.gin.FolderModule;
 import stroom.gitrepo.client.gin.GitRepoGinjector;
 import stroom.gitrepo.client.gin.GitRepoModule;
+import stroom.http.client.gin.HttpGinjector;
+import stroom.http.client.gin.HttpModule;
 import stroom.importexport.client.gin.ImportExportConfigGinjector;
 import stroom.importexport.client.gin.ImportExportConfigModule;
 import stroom.index.client.gin.IndexGinjector;
@@ -150,6 +152,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         FsVolumeModule.class,
         FeedModule.class,
         FolderModule.class,
+        HttpModule.class,
         ImportExportConfigModule.class,
         IndexModule.class,
         KafkaConfigModule.class,
@@ -201,6 +204,7 @@ public interface AppGinjectorUser extends
         FeedGinjector,
         FolderGinjector,
         Ginjector,
+        HttpGinjector,
         ImportExportConfigGinjector,
         IndexGinjector,
         KafkaConfigGinjector,

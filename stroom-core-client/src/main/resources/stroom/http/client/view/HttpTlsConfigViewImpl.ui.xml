@@ -1,0 +1,64 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="httpTlsConfigProtocol"
+                        label="Protocol"
+                        helpText="Protocol">
+            <g:TextBox ui:field="protocol"
+                       width="400px"
+                       title="Protocol"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpTlsConfigProvider"
+                        label="Provider"
+                        helpText="Provider">
+            <g:TextBox ui:field="provider"
+                       width="400px"
+                       title="Provider"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpTlsConfigKeyStore"
+                        label="Key Store"
+                        helpText="Key Store">
+            <l:SelectionBox ui:field="keyStore"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpTlsConfigTrustStore"
+                        label="Trust Store"
+                        helpText="Trust Store">
+            <l:SelectionBox ui:field="trustStore"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="trustSelfSignedCertificates"
+                                    identity="httpTlsConfigTrustSelfSignedCertificates"
+                                    label="Trust Self Signed Certificates"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="verifyHostname"
+                                    identity="httpTlsConfigVerifyHostname"
+                                    label="Verify Host Name"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpTlsConfigSupportedProtocols"
+                        label="Supported Protocols"
+                        helpText="Supported Protocols">
+            <g:TextArea ui:field="supportedProtocols"
+                        width="400px"
+                        title="Supported Protocols"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpTlsConfigSupportedCiphers"
+                        label="Supported Ciphers"
+                        helpText="Supported Ciphers">
+            <g:TextArea ui:field="supportedCiphers"
+                        width="400px"
+                        title="Supported Ciphers"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpTlsConfigCertAlias"
+                        label="Certificate Alias"
+                        helpText="Certificate Alias">
+            <g:TextBox ui:field="certAlias"
+                       width="400px"
+                       title="Certificate Alias"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

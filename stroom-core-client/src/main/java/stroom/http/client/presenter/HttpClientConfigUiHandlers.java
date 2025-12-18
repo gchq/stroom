@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.openai.client.presenter;
+package stroom.http.client.presenter;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.document.client.event.DirtyUiHandlers;
 
-public interface OpenAIModelSettingsUiHandlers extends UiHandlers {
+public interface HttpClientConfigUiHandlers extends DirtyUiHandlers {
 
-    void onChange();
-
-    void onSetHttpClientConfiguration();
-
-    void onTestModel();
+    void onSetHttpTlsConfig();
 }

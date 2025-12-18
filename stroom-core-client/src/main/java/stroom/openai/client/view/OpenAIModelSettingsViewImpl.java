@@ -51,6 +51,8 @@ public class OpenAIModelSettingsViewImpl
     ValueSpinner maxContextWindowTokens;
     @UiField
     Button testModel;
+    @UiField
+    Button setHttpClientConfig;
 
     @Inject
     public OpenAIModelSettingsViewImpl(final Binder binder) {
@@ -133,6 +135,13 @@ public class OpenAIModelSettingsViewImpl
     @UiHandler("maxContextWindowTokens")
     public void onMaxContextWindowTokensValueChange(final ValueChangeEvent<Long> event) {
         fireChange();
+    }
+
+    @UiHandler("setHttpClientConfig")
+    public void onSetHttpClientConfig(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onSetHttpClientConfiguration();
+        }
     }
 
     @UiHandler("testModel")

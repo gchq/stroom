@@ -24,8 +24,6 @@ import stroom.widget.form.client.CustomFileUpload;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.FileUpload;
-import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;

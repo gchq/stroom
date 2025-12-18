@@ -146,7 +146,8 @@ public class TestAskStroomAi {
                 baseUrl,
                 apiKey,
                 modelId,
-                1000);
+                1000,
+                null);
         final ChatModel chatModel = openAIService.getChatModel(modelDoc);
 
         final String chatMemoryId = UUID.randomUUID().toString();

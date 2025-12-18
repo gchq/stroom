@@ -52,15 +52,6 @@ public class CredentialWithPerms {
     private final boolean delete;
 
     /**
-     * Used when we want credentials with all permissions.
-     *
-     * @param credential The credentials to store. Must not be null.
-     */
-    public CredentialWithPerms(final Credential credential) {
-        this(credential, true, true);
-    }
-
-    /**
      * Constructor.
      *
      * @param credential Must not be null.
@@ -72,7 +63,6 @@ public class CredentialWithPerms {
             @JsonProperty("credential") final Credential credential,
             @JsonProperty("edit") final boolean edit,
             @JsonProperty("delete") final boolean delete) {
-        Objects.requireNonNull(credential);
         this.credential = credential;
         this.edit = edit;
         this.delete = delete;

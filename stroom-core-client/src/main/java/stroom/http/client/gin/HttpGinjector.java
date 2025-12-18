@@ -14,15 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.openai.client.presenter;
+package stroom.http.client.gin;
 
-import com.gwtplatform.mvp.client.UiHandlers;
-
-public interface OpenAIModelSettingsUiHandlers extends UiHandlers {
-
-    void onChange();
-
-    void onSetHttpClientConfiguration();
-
-    void onTestModel();
+public interface HttpGinjector {
 }
