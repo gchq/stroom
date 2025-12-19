@@ -9,4 +9,6 @@ public interface StoredSecrets {
      * @return The stored secret or null if none can be found.
      */
     StoredSecret get(String name);
+
+    KeyStore getKeyStore(String name);
 }

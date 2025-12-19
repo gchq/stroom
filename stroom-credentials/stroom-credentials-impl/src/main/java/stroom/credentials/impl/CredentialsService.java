@@ -16,6 +16,8 @@
 
 package stroom.credentials.impl;
 
+import stroom.ai.shared.KeyStoreType;
+import stroom.credentials.api.KeyStore;
 import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.shared.Credential;
@@ -30,6 +32,9 @@ import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
@@ -40,6 +45,11 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -49,6 +59,8 @@ public class CredentialsService implements StoredSecrets {
     private final SecurityContext securityContext;
     private final Provider<DocumentPermissionService> permissionServiceProvider;
     private final Provider<ResourceStore> resourceStoreProvider;
+    private final PathCreator pathCreator;
+    private final Provider<CredentialsConfig> credentialsConfigProvider;
 
     /**
      * Injected constructor.
@@ -58,11 +70,15 @@ public class CredentialsService implements StoredSecrets {
     public CredentialsService(final CredentialsDao credentialsDao,
                               final SecurityContext securityContext,
                               final Provider<DocumentPermissionService> permissionServiceProvider,
-                              final Provider<ResourceStore> resourceStoreProvider) {
+                              final Provider<ResourceStore> resourceStoreProvider,
+                              final PathCreator pathCreator,
+                              final Provider<CredentialsConfig> credentialsConfigProvider) {
         this.credentialsDao = credentialsDao;
         this.securityContext = securityContext;
         this.permissionServiceProvider = permissionServiceProvider;
         this.resourceStoreProvider = resourceStoreProvider;
+        this.pathCreator = pathCreator;
+        this.credentialsConfigProvider = credentialsConfigProvider;
     }
 
     /**
@@ -327,6 +343,84 @@ public class CredentialsService implements StoredSecrets {
         } else {
             throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to delete these credentials");
+        }
+    }
+
+    @Override
+    public KeyStore getKeyStore(final String name) {
+        if (NullSafe.isBlankString(name)) {
+            return null;
+        }
+
+        final StoredSecret storedSecret = get(name);
+        if (storedSecret == null) {
+            throw new RuntimeException("Unable to find secret '" + name + "'");
+        }
+
+        if (storedSecret.secret() instanceof KeyStoreSecret keyStoreSecret) {
+            final Path path = pathCreator
+                    .toAppPath(NullSafe.getOrElse(
+                            credentialsConfigProvider.get(),
+                            CredentialsConfig::getKeyStoreCachePath,
+                            CredentialsConfig.DEFAULT_KEY_STORE_CACHE_PATH));
+            final Path keyStorePath = path.resolve(storedSecret.credential().getUuid() + ".keystore");
+
+            // See if the key store file exists and if it is old.
+            boolean exists = Files.exists(keyStorePath);
+            boolean old = false;
+            if (exists) {
+                old = isKeyStoreOld(keyStorePath);
+            }
+
+            try {
+                if (!exists || old) {
+                    synchronized (this) {
+                        // Try under lock to see if the file is old if it exists.
+                        exists = Files.exists(keyStorePath);
+                        if (exists) {
+                            old = isKeyStoreOld(keyStorePath);
+                        }
+
+                        // If the file does not exist or is old then write it.
+                        if (!exists || old) {
+                            final byte[] bytes = storedSecret.keyStore();
+                            if (bytes == null || bytes.length == 0) {
+                                throw new RuntimeException("Key store data is missing");
+                            }
+
+                            // Create root directory for key stores
+                            Files.createDirectories(path);
+
+                            // Write temporary keystore
+                            final Path tempFile = path.resolve(UUID.randomUUID() + ".keystore");
+                            Files.write(tempFile, bytes);
+
+                            // Move keystore
+                            Files.move(tempFile, keyStorePath, StandardCopyOption.ATOMIC_MOVE);
+                        }
+                    }
+                }
+
+                return new KeyStore(
+                        FileUtil.getCanonicalPath(keyStorePath),
+                        keyStoreSecret.getKeyStorePassword(),
+                        NullSafe.getOrElse(keyStoreSecret, KeyStoreSecret::getKeyStoreType, KeyStoreType.JKS).name(),
+                        null);
+
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        } else {
+            throw new RuntimeException("Secret '" + name + "' is not a key store");
+        }
+    }
+
+    private boolean isKeyStoreOld(final Path path) {
+        try {
+            final FileTime fileTime = Files.getLastModifiedTime(path);
+            return Instant.now().isAfter(fileTime.toInstant().plus(10, ChronoUnit.MINUTES));
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 }

@@ -19090,6 +19090,148 @@
           }
         } ]
       },
+      "HttpAuthConfig" : {
+        "type" : "object",
+        "properties" : {
+          "authScheme" : {
+            "type" : "string"
+          },
+          "credentialType" : {
+            "type" : "string"
+          },
+          "domain" : {
+            "type" : "string"
+          },
+          "hostname" : {
+            "type" : "string"
+          },
+          "password" : {
+            "type" : "string"
+          },
+          "realm" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        }
+      },
+      "HttpClientConfig" : {
+        "type" : "object",
+        "properties" : {
+          "connectionRequestTimeout" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "connectionTimeout" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "cookiesEnabled" : {
+            "type" : "boolean"
+          },
+          "keepAlive" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "maxConnections" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 2147483647,
+            "minimum" : 1
+          },
+          "maxConnectionsPerRoute" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 2147483647,
+            "minimum" : 1
+          },
+          "proxy" : {
+            "$ref" : "#/components/schemas/HttpProxyConfig"
+          },
+          "retries" : {
+            "type" : "integer",
+            "format" : "int32",
+            "maximum" : 1000,
+            "minimum" : 0
+          },
+          "timeToLive" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "timeout" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          },
+          "tls" : {
+            "$ref" : "#/components/schemas/HttpTlsConfig"
+          },
+          "userAgent" : {
+            "type" : "string"
+          },
+          "validateAfterInactivityPeriod" : {
+            "$ref" : "#/components/schemas/SimpleDuration"
+          }
+        },
+        "required" : [ "connectionRequestTimeout", "connectionTimeout", "keepAlive", "timeToLive", "timeout", "validateAfterInactivityPeriod" ]
+      },
+      "HttpProxyConfig" : {
+        "type" : "object",
+        "properties" : {
+          "auth" : {
+            "$ref" : "#/components/schemas/HttpAuthConfig"
+          },
+          "host" : {
+            "type" : "string"
+          },
+          "nonProxyHosts" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "port" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "scheme" : {
+            "type" : "string"
+          }
+        }
+      },
+      "HttpTlsConfig" : {
+        "type" : "object",
+        "properties" : {
+          "certAlias" : {
+            "type" : "string"
+          },
+          "keyStoreName" : {
+            "type" : "string"
+          },
+          "protocol" : {
+            "type" : "string"
+          },
+          "provider" : {
+            "type" : "string"
+          },
+          "supportedCiphers" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "supportedProtocols" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "trustSelfSignedCertificates" : {
+            "type" : "boolean"
+          },
+          "trustStoreName" : {
+            "type" : "string"
+          },
+          "verifyHostname" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "ImportConfigRequest" : {
         "type" : "object",
         "properties" : {
@@ -20668,6 +20810,9 @@
           },
           "description" : {
             "type" : "string"
+          },
+          "httpClientConfiguration" : {
+            "$ref" : "#/components/schemas/HttpClientConfig"
           },
           "maxContextWindowTokens" : {
             "type" : "integer",

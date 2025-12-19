@@ -26,8 +26,15 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserGroupsService;
 import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.db.DbTestModule;
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.TempDirProvider;
 
 import com.google.inject.AbstractModule;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class TestModule extends AbstractModule {
 
@@ -46,5 +53,13 @@ public class TestModule extends AbstractModule {
         bind(SecurityContext.class).to(MockSecurityContext.class);
         bind(DocumentPermissionService.class).to(MockDocumentPermissionService.class);
         bind(UserGroupsService.class).to(MockUserGroupsService.class);
+
+        try {
+            final Path path = Files.createTempDirectory("stroom");
+            bind(HomeDirProvider.class).toInstance(() -> path);
+            bind(TempDirProvider.class).toInstance(() -> path);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

@@ -16,7 +16,7 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import stroom.util.http.HttpClientCache;
+import stroom.util.jersey.HttpClientCache;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;

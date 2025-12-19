@@ -24,7 +24,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.http.HttpClientCache;
+import stroom.util.jersey.HttpClientCache;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
 import stroom.util.jersey.WebTargetFactory;
@@ -54,7 +54,6 @@ public class JerseyModule extends AbstractModule {
     protected void configure() {
         bind(JerseyClientFactory.class).to(JerseyClientFactoryImpl.class);
         bind(HttpClientCache.class).to(HttpClientCacheImpl.class);
-
         GuiceUtil.buildMultiBinder(binder(), ExceptionMapper.class)
                 .addBinding(NodeCallExceptionMapper.class)
                 .addBinding(PermissionExceptionMapper.class)

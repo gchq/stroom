@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.util.http;
+package stroom.credentials.api;
 
-import org.apache.hc.client5.http.classic.HttpClient;
+public record KeyStore(String keyStorePath,
+                       String keyStorePassword,
+                       String keyStoreType,
+                       String keyStoreProvider) {
 
-public interface HttpClientCache {
-
-    HttpClient get(HttpClientConfiguration httpClientConfiguration);
 }
