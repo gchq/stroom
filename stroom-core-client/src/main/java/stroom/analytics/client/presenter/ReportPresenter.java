@@ -51,7 +51,7 @@ public class ReportPresenter
                            final LinkTabPanelView view,
                            final ReportQueryEditPresenter reportQueryEditPresenter,
                            final Provider<ReportSettingsPresenter> reportSettingsPresenterProvider,
-                           final Provider<ReportNotificationListPresenter> notificationPresenterProvider,
+                           final Provider<ReportNotificationPresenter> notificationPresenterProvider,
                            final Provider<ReportProcessingPresenter> processPresenterProvider,
                            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                            final DocumentUserPermissionsTabProvider<ReportDoc>
