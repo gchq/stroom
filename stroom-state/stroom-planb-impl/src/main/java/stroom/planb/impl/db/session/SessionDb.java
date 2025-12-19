@@ -340,7 +340,7 @@ public class SessionDb extends AbstractDb<Session, Session> {
                                     vals);
 
                         } else {
-                            // Insert new session.
+                            // Provide new session.
                             if (lastSession != null) {
                                 consumer.accept(extendSession(
                                         lastSession.vals,
@@ -502,8 +502,11 @@ public class SessionDb extends AbstractDb<Session, Session> {
                          lastSession.getEnd().equals(session.getStart()))) {
 
                         // Extend the session.
-                        newSession = new Session(lastSession.getPrefix(),
-                                lastSession.getStart(),
+                        newSession = new Session(
+                                session.getPrefix(),
+                                newSession == null
+                                        ? lastSession.getStart()
+                                        : newSession.getStart(),
                                 session.getEnd());
 
                         // Delete the previous session as we are extending it.
