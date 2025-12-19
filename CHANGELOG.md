@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.14] - 2025-12-19
+
+* Issue **#5318** : Fix Plan B session condensation.
+
+
 ## [v7.10.13] - 2025-12-11
 
 * Issue **#5288** : Fix config defaults for `ForwardHttpPostConfig` and `HttpClientConfiguration`.
@@ -1790,7 +1795,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.13...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.14...HEAD
+[v7.10.14]: https://github.com/gchq/stroom/compare/v7.10.13...v7.10.14
 [v7.10.13]: https://github.com/gchq/stroom/compare/v7.10.12...v7.10.13
 [v7.10.12]: https://github.com/gchq/stroom/compare/v7.10.11...v7.10.12
 [v7.10.11]: https://github.com/gchq/stroom/compare/v7.10.10...v7.10.11
