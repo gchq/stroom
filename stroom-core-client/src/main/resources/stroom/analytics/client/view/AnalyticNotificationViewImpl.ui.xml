@@ -1,0 +1,21 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+    <g:FlowPanel styleName="max dock-container-vertical">
+        <g:FlowPanel styleName="dock-min form-padding form">
+            <form:FormGroup identity="analyticProcessingErrorFeed"
+                            label="Feed For Errors"
+                            helpText="The Feed to write any errors that occur during execution to.">
+                <g:SimplePanel ui:field="errorFeed"/>
+            </form:FormGroup>
+
+            <!-- includeRuleDocumentation determines whether the rule's documentation will be visible in detections produced by that rule. -->
+            <form:FormGroup identity="includeRuleDocumentation" label="Include Rule Documentation" helpText="Determines if the rule's documentation will be included in any detections that it produces.">
+                <tickbox:CustomCheckBox ui:field="includeRuleDocumentation"/>
+            </form:FormGroup>
+        </g:FlowPanel>
+        <g:SimplePanel ui:field="table" styleName="dock-max"/>
+    </g:FlowPanel>
+</ui:UiBinder>
