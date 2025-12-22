@@ -97,7 +97,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static java.util.Map.entry;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFeed.PROCESSOR_FEED;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
@@ -127,18 +126,18 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private static final Field<Integer> COUNT = DSL.count();
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.ofEntries(
-            entry(ProcessorTaskFields.FIELD_ID, PROCESSOR_TASK.ID),
-            entry(ProcessorTaskFields.FIELD_CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS),
-            entry(ProcessorTaskFields.FIELD_START_TIME, PROCESSOR_TASK.START_TIME_MS),
-            entry(ProcessorTaskFields.FIELD_END_TIME_DATE, PROCESSOR_TASK.END_TIME_MS),
-            entry(ProcessorTaskFields.FIELD_FEED, PROCESSOR_FEED.NAME),
-            entry(ProcessorTaskFields.FIELD_PRIORITY, PROCESSOR_FILTER.PRIORITY),
-            entry(ProcessorTaskFields.FIELD_PIPELINE, PROCESSOR.PIPELINE_UUID),
-            entry(ProcessorTaskFields.FIELD_PIPELINE_NAME, PROCESSOR.PIPELINE_UUID),
-            entry(ProcessorTaskFields.FIELD_STATUS, PROCESSOR_TASK.STATUS),
-            entry(ProcessorTaskFields.FIELD_COUNT, COUNT),
-            entry(ProcessorTaskFields.FIELD_NODE, PROCESSOR_NODE.NAME),
-            entry(ProcessorTaskFields.FIELD_POLL_AGE, PROCESSOR_FILTER_TRACKER.LAST_POLL_MS)
+            Map.entry(ProcessorTaskFields.FIELD_ID, PROCESSOR_TASK.ID),
+            Map.entry(ProcessorTaskFields.FIELD_CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS),
+            Map.entry(ProcessorTaskFields.FIELD_START_TIME, PROCESSOR_TASK.START_TIME_MS),
+            Map.entry(ProcessorTaskFields.FIELD_END_TIME_DATE, PROCESSOR_TASK.END_TIME_MS),
+            Map.entry(ProcessorTaskFields.FIELD_FEED, PROCESSOR_FEED.NAME),
+            Map.entry(ProcessorTaskFields.FIELD_PRIORITY, PROCESSOR_FILTER.PRIORITY),
+            Map.entry(ProcessorTaskFields.FIELD_PIPELINE, PROCESSOR.PIPELINE_UUID),
+            Map.entry(ProcessorTaskFields.FIELD_PIPELINE_NAME, PROCESSOR.PIPELINE_UUID),
+            Map.entry(ProcessorTaskFields.FIELD_STATUS, PROCESSOR_TASK.STATUS),
+            Map.entry(ProcessorTaskFields.FIELD_COUNT, COUNT),
+            Map.entry(ProcessorTaskFields.FIELD_NODE, PROCESSOR_NODE.NAME),
+            Map.entry(ProcessorTaskFields.FIELD_POLL_AGE, PROCESSOR_FILTER_TRACKER.LAST_POLL_MS)
     );
 
     private static final Field<?>[] PROCESSOR_TASK_COLUMNS = new Field<?>[]{

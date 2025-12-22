@@ -80,7 +80,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.meta.impl.db.MetaDaoImpl.meta;
 
 class TestMetaServiceImpl {
 
@@ -869,10 +868,10 @@ class TestMetaServiceImpl {
         JooqUtil.context(metaDbConnProvider, context -> {
             final byte unlockedId = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
             final byte lockedId = MetaStatusId.getPrimitiveValue(Status.LOCKED);
-            final int count = context.update(meta)
-                    .set(meta.STATUS, unlockedId)
-                    .set(meta.STATUS_TIME, Instant.now().toEpochMilli())
-                    .where(meta.STATUS.eq(lockedId))
+            final int count = context.update(MetaDaoImpl.META_M)
+                    .set(MetaDaoImpl.META_M.STATUS, unlockedId)
+                    .set(MetaDaoImpl.META_M.STATUS_TIME, Instant.now().toEpochMilli())
+                    .where(MetaDaoImpl.META_M.STATUS.eq(lockedId))
                     .execute();
             LOGGER.debug("Unlocked {} meta records", count);
         });

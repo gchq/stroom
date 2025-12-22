@@ -25,7 +25,7 @@ import org.jooq.Record;
 
 import java.util.function.Function;
 
-import static stroom.storedquery.impl.db.jooq.Tables.QUERY;
+import static stroom.storedquery.impl.db.jooq.tables.Query.QUERY;
 
 class RecordToStoredQueryMapper implements Function<Record, StoredQuery> {
 

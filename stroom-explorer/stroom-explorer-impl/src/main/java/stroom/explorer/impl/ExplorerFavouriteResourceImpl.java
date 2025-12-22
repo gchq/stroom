@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.explorer.api.ExplorerFavService;
 import stroom.explorer.shared.ExplorerFavouriteResource;
 import stroom.util.logging.LambdaLogger;
@@ -32,9 +33,7 @@ import jakarta.inject.Provider;
 
 import java.util.List;
 
-import static stroom.event.logging.rs.api.AutoLogged.OperationType.UNLOGGED;
-
-@AutoLogged(UNLOGGED)
+@AutoLogged(OperationType.UNLOGGED)
 public class ExplorerFavouriteResourceImpl implements ExplorerFavouriteResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerFavouriteResourceImpl.class);

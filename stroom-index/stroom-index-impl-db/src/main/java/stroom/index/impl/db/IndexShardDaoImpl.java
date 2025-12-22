@@ -75,9 +75,9 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static stroom.index.impl.db.jooq.Tables.INDEX_SHARD;
-import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP;
+import static stroom.index.impl.db.jooq.tables.IndexShard.INDEX_SHARD;
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
+import static stroom.index.impl.db.jooq.tables.IndexVolumeGroup.INDEX_VOLUME_GROUP;
 
 @Singleton // holding all the volume selectors
 class IndexShardDaoImpl implements IndexShardDao {
@@ -392,7 +392,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                            final String[] fields,
                            final ExpressionCriteria criteria) {
         return Arrays.stream(fields).filter(Objects::nonNull).anyMatch(fieldSet::contains) ||
-                ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
+               ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
     }
 
 

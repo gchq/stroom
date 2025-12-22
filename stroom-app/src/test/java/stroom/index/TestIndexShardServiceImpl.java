@@ -30,8 +30,6 @@ import jakarta.inject.Inject;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
 
     @Inject
@@ -47,10 +45,10 @@ class TestIndexShardServiceImpl extends AbstractCoreIntegrationTest {
 
     @Test
     void testSelectIndexVolume_unknownGroup() {
-        assertThrows(IndexException.class,
-                () -> indexVolumeService.selectVolume(
+        Assertions.assertThatThrownBy(() -> indexVolumeService.selectVolume(
                         "unknown",
-                        nodeInfo.getThisNodeName()));
+                        nodeInfo.getThisNodeName()))
+                .isInstanceOf(IndexException.class);
     }
 
     @Test
