@@ -144,7 +144,7 @@ public class ZstdSegmentUtil {
         final FrameLocation frameLocation;
         if (frameIdx == 0) {
             frameLocation = new FrameLocation(
-                    0L,
+                    frameIdx, 0L,
                     (int) frameInfo.cumulativeCompressedSize(),
                     frameInfo.uncompressedSize());
         } else {
@@ -154,7 +154,7 @@ public class ZstdSegmentUtil {
             final long compressedFrameSize = frameInfo.cumulativeCompressedSize()
                                              - prevFrameInfo.cumulativeCompressedSize();
             frameLocation = new FrameLocation(
-                    prevFrameInfo.cumulativeCompressedSize(),
+                    frameIdx, prevFrameInfo.cumulativeCompressedSize(),
                     compressedFrameSize,
                     frameInfo.uncompressedSize());
         }

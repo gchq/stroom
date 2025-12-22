@@ -16,18 +16,21 @@
 
 package stroom.data.store.impl.fs.s3v2;
 
-import stroom.bytebuffer.ByteBufferUtils;
 import stroom.data.store.api.SegmentOutputStream;
+import stroom.data.store.impl.fs.s3v2.ZstdSeekTable.FilterMode;
 import stroom.data.store.impl.fs.s3v2.ZstdSeekTable.InsufficientSeekTableDataException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
-import com.github.luben.zstd.ZstdDecompressCtx;
+import com.github.luben.zstd.ZstdInputStream;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import net.datafaker.Faker;
+import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.Assertions;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -46,6 +49,9 @@ class TestZstdSeekTable {
 
     private static final int COMPRESSION_LEVEL = 7;
     private static final long RANDOM_SEED = 57294857573L;
+
+    private List<byte[]> dataBytes = null;
+    private List<String> data = null;
 
     @Test
     void test() throws IOException {
@@ -69,23 +75,33 @@ class TestZstdSeekTable {
 
             assertThat(frameLocation)
                     .isNotNull();
-            final ByteBuffer frameBuffer = ByteBuffer.wrap(
+//            final ByteBuffer frameBuffer = ByteBuffer.wrap(
+//                    compressedBytes,
+//                    (int) frameLocation.position(),
+//                    (int) frameLocation.compressedSize());
+
+            // They have to be direct buffers for decompress
+//            final ByteBuffer srcBuffer = ByteBuffer.allocateDirect((int) frameLocation.compressedSize());
+//            ByteBufferUtils.copy(frameBuffer, srcBuffer);
+//            final ByteBuffer decompressedBuffer = ByteBuffer.allocateDirect((int) frameLocation.originalSize());
+
+//            try (final ZstdDecompressCtx zstdDecompressCtx = new ZstdDecompressCtx()) {
+//                zstdDecompressCtx.decompress(decompressedBuffer, srcBuffer);
+//            }
+
+//            decompressedBuffer.flip();
+//            final String output = StandardCharsets.UTF_8.decode(decompressedBuffer).toString();
+//            LOGGER.debug("output: {}", output);
+
+            final ByteArrayInputStream compressedBytesInputStream = new ByteArrayInputStream(
                     compressedBytes,
                     (int) frameLocation.position(),
                     (int) frameLocation.compressedSize());
-
-            // They have to be direct buffers for decompress
-            final ByteBuffer srcBuffer = ByteBuffer.allocateDirect((int) frameLocation.compressedSize());
-            ByteBufferUtils.copy(frameBuffer, srcBuffer);
-            final ByteBuffer decompressedBuffer = ByteBuffer.allocateDirect((int) frameLocation.originalSize());
-
-            try (final ZstdDecompressCtx zstdDecompressCtx = new ZstdDecompressCtx()) {
-                zstdDecompressCtx.decompress(decompressedBuffer, srcBuffer);
+            try (final ZstdInputStream zstdInputStream = new ZstdInputStream(compressedBytesInputStream)) {
+                final byte[] decompressedBytes = IOUtils.toByteArray(zstdInputStream);
+                final String output = new String(decompressedBytes, StandardCharsets.UTF_8);
+                LOGGER.debug("output: {}", output);
             }
-
-            decompressedBuffer.flip();
-            final String output = StandardCharsets.UTF_8.decode(decompressedBuffer).toString();
-            LOGGER.debug("output: {}", output);
         }
     }
 
@@ -157,13 +173,60 @@ class TestZstdSeekTable {
 //                .isInstanceOf(RuntimeException.class);
     }
 
+    @Test
+    void testGetTotalUncompressedSize() throws IOException {
+        final byte[] compressedBytes = createCompressedData();
+        final ZstdSeekTable zstdSeekTable = ZstdSeekTable.parse(ByteBuffer.wrap(compressedBytes))
+                .orElseThrow();
+
+        assertThat(zstdSeekTable.getFrameCount())
+                .isEqualTo(ITERATIONS);
+        assertThat(zstdSeekTable.isEmpty())
+                .isFalse();
+
+        final int expectedTotalSize = dataBytes.stream()
+                .mapToInt(bytes -> bytes.length)
+                .sum();
+
+        assertThat(zstdSeekTable.getTotalUncompressedSize())
+                .isEqualTo(expectedTotalSize);
+
+        assertThat(zstdSeekTable.getTotalUncompressedSize(
+                IntSet.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9),
+                FilterMode.INCLUDE))
+                .isEqualTo(expectedTotalSize);
+        assertThat(zstdSeekTable.getTotalUncompressedSize(
+                IntSet.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9),
+                FilterMode.EXCLUDE))
+                .isEqualTo(0);
+
+        assertThat(zstdSeekTable.getTotalUncompressedSize(
+                IntSet.of(),
+                FilterMode.INCLUDE))
+                .isEqualTo(0);
+        assertThat(zstdSeekTable.getTotalUncompressedSize(
+                IntSet.of(),
+                FilterMode.EXCLUDE))
+                .isEqualTo(expectedTotalSize);
+
+        assertThat(zstdSeekTable.getTotalUncompressedSize(IntSet.of(2, 5), FilterMode.INCLUDE))
+                .isEqualTo(dataBytes.get(2).length + dataBytes.get(5).length);
+
+        assertThat(zstdSeekTable.getTotalUncompressedSize(IntSet.of(0, 1, 3, 4, 6, 7, 8, 9), FilterMode.EXCLUDE))
+                .isEqualTo(dataBytes.get(2).length + dataBytes.get(5).length);
+
+        Assertions.assertThatThrownBy(
+                        () -> zstdSeekTable.getTotalUncompressedSize(IntSet.of(22), FilterMode.INCLUDE))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
     private byte @NonNull [] createCompressedData() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final Faker faker = new Faker(new Random(RANDOM_SEED));
-        final List<String> data = new ArrayList<>(ITERATIONS);
-        final List<byte[]> dataBytes = new ArrayList<>(ITERATIONS);
+        this.data = new ArrayList<>(ITERATIONS);
+        this.dataBytes = new ArrayList<>(ITERATIONS);
         for (int i = 0; i < ITERATIONS; i++) {
-            generateTestData(faker, i, data, dataBytes);
+            generateTestData(faker, i);
         }
 
         try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
@@ -173,14 +236,11 @@ class TestZstdSeekTable {
 
             TestZstdSegmentOutputStream.writeDataToStream(dataBytes, segmentOutputStream);
         }
-        final byte[] compressedBytes = byteArrayOutputStream.toByteArray();
-        return compressedBytes;
+        return byteArrayOutputStream.toByteArray();
     }
 
     private void generateTestData(final Faker faker,
-                                  final int iteration,
-                                  final List<String> data,
-                                  final List<byte[]> dataBytes) throws IOException {
+                                  final int iteration) {
 
         final int remainder = iteration % 3;
         String str;

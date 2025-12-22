@@ -94,20 +94,21 @@ public class TestS3 {
         final Long size = response.size();
         LOGGER.debug("Uploaded stream {}, size: {}", meta.getId(), size);
 
-        final ResponseInputStream<GetObjectResponse> response2 = s3Manager.getByteRange(
+        try (final ResponseInputStream<GetObjectResponse> response2 = s3Manager.getByteRange(
                 meta,
                 null,
-                Range.of(20L, 30L));
-        LOGGER.debug("response2: {}", response2);
+                Range.of(20L, 30L))) {
+            LOGGER.debug("response2: {}", response2);
 
-        final byte[] bytes = response2.readAllBytes();
-        assertThat(bytes.length)
-                .isEqualTo(10);
-        final String output = new String(bytes, StandardCharsets.UTF_8);
-        LOGGER.debug("output: {}", output);
-        final Long contentLength = response2.response().contentLength();
-        assertThat(contentLength)
-                .isEqualTo(10);
+            final byte[] bytes = response2.readAllBytes();
+            assertThat(bytes.length)
+                    .isEqualTo(10);
+            final String output = new String(bytes, StandardCharsets.UTF_8);
+            LOGGER.debug("output: {}", output);
+            final Long contentLength = response2.response().contentLength();
+            assertThat(contentLength)
+                    .isEqualTo(10);
+        }
     }
 
     @Test
@@ -163,22 +164,23 @@ public class TestS3 {
 //            final long seekTableFramePosition = fileSize - seekTableFrameSize;
 //            final Range<Long> range = Range.of(seekTableFramePosition, seekTableFramePosition + seekTableFrameSize);
 
-            final ResponseInputStream<GetObjectResponse> response2 = s3Manager.getByteRange(
-                    meta, null, frameRange);
-            LOGGER.debug("response2: {}", response2);
+            try (final ResponseInputStream<GetObjectResponse> response2 = s3Manager.getByteRange(
+                    meta, null, frameRange)) {
+                LOGGER.debug("response2: {}", response2);
 
-            final byte[] rangeBytes = response2.readAllBytes();
-            assertThat(rangeBytes.length)
-                    .isEqualTo(seekTableFrameSize);
+                final byte[] rangeBytes = response2.readAllBytes();
+                assertThat(rangeBytes.length)
+                        .isEqualTo(seekTableFrameSize);
 
-            final ZstdSeekTable zstdSeekTable = ZstdSeekTable.parse(ByteBuffer.wrap(rangeBytes))
-                    .orElseThrow();
-            assertThat(zstdSeekTable.getFrameCount())
-                    .isEqualTo(iterations);
+                final ZstdSeekTable zstdSeekTable = ZstdSeekTable.parse(ByteBuffer.wrap(rangeBytes))
+                        .orElseThrow();
+                assertThat(zstdSeekTable.getFrameCount())
+                        .isEqualTo(iterations);
 
-            final Long contentLength = response2.response().contentLength();
-            assertThat(contentLength)
-                    .isEqualTo(seekTableFrameSize);
+                final Long contentLength = response2.response().contentLength();
+                assertThat(contentLength)
+                        .isEqualTo(seekTableFrameSize);
+            }
 
         } finally {
             try {

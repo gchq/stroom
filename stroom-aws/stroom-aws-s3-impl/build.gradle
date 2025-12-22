@@ -44,8 +44,9 @@ dependencies {
     implementation libs.restygwt
     implementation libs.slf4j.api
 
-    testImplementation project(':stroom-test-common')
     testImplementation project(':stroom-bytebuffer')
+    testImplementation project(':stroom-cache:stroom-cache-impl')
+    testImplementation project(':stroom-test-common')
     testImplementation project(':stroom-lmdb') // For UnsignedBytes
 
     testImplementation libs.zstd.jni

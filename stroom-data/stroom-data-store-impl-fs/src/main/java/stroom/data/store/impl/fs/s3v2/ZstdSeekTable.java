@@ -21,6 +21,10 @@ import stroom.bytebuffer.ByteBufferUtils;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
+
+import it.unimi.dsi.fastutil.ints.IntImmutableList;
+import it.unimi.dsi.fastutil.ints.IntSet;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
@@ -42,6 +46,7 @@ public class ZstdSeekTable {
      * <pre>
      * < cumulativeCompressedSize 8 byte LE > < uncompressedSize 8 byte LE >
      * </pre>
+     * All operations on this buffer should be absolute so as not to modify its postion/limit
      */
     private final ByteBuffer seekTableEntriesBuffer;
 
@@ -200,7 +205,7 @@ public class ZstdSeekTable {
         final FrameLocation frameLocation;
         if (frameIdx == 0) {
             frameLocation = new FrameLocation(
-                    0L,
+                    frameIdx, 0L,
                     (int) frameInfo.cumulativeCompressedSize(),
                     frameInfo.uncompressedSize());
         } else {
@@ -211,6 +216,7 @@ public class ZstdSeekTable {
             final long compressedFrameSize = frameInfo.cumulativeCompressedSize()
                                              - prevFrameInfo.cumulativeCompressedSize();
             frameLocation = new FrameLocation(
+                    frameIdx,
                     prevFrameInfo.cumulativeCompressedSize(),
                     compressedFrameSize,
                     frameInfo.uncompressedSize());
@@ -220,10 +226,66 @@ public class ZstdSeekTable {
     }
 
     /**
+     * @return The total size in bytes of all the compressed frames once uncompressed.
+     * This does NOT include the skippable seek table frame.
+     */
+    public long getTotalUncompressedSize() {
+        final ByteBuffer buffer = seekTableEntriesBuffer.slice();
+        long total = 0L;
+        for (int i = 0; i < buffer.limit(); i += 16) {
+            total += ZstdSegmentUtil.getLongLE(buffer, i + Long.BYTES);
+        }
+        return total;
+    }
+
+    /**
+     * @param frameIdxSet The set of frame indexes to include/exclude depending on filterMode.
+     * @param filterMode  The type of filtering to do
+     * @return The total size in bytes of all the compressed frames once uncompressed.
+     * This does NOT include the skippable seek table frame.
+     */
+    public long getTotalUncompressedSize(final IntSet frameIdxSet,
+                                         final FilterMode filterMode) {
+        Objects.requireNonNull(filterMode);
+        if (NullSafe.isEmptyCollection(frameIdxSet)) {
+            return filterMode == FilterMode.EXCLUDE
+                    ? getTotalUncompressedSize()
+                    : 0L;
+        } else {
+            final IntImmutableList invalidFrameIndexes = IntImmutableList.toList(frameIdxSet.intStream()
+                    .filter(frameIdx ->
+                            frameIdx < 0 || frameIdx >= frameCount));
+            if (!invalidFrameIndexes.isEmpty()) {
+                throw new IllegalArgumentException(LogUtil.message(
+                        "Invalid frame indexes for frameCount: {}: {}", frameCount, invalidFrameIndexes));
+            }
+
+            long total = 0L;
+            for (int i = 0; i < seekTableEntriesBuffer.remaining(); i += 16) {
+                final int frameIdx = i / 16;
+                if ((filterMode == FilterMode.INCLUDE && frameIdxSet.contains(frameIdx))
+                    || (filterMode == FilterMode.EXCLUDE && !frameIdxSet.contains(frameIdx))) {
+                    total += ZstdSegmentUtil.getLongLE(seekTableEntriesBuffer, i + Long.BYTES);
+                }
+            }
+            return total;
+        }
+    }
+
+    public boolean isValidFrame(final int frameIdx) {
+        return frameIdx >= 0 && frameIdx < frameCount;
+    }
+
+    /**
      * The position of the entry relative to the start of the seek table entries.
      */
     private static int getEntryIdx(final int frameIdx) {
         return frameIdx * ZstdConstants.SEEK_TABLE_ENTRY_SIZE;
+    }
+
+    public enum FilterMode {
+        INCLUDE,
+        EXCLUDE,
     }
 
 

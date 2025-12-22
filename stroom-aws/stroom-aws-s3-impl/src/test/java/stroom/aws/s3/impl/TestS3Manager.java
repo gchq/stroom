@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.data.store.impl.fs;
+package stroom.aws.s3.impl;
 
-import stroom.aws.s3.impl.S3Manager;
+import stroom.aws.s3.impl.S3Manager.SegmentedMetaEntry;
 import stroom.aws.s3.shared.AwsBasicCredentials;
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.cache.impl.CacheManagerImpl;
@@ -24,13 +24,16 @@ import stroom.cache.impl.TemplateCacheImpl;
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
+import stroom.test.common.TestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
 
-import org.junit.jupiter.api.Disabled;
+import com.google.inject.TypeLiteral;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.io.TempDir;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
@@ -41,11 +44,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Disabled // Needs minio running
+//@Disabled // Needs minio running
 public class TestS3Manager {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestS3Manager.class);
@@ -115,19 +121,55 @@ public class TestS3Manager {
         try {
             final PutObjectResponse response = s3Manager.upload(meta, attributeMap, file);
 
-            final ResponseInputStream<GetObjectResponse> response2 = s3Manager.getByteRange(
-                    meta, null, Range.of(10L, 20L));
+            try (final ResponseInputStream<GetObjectResponse> response2 = s3Manager.getByteRange(
+                    meta, null, Range.of(10L, 20L))) {
 
-            final byte[] bytes = response2.readAllBytes();
-            assertThat(bytes)
-                    .hasSize(10);
-            final String str = new String(bytes, StandardCharsets.UTF_8);
-            assertThat(str)
-                    .isEqualTo("some text ");
+                final byte[] bytes = response2.readAllBytes();
+                assertThat(bytes)
+                        .hasSize(10);
+                final String str = new String(bytes, StandardCharsets.UTF_8);
+                assertThat(str)
+                        .isEqualTo("some text ");
+            }
         } finally {
             deleteFile(s3Manager, meta);
         }
     }
+
+    @TestFactory
+    Stream<DynamicTest> testBuildMetaEntry() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Entry<String, String>>() {
+                })
+                .withOutputType(SegmentedMetaEntry.class)
+                .withSingleArgTestFunction(S3Manager::buildMetaEntry)
+                .withSimpleEqualityAssertion()
+                .addCase(Map.entry("foo", "bar"), null)
+                .addCase(
+                        Map.entry(S3Manager.AWS_USER_DEFINED_META_PREFIX + "foo", "bar"),
+                        null)
+                .addCase(
+                        Map.entry(S3Manager.AWS_USER_DEFINED_META_PREFIX + "0-foo", "bar"),
+                        null)
+                .addCase(
+                        Map.entry(S3Manager.AWS_USER_DEFINED_META_PREFIX
+                                  + S3Manager.META_METADATA_KEY_PREFIX
+                                  + "0-foo",
+                                "bar"),
+                        new SegmentedMetaEntry(0, "foo", "bar"))
+                .addCase(
+                        Map.entry(S3Manager.META_METADATA_KEY_PREFIX
+                                  + "0-foo",
+                                "bar"),
+                        new SegmentedMetaEntry(0, "foo", "bar"))
+                .addCase(
+                        Map.entry(S3Manager.META_METADATA_KEY_PREFIX
+                                  + "42-one two three",
+                                "foo bar"),
+                        new SegmentedMetaEntry(42, "one two three", "foo bar"))
+                .build();
+    }
+
 
     private static void deleteFile(final S3Manager s3Manager, final Meta meta) {
         try {

@@ -96,6 +96,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -110,7 +112,7 @@ public class S3Manager {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3Manager.class);
 
-    private static final Pattern S3_META_KEY_INVALID_CHARS_PATTERN = Pattern.compile("[^a-z0-9]");
+    private static final Pattern S3_META_KEY_INVALID_CHARS_PATTERN = Pattern.compile("[^a-z0-9 ]");
     private static final Pattern S3_BUCKET_NAME_INVALID_CHARS_PATTERN = Pattern.compile("[^0-9a-z.-]");
     private static final Pattern S3_KEY_NAME_INVALID_CHARS_PATTERN = Pattern.compile("[^0-9a-zA-Z!-_.*'()/]");
     private static final Pattern LEADING_HYPHENS = Pattern.compile("^-+");
@@ -127,6 +129,11 @@ public class S3Manager {
     private static final CIKey ID_VAR = CIKey.internStaticKey("id");
     private static final CIKey ID_PATH_VAR = CIKey.internStaticKey("idPath");
     private static final CIKey ID_PADDED_VAR = CIKey.internStaticKey("idPadded");
+    private static final String SEPARATE_META_FILE_METADATA_KEY = "has-stroom-meta-file";
+
+    static final String AWS_USER_DEFINED_META_PREFIX = "x-amz-meta-";
+    static final String MANIFEST_METADATA_KEY_PREFIX = "mf-";
+    static final String META_METADATA_KEY_PREFIX = "meta-";
 
     private final TemplateCache templateCache;
     private final S3ClientConfig s3ClientConfig;
@@ -421,7 +428,15 @@ public class S3Manager {
         return bucketName;
     }
 
-    private String createS3MetaKey(final String metaKey) {
+    private String createManifestKey(final String key) {
+        return MANIFEST_METADATA_KEY_PREFIX + cleanS3MetaDataKey(key);
+    }
+
+    private String createMetaKey(final String key, final int part) {
+        return part + "-" + cleanS3MetaDataKey(key);
+    }
+
+    private String cleanS3MetaDataKey(final String metaKey) {
         String s3Name = metaKey;
         s3Name = s3Name.toLowerCase(Locale.ROOT);
         s3Name = S3_META_KEY_INVALID_CHARS_PATTERN.matcher(s3Name).replaceAll("-");
@@ -558,6 +573,37 @@ public class S3Manager {
      * @param byteRange       The range of bytes to fetch.
      * @return The repose containing the byte range.
      */
+    public ResponseInputStream<GetObjectResponse> getObject(final Meta meta,
+                                                            final String childStreamType,
+                                                            final Range<Long> byteRange) {
+        Objects.requireNonNull(meta);
+        Objects.requireNonNull(byteRange);
+        final String bucketName = createBucketName(getBucketNamePattern(), meta);
+        final String key = createKey(getKeyNamePattern(), meta, childStreamType);
+        final GetObjectRequest request = GetObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .range(rangeToHttpString(byteRange))
+                .build();
+
+        logRequest("GET (range) : ", bucketName, key, byteRange, request);
+
+        try (final S3Client s3Client = createClient(s3ClientConfig)) {
+            return s3Client.getObject(request);
+        } catch (final RuntimeException e) {
+            error("Error getting: ", bucketName, key, byteRange, e);
+            throw e;
+        }
+    }
+
+    /**
+     * Get part of an S3 object, defined by a contiguous byte range.
+     *
+     * @param meta            The {@link Meta} the object belongs to.
+     * @param childStreamType The child stream type, or null if this is not a child stream.
+     * @param byteRange       The range of bytes to fetch.
+     * @return The repose containing the byte range.
+     */
     public ResponseInputStream<GetObjectResponse> getByteRange(final Meta meta,
                                                                final String childStreamType,
                                                                final Range<Long> byteRange) {
@@ -596,9 +642,138 @@ public class S3Manager {
             final HeadObjectResponse headObjectResponse = s3Client.headObject(request);
             return Objects.requireNonNullElse(headObjectResponse.contentLength(), 0L);
         } catch (final RuntimeException e) {
+            error("Error getting file size: ", bucketName, key, e);
+            throw e;
+        }
+    }
+
+    public S3ObjectInfo getObjectInfo(final Meta meta, final String childStreamType) {
+        Objects.requireNonNull(meta);
+        final String bucketName = createBucketName(getBucketNamePattern(), meta);
+        final String key = createKey(getKeyNamePattern(), meta);
+        final HeadObjectRequest request = HeadObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .build();
+
+        logRequest("HEAD: ", bucketName, key, request);
+
+        try (final S3Client s3Client = createClient(s3ClientConfig)) {
+            final HeadObjectResponse headObjectResponse = s3Client.headObject(request);
+            final Map<String, String> metadata = headObjectResponse.metadata();
+            final S3ObjectInfo s3ObjectInfo;
+
+            if (NullSafe.hasEntries(metadata)) {
+                final AttributeMap manifest = readManifest(metadata);
+                final List<AttributeMap> attributeMaps = readMeta(metadata);
+
+                s3ObjectInfo = new S3ObjectInfo(
+                        bucketName,
+                        key,
+                        attributeMaps,
+                        manifest,
+                        false);
+            } else {
+                s3ObjectInfo = new S3ObjectInfo(
+                        bucketName,
+                        key,
+                        Collections.emptyList(),
+                        new AttributeMap(),
+                        false);
+            }
+
+            return s3ObjectInfo;
+
+        } catch (final RuntimeException e) {
             error("Error downloading: ", bucketName, key, e);
             throw e;
         }
+    }
+
+    private List<AttributeMap> readMeta(final Map<String, String> metadata) {
+        final Map<Integer, List<SegmentedMetaEntry>> map = metadata.entrySet()
+                .stream()
+                .map(S3Manager::buildMetaEntry)
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(SegmentedMetaEntry::segmentIdx));
+
+        return map.entrySet()
+                .stream()
+                .sorted(Entry.comparingByKey())
+                .map(Entry::getValue)
+                .map(segmentedMetaEntries -> {
+                    final Map<String, String> metaMap = segmentedMetaEntries.stream()
+                            .collect(Collectors.toMap(SegmentedMetaEntry::key, SegmentedMetaEntry::value));
+                    return new AttributeMap(metaMap);
+                })
+                .toList();
+    }
+
+    /**
+     * Pkg private for testing
+     */
+    static SegmentedMetaEntry buildMetaEntry(final Entry<String, String> metaEntry) {
+        // metaDataKey is like
+        String key = metaEntry.getKey();
+        // Remove AWS user-defined meta key prefix if present
+        removeAwsPrefix(key);
+
+        final SegmentedMetaEntry segmentedMetaEntry;
+        if (key.startsWith(META_METADATA_KEY_PREFIX)) {
+            // Remove our own prefix
+            key = key.substring(META_METADATA_KEY_PREFIX.length());
+
+            final int dashIdx = key.indexOf("-");
+            if (dashIdx != -1) {
+                final String segmentIdxStr = key.substring(0, dashIdx);
+                try {
+                    final int segmentIdx = Integer.parseInt(segmentIdxStr);
+                    key = key.substring(dashIdx + 1);
+                    return new SegmentedMetaEntry(segmentIdx, key, metaEntry.getValue());
+                } catch (final NumberFormatException e) {
+                    LOGGER.warn("Ignoring meta entry entry {}. Unable to parse '{}'.", metaEntry, segmentIdxStr);
+                    segmentedMetaEntry = null;
+                }
+            } else {
+                LOGGER.warn("Ignoring meta entry entry {}. No '-' found.", metaEntry);
+                segmentedMetaEntry = null;
+            }
+        } else {
+            segmentedMetaEntry = null;
+        }
+        return segmentedMetaEntry;
+    }
+
+    private AttributeMap readManifest(final Map<String, String> metadata) {
+        if (NullSafe.hasEntries(metadata)) {
+            return new AttributeMap(metadata.entrySet()
+                    .stream()
+                    .map(entry -> {
+                        String key = entry.getKey();
+                        removeAwsPrefix(key);
+                        if (key.startsWith(MANIFEST_METADATA_KEY_PREFIX)) {
+                            key = key.substring(MANIFEST_METADATA_KEY_PREFIX.length());
+                            return Map.entry(key, entry.getValue());
+                        } else {
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(Entry::getKey, Entry::getValue)));
+        } else {
+            return new AttributeMap();
+        }
+    }
+
+    private static String removeAwsPrefix(final String key) {
+        return NullSafe.get(
+                key,
+                k -> {
+                    if (k.startsWith(AWS_USER_DEFINED_META_PREFIX)) {
+                        k = k.substring(AWS_USER_DEFINED_META_PREFIX.length());
+                    }
+                    return k;
+                });
     }
 
     private String rangeToHttpString(final Range<Long> range) {
@@ -778,7 +953,7 @@ public class S3Manager {
                 .entrySet()
                 .stream()
                 .collect(Collectors.toMap(e ->
-                                createS3MetaKey(e.getKey()),
+                                cleanS3MetaDataKey(e.getKey()),
                         Entry::getValue));
 
         return PutObjectRequest.builder()
@@ -850,5 +1025,26 @@ public class S3Manager {
         return "bucketName=" +
                bucketName +
                Optional.ofNullable(key).map(k -> ", key=" + k).orElse("");
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    record S3ObjectInfo(
+            String bucketName,
+            String key,
+            List<AttributeMap> meta,
+            AttributeMap manifest,
+            boolean hasMetaFile) {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    record SegmentedMetaEntry(int segmentIdx, String key, String value) {
+
     }
 }

@@ -22,6 +22,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.impl.fs.s3v2.ZstdSeekTable.InsufficientSeekTableDataException;
+import stroom.data.store.impl.fs.s3v2.ZstdSeekTable.InvalidSeekTableDataException;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
@@ -37,9 +38,8 @@ import stroom.util.shared.Range;
 import jakarta.inject.Inject;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -127,46 +127,53 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
 
     private Optional<ZstdSeekTable> fetchSeekTable(final Meta meta, final String childStreamType) {
         LOGGER.debug("fetchSeekTable() - meta: {}", meta);
-
-        // Need to know the file size because S3 range requests don't support negative ranges,
-        // i.e. to get the last N bytes.
-        final long fileSize = getFileSize(meta, childStreamType);
-
-        // We don't know how many frames there are, so we don't know how big a chunk of the
-        // end of the file we need to get the complete seek table. Therefore, we have to have a guess
-        // and hope it is big enough. If it's not the data we get back will include the frame count
-        // so we can make a 2nd request with the correct range.
-        long rangeSize = getSpeculativeSeekTableFrameSize(meta, childStreamType, fileSize);
-        boolean isSpeculativeRange = true;
-        Range<Long> range;
         Optional<ZstdSeekTable> optZstdSeekTable;
-        while (true) {
-            range = ZstdSegmentUtil.getLastNRange(fileSize, rangeSize);
-            try {
-                // If we have a speculative range we want to copy the buffer as we may have fetched
-                // way more data than we need, so don't want pointless bytes in our cache.
-                optZstdSeekTable = fetchSeekTable(meta, childStreamType, range, isSpeculativeRange);
-                break;
-            } catch (final InsufficientSeekTableDataException e) {
-                if (isSpeculativeRange) {
-                    // We now know exactly how big the seek table frame is, so can try again with that
-                    final long requiredSize = e.getRequiredSeekTableFrameSize();
-                    LOGGER.debug(() -> LogUtil.message(
-                            "fetchSeekTable() - Insufficient range, required: {}, received: {}",
-                            ModelStringUtil.formatCsv(requiredSize),
-                            ModelStringUtil.formatCsv(e.getActualSeekTableFrameSize())));
-                    rangeSize = requiredSize;
-                    isSpeculativeRange = false;
-                } else {
-                    // If we get in here then the file is not valid.
-                    throw e;
+
+        try {
+            // Need to know the file size because S3 range requests don't support negative ranges,
+            // i.e. to get the last N bytes.
+            final long fileSize = getFileSize(meta, childStreamType);
+
+            // We don't know how many frames there are, so we don't know how big a chunk of the
+            // end of the file we need to get the complete seek table. Therefore, we have to have a guess
+            // and hope it is big enough. If it's not the data we get back will include the frame count
+            // so we can make a 2nd request with the correct range.
+            long rangeSize = getSpeculativeSeekTableFrameSize(meta, childStreamType, fileSize);
+            boolean isSpeculativeRange = true;
+            Range<Long> range;
+            while (true) {
+                range = ZstdSegmentUtil.getLastNRange(fileSize, rangeSize);
+                try {
+                    // If we have a speculative range we want to copy the buffer as we may have fetched
+                    // way more data than we need, so don't want pointless bytes in our cache.
+                    optZstdSeekTable = fetchSeekTable(meta, childStreamType, range, isSpeculativeRange);
+                    break;
+                } catch (final InsufficientSeekTableDataException e) {
+                    if (isSpeculativeRange) {
+                        // We now know exactly how big the seek table frame is, so can try again with that
+                        final long requiredSize = e.getRequiredSeekTableFrameSize();
+                        LOGGER.debug(() -> LogUtil.message(
+                                "fetchSeekTable() - Insufficient range, required: {}, received: {}",
+                                ModelStringUtil.formatCsv(requiredSize),
+                                ModelStringUtil.formatCsv(e.getActualSeekTableFrameSize())));
+                        rangeSize = requiredSize;
+                        isSpeculativeRange = false;
+                    } else {
+                        // If we get in here then the file is not valid.
+                        throw e;
+                    }
                 }
             }
+        } catch (final NoSuchKeyException e) {
+            // Already logged in s3Manager
+            return Optional.empty();
+        } catch (final Exception e) {
+            throw new RuntimeException(e);
         }
-        if (optZstdSeekTable.isEmpty()) {
-            throw new IllegalStateException(LogUtil.message(
-                    "Expecting optZstdSeekTable to be present, meta: {}, childStreamType: {}", meta, childStreamType));
-        }
+//        if (optZstdSeekTable.isEmpty()) {
+//            throw new IllegalStateException(LogUtil.message(
+//                    "Expecting optZstdSeekTable to be present, meta: {}, childStreamType: {}", meta, childStreamType));
+//        }
         return optZstdSeekTable;
     }
 
@@ -222,10 +229,14 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
                                                    final Range<Long> range,
                                                    final boolean copyBufferContents) {
         LOGGER.debug("fetchSeekTable() - meta: {}, childStreamType: {}, range: {}", meta, childStreamType, range);
-        final ResponseInputStream<GetObjectResponse> response = s3Manager.getByteRange(
-                meta, childStreamType, range);
         try {
-            final byte[] rangeBytes = response.readAllBytes();
+            final byte[] rangeBytes;
+            try (final ResponseInputStream<GetObjectResponse> response = s3Manager.getByteRange(
+                    meta, childStreamType, range)) {
+                // Seek table should not be massive so read it all into memory
+                rangeBytes = response.readAllBytes();
+            }
+
             if (rangeBytes.length == 0) {
                 throw new RuntimeException(LogUtil.message(
                         "No bytes returned from response, meta: {}, childStreamType: {} range: {}",
@@ -238,8 +249,13 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
                     copyBufferContents);
             LOGGER.debug("fetchSeekTable() - returning: {}", zstdSeekTable);
             return zstdSeekTable;
-        } catch (final IOException e) {
-            throw new UncheckedIOException(LogUtil.message(
+        } catch (final NoSuchKeyException e) {
+            // Already logged in s3Manager
+            return Optional.empty();
+        } catch (final InsufficientSeekTableDataException | InvalidSeekTableDataException e) {
+            throw e;
+        } catch (final Exception e) {
+            throw new RuntimeException(LogUtil.message(
                     "Error fetching range {} for meta {}, childStreamType: {} - {}",
                     range, meta, childStreamType, LogUtil.exceptionMessage(e)), e);
         }
