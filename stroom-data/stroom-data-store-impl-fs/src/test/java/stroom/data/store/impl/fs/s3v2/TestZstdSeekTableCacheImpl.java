@@ -123,7 +123,7 @@ class TestZstdSeekTableCacheImpl {
         Mockito.when(mockS3Manager.getFileSize(Mockito.any(), Mockito.any()))
                 .thenReturn((long) compressedData.length);
 
-        AtomicInteger fetchCount = new AtomicInteger(0);
+        final AtomicInteger fetchCount = new AtomicInteger(0);
 
         Mockito.doAnswer(invocation -> {
             fetchCount.incrementAndGet();

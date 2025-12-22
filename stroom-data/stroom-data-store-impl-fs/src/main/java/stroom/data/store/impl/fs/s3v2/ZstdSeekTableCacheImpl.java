@@ -170,10 +170,7 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
         } catch (final Exception e) {
             throw new RuntimeException(e);
         }
-//        if (optZstdSeekTable.isEmpty()) {
-//            throw new IllegalStateException(LogUtil.message(
-//                    "Expecting optZstdSeekTable to be present, meta: {}, childStreamType: {}", meta, childStreamType));
-//        }
+        LOGGER.debug("fetchSeekTable() - returning {}", optZstdSeekTable);
         return optZstdSeekTable;
     }
 
