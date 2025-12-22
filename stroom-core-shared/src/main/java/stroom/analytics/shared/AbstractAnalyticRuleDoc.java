@@ -70,10 +70,9 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
     static final boolean INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE = true;
 
-    @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
-    public AbstractAnalyticRuleDoc(
-            @JsonProperty("type") final String type,
+    @SuppressWarnings("checkstyle:linelength")
+    public AbstractAnalyticRuleDoc(@JsonProperty("type") final String type,
             @JsonProperty("uuid") final String uuid,
             @JsonProperty("name") final String name,
             @JsonProperty("version") final String version,
@@ -257,6 +256,10 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                ", suppressDuplicateNotifications=" + suppressDuplicateNotifications +
                '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public abstract static class AbstractAnalyticRuleDocBuilder
             <T extends AbstractAnalyticRuleDoc, B extends AbstractAnalyticRuleDocBuilder<T, ?>>
