@@ -31,7 +31,6 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.util.RandomUtil.getRandomItem;
 
 class TestRandomUtil {
 
@@ -48,7 +47,7 @@ class TestRandomUtil {
         IntStream.rangeClosed(1, 10_000)
                 .parallel()
                 .forEach(ignored -> {
-                    final String key = getRandomItem(items);
+                    final String key = RandomUtil.getRandomItem(items);
                     map.get(key).increment();
                 });
 
@@ -71,7 +70,7 @@ class TestRandomUtil {
         IntStream.rangeClosed(1, 10_000)
                 .parallel()
                 .forEach(ignored -> {
-                    final String key = getRandomItem(items);
+                    final String key = RandomUtil.getRandomItem(items);
                     map.get(key).increment();
                 });
 
@@ -85,40 +84,40 @@ class TestRandomUtil {
 
     @Test
     void testNull() {
-        assertThat(getRandomItem((String[]) null))
+        assertThat(RandomUtil.getRandomItem((String[]) null))
                 .isNull();
     }
 
     @Test
     void testNull2() {
-        assertThat(getRandomItem((List<?>) null))
+        assertThat(RandomUtil.getRandomItem((List<?>) null))
                 .isNull();
     }
 
     @Test
     void testEmpty() {
-        assertThat(getRandomItem(new String[0]))
+        assertThat(RandomUtil.getRandomItem(new String[0]))
                 .isNull();
     }
 
     @Test
     void testEmpty2() {
         final List<String> list = List.of();
-        assertThat(getRandomItem(list))
+        assertThat(RandomUtil.getRandomItem(list))
                 .isNull();
     }
 
     @Test
     void testSingle() {
         final List<String> list = List.of("foo");
-        assertThat(getRandomItem(list))
+        assertThat(RandomUtil.getRandomItem(list))
                 .isEqualTo("foo");
     }
 
     @Test
     void testSingle2() {
         final List<String> list = List.of("foo");
-        assertThat(getRandomItem(list))
+        assertThat(RandomUtil.getRandomItem(list))
                 .isEqualTo("foo");
     }
 
