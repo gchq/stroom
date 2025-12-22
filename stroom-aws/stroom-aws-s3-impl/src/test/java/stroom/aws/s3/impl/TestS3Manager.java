@@ -31,6 +31,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Range;
 
 import com.google.inject.TypeLiteral;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -51,7 +52,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-//@Disabled // Needs minio running
+@Disabled // Needs minio running
 public class TestS3Manager {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestS3Manager.class);
