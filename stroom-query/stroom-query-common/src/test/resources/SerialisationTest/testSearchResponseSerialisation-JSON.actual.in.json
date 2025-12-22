@@ -26,8 +26,8 @@
     "totalResults" : 1,
     "errors" : [ "tableResultError" ],
     "errorMessages" : [ {
-      "severity" : "ERROR",
-      "message" : "tableResultError"
+      "message" : "tableResultError",
+      "severity" : "ERROR"
     } ]
   }, {
     "type" : "flat",
@@ -77,14 +77,14 @@
     "size" : 200,
     "errors" : [ "visResultError" ],
     "errorMessages" : [ {
-      "severity" : "ERROR",
-      "message" : "visResultError"
+      "message" : "visResultError",
+      "severity" : "ERROR"
     } ]
   } ],
   "errors" : [ "some error" ],
   "complete" : false,
   "errorMessages" : [ {
-    "severity" : "ERROR",
-    "message" : "some error"
+    "message" : "some error",
+    "severity" : "ERROR"
   } ]
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,11 @@ import stroom.query.shared.InsertType;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.client.ClipboardUtil;
+import stroom.util.shared.NullSafe;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -42,6 +46,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public class QueryHelpPresenter
         extends MyPresenterWidget<QueryHelpView>
@@ -58,7 +63,8 @@ public class QueryHelpPresenter
                               final QueryHelpAceCompletionProvider keyedAceCompletionProvider,
                               final QueryHelpDetailProvider detailProvider,
                               final DynamicQueryHelpSelectionListModel model,
-                              final MarkdownConverter markdownConverter) {
+                              final MarkdownConverter markdownConverter,
+                              final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         view.setUiHandlers(this);
         this.keyedAceCompletionProvider = keyedAceCompletionProvider;
@@ -68,6 +74,12 @@ public class QueryHelpPresenter
 
         view.getSelectionList().setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
         view.getSelectionList().init(model);
+
+        // Set up the tooltip for the quickfilter
+        uiConfigCache.get(uiConfig ->
+                NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl ->
+                        view.registerPopupTextProvider(() ->
+                                QuickFilterTooltipUtil.createTooltip("Field Quick Filter", helpUrl))));
     }
 
     @Override
@@ -216,5 +228,7 @@ public class QueryHelpPresenter
         void setDetails(SafeHtml details);
 
         void enableButtons(boolean enable);
+
+        void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
     }
 }

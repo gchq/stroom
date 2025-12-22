@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
@@ -214,7 +213,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
             short lastKeyId = -1;
             while (isFound) {
-                if (ValueStoreKeySerde.compareValueHashCode(startKey, cursor.key()) != 0) {
+                if (!ValueStoreKeySerde.valueHashCodeEquals(startKey, cursor.key())) {
                     // cursor key has a different hashcode to ours so we can stop looping
                     break;
                 }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.bytebuffer.ByteBufferUtils;
@@ -25,14 +41,19 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ValueStoreMetaSerde.class);
 
     private static final UnsignedBytes REF_COUNT_UNSIGNED_BYTES = UnsignedBytesInstances.THREE;
-    private static final byte[] REF_COUNT_ZERO = REF_COUNT_UNSIGNED_BYTES.toBytes(0);
-    private static final byte[] REF_COUNT_ONE = REF_COUNT_UNSIGNED_BYTES.toBytes(1);
+    private static final int REFERENCE_COUNT_BYTES = REF_COUNT_UNSIGNED_BYTES.length();
 
     private static final int TYPE_ID_OFFSET = 0;
     private static final int TYPE_ID_BYTES = 1;
+    /**
+     * The offset of the first byte of the reference count
+     */
     private static final int REFERENCE_COUNT_OFFSET = TYPE_ID_OFFSET + TYPE_ID_BYTES;
+    /**
+     * The offset of the last byte of the reference count
+     */
+    public static final int REFERENCE_COUNT_END_OFFSET = REFERENCE_COUNT_OFFSET + REFERENCE_COUNT_BYTES - 1;
 
-    private static final int REFERENCE_COUNT_BYTES = REF_COUNT_UNSIGNED_BYTES.length();
     private static final int BUFFER_CAPACITY = TYPE_ID_BYTES + REFERENCE_COUNT_BYTES;
 
     @Override
@@ -53,8 +74,7 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
 
     @Override
     public void serialize(final ByteBuffer byteBuffer, final ValueStoreMeta valueStoreMeta) {
-
-        byteBuffer.put((byte) valueStoreMeta.getTypeId());
+        byteBuffer.put(valueStoreMeta.getTypeId());
         REF_COUNT_UNSIGNED_BYTES.put(byteBuffer, valueStoreMeta.getReferenceCount());
         byteBuffer.flip();
     }
@@ -77,15 +97,21 @@ public class ValueStoreMetaSerde implements Serde<ValueStoreMeta> {
      * @return True if the reference count is one or zero.
      */
     public boolean isLastReference(final ByteBuffer byteBuffer) {
-        // Ever so slightly cheaper than extracting the count and checking the long value
-        // TODO could maybe use ByteBufferUtils.equals
-        return stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(
-                REF_COUNT_ONE, 0, REFERENCE_COUNT_BYTES,
-                byteBuffer, REFERENCE_COUNT_OFFSET, REFERENCE_COUNT_BYTES) == 0L
-               ||
-               stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(
-                       REF_COUNT_ZERO, 0, REFERENCE_COUNT_BYTES,
-                       byteBuffer, REFERENCE_COUNT_OFFSET, REFERENCE_COUNT_BYTES) == 0L;
+        // This relies on UnsignedBytes serialising 1 to 001 and 0 to 000.
+
+        // Check the last byte first as low numbers are more likely than high numbers.
+        final byte lastByte = byteBuffer.get(REFERENCE_COUNT_END_OFFSET);
+        if (lastByte != 1 && lastByte != 0) {
+            return false;
+        }
+
+        // Everything else should be zero
+        for (int j = REFERENCE_COUNT_END_OFFSET - 1; j >= REFERENCE_COUNT_OFFSET; j--) {
+            if (byteBuffer.get(j) != 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public void cloneAndDecrementRefCount(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.bytebuffer;
@@ -200,35 +199,6 @@ public class ByteBufferUtils {
                 StandardCharsets.UTF_8.decode(byteBuffer.duplicate()));
     }
 
-//    public static String byteBufferToAllForms(final ByteBuffer byteBuffer) {
-//        if (byteBuffer == null) {
-//            return "null";
-//        }
-//        return ByteArrayUtils.byteArrayToAllForms(toBytes(byteBuffer));
-//    }
-//
-//    public static int compare(final ByteBuffer left, final ByteBuffer right) {
-//        int cmpResult = stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(
-//                left, left.position(), left.remaining(),
-//                right, right.position(), right.remaining());
-//
-//        LOGGER.trace(() -> LogUtil.message("compare({}, {}) returned {}",
-//                ByteBufferUtils.byteBufferInfo(left),
-//                ByteBufferUtils.byteBufferInfo(right),
-//                cmpResult));
-//        return cmpResult;
-//
-//    }
-
-    public static int compareTo(final ByteBuffer buf1,
-                                final int o1,
-                                final int l1,
-                                final ByteBuffer buf2,
-                                final int o2,
-                                final int l2) {
-        return stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(buf1, o1, l1, buf2, o2, l2);
-    }
-
     /**
      * Compare two {@link ByteBuffer} objects as if they are longs
      *
@@ -245,9 +215,9 @@ public class ByteBufferUtils {
      * Compare two {@link ByteBuffer} objects as if they are longs
      *
      * @param left     A {@link ByteBuffer} representing a long
-     * @param leftPos  The absolute position of the long in the the left {@link ByteBuffer}
+     * @param leftPos  The absolute position of the long in the left {@link ByteBuffer}
      * @param right    A {@link ByteBuffer} representing a long
-     * @param rightPos The absolute position of the long in the the right {@link ByteBuffer}
+     * @param rightPos The absolute position of the long in the right {@link ByteBuffer}
      * @return The result of the comparison, 0 if identical, <0 if left < right,
      * >0 if left < right
      */
@@ -468,6 +438,33 @@ public class ByteBufferUtils {
         for (int i = offset; i < offset + length; i++) {
             byteBuffer.put(i, MAX_BYTE_UNSIGNED);
         }
+    }
+
+    /**
+     * Check for byte buffer equality over portions of two buffers. This is generally quicker than slicing as no object
+     * creation is required.
+     *
+     * @param a      Byte buffer 1.
+     * @param aOff   Byte buffer 1 offset.
+     * @param b      Byte buffer 2.
+     * @param bOff   Byte buffer 2 offset.
+     * @param length Length to compare.
+     * @return True if byte buffer portions are equal.
+     */
+    public static boolean equals(final ByteBuffer a,
+                                 final int aOff,
+                                 final ByteBuffer b,
+                                 final int bOff,
+                                 final int length) {
+        if (length > 7) {
+            return a.slice(aOff, length).equals(b.slice(bOff, length));
+        }
+        for (int i = 0; i < length; i++) {
+            if (a.get(aOff + i) != b.get(bOff + i)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static void skip(final ByteBuffer byteBuffer, final int len) {

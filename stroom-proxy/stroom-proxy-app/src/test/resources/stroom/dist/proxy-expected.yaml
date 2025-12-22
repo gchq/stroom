@@ -75,8 +75,8 @@ proxyConfig:
     forwardHeadersAdditionalAllowSet: []
     forwardUrl: null
     httpClient:
-      connectionRequestTimeout: "PT1M"
-      connectionTimeout: "PT1M"
+      connectionRequestTimeout: "PT3M"
+      connectionTimeout: "PT3M"
       cookiesEnabled: false
       keepAlive: "PT0S"
       maxConnections: 1024
@@ -84,7 +84,7 @@ proxyConfig:
       proxy: null
       retries: 0
       timeToLive: "PT1H"
-      timeout: "PT1M"
+      timeout: "PT3M"
       tls: null
       userAgent: null
       validateAfterInactivityPeriod: "PT0S"

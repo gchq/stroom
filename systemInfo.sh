@@ -1,7 +1,23 @@
 #!/bin/bash
 
+#
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 ######################################################################################
-# 
+#
 # Script to fetch a list of the System Info names so that you can
 # select one of the names to then fetch the named System Info
 #
@@ -29,7 +45,7 @@ error_exit() {
 debug_value() {
   local name="$1"; shift
   local value="$1"; shift
-  
+
   if [ "${IS_DEBUG}" = true ]; then
     echo -e "${DGREY}DEBUG ${name}: [${value}]${NC}" >&2
   fi
@@ -37,7 +53,7 @@ debug_value() {
 
 debug() {
   local str="$1"; shift
-  
+
   if [ "${IS_DEBUG}" = true ]; then
     echo -e "${DGREY}DEBUG ${str}${NC}" >&2
   fi
@@ -118,7 +134,7 @@ query_multiple_hosts() {
   local host_list="$1"; shift
   local info_path="$1"; shift
   debug_value "host_list" "${host_list}"
-  
+
   # TODO validate host_list to ensure it only contains [a-zA-Z.0-9\-] as
   # we are about to pass it to bash -c
 
@@ -168,7 +184,7 @@ query_multiple_hosts() {
 
   if [ "${IS_DEBUG}" = true ]; then
     for file in "${temp_dir}"/*.json; do
-      echo 
+      echo
       echo -e "${DGREY}DEBUG ${file} contents:${NC}"
       echo -e "${DGREY}-START------------------------------------------------------${NC}"
       local file_content

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPipelineModel {
 
-    private static final PipelineElementType ELEM_TYPE = new PipelineElementType("TestElement", null,
+    private static final PipelineElementType ELEM_TYPE = new PipelineElementType(
+            "TestElement",
+            "Test Element",
+            null,
             new String[]{PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, null);
     private static final PipelinePropertyType PROP_TYPE1 = PipelinePropertyType.builder()
             .elementType(ELEM_TYPE)
@@ -191,6 +194,7 @@ class TestPipelineModel {
     void testInheritanceRemoveRejoin() {
         final PipelineElementType sourceType = new PipelineElementType(
                 "Source",
+                "Source",
                 null,
                 new String[]{
                         PipelineElementType.ROLE_SOURCE,
@@ -199,6 +203,7 @@ class TestPipelineModel {
                 SvgImage.PIPELINE_STREAM);
         final PipelineElementType parserType = new PipelineElementType(
                 "CombinedParser",
+                "Combined Parser",
                 Category.PARSER,
                 new String[]{
                         PipelineElementType.ROLE_PARSER,
@@ -210,6 +215,7 @@ class TestPipelineModel {
                 SvgImage.PIPELINE_TEXT);
         final PipelineElementType xsltType = new PipelineElementType(
                 "XSLTFilter",
+                "XSLT Filter",
                 Category.FILTER,
                 new String[]{
                         PipelineElementType.ROLE_TARGET,
@@ -221,6 +227,7 @@ class TestPipelineModel {
                 SvgImage.PIPELINE_XSLT);
         final PipelineElementType schemaType = new PipelineElementType(
                 "SchemaFilter",
+                "Schema Filter",
                 Category.FILTER,
                 new String[]{
                         PipelineElementType.ROLE_TARGET,
@@ -230,6 +237,7 @@ class TestPipelineModel {
                 SvgImage.PIPELINE_XSD);
         final PipelineElementType writerType = new PipelineElementType(
                 "XMLWriter",
+                "XML Writer",
                 Category.WRITER,
                 new String[]{
                         PipelineElementType.ROLE_TARGET,
@@ -240,6 +248,7 @@ class TestPipelineModel {
                 SvgImage.PIPELINE_XML);
         final PipelineElementType appenderType = new PipelineElementType(
                 "StreamAppender",
+                "Stream Appender",
                 Category.DESTINATION,
                 new String[]{
                         PipelineElementType.ROLE_TARGET,
@@ -596,6 +605,7 @@ class TestPipelineModel {
         }
 
         return new PipelineElementType(
+                type,
                 type,
                 category,
                 roles, null);

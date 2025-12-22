@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,10 @@ import java.util.stream.Collectors;
 public class PipelineDataMerger {
 
     private static final String SOURCE = "Source";
-    private static final PipelineElementType SOURCE_ELEMENT_TYPE = new PipelineElementType(SOURCE, null,
+    private static final PipelineElementType SOURCE_ELEMENT_TYPE = new PipelineElementType(
+            SOURCE,
+            SOURCE,
+            null,
             new String[]{
                     PipelineElementType.ROLE_SOURCE, PipelineElementType.ROLE_HAS_TARGETS,
                     PipelineElementType.VISABILITY_SIMPLE},

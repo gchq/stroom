@@ -22,6 +22,22 @@ configurations {
 
 ext.moduleName = 'stroom.app'
 
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 //def uiDir = project.file('src/main/resources/ui')
 //def swaggerDir = "${uiDir}/noauth/swagger"
 //def restResourceClassNames = []
@@ -379,6 +395,8 @@ shadowJar {
 
     // A transformer to merges files in META-INF/services
     mergeServiceFiles()
+    // Without INCLUDE, it drops any duplicates
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
 
     archiveFileName = fatJarName
     exclude '**/gwt-unitCache'
@@ -686,6 +704,12 @@ tasks.register('makeSendExecutable') {
 
 // Build the release distribution zip for stroom
 tasks.register('buildDistribution', Zip) {
+
+    // See https://docs.gradle.org/9.0.0/release-notes.html#archive-tasks-produce-reproducible-archives-by-default
+    // Use file timestamps from the file system, else they will all be 1 Feb 1980
+    preserveFileTimestamps = true
+    // Use permissions from the file system, else files will all be -rw-r--r--
+    useFileSystemPermissions()
 
     // run all the tasks that produce content for the zip
     dependsOn copyJar

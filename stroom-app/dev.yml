@@ -111,6 +111,7 @@ appConfig:
     port: ${API_GATEWAY_PORT:-}
   security:
     identity:
+      autoCreateAdminAccountOnBoot: true
       passwordPolicy:
         minimumPasswordStrength: 1
         minimumPasswordLength: 1

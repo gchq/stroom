@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.bytebuffer;
@@ -308,10 +307,31 @@ class TestPooledByteBufferOutputStream {
                     .isGreaterThan(BYTES);
             assertThat(pooledBuffer.limit())
                     .isEqualTo(BYTES);
-            assertThat(ByteBufferUtils.compareTo(
-                    byteBuffer, 5, BYTES,
-                    pooledBuffer, 0, BYTES))
-                    .isZero();
+            assertThat(byteBuffer.slice(5, BYTES)).isEqualTo(pooledBuffer.slice(0, BYTES));
         }
+    }
+
+    @Test
+    void testWriteLong() throws IOException {
+        final ByteBufferPool byteBufferPool = getByteBufferPool();
+        try (final PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
+                byteBufferPool,
+                BYTES)) {
+            pooledByteBufferOutputStream.writeLong(234556L);
+            final ByteBuffer pooledBuffer = pooledByteBufferOutputStream.getByteBuffer();
+            final byte[] actual = ByteBufferUtils.toBytes(pooledBuffer);
+            final byte[] expected = new byte[BYTES];
+            oldPutLong(expected, 0, 234556L);
+            assertThat(actual).isEqualTo(expected);
+        }
+    }
+
+    private int oldPutLong(final byte[] bytes, final int offset, long val) {
+        for (int i = offset + 7; i > offset; i--) {
+            bytes[i] = (byte) val;
+            val >>>= 8;
+        }
+        bytes[offset] = (byte) val;
+        return offset + BYTES;
     }
 }

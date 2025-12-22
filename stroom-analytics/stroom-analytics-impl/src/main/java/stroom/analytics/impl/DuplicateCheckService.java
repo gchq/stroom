@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import stroom.analytics.shared.FindDuplicateCheckCriteria;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
@@ -67,11 +68,13 @@ class DuplicateCheckService {
     public String getEnabledNodeName(final DocRef analyticDocRef) {
         Objects.requireNonNull(analyticDocRef);
         final Set<String> nodeNames = getEnabledNodeNames(analyticDocRef);
-        if (nodeNames.size() > 1) {
+        if (NullSafe.isEmptyCollection(nodeNames)) {
+            return null;
+        } else if (nodeNames.size() == 1) {
+            return nodeNames.iterator().next();
+        } else {
             throw new RuntimeException("Duplicate checking is not supported when executors are running " +
                                        "on multiple nodes");
-        } else {
-            return nodeNames.iterator().next();
         }
     }
 

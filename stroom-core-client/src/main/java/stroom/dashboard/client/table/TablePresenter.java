@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.client.table;
@@ -97,6 +96,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
@@ -104,6 +104,7 @@ import stroom.util.shared.RandomId;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -151,6 +152,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final PagerView pagerView;
     private final DataSourceClient dataSourceClient;
     private final LocationManager locationManager;
+    private final UiConfigCache uiConfigCache;
     private TableResultRequest tableResultRequest = TableResultRequest.builder()
             .requestedRange(OffsetRange.ZERO_1000)
             .build();
@@ -210,7 +212,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final UserPreferencesManager userPreferencesManager,
                           final DynamicColumnSelectionListModel columnSelectionListModel,
                           final DataSourceClient dataSourceClient,
-                          final ColumnValuesFilterPresenter columnValuesFilterPresenter) {
+                          final ColumnValuesFilterPresenter columnValuesFilterPresenter,
+                          final UiConfigCache uiConfigCache) {
         super(eventBus, view, settingsPresenterProvider);
         this.eventBus = eventBus;
         this.pagerView = pagerView;
@@ -223,6 +226,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.userPreferencesManager = userPreferencesManager;
         this.columnSelectionListModel = columnSelectionListModel;
         this.dataSourceClient = dataSourceClient;
+        this.uiConfigCache = uiConfigCache;
         rowStyles = new TableRowStyles(userPreferencesManager);
 
         columnSelectionListModel.setTaskMonitorFactory(this);
@@ -522,6 +526,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             if (addColumnPopup == null) {
                 addColumnPopup = new SelectionPopup<>();
                 addColumnPopup.init(columnSelectionListModel);
+
+                uiConfigCache.get(uiConfig ->
+                        NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl ->
+                                addColumnPopup.registerPopupTextProvider(() ->
+                                        QuickFilterTooltipUtil.createTooltip(
+                                                "Column Filter", helpUrl))));
             } else if (changedDataSource) {
                 addColumnPopup.refresh();
             }
