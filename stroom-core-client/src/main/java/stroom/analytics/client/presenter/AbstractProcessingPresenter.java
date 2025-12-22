@@ -88,7 +88,9 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
                 final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
-                final AnalyticProcessType analyticProcessType = NullSafe.requireNonNullElse(analyticRuleDoc.getAnalyticProcessType(), AnalyticProcessType.SCHEDULED_QUERY);
+                final AnalyticProcessType analyticProcessType = NullSafe.requireNonNullElse(
+                        analyticRuleDoc.getAnalyticProcessType(),
+                        AnalyticProcessType.SCHEDULED_QUERY);
                 setProcessType(analyticProcessType);
 
                 if (AnalyticProcessType.SCHEDULED_QUERY.equals(analyticProcessType)) {

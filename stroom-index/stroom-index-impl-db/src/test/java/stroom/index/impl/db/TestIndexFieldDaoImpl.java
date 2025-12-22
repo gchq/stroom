@@ -53,7 +53,6 @@ import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static stroom.db.util.JooqUtil.count;
 import static stroom.index.impl.db.jooq.tables.IndexField.INDEX_FIELD;
 import static stroom.index.impl.db.jooq.tables.IndexFieldSource.INDEX_FIELD_SOURCE;
 
@@ -107,9 +106,9 @@ class TestIndexFieldDaoImpl {
             context.deleteFrom(INDEX_FIELD).execute();
             context.deleteFrom(INDEX_FIELD_SOURCE).execute();
 
-            assertThat(count(context, INDEX_FIELD))
+            assertThat(JooqUtil.count(context, INDEX_FIELD))
                     .isEqualTo(0);
-            assertThat(count(context, INDEX_FIELD_SOURCE))
+            assertThat(JooqUtil.count(context, INDEX_FIELD_SOURCE))
                     .isEqualTo(0);
         });
     }
@@ -185,7 +184,7 @@ class TestIndexFieldDaoImpl {
         final ExecutorService executorService = Executors.newFixedThreadPool(threads);
         final CountDownLatch startLatch = new CountDownLatch(1);
 
-        JooqUtil.context(indexDbConnProvider, context -> assertThat(count(context, INDEX_FIELD))
+        JooqUtil.context(indexDbConnProvider, context -> assertThat(JooqUtil.count(context, INDEX_FIELD))
                 .isEqualTo(0));
 
         final List<CompletableFuture<?>> futures = new ArrayList<>();

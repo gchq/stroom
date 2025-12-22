@@ -29,12 +29,8 @@ import org.junit.jupiter.api.TestFactory;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.security.shared.DocumentPermission.DELETE;
-import static stroom.security.shared.DocumentPermission.EDIT;
-import static stroom.security.shared.DocumentPermission.OWNER;
-import static stroom.security.shared.DocumentPermission.USE;
-import static stroom.security.shared.DocumentPermission.VIEW;
 
+@SuppressWarnings("checkstyle:AvoidStaticImport")
 class TestUserDocumentPermissions {
 
     private static final DocRef DOC_UUID_1 = new DocRef("test", "123");
@@ -46,8 +42,8 @@ class TestUserDocumentPermissions {
     @BeforeEach
     void setUp() {
         userDocPerms = new UserDocumentPermissions();
-        userDocPerms.setPermission(DOC_UUID_1, OWNER);
-        userDocPerms.setPermission(DOC_UUID_2, DELETE);
+        userDocPerms.setPermission(DOC_UUID_1, DocumentPermission.OWNER);
+        userDocPerms.setPermission(DOC_UUID_2, DocumentPermission.DELETE);
     }
 
     @TestFactory
@@ -59,23 +55,23 @@ class TestUserDocumentPermissions {
                         testCase.getInput()._1(),
                         testCase.getInput()._2()))
                 .withSimpleEqualityAssertion()
-                .addCase(Tuple.of(DOC_UUID_1, USE), true) // Inferred
-                .addCase(Tuple.of(DOC_UUID_1, VIEW), true) // Inferred
-                .addCase(Tuple.of(DOC_UUID_1, EDIT), true) // Direct
-                .addCase(Tuple.of(DOC_UUID_1, DELETE), true) // Inferred
-                .addCase(Tuple.of(DOC_UUID_1, OWNER), true) // Direct
+                .addCase(Tuple.of(DOC_UUID_1, DocumentPermission.USE), true) // Inferred
+                .addCase(Tuple.of(DOC_UUID_1, DocumentPermission.VIEW), true) // Inferred
+                .addCase(Tuple.of(DOC_UUID_1, DocumentPermission.EDIT), true) // Direct
+                .addCase(Tuple.of(DOC_UUID_1, DocumentPermission.DELETE), true) // Inferred
+                .addCase(Tuple.of(DOC_UUID_1, DocumentPermission.OWNER), true) // Direct
 
-                .addCase(Tuple.of(DOC_UUID_2, USE), true) // Inferred
-                .addCase(Tuple.of(DOC_UUID_2, VIEW), true) // Direct
-                .addCase(Tuple.of(DOC_UUID_2, EDIT), true) // Inferred
-                .addCase(Tuple.of(DOC_UUID_2, DELETE), true) // Direct
-                .addCase(Tuple.of(DOC_UUID_2, OWNER), false)
+                .addCase(Tuple.of(DOC_UUID_2, DocumentPermission.USE), true) // Inferred
+                .addCase(Tuple.of(DOC_UUID_2, DocumentPermission.VIEW), true) // Direct
+                .addCase(Tuple.of(DOC_UUID_2, DocumentPermission.EDIT), true) // Inferred
+                .addCase(Tuple.of(DOC_UUID_2, DocumentPermission.DELETE), true) // Direct
+                .addCase(Tuple.of(DOC_UUID_2, DocumentPermission.OWNER), false)
 
-                .addCase(Tuple.of(DOC_UUID_3, USE), false)
-                .addCase(Tuple.of(DOC_UUID_3, VIEW), false)
-                .addCase(Tuple.of(DOC_UUID_3, EDIT), false)
-                .addCase(Tuple.of(DOC_UUID_3, DELETE), false)
-                .addCase(Tuple.of(DOC_UUID_3, OWNER), false)
+                .addCase(Tuple.of(DOC_UUID_3, DocumentPermission.USE), false)
+                .addCase(Tuple.of(DOC_UUID_3, DocumentPermission.VIEW), false)
+                .addCase(Tuple.of(DOC_UUID_3, DocumentPermission.EDIT), false)
+                .addCase(Tuple.of(DOC_UUID_3, DocumentPermission.DELETE), false)
+                .addCase(Tuple.of(DOC_UUID_3, DocumentPermission.OWNER), false)
 
                 .build();
     }
@@ -83,96 +79,96 @@ class TestUserDocumentPermissions {
 
     @Test
     void addPermission() {
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_3, EDIT))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_3, DocumentPermission.EDIT))
                 .isFalse();
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_3, VIEW))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_3, DocumentPermission.VIEW))
                 .isFalse();
 
-        userDocPerms.setPermission(DOC_UUID_3, EDIT);
+        userDocPerms.setPermission(DOC_UUID_3, DocumentPermission.EDIT);
 
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_3, EDIT))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_3, DocumentPermission.EDIT))
                 .isTrue();
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_3, VIEW))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_3, DocumentPermission.VIEW))
                 .isTrue();
 
         // Add same again
-        userDocPerms.setPermission(DOC_UUID_3, EDIT);
+        userDocPerms.setPermission(DOC_UUID_3, DocumentPermission.EDIT);
 
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_3, EDIT))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_3, DocumentPermission.EDIT))
                 .isTrue();
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_3, VIEW))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_3, DocumentPermission.VIEW))
                 .isTrue();
     }
 
     @Test
     void removePermission() {
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, OWNER))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.OWNER))
                 .isTrue();
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DELETE))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.DELETE))
                 .isTrue();
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, EDIT))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.EDIT))
                 .isTrue();
 
-        userDocPerms.setPermission(DOC_UUID_1, EDIT);
+        userDocPerms.setPermission(DOC_UUID_1, DocumentPermission.EDIT);
 
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, OWNER))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.OWNER))
                 .isFalse();
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DELETE))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.DELETE))
                 .isFalse();
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, EDIT))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.EDIT))
                 .isTrue();
 
         // Remove same again
-        userDocPerms.setPermission(DOC_UUID_1, EDIT);
+        userDocPerms.setPermission(DOC_UUID_1, DocumentPermission.EDIT);
 
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, OWNER))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.OWNER))
                 .isFalse();
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DELETE))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.DELETE))
                 .isFalse();
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, EDIT))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.EDIT))
                 .isTrue();
     }
 
     @Test
     void clearDocumentPermissions() {
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, OWNER))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.OWNER))
                 .isTrue();
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DELETE))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.DELETE))
                 .isTrue();
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, EDIT))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.EDIT))
                 .isTrue();
 
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_2, VIEW))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_2, DocumentPermission.VIEW))
                 .isTrue();
 
         userDocPerms.clearPermission(DOC_UUID_1);
 
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, OWNER))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.OWNER))
                 .isFalse();
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DELETE))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.DELETE))
                 .isFalse();
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, EDIT))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.EDIT))
                 .isFalse();
 
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_2, VIEW))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_2, DocumentPermission.VIEW))
                 .isTrue();
 
         // Same again
         userDocPerms.clearPermission(DOC_UUID_1);
 
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, OWNER))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.OWNER))
                 .isFalse();
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DELETE))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.DELETE))
                 .isFalse();
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, EDIT))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_1, DocumentPermission.EDIT))
                 .isFalse();
 
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_2, VIEW))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_2, DocumentPermission.VIEW))
                 .isTrue();
 
         userDocPerms.clearPermission(DOC_UUID_2);
 
-        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_2, VIEW))
+        assertThat(userDocPerms.hasDocumentPermission(DOC_UUID_2, DocumentPermission.VIEW))
                 .isFalse();
     }
 }

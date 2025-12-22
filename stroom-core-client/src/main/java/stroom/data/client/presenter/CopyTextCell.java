@@ -24,6 +24,7 @@ import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.GwtEvent;
@@ -32,21 +33,19 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.web.bindery.event.shared.EventBus;
 
-import static com.google.gwt.dom.client.BrowserEvents.MOUSEDOWN;
-
 public class CopyTextCell extends AbstractCell<String> implements HasHandlers, EventCell {
 
     private final EventBus eventBus;
 
     public CopyTextCell(final EventBus eventBus) {
-        super(MOUSEDOWN);
+        super(BrowserEvents.MOUSEDOWN);
         this.eventBus = eventBus;
     }
 
     @Override
     public boolean isConsumed(final CellPreviewEvent<?> event) {
         final NativeEvent nativeEvent = event.getNativeEvent();
-        if (MOUSEDOWN.equals(nativeEvent.getType()) && MouseUtil.isPrimary(nativeEvent)) {
+        if (BrowserEvents.MOUSEDOWN.equals(nativeEvent.getType()) && MouseUtil.isPrimary(nativeEvent)) {
             final Element element = nativeEvent.getEventTarget().cast();
             return ElementUtil.hasClassName(element, CopyTextUtil.COPY_CLASS_NAME, 5);
         }
@@ -60,7 +59,7 @@ public class CopyTextCell extends AbstractCell<String> implements HasHandlers, E
                                final NativeEvent event,
                                final ValueUpdater<String> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
-        if (MOUSEDOWN.equals(event.getType())) {
+        if (BrowserEvents.MOUSEDOWN.equals(event.getType())) {
             if (MouseUtil.isPrimary(event)) {
                 onEnterKeyDown(context, parent, value, event, valueUpdater);
             }

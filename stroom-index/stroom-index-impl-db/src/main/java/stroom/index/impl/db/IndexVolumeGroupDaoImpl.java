@@ -38,7 +38,7 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP;
+import static stroom.index.impl.db.jooq.tables.IndexVolumeGroup.INDEX_VOLUME_GROUP;
 
 class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 

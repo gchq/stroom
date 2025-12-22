@@ -62,13 +62,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.jooq.impl.DSL.val;
-import static stroom.security.impl.db.jooq.Tables.PERMISSION_APP;
-import static stroom.security.impl.db.jooq.Tables.PERMISSION_DOC;
-import static stroom.security.impl.db.jooq.Tables.PERMISSION_DOC_CREATE;
-import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
-import static stroom.security.impl.db.jooq.Tables.STROOM_USER_ARCHIVE;
-import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUP;
+import static stroom.security.impl.db.jooq.tables.PermissionApp.PERMISSION_APP;
+import static stroom.security.impl.db.jooq.tables.PermissionDoc.PERMISSION_DOC;
+import static stroom.security.impl.db.jooq.tables.PermissionDocCreate.PERMISSION_DOC_CREATE;
+import static stroom.security.impl.db.jooq.tables.StroomUser.STROOM_USER;
+import static stroom.security.impl.db.jooq.tables.StroomUserArchive.STROOM_USER_ARCHIVE;
+import static stroom.security.impl.db.jooq.tables.StroomUserGroup.STROOM_USER_GROUP;
 
 public class UserDaoImpl implements UserDao {
 
@@ -286,41 +285,43 @@ public class UserDaoImpl implements UserDao {
 
             final int numberGroups = txnContext.insertInto(STROOM_USER_GROUP)
                     .columns(STROOM_USER_GROUP.USER_UUID, STROOM_USER_GROUP.GROUP_UUID)
-                    .select(txnContext.select(val(toUserUuid), STROOM_USER_GROUP.GROUP_UUID)
+                    .select(txnContext.select(DSL.val(toUserUuid), STROOM_USER_GROUP.GROUP_UUID)
                             .from(STROOM_USER_GROUP)
                             .where(STROOM_USER_GROUP.USER_UUID.eq(fromUserUuid)))
                     .onDuplicateKeyUpdate()
-                    .set(STROOM_USER_GROUP.USER_UUID, val(toUserUuid))
+                    .set(STROOM_USER_GROUP.USER_UUID, DSL.val(toUserUuid))
                     .execute();
 
             final int numberAppPermissions = txnContext.insertInto(PERMISSION_APP)
                     .columns(PERMISSION_APP.USER_UUID, PERMISSION_APP.PERMISSION_ID)
-                    .select(txnContext.select(val(toUserUuid), PERMISSION_APP.PERMISSION_ID)
+                    .select(txnContext.select(DSL.val(toUserUuid), PERMISSION_APP.PERMISSION_ID)
                             .from(PERMISSION_APP)
                             .where(PERMISSION_APP.USER_UUID.eq(fromUserUuid)))
                     .onDuplicateKeyUpdate()
-                    .set(PERMISSION_APP.USER_UUID, val(toUserUuid))
+                    .set(PERMISSION_APP.USER_UUID, DSL.val(toUserUuid))
                     .execute();
 
             final int numberDocPermissions = txnContext.insertInto(PERMISSION_DOC)
                     .columns(PERMISSION_DOC.USER_UUID, PERMISSION_DOC.DOC_UUID, PERMISSION_DOC.PERMISSION_ID)
-                    .select(txnContext.select(val(toUserUuid), PERMISSION_DOC.DOC_UUID, PERMISSION_DOC.PERMISSION_ID)
+                    .select(txnContext.select(DSL.val(toUserUuid),
+                                    PERMISSION_DOC.DOC_UUID,
+                                    PERMISSION_DOC.PERMISSION_ID)
                             .from(PERMISSION_DOC)
                             .where(PERMISSION_DOC.USER_UUID.eq(fromUserUuid)))
                     .onDuplicateKeyUpdate()
-                    .set(PERMISSION_DOC.USER_UUID, val(toUserUuid))
+                    .set(PERMISSION_DOC.USER_UUID, DSL.val(toUserUuid))
                     .execute();
 
             final int numberDocCreatePermissions = txnContext.insertInto(PERMISSION_DOC_CREATE)
                     .columns(PermissionDocCreate.PERMISSION_DOC_CREATE.DOC_UUID,
                             PermissionDocCreate.PERMISSION_DOC_CREATE.USER_UUID,
                             PermissionDocCreate.PERMISSION_DOC_CREATE.DOC_TYPE_ID)
-                    .select(txnContext.select(PERMISSION_DOC_CREATE.DOC_UUID, val(toUserUuid),
-                            PERMISSION_DOC_CREATE.DOC_TYPE_ID)
+                    .select(txnContext.select(PERMISSION_DOC_CREATE.DOC_UUID, DSL.val(toUserUuid),
+                                    PERMISSION_DOC_CREATE.DOC_TYPE_ID)
                             .from(PERMISSION_DOC_CREATE)
                             .where(PERMISSION_DOC_CREATE.USER_UUID.eq(fromUserUuid)))
                     .onDuplicateKeyUpdate()
-                    .set(PERMISSION_DOC_CREATE.USER_UUID, val(toUserUuid))
+                    .set(PERMISSION_DOC_CREATE.USER_UUID, DSL.val(toUserUuid))
                     .execute();
 
             LOGGER.debug("""

@@ -32,8 +32,6 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.util.shared.StringUtil.plural;
-import static stroom.util.shared.StringUtil.pluralSuffix;
 
 class TestStringUtil {
 
@@ -210,25 +208,25 @@ class TestStringUtil {
 
     @Test
     void testPlural_1() {
-        assertThat(plural("has", "have", 1))
+        assertThat(StringUtil.plural("has", "have", 1))
                 .isEqualTo("has");
-        assertThat(plural("has", "have", 2))
+        assertThat(StringUtil.plural("has", "have", 2))
                 .isEqualTo("have");
     }
 
     @Test
     void testPlural_2() {
-        assertThat(plural("has", "have", 1L))
+        assertThat(StringUtil.plural("has", "have", 1L))
                 .isEqualTo("has");
-        assertThat(plural("has", "have", 2L))
+        assertThat(StringUtil.plural("has", "have", 2L))
                 .isEqualTo("have");
     }
 
     @Test
     void testPlural_3() {
-        assertThat(plural("has", "have", List.of(1)))
+        assertThat(StringUtil.plural("has", "have", List.of(1)))
                 .isEqualTo("has");
-        assertThat(plural("has", "have", List.of(1, 2)))
+        assertThat(StringUtil.plural("has", "have", List.of(1, 2)))
                 .isEqualTo("have");
     }
 
@@ -258,25 +256,25 @@ class TestStringUtil {
 
     @Test
     void testPluralSuffix_1b() {
-        assertThat(pluralSuffix(1))
+        assertThat(StringUtil.pluralSuffix(1))
                 .isEqualTo("");
-        assertThat(pluralSuffix(2))
+        assertThat(StringUtil.pluralSuffix(2))
                 .isEqualTo("s");
     }
 
     @Test
     void testPluralSuffix_2b() {
-        assertThat(pluralSuffix(1L))
+        assertThat(StringUtil.pluralSuffix(1L))
                 .isEqualTo("");
-        assertThat(pluralSuffix(2L))
+        assertThat(StringUtil.pluralSuffix(2L))
                 .isEqualTo("s");
     }
 
     @Test
     void testPluralSuffix_3b() {
-        assertThat(pluralSuffix(List.of(1)))
+        assertThat(StringUtil.pluralSuffix(List.of(1)))
                 .isEqualTo("");
-        assertThat(pluralSuffix(List.of(1, 2)))
+        assertThat(StringUtil.pluralSuffix(List.of(1, 2)))
                 .isEqualTo("s");
     }
 
