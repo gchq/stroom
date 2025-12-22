@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import stroom.util.io.HomeDirProviderImpl;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
 import stroom.util.io.TempDirProviderImpl;
+import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.xml.XMLUtil;
@@ -62,6 +63,8 @@ import javax.xml.transform.stream.StreamResult;
 
 /**
  * Command line tool to process some files from a proxy stroom.
+ * <p>
+ * No idea why this class was created or what purpose it was intended for.
  */
 public class Cli extends AbstractCommandLineTool {
 
@@ -119,19 +122,19 @@ public class Cli extends AbstractCommandLineTool {
     @Override
     protected void checkArgs() {
         if (input == null) {
-            failArg("input", "required");
+            failMissingMandatoryArg("input");
         }
         if (error == null) {
-            failArg("error", "required");
+            failMissingMandatoryArg("error");
         }
 //        if (config == null && content == null) {
-//            failArg("config", "required");
+//            failMissingMandatoryArg("config");
 //        }
         if (content == null) {
-            failArg("content", "required");
+            failMissingMandatoryArg("content");
         }
         if (tmp == null) {
-            failArg("tmp", "required");
+            failMissingMandatoryArg("tmp");
         }
     }
 
@@ -142,27 +145,53 @@ public class Cli extends AbstractCommandLineTool {
         contentDir = getPath(content);
         tmpDir = getPath(tmp);
 
-        if (!Files.isDirectory(inputDir)) {
-            throw new RuntimeException(
-                    "Input directory \"" + FileUtil.getCanonicalPath(inputDir) + "\" cannot be found!");
-        }
-        if (!Files.isDirectory(errorFile.getParent())) {
-            throw new RuntimeException("Output file \"" + FileUtil.getCanonicalPath(errorFile.getParent())
-                    + "\" parent directory cannot be found!");
-        }
-//        if (!Files.isRegularFile(configFile)) {
-//            throw new RuntimeException(
-//            "Config file \"" + FileUtil.getCanonicalPath(configFile) + "\" cannot be found!");
-//        }
-        if (!Files.isDirectory(contentDir)) {
-            throw new RuntimeException(
-                    "Content dir \"" + FileUtil.getCanonicalPath(contentDir) + "\" cannot be found!");
-        }
+        checkIsDir("Input", inputDir);
+        checkIsDir("Error", errorFile.getParent());
+//        checkIsFile("Config", configFile);
+        checkIsDir("Content", contentDir);
 
         // Make sure tmp dir exists and is empty.
-        FileUtil.mkdirs(tmpDir);
         FileUtil.deleteFile(errorFile);
+        FileUtil.mkdirs(tmpDir);
         FileUtil.deleteContents(tmpDir);
+    }
+
+    private void checkIsDir(final String name,
+                            final Path path) {
+        if (!Files.exists(path)) {
+            throw new RuntimeException(LogUtil.message("{} directory '{}' does not exist.",
+                    name,
+                    FileUtil.getCanonicalPath(path)));
+        }
+        if (!Files.isDirectory(path)) {
+            throw new RuntimeException(LogUtil.message("{} directory '{}' is not a directory.",
+                    name,
+                    FileUtil.getCanonicalPath(path)));
+        }
+        if (!Files.isReadable(path)) {
+            throw new RuntimeException(LogUtil.message("{} directory '{}' is not readable.",
+                    name,
+                    FileUtil.getCanonicalPath(path)));
+        }
+    }
+
+    private void checkIsFile(final String name,
+                             final Path path) {
+        if (!Files.exists(path)) {
+            throw new RuntimeException(LogUtil.message("{} file '{}' does not exist.",
+                    name,
+                    FileUtil.getCanonicalPath(path)));
+        }
+        if (!Files.isRegularFile(path)) {
+            throw new RuntimeException(LogUtil.message("{} file '{}' is not a file.",
+                    name,
+                    FileUtil.getCanonicalPath(path)));
+        }
+        if (!Files.isReadable(path)) {
+            throw new RuntimeException(LogUtil.message("{} file '{}' is not readable.",
+                    name,
+                    FileUtil.getCanonicalPath(path)));
+        }
     }
 
     private Path getPath(final String string) {
@@ -180,12 +209,9 @@ public class Cli extends AbstractCommandLineTool {
 
             // Setup temp dir.
             final Path tempDir = Paths.get(tmp);
-            final String path = FileUtil.getCanonicalPath(tempDir);
-            System.setProperty(TempDirProviderImpl.PROP_STROOM_TEMP, path);
-            System.setProperty(HomeDirProviderImpl.PROP_STROOM_HOME, path);
 
             // Create the Guice injector and inject members.
-            createInjector();
+            createInjector(tempDir, tempDir);
 
             process();
         } finally {
@@ -199,7 +225,7 @@ public class Cli extends AbstractCommandLineTool {
         pipelineScopeRunnable.scopeRunnable(this::processInPipelineScope);
 
         LOGGER.info("Processing completed in "
-                + ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
+                    + ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime));
     }
 
     private void processInPipelineScope() {
@@ -221,7 +247,6 @@ public class Cli extends AbstractCommandLineTool {
 
 
             processRepository(errorWriter);
-
 
         } catch (final IOException | TransformerConfigurationException | RuntimeException e) {
             LOGGER.error("Unable to process", e);
@@ -294,8 +319,8 @@ public class Cli extends AbstractCommandLineTool {
         }
     }
 
-    private void createInjector() {
-        final Injector injector = Guice.createInjector(new CliModule());
+    private void createInjector(final Path homeDir, final Path tempDir) {
+        final Injector injector = Guice.createInjector(new CliModule(homeDir, tempDir));
         injector.injectMembers(this);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"type", "category", "roles", "icon"})
-public class PipelineElementType implements Comparable<PipelineElementType>, HasType {
+public class PipelineElementType implements Comparable<PipelineElementType>, HasType, HasDisplayValue {
 
     public static final String ROLE_SOURCE = "source";
     public static final String ROLE_DESTINATION = "destination";
@@ -79,6 +79,8 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
     @JsonProperty
     private final String type;
     @JsonProperty
+    private final String displayValue;
+    @JsonProperty
     private final Category category;
     @JsonProperty
     private final String[] roles;
@@ -90,10 +92,12 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
 
     @JsonCreator
     public PipelineElementType(@JsonProperty("type") final String type,
+                               @JsonProperty("displayValue") final String displayValue,
                                @JsonProperty("category") final Category category,
                                @JsonProperty("roles") final String[] roles,
                                @JsonProperty("icon") final SvgImage icon) {
         this.type = type;
+        this.displayValue = displayValue;
         this.category = category;
         this.roles = roles;
         this.icon = icon;
@@ -102,6 +106,11 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
     @Override
     public String getType() {
         return type;
+    }
+
+    @Override
+    public String getDisplayValue() {
+        return displayValue;
     }
 
     public Category getCategory() {

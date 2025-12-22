@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.bytebuffer;
@@ -405,8 +404,7 @@ class TestByteBufferUtils {
         src.flip();
 
         final Map<String, BiConsumer<ByteBuffer, ByteBuffer>> funcMap = Map.of(
-                "Simple", this::doSimpleCopyTest,
-                "Hadoop", this::doHadoopCopyTest);
+                "Simple", this::doSimpleCopyTest);
 
         for (int j = 0; j < rounds; j++) {
             final int round = j;
@@ -431,10 +429,6 @@ class TestByteBufferUtils {
                         round, name, Duration.between(startTime, Instant.now()));
             });
         }
-    }
-
-    private void doHadoopCopyTest(final ByteBuffer src, final ByteBuffer dest) {
-        stroom.bytebuffer.hbase.ByteBufferUtils.copyFromBufferToBuffer(src, dest);
     }
 
     private void doSimpleCopyTest(final ByteBuffer src, final ByteBuffer dest) {

@@ -20328,6 +20328,9 @@
             },
             "useSourceFeedIfPossible" : {
               "type" : "boolean"
+            },
+            "includeRuleDocumentation" : {
+              "type" : "boolean"
             }
           }
         } ]
@@ -20755,6 +20758,9 @@
           "category" : {
             "type" : "string",
             "enum" : [ "INTERNAL", "READER", "PARSER", "FILTER", "WRITER", "DESTINATION" ]
+          },
+          "displayValue" : {
+            "type" : "string"
           },
           "icon" : {
             "type" : "string",
@@ -26794,9 +26800,8 @@
         }, {
           "type" : "object",
           "properties" : {
-            "bytes" : {
-              "type" : "string",
-              "format" : "byte"
+            "data" : {
+              "type" : "string"
             }
           }
         } ]

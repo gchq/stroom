@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPipelineSerialisation {
 
-    private static final PipelineElementType ELEM_TYPE = new PipelineElementType("TestElement", null,
+    private static final PipelineElementType ELEM_TYPE = new PipelineElementType(
+            "TestElement",
+            "Test Element",
+            null,
             new String[]{PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, null);
 
     @Test

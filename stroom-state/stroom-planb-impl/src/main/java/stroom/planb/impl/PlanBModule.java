@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class PlanBModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(PlanBShardInfoServiceImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), Searchable.class)
+        GuiceUtil.buildMapBinder(binder(), Searchable.class)
                 .addBinding(PlanBShardInfoServiceImpl.class);
 
         // State

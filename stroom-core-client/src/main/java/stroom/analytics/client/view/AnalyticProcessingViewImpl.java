@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,6 @@ public class AnalyticProcessingViewImpl
     private final Widget widget;
 
     @UiField
-    SimplePanel errorFeed;
-    @UiField
     SelectionBox<AnalyticProcessType> processingType;
     @UiField
     SimplePanel processSettings;
@@ -52,11 +50,6 @@ public class AnalyticProcessingViewImpl
     @Override
     public Widget asWidget() {
         return widget;
-    }
-
-    @Override
-    public void setErrorFeedView(final View view) {
-        this.errorFeed.setWidget(view.asWidget());
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.headless;
@@ -51,7 +50,10 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ElementId;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -62,6 +64,8 @@ import java.util.List;
 
 
 class HeadlessTranslationTaskHandler {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HeadlessTranslationTaskHandler.class);
 
     private static final ElementId ELEMENT_ID = new ElementId("PipelineStreamProcessor");
 
@@ -132,22 +136,29 @@ class HeadlessTranslationTaskHandler {
 
                     // Get the feed.
                     final String feedName = metaData.get(StandardHeaderArguments.FEED);
+                    if (NullSafe.isBlankString(feedName)) {
+                        throw ProcessException.create("The Feed attribute is not set in the meta data.");
+                    }
                     feedHolder.setFeedName(feedName);
 
                     // Setup the meta data holder.
                     metaDataHolder.setMetaDataProvider(new StreamMetaDataProvider(metaHolder, pipelineStore));
 
-                    // Set the pipeline so it can be used by a filter if needed.
+                    // Set the pipeline, so it can be used by a filter if needed.
                     final List<DocRef> pipelines = pipelineStore.findByName(feedName);
-                    if (pipelines == null || pipelines.size() == 0) {
-                        throw ProcessException.create("No pipeline found for feed name '" + feedName + "'");
-                    }
-                    if (pipelines.size() > 1) {
-                        throw ProcessException.create("More than one pipeline found for feed name '" + feedName + "'");
+                    final int pipelinesCount = NullSafe.size(pipelines);
+                    if (pipelinesCount == 0) {
+                        throw ProcessException.create("No pipeline found matching feed name '" + feedName + "'");
+                    } else if (pipelinesCount > 1) {
+                        throw ProcessException.create(
+                                "More than one pipeline found matching feed name '" + feedName + "'");
                     }
 
-                    final DocRef pipelineRef = pipelines.get(0);
+                    final DocRef pipelineRef = pipelines.getFirst();
                     pipelineHolder.setPipeline(pipelineRef);
+
+                    LOGGER.info("Processing Feed '{}' using pipeline '{}' ({})",
+                            feedName, pipelineRef.getName(), pipelineRef.getUuid());
 
                     // Create the parser.
                     final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
@@ -156,13 +167,13 @@ class HeadlessTranslationTaskHandler {
 
                     // Find last XSLT filter.
                     final XMLFilter lastFilter = getLastFilter(pipeline);
-                    if (!(lastFilter instanceof HasTargets)) {
+                    if (!(lastFilter instanceof final HasTargets hasTargets)) {
                         throw ProcessException.create(
                                 "No appendable filters can be found in pipeline '" + pipelineRef.getName() + "'");
                     }
-                    ((HasTargets) lastFilter).setTarget(headlessFilter);
+                    hasTargets.setTarget(headlessFilter);
 
-                    // Output the meta data for the new stream.
+                    // Output the meta-data for the new stream.
                     this.metaData.putAll(metaData);
                     headlessFilter.changeMetaData(metaData);
 
@@ -170,7 +181,7 @@ class HeadlessTranslationTaskHandler {
                     Long effectiveMs = null;
                     try {
                         final String effectiveTime = metaData.get(StandardHeaderArguments.EFFECTIVE_TIME);
-                        if (effectiveTime != null && !effectiveTime.isEmpty()) {
+                        if (NullSafe.isNonEmptyString(effectiveTime)) {
                             effectiveMs = DateUtil.parseNormalDateTimeString(effectiveTime);
                         }
                     } catch (final RuntimeException e) {
@@ -185,17 +196,21 @@ class HeadlessTranslationTaskHandler {
 
                     // Add stream providers for lookups etc.
                     final BasicInputStreamProvider inputStreamProvider = new BasicInputStreamProvider();
-                    inputStreamProvider.put(null, new IgnoreCloseInputStream(dataStream), dataStream.available());
-                    inputStreamProvider.put(StreamTypeNames.RAW_EVENTS,
+                    inputStreamProvider.put(
+                            null,
                             new IgnoreCloseInputStream(dataStream),
                             dataStream.available());
-                    if (metaStream != null) {
-                        inputStreamProvider.put(StreamTypeNames.META,
-                                new IgnoreCloseInputStream(metaStream),
-                                metaStream.available());
-                    }
+                    inputStreamProvider.put(
+                            StreamTypeNames.RAW_EVENTS,
+                            new IgnoreCloseInputStream(dataStream),
+                            dataStream.available());
+                    inputStreamProvider.put(
+                            StreamTypeNames.META,
+                            new IgnoreCloseInputStream(metaStream),
+                            metaStream.available());
                     if (contextStream != null) {
-                        inputStreamProvider.put(StreamTypeNames.CONTEXT,
+                        inputStreamProvider.put(
+                                StreamTypeNames.CONTEXT,
                                 new IgnoreCloseInputStream(contextStream),
                                 contextStream.available());
                     }
@@ -205,8 +220,12 @@ class HeadlessTranslationTaskHandler {
 
                     try {
                         // Processing the data stream so use null child type
-                        pipeline.process(dataStream, feedProperties.getEncoding(
-                                feedName, feedProperties.getStreamTypeName(feedName), null));
+                        pipeline.process(
+                                dataStream,
+                                feedProperties.getEncoding(
+                                        feedName,
+                                        feedProperties.getStreamTypeName(feedName),
+                                        null));
                     } catch (final RuntimeException e) {
                         outputError(e);
                     }
@@ -229,11 +248,7 @@ class HeadlessTranslationTaskHandler {
     }
 
     private <T extends XMLFilter> T getLastFilter(final Pipeline pipeline, final Class<T> clazz) {
-        final List<T> filters = pipeline.findFilters(clazz);
-        if (filters.size() > 0) {
-            return filters.get(filters.size() - 1);
-        }
-        return null;
+        return NullSafe.last(pipeline.findFilters(clazz));
     }
 
     /**
@@ -251,8 +266,8 @@ class HeadlessTranslationTaskHandler {
                 // Ignore exception as we generated it.
             }
 
-            if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics) {
-                ((ErrorStatistics) errorReceiverProxy.getErrorReceiver()).checkRecord(-1);
+            if (errorReceiverProxy.getErrorReceiver() instanceof final ErrorStatistics errorStatistics) {
+                errorStatistics.checkRecord(-1);
             }
         }
     }

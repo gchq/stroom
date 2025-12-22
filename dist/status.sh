@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 #
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#
 # Tells the user if stroom is running or not.
 
 echo_usage() {
@@ -27,7 +43,7 @@ show_status(){
 
     if [ "${stroom_pid}" = '' ]; then # If the pid file is empty for some reason
       info "${NOT_RUNNING_MESSAGE}"
-    else 
+    else
       if ps -p "${stroom_pid}" > /dev/null
       then
         info "${RUNNING_MESSAGE} ${BLUE}${stroom_pid}${NC}"
@@ -53,14 +69,14 @@ main() {
   while getopts ":mh" arg; do
     # shellcheck disable=SC2034
     case $arg in
-      h ) 
+      h )
         echo_usage
         exit 0
         ;;
-      m )  
-        MONOCHROME=true 
+      m )
+        MONOCHROME=true
         ;;
-      * ) 
+      * )
         invalid_arguments
         ;;  # getopts already reported the illegal option
     esac

@@ -1,12 +1,28 @@
 #!/usr/bin/env bash
 
+#
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 # This script will replicate all files found in gh_pages_source_dir into
 # a subdirectory of the gh-pages git branch. The subdirectory name will be the
 # minor version, i.e. if the version is v7.1.2 then the files will be replicated
 # into ./v7.1/
 # This means we will have a subdirectory for each minor version and each new
 # patch release will update the content for its minor version.
-# The replication from the source uses rsync to add/update/delete in the 
+# The replication from the source uses rsync to add/update/delete in the
 # destination directory as required to ensure the destination subdirectory
 # matches the source.
 # Following replication the changes are commited and pushed so that they are
@@ -27,7 +43,7 @@ setup_echo_colours() {
     BLUE2=''
     DGREY=''
     NC='' # No Colour
-  else 
+  else
     RED='\033[1;31m'
     GREEN='\033[1;32m'
     YELLOW='\033[1;33m'
@@ -41,7 +57,7 @@ setup_echo_colours() {
 debug_value() {
   local name="$1"; shift
   local value="$1"; shift
-  
+
   if [ "${IS_DEBUG}" = true ]; then
     echo -e "${DGREY}DEBUG ${name}: ${value}${NC}"
   fi
@@ -49,7 +65,7 @@ debug_value() {
 
 debug() {
   local str="$1"; shift
-  
+
   if [ "${IS_DEBUG}" = true ]; then
     echo -e "${DGREY}DEBUG ${str}${NC}"
   fi

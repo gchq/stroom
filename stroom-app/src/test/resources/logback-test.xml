@@ -17,14 +17,15 @@
     </appender>
 
     <logger name="stroom" level="info" />
-
+    <logger name="stroom.headless" level="debug" />
     <logger name="stroom.query.impl" level="debug" />
-
     <logger name="stroom.proxy" level="info" />
 
 <!--    <logger name="stroom.resource.impl.UserResourceStoreImpl" level="debug" />-->
 
     <logger name="stroom.db.util.SlowQueryExecuteListener" level="debug" />
+    <logger name="stroom.test.common.util.test.ContentPackZipDownloader" level="debug" />
+
 <!--    <logger name="stroom.db.util.DataSourceProxy" level="trace" />-->
 
 

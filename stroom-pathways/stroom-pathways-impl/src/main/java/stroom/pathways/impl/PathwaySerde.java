@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pathways.impl;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
@@ -15,6 +31,9 @@ import stroom.pathways.shared.pathway.DoubleValue;
 import stroom.pathways.shared.pathway.IntegerRange;
 import stroom.pathways.shared.pathway.IntegerSet;
 import stroom.pathways.shared.pathway.IntegerValue;
+import stroom.pathways.shared.pathway.LongRange;
+import stroom.pathways.shared.pathway.LongSet;
+import stroom.pathways.shared.pathway.LongValue;
 import stroom.pathways.shared.pathway.NamePathKey;
 import stroom.pathways.shared.pathway.NamesPathKey;
 import stroom.pathways.shared.pathway.NanoTimeRange;
@@ -156,6 +175,9 @@ public class PathwaySerde {
             case ConstraintValueType.INTEGER -> new IntegerValue(input.readInt());
             case ConstraintValueType.INTEGER_SET -> new IntegerSet(readSet(input, Input::readInt));
             case ConstraintValueType.INTEGER_RANGE -> new IntegerRange(input.readInt(), input.readInt());
+            case ConstraintValueType.LONG -> new LongValue(input.readLong());
+            case ConstraintValueType.LONG_SET -> new LongSet(readSet(input, Input::readLong));
+            case ConstraintValueType.LONG_RANGE -> new LongRange(input.readLong(), input.readLong());
             case ConstraintValueType.DOUBLE -> new DoubleValue(input.readDouble());
             case ConstraintValueType.DOUBLE_SET -> new DoubleSet(readSet(input, Input::readDouble));
             case ConstraintValueType.DOUBLE_RANGE -> new DoubleRange(input.readDouble(), input.readDouble());
@@ -301,6 +323,16 @@ public class PathwaySerde {
             case final IntegerRange integerRange -> {
                 output.writeInt(integerRange.getMin());
                 output.writeInt(integerRange.getMax());
+            }
+            case final LongValue longValue -> {
+                output.writeLong(longValue.getValue());
+            }
+            case final LongSet longSet -> {
+                writeSet(longSet.getSet(), output, this::writeLong);
+            }
+            case final LongRange longRange -> {
+                output.writeLong(longRange.getMin());
+                output.writeLong(longRange.getMax());
             }
             case final DoubleValue doubleValue -> {
                 output.writeDouble(doubleValue.getValue());
