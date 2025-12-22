@@ -89,6 +89,8 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
                                   final CacheManager cacheManager) {
         this.metaService = metaService;
         this.s3Manager = s3Manager;
+        // TODO add config for cache
+        // Seek tables are immutable things, so no expiry needed
         this.cache = cacheManager.create(
                 CACHE_NAME,
                 () -> CacheConfig.builder()

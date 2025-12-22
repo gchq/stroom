@@ -145,11 +145,11 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
             return -1;
         }
 
-        int remainingToRead = len;
+        int remainingUncompressedToRead = len;
         int totalUncompressedBytesRead = 0;
         boolean currentFrameAllRead = false;
 
-        while (remainingToRead > 0) {
+        while (remainingUncompressedToRead > 0) {
             if (currentFrameAllRead) {
                 final boolean success = advanceFrame();
                 if (!success) {
@@ -168,7 +168,7 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
                 LOGGER.debug("read() - Completed frame {}", currentFrameLocation);
                 currentFrameAllRead = true;
             } else {
-                remainingToRead -= compressedBytesRead;
+                remainingUncompressedToRead -= compressedBytesRead;
                 totalUncompressedBytesRead += compressedBytesRead;
             }
         }
@@ -282,6 +282,10 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
 
     public interface ZstdFrameSupplier {
 
+        // TODO considering also passing in a list of FrameLocations so that the ZstdFrameSupplier can
+        //  asynchronously pre-fetch the frames in the list so that they are immediately available on
+        //  the next call to getFrameInputStream with one of those FrameLocations. This is to combat
+        //  the potential latency in S3 GETs.
         InputStream getFrameInputStream(final FrameLocation frameLocation) throws IOException;
 
     }

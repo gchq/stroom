@@ -29,6 +29,8 @@ public interface ThrowingFunction<T, R, E extends Throwable> {
      * Wraps a function that throws a checked exception with a catch block that will wrap
      * any thrown exception with a {@link RuntimeException}, thus making it unchecked and
      * usable in a lambda.
+     * If the exception thrown is an {@link IOException} it will wrap it in an
+     * {@link UncheckedIOException} instead.
      */
     static <T, R, E extends Throwable> Function<T, R> unchecked(final ThrowingFunction<T, R, E> f) {
         return t -> {
