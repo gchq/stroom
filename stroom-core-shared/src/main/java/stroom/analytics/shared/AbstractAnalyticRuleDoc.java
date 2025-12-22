@@ -70,30 +70,31 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
     static final boolean INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE = true;
 
-    @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
-    public AbstractAnalyticRuleDoc(@JsonProperty("type") final String type,
-                                   @JsonProperty("uuid") final String uuid,
-                                   @JsonProperty("name") final String name,
-                                   @JsonProperty("version") final String version,
-                                   @JsonProperty("createTimeMs") final Long createTimeMs,
-                                   @JsonProperty("updateTimeMs") final Long updateTimeMs,
-                                   @JsonProperty("createUser") final String createUser,
-                                   @JsonProperty("updateUser") final String updateUser,
-                                   @JsonProperty("description") final String description,
-                                   @JsonProperty("includeRuleDocumentation") final Boolean includeRuleDocumentation,
-                                   @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
-                                   @JsonProperty("parameters") final List<Param> parameters,
-                                   @JsonProperty("timeRange") final TimeRange timeRange,
-                                   @JsonProperty("query") final String query,
-                                   @JsonProperty("analyticProcessType") final AnalyticProcessType analyticProcessType,
-                                   @JsonProperty("analyticProcessConfig") final AnalyticProcessConfig analyticProcessConfig,
-                                   @Deprecated @JsonProperty("analyticNotificationConfig") final NotificationConfig analyticNotificationConfig,
-                                   @JsonProperty("notifications") final List<NotificationConfig> notifications,
-                                   @JsonProperty("errorFeed") final DocRef errorFeed,
-                                   @JsonProperty("rememberNotifications") final boolean rememberNotifications,
-                                   @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
-                                   @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
+    @SuppressWarnings("checkstyle:linelength")
+    public AbstractAnalyticRuleDoc(
+            @JsonProperty("type") final String type,
+            @JsonProperty("uuid") final String uuid,
+            @JsonProperty("name") final String name,
+            @JsonProperty("version") final String version,
+            @JsonProperty("createTimeMs") final Long createTimeMs,
+            @JsonProperty("updateTimeMs") final Long updateTimeMs,
+            @JsonProperty("createUser") final String createUser,
+            @JsonProperty("updateUser") final String updateUser,
+            @JsonProperty("description") final String description,
+            @JsonProperty("includeRuleDocumentation") final Boolean includeRuleDocumentation,
+            @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
+            @JsonProperty("parameters") final List<Param> parameters,
+            @JsonProperty("timeRange") final TimeRange timeRange,
+            @JsonProperty("query") final String query,
+            @JsonProperty("analyticProcessType") final AnalyticProcessType analyticProcessType,
+            @JsonProperty("analyticProcessConfig") final AnalyticProcessConfig analyticProcessConfig,
+            @Deprecated @JsonProperty("analyticNotificationConfig") final NotificationConfig analyticNotificationConfig,
+            @JsonProperty("notifications") final List<NotificationConfig> notifications,
+            @JsonProperty("errorFeed") final DocRef errorFeed,
+            @JsonProperty("rememberNotifications") final boolean rememberNotifications,
+            @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
+            @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.includeRuleDocumentation = includeRuleDocumentation;
@@ -131,7 +132,9 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     }
 
     /**
-     * The includeRuleDocumentation field determines whether a rule's documentation will be included in any detections that it produces.
+     * The includeRuleDocumentation field determines whether a rule's documentation
+     * will be included in any detections that it produces.
+     *
      * @return boolean value of includeRuleDocumentation
      */
     public boolean isIncludeRuleDocumentation() {
@@ -254,6 +257,10 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                ", suppressDuplicateNotifications=" + suppressDuplicateNotifications +
                '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public abstract static class AbstractAnalyticRuleDocBuilder
             <T extends AbstractAnalyticRuleDoc, B extends AbstractAnalyticRuleDocBuilder<T, ?>>
