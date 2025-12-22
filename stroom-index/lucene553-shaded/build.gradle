@@ -33,11 +33,11 @@ configurations {
 }
 
 dependencies {
-    lucene553Shadow "org.apache.lucene:lucene-analyzers-common:5.5.3"
-    lucene553Shadow "org.apache.lucene:lucene-backward-codecs:5.5.3"
-    lucene553Shadow "org.apache.lucene:lucene-core:5.5.3"
-    lucene553Shadow "org.apache.lucene:lucene-memory:5.5.3"
-    lucene553Shadow "org.apache.lucene:lucene-queryparser:5.5.3"
+    lucene553Shadow "org.apache.lucene:lucene-analyzers-common:8.11.4"
+    lucene553Shadow "org.apache.lucene:lucene-backward-codecs:8.11.4"
+    lucene553Shadow "org.apache.lucene:lucene-core:8.11.4"
+    lucene553Shadow "org.apache.lucene:lucene-memory:8.11.4"
+    lucene553Shadow "org.apache.lucene:lucene-queryparser:8.11.4"
 }
 
 tasks.shadowJar {
