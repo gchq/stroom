@@ -18,7 +18,8 @@ package stroom.util.shared.string;
 
 import org.junit.jupiter.api.Test;
 
-import static java.util.Map.Entry.comparingByKey;
+import java.util.Map.Entry;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestCIHashMap {
@@ -69,7 +70,7 @@ class TestCIHashMap {
 
         assertThat(map.entrySet()
                 .stream()
-                .sorted(comparingByKey())
+                .sorted(Entry.comparingByKey())
                 .toList())
                 .extracting(entry -> entry.getKey().getAsLowerCase())
                 .containsExactly(

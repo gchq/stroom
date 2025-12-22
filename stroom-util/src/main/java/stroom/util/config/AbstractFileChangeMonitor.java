@@ -43,8 +43,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
-
 public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractFileChangeMonitor.class);
@@ -156,8 +154,9 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
                         }
                     }
 
-                    if (event.kind().equals(OVERFLOW)) {
-                        LOGGER.warn("{} event detected breaking out. Retry file change", OVERFLOW.name());
+                    if (event.kind().equals(StandardWatchEventKinds.OVERFLOW)) {
+                        LOGGER.warn("{} event detected breaking out. Retry file change",
+                                StandardWatchEventKinds.OVERFLOW.name());
                         break;
                     }
                     if (event.kind() != null && Path.class.isAssignableFrom(event.kind().type())) {

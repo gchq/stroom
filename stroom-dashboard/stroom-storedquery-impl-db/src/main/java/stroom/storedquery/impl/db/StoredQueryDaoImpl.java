@@ -51,7 +51,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 
-import static stroom.storedquery.impl.db.jooq.Tables.QUERY;
+import static stroom.storedquery.impl.db.jooq.tables.Query.QUERY;
 
 class StoredQueryDaoImpl implements StoredQueryDao {
 

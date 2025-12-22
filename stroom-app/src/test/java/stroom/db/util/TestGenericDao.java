@@ -30,7 +30,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.job.impl.db.jooq.Tables.JOB;
+import static stroom.job.impl.db.jooq.tables.Job.JOB;
 
 public class TestGenericDao extends AbstractCoreIntegrationTest {
 

@@ -60,7 +60,6 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static java.util.Map.entry;
 import static stroom.security.identity.db.jooq.tables.Account.ACCOUNT;
 
 @Singleton
@@ -134,28 +133,28 @@ class AccountDaoImpl implements AccountDao {
             };
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.ofEntries(
-            entry("id", ACCOUNT.ID),
-            entry("version", ACCOUNT.VERSION),
-            entry("createTimeMs", ACCOUNT.CREATE_TIME_MS),
-            entry("updateTimeMs", ACCOUNT.UPDATE_TIME_MS),
-            entry("createUser", ACCOUNT.CREATE_USER),
-            entry("updateUser", ACCOUNT.UPDATE_USER),
-            entry(AccountFields.FIELD_NAME_USER_ID, ACCOUNT.USER_ID),
-            entry(AccountFields.FIELD_NAME_EMAIL, ACCOUNT.EMAIL),
-            entry(AccountFields.FIELD_NAME_FIRST_NAME, ACCOUNT.FIRST_NAME),
-            entry(AccountFields.FIELD_NAME_LAST_NAME, ACCOUNT.LAST_NAME),
-            entry(AccountFields.FIELD_NAME_COMMENTS, ACCOUNT.COMMENTS),
-            entry("loginCount", ACCOUNT.LOGIN_COUNT),
-            entry(AccountFields.FIELD_NAME_LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES),
-            entry(AccountFields.FIELD_NAME_LAST_LOGIN_MS, ACCOUNT.LAST_LOGIN_MS),
-            entry("reactivatedMs", ACCOUNT.REACTIVATED_MS),
-            entry("forcePasswordChange", ACCOUNT.FORCE_PASSWORD_CHANGE),
-            entry("neverExpires", ACCOUNT.NEVER_EXPIRES),
-            entry("enabled", ACCOUNT.ENABLED),
-            entry("inactive", ACCOUNT.INACTIVE),
-            entry("locked", ACCOUNT.LOCKED),
-            entry("processingAccount", ACCOUNT.PROCESSING_ACCOUNT),
-            entry(AccountFields.FIELD_NAME_STATUS, ACCOUNT_STATUS));
+            Map.entry("id", ACCOUNT.ID),
+            Map.entry("version", ACCOUNT.VERSION),
+            Map.entry("createTimeMs", ACCOUNT.CREATE_TIME_MS),
+            Map.entry("updateTimeMs", ACCOUNT.UPDATE_TIME_MS),
+            Map.entry("createUser", ACCOUNT.CREATE_USER),
+            Map.entry("updateUser", ACCOUNT.UPDATE_USER),
+            Map.entry(AccountFields.FIELD_NAME_USER_ID, ACCOUNT.USER_ID),
+            Map.entry(AccountFields.FIELD_NAME_EMAIL, ACCOUNT.EMAIL),
+            Map.entry(AccountFields.FIELD_NAME_FIRST_NAME, ACCOUNT.FIRST_NAME),
+            Map.entry(AccountFields.FIELD_NAME_LAST_NAME, ACCOUNT.LAST_NAME),
+            Map.entry(AccountFields.FIELD_NAME_COMMENTS, ACCOUNT.COMMENTS),
+            Map.entry("loginCount", ACCOUNT.LOGIN_COUNT),
+            Map.entry(AccountFields.FIELD_NAME_LOGIN_FAILURES, ACCOUNT.LOGIN_FAILURES),
+            Map.entry(AccountFields.FIELD_NAME_LAST_LOGIN_MS, ACCOUNT.LAST_LOGIN_MS),
+            Map.entry("reactivatedMs", ACCOUNT.REACTIVATED_MS),
+            Map.entry("forcePasswordChange", ACCOUNT.FORCE_PASSWORD_CHANGE),
+            Map.entry("neverExpires", ACCOUNT.NEVER_EXPIRES),
+            Map.entry("enabled", ACCOUNT.ENABLED),
+            Map.entry("inactive", ACCOUNT.INACTIVE),
+            Map.entry("locked", ACCOUNT.LOCKED),
+            Map.entry("processingAccount", ACCOUNT.PROCESSING_ACCOUNT),
+            Map.entry(AccountFields.FIELD_NAME_STATUS, ACCOUNT_STATUS));
 
     private static final FieldComparators<Account> FIELD_COMPARATORS = FieldComparators.builder(Account.class)
             .addStringComparator(AccountFields.FIELD_NAME_USER_ID, Account::getUserId)

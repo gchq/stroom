@@ -33,6 +33,7 @@ import stroom.util.shared.UserRef;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import org.assertj.core.api.Assertions;
 import org.jooq.exception.IntegrityConstraintViolationException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +45,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestAppPermissionDaoImpl {
 
@@ -79,8 +79,9 @@ class TestAppPermissionDaoImpl {
         final String userUuid = UUID.randomUUID().toString();
 
         // When
-        assertThrows(IntegrityConstraintViolationException.class, () ->
-                appPermissionDao.addPermission(userUuid, AppPermission.STEPPING_PERMISSION));
+        Assertions.assertThatThrownBy(() ->
+                        appPermissionDao.addPermission(userUuid, AppPermission.STEPPING_PERMISSION))
+                .isInstanceOf(IntegrityConstraintViolationException.class);
     }
 
     @Test

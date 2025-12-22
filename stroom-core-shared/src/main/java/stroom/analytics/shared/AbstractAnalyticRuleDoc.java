@@ -72,8 +72,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
     @JsonCreator
     @SuppressWarnings("checkstyle:linelength")
-    public AbstractAnalyticRuleDoc(
-            @JsonProperty("type") final String type,
+    public AbstractAnalyticRuleDoc(@JsonProperty("type") final String type,
             @JsonProperty("uuid") final String uuid,
             @JsonProperty("name") final String name,
             @JsonProperty("version") final String version,

@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.List;
 
-import static stroom.job.impl.db.jooq.Tables.JOB;
+import static stroom.job.impl.db.jooq.tables.Job.JOB;
 
 /**
  * More of a manual test, need DEBUG set on {@link SlowQueryExecuteListener}
@@ -140,7 +140,7 @@ public class TestSlowQueryExecuteListener extends AbstractCoreIntegrationTest {
                 .fetch(JOB.NAME));
 
         Assertions.assertThat(names)
-                        .containsExactly(JOB_NAME + "_1", JOB_NAME + "_2");
+                .containsExactly(JOB_NAME + "_1", JOB_NAME + "_2");
 
         LOGGER.info("\n{}", AsciiTable.fromCollection(names));
     }
