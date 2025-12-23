@@ -403,8 +403,9 @@ public class HeapBufferPool implements BufferPool, HasSystemInfo {
             if (!didOfferSucceed) {
                 // We must have created more buffers than there are under pool control so we just have
                 // to unmap it
-                LOGGER.trace(() -> LogUtil.message("Unable to return buffer to the queue so will destroy it " +
-                                                   "(capacity: {}, queue size: {}, counter value: {}, configured limit: {}",
+                LOGGER.trace(() -> LogUtil.message(
+                        "Unable to return buffer to the queue so will destroy it " +
+                        "(capacity: {}, queue size: {}, counter value: {}, configured limit: {}",
                         buffer.capacity(),
                         size(),
                         queue.size(),
