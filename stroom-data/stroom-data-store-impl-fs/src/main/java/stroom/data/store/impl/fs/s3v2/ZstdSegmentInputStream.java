@@ -23,7 +23,9 @@ import stroom.util.io.SeekableInputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
+import com.github.luben.zstd.ZstdDictDecompress;
 import com.github.luben.zstd.ZstdInputStream;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.ints.IntBidirectionalIterator;
@@ -37,7 +39,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
 
 /**
+ * A {@link SegmentInputStream} for consuming ZStandard compressed frames (one frame == one segment)
+ * from a {@link ZstdFrameSupplier}.
+ * <p>
+ * For details of the format of the compressed file, see {@link ZstdSegmentOutputStream}.
+ * </p>
+ * <p>
  * Currently supports one level of segmentation, either boundary or index, not both.
+ * </p>
  */
 public class ZstdSegmentInputStream extends SegmentInputStream {
 
@@ -48,6 +57,7 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
     private final ZstdSeekTable zstdSeekTable;
     private final ZstdFrameSupplier zstdFrameSupplier;
     private final ZstdDictionary zstdDictionary;
+    private final ZstdDictDecompress zstdDictDecompress;
     private final HeapBufferPool heapBufferPool;
 
     private IntSortedSet includedSegments;
@@ -73,6 +83,9 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
         this.zstdSeekTable = Objects.requireNonNull(zstdSeekTable);
         this.zstdFrameSupplier = zstdFrameSupplier;
         this.zstdDictionary = zstdDictionary;
+        this.zstdDictDecompress = NullSafe.get(
+                zstdDictionary,
+                dict -> new ZstdDictDecompress(dict.getDictionaryBytes()));
         this.heapBufferPool = heapBufferPool;
     }
 
@@ -84,6 +97,7 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
     @Override
     public void include(final long segment) {
         checkState(Math.toIntExact(segment));
+        includeAllSegments = false;
         includedSegments = Objects.requireNonNullElseGet(includedSegments, IntAVLTreeSet::new);
         includedSegments.add(Math.toIntExact(segment));
     }
@@ -242,9 +256,9 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
 
             // Initialise the ZstdInputStream to decompress the frame
             final ZstdInputStream zstdInputStream = new ZstdInputStream(compressedFrameInputStream, heapBufferPool);
-            if (zstdDictionary != null) {
+            if (zstdDictDecompress != null) {
                 LOGGER.debug("advanceFrame() - Setting dictionary {}", zstdDictionary);
-                zstdInputStream.setDict(zstdDictionary.getDictionaryBytes());
+                zstdInputStream.setDict(zstdDictDecompress);
             }
             this.currentZstdInputStream = zstdInputStream;
             LOGGER.debug("advanceFrame() - nextFrameIdx: {}, currentFrameLocation: {}",

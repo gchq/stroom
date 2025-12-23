@@ -17,7 +17,10 @@
 package stroom.data.store.impl.fs.s3v2;
 
 
+import stroom.util.UuidUtil;
+
 import java.nio.ByteBuffer;
+import java.util.UUID;
 
 public class ZstdConstants {
 
@@ -56,12 +59,38 @@ public class ZstdConstants {
     public static final int SEEKABLE_MAGIC_NUMBER_SIZE = SEEKABLE_MAGIC_NUMBER.length;
 
     /**
+     * Number of bytes for the frame count field.
+     */
+    public static final int FRAME_COUNT_SIZE = Integer.BYTES;
+
+    /**
+     * Number of bytes for the bit field.
+     */
+    public static final int BIT_FIELD_SIZE = 1;
+
+    /**
      * The position of the frame count value in the skippable frame
      * <strong>relative to the END of the byte[]/buffer/stream</strong>.
+     * This is a negative number.
      */
     public static final int FRAME_COUNT_RELATIVE_POSITION = -1 * (SEEKABLE_MAGIC_NUMBER_SIZE
-                                                                  + 1
-                                                                  + Integer.BYTES);
+                                                                  + BIT_FIELD_SIZE
+                                                                  + FRAME_COUNT_SIZE);
+
+    /**
+     * Number of bytes for the dictionary UUID field.
+     */
+    public static final int DICTIONARY_UUID_SIZE = UuidUtil.UUID_BYTES;
+
+    /**
+     * The position of the dictionary UUID value in the skippable frame
+     * <strong>relative to the END of the byte[]/buffer/stream</strong>.
+     * This is a negative number.
+     */
+    public static final int DICTIONARY_UUID_RELATIVE_POSITION = -1 * (SEEKABLE_MAGIC_NUMBER_SIZE
+                                                                      + BIT_FIELD_SIZE
+                                                                      + FRAME_COUNT_SIZE
+                                                                      + DICTIONARY_UUID_SIZE);
 
     /**
      * A read-only {@link ByteBuffer} that wraps {@link ZstdConstants#SEEKABLE_MAGIC_NUMBER}
@@ -72,15 +101,22 @@ public class ZstdConstants {
     /**
      * Number of bytes in a seekable frame footer
      * <pre>
-     * <4b frame count LE><1b table descriptor><4b seekable magic number LE>
+     * <16b dict UUID BE><4b frame count LE><1b table descriptor><4b seekable magic number LE>
      * </pre>
      */
-    public static final int SEEKABLE_FOOTER_SIZE = Integer.BYTES + 1 + SEEKABLE_MAGIC_NUMBER_SIZE;
+    public static final int SEEKABLE_FOOTER_SIZE = DICTIONARY_UUID_SIZE
+                                                   + FRAME_COUNT_SIZE
+                                                   + BIT_FIELD_SIZE
+                                                   + SEEKABLE_MAGIC_NUMBER_SIZE;
 
     /**
      * Number of bytes in an entry in the seek table within a seekable frame.
      */
     public static final int SEEK_TABLE_ENTRY_SIZE = Long.BYTES + Long.BYTES;
+
+    public static final UUID ZERO_UUID = new UUID(0, 0);
+
+    public static final byte[] ZERO_UUID_BYTES = UuidUtil.toByteArray(ZERO_UUID);
 
     private ZstdConstants() {
         // Constants only

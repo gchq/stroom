@@ -59,13 +59,19 @@ public abstract class SegmentInputStream extends SizeAwareInputStream {
      * Initially all segments are included so setting this will exclude only the
      * specified segment.
      * Zero based.
+     *
+     * @deprecated Doesn't seem to be used to non-test code.
      */
+    @Deprecated
     public abstract void exclude(long segment);
 
     /**
      * Excludes all segments when reading from this input stream. It is unlikely
      * that all input should be excluded, instead this method should be used to
      * clear all includes that have been specifically set.
+     *
+     * @deprecated Doesn't seem to be used to non-test code.
      */
+    @Deprecated
     public abstract void excludeAll();
 }

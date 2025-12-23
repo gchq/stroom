@@ -20,6 +20,7 @@ import stroom.data.store.api.SegmentOutputStream;
 import stroom.util.io.IgnoreCloseOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import com.github.luben.zstd.ZstdOutputStream;
 import com.google.common.io.CountingOutputStream;
@@ -59,30 +60,38 @@ import java.util.Objects;
  *
  * <p>
  * The seek table structure is like this. Each compressed frame has a corresponding 16 byte.
- * The example is for a stream containing 4 compressed frames (segments).
+ * The example is for a stream containing 3 compressed frames (segments/frame index 0-2)
+ * and 1 skippable frame (frame index 3).
  * {@code CCCCCCCCUUUUUUUU} block.
  * </p>
  * <pre>
+ * ============ HEADER ============
  * m == skippable frame magic number header (4 byte)
  * s == size of skippable frame (4 byte int)
+ * ============ ENTRIES ============
  * C == cumulativeCompressedSize (8 byte long)
  * U == uncompressedSize (8 byte long)
- * F == frameCount (4 byte int)               ∖
- * B == bitfield (1 byte)                     | - Footer
- * M == seek table magic number (4 byte int)  /
- * FrameIdx:                    0               1               2               3
- * < compressed frames >mmmmssssCCCCCCCCUUUUUUUUCCCCCCCCUUUUUUUUCCCCCCCCUUUUUUUUCCCCCCCCUUUUUUUUFFFFBMMMM
+ * ============ FOOTER ============
+ * I == Dictionary UUID (most significant bits LE)
+ * i == Dictionary UUID (least significant bits LE)
+ * F == frameCount (4 byte int)
+ * B == bitfield (1 byte)
+ * M == seek table magic number (4 byte int)
+ *
+ * FrameIdx:                    0               1               2
+ * < compressed frames >mmmmssssCCCCCCCCUUUUUUUUCCCCCCCCUUUUUUUUCCCCCCCCUUUUUUUUIIIIIIIIiiiiiiiiFFFFBMMMM
  * 012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901
  * 0         1         2         3         4         5         6         7         8         9
  * </pre>
  * <p>
  * The seek table format is derived from the
  * <a href="https://github.com/facebook/zstd/blob/dev/contrib/seekable_format/zstd_seekable_compression_format.md">
- * Zstd Seekable Format. It differs from it in the following ways:
+ * Zstd Seekable Format. Stroom's implementation of it differs in the following ways:
  * <ul>
  * <li>Use 8 bytes instead of 4 for cumulativeCompressedSize and uncompressedSize to allow for very large
  * streams</li>
  * <li>We don't use the checksums</li>
+ * <li>We have added the dictionary UUID to the footer</li>
  * </ul>
  * </a>
  * </p>
@@ -224,6 +233,9 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
 
         // --- Seek table frame footer ---
 
+        // Write the UUID of the dict used by this outputStream. Writes all zeros if there is no dict
+        // so that we have a fixed width footer.
+        writeDictionaryUuid(compressedBytesCountingOutputStream);
         // Frame count, so know how big our seek table is
         writeLEInteger(frameInfoList.size(), compressedBytesCountingOutputStream);
         // Seek table descriptor bitfield
@@ -233,6 +245,14 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
         // Seekable magic number, so we can look at the last 4 bytes of a zst file and determine
         // that it is seekable
         compressedBytesCountingOutputStream.write(ZstdConstants.SEEKABLE_MAGIC_NUMBER);
+    }
+
+    private void writeDictionaryUuid(final OutputStream outputStream) throws IOException {
+        final byte[] dictUuidBytes = NullSafe.getOrElse(
+                zstdDictionary,
+                ZstdDictionary::getUuidBytes,
+                ZstdConstants.ZERO_UUID_BYTES);
+        outputStream.write(dictUuidBytes);
     }
 
     private void writeLEInteger(final long val, final OutputStream outputStream) throws IOException {

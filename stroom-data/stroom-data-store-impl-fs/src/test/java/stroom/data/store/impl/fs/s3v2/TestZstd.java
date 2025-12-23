@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs.s3v2;
 
 import stroom.bytebuffer.ByteBufferUtils;
+import stroom.util.UuidUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
@@ -42,6 +43,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,6 +52,7 @@ public class TestZstd {
     // See https://github.com/facebook/zstd/blob/release/doc/zstd_compression_format.md#skippable-frames
     // Identifies the frame as one that zstd will skip over
     public static final byte[] SKIPPABLE_FRAME_HEADER = new byte[]{0x5E, 0x2A, 0x4D, 0x18};
+    private static final byte[] DICT_UUID_BYTES = UuidUtil.toByteArray(UUID.randomUUID());
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestZstd.class);
 
@@ -221,6 +224,8 @@ public class TestZstd {
 
         // write the footer
 
+        // Dict UUID
+        outputStream.write(DICT_UUID_BYTES);
         // Frame count, so know how big our seek table is
         writeLEInteger(frameInfoList.size(), outputStream);
         // Seek table descriptor bitfield

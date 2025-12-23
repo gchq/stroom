@@ -47,21 +47,21 @@ class TestZstdSegmentUtil {
     @Test
     void calculateSeekTableFramePayloadSize() {
         assertThat(ZstdSegmentUtil.calculateSeekTableFramePayloadSize(0))
-                .isEqualTo(9);
+                .isEqualTo(25);
         assertThat(ZstdSegmentUtil.calculateSeekTableFramePayloadSize(1))
-                .isEqualTo(16 + 9);
+                .isEqualTo(16 + 25);
         assertThat(ZstdSegmentUtil.calculateSeekTableFramePayloadSize(10))
-                .isEqualTo(160 + 9);
+                .isEqualTo(160 + 25);
     }
 
     @Test
     void calculateSeekTableFrameSize() {
         assertThat(ZstdSegmentUtil.calculateSeekTableFrameSize(0))
-                .isEqualTo(8 + 9);
+                .isEqualTo(8 + 25);
         assertThat(ZstdSegmentUtil.calculateSeekTableFrameSize(1))
-                .isEqualTo(8 + 16 + 9);
+                .isEqualTo(8 + 16 + 25);
         assertThat(ZstdSegmentUtil.calculateSeekTableFrameSize(10))
-                .isEqualTo(8 + 160 + 9);
+                .isEqualTo(8 + 160 + 25);
     }
 
     @Test

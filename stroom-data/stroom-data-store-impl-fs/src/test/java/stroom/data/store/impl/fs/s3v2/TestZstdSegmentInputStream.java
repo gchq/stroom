@@ -17,21 +17,24 @@
 package stroom.data.store.impl.fs.s3v2;
 
 import stroom.bytebuffer.ByteBufferPoolConfig;
+import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.impl.fs.s3v2.ZstdSegmentInputStream.ZstdFrameSupplier;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.common.io.CountingOutputStream;
-import org.apache.commons.io.IOUtils;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -43,7 +46,73 @@ class TestZstdSegmentInputStream {
     private final List<byte[]> dataBytes = new ArrayList<>();
 
     @Test
-    void test() throws IOException {
+    void test1() throws IOException {
+        doTest(
+                SegmentInputStream::includeAll,
+                "Item-0Item-1Item-2Item-3Item-4Item-5Item-6Item-7Item-8Item-9");
+    }
+
+    @Test
+    void test2() throws IOException {
+        doTest(
+                segmentInputStream -> {
+                    segmentInputStream.include(0);
+                    segmentInputStream.include(3);
+                    segmentInputStream.includeAll();
+                },
+                "Item-0Item-1Item-2Item-3Item-4Item-5Item-6Item-7Item-8Item-9");
+    }
+
+    @Test
+    void test3() throws IOException {
+        doTest(
+                segmentInputStream -> {
+                    segmentInputStream.include(9);
+                    segmentInputStream.include(3);
+                    segmentInputStream.include(0);
+                    segmentInputStream.include(3);
+                    segmentInputStream.include(5);
+                },
+                "Item-0Item-3Item-5Item-9");
+    }
+
+    @Test
+    void test4() throws IOException {
+        doTest(
+                segmentInputStream -> {
+                    segmentInputStream.include(3);
+                },
+                "Item-3");
+    }
+
+    @Test
+    void test5() {
+        Assertions.assertThatThrownBy(
+                () -> {
+                    doTest(
+                            segmentInputStream -> {
+                                segmentInputStream.include(99);
+                            },
+                            null);
+                }
+        ).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void test6() {
+        Assertions.assertThatThrownBy(
+                () -> {
+                    doTest(
+                            segmentInputStream -> {
+                                segmentInputStream.include(-1);
+                            },
+                            null);
+                }
+        ).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private void doTest(final Consumer<SegmentInputStream> inputStreamConsumer,
+                        final String expectedOutput) throws IOException {
         final int iterations = 10;
 
         final byte[] compressedBytes = makeData(iterations);
@@ -68,17 +137,32 @@ class TestZstdSegmentInputStream {
                 null,
                 heapBufferPool);
 
-        zstdSegmentInputStream.includeAll();
+        if (inputStreamConsumer != null) {
+            inputStreamConsumer.accept(zstdSegmentInputStream);
+        }
 
-        final byte[] uncompressedBytes = IOUtils.toByteArray(zstdSegmentInputStream);
+        // Use a tiny buffer to consume the input stream to make sure we test repeated read calls
+        // rather than just reading it all into an 8k buffer.
+        final byte[] uncompressedBytes = toBytes(zstdSegmentInputStream, 7);
         final String uncompressedStr = new String(uncompressedBytes, StandardCharsets.UTF_8);
 
         LOGGER.debug("str: {}", uncompressedStr);
 
-        for (final String str : data) {
-            assertThat(uncompressedStr)
-                    .contains(str);
-        }
+        assertThat(uncompressedStr)
+                .isEqualTo(expectedOutput);
+    }
+
+    private byte[] toBytes(final InputStream inputStream, final int bufferSize) throws IOException {
+        final byte[] buffer = new byte[bufferSize];
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        int cnt;
+        do {
+            cnt = inputStream.read(buffer);
+            if (cnt != -1) {
+                byteArrayOutputStream.write(buffer, 0, cnt);
+            }
+        } while (cnt != -1);
+        return byteArrayOutputStream.toByteArray();
     }
 
     private byte[] makeData(final int iterations) throws IOException {

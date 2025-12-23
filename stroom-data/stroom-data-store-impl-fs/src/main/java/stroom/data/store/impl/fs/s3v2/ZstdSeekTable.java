@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs.s3v2;
 
 
 import stroom.bytebuffer.ByteBufferUtils;
+import stroom.util.UuidUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -29,20 +30,33 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
- * Encapsulates a seek table from a skippable frame.
- * Provides methods for getting the {@link FrameLocation} for a given frameIdx.
+ *
+ * Encapsulates the seek table skippable frame found at the end of the data produced
+ * by {@link ZstdSegmentOutputStream}.
+ * <p>
+ * The seek table provides the means to locate and decompress individual frames/segments.
+ * </p>
+ * <p>
+ * For details of the format of the compressed file and its skippable frame,
+ * see {@link ZstdSegmentOutputStream}.
+ * </p>
  */
 public class ZstdSeekTable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZstdSeekTable.class);
 
-    static final ZstdSeekTable EMPTY = new ZstdSeekTable(0, ByteBuffer.wrap(new byte[0]));
+    static final ZstdSeekTable EMPTY = new ZstdSeekTable(
+            ZstdConstants.ZERO_UUID,
+            0,
+            ByteBuffer.wrap(new byte[0]));
 
+    private final UUID dictionaryUuid;
     private final int frameCount;
     /**
-     * Holds all the entries as a series of these pairs.
+     * Holds all the entries as a series of pairs, where each pair has this format:
      * <pre>
      * < cumulativeCompressedSize 8 byte LE > < uncompressedSize 8 byte LE >
      * </pre>
@@ -64,7 +78,10 @@ public class ZstdSeekTable {
 //        this.seekTableEntriesBuffer = ByteBuffer.wrap(seekTableEntries);
 //    }
 
-    private ZstdSeekTable(final int frameCount, final ByteBuffer seekTableEntries) {
+    private ZstdSeekTable(final UUID dictionaryUuid,
+                          final int frameCount,
+                          final ByteBuffer seekTableEntries) {
+        this.dictionaryUuid = Objects.requireNonNull(dictionaryUuid);
         this.frameCount = frameCount;
         if (frameCount < 0) {
             throw new IllegalArgumentException(LogUtil.message("Expecting frameCount {} to be >=0", frameCount));
@@ -107,6 +124,7 @@ public class ZstdSeekTable {
                 LOGGER.debug("parse() - No frames");
                 optZstdSeekTable = Optional.of(EMPTY);
             } else {
+                final UUID dictionaryUuid = readDictionaryUuid(byteBuffer);
                 final int seekTableFrameSize = ZstdSegmentUtil.calculateSeekTableFrameSize(frameCount);
                 try {
                     final int dataLength = byteBuffer.remaining();
@@ -126,9 +144,11 @@ public class ZstdSeekTable {
                         final byte[] seekTableEntries = new byte[seekTableSize];
                         final ByteBuffer seekTableBufferCopy = ByteBuffer.wrap(seekTableEntries);
                         ByteBufferUtils.copy(seekTableBuffer, seekTableBufferCopy);
-                        optZstdSeekTable = Optional.of(new ZstdSeekTable(frameCount, seekTableBufferCopy));
+                        optZstdSeekTable = Optional.of(new ZstdSeekTable(
+                                dictionaryUuid, frameCount, seekTableBufferCopy));
                     } else {
-                        optZstdSeekTable = Optional.of(new ZstdSeekTable(frameCount, seekTableBuffer));
+                        optZstdSeekTable = Optional.of(new ZstdSeekTable(
+                                dictionaryUuid, frameCount, seekTableBuffer));
                     }
                     LOGGER.debug(() -> LogUtil.message("parse() - frameCount: {}, seekTableFrameSize",
                             frameCount, seekTableFrameSize));
@@ -186,14 +206,53 @@ public class ZstdSeekTable {
         }
     }
 
+    private static UUID readDictionaryUuid(final ByteBuffer byteBuffer) {
+        final int dictUuidPosition = byteBuffer.limit() + ZstdConstants.DICTIONARY_UUID_RELATIVE_POSITION;
+        try {
+            // Frame count is an unsigned int. If we have so many frames that we overflow an int then we
+            // probably have bigger issues as all the ByteBuffer and byte[] api are int based for positions.
+            return UuidUtil.readUuid(byteBuffer, dictUuidPosition);
+        } catch (final Exception e) {
+            throw new InvalidSeekTableDataException(LogUtil.message(
+                    "Error reading dictionaryUuid from position {} - {}",
+                    dictUuidPosition, LogUtil.exceptionMessage(e)), e);
+        }
+    }
+
+    /**
+     * @return True if there are no compressed data frames/segments.
+     */
     public boolean isEmpty() {
         return frameCount == 0;
     }
 
+    /**
+     * @return The number of compressed data frames.
+     */
     public int getFrameCount() {
         return frameCount;
     }
 
+    /**
+     * @return The UUID of the dictionary that compressed the frames that this {@link ZstdSeekTable} describes.
+     * The dictionary is applicable to ALL frames.
+     */
+    public UUID getDictionaryUuid() {
+        return dictionaryUuid;
+    }
+
+    /**
+     * @return True if a dictionary was used to compress the data frames.
+     */
+    public boolean hasDictionary() {
+        return !ZstdConstants.ZERO_UUID.equals(dictionaryUuid);
+    }
+
+    /**
+     * The location of the frame/segment corresponding to the frameIdx.
+     *
+     * @param frameIdx The frame/segment index (zero based).
+     */
     public FrameLocation getFrameLocation(final int frameIdx) {
         if (frameIdx < 0 || frameIdx >= frameCount) {
             throw new IllegalArgumentException(LogUtil.message("Invalid frameIdx {} for frameCount: {}.",
@@ -272,6 +331,9 @@ public class ZstdSeekTable {
         }
     }
 
+    /**
+     * @return True if frameIdx is a valid index for a frame/segment.
+     */
     public boolean isValidFrame(final int frameIdx) {
         return frameIdx >= 0 && frameIdx < frameCount;
     }
@@ -282,6 +344,10 @@ public class ZstdSeekTable {
     private static int getEntryIdx(final int frameIdx) {
         return frameIdx * ZstdConstants.SEEK_TABLE_ENTRY_SIZE;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public enum FilterMode {
         INCLUDE,

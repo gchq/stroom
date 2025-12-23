@@ -132,6 +132,9 @@ class TestZstdSeekTable {
                 compressedData.length - halfFrameSize,
                 halfFrameSize);
 
+        assertThat(buffer.remaining())
+                .isLessThan(seekTableFrameSize);
+
         final InsufficientSeekTableDataException e = Assertions.catchThrowableOfType(
                 InsufficientSeekTableDataException.class,
                 () -> ZstdSeekTable.parse(buffer));
