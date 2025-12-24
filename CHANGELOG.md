@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#5318** : Fix Plan B session condensation.
+
 * Issue **#5288** : Fix config defaults for `ForwardHttpPostConfig` and `HttpClientConfiguration`.
 
 * Issue **#5281** : Fix behaviour of query expression IN condition.
