@@ -27,6 +27,7 @@ dependencies {
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-langchain:stroom-langchain-api')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-query-api')
@@ -48,6 +49,7 @@ dependencies {
 
     implementation libs.jackson.annotations
     implementation libs.guice
+    implementation libs.langchain4j
     implementation libs.slf4j.api
     implementation libs.vavr
     implementation libs.ws.rs.api

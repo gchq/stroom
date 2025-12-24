@@ -23,6 +23,7 @@ import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.lucene.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.index.shared.IndexShard;
+import stroom.langchain.api.OpenAIService;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.QueryKey;
@@ -71,6 +72,7 @@ class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final PathCreator pathCreator;
+    private final FieldFactory fieldFactory;
 
     private final QueryKey queryKey;
     private final Query query;
@@ -85,19 +87,23 @@ class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
                         final ExpressionOperator expression,
                         final WordListProvider dictionaryStore,
                         final DateTimeSettings dateTimeSettings,
-                        final QueryKey queryKey) {
+                        final QueryKey queryKey,
+                        final OpenAIService openAIService,
+                        final FieldFactory fieldFactory) {
         this.queryKey = queryKey;
         this.indexShardWriterCache = indexShardWriterCache;
         this.shardConfig = shardConfig;
         this.executor = executorProvider.get(THREAD_POOL);
         this.taskContextFactory = taskContextFactory;
         this.pathCreator = pathCreator;
+        this.fieldFactory = fieldFactory;
 
         final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
                 indexDocRef,
                 indexFieldCache,
                 dictionaryStore,
-                dateTimeSettings);
+                dateTimeSettings,
+                openAIService);
         final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery(expression);
         query = searchExpressionQuery.getQuery();
 
@@ -125,7 +131,7 @@ class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
                 taskContext.reset();
                 taskContext.info(() ->
                         "Searching shard " + shardNumber + " of " + shardTotal +
-                                " (id=" + indexShard.getId() + ")", LOGGER);
+                        " (id=" + indexShard.getId() + ")", LOGGER);
 
                 final IndexWriter indexWriter = getWriter(indexShard.getId());
 
@@ -295,7 +301,7 @@ class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
                     // If the field is not in fact stored then it will be null here.
                     if (indexableField != null) {
                         try {
-                            values[i] = FieldFactory.convertValue(storedField, indexableField);
+                            values[i] = fieldFactory.convertValue(storedField, indexableField);
                         } catch (final RuntimeException e) {
                             error(errorConsumer, e);
                         }

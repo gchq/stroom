@@ -53,6 +53,7 @@ class TestIndexShardIO extends StroomUnitTest {
     private static final int MAX_DOCS = 1000000000;
 
     private PathCreator pathCreator;
+    private final FieldFactory fieldFactory = new FieldFactory();
 
     public static void main(final String[] args) {
         for (final Object s : System.getProperties().keySet()) {
@@ -98,7 +99,7 @@ class TestIndexShardIO extends StroomUnitTest {
 
         for (int i = 1; i <= 10; i++) {
             final IndexShardWriter writer = new LuceneIndexShardWriter(
-                    null, new IndexConfig(), idx1, pathCreator, MAX_DOCS);
+                    null, new IndexConfig(), idx1, pathCreator, MAX_DOCS, fieldFactory);
             writer.flush();
             writer.addDocument(buildDocument(i));
             writer.flush();
@@ -129,7 +130,7 @@ class TestIndexShardIO extends StroomUnitTest {
 
         for (int i = 1; i <= 10; i++) {
             final IndexShardWriter writer = new LuceneIndexShardWriter(
-                    null, new IndexConfig(), idx1, pathCreator, MAX_DOCS);
+                    null, new IndexConfig(), idx1, pathCreator, MAX_DOCS, fieldFactory);
             writer.addDocument(buildDocument(i));
             writer.close();
             assertThat(writer.getDocumentCount()).isEqualTo(i);
@@ -307,7 +308,7 @@ class TestIndexShardIO extends StroomUnitTest {
         FileUtil.deleteDir(dir);
 
         final IndexShardWriter writer = new LuceneIndexShardWriter(
-                null, new IndexConfig(), idx1, pathCreator, MAX_DOCS);
+                null, new IndexConfig(), idx1, pathCreator, MAX_DOCS, fieldFactory);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
@@ -339,7 +340,7 @@ class TestIndexShardIO extends StroomUnitTest {
         FileUtil.deleteDir(dir);
 
         final IndexShardWriter writer = new LuceneIndexShardWriter(
-                null, new IndexConfig(), idx1, pathCreator, MAX_DOCS);
+                null, new IndexConfig(), idx1, pathCreator, MAX_DOCS, fieldFactory);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
@@ -368,7 +369,7 @@ class TestIndexShardIO extends StroomUnitTest {
         idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
 
         final IndexShardWriter writer = new LuceneIndexShardWriter(
-                null, new IndexConfig(), idx1, pathCreator, MAX_DOCS);
+                null, new IndexConfig(), idx1, pathCreator, MAX_DOCS, fieldFactory);
 
         Long lastSize = null;
 
