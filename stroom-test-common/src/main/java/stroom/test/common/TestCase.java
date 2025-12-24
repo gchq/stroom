@@ -36,38 +36,54 @@ public class TestCase<I, O> {
     private final O expectedOutput;
     private final Class<? extends Throwable> expectedThrowableType;
     private final String name;
+    private final String throwableMessageSubString;
 
     TestCase(final I input,
              final O expectedOutput,
              final Class<? extends Throwable> expectedThrowableType,
-             final String name) {
+             final String name,
+             final String throwableMessageSubString) {
 
         this.input = input;
         this.expectedOutput = expectedOutput;
         this.expectedThrowableType = expectedThrowableType;
         this.name = name;
+        this.throwableMessageSubString = throwableMessageSubString;
     }
 
     public static <I, O> TestCase<I, O> of(final I input,
                                            final O expectedOutput) {
-        return new TestCase<>(input, expectedOutput, null, null);
+        return new TestCase<>(input, expectedOutput, null, null, null);
     }
 
     public static <I, O> TestCase<I, O> of(final String name,
                                            final I input,
                                            final O expectedOutput) {
-        return new TestCase<>(input, expectedOutput, null, name);
+        return new TestCase<>(input, expectedOutput, null, name, null);
     }
 
+//    public static <I> TestCase<I, ?> throwing(final I input,
+//                                              final Class<? extends Throwable> expectedThrowable) {
+//        return new TestCase<>(input, null, expectedThrowable, null, null);
+//    }
+
     public static <I> TestCase<I, ?> throwing(final I input,
-                                              final Class<? extends Throwable> expectedThrowable) {
-        return new TestCase<>(input, null, expectedThrowable, null);
+                                              final Class<? extends Throwable> expectedThrowable,
+                                              final String throwableMessageSubString) {
+        return new TestCase<>(input, null, expectedThrowable, null, throwableMessageSubString);
     }
+
+//    public static <I> TestCase<I, ?> throwing(final String name,
+//                                              final I input,
+//                                              final Class<? extends Throwable> expectedThrowable) {
+//        return new TestCase<>(input, null, expectedThrowable, name, null);
+//    }
 
     public static <I> TestCase<I, ?> throwing(final String name,
                                               final I input,
-                                              final Class<? extends Throwable> expectedThrowable) {
-        return new TestCase<>(input, null, expectedThrowable, name);
+                                              final Class<? extends Throwable> expectedThrowable,
+                                              final String throwableMessageSubString) {
+        return new TestCase<>(input, null, expectedThrowable, name, throwableMessageSubString);
     }
 
     public I getInput() {
@@ -84,6 +100,10 @@ public class TestCase<I, O> {
 
     public boolean isExpectedToThrow() {
         return expectedThrowableType != null;
+    }
+
+    public String getThrowableMessageSubString() {
+        return throwableMessageSubString;
     }
 
     public String getName() {
@@ -107,9 +127,9 @@ public class TestCase<I, O> {
     @Override
     public String toString() {
         return "TestCase{" +
-                "input=" + input +
-                ", expectedOutput=" + expectedOutput +
-                ", name='" + name + '\'' +
-                '}';
+               "input=" + input +
+               ", expectedOutput=" + expectedOutput +
+               ", name='" + name + '\'' +
+               '}';
     }
 }

@@ -62,6 +62,10 @@ public class TestOutcome<I, O> {
         return testCase.getExpectedThrowableType() != null;
     }
 
+    public String getThrowableMessageSubString() {
+        return testCase.getThrowableMessageSubString();
+    }
+
     public String buildFailMessage() {
         return buildFailMessage(this);
     }
@@ -77,9 +81,9 @@ public class TestOutcome<I, O> {
     @Override
     public String toString() {
         return "TestOutcome{" +
-                "testCase=" + testCase +
-                ", actualOutput=" + actualOutput +
-                ", throwable=" + actualThrowable +
-                '}';
+               "testCase=" + testCase +
+               ", actualOutput=" + actualOutput +
+               ", throwable=" + actualThrowable +
+               '}';
     }
 }

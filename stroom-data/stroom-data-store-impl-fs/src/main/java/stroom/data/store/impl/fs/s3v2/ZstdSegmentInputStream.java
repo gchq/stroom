@@ -19,7 +19,6 @@ package stroom.data.store.impl.fs.s3v2;
 
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.impl.fs.s3v2.ZstdSeekTable.FilterMode;
-import stroom.util.io.SeekableInputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -33,7 +32,6 @@ import it.unimi.dsi.fastutil.ints.IntSortedSet;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
@@ -53,24 +51,18 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZstdSegmentInputStream.class);
 
     private final byte[] singleByte = new byte[1];
-    //    private final SeekableInputStream seekableInputStream;
     private final ZstdSeekTable zstdSeekTable;
     private final ZstdFrameSupplier zstdFrameSupplier;
     private final ZstdDictionary zstdDictionary;
     private final ZstdDictDecompress zstdDictDecompress;
     private final HeapBufferPool heapBufferPool;
+    private final AtomicBoolean startedReading = new AtomicBoolean(false);
 
     private IntSortedSet includedSegments;
     private boolean includeAllSegments = true;
-    private AtomicBoolean startedReading = new AtomicBoolean(false);
     private FrameLocation currentFrameLocation;
-    private long positionInCurrentFrame;
-    private long remainingInCurrentFrame;
-
     private IntBidirectionalIterator includedSegmentsIterator;
-    //    private InputStream currentCompressedFrameStream;
     private InputStream currentZstdInputStream;
-    //    private ZstdDecompressCtx zstdDecompressCtx = null;
     private boolean complete = false;
     private boolean currentFrameAllRead = false;
     private int currentFrameReadCount = 0;
@@ -79,7 +71,6 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
                                   final ZstdFrameSupplier zstdFrameSupplier,
                                   final ZstdDictionary zstdDictionary,
                                   final HeapBufferPool heapBufferPool) {
-//        this.seekableInputStream = compressedInputStream;
         this.zstdSeekTable = Objects.requireNonNull(zstdSeekTable);
         this.zstdFrameSupplier = zstdFrameSupplier;
         this.zstdDictionary = zstdDictionary;
@@ -226,13 +217,6 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
             throw new IllegalStateException("Expecting currentFrameLocation to be null at this point");
         }
 
-//        zstdDecompressCtx = new ZstdDecompressCtx();
-//        NullSafe.consume(zstdDictionary, dict -> {
-//            LOGGER.debug("initialiseForReading() - Loading dictionary {}", dict);
-//            zstdDecompressCtx.loadDict(dict.getDictionaryBytes());
-//        });
-
-
         // Move to the first frame in our iterator
         return advanceFrame();
     }
@@ -247,12 +231,10 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
             Objects.requireNonNull(currentFrameLocation, () ->
                     "null current frame location for nexFrameIdx: " + nextFrameIdx);
 
-
             // Will get closed on close()
             final InputStream compressedFrameInputStream = zstdFrameSupplier.getFrameInputStream(currentFrameLocation);
             Objects.requireNonNull(compressedFrameInputStream, () -> LogUtil.message(
                     "null compressedFrameInputStream for FrameLocation: {}", currentFrameLocation));
-//            this.currentCompressedFrameStream = zstdFrameSupplier.getFrameInputStream(currentFrameLocation);
 
             // Initialise the ZstdInputStream to decompress the frame
             final ZstdInputStream zstdInputStream = new ZstdInputStream(compressedFrameInputStream, heapBufferPool);
@@ -264,18 +246,15 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
             LOGGER.debug("advanceFrame() - nextFrameIdx: {}, currentFrameLocation: {}",
                     nextFrameIdx, currentFrameLocation);
 
-            remainingInCurrentFrame = currentFrameLocation.compressedSize();
-            LOGGER.debug("advanceFrame() - Advanced to: {}, remainingInCurrentFrame: {}",
-                    currentFrameLocation, remainingInCurrentFrame);
+//            remainingInCurrentFrame = currentFrameLocation.compressedSize();
+            LOGGER.debug("advanceFrame() - Advanced to: {}", currentFrameLocation);
             didAdvance = true;
         } else {
             LOGGER.debug("advanceFrame() - No more frames, currentFrameLocation: {}", currentFrameLocation);
             currentFrameLocation = null;
-            remainingInCurrentFrame = 0;
             didAdvance = false;
             complete = true;
         }
-        positionInCurrentFrame = 0;
         return didAdvance;
     }
 
@@ -304,55 +283,6 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
         }
         if (startedReading.get()) {
             throw new RuntimeException("Cannot include a new segment as reading is in progress");
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    @FunctionalInterface
-    public interface ZstdFrameSupplier {
-
-        // TODO considering also passing in a list of FrameLocations so that the ZstdFrameSupplier can
-        //  asynchronously pre-fetch the frames in the list so that they are immediately available on
-        //  the next call to getFrameInputStream with one of those FrameLocations. This is to combat
-        //  the potential latency in S3 GETs.
-        InputStream getFrameInputStream(final FrameLocation frameLocation) throws IOException;
-
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class InternalSeekableInputStream extends InputStream implements SeekableInputStream {
-
-        private final SeekableInputStream compressedInputStream;
-
-        private InternalSeekableInputStream(final SeekableInputStream compressedInputStream,
-                                            final List<FrameLocation> frameLocations) {
-            this.compressedInputStream = compressedInputStream;
-        }
-
-        @Override
-        public int read() throws IOException {
-            return 0;
-        }
-
-        @Override
-        public long getSize() throws IOException {
-            return compressedInputStream.getSize();
-        }
-
-        @Override
-        public long getPosition() throws IOException {
-            return 0;
-        }
-
-        @Override
-        public void seek(final long pos) throws IOException {
-
         }
     }
 }

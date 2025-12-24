@@ -38,7 +38,13 @@ class S3StreamTypeExtensions {
 
     public static final String ZSTD_EXTENSION = "zst";
 
+    /**
+     * streamTypeName => extension (without '.')
+     */
     private static final Map<String, String> EXTENSION_MAP = new HashMap<>();
+    /**
+     * extension (without '.') => streamTypeName
+     */
     private static final Map<String, String> CHILD_TYPES_REVERSE_MAP = new HashMap<>();
 
     static {
@@ -48,16 +54,16 @@ class S3StreamTypeExtensions {
         putEntry(StreamTypeNames.CONTEXT, "ctx");
     }
 
-    private static void putEntry(final String streamTypeName, final String extension) {
-        EXTENSION_MAP.put(streamTypeName, extension);
-        CHILD_TYPES_REVERSE_MAP.put(extension, streamTypeName);
-    }
-
     private final Provider<FsVolumeConfig> fsVolumeConfigProvider;
 
     @Inject
     S3StreamTypeExtensions(final Provider<FsVolumeConfig> fsVolumeConfigProvider) {
         this.fsVolumeConfigProvider = fsVolumeConfigProvider;
+    }
+
+    private static void putEntry(final String streamTypeName, final String extension) {
+        EXTENSION_MAP.put(streamTypeName, extension);
+        CHILD_TYPES_REVERSE_MAP.put(extension, streamTypeName);
     }
 
     /**

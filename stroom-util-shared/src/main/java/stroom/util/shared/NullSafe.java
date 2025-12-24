@@ -1782,6 +1782,44 @@ public class NullSafe {
     }
 
     /**
+     * Will throw a {@link RuntimeException} if value is null or empty.
+     */
+    public static String requireNonEmptyString(final String value) {
+        return requireNonEmptyString(value, null);
+    }
+
+    /**
+     * Will throw a {@link RuntimeException} if value is null or empty.
+     */
+    public static String requireNonEmptyString(final String value, final Supplier<String> messageSupplier) {
+        if (isEmptyString(value)) {
+            final String msg = NullSafe.getOrElse(messageSupplier, Supplier::get, "Non-empty string required");
+            throw new RuntimeException(msg);
+        } else {
+            return value;
+        }
+    }
+
+    /**
+     * Will throw a {@link RuntimeException} if value is null, empty or only contains whitespace.
+     */
+    public static String requireNonBlankString(final String value) {
+        return requireNonBlankString(value, null);
+    }
+
+    /**
+     * Will throw a {@link RuntimeException} if value is null, empty or only contains whitespace.
+     */
+    public static String requireNonBlankString(final String value, final Supplier<String> messageSupplier) {
+        if (isBlankString(value)) {
+            final String msg = NullSafe.getOrElse(messageSupplier, Supplier::get, "Non-blank string required");
+            throw new RuntimeException(msg);
+        } else {
+            return value;
+        }
+    }
+
+    /**
      * If predicate is non-null return it, else return a Predicate that always returns defaultOutcome.
      */
     @SuppressWarnings("unchecked")

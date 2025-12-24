@@ -27,6 +27,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import net.datafaker.Faker;
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.Assertions;
+import org.assertj.core.data.Percentage;
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 
@@ -69,12 +70,15 @@ class TestZstdSeekTable {
         Assertions.assertThatThrownBy(() -> zstdSeekTable.getFrameLocation(ITERATIONS + 1))
                 .isInstanceOf(RuntimeException.class);
 
+        long compressedTotal = 0;
         for (int i = 0; i < ITERATIONS; i++) {
             final FrameLocation frameLocation = zstdSeekTable.getFrameLocation(i);
             LOGGER.debug("frameLocation: {}", frameLocation);
 
             assertThat(frameLocation)
                     .isNotNull();
+
+            compressedTotal += frameLocation.compressedSize();
 //            final ByteBuffer frameBuffer = ByteBuffer.wrap(
 //                    compressedBytes,
 //                    (int) frameLocation.position(),
@@ -103,6 +107,16 @@ class TestZstdSeekTable {
                 LOGGER.debug("output: {}", output);
             }
         }
+
+        final IntSet includeSet = IntSet.of(2, 4, 7);
+        final double percentageOfCompressed = zstdSeekTable.getPercentageOfCompressed(includeSet);
+        final long filtered = includeSet.intStream()
+                .mapToLong(i -> zstdSeekTable.getFrameLocation(i).compressedSize())
+                .sum();
+
+        final double percentageOfCompressed2 = filtered / (double) compressedTotal * 100;
+        Assertions.assertThat(percentageOfCompressed)
+                .isCloseTo(percentageOfCompressed2, Percentage.withPercentage(3));
     }
 
     @Test

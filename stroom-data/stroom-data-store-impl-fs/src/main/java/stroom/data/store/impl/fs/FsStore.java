@@ -128,7 +128,8 @@ class FsStore implements Store, AttributeMapFactory {
     private @NonNull Target createFsTarget(final DataVolume dataVolume, final Meta meta) {
         final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
         final String streamType = meta.getTypeName();
-        final FsTarget fsTarget = FsTarget.create(metaService,
+        final FsTarget fsTarget = FsTarget.create(
+                metaService,
                 fileSystemStreamPathHelper,
                 meta,
                 volumePath,

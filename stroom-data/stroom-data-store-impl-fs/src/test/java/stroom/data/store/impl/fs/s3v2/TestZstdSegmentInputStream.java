@@ -18,7 +18,6 @@ package stroom.data.store.impl.fs.s3v2;
 
 import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.data.store.api.SegmentInputStream;
-import stroom.data.store.impl.fs.s3v2.ZstdSegmentInputStream.ZstdFrameSupplier;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -124,12 +123,7 @@ class TestZstdSegmentInputStream {
         assertThat(zstdSeekTable.getFrameCount())
                 .isEqualTo(iterations);
 
-        final ZstdFrameSupplier zstdFrameSupplier = frameLocation ->
-                new ByteArrayInputStream(
-                        compressedBytes,
-                        Math.toIntExact(frameLocation.position()),
-                        Math.toIntExact(frameLocation.compressedSize()));
-
+        final ZstdFrameSupplier zstdFrameSupplier = new ByteArrayFrameSupplier(compressedBytes);
         final HeapBufferPool heapBufferPool = new HeapBufferPool(ByteBufferPoolConfig::new);
         final ZstdSegmentInputStream zstdSegmentInputStream = new ZstdSegmentInputStream(
                 zstdSeekTable,
@@ -192,5 +186,31 @@ class TestZstdSegmentInputStream {
         final byte[] bytes = byteArrayOutputStream.toByteArray();
         LOGGER.debug("bytes.length: {}", bytes.length);
         return bytes;
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class ByteArrayFrameSupplier implements ZstdFrameSupplier {
+
+        private final byte[] compressedBytes;
+
+        private ByteArrayFrameSupplier(final byte[] compressedBytes) {
+            this.compressedBytes = compressedBytes;
+        }
+
+        @Override
+        public InputStream getFrameInputStream(final FrameLocation frameLocation) throws IOException {
+            return new ByteArrayInputStream(
+                    compressedBytes,
+                    Math.toIntExact(frameLocation.position()),
+                    Math.toIntExact(frameLocation.compressedSize()));
+        }
+
+        @Override
+        public void close() throws Exception {
+            // no-op
+        }
     }
 }

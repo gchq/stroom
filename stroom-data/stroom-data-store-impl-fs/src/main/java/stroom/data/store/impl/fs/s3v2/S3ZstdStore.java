@@ -19,6 +19,7 @@ package stroom.data.store.impl.fs.s3v2;
 import stroom.aws.s3.impl.S3FileExtensions;
 import stroom.aws.s3.impl.S3Manager;
 import stroom.cache.api.TemplateCache;
+import stroom.data.store.api.Source;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
@@ -55,6 +56,8 @@ public class S3ZstdStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ZstdStore.class);
 
+    public static final String KEY_NAME_TEMPLATE_BASE = "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}";
+
     private static final int MAX_CACHED_ITEMS = 10;
 
     private final TemplateCache templateCache;
@@ -71,7 +74,7 @@ public class S3ZstdStore {
         this.metaService = metaService;
 
         try {
-            tempDir = tempDirProvider.get().resolve("s3_cache");
+            tempDir = tempDirProvider.get().resolve("s3v2_cache");
             Files.createDirectories(tempDir);
             FileUtil.deleteContents(tempDir);
         } catch (final IOException e) {
@@ -79,7 +82,7 @@ public class S3ZstdStore {
         }
     }
 
-    public S3ZstdSource getSource(final DataVolume dataVolume, final Meta meta) {
+    public Source getSource(final DataVolume dataVolume, final Meta meta) {
         final TrackedSource trackedSource = cache.compute(meta.getId(), (k, v) -> {
             if (v == null) {
                 final Path tempPath = createTempPath(meta.getId());
@@ -89,8 +92,9 @@ public class S3ZstdStore {
                     try {
                         zipFile = tempPath.resolve(S3FileExtensions.ZIP_FILE_NAME);
                         // Download the zip from S3.
-                        final S3Manager s3Manager =
-                                new S3Manager(templateCache, dataVolume.getVolume().getS3ClientConfig());
+                        final S3Manager s3Manager = new S3Manager(
+                                templateCache,
+                                dataVolume.getVolume().getS3ClientConfig());
                         s3Manager.download(meta, zipFile);
 
                         ZipUtil.unzip(zipFile, tempPath);

@@ -433,7 +433,7 @@ public class S3Manager {
     }
 
     private String createMetaKey(final String key, final int part) {
-        return part + "-" + cleanS3MetaDataKey(key);
+        return META_METADATA_KEY_PREFIX + part + "-" + cleanS3MetaDataKey(key);
     }
 
     private String cleanS3MetaDataKey(final String metaKey) {
@@ -468,6 +468,8 @@ public class S3Manager {
                                     final Meta meta,
                                     final AttributeMap attributeMap,
                                     final Path source) {
+        NullSafe.requireNonBlankString(keyNamePattern, () -> "keyNamePattern must not be blank");
+        NullSafe.requireNonBlankString(bucketNamePattern, () -> "bucketNamePattern must not be blank");
         final String bucketName = createBucketName(bucketNamePattern, meta);
         final String key = createKey(keyNamePattern, meta);
 
@@ -607,10 +609,26 @@ public class S3Manager {
     public ResponseInputStream<GetObjectResponse> getByteRange(final Meta meta,
                                                                final String childStreamType,
                                                                final Range<Long> byteRange) {
+        return getByteRange(meta, childStreamType, getKeyNamePattern(), byteRange);
+    }
+
+    /**
+     * Get part of an S3 object, defined by a contiguous byte range.
+     *
+     * @param meta            The {@link Meta} the object belongs to.
+     * @param childStreamType The child stream type, or null if this is not a child stream.
+     * @param byteRange       The range of bytes to fetch.
+     * @return The repose containing the byte range.
+     */
+    public ResponseInputStream<GetObjectResponse> getByteRange(final Meta meta,
+                                                               final String childStreamType,
+                                                               final String keyNamePattern,
+                                                               final Range<Long> byteRange) {
         Objects.requireNonNull(meta);
         Objects.requireNonNull(byteRange);
+        NullSafe.requireNonBlankString(keyNamePattern, () -> "keyNamePattern must not be blank");
         final String bucketName = createBucketName(getBucketNamePattern(), meta);
-        final String key = createKey(getKeyNamePattern(), meta, childStreamType);
+        final String key = createKey(keyNamePattern, meta, childStreamType);
         final GetObjectRequest request = GetObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
@@ -620,17 +638,28 @@ public class S3Manager {
         logRequest("GET (range) : ", bucketName, key, byteRange, request);
 
         try (final S3Client s3Client = createClient(s3ClientConfig)) {
-            return s3Client.getObject(request);
+            return LOGGER.logDurationIfDebugEnabled(
+                    () -> s3Client.getObject(request),
+                    () -> LogUtil.message("getByteRange() - bucket: '{}', key: '{}', byteRange: '{}'",
+                            bucketName, key, byteRange));
         } catch (final RuntimeException e) {
             error("Error getting: ", bucketName, key, byteRange, e);
             throw e;
         }
     }
 
-    public long getFileSize(final Meta meta, final String childStreamType) {
+    public long getFileSize(final Meta meta,
+                            final String childStreamType) {
+        return getFileSize(meta, childStreamType, getKeyNamePattern());
+    }
+
+    public long getFileSize(final Meta meta,
+                            final String childStreamType,
+                            final String keyNamePattern) {
         Objects.requireNonNull(meta);
+        NullSafe.requireNonBlankString(keyNamePattern, () -> "keyNamePattern must not be blank");
         final String bucketName = createBucketName(getBucketNamePattern(), meta);
-        final String key = createKey(getKeyNamePattern(), meta);
+        final String key = createKey(keyNamePattern, meta);
         final HeadObjectRequest request = HeadObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
@@ -639,7 +668,10 @@ public class S3Manager {
         logRequest("HEAD: ", bucketName, key, request);
 
         try (final S3Client s3Client = createClient(s3ClientConfig)) {
-            final HeadObjectResponse headObjectResponse = s3Client.headObject(request);
+            final HeadObjectResponse headObjectResponse = LOGGER.logDurationIfDebugEnabled(
+                    () -> s3Client.headObject(request),
+                    () -> LogUtil.message("getFileSize() - bucket: '{}', key: '{}'",
+                            bucketName, key));
             return Objects.requireNonNullElse(headObjectResponse.contentLength(), 0L);
         } catch (final RuntimeException e) {
             error("Error getting file size: ", bucketName, key, e);
@@ -659,7 +691,11 @@ public class S3Manager {
         logRequest("HEAD: ", bucketName, key, request);
 
         try (final S3Client s3Client = createClient(s3ClientConfig)) {
-            final HeadObjectResponse headObjectResponse = s3Client.headObject(request);
+            final HeadObjectResponse headObjectResponse = LOGGER.logDurationIfDebugEnabled(
+                    () -> s3Client.headObject(request),
+                    () -> LogUtil.message("getObjectInfo() - bucket: '{}', key: '{}'",
+                            bucketName, key));
+
             final Map<String, String> metadata = headObjectResponse.metadata();
             final S3ObjectInfo s3ObjectInfo;
 
@@ -792,8 +828,19 @@ public class S3Manager {
 
     public GetObjectResponse download(final Meta meta,
                                       final Path dest) {
+        return download(meta, null, getKeyNamePattern(), dest, true);
+    }
+
+    public GetObjectResponse download(final Meta meta,
+                                      final String childStreamType,
+                                      final String keyNamePattern,
+                                      final Path dest,
+                                      final boolean allowAsync) {
+        Objects.requireNonNull(meta);
+        NullSafe.requireNonBlankString(keyNamePattern, () -> "keyNamePattern must not be blank");
+        Objects.requireNonNull(dest);
         final String bucketName = createBucketName(getBucketNamePattern(), meta);
-        final String key = createKey(getKeyNamePattern(), meta);
+        final String key = createKey(keyNamePattern, meta);
         final GetObjectRequest request = GetObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
@@ -801,7 +848,7 @@ public class S3Manager {
         logRequest("Downloading: ", bucketName, key, request);
 
         final GetObjectResponse response;
-        if (s3ClientConfig.isAsync()) {
+        if (allowAsync && s3ClientConfig.isAsync()) {
             try (final S3AsyncClient s3AsyncClient = createAsyncClient(s3ClientConfig)) {
                 if (s3ClientConfig.isMultipart()) {
                     try (final S3TransferManager transferManager =
@@ -834,7 +881,10 @@ public class S3Manager {
             }
         } else {
             try (final S3Client s3Client = createClient(s3ClientConfig)) {
-                response = s3Client.getObject(request, dest);
+                response = LOGGER.logDurationIfDebugEnabled(
+                        () -> s3Client.getObject(request, dest),
+                        () -> LogUtil.message("Download() - bucket: '{}', key: '{}', dest: '{}'",
+                                bucketName, key, dest));
             } catch (final RuntimeException e) {
                 error("Error downloading: ", bucketName, key, e);
                 throw e;
@@ -1031,7 +1081,7 @@ public class S3Manager {
     // --------------------------------------------------------------------------------
 
 
-    record S3ObjectInfo(
+    public record S3ObjectInfo(
             String bucketName,
             String key,
             List<AttributeMap> meta,

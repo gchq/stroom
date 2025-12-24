@@ -298,6 +298,25 @@ public class ZstdSeekTable {
     }
 
     /**
+     * For a given frameIdxSet, return the uncompressed size of the frames included
+     * in the filter expressed as a percentage of the total uncompressed size.
+     *
+     * @param frameIdxSet The frames to include in the calculation.
+     */
+    public double getPercentageOfCompressed(final IntSet frameIdxSet) {
+        if (NullSafe.isEmptyCollection(frameIdxSet)) {
+            return 0;
+        } else {
+            final long filtered = frameIdxSet.intStream()
+                    .mapToLong(idx -> getFrameLocation(idx).compressedSize())
+                    .sum();
+            final int lastIdx = getEntryIdx(frameCount - 1);
+            final long total = ZstdSegmentUtil.getLongLE(seekTableEntriesBuffer, lastIdx);
+            return filtered / (double) total * 100;
+        }
+    }
+
+    /**
      * @param frameIdxSet The set of frame indexes to include/exclude depending on filterMode.
      * @param filterMode  The type of filtering to do
      * @return The total size in bytes of all the compressed frames once uncompressed.

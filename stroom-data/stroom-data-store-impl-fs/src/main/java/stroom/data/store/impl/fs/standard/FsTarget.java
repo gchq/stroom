@@ -51,7 +51,13 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
 
     private final MetaService metaService;
     private final FsPathHelper fileSystemStreamPathHelper;
+    /**
+     * streamTypeName => {@link FsTarget}
+     */
     private final Map<String, FsTarget> childMap = new HashMap<>();
+    /**
+     * streamTypeName => {@link SegmentOutputStreamProvider}
+     */
     private final Map<String, SegmentOutputStreamProvider> outputStreamMap = new HashMap<>(10);
     private final Path volumePath;
     private final String streamType;

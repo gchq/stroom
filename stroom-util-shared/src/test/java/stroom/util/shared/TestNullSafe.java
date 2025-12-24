@@ -2386,6 +2386,94 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testRequireNonEmptyString1() {
+        final String defaultMsg = "Non-empty string required";
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withSingleArgTestFunction(NullSafe::requireNonEmptyString)
+                .withSimpleEqualityAssertion()
+                .addCase(" ", " ")
+                .addCase("foo", "foo")
+                .addThrowsCaseContaining(null, RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining("", RuntimeException.class, defaultMsg)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRequireNonEmptyString2() {
+        final String defaultMsg = "Non-empty string required";
+        final String msg = "Bad!";
+        final Supplier<String> nullMsgSupplier = () -> null;
+        final Supplier<String> msgSupplier = () -> msg;
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<String, Supplier<String>>>() {
+                })
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> NullSafe.requireNonEmptyString(
+                        testCase.getInput()._1(),
+                        testCase.getInput()._2()))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(" ", msgSupplier), " ")
+                .addCase(Tuple.of("foo", msgSupplier), "foo")
+                .addCase(Tuple.of("foo", null), "foo")
+                .addCase(Tuple.of("foo", nullMsgSupplier), "foo")
+                .addThrowsCaseContaining(Tuple.of(null, null), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of(null, nullMsgSupplier), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of(null, msgSupplier), RuntimeException.class, msg)
+                .addThrowsCaseContaining(Tuple.of("", null), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of("", nullMsgSupplier), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of("", msgSupplier), RuntimeException.class, msg)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRequireNonBlankString1() {
+        final String defaultMsg = "Non-blank string required";
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withSingleArgTestFunction(NullSafe::requireNonBlankString)
+                .withSimpleEqualityAssertion()
+                .addCase("foo", "foo")
+                .addThrowsCaseContaining(null, RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining("", RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(" ", RuntimeException.class, defaultMsg)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRequireNonBlankString2() {
+        final String defaultMsg = "Non-blank string required";
+        final String msg = "Bad!";
+        final Supplier<String> nullMsgSupplier = () -> null;
+        final Supplier<String> msgSupplier = () -> msg;
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Tuple2<String, Supplier<String>>>() {
+                })
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> NullSafe.requireNonBlankString(
+                        testCase.getInput()._1(),
+                        testCase.getInput()._2()))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of("foo", msgSupplier), "foo")
+                .addCase(Tuple.of("foo", null), "foo")
+                .addCase(Tuple.of("foo", nullMsgSupplier), "foo")
+                .addThrowsCaseContaining(Tuple.of(null, null), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of(null, nullMsgSupplier), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of(null, msgSupplier), RuntimeException.class, msg)
+                .addThrowsCaseContaining(Tuple.of("", null), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of("", nullMsgSupplier), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of("", msgSupplier), RuntimeException.class, msg)
+                .addThrowsCaseContaining(Tuple.of(" ", null), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of(" ", nullMsgSupplier), RuntimeException.class, defaultMsg)
+                .addThrowsCaseContaining(Tuple.of(" ", msgSupplier), RuntimeException.class, msg)
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testPredicate() {
         final String valToTest = "foo";
         return TestUtil.buildDynamicTestStream()

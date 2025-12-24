@@ -19,6 +19,7 @@ package stroom.data.store.impl.fs.s3v1;
 import stroom.aws.s3.impl.S3FileExtensions;
 import stroom.aws.s3.impl.S3Manager;
 import stroom.cache.api.TemplateCache;
+import stroom.data.store.api.Source;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
@@ -79,7 +80,7 @@ public class S3Store {
         }
     }
 
-    public S3Source getSource(final DataVolume dataVolume, final Meta meta) {
+    public Source getSource(final DataVolume dataVolume, final Meta meta) {
         final TrackedSource trackedSource = cache.compute(meta.getId(), (k, v) -> {
             if (v == null) {
                 final Path tempPath = createTempPath(meta.getId());
