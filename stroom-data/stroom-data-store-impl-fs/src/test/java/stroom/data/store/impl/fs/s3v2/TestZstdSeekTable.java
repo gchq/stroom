@@ -115,7 +115,7 @@ class TestZstdSeekTable {
                 .sum();
 
         final double percentageOfCompressed2 = filtered / (double) compressedTotal * 100;
-        Assertions.assertThat(percentageOfCompressed)
+        assertThat(percentageOfCompressed)
                 .isCloseTo(percentageOfCompressed2, Percentage.withPercentage(3));
     }
 
@@ -171,23 +171,52 @@ class TestZstdSeekTable {
 
             // Don't write any data to the stream
         }
+        // No data written at all, so no Zstd frame headers or seek table
         final byte[] compressedBytes = byteArrayOutputStream.toByteArray();
+        LOGGER.debug("compressedBytes.length: {}", compressedBytes.length);
+        assertThat(compressedBytes)
+                .hasSize(0);
 
         final Optional<ZstdSeekTable> zstdSeekTable = ZstdSeekTable.parse(ByteBuffer.wrap(compressedBytes));
         assertThat(zstdSeekTable)
                 .isEmpty();
-//
-//        assertThat(zstdSeekTable.getFrameCount())
-//                .isZero();
-//        assertThat(zstdSeekTable.isEmpty())
-//                .isTrue();
-//        assertThat(zstdSeekTable)
-//                .isSameAs(ZstdSeekTable.EMPTY);
-//
-//        Assertions.assertThatThrownBy(() -> zstdSeekTable.getFrameLocation(-1))
-//                .isInstanceOf(RuntimeException.class);
-//        Assertions.assertThatThrownBy(() -> zstdSeekTable.getFrameLocation(0))
-//                .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void testAllEmptySegments() throws IOException {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+        //noinspection EmptyTryBlock
+        try (final SegmentOutputStream ignored = new ZstdSegmentOutputStream(
+                byteArrayOutputStream,
+                null,
+                COMPRESSION_LEVEL)) {
+
+            // Don't write any data to the stream, but mark 3 empty segment boundaries,
+            // so 4 segments
+            ignored.addSegment();
+            ignored.addSegment();
+            ignored.addSegment();
+
+        }
+        // No data written at all, so no Zstd frame headers or seek table
+        final byte[] compressedBytes = byteArrayOutputStream.toByteArray();
+        LOGGER.debug("compressedBytes.length: {}", compressedBytes.length);
+        assertThat(compressedBytes.length)
+                .isGreaterThan(0);
+
+        final ZstdSeekTable zstdSeekTable = ZstdSeekTable.parse(ByteBuffer.wrap(compressedBytes))
+                .orElseThrow();
+        assertThat(zstdSeekTable.getFrameCount())
+                .isEqualTo(4);
+
+        for (int i = 0; i < 4; i++) {
+            final FrameLocation frameLocation = zstdSeekTable.getFrameLocation(i);
+            assertThat(frameLocation.compressedSize())
+                    .isEqualTo(0);
+            assertThat(frameLocation.originalSize())
+                    .isEqualTo(0);
+        }
     }
 
     @Test

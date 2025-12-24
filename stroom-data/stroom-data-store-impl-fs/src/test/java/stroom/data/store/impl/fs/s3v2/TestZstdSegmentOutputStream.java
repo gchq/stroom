@@ -97,9 +97,7 @@ class TestZstdSegmentOutputStream {
                 LOGGER.debug("i: {}, len: {}", i, dataBytes.get(i).length);
                 final String expected = data.get(i);
                 final String actual = getEvent(
-                        zstdSeekTable, compressedBuffer, i, zstdDecompressCtx, decompressedBuffer);
-                assertThat(actual)
-                        .isEqualTo(expected);
+                        zstdSeekTable, compressedBuffer, i, zstdDecompressCtx, decompressedBuffer, data, dataBytes);
             }
         }
     }
@@ -137,7 +135,199 @@ class TestZstdSegmentOutputStream {
                         .contains(line);
             }
 
+            final ByteBuffer compressedBuffer = ByteBuffer.allocateDirect(compressedBytes.length);
+            ByteBufferUtils.copy(ByteBuffer.wrap(compressedBytes), compressedBuffer);
+
+            assertThat(ZstdSegmentUtil.isSeekable(compressedBuffer))
+                    .isTrue();
+
+            final Optional<ZstdSeekTable> optZstdSeekTable = ZstdSeekTable.parse(compressedBuffer);
+            assertThat(optZstdSeekTable)
+                    .isPresent();
+            final ZstdSeekTable zstdSeekTable = optZstdSeekTable.get();
+            assertThat(zstdSeekTable.getFrameCount())
+                    .isEqualTo(1);
+        }
+    }
+
+    @Test
+    void test_someEmptySegments() throws IOException {
+        final int iterations = 10;
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        final List<String> data = new ArrayList<>(iterations);
+        final List<byte[]> dataBytes = new ArrayList<>(iterations);
+        for (int i = 0; i < iterations; i++) {
+            final String str = "frame-" + i;
+            data.add(str);
+            dataBytes.add(str.getBytes(StandardCharsets.UTF_8));
+        }
+
+        try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
+                byteArrayOutputStream,
+                null,
+                COMPRESSION_LEVEL)) {
+
+            for (int i = 0; i < dataBytes.size(); i++) {
+                final byte[] bytes = dataBytes.get(i);
+                // Write the segments regardless
+                if (i != 0) {
+                    segmentOutputStream.addSegment();
+                }
+
+                if (i % 3 == 0) {
+                    LOGGER.debug("Writing data {}", i);
+                    segmentOutputStream.write(bytes);
+                }
+            }
+        }
+        final byte[] compressedBytes = byteArrayOutputStream.toByteArray();
+
+        try (final ZstdDecompressCtx zstdDecompressCtx = new ZstdDecompressCtx()) {
+            // Make sure we can decompress the whole thing with no knowledge of the frames
+            final int originalSize = data.stream()
+                    .mapToInt(str -> str.getBytes(StandardCharsets.UTF_8).length)
+                    .sum();
+            final byte[] decompressed = zstdDecompressCtx.decompress(compressedBytes, originalSize);
+            final String decompressedStr = new String(decompressed, StandardCharsets.UTF_8);
+
+            for (int i = 0; i < data.size(); i++) {
+                if (i % 3 == 0) {
+                    final String line = data.get(i);
+                    assertThat(decompressedStr)
+                            .contains(line);
+                }
+            }
+            assertThat(decompressedStr)
+                    .isEqualTo("frame-0frame-3frame-6frame-9");
+
             final ByteBuffer decompressedBuffer = ByteBuffer.allocateDirect(500);
+            final ByteBuffer compressedBuffer = ByteBuffer.allocateDirect(compressedBytes.length);
+            ByteBufferUtils.copy(ByteBuffer.wrap(compressedBytes), compressedBuffer);
+
+            assertThat(ZstdSegmentUtil.isSeekable(compressedBuffer))
+                    .isTrue();
+
+            final Optional<ZstdSeekTable> optZstdSeekTable = ZstdSeekTable.parse(compressedBuffer);
+            assertThat(optZstdSeekTable)
+                    .isPresent();
+            final ZstdSeekTable zstdSeekTable = optZstdSeekTable.get();
+            assertThat(zstdSeekTable.getFrameCount())
+                    .isEqualTo(iterations);
+
+            // Try and retrieve each event individually and check it matches what we expect
+            for (int i = 0; i < data.size(); i++) {
+                if (i % 3 == 0) {
+                    LOGGER.debug("i: {}, len: {}", i, dataBytes.get(i).length);
+                    final String expected = data.get(i);
+                    final String actual = getEvent(
+                            zstdSeekTable, compressedBuffer, i, zstdDecompressCtx, decompressedBuffer, data, dataBytes);
+                    assertThat(actual)
+                            .isEqualTo(expected);
+                } else {
+                    final FrameLocation frameLocation = zstdSeekTable.getFrameLocation(i);
+                    assertThat(frameLocation.compressedSize())
+                            .isEqualTo(0);  // Zstd still writes a frame header
+                    assertThat(frameLocation.originalSize())
+                            .isEqualTo(0);
+                }
+            }
+        }
+    }
+
+    @Test
+    void test_allEmptySegments() throws IOException {
+        final int iterations = 10;
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        final List<String> data = new ArrayList<>(iterations);
+        final List<byte[]> dataBytes = new ArrayList<>(iterations);
+        for (int i = 0; i < iterations; i++) {
+            final String str = "frame-" + i;
+            data.add(str);
+            dataBytes.add(str.getBytes(StandardCharsets.UTF_8));
+        }
+
+        try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
+                byteArrayOutputStream,
+                null,
+                COMPRESSION_LEVEL)) {
+
+            for (int i = 0; i < dataBytes.size(); i++) {
+                // Write the segments regardless
+                if (i != 0) {
+                    segmentOutputStream.addSegment();
+                }
+                // don't write any data
+            }
+        }
+        // Should contain only the seek table frame
+        final byte[] compressedBytes = byteArrayOutputStream.toByteArray();
+        assertThat(compressedBytes.length)
+                .isEqualTo(ZstdSegmentUtil.calculateSeekTableFrameSize(iterations));
+
+        try (final ZstdDecompressCtx zstdDecompressCtx = new ZstdDecompressCtx()) {
+            // Make sure we can decompress the whole thing with no knowledge of the frames
+            final int originalSize = data.stream()
+                    .mapToInt(str -> str.getBytes(StandardCharsets.UTF_8).length)
+                    .sum();
+            final byte[] decompressed = zstdDecompressCtx.decompress(compressedBytes, originalSize);
+
+            assertThat(decompressed.length)
+                    .isEqualTo(0);
+
+            final ByteBuffer compressedBuffer = ByteBuffer.allocateDirect(compressedBytes.length);
+            ByteBufferUtils.copy(ByteBuffer.wrap(compressedBytes), compressedBuffer);
+
+            assertThat(ZstdSegmentUtil.isSeekable(compressedBuffer))
+                    .isTrue();
+
+            final Optional<ZstdSeekTable> optZstdSeekTable = ZstdSeekTable.parse(compressedBuffer);
+            assertThat(optZstdSeekTable)
+                    .isPresent();
+            final ZstdSeekTable zstdSeekTable = optZstdSeekTable.get();
+            assertThat(zstdSeekTable.getFrameCount())
+                    .isEqualTo(iterations);
+
+            // Try and retrieve each event individually and check it matches what we expect
+            for (int i = 0; i < data.size(); i++) {
+                final FrameLocation frameLocation = zstdSeekTable.getFrameLocation(i);
+                assertThat(frameLocation.compressedSize())
+                        .isEqualTo(0);  // Zstd still writes a frame header
+                assertThat(frameLocation.originalSize())
+                        .isEqualTo(0);
+            }
+        }
+    }
+
+    @Test
+    void test_noDataOrSegmentsWriten() throws IOException {
+        final int iterations = 10;
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+//        final List<String> data = new ArrayList<>(iterations);
+//        final List<byte[]> dataBytes = new ArrayList<>(iterations);
+//        for (int i = 0; i < iterations; i++) {
+//            final String str = "frame-" + i;
+//            data.add(str);
+//            dataBytes.add(str.getBytes(StandardCharsets.UTF_8));
+//        }
+
+        try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
+                byteArrayOutputStream,
+                null,
+                COMPRESSION_LEVEL)) {
+            // don't write any data or segments
+        }
+        // Should contain only the seek table frame
+        final byte[] compressedBytes = byteArrayOutputStream.toByteArray();
+        assertThat(compressedBytes.length)
+                .isEqualTo(0);
+
+        try (final ZstdDecompressCtx zstdDecompressCtx = new ZstdDecompressCtx()) {
+            // Make sure we can decompress the whole thing with no knowledge of the frames
+            final int originalSize = 0;
+            final byte[] decompressed = zstdDecompressCtx.decompress(compressedBytes, originalSize);
+
+            assertThat(decompressed.length)
+                    .isEqualTo(0);
 
             final ByteBuffer compressedBuffer = ByteBuffer.allocateDirect(compressedBytes.length);
             ByteBufferUtils.copy(ByteBuffer.wrap(compressedBytes), compressedBuffer);
@@ -216,7 +406,7 @@ class TestZstdSegmentOutputStream {
                 LOGGER.debug("i: {}, len: {}", i, dataBytes.get(i).length);
                 final String expected = data.get(i);
                 final String actual = getEvent(
-                        zstdSeekTable, compressedBuffer, i, zstdDecompressCtx, decompressedBuffer);
+                        zstdSeekTable, compressedBuffer, i, zstdDecompressCtx, decompressedBuffer, data, dataBytes);
                 assertThat(actual)
                         .isEqualTo(expected);
             }
@@ -261,7 +451,9 @@ class TestZstdSegmentOutputStream {
                             final ByteBuffer compressedBuffer,
                             final int eventIdx,
                             final ZstdDecompressCtx zstdDecompressCtx,
-                            final ByteBuffer decompressedBuffer) {
+                            final ByteBuffer decompressedBuffer,
+                            final List<String> data,
+                            final List<byte[]> dataBytes) {
 
         final FrameLocation frameLocation = zstdSeekTable.getFrameLocation(eventIdx);
 //        final FrameLocation frameLocation = ZstdSegmentUtil.getFrameLocation(compressedBuffer, eventIdx);
@@ -277,6 +469,14 @@ class TestZstdSegmentOutputStream {
         zstdDecompressCtx.decompress(outputBuffer, frameBuffer);
         outputBuffer.flip();
 
-        return StandardCharsets.UTF_8.decode(outputBuffer).toString();
+        final long expectedOriginalSize = dataBytes.get(eventIdx).length;
+        assertThat(originalSize)
+                .isEqualTo(expectedOriginalSize);
+
+        final String expected = data.get(eventIdx);
+        final String actual = StandardCharsets.UTF_8.decode(outputBuffer).toString();
+        assertThat(actual)
+                .isEqualTo(expected);
+        return actual;
     }
 }

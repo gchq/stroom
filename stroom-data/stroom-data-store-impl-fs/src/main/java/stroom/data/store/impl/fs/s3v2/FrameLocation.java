@@ -26,7 +26,8 @@ import stroom.util.shared.Range;
  * @param frameIdx
  * @param position       The position of the compressed frame (in byte terms) within the file/stream.
  *                       Zero based. <strong>Not</strong> the same as the frameIdx.
- * @param compressedSize The length of the compressed frame in bytes.
+ * @param compressedSize The length of the compressed frame in bytes. This includes the Zstd frame header.
+ *                       It will be zero if no data has been written for this segment.
  * @param originalSize   The un-compressed size of the compressed frame.
  */
 public record FrameLocation(int frameIdx, long position, long compressedSize, long originalSize) {
@@ -50,6 +51,14 @@ public record FrameLocation(int frameIdx, long position, long compressedSize, lo
         return compressedSize / (double) originalSize * 100;
     }
 
+    private String formatPct(final double pct) {
+        try {
+            return ModelStringUtil.formatCsv(pct, 1) + "%";
+        } catch (final NumberFormatException e) {
+            return "NaN";
+        }
+    }
+
     @Override
     public String toString() {
         return "FrameLocation{" +
@@ -57,7 +66,7 @@ public record FrameLocation(int frameIdx, long position, long compressedSize, lo
                ", position=" + position +
                ", compressedSize=" + compressedSize +
                ", originalSize=" + originalSize +
-               ", compressionPct=" + ModelStringUtil.formatCsv(getCompressionPct(), 1) + "%" +
+               ", compressionPct=" + formatPct(getCompressionPct()) +
                '}';
     }
 }

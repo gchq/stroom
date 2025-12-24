@@ -121,6 +121,7 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
     private long position = 0;
     // Tracks the position of the start index of the current segment, in un-compressed terms.
     private long lastBoundary = 0;
+    private boolean hasWrites = false;
 
     public ZstdSegmentOutputStream(final OutputStream dataOutputStream,
                                    final ZstdDictionary zstdDictionary) {
@@ -171,6 +172,7 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
 
     @Override
     public void addSegment() throws IOException {
+        hasWrites = true;
         closeSegment();
         zstdOutputStream = createZstdOutputStream();
     }
@@ -185,24 +187,35 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
     private void closeSegment() throws IOException {
         // Ensure all uncompressed bytes are compressed and the frame closed
         if (zstdOutputStream != null) {
-            zstdOutputStream.flush();
-            zstdOutputStream.close(); // This won't close its delegate, compressedBytesCountingOutputStream
-            compressedBytesCountingOutputStream.flush();
+            if (position == lastBoundary) {
+                // No data has been written, so don't flush the zstdOutputStream else we will get an
+                // empty Zstd frame with just a header (9 bytes).
+                // This does mean a mismatch between the frames that Zstd knows about and the frames described
+                // in the seek table, but if we have a lot of empty segments it means we don't waste space.
+                // It does however mean that we must use our seek table as the source of truth.
+                LOGGER.debug("No data written, won't write Zstd frame. position: {}, currentSegmentIndex: {}",
+                        position, currentSegmentIndex);
+            } else {
+                zstdOutputStream.flush();
+                zstdOutputStream.close(); // This won't close its delegate, compressedBytesCountingOutputStream
+                compressedBytesCountingOutputStream.flush();
+            }
             zstdOutputStream = null;
         }
 
         final long segmentUncompressedSize = position - lastBoundary;
-        if (segmentUncompressedSize > 0) {
-            final FrameInfo frameInfo = new FrameInfo(
-                    currentSegmentIndex,
-                    compressedBytesCountingOutputStream.getCount(),
-                    segmentUncompressedSize);
-            frameInfoList.add(frameInfo);
-            LOGGER.trace("closeSegment() - adding frameInfo {}, segmentUncompressedSize: {}, " +
-                         "currentSegmentIndex: {}, lastBoundary: {}, position: {}",
-                    frameInfo, segmentUncompressedSize, currentSegmentIndex, lastBoundary, position);
-            currentSegmentIndex++;
-        }
+        // Even if no data has been written to the stream, we still record the frame
+        // as Zstd will write a header for the frame (about 9 bytes) so that it knows a frame
+        // is there.
+        final FrameInfo frameInfo = new FrameInfo(
+                currentSegmentIndex,
+                compressedBytesCountingOutputStream.getCount(),
+                segmentUncompressedSize);
+        frameInfoList.add(frameInfo);
+        LOGGER.trace("closeSegment() - adding frameInfo {}, segmentUncompressedSize: {}, " +
+                     "currentSegmentIndex: {}, lastBoundary: {}, position: {}",
+                frameInfo, segmentUncompressedSize, currentSegmentIndex, lastBoundary, position);
+        currentSegmentIndex++;
         // Reset lastBoundary to the next segment
         lastBoundary = position;
     }
@@ -270,6 +283,7 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
 
     @Override
     public void write(final byte @NonNull [] b, final int off, final int len) throws IOException {
+        hasWrites = true;
         zstdOutputStream = Objects.requireNonNullElseGet(zstdOutputStream, this::createZstdOutputStream);
         zstdOutputStream.write(b, off, len);
         position += len;
@@ -277,6 +291,7 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
 
     @Override
     public void write(final byte @NonNull [] b) throws IOException {
+        hasWrites = true;
         zstdOutputStream = Objects.requireNonNullElseGet(zstdOutputStream, this::createZstdOutputStream);
         zstdOutputStream.write(b);
         position += b.length;
@@ -284,6 +299,7 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
 
     @Override
     public void write(final int b) throws IOException {
+        hasWrites = true;
         zstdOutputStream = Objects.requireNonNullElseGet(zstdOutputStream, this::createZstdOutputStream);
         zstdOutputStream.write(b);
         position++;
@@ -304,8 +320,9 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
     @Override
     public void close() throws IOException {
         closeSegment();
-        // Write the segment info to the delegate stream
-        if (frameInfoList.size() > 1) {
+        // Even if we only have one frame we still need to write the seek table so that
+        // we have the dict uuid in there to decompress it.
+        if (hasWrites && !frameInfoList.isEmpty()) {
             writeSeekTable();
         }
         compressedBytesCountingOutputStream.flush();
