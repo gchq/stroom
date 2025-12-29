@@ -22,10 +22,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.common.io.CountingOutputStream;
-import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -175,11 +175,12 @@ class TestZstdSegmentInputStream {
                 final String str = "Item-" + i;
                 final byte[] strBytes = ("Item-" + i).getBytes(StandardCharsets.UTF_8);
                 zstdSegmentOutputStream.write(strBytes);
+                zstdSegmentOutputStream.flush();
                 data.add(str);
                 dataBytes.add(strBytes);
                 final long offset = countingOutputStream.getCount();
                 LOGGER.debug("offset: {}, len: {}, str: {}",
-                        offset, offset - lastOffset, str);
+                        offset, strBytes.length, str);
                 lastOffset = offset;
             }
         }
@@ -192,7 +193,7 @@ class TestZstdSegmentInputStream {
     // --------------------------------------------------------------------------------
 
 
-    private static class ByteArrayFrameSupplier implements ZstdFrameSupplier {
+    private static class ByteArrayFrameSupplier extends AbstractZstdFrameSupplier {
 
         private final byte[] compressedBytes;
 
@@ -206,25 +207,12 @@ class TestZstdSegmentInputStream {
         }
 
         @Override
-        public void initialise(final ZstdSeekTable zstdSeekTable,
-                               final IntSortedSet includedFrameIndexes,
-                               final boolean includeAll) {
-
-        }
-
-        @Override
-        public boolean hasNext() {
-            return false;
-        }
-
-        @Override
         public InputStream next() {
-            return null;
-        }
-
-        @Override
-        public FrameLocation getCurrentFrameLocation() {
-            return null;
+            final FrameLocation frameLocation = nextFrameLocation();
+            return new ByteArrayInputStream(
+                    compressedBytes,
+                    Math.toIntExact(frameLocation.position()),
+                    Math.toIntExact(frameLocation.compressedSize()));
         }
     }
 }

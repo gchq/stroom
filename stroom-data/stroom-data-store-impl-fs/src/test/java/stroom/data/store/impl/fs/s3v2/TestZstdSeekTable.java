@@ -281,7 +281,7 @@ class TestZstdSeekTable {
 
         Assertions.assertThatThrownBy(
                         () -> zstdSeekTable.getTotalUncompressedSize(IntSet.of(22)))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private byte @NonNull [] createCompressedData() throws IOException {

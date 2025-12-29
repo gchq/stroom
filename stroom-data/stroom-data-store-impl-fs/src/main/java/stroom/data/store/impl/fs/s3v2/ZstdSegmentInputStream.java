@@ -27,13 +27,13 @@ import com.github.luben.zstd.ZstdDictDecompress;
 import com.github.luben.zstd.ZstdInputStream;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
+import it.unimi.dsi.fastutil.ints.IntSortedSets;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.IntStream;
 
 /**
  * A {@link SegmentInputStream} for consuming ZStandard compressed frames (one frame == one segment)
@@ -204,14 +204,10 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
 
     private boolean initialiseForReading() throws IOException {
         LOGGER.debug("initialiseForReading()");
-        // Easier to have one thing to work with (the include set iterator) so add
-        // all the frames given we know exactly how many there are.
         if (includeAllSegments) {
-            includedSegments = Objects.requireNonNullElseGet(includedSegments, IntAVLTreeSet::new);
-            IntStream.range(0, zstdSeekTable.getFrameCount())
-                    .forEach(includedSegments::add);
+            includedSegments = IntSortedSets.emptySet();
         }
-//        includedSegmentsIterator = includedSegments.iterator();
+        zstdFrameSupplier.initialise(zstdSeekTable, includedSegments, includeAllSegments);
         frameIterator = zstdFrameSupplier;
 
         if (currentFrameLocation != null) {

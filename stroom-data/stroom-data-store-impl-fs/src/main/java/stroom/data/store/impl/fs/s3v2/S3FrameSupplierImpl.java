@@ -24,10 +24,8 @@ import stroom.util.io.WrappedInputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.NullSafe;
 
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
-import it.unimi.dsi.fastutil.ints.IntSortedSets;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 
@@ -35,7 +33,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
-import java.util.Iterator;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -43,7 +40,7 @@ import java.util.UUID;
  * Gets each frame directly from S3 using a GET with byte range.
  * Intended for use when only one segment or only a small percentage of the stream is required.
  */
-public class S3FrameSupplierImpl implements ZstdFrameSupplier {
+public class S3FrameSupplierImpl extends AbstractZstdFrameSupplier {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3FrameSupplierImpl.class);
     // TODO needs to come from config
@@ -59,14 +56,7 @@ public class S3FrameSupplierImpl implements ZstdFrameSupplier {
     private final Path tempDir;
     private final S3StreamTypeExtensions s3StreamTypeExtensions;
 
-    private ZstdSeekTable zstdSeekTable = null;
-    private IntSortedSet includedFrameIndexes = IntSortedSets.emptySet();
-    private boolean includeAll = false;
-    private Iterator<FrameLocation> frameLocationIterator = null;
-
     private InputStream currentInputStream = null;
-    private FrameLocation currentFrameLocation = null;
-    private boolean downloadAll = false;
     private FileFrameSupplierImpl fileFrameSupplier = null;
     private Path tempFile = null;
 
@@ -88,24 +78,7 @@ public class S3FrameSupplierImpl implements ZstdFrameSupplier {
     public void initialise(final ZstdSeekTable zstdSeekTable,
                            final IntSortedSet includedFrameIndexes,
                            final boolean includeAll) {
-        if (includeAll) {
-            if (NullSafe.hasItems(includedFrameIndexes)) {
-                throw new IllegalArgumentException("Cannot set includeAll and includedFrameIndexes");
-            }
-        }
-        if (this.zstdSeekTable != null) {
-            throw new IllegalStateException("Already initialised");
-        }
-        this.zstdSeekTable = Objects.requireNonNull(zstdSeekTable);
-        this.includeAll = includeAll;
-        this.includedFrameIndexes = Objects.requireNonNullElseGet(
-                includedFrameIndexes,
-                IntSortedSets::emptySet);
-        this.frameLocationIterator = includeAll
-                ? zstdSeekTable.iterator()
-                : zstdSeekTable.iterator(includedFrameIndexes);
-        this.downloadAll = shouldDownloadAll(zstdSeekTable, includedFrameIndexes, includeAll);
-
+        super.initialise(zstdSeekTable, includedFrameIndexes, includeAll);
         if (downloadAll) {
             initFileFrameSupplier();
         }
@@ -125,50 +98,6 @@ public class S3FrameSupplierImpl implements ZstdFrameSupplier {
         }
     }
 
-    private boolean shouldDownloadAll(final ZstdSeekTable zstdSeekTable,
-                                      final IntSortedSet includedFrameIndexes,
-                                      final boolean includeAll) {
-        final long totalUncompressedSize = getTotalUncompressedSize(includedFrameIndexes, includeAll);
-        LOGGER.debug("shouldDownloadAll() - meta: {}, childStreamType: {}, totalUncompressedSize: {}",
-                meta, childStreamType, totalUncompressedSize);
-        if (totalUncompressedSize == 0) {
-            return false;
-        } else {
-            if (includeAll) {
-                return true;
-            } else {
-                final double percentageOfCompressed = zstdSeekTable.getPercentageOfCompressed(includedFrameIndexes);
-                LOGGER.debug("shouldDownloadAll() - meta: {}, childStreamType: {}, " +
-                             "totalUncompressedSize: {}, percentageOfCompressed: {}",
-                        meta, childStreamType, totalUncompressedSize, percentageOfCompressed);
-                return percentageOfCompressed > DOWNLOAD_ALL_PCT_THRESHOLD;
-            }
-        }
-    }
-
-    private long getTotalUncompressedSize(final IntSortedSet includedFrameIndexes, final boolean includeAll) {
-        if (includeAll) {
-            return zstdSeekTable.getTotalUncompressedSize();
-        } else {
-            return zstdSeekTable.getTotalUncompressedSize(includedFrameIndexes);
-        }
-    }
-
-    private void checkInitialised() {
-        if (zstdSeekTable == null) {
-            throw new IllegalStateException("Not initialised");
-        }
-    }
-
-    @Override
-    public boolean hasNext() {
-        LOGGER.debug("hasNext()");
-        checkInitialised();
-        final boolean hasNext = frameLocationIterator.hasNext();
-        LOGGER.debug("hasNext() - currentFrameLocation: {}, returning: {}", currentFrameLocation, hasNext);
-        return hasNext;
-    }
-
     @Override
     public InputStream next() {
         checkInitialised();
@@ -178,12 +107,12 @@ public class S3FrameSupplierImpl implements ZstdFrameSupplier {
             // Grab the frameInputStream from the downloaded temp file
             frameInputStream = fileFrameSupplier.next();
             frameLocation = fileFrameSupplier.getCurrentFrameLocation();
+            this.currentFrameLocation = frameLocation;
         } else {
             // Grab the frameInputStream from an S3 range GET directly
-            frameLocation = frameLocationIterator.next();
+            frameLocation = nextFrameLocation();
             frameInputStream = getFrameInputStreamFromRangeGet(frameLocation);
         }
-        this.currentFrameLocation = frameLocation;
         LOGGER.debug("next() - returning input stream for frameLocation: {}", frameLocation);
         return frameInputStream;
     }

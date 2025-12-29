@@ -45,22 +45,6 @@ public interface ZstdFrameSupplier extends AutoCloseable, Iterator<InputStream> 
                     final IntSortedSet includedFrameIndexes,
                     final boolean includeAll);
 
-//    /**
-//     * Get an {@link InputStream} for the supplied {@link FrameLocation}.
-//     * The {@link InputStream} must be closed before calling this method again.
-//     */
-//    // TODO considering also passing in a list of FrameLocations so that the ZstdFrameSupplier can
-//    //  asynchronously pre-fetch the frames in the list so that they are immediately available on
-//    //  the next call to getFrameInputStream with one of those FrameLocations. This is to combat
-//    //  the potential latency in S3 GETs.
-//    InputStream getFrameInputStream(final FrameLocation frameLocation) throws IOException;
-
-//    /**
-//     * Get an {@link InputStream} for the supplied frameIdx.
-//     * The {@link InputStream} must be closed before calling this method again.
-//     */
-//    InputStream getFrameInputStream(final int frameIdx) throws IOException;
-
     /**
      * Returns {@code true} if another frame {@link InputStream} can be supplied.
      * (In other words, returns {@code true} if {@link #next} would
