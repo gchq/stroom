@@ -116,7 +116,7 @@ javax-inject-gwt = { module = "javax.inject:javax.inject", version = "1" }
 jakarta-inject = { module = "jakarta.inject:jakarta.inject-api", version = "2.0.1" }
 jaxb-api = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version = "4.0.2" }
 jaxb-api-gwt = { module = "javax.xml.bind:jaxb-api", version = "2.3.1" }#"jakarta.xml.bind:jakarta.xml.bind-api", version = "3.0.1" } # Using beta versions of jaxb libs as they resolve the split pkg problem between jaxb-core and jaxb-runtime
-jaxb-impl = { module = "com.sun.xml.bind:jaxb-impl", version = "4.0.5" }
+jaxb-impl = { module = "com.sun.xml.bind:jaxb-impl", version = "4.0.6" }
 #jaxb-impl-gwt = { module = "org.glassfish.jaxb:jaxb-runtime", version = "2.3.1" }#"com.sun.xml.bind:jaxb-impl", version = "3.0.2" }
 #jaxws-api = { module = "javax.xml.ws:jaxws-api", version = "2.2.6" }
 jcl-over-slf4j = { module = "org.slf4j:jcl-over-slf4j" } # version controlled by dropwizard-dependencies
