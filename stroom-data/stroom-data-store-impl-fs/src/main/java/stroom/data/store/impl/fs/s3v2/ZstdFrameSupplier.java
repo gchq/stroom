@@ -17,18 +17,72 @@
 package stroom.data.store.impl.fs.s3v2;
 
 
-import java.io.IOException;
-import java.io.InputStream;
+import it.unimi.dsi.fastutil.ints.IntSortedSet;
 
-public interface ZstdFrameSupplier extends AutoCloseable {
+import java.io.InputStream;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+public interface ZstdFrameSupplier extends AutoCloseable, Iterator<InputStream> {
 
     /**
-     * Get an {@link InputStream} for the supplied {@link FrameLocation}.
-     * The {@link InputStream} must be closed before calling this method again.
+     * Allows the {@link ZstdFrameSupplier} implementation to make decisions on how best to provide
+     * the requested {@link InputStream}s returned by {@link ZstdFrameSupplier#next()}
+     * <p>
+     * <strong>MUST</strong> be called before {@link ZstdFrameSupplier#next()} or {@link ZstdFrameSupplier#hasNext()}
+     * are called.
+     * </p>
+     *
+     * @param zstdSeekTable        The {@link ZstdSeekTable} that provides the locations of all the frames.
+     * @param includedFrameIndexes The set of frames that can be supplied.
+     * @param includeAll           If true, all available frames will be supplied by repeated calls to
+     *                             {@link ZstdFrameSupplier#next()}. If true and includedFrameIndexes is not
+     *                             empty, an exception will be thrown. If false, only those frames included
+     *                             in includedFrameIndexes will be supplied by calls
+     *                             to {@link ZstdFrameSupplier#next()}.
      */
-    // TODO considering also passing in a list of FrameLocations so that the ZstdFrameSupplier can
-    //  asynchronously pre-fetch the frames in the list so that they are immediately available on
-    //  the next call to getFrameInputStream with one of those FrameLocations. This is to combat
-    //  the potential latency in S3 GETs.
-    InputStream getFrameInputStream(final FrameLocation frameLocation) throws IOException;
+    void initialise(final ZstdSeekTable zstdSeekTable,
+                    final IntSortedSet includedFrameIndexes,
+                    final boolean includeAll);
+
+//    /**
+//     * Get an {@link InputStream} for the supplied {@link FrameLocation}.
+//     * The {@link InputStream} must be closed before calling this method again.
+//     */
+//    // TODO considering also passing in a list of FrameLocations so that the ZstdFrameSupplier can
+//    //  asynchronously pre-fetch the frames in the list so that they are immediately available on
+//    //  the next call to getFrameInputStream with one of those FrameLocations. This is to combat
+//    //  the potential latency in S3 GETs.
+//    InputStream getFrameInputStream(final FrameLocation frameLocation) throws IOException;
+
+//    /**
+//     * Get an {@link InputStream} for the supplied frameIdx.
+//     * The {@link InputStream} must be closed before calling this method again.
+//     */
+//    InputStream getFrameInputStream(final int frameIdx) throws IOException;
+
+    /**
+     * Returns {@code true} if another frame {@link InputStream} can be supplied.
+     * (In other words, returns {@code true} if {@link #next} would
+     * return an element rather than throwing an exception.)
+     *
+     * @return {@code true} if the iteration has more elements
+     */
+    @Override
+    boolean hasNext();
+
+    /**
+     * Returns the next element in the iteration.
+     *
+     * @return the next element in the iteration
+     * @throws NoSuchElementException if the iteration has no more elements
+     */
+    @Override
+    InputStream next();
+
+    /**
+     * @return The {@link FrameLocation} returned by the last call to {@link ZstdFrameSupplier#next()}
+     * or null if {@link ZstdFrameSupplier#next()} has not been called yet.
+     */
+    FrameLocation getCurrentFrameLocation();
 }

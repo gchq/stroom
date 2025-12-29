@@ -24,10 +24,13 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
-import it.unimi.dsi.fastutil.ints.IntImmutableList;
+import it.unimi.dsi.fastutil.ints.IntBidirectionalIterator;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSortedSet;
 
 import java.nio.ByteBuffer;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,7 +47,7 @@ import java.util.UUID;
  * see {@link ZstdSegmentOutputStream}.
  * </p>
  */
-public class ZstdSeekTable {
+public class ZstdSeekTable implements Iterable<FrameLocation> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZstdSeekTable.class);
 
@@ -298,6 +301,27 @@ public class ZstdSeekTable {
     }
 
     /**
+     * @param frameIdxSet The set of frame indexes to include
+     * @return The total size in bytes of all the compressed frames once uncompressed.
+     * This does NOT include the skippable seek table frame.
+     */
+    public long getTotalUncompressedSize(final IntSet frameIdxSet) {
+        if (NullSafe.isEmptyCollection(frameIdxSet)) {
+            return 0L;
+        } else {
+            final long total = frameIdxSet.intStream()
+                    .peek(this::checkValidFrame)
+                    .mapToLong(frameIdx -> {
+                        final int valueIdx = getEntryIdx(frameIdx) + Long.BYTES;
+                        return ZstdSegmentUtil.getLongLE(seekTableEntriesBuffer, valueIdx);
+                    })
+                    .sum();
+            LOGGER.debug("getTotalUncompressedSize() - frameIdxSet: {}, total: {}", frameIdxSet, total);
+            return total;
+        }
+    }
+
+    /**
      * For a given frameIdxSet, return the uncompressed size of the frames included
      * in the filter expressed as a percentage of the total uncompressed size.
      *
@@ -317,44 +341,16 @@ public class ZstdSeekTable {
     }
 
     /**
-     * @param frameIdxSet The set of frame indexes to include/exclude depending on filterMode.
-     * @param filterMode  The type of filtering to do
-     * @return The total size in bytes of all the compressed frames once uncompressed.
-     * This does NOT include the skippable seek table frame.
-     */
-    public long getTotalUncompressedSize(final IntSet frameIdxSet,
-                                         final FilterMode filterMode) {
-        Objects.requireNonNull(filterMode);
-        if (NullSafe.isEmptyCollection(frameIdxSet)) {
-            return filterMode == FilterMode.EXCLUDE
-                    ? getTotalUncompressedSize()
-                    : 0L;
-        } else {
-            final IntImmutableList invalidFrameIndexes = IntImmutableList.toList(frameIdxSet.intStream()
-                    .filter(frameIdx ->
-                            frameIdx < 0 || frameIdx >= frameCount));
-            if (!invalidFrameIndexes.isEmpty()) {
-                throw new IllegalArgumentException(LogUtil.message(
-                        "Invalid frame indexes for frameCount: {}: {}", frameCount, invalidFrameIndexes));
-            }
-
-            long total = 0L;
-            for (int i = 0; i < seekTableEntriesBuffer.remaining(); i += 16) {
-                final int frameIdx = i / 16;
-                if ((filterMode == FilterMode.INCLUDE && frameIdxSet.contains(frameIdx))
-                    || (filterMode == FilterMode.EXCLUDE && !frameIdxSet.contains(frameIdx))) {
-                    total += ZstdSegmentUtil.getLongLE(seekTableEntriesBuffer, i + Long.BYTES);
-                }
-            }
-            return total;
-        }
-    }
-
-    /**
      * @return True if frameIdx is a valid index for a frame/segment.
      */
     public boolean isValidFrame(final int frameIdx) {
         return frameIdx >= 0 && frameIdx < frameCount;
+    }
+
+    private void checkValidFrame(final int frameIdx) {
+        if (!isValidFrame(frameIdx)) {
+            throw new IllegalStateException("Invalid frame index: " + frameIdx);
+        }
     }
 
     /**
@@ -362,6 +358,79 @@ public class ZstdSeekTable {
      */
     private static int getEntryIdx(final int frameIdx) {
         return frameIdx * ZstdConstants.SEEK_TABLE_ENTRY_SIZE;
+    }
+
+    @Override
+    public Iterator<FrameLocation> iterator() {
+        return new ZstdSeekTableIterator();
+    }
+
+    public Iterator<FrameLocation> iterator(final IntSortedSet frameIdxSet) {
+        return new ZstdSeekTableFilteredIterator(frameIdxSet);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private class ZstdSeekTableIterator implements Iterator<FrameLocation> {
+
+        private int lastFrameIdx = -1;
+
+        @Override
+        public boolean hasNext() {
+            final int nextFrameIdx = lastFrameIdx + 1;
+            return isValidFrame(nextFrameIdx);
+        }
+
+        @Override
+        public FrameLocation next() {
+            final int nextFrameIdx = lastFrameIdx + 1;
+            if (isValidFrame(nextFrameIdx)) {
+                final FrameLocation frameLocation = getFrameLocation(nextFrameIdx);
+                lastFrameIdx = nextFrameIdx;
+                return frameLocation;
+            } else {
+                throw new NoSuchElementException();
+            }
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private class ZstdSeekTableFilteredIterator implements Iterator<FrameLocation> {
+
+        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZstdSeekTableFilteredIterator.class);
+
+        private final IntBidirectionalIterator frameIdxIterator;
+
+        private ZstdSeekTableFilteredIterator(final IntSortedSet includedFrameIndexes) {
+            this.frameIdxIterator = includedFrameIndexes.iterator();
+        }
+
+        @Override
+        public boolean hasNext() {
+            final boolean hasNext = frameIdxIterator.hasNext();
+            LOGGER.debug("hasNext() - Returning hasNext: {}, zstdSeekTable: {}", hasNext, ZstdSeekTable.this);
+            return hasNext;
+        }
+
+        @Override
+        public FrameLocation next() {
+            final int nextFrameIdx = frameIdxIterator.nextInt();
+            if (isValidFrame(nextFrameIdx)) {
+                final FrameLocation frameLocation = getFrameLocation(nextFrameIdx);
+                LOGGER.debug("next() - Returning frameLocation: {}, zstdSeekTable: {}",
+                        frameLocation,
+                        ZstdSeekTable.this);
+                return frameLocation;
+            } else {
+                throw new IllegalStateException(LogUtil.message("Invalid frameIdx {} for seekTable: {}",
+                        nextFrameIdx, ZstdSeekTable.this));
+            }
+        }
     }
 
 

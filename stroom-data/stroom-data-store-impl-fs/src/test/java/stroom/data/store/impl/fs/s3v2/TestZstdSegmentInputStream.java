@@ -22,10 +22,10 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.common.io.CountingOutputStream;
+import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -201,16 +201,30 @@ class TestZstdSegmentInputStream {
         }
 
         @Override
-        public InputStream getFrameInputStream(final FrameLocation frameLocation) throws IOException {
-            return new ByteArrayInputStream(
-                    compressedBytes,
-                    Math.toIntExact(frameLocation.position()),
-                    Math.toIntExact(frameLocation.compressedSize()));
+        public void close() throws Exception {
+            // no-op
         }
 
         @Override
-        public void close() throws Exception {
-            // no-op
+        public void initialise(final ZstdSeekTable zstdSeekTable,
+                               final IntSortedSet includedFrameIndexes,
+                               final boolean includeAll) {
+
+        }
+
+        @Override
+        public boolean hasNext() {
+            return false;
+        }
+
+        @Override
+        public InputStream next() {
+            return null;
+        }
+
+        @Override
+        public FrameLocation getCurrentFrameLocation() {
+            return null;
         }
     }
 }

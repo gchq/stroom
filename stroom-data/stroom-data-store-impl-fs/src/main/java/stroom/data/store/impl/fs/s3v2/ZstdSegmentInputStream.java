@@ -18,7 +18,6 @@ package stroom.data.store.impl.fs.s3v2;
 
 
 import stroom.data.store.api.SegmentInputStream;
-import stroom.data.store.impl.fs.s3v2.ZstdSeekTable.FilterMode;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -27,11 +26,11 @@ import stroom.util.shared.NullSafe;
 import com.github.luben.zstd.ZstdDictDecompress;
 import com.github.luben.zstd.ZstdInputStream;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
-import it.unimi.dsi.fastutil.ints.IntBidirectionalIterator;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.IntStream;
@@ -61,7 +60,8 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
     private IntSortedSet includedSegments;
     private boolean includeAllSegments = true;
     private FrameLocation currentFrameLocation;
-    private IntBidirectionalIterator includedSegmentsIterator;
+    //    private IntBidirectionalIterator includedSegmentsIterator;
+    private Iterator<InputStream> frameIterator;
     private InputStream currentZstdInputStream;
     private boolean complete = false;
     private boolean currentFrameAllRead = false;
@@ -115,7 +115,7 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
         if (includeAllSegments) {
             return zstdSeekTable.getTotalUncompressedSize();
         } else {
-            return zstdSeekTable.getTotalUncompressedSize(includedSegments, FilterMode.INCLUDE);
+            return zstdSeekTable.getTotalUncompressedSize(includedSegments);
         }
     }
 
@@ -211,7 +211,8 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
             IntStream.range(0, zstdSeekTable.getFrameCount())
                     .forEach(includedSegments::add);
         }
-        includedSegmentsIterator = includedSegments.iterator();
+//        includedSegmentsIterator = includedSegments.iterator();
+        frameIterator = zstdFrameSupplier;
 
         if (currentFrameLocation != null) {
             throw new IllegalStateException("Expecting currentFrameLocation to be null at this point");
@@ -223,18 +224,22 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
 
     private boolean advanceFrame() throws IOException {
         final boolean didAdvance;
-        if (includedSegmentsIterator.hasNext()) {
-            final int nextFrameIdx = includedSegmentsIterator.nextInt();
-            currentFrameLocation = zstdSeekTable.getFrameLocation(nextFrameIdx);
-
-            // Iterator should ensure we have a valid frameIdx.
-            Objects.requireNonNull(currentFrameLocation, () ->
-                    "null current frame location for nexFrameIdx: " + nextFrameIdx);
+        if (frameIterator.hasNext()) {
+//            final int nextFrameIdx = includedSegmentsIterator.nextInt();
+//            currentFrameLocation = zstdSeekTable.getFrameLocation(nextFrameIdx);
 
             // Will get closed on close()
-            final InputStream compressedFrameInputStream = zstdFrameSupplier.getFrameInputStream(currentFrameLocation);
+            final InputStream compressedFrameInputStream = zstdFrameSupplier.next();
+            final FrameLocation frameLocation = zstdFrameSupplier.getCurrentFrameLocation();
+
+            // Iterator should ensure we have a valid frameIdx.
+            Objects.requireNonNull(frameLocation, () ->
+                    "null current frame location, previous frameLocation: " + currentFrameLocation);
+
             Objects.requireNonNull(compressedFrameInputStream, () -> LogUtil.message(
-                    "null compressedFrameInputStream for FrameLocation: {}", currentFrameLocation));
+                    "null compressedFrameInputStream for frameLocation: {}", frameLocation));
+
+            this.currentFrameLocation = frameLocation;
 
             // Initialise the ZstdInputStream to decompress the frame
             final ZstdInputStream zstdInputStream = new ZstdInputStream(compressedFrameInputStream, heapBufferPool);
@@ -243,8 +248,6 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
                 zstdInputStream.setDict(zstdDictDecompress);
             }
             this.currentZstdInputStream = zstdInputStream;
-            LOGGER.debug("advanceFrame() - nextFrameIdx: {}, currentFrameLocation: {}",
-                    nextFrameIdx, currentFrameLocation);
 
 //            remainingInCurrentFrame = currentFrameLocation.compressedSize();
             LOGGER.debug("advanceFrame() - Advanced to: {}", currentFrameLocation);

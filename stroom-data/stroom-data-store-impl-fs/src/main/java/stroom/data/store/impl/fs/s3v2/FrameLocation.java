@@ -51,6 +51,10 @@ public record FrameLocation(int frameIdx, long position, long compressedSize, lo
         return compressedSize / (double) originalSize * 100;
     }
 
+    boolean isEmptyFrame() {
+        return originalSize == 0;
+    }
+
     private String formatPct(final double pct) {
         try {
             return ModelStringUtil.formatCsv(pct, 1) + "%";

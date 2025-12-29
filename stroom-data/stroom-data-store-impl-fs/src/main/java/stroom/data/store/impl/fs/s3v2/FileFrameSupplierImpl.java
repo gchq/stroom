@@ -21,6 +21,10 @@ import stroom.util.io.NoCloseInputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
+
+import it.unimi.dsi.fastutil.ints.IntSortedSet;
+import it.unimi.dsi.fastutil.ints.IntSortedSets;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +33,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Iterator;
 import java.util.Objects;
 
 public class FileFrameSupplierImpl implements ZstdFrameSupplier {
@@ -38,24 +43,15 @@ public class FileFrameSupplierImpl implements ZstdFrameSupplier {
     private final Path file;
     private final FileChannel fileChannel;
 
+    private ZstdSeekTable zstdSeekTable = null;
+    private IntSortedSet includedFrameIndexes = IntSortedSets.emptySet();
+    private boolean includeAll = false;
+    private Iterator<FrameLocation> frameLocationIterator = null;
+    private FrameLocation currentFrameLocation = null;
+
     public FileFrameSupplierImpl(final Path file) throws IOException {
         this.file = Objects.requireNonNull(file);
         this.fileChannel = createFileChannel();
-    }
-
-    @Override
-    public InputStream getFrameInputStream(final FrameLocation frameLocation) throws IOException {
-        Objects.requireNonNull(frameLocation);
-        try {
-            fileChannel.position(frameLocation.position());
-        } catch (final IOException e) {
-            throw new RuntimeException(LogUtil.message(
-                    "Error positioning fileChannel '{}' at frameLocation: {} - {}",
-                    file.toAbsolutePath().normalize(), frameLocation, LogUtil.exceptionMessage(e)), e);
-        }
-
-        // TODO not sure we need to create it for each frame
-        return new NoCloseInputStream(Channels.newInputStream(fileChannel));
     }
 
     private FileChannel createFileChannel() throws IOException {
@@ -72,12 +68,68 @@ public class FileFrameSupplierImpl implements ZstdFrameSupplier {
     @Override
     public void close() throws Exception {
         if (fileChannel != null) {
-            LOGGER.debug(() -> LogUtil.message("Closed fileChannel {}", file.toAbsolutePath().normalize().toString()));
+            LOGGER.debug(() ->
+                    LogUtil.message("Closed fileChannel {}", file.toAbsolutePath().normalize().toString()));
             fileChannel.close();
         }
     }
 
     public Path getFile() {
         return file;
+    }
+
+    @Override
+    public void initialise(final ZstdSeekTable zstdSeekTable,
+                           final IntSortedSet includedFrameIndexes,
+                           final boolean includeAll) {
+        this.zstdSeekTable = Objects.requireNonNull(zstdSeekTable);
+        if (includeAll) {
+            if (NullSafe.hasItems(includedFrameIndexes)) {
+                throw new IllegalArgumentException("Cannot set includeAll and includedFrameIndexes");
+            }
+        }
+        this.includeAll = includeAll;
+        this.includedFrameIndexes = Objects.requireNonNullElseGet(
+                includedFrameIndexes,
+                IntSortedSets::emptySet);
+        this.frameLocationIterator = includeAll
+                ? zstdSeekTable.iterator()
+                : zstdSeekTable.iterator(includedFrameIndexes);
+    }
+
+    @Override
+    public boolean hasNext() {
+        return frameLocationIterator.hasNext();
+    }
+
+    @Override
+    public InputStream next() {
+        final FrameLocation frameLocation = frameLocationIterator.next();
+        this.currentFrameLocation = frameLocation;
+        try {
+            fileChannel.position(frameLocation.position());
+        } catch (final IOException e) {
+            throw new RuntimeException(LogUtil.message(
+                    "Error positioning fileChannel '{}' at frameLocation: {} - {}",
+                    file.toAbsolutePath().normalize(), frameLocation, LogUtil.exceptionMessage(e)), e);
+        }
+
+        // TODO not sure we need to create it for each frame
+        return new NoCloseInputStream(Channels.newInputStream(fileChannel));
+    }
+
+    @Override
+    public FrameLocation getCurrentFrameLocation() {
+        return currentFrameLocation;
+    }
+
+    @Override
+    public String toString() {
+        return "FileFrameSupplierImpl{" +
+               "file=" + file +
+               ", zstdSeekTable=" + zstdSeekTable +
+               ", includeAll=" + includeAll +
+               ", currentFrameLocation=" + currentFrameLocation +
+               '}';
     }
 }

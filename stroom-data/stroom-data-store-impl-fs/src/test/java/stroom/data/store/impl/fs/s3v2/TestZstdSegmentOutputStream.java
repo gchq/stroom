@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs.s3v2;
 
+import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.util.logging.LambdaLogger;
@@ -61,6 +62,7 @@ class TestZstdSegmentOutputStream {
         try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
                 byteArrayOutputStream,
                 null,
+                new HeapBufferPool(ByteBufferPoolConfig::new),
                 COMPRESSION_LEVEL)) {
 
             writeDataToStream(dataBytes, segmentOutputStream);
@@ -91,6 +93,8 @@ class TestZstdSegmentOutputStream {
                     .orElseThrow();
             assertThat(zstdSeekTable.isEmpty())
                     .isEqualTo(false);
+            assertThat(zstdSeekTable.getDictionaryUuid())
+                    .isEqualTo(ZstdConstants.ZERO_UUID);
 
             // Try and retrieve each event individually and check it matches what we expect
             for (int i = 0; i < data.size(); i++) {
@@ -116,6 +120,7 @@ class TestZstdSegmentOutputStream {
         try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
                 byteArrayOutputStream,
                 null,
+                new HeapBufferPool(ByteBufferPoolConfig::new),
                 COMPRESSION_LEVEL)) {
 
             writeDataToStream(dataBytes, segmentOutputStream);
@@ -147,6 +152,8 @@ class TestZstdSegmentOutputStream {
             final ZstdSeekTable zstdSeekTable = optZstdSeekTable.get();
             assertThat(zstdSeekTable.getFrameCount())
                     .isEqualTo(1);
+            assertThat(zstdSeekTable.getDictionaryUuid())
+                    .isEqualTo(ZstdConstants.ZERO_UUID);
         }
     }
 
@@ -165,6 +172,7 @@ class TestZstdSegmentOutputStream {
         try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
                 byteArrayOutputStream,
                 null,
+                new HeapBufferPool(ByteBufferPoolConfig::new),
                 COMPRESSION_LEVEL)) {
 
             for (int i = 0; i < dataBytes.size(); i++) {
@@ -213,9 +221,12 @@ class TestZstdSegmentOutputStream {
             final ZstdSeekTable zstdSeekTable = optZstdSeekTable.get();
             assertThat(zstdSeekTable.getFrameCount())
                     .isEqualTo(iterations);
+            assertThat(zstdSeekTable.getDictionaryUuid())
+                    .isEqualTo(ZstdConstants.ZERO_UUID);
 
             // Try and retrieve each event individually and check it matches what we expect
             for (int i = 0; i < data.size(); i++) {
+                final FrameLocation frameLocation = zstdSeekTable.getFrameLocation(i);
                 if (i % 3 == 0) {
                     LOGGER.debug("i: {}, len: {}", i, dataBytes.get(i).length);
                     final String expected = data.get(i);
@@ -223,12 +234,15 @@ class TestZstdSegmentOutputStream {
                             zstdSeekTable, compressedBuffer, i, zstdDecompressCtx, decompressedBuffer, data, dataBytes);
                     assertThat(actual)
                             .isEqualTo(expected);
+                    assertThat(frameLocation.isEmptyFrame())
+                            .isFalse();
                 } else {
-                    final FrameLocation frameLocation = zstdSeekTable.getFrameLocation(i);
                     assertThat(frameLocation.compressedSize())
                             .isEqualTo(0);  // Zstd still writes a frame header
                     assertThat(frameLocation.originalSize())
                             .isEqualTo(0);
+                    assertThat(frameLocation.isEmptyFrame())
+                            .isTrue();
                 }
             }
         }
@@ -249,6 +263,7 @@ class TestZstdSegmentOutputStream {
         try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
                 byteArrayOutputStream,
                 null,
+                new HeapBufferPool(ByteBufferPoolConfig::new),
                 COMPRESSION_LEVEL)) {
 
             for (int i = 0; i < dataBytes.size(); i++) {
@@ -286,6 +301,8 @@ class TestZstdSegmentOutputStream {
             final ZstdSeekTable zstdSeekTable = optZstdSeekTable.get();
             assertThat(zstdSeekTable.getFrameCount())
                     .isEqualTo(iterations);
+            assertThat(zstdSeekTable.getDictionaryUuid())
+                    .isEqualTo(ZstdConstants.ZERO_UUID);
 
             // Try and retrieve each event individually and check it matches what we expect
             for (int i = 0; i < data.size(); i++) {
@@ -294,6 +311,8 @@ class TestZstdSegmentOutputStream {
                         .isEqualTo(0);  // Zstd still writes a frame header
                 assertThat(frameLocation.originalSize())
                         .isEqualTo(0);
+                assertThat(frameLocation.isEmptyFrame())
+                        .isTrue();
             }
         }
     }
@@ -313,6 +332,7 @@ class TestZstdSegmentOutputStream {
         try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
                 byteArrayOutputStream,
                 null,
+                new HeapBufferPool(ByteBufferPoolConfig::new),
                 COMPRESSION_LEVEL)) {
             // don't write any data or segments
         }
@@ -362,18 +382,19 @@ class TestZstdSegmentOutputStream {
         } catch (final ZstdException e) {
             throw new RuntimeException("Error training dictionary", e);
         }
-        final ZstdDictionary zstdDictionary = new ZstdDictionary(UUID.randomUUID().toString(), dict);
+        final UUID dictUuid = UUID.randomUUID();
+        final ZstdDictionary zstdDictionary = new ZstdDictionary(dictUuid, dict);
 
         try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
                 byteArrayOutputStream,
                 zstdDictionary,
+                new HeapBufferPool(ByteBufferPoolConfig::new),
                 COMPRESSION_LEVEL)) {
 
             writeDataToStream(dataBytes, segmentOutputStream);
         }
 
         final byte[] compressedBytes = byteArrayOutputStream.toByteArray();
-
 
         try (final ZstdDictDecompress zstdDictDecompress = new ZstdDictDecompress(zstdDictionary.getDictionaryBytes());
                 final ZstdDecompressCtx zstdDecompressCtx = new ZstdDecompressCtx()) {
@@ -400,6 +421,8 @@ class TestZstdSegmentOutputStream {
 
             final ZstdSeekTable zstdSeekTable = ZstdSeekTable.parse(compressedBuffer)
                     .orElseThrow();
+            assertThat(zstdSeekTable.getDictionaryUuid())
+                    .isEqualTo(dictUuid);
 
             // Try and retrieve each event individually and check it matches what we expect
             for (int i = 0; i < data.size(); i++) {

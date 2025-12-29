@@ -22,6 +22,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
+import com.github.luben.zstd.ZstdDictCompress;
 import com.github.luben.zstd.ZstdOutputStream;
 import com.google.common.io.CountingOutputStream;
 import org.jspecify.annotations.NonNull;
@@ -105,6 +106,7 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
 
     private final OutputStream dataOutputStream;
     private final ZstdDictionary zstdDictionary;
+    private final ZstdDictCompress zstdDictCompress;
     private final int compressionLevel;
     private final CountingOutputStream compressedBytesCountingOutputStream;
     private final List<FrameInfo> frameInfoList = new ArrayList<>();
@@ -112,6 +114,7 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
     private final ByteBuffer fourByteBuffer = ByteBuffer.wrap(fourByteArray);
     private final byte[] eightByteArray = new byte[Long.BYTES];
     private final ByteBuffer eightByteBuffer = ByteBuffer.wrap(eightByteArray);
+    private final HeapBufferPool heapBufferPool;
 
     private ZstdOutputStream zstdOutputStream = null;
 
@@ -123,21 +126,23 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
     private long lastBoundary = 0;
     private boolean hasWrites = false;
 
-    public ZstdSegmentOutputStream(final OutputStream dataOutputStream,
-                                   final ZstdDictionary zstdDictionary) {
-        this(dataOutputStream, zstdDictionary, DEFAULT_COMPRESSION_LEVEL);
+    public ZstdSegmentOutputStream(final OutputStream dataOutputStream) {
+        this(dataOutputStream, null, null, DEFAULT_COMPRESSION_LEVEL);
     }
 
-    public ZstdSegmentOutputStream(final OutputStream dataOutputStream) {
-        this(dataOutputStream, null, DEFAULT_COMPRESSION_LEVEL);
+    public ZstdSegmentOutputStream(final OutputStream dataOutputStream,
+                                   final ZstdDictionary zstdDictionary) {
+        this(dataOutputStream, zstdDictionary, null, DEFAULT_COMPRESSION_LEVEL);
     }
 
     public ZstdSegmentOutputStream(final OutputStream dataOutputStream,
                                    final ZstdDictionary zstdDictionary,
+                                   final HeapBufferPool heapBufferPool,
                                    final int compressionLevel) {
         Objects.requireNonNull(dataOutputStream);
         validateCompressionLevel(compressionLevel);
 
+        this.heapBufferPool = heapBufferPool;
         this.dataOutputStream = dataOutputStream;
         // Wrap the delegate dataOutputStream in a IgnoreCloseOutputStream so that we can
         // close the ZstdOutputStream without closing the underlying output streams.
@@ -145,6 +150,9 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
                 new IgnoreCloseOutputStream(dataOutputStream));
         this.compressionLevel = compressionLevel;
         this.zstdDictionary = zstdDictionary;
+        this.zstdDictCompress = NullSafe.get(
+                zstdDictionary,
+                dict -> new ZstdDictCompress(dict.getDictionaryBytes(), compressionLevel));
     }
 
     private void validateCompressionLevel(final int compressionLevel) {
@@ -156,13 +164,17 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
     private ZstdOutputStream createZstdOutputStream() {
         try {
             // Tracks the count of compressed bytes written
-            final ZstdOutputStream zstdOutputStream = new ZstdOutputStream(compressedBytesCountingOutputStream);
+            final ZstdOutputStream zstdOutputStream = heapBufferPool != null
+                    ? new ZstdOutputStream(compressedBytesCountingOutputStream, heapBufferPool)
+                    : new ZstdOutputStream(compressedBytesCountingOutputStream);
+
             // We may not have a dict if this is the first stream and thus have not had
             // a chance to create a dict from training data yet.
-            if (zstdDictionary != null) {
-                zstdOutputStream.setDict(zstdDictionary.getDictionaryBytes());
+            if (zstdDictCompress != null) {
+                zstdOutputStream.setDict(zstdDictCompress);
             }
-            zstdOutputStream.setCloseFrameOnFlush(false);
+            // We are using one stream per frame/segment, so we have full control of the writing
+//            zstdOutputStream.setCloseFrameOnFlush(false);
             zstdOutputStream.setLevel(compressionLevel);
             return zstdOutputStream;
         } catch (final IOException e) {

@@ -665,9 +665,9 @@ public class TemplateUtil {
         public ExecutorBuilder addLazyReplacement(final CIKey var,
                                                   final Supplier<String> replacementSupplier) {
             Objects.requireNonNull(var);
-            Objects.requireNonNull(replacementSupplier);
             if (!var.isEmpty()) {
                 if (template.isVarInTemplate(var)) {
+                    Objects.requireNonNull(replacementSupplier);
                     final SingleStatefulReplacementProvider singleStatefulReplacementProvider =
                             new SingleStatefulReplacementProvider(var, replacementSupplier);
                     varToReplacementProviderMap.put(var, singleStatefulReplacementProvider);

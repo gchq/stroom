@@ -20,6 +20,7 @@ package stroom.data.store.impl.fs.s3v2;
 import stroom.aws.s3.impl.S3Manager;
 import stroom.aws.s3.shared.AwsBasicCredentials;
 import stroom.aws.s3.shared.S3ClientConfig;
+import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.cache.impl.CacheManagerImpl;
 import stroom.cache.impl.TemplateCacheImpl;
 import stroom.data.shared.StreamTypeNames;
@@ -136,6 +137,7 @@ public class TestS3 {
         try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
                 byteArrayOutputStream,
                 null,
+                new HeapBufferPool(ByteBufferPoolConfig::new),
                 COMPRESSION_LEVEL)) {
 
             TestZstdSegmentOutputStream.writeDataToStream(dataBytes, segmentOutputStream);

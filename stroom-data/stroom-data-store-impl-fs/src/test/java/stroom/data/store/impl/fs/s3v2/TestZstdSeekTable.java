@@ -16,14 +16,16 @@
 
 package stroom.data.store.impl.fs.s3v2;
 
+import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.data.store.api.SegmentOutputStream;
-import stroom.data.store.impl.fs.s3v2.ZstdSeekTable.FilterMode;
 import stroom.data.store.impl.fs.s3v2.ZstdSeekTable.InsufficientSeekTableDataException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.github.luben.zstd.ZstdInputStream;
+import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import net.datafaker.Faker;
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.Assertions;
@@ -40,6 +42,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -77,6 +84,8 @@ class TestZstdSeekTable {
 
             assertThat(frameLocation)
                     .isNotNull();
+            assertThat(frameLocation.isEmptyFrame())
+                    .isFalse();
 
             compressedTotal += frameLocation.compressedSize();
 //            final ByteBuffer frameBuffer = ByteBuffer.wrap(
@@ -108,7 +117,7 @@ class TestZstdSeekTable {
             }
         }
 
-        final IntSet includeSet = IntSet.of(2, 4, 7);
+        final IntSortedSet includeSet = new IntAVLTreeSet(IntSet.of(2, 4, 7));
         final double percentageOfCompressed = zstdSeekTable.getPercentageOfCompressed(includeSet);
         final long filtered = includeSet.intStream()
                 .mapToLong(i -> zstdSeekTable.getFrameLocation(i).compressedSize())
@@ -117,6 +126,24 @@ class TestZstdSeekTable {
         final double percentageOfCompressed2 = filtered / (double) compressedTotal * 100;
         assertThat(percentageOfCompressed)
                 .isCloseTo(percentageOfCompressed2, Percentage.withPercentage(3));
+
+        final Set<Integer> frameIndexes1 = StreamSupport.stream(
+                        Spliterators.spliteratorUnknownSize(zstdSeekTable.iterator(), Spliterator.ORDERED),
+                        false)
+                .map(FrameLocation::frameIdx)
+                .collect(Collectors.toSet());
+        assertThat(frameIndexes1)
+                .containsExactly(
+                        0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+
+        final Set<Integer> frameIndexes2 = StreamSupport.stream(
+                        Spliterators.spliteratorUnknownSize(zstdSeekTable.iterator(includeSet), Spliterator.ORDERED),
+                        false)
+                .map(FrameLocation::frameIdx)
+                .collect(Collectors.toSet());
+        assertThat(frameIndexes2)
+                .containsExactly(
+                        2, 4, 7);
     }
 
     @Test
@@ -167,6 +194,7 @@ class TestZstdSeekTable {
         try (final SegmentOutputStream ignored = new ZstdSegmentOutputStream(
                 byteArrayOutputStream,
                 null,
+                new HeapBufferPool(ByteBufferPoolConfig::new),
                 COMPRESSION_LEVEL)) {
 
             // Don't write any data to the stream
@@ -190,6 +218,7 @@ class TestZstdSeekTable {
         try (final SegmentOutputStream ignored = new ZstdSegmentOutputStream(
                 byteArrayOutputStream,
                 null,
+                new HeapBufferPool(ByteBufferPoolConfig::new),
                 COMPRESSION_LEVEL)) {
 
             // Don't write any data to the stream, but mark 3 empty segment boundaries,
@@ -236,33 +265,22 @@ class TestZstdSeekTable {
 
         assertThat(zstdSeekTable.getTotalUncompressedSize())
                 .isEqualTo(expectedTotalSize);
-
-        assertThat(zstdSeekTable.getTotalUncompressedSize(
-                IntSet.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9),
-                FilterMode.INCLUDE))
-                .isEqualTo(expectedTotalSize);
-        assertThat(zstdSeekTable.getTotalUncompressedSize(
-                IntSet.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9),
-                FilterMode.EXCLUDE))
-                .isEqualTo(0);
-
-        assertThat(zstdSeekTable.getTotalUncompressedSize(
-                IntSet.of(),
-                FilterMode.INCLUDE))
-                .isEqualTo(0);
-        assertThat(zstdSeekTable.getTotalUncompressedSize(
-                IntSet.of(),
-                FilterMode.EXCLUDE))
+        assertThat(zstdSeekTable.getTotalUncompressedSize())
                 .isEqualTo(expectedTotalSize);
 
-        assertThat(zstdSeekTable.getTotalUncompressedSize(IntSet.of(2, 5), FilterMode.INCLUDE))
-                .isEqualTo(dataBytes.get(2).length + dataBytes.get(5).length);
+        assertThat(zstdSeekTable.getTotalUncompressedSize(
+                IntSet.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)))
+                .isEqualTo(expectedTotalSize);
 
-        assertThat(zstdSeekTable.getTotalUncompressedSize(IntSet.of(0, 1, 3, 4, 6, 7, 8, 9), FilterMode.EXCLUDE))
+        assertThat(zstdSeekTable.getTotalUncompressedSize(
+                IntSet.of()))
+                .isEqualTo(0);
+
+        assertThat(zstdSeekTable.getTotalUncompressedSize(IntSet.of(2, 5)))
                 .isEqualTo(dataBytes.get(2).length + dataBytes.get(5).length);
 
         Assertions.assertThatThrownBy(
-                        () -> zstdSeekTable.getTotalUncompressedSize(IntSet.of(22), FilterMode.INCLUDE))
+                        () -> zstdSeekTable.getTotalUncompressedSize(IntSet.of(22)))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -278,6 +296,7 @@ class TestZstdSeekTable {
         try (final SegmentOutputStream segmentOutputStream = new ZstdSegmentOutputStream(
                 byteArrayOutputStream,
                 null,
+                new HeapBufferPool(ByteBufferPoolConfig::new),
                 COMPRESSION_LEVEL)) {
 
             TestZstdSegmentOutputStream.writeDataToStream(dataBytes, segmentOutputStream);
