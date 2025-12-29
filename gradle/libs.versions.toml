@@ -223,7 +223,7 @@ jdeps = { id = "org.kordamp.gradle.jdeps", version = "0.20.0" }
 
 # dependency-graph-generator = { id = "com.vanniktech.dependency.graph.generator", version = "0.5.0" }
 
-swagger-gradle-plugin = { id = "io.swagger.core.v3.swagger-gradle-plugin", version = "2.2.19" }
+swagger-gradle-plugin = { id = "io.swagger.core.v3.swagger-gradle-plugin", version = "2.2.41" }
 
 [bundles]
 common-test-implementation = [
