@@ -230,7 +230,7 @@ public class IndexFieldImpl implements IndexField {
             return this;
         }
 
-        public Builder denseVectorFieldConfig(final stroom.query.api.datasource.DenseVectorFieldConfig denseVectorFieldConfig) {
+        public Builder denseVectorFieldConfig(final DenseVectorFieldConfig denseVectorFieldConfig) {
             this.denseVectorFieldConfig = denseVectorFieldConfig;
             return this;
         }

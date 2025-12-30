@@ -68,7 +68,8 @@ public class DenseVectorFieldPresenter extends MyPresenterWidget<DenseVectorFiel
     }
 
     public void show(final String caption, final HidePopupRequestEvent.Handler handler) {
-        final PopupSize popupSize = null;//PopupSize.resizable(300, 400);
+        final PopupSize popupSize = null;
+        //PopupSize.resizable(300, 400);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)

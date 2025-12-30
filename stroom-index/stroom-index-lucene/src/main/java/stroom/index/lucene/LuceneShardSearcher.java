@@ -51,14 +51,19 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.KnnFloatVectorQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
+import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SearcherManager;
+import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 
 class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
@@ -200,20 +205,39 @@ class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
                                 try {
                                     LOGGER.logDurationIfDebugEnabled(() -> {
                                         try {
-                                            // Create a collector.
-                                            final IndexShardHitCollector collector = new IndexShardHitCollector(
-                                                    taskContext,
-                                                    queryKey,
-                                                    indexShard,
-                                                    query,
-                                                    docIdQueue,
-                                                    hitCount);
+                                            // Determine if we are going to use a KNN vector search.
+                                            final boolean isKNN = isKNN(query);
+                                            if (isKNN) {
+                                                // TODO : Allow configuration of max hits.
+                                                final TopDocs results = searcher
+                                                        .search(query, shardConfig.getMaxDocIdQueueSize());
+                                                final ScoreDoc[] scoreDocs = results.scoreDocs;
+                                                for (final ScoreDoc scoreDoc : scoreDocs) {
+                                                    // Add to the hit count.
+                                                    docIdQueue.put(scoreDoc.doc);
+                                                    hitCount.increment();
+                                                }
 
-                                            searcher.search(query, collector);
+                                                LOGGER.debug("Shard search complete. {}, query term [{}]",
+                                                        results,
+                                                        query);
 
-                                            LOGGER.debug("Shard search complete. {}, query term [{}]",
-                                                    collector,
-                                                    query);
+                                            } else {
+                                                // Create a collector.
+                                                final IndexShardHitCollector collector = new IndexShardHitCollector(
+                                                        taskContext,
+                                                        queryKey,
+                                                        indexShard,
+                                                        query,
+                                                        docIdQueue,
+                                                        hitCount);
+
+                                                searcher.search(query, collector);
+
+                                                LOGGER.debug("Shard search complete. {}, query term [{}]",
+                                                        collector,
+                                                        query);
+                                            }
 
                                         } catch (final TaskTerminatedException e) {
                                             // Expected error on early completion.
@@ -272,6 +296,20 @@ class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
                 error(errorConsumer, e);
             }
         }
+    }
+
+    private boolean isKNN(final Query query) {
+        // Determine if we are going to use a KNN vector search.
+        final AtomicBoolean usingVector = new AtomicBoolean();
+        query.visit(new QueryVisitor() {
+            @Override
+            public void visitLeaf(final Query query) {
+                if (query instanceof KnnFloatVectorQuery) {
+                    usingVector.set(true);
+                }
+            }
+        });
+        return usingVector.get();
     }
 
     /**

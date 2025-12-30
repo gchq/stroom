@@ -114,8 +114,11 @@ class TestActiveShards {
     }
 
     void runTest(
-            final IndexShardStatus status, final IndexVolume.Builder indexVolumeBuilder,
-            final VolumeUseState volumeUseState, final int documentCount, final int maxDocsPerShard,
+            final IndexShardStatus status,
+            final IndexVolume.Builder indexVolumeBuilder,
+            final VolumeUseState volumeUseState,
+            final int documentCount,
+            final int maxDocsPerShard,
             final VerificationMode isDocumentAdded) {
         // given we have an existing shard
         final IndexVolume indexVolume = indexVolumeBuilder.state(volumeUseState).build();
@@ -124,8 +127,8 @@ class TestActiveShards {
                 indexVolume,
                 nodeInfo.getThisNodeName(),
                 LuceneVersionUtil.CURRENT_LUCENE_VERSION.getDisplayValue());
-        myIndexShard.setStatus(status);
-        myIndexShard.setDocumentCount(documentCount);
+        indexShardDao.setStatus(myIndexShard.getId(), status);
+        indexShardDao.update(myIndexShard.getId(), documentCount, 0L, 0L, 0L);
 
         Mockito.lenient().when(indexShardWriterCache.getOrOpenWriter(anyLong())).thenReturn(anotherIndexShardWriter);
         Mockito.lenient().when(indexShardWriterCache.getOrOpenWriter(myIndexShard.getId()))

@@ -11276,6 +11276,27 @@ components:
           $ref: "#/components/schemas/DocRef"
         name:
           type: string
+    DenseVectorFieldConfig:
+      type: object
+      properties:
+        modelRef:
+          $ref: "#/components/schemas/DocRef"
+        nearestNeighbourCount:
+          type: integer
+          format: int32
+        overlapSize:
+          type: integer
+          format: int32
+        segmentSize:
+          type: integer
+          format: int32
+        vectorSimilarityFunction:
+          type: string
+          enum:
+          - EUCLIDEAN
+          - DOT_PRODUCT
+          - COSINE
+          - MAXIMUM_INNER_PRODUCT
     Dependency:
       type: object
       properties:
@@ -11978,6 +11999,8 @@ components:
     ElasticIndexField:
       type: object
       properties:
+        denseVectorFieldConfig:
+          $ref: "#/components/schemas/DenseVectorFieldConfig"
         fieldName:
           type: string
         fieldType:
@@ -14046,6 +14069,8 @@ components:
           - STANDARD
         caseSensitive:
           type: boolean
+        denseVectorFieldConfig:
+          $ref: "#/components/schemas/DenseVectorFieldConfig"
         fldName:
           type: string
         fldType:
@@ -14685,6 +14710,8 @@ components:
           - STANDARD
         caseSensitive:
           type: boolean
+        denseVectorFieldConfig:
+          $ref: "#/components/schemas/DenseVectorFieldConfig"
         fieldName:
           type: string
         fieldType:
@@ -18314,6 +18341,8 @@ components:
       properties:
         defaultValue:
           type: string
+        denseVectorFieldConfig:
+          $ref: "#/components/schemas/DenseVectorFieldConfig"
         docValues:
           type: boolean
         fieldName:

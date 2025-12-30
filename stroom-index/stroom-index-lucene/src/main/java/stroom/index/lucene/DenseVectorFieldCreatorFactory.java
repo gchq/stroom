@@ -25,9 +25,11 @@ import stroom.query.api.datasource.IndexField;
 import stroom.util.shared.NullSafe;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import org.apache.lucene.index.VectorSimilarityFunction;
 
+@Singleton
 public class DenseVectorFieldCreatorFactory {
 
     private final OpenAIService openAIService;

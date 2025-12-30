@@ -26,6 +26,7 @@ import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexFields;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 import stroom.index.shared.LuceneIndexField;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.StandardHeaderArguments;
@@ -98,10 +99,6 @@ public class CommonTestScenarioCreator {
         return createIndex(name, createIndexFields(), LuceneIndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
     }
 
-    public DocRef createIndex(final String name, final List<LuceneIndexField> indexFields) {
-        return createIndex(name, indexFields, LuceneIndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
-    }
-
     public DocRef createIndex(final String name, final List<LuceneIndexField> indexFields, final int maxDocsPerShard) {
         // Create a test index.
         final DocRef indexRef = indexStore.createDocument(name);
@@ -111,6 +108,7 @@ public class CommonTestScenarioCreator {
         index.setMaxDocsPerShard(maxDocsPerShard);
         index.setFields(indexFields);
         index.setVolumeGroupName(VolumeCreator.DEFAULT_VOLUME_GROUP);
+        index.setPartitionBy(PartitionBy.YEAR);
         indexStore.writeDocument(index);
         assertThat(index).isNotNull();
         return indexRef;

@@ -34,6 +34,7 @@ import stroom.feed.impl.MockFeedModule;
 import stroom.gitrepo.mock.MockGitRepoModule;
 import stroom.importexport.impl.ImportExportModule;
 import stroom.index.mock.MockIndexModule;
+import stroom.langchain.impl.MockOpenAIModule;
 import stroom.meta.mock.MockMetaModule;
 import stroom.node.mock.MockNodeServiceModule;
 import stroom.pipeline.xmlschema.MockXmlSchemaModule;
@@ -120,6 +121,7 @@ public class MockServiceModule extends AbstractModule {
         install(new MockStateModule());
         install(new MockPlanBModule());
         install(new MockClusterLockModule());
+        install(new MockOpenAIModule());
 
         bind(ContentPackUserService.class).to(MockSecurityContext.class);
         bind(HttpClientFactory.class).to(BasicHttpClientFactory.class);

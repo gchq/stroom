@@ -185,6 +185,7 @@ include 'stroom-kafka:stroom-kafka-impl'
 // LangChain (LLM integration)
 include 'stroom-langchain:stroom-langchain-api'
 include 'stroom-langchain:stroom-langchain-impl'
+include 'stroom-langchain:stroom-langchain-mock'
 
 // Lifecycle
 include 'stroom-lifecycle:stroom-lifecycle-api'

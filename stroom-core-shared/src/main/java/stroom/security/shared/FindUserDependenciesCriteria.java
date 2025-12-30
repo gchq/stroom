@@ -98,7 +98,7 @@ public class FindUserDependenciesCriteria extends ExpressionCriteria {
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder extends AbstractBuilder<FindUserDependenciesCriteria, Builder> {
+    public static class Builder extends ExpressionCriteriaBuilder<FindUserDependenciesCriteria, Builder> {
 
         private UserRef userRef = null;
 

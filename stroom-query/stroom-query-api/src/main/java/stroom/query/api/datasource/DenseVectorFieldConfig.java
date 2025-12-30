@@ -46,6 +46,7 @@ public class DenseVectorFieldConfig {
     @JsonProperty
     private final int nearestNeighbourCount;
 
+    @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
     public DenseVectorFieldConfig(@JsonProperty("modelRef") final DocRef modelRef,
                                   @JsonProperty("vectorSimilarityFunction") final VectorSimilarityFunctionType vectorSimilarityFunction,

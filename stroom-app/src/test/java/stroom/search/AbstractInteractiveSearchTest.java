@@ -386,7 +386,7 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
         test(expression, 5);
     }
 
-    private void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount) {
+    void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount) {
         final List<String> componentIds = Collections.singletonList("table-1");
         test(expressionIn, expectResultCount, componentIds, true);
     }
@@ -542,12 +542,12 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
                 .build();
     }
 
-    private ExpressionOperator.Builder buildExpression(final String userField,
-                                                       final String userTerm,
-                                                       final String from,
-                                                       final String to,
-                                                       final String wordsField,
-                                                       final String wordsTerm) {
+    ExpressionOperator.Builder buildExpression(final String userField,
+                                               final String userTerm,
+                                               final String from,
+                                               final String to,
+                                               final String wordsField,
+                                               final String wordsTerm) {
         final ExpressionOperator.Builder operator = ExpressionOperator.builder();
         operator.addTerm(userField, Condition.EQUALS, userTerm);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);

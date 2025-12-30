@@ -57,7 +57,7 @@ public class FetchAppUserPermissionsRequest extends ExpressionCriteria {
     }
 
 
-    public static class Builder extends AbstractBuilder<FetchAppUserPermissionsRequest, Builder> {
+    public static class Builder extends ExpressionCriteriaBuilder<FetchAppUserPermissionsRequest, Builder> {
 
         private UserRef userRef;
         private PermissionShowLevel showLevel;

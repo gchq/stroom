@@ -76,6 +76,7 @@ public class LuceneIndexField implements IndexField {
     @JsonProperty
     private final DenseVectorFieldConfig denseVectorFieldConfig;
 
+    @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
     public LuceneIndexField(@Deprecated @JsonProperty("fieldName") final String fieldName,
                             @Deprecated @JsonProperty("fieldType") final OldIndexFieldType fieldType,

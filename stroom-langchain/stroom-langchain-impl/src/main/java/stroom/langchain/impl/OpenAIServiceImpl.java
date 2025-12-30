@@ -238,7 +238,10 @@ public class OpenAIServiceImpl implements OpenAIService {
     }
 
     private HttpClientBuilder getClientBuilder(final OpenAIModelDoc modelDoc) {
-        final HttpClientConfiguration httpClientConfiguration = convert(modelDoc.getHttpClientConfiguration());
+        final HttpClientConfiguration httpClientConfiguration = convert(NullSafe.getOrElse(
+                modelDoc,
+                OpenAIModelDoc::getHttpClientConfiguration,
+                HttpClientConfig.builder().build()));
         final HttpClientCache httpClientCache = httpClientCacheProvider.get();
         final HttpClient httpClient = httpClientCache.get(httpClientConfiguration);
         return new ApacheHttpClientBuilder(httpClient, httpClientConfiguration);

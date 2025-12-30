@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.util.shared;
+ext.moduleName = 'stroom.langchain.mock'
 
-public abstract class BaseBuilder<T, B extends BaseBuilder<T, ?>> {
+dependencies {
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-langchain:stroom-langchain-api')
+    implementation project(':stroom-langchain:stroom-langchain-impl')
 
-    protected abstract B self();
-
-    public abstract T build();
+    implementation libs.guice
+    implementation libs.langchain4j
+    implementation libs.langchain4j.cohere
+    implementation libs.langchain4j.jina
+    implementation libs.langchain4j.open.ai
+    implementation project(':stroom-test-common')
 }

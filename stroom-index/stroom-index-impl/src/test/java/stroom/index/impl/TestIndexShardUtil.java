@@ -54,11 +54,13 @@ class TestIndexShardUtil {
         Files.createDirectories(path);
         final IndexVolume indexVolume = new IndexVolume();
         indexVolume.setPath(path.toString());
-        final IndexShard indexShard = new IndexShard();
-        indexShard.setId(123L);
-        indexShard.setIndexUuid(String.valueOf(UUID.randomUUID()));
-        indexShard.setPartition("partition1");
-        indexShard.setVolume(indexVolume);
+        final IndexShard indexShard = IndexShard
+                .builder()
+                .id(123L)
+                .indexUuid(String.valueOf(UUID.randomUUID()))
+                .partition("partition1")
+                .volume(indexVolume)
+                .build();
 
         final Path indexPath = IndexShardUtil.getIndexPath(indexShard, pathCreator);
         LOGGER.info("indexPath: {}", indexPath);
@@ -75,11 +77,13 @@ class TestIndexShardUtil {
 
         final IndexVolume indexVolume = new IndexVolume();
         indexVolume.setPath(relPathStr);
-        final IndexShard indexShard = new IndexShard();
-        indexShard.setId(123L);
-        indexShard.setIndexUuid(String.valueOf(UUID.randomUUID()));
-        indexShard.setPartition("partition1");
-        indexShard.setVolume(indexVolume);
+        final IndexShard indexShard = IndexShard
+                .builder()
+                .id(123L)
+                .indexUuid(String.valueOf(UUID.randomUUID()))
+                .partition("partition1")
+                .volume(indexVolume)
+                .build();
 
         final Path indexPath = IndexShardUtil.getIndexPath(indexShard, pathCreator);
         LOGGER.info("indexPath: {}", indexPath);
