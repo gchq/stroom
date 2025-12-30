@@ -34,6 +34,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Range;
 import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
 import stroom.util.string.StringIdUtil;
 import stroom.util.string.TemplateUtil.Template;
 
@@ -65,9 +66,12 @@ import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
+import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.model.S3Request;
 import software.amazon.awssdk.services.s3.model.S3Response;
 import software.amazon.awssdk.services.s3.model.Tag;
@@ -98,7 +102,6 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -137,11 +140,14 @@ public class S3Manager {
 
     private final TemplateCache templateCache;
     private final S3ClientConfig s3ClientConfig;
+    private final S3MetaFieldsMapper s3MetaFieldsMapper;
 
     public S3Manager(final TemplateCache templateCache,
-                     final S3ClientConfig s3ClientConfig) {
+                     final S3ClientConfig s3ClientConfig,
+                     final S3MetaFieldsMapper s3MetaFieldsMapper) {
         this.templateCache = templateCache;
         this.s3ClientConfig = s3ClientConfig;
+        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
     }
 
     private S3AsyncClient createAsyncClient(final S3ClientConfig s3ClientConfig) {
@@ -406,7 +412,7 @@ public class S3Manager {
                 .addLazyReplacement(TYPE_VAR, meta::getTypeName)
                 .execute();
 
-        bucketName = cleanBuckName(bucketName);
+        bucketName = S3Util.cleanBucketName(bucketName);
         final int len = bucketName.length();
         if (len < 3) {
             LOGGER.error("Bucket name too short, must be >=3. bucketName: '{}'", bucketName);
@@ -420,29 +426,26 @@ public class S3Manager {
         return bucketName;
     }
 
-    private static String cleanBuckName(String bucketName) {
-        bucketName = bucketName.toLowerCase(Locale.ROOT);
-        bucketName = S3_BUCKET_NAME_INVALID_CHARS_PATTERN.matcher(bucketName).replaceAll("-");
-        bucketName = LEADING_HYPHENS.matcher(bucketName).replaceAll("");
-        bucketName = TRAILING_HYPHENS.matcher(bucketName).replaceAll("");
-        return bucketName;
-    }
-
     private String createManifestKey(final String key) {
-        return MANIFEST_METADATA_KEY_PREFIX + cleanS3MetaDataKey(key);
+        if (NullSafe.isNonBlankString(key)) {
+            final CIKey ciKey = CIKeys.getCommonKey(key);
+            final CIKey cleanedCiKey = s3MetaFieldsMapper.getS3Key(ciKey)
+                    .orElse(null);
+            if (cleanedCiKey == null) {
+                LOGGER.warn("Unknown manifest key '{}'", key);
+            }
+            // Add on the key prefix to distinguish it as a user-defined key and as a manifest key
+            return NullSafe.get(
+                    cleanedCiKey,
+                    CIKey::get,
+                    str -> AWS_USER_DEFINED_META_PREFIX + MANIFEST_METADATA_KEY_PREFIX + str);
+        } else {
+            return key;
+        }
     }
 
     private String createMetaKey(final String key, final int part) {
-        return META_METADATA_KEY_PREFIX + part + "-" + cleanS3MetaDataKey(key);
-    }
-
-    private String cleanS3MetaDataKey(final String metaKey) {
-        String s3Name = metaKey;
-        s3Name = s3Name.toLowerCase(Locale.ROOT);
-        s3Name = S3_META_KEY_INVALID_CHARS_PATTERN.matcher(s3Name).replaceAll("-");
-        s3Name = LEADING_HYPHENS.matcher(s3Name).replaceAll("");
-        s3Name = TRAILING_HYPHENS.matcher(s3Name).replaceAll("");
-        return s3Name;
+        return META_METADATA_KEY_PREFIX + part + "-" + S3Util.cleanS3MetaDataKey(key);
     }
 
     public String getBucketNamePattern() {
@@ -786,10 +789,18 @@ public class S3Manager {
                     .stream()
                     .map(entry -> {
                         String key = entry.getKey();
+                        final String value = entry.getValue();
                         removeAwsPrefix(key);
                         if (key.startsWith(MANIFEST_METADATA_KEY_PREFIX)) {
                             key = key.substring(MANIFEST_METADATA_KEY_PREFIX.length());
-                            return Map.entry(key, entry.getValue());
+                            final CIKey originalCiKey = s3MetaFieldsMapper.getOriginalKey(CIKey.of(key))
+                                    .orElse(null);
+                            if (originalCiKey == null) {
+                                // TODO how do we handle un-reversable keys??
+                                LOGGER.warn("readManifest() - Unknown manifest key '{}' with value '{}'",
+                                        key, value);
+                            }
+                            return Map.entry(key, value);
                         } else {
                             return null;
                         }
@@ -895,6 +906,29 @@ public class S3Manager {
         return response;
     }
 
+    public List<String> listKeys(final Meta meta,
+                                 final String childStreamType,
+                                 final String keyNamePattern) {
+
+        final String bucketName = createBucketName(getBucketNamePattern(), meta);
+        final String key = createKey(getKeyNamePattern(), meta);
+        final ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request.builder()
+                .bucket(bucketName)
+                .prefix(key)
+                .build();
+
+        try (final S3Client s3Client = createClient(s3ClientConfig)) {
+            final ListObjectsV2Response listObjectsV2Response = s3Client.listObjectsV2(listObjectsV2Request);
+            return NullSafe.stream(listObjectsV2Response.contents())
+                    .map(S3Object::key)
+                    .toList();
+        } catch (final S3Exception e) {
+            error("Error deleting: ", bucketName, key, e);
+            throw e;
+        }
+    }
+
+
     public DeleteObjectResponse delete(final Meta meta) {
         final String bucketName = createBucketName(getBucketNamePattern(), meta);
         final String key = createKey(getKeyNamePattern(), meta);
@@ -949,11 +983,11 @@ public class S3Manager {
                 .addLazyReplacement(FEED_VAR, meta::getFeedName)
                 .addLazyReplacement(TYPE_VAR, meta::getTypeName)
                 .addLazyReplacement(ID_VAR, () -> String.valueOf(meta.getId()))
-                .addLazyReplacement(ID_PATH_VAR, () -> getIdPath(padId(meta.getId())))
+                .addLazyReplacement(ID_PATH_VAR, () -> getIdPath(meta.getId()))
                 .addLazyReplacement(ID_PADDED_VAR, () -> padId(meta.getId()))
                 .execute();
 
-        keyName = cleanKeyName(keyName);
+        keyName = S3Util.cleanKeyName(keyName);
 
         final int keyBytesLen = keyName.getBytes(StandardCharsets.UTF_8).length;
         if (keyBytesLen > 1024) {
@@ -964,46 +998,71 @@ public class S3Manager {
         return keyName;
     }
 
-    private static String cleanKeyName(String keyName) {
-        keyName = S3_KEY_NAME_INVALID_CHARS_PATTERN.matcher(keyName).replaceAll("-");
-        keyName = MULTI_SLASH.matcher(keyName).replaceAll("/");
-        keyName = LEADING_SLASH.matcher(keyName).replaceAll("");
-        keyName = TRAILING_SLASH.matcher(keyName).replaceAll("");
-        return keyName;
+    /**
+     * Creates a string representation of an S3 object of the form
+     * <pre>
+     * s3://region/bucket/key
+     * </pre>
+     */
+    public String toS3PathString(final Meta meta, final String keyNamePattern) {
+        final String bucketName = createBucketName(getBucketNamePattern(), meta);
+        final String keyName = createKey(
+                Objects.requireNonNullElseGet(keyNamePattern, this::getKeyNamePattern),
+                meta);
+        return String.join(
+                "/",
+                "s3:/",
+                s3ClientConfig.getRegion(),
+                bucketName,
+                keyName);
     }
 
     /**
      * Pad a prefix.
      */
-    private String padId(final Long current) {
-        if (current == null) {
-            return START_PREFIX;
-        } else {
-            return StringIdUtil.idToString(current);
-        }
+    private static String padId(final long current) {
+//        if (current == null) {
+//            return START_PREFIX;
+//        } else {
+        return StringIdUtil.idToString(current);
+//        }
     }
 
-    private String getIdPath(final String id) {
+    /**
+     * Pkg private for testing
+     *
+     * @return The metaId as a directory path with one dir for 1000 metaIds,
+     * e.g. metaId 123,456,789 => "123/456"
+     */
+    static String getIdPath(final long metaId) {
+//        if (metaId == null) {
+//            return "";
+//        } else {
+        final String idStr = padId(metaId);
         final StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < id.length() - PAD_SIZE; i += PAD_SIZE) {
-            final String part = id.substring(i, i + PAD_SIZE);
+        final int endIdxExc = idStr.length() - PAD_SIZE;
+        for (int i = 0; i < endIdxExc; i += PAD_SIZE) {
+            final String part = idStr.substring(i, i + PAD_SIZE);
             if (!sb.isEmpty()) {
                 sb.append("/");
             }
             sb.append(part);
         }
         return sb.toString();
+//        }
     }
 
     private PutObjectRequest createPutObjectRequest(final String bucketName,
                                                     final String key,
                                                     final Meta meta,
                                                     final AttributeMap attributeMap) {
-        final Map<String, String> metadata = attributeMap
+        // Convert the manifest attributeMap into s3 metadata key/value pairs to save
+        // creating a tiny file for them.
+        final Map<String, String> metadata = NullSafe.map(attributeMap)
                 .entrySet()
                 .stream()
-                .collect(Collectors.toMap(e ->
-                                cleanS3MetaDataKey(e.getKey()),
+                .collect(Collectors.toMap(
+                        entry -> createManifestKey(entry.getKey()),
                         Entry::getValue));
 
         return PutObjectRequest.builder()

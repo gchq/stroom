@@ -68,7 +68,8 @@ public class TestS3Manager {
 
         final S3Manager s3Manager = new S3Manager(
                 new TemplateCacheImpl(new CacheManagerImpl()),
-                s3ClientConfig);
+                s3ClientConfig,
+                new S3MetaFieldsMapper());
         final Path file = tempDir.resolve("test.txt");
 
         Files.writeString(file,
@@ -105,7 +106,8 @@ public class TestS3Manager {
 
         final S3Manager s3Manager = new S3Manager(
                 new TemplateCacheImpl(new CacheManagerImpl()),
-                s3ClientConfig);
+                s3ClientConfig,
+                new S3MetaFieldsMapper());
         final Path file = tempDir.resolve("test.txt");
 
         Files.writeString(file,
@@ -168,6 +170,23 @@ public class TestS3Manager {
                                   + "42-one two three",
                                 "foo bar"),
                         new SegmentedMetaEntry(42, "one two three", "foo bar"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testGetIdPath() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(long.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(S3Manager::getIdPath)
+                .withSimpleEqualityAssertion()
+                .addCase(0L, "")
+                .addCase(1L, "")
+                .addCase(999L, "")
+                .addCase(4_321L, "004")
+                .addCase(987_654_321L, "987/654")
+                .addCase(999_999_999_001L, "999/999/999")
+                .addCase(999_999_999_999L, "999/999/999")
                 .build();
     }
 

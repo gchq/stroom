@@ -28,8 +28,11 @@ import it.unimi.dsi.fastutil.ints.IntBidirectionalIterator;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -51,6 +54,7 @@ public class ZstdSeekTable implements Iterable<FrameLocation> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZstdSeekTable.class);
 
+    private static final int VALUE_BUFFER_CAPACITY = Long.BYTES;
     static final ZstdSeekTable EMPTY = new ZstdSeekTable(
             ZstdConstants.ZERO_UUID,
             0,
@@ -165,6 +169,92 @@ public class ZstdSeekTable implements Iterable<FrameLocation> {
             }
         }
         return optZstdSeekTable;
+    }
+
+    /**
+     * Writes the frameInfoList as a complete seek table to outputStream.
+     *
+     * @param outputStream   The {@link OutputStream} to write to.
+     * @param frameInfoList  The details of the frames already written to outputStream.
+     * @param zstdDictionary The dictionary that is being used to compress the associated data.
+     * @param heapBufferPool A buffer pool if available, can be null.
+     * @throws IOException
+     */
+    public static void writeSeekTable(final OutputStream outputStream,
+                                      final List<FrameInfo> frameInfoList,
+                                      final ZstdDictionary zstdDictionary,
+                                      final HeapBufferPool heapBufferPool) throws IOException {
+        // Format of a generic skippable frame is
+        // <4 byte magic number><4 byte size of payload (LE)><payload>
+
+        // --- Seek table frame header ---
+
+        // Write the magic number that identifies this frame to Zstd as a skippable one
+        outputStream.write(ZstdConstants.SKIPPABLE_FRAME_MAGIC_NUMBER);
+
+        final ByteBuffer valueBuffer = getHeapByteBuffer(heapBufferPool);
+
+        try {
+            // Determine how big the seek table is (including footer)
+            final int frameCount = frameInfoList.size();
+            final int framePayloadSize = ZstdSegmentUtil.calculateSeekTableFramePayloadSize(frameCount);
+            LOGGER.debug("writeSeekTable() - frameCount: {}, framePayloadSize: {}", frameCount, framePayloadSize);
+            // Write the payload size so Zstd knows how far to skip
+            writeLEInteger(framePayloadSize, outputStream, valueBuffer);
+
+            // --- Seek table frame entries ---
+
+            // Write one entry describing each frame
+            for (final FrameInfo frameInfo : frameInfoList) {
+                writeLELong(frameInfo.cumulativeCompressedSize(), outputStream, valueBuffer);
+                writeLELong(frameInfo.uncompressedSize(), outputStream, valueBuffer);
+            }
+
+            // --- Seek table frame footer ---
+
+            // Write the UUID of the dict used by this outputStream. Writes all zeros if there is no dict
+            // so that we have a fixed width footer.
+            writeDictionaryUuid(outputStream, zstdDictionary);
+            // Frame count, so know how big our seek table is
+            writeLEInteger(frameInfoList.size(), outputStream, valueBuffer);
+            // Seek table descriptor bitfield
+            // We currently don't use any bits in this, but may as well keep it in case
+            // we find a use for some of them.
+            outputStream.write((byte) 0);
+            // Seekable magic number, so we can look at the last 4 bytes of a zst file and determine
+            // that it is seekable
+            outputStream.write(ZstdConstants.SEEKABLE_MAGIC_NUMBER);
+        } finally {
+            NullSafe.consume(heapBufferPool, pool -> pool.release(valueBuffer));
+        }
+    }
+
+    private static ByteBuffer getHeapByteBuffer(final HeapBufferPool heapBufferPool) {
+        return NullSafe.getOrElseGet(
+                heapBufferPool,
+                pool -> pool.get(VALUE_BUFFER_CAPACITY),
+                () -> ByteBuffer.allocate(VALUE_BUFFER_CAPACITY));
+    }
+
+    private static void writeDictionaryUuid(final OutputStream outputStream,
+                                            final ZstdDictionary zstdDictionary) throws IOException {
+        final byte[] dictUuidBytes = NullSafe.getOrElse(
+                zstdDictionary,
+                ZstdDictionary::getUuidBytes,
+                ZstdConstants.ZERO_UUID_BYTES);
+        outputStream.write(dictUuidBytes);
+    }
+
+    private static void writeLEInteger(final long val,
+                                       final OutputStream outputStream,
+                                       final ByteBuffer byteBuffer) throws IOException {
+        ZstdSegmentUtil.writeLEInteger(val, byteBuffer, outputStream);
+    }
+
+    private static void writeLELong(final long val,
+                                    final OutputStream outputStream,
+                                    final ByteBuffer byteBuffer) throws IOException {
+        ZstdSegmentUtil.writeLELong(val, byteBuffer, outputStream);
     }
 
     private static void checkIsSkippableFrame(final ByteBuffer byteBuffer, final long seekTableFrameSize) {

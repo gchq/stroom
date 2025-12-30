@@ -31,6 +31,10 @@ public abstract class AbstractZstdFrameSupplier implements ZstdFrameSupplier {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractZstdFrameSupplier.class);
 
+    // TODO needs to come from config
+    // If we need a critical mass of the stream we might as well download it all to a temp file and
+    // grab the bits we need from there.  Maybe it should be based on % of total frame count rather than
+    // on size as transfer cost is free, but requests have a cost.
     protected static final double DOWNLOAD_ALL_PCT_THRESHOLD = 50;
 
     protected ZstdSeekTable zstdSeekTable = null;
@@ -46,6 +50,7 @@ public abstract class AbstractZstdFrameSupplier implements ZstdFrameSupplier {
                            final IntSortedSet includedFrameIndexes,
                            final boolean includeAll) {
 
+        LOGGER.debug("initialise() - zstdSeekTable: {}, includeAll: {}", zstdSeekTable, includeAll);
         if (includeAll) {
             if (NullSafe.hasItems(includedFrameIndexes)) {
                 throw new IllegalArgumentException("Cannot set includeAll and includedFrameIndexes");

@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs.s3v2;
 
 
 import stroom.aws.s3.impl.S3Manager;
+import stroom.aws.s3.impl.S3MetaFieldsMapper;
 import stroom.aws.s3.shared.AwsBasicCredentials;
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.bytebuffer.ByteBufferPoolConfig;
@@ -67,7 +68,8 @@ public class TestS3 {
 
         final S3Manager s3Manager = new S3Manager(
                 new TemplateCacheImpl(new CacheManagerImpl()),
-                s3ClientConfig);
+                s3ClientConfig,
+                new S3MetaFieldsMapper());
 
         final Path file = tempDir.resolve("test.txt");
         Files.writeString(file, """
@@ -123,7 +125,8 @@ public class TestS3 {
 
         final S3Manager s3Manager = new S3Manager(
                 new TemplateCacheImpl(new CacheManagerImpl()),
-                s3ClientConfig);
+                s3ClientConfig,
+                new S3MetaFieldsMapper());
 
         final int iterations = 10;
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();

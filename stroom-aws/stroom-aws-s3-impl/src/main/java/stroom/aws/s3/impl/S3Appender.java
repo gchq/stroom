@@ -78,6 +78,7 @@ public class S3Appender extends AbstractAppender {
     private final S3ClientConfigCache s3ClientConfigCache;
     private final MetaDataHolder metaDataHolder;
     private final MetaHolder metaHolder;
+    private final S3MetaFieldsMapper s3MetaFieldsMapper;
     private DocRef s3ConfigRef;
     private String bucketNamePattern;
     private String keyNamePattern;
@@ -89,7 +90,8 @@ public class S3Appender extends AbstractAppender {
                       final MetaHolder metaHolder,
                       final S3AppenderTempDir s3AppenderTempDir,
                       final TemplateCache templateCache,
-                      final S3ClientConfigCache s3ClientConfigCache) {
+                      final S3ClientConfigCache s3ClientConfigCache,
+                      final S3MetaFieldsMapper s3MetaFieldsMapper) {
         super(errorReceiverProxy);
         this.s3AppenderTempDir = s3AppenderTempDir;
         this.templateCache = templateCache;
@@ -97,6 +99,7 @@ public class S3Appender extends AbstractAppender {
         this.metaDataHolder = metaDataHolder;
         this.metaHolder = metaHolder;
         this.outputFactory = new OutputFactory(metaDataHolder);
+        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
 
         // Ensure outputStreamSupport has the defaults for S3Appender
         setUseCompression(DEFAULT_USE_COMPRESSION_PROP_VALUE_BOOLEAN);
@@ -135,7 +138,7 @@ public class S3Appender extends AbstractAppender {
                     super.close();
 
                     try {
-                        final S3Manager s3Manager = new S3Manager(templateCache, s3ClientConfig);
+                        final S3Manager s3Manager = new S3Manager(templateCache, s3ClientConfig, s3MetaFieldsMapper);
                         final String bucketNamePattern = NullSafe
                                 .nonBlank(S3Appender.this.bucketNamePattern)
                                 .orElse(s3Manager.getBucketNamePattern());

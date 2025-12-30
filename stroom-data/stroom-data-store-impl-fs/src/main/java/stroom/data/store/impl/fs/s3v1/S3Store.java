@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs.s3v1;
 
 import stroom.aws.s3.impl.S3FileExtensions;
 import stroom.aws.s3.impl.S3Manager;
+import stroom.aws.s3.impl.S3MetaFieldsMapper;
 import stroom.cache.api.TemplateCache;
 import stroom.data.store.api.Source;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
@@ -62,14 +63,17 @@ public class S3Store {
     private final Map<Long, TrackedSource> cache = new ConcurrentHashMap<>();
     private final Set<TrackedSource> evictable = new HashSet<>();
     private final MetaService metaService;
+    private final S3MetaFieldsMapper s3MetaFieldsMapper;
     private final Path tempDir;
 
     @Inject
     S3Store(final TemplateCache templateCache,
             final TempDirProvider tempDirProvider,
-            final MetaService metaService) {
+            final MetaService metaService,
+            final S3MetaFieldsMapper s3MetaFieldsMapper) {
         this.templateCache = templateCache;
         this.metaService = metaService;
+        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
 
         try {
             tempDir = tempDirProvider.get().resolve("s3_cache");
@@ -90,8 +94,7 @@ public class S3Store {
                     try {
                         zipFile = tempPath.resolve(S3FileExtensions.ZIP_FILE_NAME);
                         // Download the zip from S3.
-                        final S3Manager s3Manager =
-                                new S3Manager(templateCache, dataVolume.getVolume().getS3ClientConfig());
+                        final S3Manager s3Manager = createS3Manager(dataVolume);
                         s3Manager.download(meta, zipFile);
 
                         ZipUtil.unzip(zipFile, tempPath);
@@ -128,8 +131,7 @@ public class S3Store {
     }
 
     private String getS3Path(final DataVolume dataVolume, final Meta meta) {
-        final S3Manager s3Manager = new S3Manager(
-                templateCache, dataVolume.getVolume().getS3ClientConfig());
+        final S3Manager s3Manager = createS3Manager(dataVolume);
         return "S3 > " +
                s3Manager.createBucketName(s3Manager.getBucketNamePattern(), meta) +
                " > " +
@@ -196,8 +198,7 @@ public class S3Store {
             ZipUtil.zip(zipFile, tempDir);
 
             // Upload the zip to S3.
-            final S3Manager s3Manager = new S3Manager(
-                    templateCache, dataVolume.getVolume().getS3ClientConfig());
+            final S3Manager s3Manager = createS3Manager(dataVolume);
             s3Manager.upload(meta, attributeMap, zipFile);
 
         } catch (final IOException e) {
@@ -238,6 +239,13 @@ public class S3Store {
                 LOGGER.debug(e::getMessage, e);
             }
         }
+    }
+
+    private S3Manager createS3Manager(final DataVolume dataVolume) {
+        return new S3Manager(
+                this.templateCache,
+                dataVolume.getVolume().getS3ClientConfig(),
+                s3MetaFieldsMapper);
     }
 
 

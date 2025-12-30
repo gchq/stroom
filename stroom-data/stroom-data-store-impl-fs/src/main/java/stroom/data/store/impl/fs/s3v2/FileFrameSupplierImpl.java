@@ -38,12 +38,6 @@ public class FileFrameSupplierImpl extends AbstractZstdFrameSupplier {
     private final Path file;
     private final FileChannel fileChannel;
 
-//    private ZstdSeekTable zstdSeekTable = null;
-//    private IntSortedSet includedFrameIndexes = IntSortedSets.emptySet();
-//    private boolean includeAll = false;
-//    private Iterator<FrameLocation> frameLocationIterator = null;
-//    private FrameLocation currentFrameLocation = null;
-
     public FileFrameSupplierImpl(final Path file) throws IOException {
         this.file = Objects.requireNonNull(file);
         this.fileChannel = createFileChannel();

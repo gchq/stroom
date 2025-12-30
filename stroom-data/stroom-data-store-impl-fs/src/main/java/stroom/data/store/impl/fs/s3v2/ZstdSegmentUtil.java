@@ -188,24 +188,28 @@ public class ZstdSegmentUtil {
                - ((frameCount - frameIdx) * (long) ZstdConstants.SEEK_TABLE_ENTRY_SIZE);
     }
 
+    /**
+     * Writes val as a 4-byte unsigned integer in LE order. Clears the buffer, but does not flip it.
+     */
     public static void writeLEInteger(final long val,
-                                      final ByteBuffer fourByteBuffer,
+                                      final ByteBuffer byteBuffer,
                                       final OutputStream outputStream) throws IOException {
-        fourByteBuffer.clear();
-        fourByteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        putUnsignedInt(fourByteBuffer, val);
-        fourByteBuffer.flip();
-        outputStream.write(fourByteBuffer.array());
+        byteBuffer.clear();
+        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        putUnsignedInt(byteBuffer, val);
+        outputStream.write(byteBuffer.array(), 0, Integer.BYTES);
     }
 
+    /**
+     * Writes val as an 8-byte long in LE order. Clears the buffer, but does not flip it.
+     */
     public static void writeLELong(final long val,
-                                   final ByteBuffer eightByteBuffer,
+                                   final ByteBuffer byteBuffer,
                                    final OutputStream outputStream) throws IOException {
-        eightByteBuffer.clear();
-        eightByteBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        eightByteBuffer.putLong(val);
-        eightByteBuffer.flip();
-        outputStream.write(eightByteBuffer.array());
+        byteBuffer.clear();
+        byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        byteBuffer.putLong(val);
+        outputStream.write(byteBuffer.array(), 0, Long.BYTES);
     }
 
     public static long getUnsignedIntLE(final ByteBuffer byteBuffer, final int index) {

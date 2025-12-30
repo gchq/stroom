@@ -43,11 +43,6 @@ import java.util.UUID;
 public class S3FrameSupplierImpl extends AbstractZstdFrameSupplier {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3FrameSupplierImpl.class);
-    // TODO needs to come from config
-    // If we need a critical mass of the stream we might as well download it all to a temp file and
-    // grab the bits we need from there.  Maybe it should be based on % of total frame count rather than
-    // on size as transfer cost is free, but requests have a cost.
-    private static final double DOWNLOAD_ALL_PCT_THRESHOLD = 50;
 
     private final S3Manager s3Manager;
     private final Meta meta;
@@ -80,7 +75,19 @@ public class S3FrameSupplierImpl extends AbstractZstdFrameSupplier {
                            final boolean includeAll) {
         super.initialise(zstdSeekTable, includedFrameIndexes, includeAll);
         if (downloadAll) {
+            // We need to download the whole file as we need all or most of it
             initFileFrameSupplier();
+        } else {
+            // TODO We could pre-emptively fetch all the byte ranges in parallel with N threads.
+            //  We would need to first create the tempFile with a size equal to the total of all
+            //  the included compressed frames. We then need to build a map of FrameLocations from
+            //  the seek table to a shifted FrameLocation in the non-sparse temp file. Each thread can then
+            //  fetch an included frame and write it to the file using FileChannel.map(mode, offset, size)
+            //  and the shifted frame location. The FileChannel and MappedByteBuffers/MemorySegments can
+            //  be held until close() is called, the next() method can hopefully read back from memory.
+            //  next() would need to block until the required frame is available as we need them in order.
+            //  S3 has not great latency but is highly parallel, so hopefully pre-fetching like this would
+            //  speed things up a bit.
         }
     }
 
@@ -130,7 +137,7 @@ public class S3FrameSupplierImpl extends AbstractZstdFrameSupplier {
                                             + frameLocation);
         }
 
-        // TODO When we want the whole stream we want a different approach
+        // TODO See comment in initialise()
         final ResponseInputStream<GetObjectResponse> responseInputStream = s3Manager.getByteRange(
                 meta,
                 childStreamType,
@@ -176,6 +183,8 @@ public class S3FrameSupplierImpl extends AbstractZstdFrameSupplier {
     private Path createTempFile() {
         final String ext = s3StreamTypeExtensions.getExtension(meta.getTypeName(), childStreamType);
         final long id = meta.getId();
-        return tempDir.resolve(id + "__" + UUID.randomUUID() + ext);
+        final Path tempFile = tempDir.resolve(id + "__" + UUID.randomUUID() + ext);
+        LOGGER.debug("createTempFile() - Returning tempFile: {}", tempFile);
+        return tempFile;
     }
 }

@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs.s3v2;
 
 import stroom.aws.s3.impl.S3FileExtensions;
+import stroom.aws.s3.impl.S3Manager;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
@@ -62,6 +63,7 @@ final class S3ZstdSource implements Source {
     private final String s3Location;
     private AttributeMap attributeMap;
 
+    private final S3Manager s3Manager;
     private final S3ZstdStore s3ZstdStore;
     private final Meta meta;
     private boolean closed;
@@ -70,10 +72,12 @@ final class S3ZstdSource implements Source {
     public S3ZstdSource(final S3ZstdStore s3ZstdStore,
                         final Path tempDir,
                         final String s3Location,
+                        final S3Manager s3Manager,
                         final Meta meta) {
         this.s3ZstdStore = s3ZstdStore;
         this.tempDir = tempDir;
         this.s3Location = s3Location;
+        this.s3Manager = s3Manager;
         this.meta = meta;
         counts = countTypes();
     }

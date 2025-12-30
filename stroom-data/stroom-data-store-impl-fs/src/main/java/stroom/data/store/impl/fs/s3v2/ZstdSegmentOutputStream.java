@@ -30,7 +30,6 @@ import org.jspecify.annotations.NonNull;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -110,10 +109,6 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
     private final int compressionLevel;
     private final CountingOutputStream compressedBytesCountingOutputStream;
     private final List<FrameInfo> frameInfoList = new ArrayList<>();
-    private final byte[] fourByteArray = new byte[Integer.BYTES];
-    private final ByteBuffer fourByteBuffer = ByteBuffer.wrap(fourByteArray);
-    private final byte[] eightByteArray = new byte[Long.BYTES];
-    private final ByteBuffer eightByteBuffer = ByteBuffer.wrap(eightByteArray);
     private final HeapBufferPool heapBufferPool;
 
     private ZstdOutputStream zstdOutputStream = null;
@@ -232,62 +227,6 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
         lastBoundary = position;
     }
 
-    private void writeSeekTable() throws IOException {
-        // Format of a generic skippable frame is
-        // <4 byte magic number><4 byte size of payload (LE)><payload>
-
-        // --- Seek table frame header ---
-
-        // Write the magic number that identifies this frame to Zstd as a skippable one
-        compressedBytesCountingOutputStream.write(ZstdConstants.SKIPPABLE_FRAME_MAGIC_NUMBER);
-
-        // Determine how big the seek table is (including footer)
-        final int frameCount = frameInfoList.size();
-        final int framePayloadSize = ZstdSegmentUtil.calculateSeekTableFramePayloadSize(frameCount);
-        LOGGER.debug("writeSeekTable() - frameCount: {}, framePayloadSize: {}", frameCount, framePayloadSize);
-        // Write the payload size so Zstd knows how far to skip
-        writeLEInteger(framePayloadSize, compressedBytesCountingOutputStream);
-
-        // --- Seek table frame entries ---
-
-        // Write one entry describing each frame
-        for (final FrameInfo frameInfo : frameInfoList) {
-            writeLELong(frameInfo.cumulativeCompressedSize(), compressedBytesCountingOutputStream);
-            writeLELong(frameInfo.uncompressedSize(), compressedBytesCountingOutputStream);
-        }
-
-        // --- Seek table frame footer ---
-
-        // Write the UUID of the dict used by this outputStream. Writes all zeros if there is no dict
-        // so that we have a fixed width footer.
-        writeDictionaryUuid(compressedBytesCountingOutputStream);
-        // Frame count, so know how big our seek table is
-        writeLEInteger(frameInfoList.size(), compressedBytesCountingOutputStream);
-        // Seek table descriptor bitfield
-        // We currently don't use any bits in this, but may as well keep it in case
-        // we find a use for some of them.
-        compressedBytesCountingOutputStream.write((byte) 0);
-        // Seekable magic number, so we can look at the last 4 bytes of a zst file and determine
-        // that it is seekable
-        compressedBytesCountingOutputStream.write(ZstdConstants.SEEKABLE_MAGIC_NUMBER);
-    }
-
-    private void writeDictionaryUuid(final OutputStream outputStream) throws IOException {
-        final byte[] dictUuidBytes = NullSafe.getOrElse(
-                zstdDictionary,
-                ZstdDictionary::getUuidBytes,
-                ZstdConstants.ZERO_UUID_BYTES);
-        outputStream.write(dictUuidBytes);
-    }
-
-    private void writeLEInteger(final long val, final OutputStream outputStream) throws IOException {
-        ZstdSegmentUtil.writeLEInteger(val, fourByteBuffer, outputStream);
-    }
-
-    private void writeLELong(final long val, final OutputStream outputStream) throws IOException {
-        ZstdSegmentUtil.writeLELong(val, eightByteBuffer, outputStream);
-    }
-
     @Override
     public long getPosition() {
         return position;
@@ -335,7 +274,11 @@ public class ZstdSegmentOutputStream extends SegmentOutputStream {
         // Even if we only have one frame we still need to write the seek table so that
         // we have the dict uuid in there to decompress it.
         if (hasWrites && !frameInfoList.isEmpty()) {
-            writeSeekTable();
+            ZstdSeekTable.writeSeekTable(
+                    compressedBytesCountingOutputStream,
+                    frameInfoList,
+                    zstdDictionary,
+                    heapBufferPool);
         }
         compressedBytesCountingOutputStream.flush();
         // Close the underlying

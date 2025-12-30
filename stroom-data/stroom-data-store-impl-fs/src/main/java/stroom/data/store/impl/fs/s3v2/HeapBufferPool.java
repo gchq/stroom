@@ -30,6 +30,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -146,6 +147,9 @@ public class HeapBufferPool implements BufferPool, HasSystemInfo {
             buffer = pooledBufferQueues[offset].getByteBuffer();
             // Ensure the buffer goes out ready for use, i.e. with offset at zero and limit at capacity
             buffer.clear();
+            // Ensure the buffer goes out with the default byte order in case the last user of it
+            // changed the order. Clear does not reset the order it seems.
+            buffer.order(ByteOrder.BIG_ENDIAN);
         }
         return buffer;
     }
@@ -169,6 +173,7 @@ public class HeapBufferPool implements BufferPool, HasSystemInfo {
      * @return True if n is a power of ten, e.g. if n==10
      */
     static boolean isPowerOf10(final int n) {
+        // Faster than doing the maths, especially as most of our buffers are fairly small.
         return switch (n) {
             case 1,
                  10,
