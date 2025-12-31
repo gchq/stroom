@@ -233,8 +233,13 @@ public class AskStroomAIService {
             DashboardSearchResponse response = dataProvider.apply(range);
             TableResult result = (TableResult) response.getResults().getFirst();
 
-            // Create column header string.
-            final String header = writeHeader(result.getColumns().stream().map(Column::getName).toList());
+            // Create column header string from visible columns.
+            final List<Column> columns = result.getColumns();
+            final String header = writeHeader(columns
+                    .stream()
+                    .filter(Column::isVisible)
+                    .map(Column::getName)
+                    .toList());
 
             // Batch and summarise user message responses into a combined summary
             final TableSummaryConfig tableSummaryConfig = NullSafe.getOrElse(
@@ -249,8 +254,25 @@ public class AskStroomAIService {
             while (!NullSafe.isEmptyCollection(result.getRows())) {
                 for (final Row row : result.getRows()) {
                     final List<String> rowValues = row.getValues();
-                    final String rowString = writeRow(rowValues);
 
+                    // Write row
+                    final StringBuilder rowBuilder = new StringBuilder();
+                    for (int i = 0; i < columns.size(); i++) {
+                        final Column column = columns.get(i);
+                        // Only write visible cells.
+                        if (column.isVisible()) {
+                            final String cell = rowValues.get(i);
+                            rowBuilder.append("| ");
+                            rowBuilder.append(escape(cell));
+                            rowBuilder.append(" ");
+                        }
+                    }
+                    // End the row
+                    if (!rowBuilder.isEmpty()) {
+                        rowBuilder.append("|\n");
+                    }
+
+                    final String rowString = rowBuilder.toString();
                     final int newBatchSize = batch.length() + rowString.length();
                     if (rowCount > 0 && newBatchSize > maxBatchSize) {
                         // Batch message plus the new row would exceed the maximum batch size, so send the batch to the
