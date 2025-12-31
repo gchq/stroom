@@ -29,13 +29,15 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.document.Field;
 import org.apache.lucene.index.memory.MemoryIndex;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,10 +52,13 @@ class LuceneMemoryIndex implements stroom.search.extraction.MemoryIndex {
     private final Map<String, Analyzer> analyzerMap = new HashMap<>();
     private Map<String, Optional<IndexField>> cachedFields;
     private SearchExpressionQuery cachedQuery;
+    private final FieldFactory fieldFactory;
 
     @Inject
-    public LuceneMemoryIndex(final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory) {
+    public LuceneMemoryIndex(final SearchExpressionQueryBuilderFactory searchExpressionQueryBuilderFactory,
+                             final Provider<FieldFactory> fieldFactoryProvider) {
         this.searchExpressionQueryBuilderFactory = searchExpressionQueryBuilderFactory;
+        this.fieldFactory = fieldFactoryProvider.get();
     }
 
     @Override
@@ -89,8 +94,8 @@ class LuceneMemoryIndex implements stroom.search.extraction.MemoryIndex {
                 // If the field is indexed then add it to the in memory index.
                 if (luceneIndexField.isIndexed()) {
                     final Analyzer fieldAnalyzer = getAnalyser(luceneIndexField);
-                    final IndexableField field = FieldFactory.create(fieldValue);
-                    if (field != null) {
+                    final Collection<Field> fields = fieldFactory.create(fieldValue);
+                    for (final Field field : fields) {
                         // OPTIMISATION: Lazily create the memory index.
                         if (memoryIndex == null) {
                             memoryIndex = new MemoryIndex();

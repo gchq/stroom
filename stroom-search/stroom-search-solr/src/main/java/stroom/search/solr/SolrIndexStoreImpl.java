@@ -28,7 +28,6 @@ import stroom.query.api.datasource.FieldType;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrSynchState;
-import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
@@ -283,7 +282,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     }
 
     private SolrIndexField fromAttributes(final Map<String, Object> attributes) {
-        final SolrIndexField field = new SolrIndexField();
+        final SolrIndexField field = SolrIndexField.builder().build();
         setString(attributes, "name", field::setFldName);
         setString(attributes, "type", field::setNativeType);
         setString(attributes, "default", field::setDefaultValue);

@@ -51,6 +51,7 @@ public class QueryModule extends AbstractModule {
                 .bind(QueryDoc.class, QueryDocObjectInfoProvider.class);
 
         RestResourcesBinder.create(binder())
+                .bind(AskStroomAiResourceImpl.class)
                 .bind(QueryResourceImpl.class)
                 .bind(ExpressionResourceImpl.class)
                 .bind(ResultStoreResourceImpl.class);

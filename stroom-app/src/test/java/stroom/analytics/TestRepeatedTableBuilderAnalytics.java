@@ -25,6 +25,7 @@ import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
 import stroom.index.VolumeTestConfigModule;
+import stroom.langchain.impl.MockOpenAIModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
 import stroom.resource.impl.ResourceModule;
@@ -50,6 +51,7 @@ import java.util.UUID;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
+@IncludeModule(MockOpenAIModule.class)
 class TestRepeatedTableBuilderAnalytics extends AbstractAnalyticsTest {
 
     @Inject

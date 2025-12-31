@@ -21,6 +21,9 @@ import stroom.cache.impl.CacheModule;
 import stroom.cache.service.impl.CacheServiceModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.core.dataprocess.PipelineStreamTaskModule;
+import stroom.credentials.api.KeyStore;
+import stroom.credentials.api.StoredSecret;
+import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.impl.db.MockCredentialsDaoModule;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
@@ -31,6 +34,7 @@ import stroom.feed.impl.MockFeedModule;
 import stroom.gitrepo.mock.MockGitRepoModule;
 import stroom.importexport.impl.ImportExportModule;
 import stroom.index.mock.MockIndexModule;
+import stroom.langchain.impl.MockOpenAIModule;
 import stroom.meta.mock.MockMetaModule;
 import stroom.node.mock.MockNodeServiceModule;
 import stroom.pipeline.xmlschema.MockXmlSchemaModule;
@@ -117,9 +121,21 @@ public class MockServiceModule extends AbstractModule {
         install(new MockStateModule());
         install(new MockPlanBModule());
         install(new MockClusterLockModule());
+        install(new MockOpenAIModule());
 
         bind(ContentPackUserService.class).to(MockSecurityContext.class);
         bind(HttpClientFactory.class).to(BasicHttpClientFactory.class);
+        bind(StoredSecrets.class).toInstance(new StoredSecrets() {
+            @Override
+            public StoredSecret get(final String name) {
+                return null;
+            }
+
+            @Override
+            public KeyStore getKeyStore(final String name) {
+                return null;
+            }
+        });
 
         final UserService mockUserService = mock(UserService.class);
         when(mockUserService.loadByUuid(any())).then((Answer<User>) invocation -> {

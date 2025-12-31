@@ -1,0 +1,35 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="EmbeddingModel"
+                        label="Embedding Model"
+                        helpText="Choose the AI model to convert field data to vectors.">
+            <g:SimplePanel ui:field="model"/>
+        </form:FormGroup>
+        <form:FormGroup identity="vectorSimilarityFunctionType"
+                        label="Vector Similarity Function Type"
+                        helpText="Vector similarity function; used in search to return top K most similar vectors to a target vector. This is a label describing the method used during indexing and searching of the vectors in order to determine the nearest neighbors.">
+            <l:SelectionBox ui:field="vectorSimilarityFunctionType" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="segmentSize"
+                        label="Segment Size"
+                        helpText="The maximum size of the segment used during vectorisation, defined in tokens.">
+            <v:ValueSpinner ui:field="segmentSize" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="overlapSize"
+                        label="Overlap Size"
+                        helpText="The maximum size of the overlap, defined in tokens. Only full sentences are considered for the overlap.">
+            <v:ValueSpinner ui:field="overlapSize" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="nearestNeighbourCount"
+                        label="Nearest Neighbour Count"
+                        helpText="The number of nearest neighbors to gather when querying.">
+            <v:ValueSpinner ui:field="nearestNeighbourCount" width="200px"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>
+

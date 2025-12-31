@@ -23,6 +23,7 @@ import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.lucene.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.index.shared.IndexShard;
+import stroom.langchain.api.OpenAIService;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.QueryKey;
@@ -50,14 +51,19 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.KnnFloatVectorQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
+import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.SearcherManager;
+import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 
 class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
@@ -71,6 +77,7 @@ class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
     private final PathCreator pathCreator;
+    private final FieldFactory fieldFactory;
 
     private final QueryKey queryKey;
     private final Query query;
@@ -85,19 +92,23 @@ class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
                         final ExpressionOperator expression,
                         final WordListProvider dictionaryStore,
                         final DateTimeSettings dateTimeSettings,
-                        final QueryKey queryKey) {
+                        final QueryKey queryKey,
+                        final OpenAIService openAIService,
+                        final FieldFactory fieldFactory) {
         this.queryKey = queryKey;
         this.indexShardWriterCache = indexShardWriterCache;
         this.shardConfig = shardConfig;
         this.executor = executorProvider.get(THREAD_POOL);
         this.taskContextFactory = taskContextFactory;
         this.pathCreator = pathCreator;
+        this.fieldFactory = fieldFactory;
 
         final SearchExpressionQueryBuilder searchExpressionQueryBuilder = new SearchExpressionQueryBuilder(
                 indexDocRef,
                 indexFieldCache,
                 dictionaryStore,
-                dateTimeSettings);
+                dateTimeSettings,
+                openAIService);
         final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery(expression);
         query = searchExpressionQuery.getQuery();
 
@@ -125,7 +136,7 @@ class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
                 taskContext.reset();
                 taskContext.info(() ->
                         "Searching shard " + shardNumber + " of " + shardTotal +
-                                " (id=" + indexShard.getId() + ")", LOGGER);
+                        " (id=" + indexShard.getId() + ")", LOGGER);
 
                 final IndexWriter indexWriter = getWriter(indexShard.getId());
 
@@ -194,20 +205,39 @@ class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
                                 try {
                                     LOGGER.logDurationIfDebugEnabled(() -> {
                                         try {
-                                            // Create a collector.
-                                            final IndexShardHitCollector collector = new IndexShardHitCollector(
-                                                    taskContext,
-                                                    queryKey,
-                                                    indexShard,
-                                                    query,
-                                                    docIdQueue,
-                                                    hitCount);
+                                            // Determine if we are going to use a KNN vector search.
+                                            final boolean isKNN = isKNN(query);
+                                            if (isKNN) {
+                                                // TODO : Allow configuration of max hits.
+                                                final TopDocs results = searcher
+                                                        .search(query, shardConfig.getMaxDocIdQueueSize());
+                                                final ScoreDoc[] scoreDocs = results.scoreDocs;
+                                                for (final ScoreDoc scoreDoc : scoreDocs) {
+                                                    // Add to the hit count.
+                                                    docIdQueue.put(scoreDoc.doc);
+                                                    hitCount.increment();
+                                                }
 
-                                            searcher.search(query, collector);
+                                                LOGGER.debug("Shard search complete. {}, query term [{}]",
+                                                        results,
+                                                        query);
 
-                                            LOGGER.debug("Shard search complete. {}, query term [{}]",
-                                                    collector,
-                                                    query);
+                                            } else {
+                                                // Create a collector.
+                                                final IndexShardHitCollector collector = new IndexShardHitCollector(
+                                                        taskContext,
+                                                        queryKey,
+                                                        indexShard,
+                                                        query,
+                                                        docIdQueue,
+                                                        hitCount);
+
+                                                searcher.search(query, collector);
+
+                                                LOGGER.debug("Shard search complete. {}, query term [{}]",
+                                                        collector,
+                                                        query);
+                                            }
 
                                         } catch (final TaskTerminatedException e) {
                                             // Expected error on early completion.
@@ -268,6 +298,20 @@ class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
         }
     }
 
+    private boolean isKNN(final Query query) {
+        // Determine if we are going to use a KNN vector search.
+        final AtomicBoolean usingVector = new AtomicBoolean();
+        query.visit(new QueryVisitor() {
+            @Override
+            public void visitLeaf(final Query query) {
+                if (query instanceof KnnFloatVectorQuery) {
+                    usingVector.set(true);
+                }
+            }
+        });
+        return usingVector.get();
+    }
+
     /**
      * This method takes a list of document id's and extracts the stored fields
      * that are required for data display. In some cases such as batch search we
@@ -295,7 +339,7 @@ class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
                     // If the field is not in fact stored then it will be null here.
                     if (indexableField != null) {
                         try {
-                            values[i] = FieldFactory.convertValue(storedField, indexableField);
+                            values[i] = fieldFactory.convertValue(storedField, indexableField);
                         } catch (final RuntimeException e) {
                             error(errorConsumer, e);
                         }

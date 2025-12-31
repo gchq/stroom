@@ -20,6 +20,7 @@ import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardSearchConfig;
 import stroom.index.impl.IndexShardWriterCache;
+import stroom.langchain.api.OpenAIService;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.QueryKey;
@@ -42,6 +43,8 @@ class LuceneShardSearcherFactory {
     private final PathCreator pathCreator;
     private final WordListProvider dictionaryStore;
     private final Provider<SearchConfig> searchConfigProvider;
+    private final Provider<OpenAIService> openAIServiceProvider;
+    private final Provider<FieldFactory> fieldFactoryProvider;
 
     @Inject
     LuceneShardSearcherFactory(final IndexShardWriterCache indexShardWriterCache,
@@ -50,7 +53,9 @@ class LuceneShardSearcherFactory {
                                final TaskContextFactory taskContextFactory,
                                final PathCreator pathCreator,
                                final WordListProvider dictionaryStore,
-                               final Provider<SearchConfig> searchConfigProvider) {
+                               final Provider<SearchConfig> searchConfigProvider,
+                               final Provider<OpenAIService> openAIServiceProvider,
+                               final Provider<FieldFactory> fieldFactoryProvider) {
         this.indexShardWriterCache = indexShardWriterCache;
         this.shardSearchConfigProvider = shardSearchConfigProvider;
         this.executorProvider = executorProvider;
@@ -58,6 +63,8 @@ class LuceneShardSearcherFactory {
         this.pathCreator = pathCreator;
         this.dictionaryStore = dictionaryStore;
         this.searchConfigProvider = searchConfigProvider;
+        this.openAIServiceProvider = openAIServiceProvider;
+        this.fieldFactoryProvider = fieldFactoryProvider;
     }
 
     public stroom.index.impl.LuceneShardSearcher create(final DocRef indexDocRef,
@@ -77,6 +84,8 @@ class LuceneShardSearcherFactory {
                 expression,
                 dictionaryStore,
                 dateTimeSettings,
-                queryKey);
+                queryKey,
+                openAIServiceProvider.get(),
+                fieldFactoryProvider.get());
     }
 }

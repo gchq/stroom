@@ -18,6 +18,7 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.util.io.StreamUtil;
+import stroom.util.jersey.HttpClientCache;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;

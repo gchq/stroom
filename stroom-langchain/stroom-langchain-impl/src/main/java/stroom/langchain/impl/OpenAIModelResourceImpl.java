@@ -25,12 +25,10 @@ import stroom.langchain.api.OpenAIService;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.openai.shared.OpenAIModelResource;
 import stroom.openai.shared.OpenAIModelTestResponse;
-import stroom.util.date.DateUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.NullSafe;
 
-import com.openai.models.models.Model;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -81,18 +79,8 @@ public class OpenAIModelResourceImpl implements OpenAIModelResource, FetchWithUu
                 throw new IllegalArgumentException("Model ID must not be empty");
             }
 
-            final Model model = openAIServiceProvider.get().getModel(modelDoc);
-            final StringBuilder sb = new StringBuilder()
-                    .append("Model ID: ")
-                    .append(model.id())
-                    .append("\nCreated: ")
-                    .append(DateUtil.createNormalDateTimeString(model.created()))
-                    .append("\nOwner: ")
-                    .append(model.ownedBy())
-                    .append("\nValid: ")
-                    .append(model.isValid());
-
-            return new OpenAIModelTestResponse(model.isValid(), sb.toString());
+            final String model = openAIServiceProvider.get().getModel(modelDoc);
+            return new OpenAIModelTestResponse(model != null, model);
         } catch (final NoSuchElementException e) {
             return new OpenAIModelTestResponse(false, "Model " + modelDoc.getModelId() + " not found");
         }

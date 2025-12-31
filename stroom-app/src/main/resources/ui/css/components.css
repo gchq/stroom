@@ -1125,6 +1125,7 @@
 .askStroomAiViewImpl-bottom {
     display: flex;
     gap: var(--control__padding--horizontal);
+    align-items: center;
 }
 
 .askStroomAiViewImpl-bottom button.Button {
@@ -2651,8 +2652,7 @@ button.main-menu svg {
     height: 150px;
 }
 /* Width of access token and passphrase */
-.credentials-details-dialog #accessToken,
-.credentials-details-dialog #passphrase {
+.credentials-details-dialog .wide-control {
     width: 650px;
 }
 
@@ -2758,4 +2758,10 @@ button.main-menu svg {
 .ColumnValuesFilterViewImpl .cellTableOddRow:hover,
 .ColumnValuesFilterViewImpl .cellTableEvenRow:hover {
     background-color: var(--row__background-color--hovered);
+}
+
+.customFileUpload {
+    display: flex;
+    align-items: center;
+    gap: var(--control__gap--horizontal);
 }

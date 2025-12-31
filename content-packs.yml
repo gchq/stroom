@@ -23,8 +23,8 @@
     repo: {
       name: "stroom-content",
       uri : "https://github.com/gchq/stroom-content.git",
-      branch: "master",
-      commit: "aae2452752f6fea2d9701ee08a69038dbbfba834"
+      branch: "vllm",
+      commit: "6714666fbd208d726841f9a2a03fcd9766df0389"
     }
   }, {
     name: "internal-dashboards",

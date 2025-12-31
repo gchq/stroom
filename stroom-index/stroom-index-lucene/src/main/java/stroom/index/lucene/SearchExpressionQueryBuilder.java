@@ -19,12 +19,15 @@ package stroom.index.lucene;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.index.lucene.analyser.AnalyzerFactory;
+import stroom.langchain.api.OpenAIService;
+import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.IndexField;
 import stroom.query.common.v2.DateExpressionParser;
@@ -32,10 +35,12 @@ import stroom.query.common.v2.IndexFieldCache;
 import stroom.query.language.token.InTermsUtil;
 import stroom.search.impl.SearchException;
 
+import dev.langchain4j.model.embedding.EmbeddingModel;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.DoubleField;
 import org.apache.lucene.document.FloatField;
 import org.apache.lucene.document.IntField;
+import org.apache.lucene.document.KnnFloatVectorField;
 import org.apache.lucene.document.LongField;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.flexible.core.QueryNodeException;
@@ -71,15 +76,18 @@ class SearchExpressionQueryBuilder {
     private final IndexFieldCache indexFieldCache;
     private final WordListProvider wordListProvider;
     private final DateTimeSettings dateTimeSettings;
+    private final OpenAIService openAIService;
 
     SearchExpressionQueryBuilder(final DocRef indexDocRef,
                                  final IndexFieldCache indexFieldCache,
                                  final WordListProvider wordListProvider,
-                                 final DateTimeSettings dateTimeSettings) {
+                                 final DateTimeSettings dateTimeSettings,
+                                 final OpenAIService openAIService) {
         this.indexDocRef = indexDocRef;
         this.indexFieldCache = indexFieldCache;
         this.wordListProvider = wordListProvider;
         this.dateTimeSettings = dateTimeSettings;
+        this.openAIService = openAIService;
     }
 
     public SearchExpressionQuery buildQuery(final ExpressionOperator expression) {
@@ -547,6 +555,29 @@ class SearchExpressionQueryBuilder {
                 default -> throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                                                      + indexField.getFldType().getDisplayValue() + " field type");
             }
+        } else if (FieldType.DENSE_VECTOR.equals(indexField.getFldType())) {
+            final DenseVectorFieldConfig denseVectorFieldConfig = indexField.getDenseVectorFieldConfig();
+            if (denseVectorFieldConfig == null ||
+                denseVectorFieldConfig.getModelRef() == null) {
+                throw new IllegalArgumentException("Vector embedding model is not defined for field " +
+                                                   indexField);
+            }
+
+            try {
+                // Query the embeddings API for a vector representation of the query expression
+                final OpenAIModelDoc modelDoc = openAIService
+                        .getOpenAIModelDoc(denseVectorFieldConfig.getModelRef());
+
+                final EmbeddingModel embeddingModel = openAIService.getEmbeddingModel(modelDoc);
+                final float[] queryVector = embeddingModel.embed(value).content().vector();
+                return KnnFloatVectorField.newVectorQuery(fieldName,
+                        queryVector,
+                        denseVectorFieldConfig.getNearestNeighbourCount());
+            } catch (final Exception e) {
+                throw new RuntimeException("Failed to create vector embeddings for field " + fieldName + ". " +
+                                           e.getMessage(), e);
+            }
+
         } else {
             return switch (condition) {
                 case EQUALS -> getContains(fieldName, value, indexField, terms);

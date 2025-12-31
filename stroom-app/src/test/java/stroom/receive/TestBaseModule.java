@@ -21,6 +21,9 @@ import stroom.cache.service.impl.CacheServiceModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.core.receive.ReceiveDataModule;
+import stroom.credentials.api.KeyStore;
+import stroom.credentials.api.StoredSecret;
+import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.impl.db.MockCredentialsDaoModule;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.impl.DictionaryModule;
@@ -104,6 +107,18 @@ public class TestBaseModule extends AbstractModule {
         bind(ContentPackUserService.class).to(MockSecurityContext.class); //?
         bind(PathConfig.class).to(StroomPathConfig.class);
         bind(TempDirProvider.class).to(TempDirProviderImpl.class);
+
+        bind(StoredSecrets.class).toInstance(new StoredSecrets() {
+            @Override
+            public StoredSecret get(final String name) {
+                return null;
+            }
+
+            @Override
+            public KeyStore getKeyStore(final String name) {
+                return null;
+            }
+        });
     }
 
     @SuppressWarnings("unused")

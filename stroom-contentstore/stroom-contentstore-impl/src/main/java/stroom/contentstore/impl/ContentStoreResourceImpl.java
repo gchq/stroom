@@ -292,7 +292,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
                 // Add credentials if necessary
                 if (contentPack.getGitNeedsAuth()) {
                     messages.add(new Message(Severity.INFO, "Adding credentials for pull"));
-                    gitRepoDoc.setCredentialsId(createGitRepoRequest.getCredentialsId());
+                    gitRepoDoc.setCredentialName(createGitRepoRequest.getCredentialName());
                 }
 
                 // Write doc to DB

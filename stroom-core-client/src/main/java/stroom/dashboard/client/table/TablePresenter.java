@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.table;
 
+import stroom.ai.shared.DashboardTableContext;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.annotation.shared.AnnotationDecorationFields;
@@ -43,6 +44,7 @@ import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
+import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.grid.client.MessagePanel;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -106,7 +108,6 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
@@ -166,7 +167,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final InlineSvgToggleButton valueFilterButton;
     private final ButtonView annotateButton;
     private final ButtonView askAiButton;
-    private final AskStroomAiPresenter askAiPresenter;
     private final DownloadPresenter downloadPresenter;
     private final AnnotationManager annotationManager;
     private final RestFactory restFactory;
@@ -203,7 +203,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final FormatPresenter formatPresenter,
                           final TableFilterPresenter tableFilterPresenter,
                           final Provider<TableSettingsPresenter> settingsPresenterProvider,
-                          final AskStroomAiPresenter askAiPresenter,
                           final DownloadPresenter downloadPresenter,
                           final AnnotationManager annotationManager,
                           final RestFactory restFactory,
@@ -218,7 +217,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.eventBus = eventBus;
         this.pagerView = pagerView;
         this.locationManager = locationManager;
-        this.askAiPresenter = askAiPresenter;
         this.downloadPresenter = downloadPresenter;
         this.annotationManager = annotationManager;
         this.restFactory = restFactory;
@@ -613,16 +611,32 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             final QueryKey queryKey = currentSearchModel.getCurrentQueryKey();
             final Search currentSearch = currentSearchModel.getCurrentSearch();
             if (queryKey != null && currentSearch != null) {
-                ShowPopupEvent.builder(askAiPresenter)
-                        .popupType(PopupType.CLOSE_DIALOG)
-                        .popupSize(PopupSize.resizable(700, 500))
-                        .caption("Ask Stroom AI")
-                        .onShow(e -> {
-                            askAiPresenter.setSearchContext(currentSearchModel, getDashboardSearchRequest(
-                                    currentSearch, queryKey));
-                            askAiPresenter.getView().focus();
-                        })
-                        .fire();
+                // Create a download request just for this table.
+                final Search search = Search
+                        .builder()
+                        .dataSourceRef(currentSearch.getDataSourceRef())
+                        .expression(currentSearch.getExpression())
+                        .componentSettingsMap(currentSearch.getComponentSettingsMap())
+                        .params(currentSearch.getParams())
+                        .timeRange(currentSearch.getTimeRange())
+                        .incremental(true)
+                        .queryInfo(currentSearch.getQueryInfo())
+                        .build();
+
+                final DashboardSearchRequest dashboardSearchRequest = DashboardSearchRequest
+                        .builder()
+                        .searchRequestSource(currentSearchModel.getSearchRequestSource())
+                        .queryKey(queryKey)
+                        .search(search)
+                        .componentResultRequests(Collections.singletonList(createDownloadQueryRequest()))
+                        .dateTimeSettings(getDateTimeSettings())
+                        .build();
+
+                AskStroomAiEvent.fire(this,
+                        currentSearchModel.getCurrentNode(),
+                        new DashboardTableContext(
+                                currentSearchModel.getCurrentQueryKey().toString(),
+                                dashboardSearchRequest));
             }
         }
     }

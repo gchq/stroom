@@ -29,14 +29,17 @@ class LuceneIndexShardWriterFactory {
 
     private final IndexShardDao indexShardDao;
     private final Provider<IndexConfig> indexConfigProvider;
+    private final Provider<FieldFactory> fieldFactoryProvider;
     private final PathCreator pathCreator;
 
     @Inject
     LuceneIndexShardWriterFactory(final IndexShardDao indexShardDao,
                                   final Provider<IndexConfig> indexConfigProvider,
+                                  final Provider<FieldFactory> fieldFactoryProvider,
                                   final PathCreator pathCreator) {
         this.indexShardDao = indexShardDao;
         this.indexConfigProvider = indexConfigProvider;
+        this.fieldFactoryProvider = fieldFactoryProvider;
         this.pathCreator = pathCreator;
     }
 
@@ -47,6 +50,7 @@ class LuceneIndexShardWriterFactory {
                 indexConfigProvider.get(),
                 indexShard,
                 pathCreator,
-                maxDocumentCount);
+                maxDocumentCount,
+                fieldFactoryProvider.get());
     }
 }

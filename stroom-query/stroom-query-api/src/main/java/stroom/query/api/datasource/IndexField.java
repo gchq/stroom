@@ -37,4 +37,6 @@ public interface IndexField extends Field {
     default boolean isTermPositions() {
         return false;
     }
+
+    DenseVectorFieldConfig getDenseVectorFieldConfig();
 }
