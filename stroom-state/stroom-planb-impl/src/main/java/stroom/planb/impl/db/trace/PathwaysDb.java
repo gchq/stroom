@@ -132,9 +132,15 @@ public class PathwaysDb {
             LmdbIterable.iterate(txn, dbi, consumer);
         }
 
+        public <R> R get(final Txn<ByteBuffer> txn,
+                         final ByteBuffer keyByteBuffer,
+                         final Function<ByteBuffer, R> byteBufferConsumer) {
+            return byteBufferConsumer.apply(dbi.get(txn, keyByteBuffer));
+        }
+
         public <R> R get(final ByteBuffer keyByteBuffer,
                          final Function<ByteBuffer, R> byteBufferConsumer) {
-            return env.read(readTxn -> byteBufferConsumer.apply(dbi.get(readTxn, keyByteBuffer)));
+            return env.read(readTxn -> get(readTxn, keyByteBuffer, byteBufferConsumer));
         }
     }
 }
