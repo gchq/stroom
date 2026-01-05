@@ -39,22 +39,24 @@ class TestProcessorFilterSerialiser {
 
     @Test
     void testMarshall() throws JAXBException {
-        final QueryData queryData = new QueryData();
-        queryData.setDataSource(LuceneIndexDoc.buildDocRef()
-                .randomUuid()
-                .name("Some idx")
-                .build());
-        queryData.setParams(List.of(new Param("key1", "val1")));
-        queryData.setTimeRange(new TimeRange("MyName", Condition.BETWEEN, "week() -1w", "week()"));
-        queryData.setExpression(
-                ExpressionOperator.builder()
-                        .addTerm(ExpressionTerm.builder()
-                                .field("SomeField")
-                                .condition(Condition.EQUALS)
-                                .value("xxxx")
-                                .build())
-                        .build()
-        );
+        final QueryData queryData = QueryData
+                .builder()
+                .dataSource(LuceneIndexDoc.buildDocRef()
+                        .randomUuid()
+                        .name("Some idx")
+                        .build())
+                .params(List.of(new Param("key1", "val1")))
+                .timeRange(new TimeRange("MyName", Condition.BETWEEN, "week() -1w", "week()"))
+                .expression(
+                        ExpressionOperator.builder()
+                                .addTerm(ExpressionTerm.builder()
+                                        .field("SomeField")
+                                        .condition(Condition.EQUALS)
+                                        .value("xxxx")
+                                        .build())
+                                .build()
+                )
+                .build();
 
         final ProcessorFilter processorFilter = new ProcessorFilter();
         // Blank tracker

@@ -9241,6 +9241,8 @@ components:
           $ref: "#/components/schemas/DuplicateNotificationConfig"
         errorFeed:
           $ref: "#/components/schemas/DocRef"
+        includeRuleDocumentation:
+          type: boolean
         languageVersion:
           type: string
           enum:
@@ -12149,6 +12151,8 @@ components:
       properties:
         message:
           type: string
+        node:
+          type: string
         severity:
           type: string
           enum:
@@ -12616,6 +12620,15 @@ components:
           - REJECT_ALL
         uiConfig:
           $ref: "#/components/schemas/UiConfig"
+    FeedDependency:
+      type: object
+      properties:
+        feedName:
+          type: string
+        streamType:
+          type: string
+        uuid:
+          type: string
     FeedDoc:
       type: object
       properties:
@@ -15126,8 +15139,6 @@ components:
             $ref: "#/components/schemas/DocRef"
           useSourceFeedIfPossible:
             type: boolean
-          includeRuleDocumentation:
-            type: boolean
     NumberFormatSettings:
       type: object
       allOf:
@@ -16304,6 +16315,10 @@ components:
           $ref: "#/components/schemas/DocRef"
         expression:
           $ref: "#/components/schemas/ExpressionOperator"
+        feedDependencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeedDependency"
         limits:
           $ref: "#/components/schemas/Limits"
         params:
@@ -16898,6 +16913,8 @@ components:
           $ref: "#/components/schemas/DuplicateNotificationConfig"
         errorFeed:
           $ref: "#/components/schemas/DocRef"
+        includeRuleDocumentation:
+          type: boolean
         languageVersion:
           type: string
           enum:

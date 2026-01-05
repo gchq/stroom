@@ -723,6 +723,7 @@ appConfig:
         prepStmtCacheSqlLimit: 256
     deleteAge: "P1D"
     disownDeadTasksAfter: "PT10M"
+    feedDependencyDelay: "PT20M"
     fillTaskQueue: true
     processorCache:
       expireAfterAccess: "PT10S"

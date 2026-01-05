@@ -16,7 +16,6 @@
 
 package stroom.analytics.client.presenter;
 
-import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;

@@ -66,11 +66,14 @@ import stroom.pipeline.structure.client.view.PipelineStructureViewImpl;
 import stroom.pipeline.structure.client.view.PipelineTreeViewImpl;
 import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter;
 import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter.BatchProcessorFilterEditView;
+import stroom.processor.client.presenter.NewFeedDependencyPresenter;
+import stroom.processor.client.presenter.NewFeedDependencyPresenter.NewFeedDependencyView;
 import stroom.processor.client.presenter.ProcessorEditPresenter;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
 import stroom.processor.client.view.BatchProcessorFilterEditViewImpl;
+import stroom.processor.client.view.NewFeedDependencyViewImpl;
 import stroom.processor.client.view.ProcessorEditViewImpl;
 import stroom.processor.client.view.ProcessorViewImpl;
 import stroom.processor.task.client.ProcessorTaskPlugin;
@@ -125,6 +128,10 @@ public class PipelineModule extends PluginModule {
                 BatchProcessorFilterEditPresenter.class,
                 BatchProcessorFilterEditView.class,
                 BatchProcessorFilterEditViewImpl.class);
+        bindPresenterWidget(
+                NewFeedDependencyPresenter.class,
+                NewFeedDependencyView.class,
+                NewFeedDependencyViewImpl.class);
 
         bindPlugin(ProcessorTaskPlugin.class);
         bindPresenterWidget(ProcessorTaskPresenter.class, ProcessorTaskView.class,

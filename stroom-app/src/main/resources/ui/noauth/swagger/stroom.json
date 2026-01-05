@@ -13434,6 +13434,9 @@
           "errorFeed" : {
             "$ref" : "#/components/schemas/DocRef"
           },
+          "includeRuleDocumentation" : {
+            "type" : "boolean"
+          },
           "languageVersion" : {
             "type" : "string",
             "enum" : [ "STROOM_QL_VERSION_0_1", "SIGMA" ]
@@ -16887,6 +16890,9 @@
           "message" : {
             "type" : "string"
           },
+          "node" : {
+            "type" : "string"
+          },
           "severity" : {
             "type" : "string",
             "enum" : [ "INFO", "WARN", "ERROR", "FATAL" ]
@@ -17442,6 +17448,20 @@
           },
           "uiConfig" : {
             "$ref" : "#/components/schemas/UiConfig"
+          }
+        }
+      },
+      "FeedDependency" : {
+        "type" : "object",
+        "properties" : {
+          "feedName" : {
+            "type" : "string"
+          },
+          "streamType" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
           }
         }
       },
@@ -20780,9 +20800,6 @@
             },
             "useSourceFeedIfPossible" : {
               "type" : "boolean"
-            },
-            "includeRuleDocumentation" : {
-              "type" : "boolean"
             }
           }
         } ]
@@ -22125,6 +22142,12 @@
           "expression" : {
             "$ref" : "#/components/schemas/ExpressionOperator"
           },
+          "feedDependencies" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/FeedDependency"
+            }
+          },
           "limits" : {
             "$ref" : "#/components/schemas/Limits"
           },
@@ -22839,6 +22862,9 @@
           },
           "errorFeed" : {
             "$ref" : "#/components/schemas/DocRef"
+          },
+          "includeRuleDocumentation" : {
+            "type" : "boolean"
           },
           "languageVersion" : {
             "type" : "string",

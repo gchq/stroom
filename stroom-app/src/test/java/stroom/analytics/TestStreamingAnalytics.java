@@ -120,9 +120,11 @@ class TestStreamingAnalytics extends AbstractAnalyticsTest {
         final DocRef analyticRuleDocRef = writeRule(analyticRuleDoc);
         final ExpressionOperator expressionOperator = analyticRuleProcessors
                 .getDefaultProcessingFilterExpression(query);
-        final QueryData queryData = new QueryData();
-        queryData.setDataSource(MetaFields.STREAM_STORE_DOC_REF);
-        queryData.setExpression(expressionOperator);
+        final QueryData queryData = QueryData
+                .builder()
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                .expression(expressionOperator)
+                .build();
 
         // Now create the processor filter using the find stream criteria.
         final CreateProcessFilterRequest request = CreateProcessFilterRequest

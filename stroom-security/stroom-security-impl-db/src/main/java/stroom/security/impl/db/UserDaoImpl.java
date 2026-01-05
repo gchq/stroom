@@ -45,6 +45,8 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.Record1;
+import org.jooq.SelectConditionStep;
 import org.jooq.exception.DataAccessException;
 import org.jooq.exception.IntegrityConstraintViolationException;
 import org.jooq.impl.DSL;
@@ -419,12 +421,12 @@ public class UserDaoImpl implements UserDao {
                                               final FindUserContext context) {
         if (FindUserContext.ANNOTATION_ASSIGNMENT.equals(context)) {
             // Get immediate parent groups for the supplied user.
-            final var selectParentGroupUuids = DSL
+            final SelectConditionStep<Record1<String>> selectParentGroupUuids = DSL
                     .selectDistinct(STROOM_USER_GROUP.GROUP_UUID)
                     .from(STROOM_USER_GROUP)
                     .where(STROOM_USER_GROUP.USER_UUID.eq(currentUserUuid));
             // Get siblings users for all parent groups (this will obviously include the supplied user).
-            final var selectSiblingUsers = DSL
+            final SelectConditionStep<Record1<String>> selectSiblingUsers = DSL
                     .selectDistinct(STROOM_USER_GROUP.USER_UUID)
                     .from(STROOM_USER_GROUP)
                     .where(STROOM_USER_GROUP.GROUP_UUID.in(selectParentGroupUuids));
@@ -434,7 +436,7 @@ public class UserDaoImpl implements UserDao {
 
         } else if (FindUserContext.RUN_AS.equals(context)) {
             // Get immediate parent groups for the supplied user.
-            final var selectParentGroupUuids = DSL
+            final SelectConditionStep<Record1<String>> selectParentGroupUuids = DSL
                     .selectDistinct(STROOM_USER_GROUP.GROUP_UUID)
                     .from(STROOM_USER_GROUP)
                     .where(STROOM_USER_GROUP.USER_UUID.eq(currentUserUuid));

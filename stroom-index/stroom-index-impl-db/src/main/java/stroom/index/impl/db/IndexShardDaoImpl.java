@@ -62,6 +62,7 @@ import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Result;
+import org.jooq.SelectJoinStep;
 import org.jooq.impl.DSL;
 
 import java.util.Arrays;
@@ -236,7 +237,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                 numberOfRows = pageRequest.getLength();
             }
 
-            var select = context
+            SelectJoinStep<Record> select = context
                     .select(dbFields)
                     .from(INDEX_SHARD);
 

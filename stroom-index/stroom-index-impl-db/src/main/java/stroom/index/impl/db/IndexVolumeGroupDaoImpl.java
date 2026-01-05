@@ -128,8 +128,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
             saved = genericDao.update(indexVolumeGroup);
         } catch (final DataAccessException e) {
             if (e.getCause() != null
-                && e.getCause() instanceof SQLIntegrityConstraintViolationException) {
-                final var sqlEx = (SQLIntegrityConstraintViolationException) e.getCause();
+                && e.getCause() instanceof final SQLIntegrityConstraintViolationException sqlEx) {
                 if (sqlEx.getErrorCode() == 1062
                     && sqlEx.getMessage().contains("Duplicate entry")
                     && sqlEx.getMessage().contains("key")
@@ -208,7 +207,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
     @Override
     public void delete(final String name) {
-        final var indexVolumeGroupToDelete = get(name);
+        final IndexVolumeGroup indexVolumeGroupToDelete = get(name);
         genericDao.delete(indexVolumeGroupToDelete.getId());
     }
 

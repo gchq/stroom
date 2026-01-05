@@ -483,11 +483,13 @@ public class QueryPresenter
         final ExpressionOperator root = expressionPresenter.write();
 
         final DashboardContext dashboardContext = getDashboardContext();
-        final QueryData queryData = new QueryData();
-        queryData.setDataSource(getQuerySettings().getDataSource());
-        queryData.setExpression(root);
-        queryData.setParams(dashboardContext.getParams());
-        queryData.setTimeRange(dashboardContext.getResolvedTimeRange());
+        final QueryData queryData = QueryData
+                .builder()
+                .dataSource(getQuerySettings().getDataSource())
+                .expression(root)
+                .params(dashboardContext.getParams())
+                .timeRange(dashboardContext.getResolvedTimeRange())
+                .build();
 
         final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");
@@ -514,15 +516,14 @@ public class QueryPresenter
                         .onShow(e -> processorLimitsPresenter.getView().focus())
                         .onHideRequest(e -> {
                             if (e.isOk()) {
-                                final Limits limits = new Limits();
+                                final Limits.Builder limitsBuilder = Limits.builder();
                                 if (processorLimitsPresenter.getRecordLimit() != null) {
-                                    limits.setEventCount(processorLimitsPresenter.getRecordLimit());
+                                    limitsBuilder.eventCount(processorLimitsPresenter.getRecordLimit());
                                 }
                                 if (processorLimitsPresenter.getTimeLimitMins() != null) {
-                                    limits.setDurationMs(processorLimitsPresenter.getTimeLimitMins() * 60 * 1000);
+                                    limitsBuilder.durationMs(processorLimitsPresenter.getTimeLimitMins() * 60 * 1000);
                                 }
-                                queryData.setLimits(limits);
-                                openEditor(queryData, pipeline);
+                                createProcessFilter(queryData.copy().limits(limitsBuilder.build()).build(), pipeline);
                             }
                             e.hide();
                         })
@@ -531,7 +532,8 @@ public class QueryPresenter
         }, this);
     }
 
-    private void openEditor(final QueryData queryData, final DocRef pipeline) {
+    private void createProcessFilter(final QueryData queryData,
+                                     final DocRef pipeline) {
         // Now create the processor filter using the find stream criteria.
         final CreateProcessFilterRequest request = CreateProcessFilterRequest
                 .builder()
@@ -585,8 +587,10 @@ public class QueryPresenter
     }
 
     private String getAlertMessage(final int numberOfMessages) {
-        return numberOfMessages == 1 ? ERROR_MESSAGE_TEMPLATES.errorMessageCreatedSingular() :
-                ERROR_MESSAGE_TEMPLATES.errorMessagesCreatedPlural();
+        return numberOfMessages == 1
+                ? ERROR_MESSAGE_TEMPLATES.errorMessageCreatedSingular()
+                :
+                        ERROR_MESSAGE_TEMPLATES.errorMessagesCreatedPlural();
     }
 
     @Override
@@ -621,7 +625,7 @@ public class QueryPresenter
 
     @Override
     public void run(final boolean incremental,
-                     final boolean storeHistory) {
+                    final boolean storeHistory) {
         run(incremental, storeHistory, null);
     }
 
@@ -919,7 +923,9 @@ public class QueryPresenter
     }
 
     private void setErrorsVisible(final boolean show) {
-        errorsButton.asWidget().getElement().getStyle().setOpacity(show ? 1 : 0);
+        errorsButton.asWidget().getElement().getStyle().setOpacity(show
+                ? 1
+                : 0);
     }
 
     @Override

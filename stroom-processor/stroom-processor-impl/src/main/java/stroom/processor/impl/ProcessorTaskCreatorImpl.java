@@ -27,6 +27,7 @@ import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.impl.ProgressMonitor.Phase;
+import stroom.processor.shared.FeedDependency;
 import stroom.processor.shared.Limits;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
@@ -58,8 +59,12 @@ import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
+import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -70,6 +75,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -409,12 +415,13 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         LOGGER.debug("Creating tasks from criteria, requiredTasks: {}, filter: {}", maxTasks, filter);
 
         // This will contain locked and unlocked streams
-        final Long maxMetaId = metaService.getMaxId();
+        final long maxMetaId = getMaxMetaId(filter);
 
         final DurationTimer durationTimer = DurationTimer.start();
         final List<Meta> metaList = runSelectMetaQuery(
                 queryData.getExpression(),
                 tracker.getMinMetaId(),
+                maxMetaId,
                 filter.getMinMetaCreateTimeMs(),
                 filter.getMaxMetaCreateTimeMs(),
                 filter.getPipeline(),
@@ -443,6 +450,45 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                         createdTasks,
                         filter.getFilterInfo()));
         totalTasksCreated.add(createdTasks);
+    }
+
+    private long getMaxMetaId(final ProcessorFilter filter) {
+        // Determine the max effective time for all feed dependencies.
+        final List<FeedDependency> feedDependencies =
+                NullSafe.get(filter, ProcessorFilter::getQueryData, QueryData::getFeedDependencies);
+        Instant maxEffectiveTime = metaService.getFeedDependencyEffectiveTime(feedDependencies);
+        if (maxEffectiveTime != null) {
+
+            // If there is a feed dependency delay then subtract the delay.
+            final StroomDuration feedDependencyDelay = processorConfigProvider.get().getFeedDependencyDelay();
+            if (feedDependencyDelay != null) {
+                final Instant youngest = Instant.now().minus(feedDependencyDelay);
+                if (maxEffectiveTime.isAfter(youngest)) {
+                    maxEffectiveTime = youngest;
+                }
+            }
+
+            // Find the max stream id that belongs to a stream that has a create time less than or equal to the max
+            // effective time.
+            final CriteriaFieldSort sort = new CriteriaFieldSort(MetaFields.FIELD_ID, true, true);
+            final ExpressionOperator expression = ExpressionOperator.builder()
+                    .addTextTerm(MetaFields.CREATE_TIME,
+                            Condition.LESS_THAN_OR_EQUAL_TO,
+                            DateUtil.createNormalDateTimeString(maxEffectiveTime))
+                    .build();
+            final FindMetaCriteria criteria = new FindMetaCriteria(
+                    PageRequest.oneRow(),
+                    List.of(sort),
+                    expression,
+                    false);
+            final ResultPage<Meta> resultPage = metaService.find(criteria);
+            if (NullSafe.isEmptyCollection(resultPage.getValues())) {
+                return 0L;
+            } else {
+                return resultPage.getValues().getFirst().getId();
+            }
+        }
+        return Objects.requireNonNullElse(metaService.getMaxId(), 0L);
     }
 
     private void createTasksFromSearchQuery(final ProcessorFilter filter,
@@ -713,18 +759,25 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
      */
     List<Meta> runSelectMetaQuery(final ExpressionOperator expression,
                                   final long minMetaId,
+                                  final long maxMetaId,
                                   final Long minMetaCreateTimeMs,
                                   final Long maxMetaCreateTimeMs,
                                   final DocRef pipelineDocRef,
                                   final boolean reprocess,
                                   final int length) {
+        // If we can't possibly return any data then return an empty list.
+        if (minMetaId > maxMetaId) {
+            return Collections.emptyList();
+        }
 
         final ExpressionOperator effectiveExpression = sanitiseAndValidateExpression(expression);
         ExpressionOperator.Builder builder = ExpressionOperator.builder()
                 .addOperator(effectiveExpression);
 
         if (reprocess) {
-            builder = builder.addIdTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+            builder = builder
+                    .addIdTerm(MetaFields.PARENT_ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId)
+                    .addIdTerm(MetaFields.PARENT_ID, Condition.LESS_THAN_OR_EQUAL_TO, maxMetaId);
 
             if (pipelineDocRef != null) {
                 builder = builder.addDocRefTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef);
@@ -750,7 +803,9 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
             return findMeta(metaService::findReprocess, builder, MetaFields.PARENT_ID, length, reprocess);
 
         } else {
-            builder = builder.addIdTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId);
+            builder = builder
+                    .addIdTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, minMetaId)
+                    .addIdTerm(MetaFields.ID, Condition.LESS_THAN_OR_EQUAL_TO, maxMetaId);
 
             if (minMetaCreateTimeMs != null) {
                 builder = builder.addDateTerm(MetaFields.CREATE_TIME,

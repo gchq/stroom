@@ -44,6 +44,7 @@ import jakarta.inject.Inject;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -120,14 +121,23 @@ public class CommonTestScenarioCreator {
         return indexFields;
     }
 
+    public Meta createSample2LineRawFile(final String feed,
+                                         final String streamType) {
+        return createSample2LineRawFile(feed, streamType, Instant.now());
+    }
+
     /**
      * @param feed related
      * @return a basic raw file
      */
-    public Meta createSample2LineRawFile(final String feed, final String streamType) {
+    public Meta createSample2LineRawFile(final String feed,
+                                         final String streamType,
+                                         final Instant effectiveTime) {
         final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feed)
                 .typeName(streamType)
+                .createMs(effectiveTime.toEpochMilli())
+                .effectiveMs(effectiveTime.toEpochMilli())
                 .build();
         try (final Target target = streamStore.openTarget(metaProperties)) {
             TargetUtil.write(target, "line1\nline2");

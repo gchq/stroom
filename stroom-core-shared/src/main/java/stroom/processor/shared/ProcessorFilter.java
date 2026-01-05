@@ -479,7 +479,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
                ", processorUuid='" + processorUuid + '\'' +
                ", pipelineUuid='" + pipelineUuid + '\'' +
                ", pipelineName='" + pipelineName + '\'' +
-               ", runAsUser='" + runAsUser + '\'' +
+               ", runAsUser=" + runAsUser +
                ", processor=" + processor +
                ", processorFilterTracker=" + processorFilterTracker +
                ", priority=" + priority +

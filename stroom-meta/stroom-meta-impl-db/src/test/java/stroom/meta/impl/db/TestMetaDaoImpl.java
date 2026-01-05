@@ -73,6 +73,7 @@ import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
 import jakarta.inject.Inject;
 import org.jooq.Record1;
+import org.jooq.Record9;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
@@ -317,7 +318,7 @@ class TestMetaDaoImpl {
 
     private void dumpMetaTableToDebug() {
         JooqUtil.context(metaDbConnProvider, context -> {
-            final var metaRows = context
+            final List<Record9<Long, Long, Long, Long, Byte, Integer, String, String, String>> metaRows = context
                     .select(
                             META_M.ID,
                             META_M.CREATE_TIME,

@@ -25,6 +25,7 @@ import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.shared.CreateProcessFilterRequest;
+import stroom.processor.shared.FeedDependency;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorType;
@@ -47,15 +48,19 @@ import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
 public class ProcessorEditPresenter
-        extends MyPresenterWidget<ProcessorEditView> {
+        extends MyPresenterWidget<ProcessorEditView>
+        implements ProcessorEditUiHandlers {
 
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
     private static final ExpressionResource EXPRESSION_RESOURCE = GWT.create(ExpressionResource.class);
@@ -65,9 +70,11 @@ public class ProcessorEditPresenter
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final ClientSecurityContext clientSecurityContext;
+    private final Provider<FeedDependencyListPresenter> feedDependencyListPresenterProvider;
 
     private ProcessorType processorType;
     private DocRef pipelineRef;
+    private List<FeedDependency> feedDependencies;
     private Consumer<ProcessorFilter> consumer;
 
     @Inject
@@ -77,24 +84,28 @@ public class ProcessorEditPresenter
                                   final RestFactory restFactory,
                                   final DateTimeSettingsFactory dateTimeSettingsFactory,
                                   final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
-                                  final ClientSecurityContext clientSecurityContext) {
+                                  final ClientSecurityContext clientSecurityContext,
+                                  final Provider<FeedDependencyListPresenter> feedDependencyListPresenterProvider) {
         super(eventBus, view);
+        view.setUiHandlers(this);
+
         this.editExpressionPresenter = editExpressionPresenter;
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
         this.clientSecurityContext = clientSecurityContext;
+        this.feedDependencyListPresenterProvider = feedDependencyListPresenterProvider;
         view.setExpressionView(editExpressionPresenter.getView());
         view.setRunAsUserView(userRefSelectionBoxPresenter.getView());
         userRefSelectionBoxPresenter.setContext(FindUserContext.RUN_AS);
     }
 
-    public void read(final ExpressionOperator expression,
-                     final DocRef dataSource,
-                     final List<QueryField> fields,
-                     final Long minMetaCreateTimeMs,
-                     final Long maxMetaCreateTimeMs,
-                     final boolean export) {
+    private void read(final ExpressionOperator expression,
+                      final DocRef dataSource,
+                      final List<QueryField> fields,
+                      final Long minMetaCreateTimeMs,
+                      final Long maxMetaCreateTimeMs,
+                      final boolean export) {
 
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
         selectionBoxModel.addItems(fields);
@@ -144,6 +155,7 @@ public class ProcessorEditPresenter
         final QueryData queryData = getOrCreateQueryData(filter, defaultExpression);
         final List<QueryField> fields = MetaFields.getProcessorFilterFields();
         final boolean export = NullSafe.getOrElse(filter, ProcessorFilter::isExport, false);
+        feedDependencies = NullSafe.getOrElse(queryData, QueryData::getFeedDependencies, new ArrayList<>());
         read(
                 queryData.getExpression(),
                 MetaFields.STREAM_STORE_DOC_REF,
@@ -153,7 +165,7 @@ public class ProcessorEditPresenter
                 export);
 
         // Show the processor creation dialog.
-        final PopupSize popupSize = PopupSize.resizable(800, 600);
+        final PopupSize popupSize = PopupSize.resizable(800, 700);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -171,8 +183,11 @@ public class ProcessorEditPresenter
 
                         validateExpression(fields, expression, () -> {
                             try {
-                                queryData.setDataSource(MetaFields.STREAM_STORE_DOC_REF);
-                                queryData.setExpression(expression);
+                                final QueryData qd = queryData
+                                        .copy()
+                                        .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                                        .expression(expression)
+                                        .build();
 
                                 if (existingFilter) {
                                     ConfirmEvent.fire(
@@ -185,7 +200,7 @@ public class ProcessorEditPresenter
                                                 if (result) {
                                                     validateFeed(
                                                             filter,
-                                                            queryData,
+                                                            qd,
                                                             minMetaCreateTime,
                                                             maxMetaCreateTime,
                                                             exportRead,
@@ -196,7 +211,7 @@ public class ProcessorEditPresenter
                                             });
                                 } else {
                                     validateFeed(null,
-                                            queryData,
+                                            qd,
                                             minMetaCreateTime,
                                             maxMetaCreateTime,
                                             exportRead,
@@ -212,6 +227,12 @@ public class ProcessorEditPresenter
                     }
                 })
                 .fire();
+    }
+
+    @Override
+    public void onEditFeedDependencies() {
+        final FeedDependencyListPresenter feedDependencyListPresenter = feedDependencyListPresenterProvider.get();
+        feedDependencyListPresenter.show(feedDependencies, updated -> this.feedDependencies = updated);
     }
 
     private void validateExpression(final List<QueryField> fields,
@@ -329,9 +350,14 @@ public class ProcessorEditPresenter
                                          final Long maxMetaCreateTimeMs,
                                          final boolean export,
                                          final HidePopupRequestEvent event) {
+        List<FeedDependency> feedDependencies = null;
+        if (!NullSafe.isEmptyCollection(this.feedDependencies)) {
+            feedDependencies = new ArrayList<>(this.feedDependencies);
+        }
+
         if (filter != null) {
             // Now update the processor filter using the find stream criteria.
-            filter.setQueryData(queryData);
+            filter.setQueryData(queryData.copy().feedDependencies(feedDependencies).build());
             filter.setMinMetaCreateTimeMs(minMetaCreateTimeMs);
             filter.setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
             filter.setExport(export);
@@ -372,7 +398,7 @@ public class ProcessorEditPresenter
     // --------------------------------------------------------------------------------
 
 
-    public interface ProcessorEditView extends View {
+    public interface ProcessorEditView extends View, HasUiHandlers<ProcessorEditUiHandlers> {
 
         void setExpressionView(View view);
 

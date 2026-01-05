@@ -20,6 +20,7 @@ import stroom.data.client.presenter.OpenLinkUtil;
 import stroom.data.client.presenter.OpenLinkUtil.LinkType;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.processor.shared.FeedDependency;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterRow;
@@ -27,6 +28,7 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.ProcessorType;
+import stroom.processor.shared.QueryData;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.customdatebox.client.ClientDateUtil;
@@ -39,6 +41,9 @@ import stroom.widget.util.client.TableCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 public class ProcessorInfoBuilder {
@@ -100,7 +105,10 @@ public class ProcessorInfoBuilder {
             tb.row("Updated By", filter.getUpdateUser());
             addRowDateString(tb, "Updated On", filter.getUpdateTimeMs());
 
-            tb.row("Export", filter.isExport() ? "True" : "False");
+            tb.row("Export",
+                    filter.isExport()
+                            ? "True"
+                            : "False");
 
             if (ProcessorType.STREAMING_ANALYTIC.equals(filter.getProcessorType())) {
                 tb.row("Analytic Rule",
@@ -118,6 +126,19 @@ public class ProcessorInfoBuilder {
                     filter.getMaxProcessingTasks() == 0
                             ? "Unlimited"
                             : String.valueOf(filter.getMaxProcessingTasks()));
+
+            final List<FeedDependency> feedDependencyList = NullSafe.getOrElse(
+                    filter,
+                    ProcessorFilter::getQueryData,
+                    QueryData::getFeedDependencies,
+                    new ArrayList<>());
+            if (!NullSafe.isEmptyCollection(feedDependencyList)) {
+                tb.row("Feed Dependencies",
+                        feedDependencyList
+                                .stream()
+                                .map(fd -> fd.getFeedName() + " - " + fd.getStreamType())
+                                .collect(Collectors.joining(", ")));
+            }
 
             final ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();
             if (tracker != null) {
