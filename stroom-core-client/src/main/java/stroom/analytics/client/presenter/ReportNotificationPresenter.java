@@ -28,6 +28,8 @@ import com.google.web.bindery.event.shared.EventBus;
 public class ReportNotificationPresenter
         extends AbstractNotificationPresenter<ReportDoc> {
 
+    private final ReportNotificationListPresenter notificationListPresenter;
+
 
     @Inject
     public ReportNotificationPresenter(final EventBus eventBus,
@@ -40,10 +42,12 @@ public class ReportNotificationPresenter
                 errorFeedPresenter,
                 notificationListPresenter,
                 uiConfigCache);
+        this.notificationListPresenter = notificationListPresenter;
     }
 
     @Override
-    protected ReportDoc onWrite(final ReportDoc reportDoc) {
+    protected ReportDoc onWrite(ReportDoc reportDoc) {
+        reportDoc = notificationListPresenter.onWrite(reportDoc);
         return reportDoc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
