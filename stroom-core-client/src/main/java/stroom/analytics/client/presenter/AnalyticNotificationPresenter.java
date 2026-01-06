@@ -28,6 +28,8 @@ import com.google.web.bindery.event.shared.EventBus;
 public class AnalyticNotificationPresenter
         extends AbstractNotificationPresenter<AnalyticRuleDoc> {
 
+    private final AnalyticNotificationListPresenter notificationListPresenter;
+
 
     @Inject
     public AnalyticNotificationPresenter(final EventBus eventBus,
@@ -40,10 +42,12 @@ public class AnalyticNotificationPresenter
                 errorFeedPresenter,
                 notificationListPresenter,
                 uiConfigCache);
+        this.notificationListPresenter = notificationListPresenter;
     }
 
     @Override
-    protected AnalyticRuleDoc onWrite(final AnalyticRuleDoc analyticRuleDoc) {
+    protected AnalyticRuleDoc onWrite(AnalyticRuleDoc analyticRuleDoc) {
+        analyticRuleDoc = notificationListPresenter.onWrite(analyticRuleDoc);
         return analyticRuleDoc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
