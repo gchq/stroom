@@ -27,7 +27,7 @@ import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.impl.ProgressMonitor.Phase;
-import stroom.processor.shared.FeedDependency;
+import stroom.processor.shared.FeedDependencies;
 import stroom.processor.shared.Limits;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
@@ -59,12 +59,11 @@ import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
-import stroom.util.time.StroomDuration;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.time.SimpleDurationUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -454,38 +453,43 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
 
     private long getMaxMetaId(final ProcessorFilter filter) {
         // Determine the max effective time for all feed dependencies.
-        final List<FeedDependency> feedDependencies =
+        final Instant now = Instant.now();
+        final FeedDependencies feedDependencies =
                 NullSafe.get(filter, ProcessorFilter::getQueryData, QueryData::getFeedDependencies);
-        Instant maxEffectiveTime = metaService.getFeedDependencyEffectiveTime(feedDependencies);
-        if (maxEffectiveTime != null) {
+        if (feedDependencies != null) {
+            final SimpleDuration minProcessingDelay = feedDependencies.getMinProcessingDelay();
+            final SimpleDuration maxProcessingDelay = feedDependencies.getMaxProcessingDelay();
 
-            // If there is a feed dependency delay then subtract the delay.
-            final StroomDuration feedDependencyDelay = processorConfigProvider.get().getFeedDependencyDelay();
-            if (feedDependencyDelay != null) {
-                final Instant youngest = Instant.now().minus(feedDependencyDelay);
-                if (maxEffectiveTime.isAfter(youngest)) {
-                    maxEffectiveTime = youngest;
+            Instant maxCreateTime = metaService
+                    .getFeedDependencyEffectiveTime(NullSafe.get(feedDependencies,
+                            FeedDependencies::getFeedDependencies));
+            if (maxCreateTime == null) {
+                // If we have a null create time from feed dependencies we might still want to delay processing.
+                if (minProcessingDelay != null || (maxProcessingDelay != null && maxProcessingDelay.getTime() > 0)) {
+                    maxCreateTime = now;
                 }
             }
 
-            // Find the max stream id that belongs to a stream that has a create time less than or equal to the max
-            // effective time.
-            final CriteriaFieldSort sort = new CriteriaFieldSort(MetaFields.FIELD_ID, true, true);
-            final ExpressionOperator expression = ExpressionOperator.builder()
-                    .addTextTerm(MetaFields.CREATE_TIME,
-                            Condition.LESS_THAN_OR_EQUAL_TO,
-                            DateUtil.createNormalDateTimeString(maxEffectiveTime))
-                    .build();
-            final FindMetaCriteria criteria = new FindMetaCriteria(
-                    PageRequest.oneRow(),
-                    List.of(sort),
-                    expression,
-                    false);
-            final ResultPage<Meta> resultPage = metaService.find(criteria);
-            if (NullSafe.isEmptyCollection(resultPage.getValues())) {
-                return 0L;
-            } else {
-                return resultPage.getValues().getFirst().getId();
+            if (maxCreateTime != null) {
+                // If there is a minimum delay then make sure we wait at least that long to process.
+                if (minProcessingDelay != null) {
+                    final Instant youngest = SimpleDurationUtil.minus(now, minProcessingDelay);
+                    if (maxCreateTime.isAfter(youngest)) {
+                        maxCreateTime = youngest;
+                    }
+                }
+
+                // If there is a maximum delay then make sure we don't process streams older than the delay.
+                if (maxProcessingDelay != null) {
+                    final Instant oldest = SimpleDurationUtil.minus(now, maxProcessingDelay);
+                    if (maxCreateTime.isBefore(oldest)) {
+                        maxCreateTime = oldest;
+                    }
+                }
+
+                // Find the max stream id that belongs to a stream that has a create time less than or equal to the
+                // max effective time.
+                return Objects.requireNonNullElse(metaService.getMaxId(maxCreateTime.toEpochMilli()), 0L);
             }
         }
         return Objects.requireNonNullElse(metaService.getMaxId(), 0L);

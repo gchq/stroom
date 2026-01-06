@@ -4,10 +4,14 @@
         xmlns:g="urn:import:com.google.gwt.user.client.ui"
         xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="newPipelineReferenceFeed" label="Feed">
+        <form:FormGroup identity="feedDependencyFeed"
+                        label="Feed"
+                        helpText="Choose the feed for the data this processing depends on.">
             <g:SimplePanel ui:field="feed" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="newPipelineReferenceType" label="Type">
+        <form:FormGroup identity="feedDependencyType"
+                        label="Type"
+                        helpText="Choose the stream type for the data this processing depends on.">
             <g:SimplePanel ui:field="type" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>

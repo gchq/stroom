@@ -16,7 +16,7 @@
 
 package stroom.processor.client.view;
 
-import stroom.processor.client.presenter.NewFeedDependencyPresenter.NewFeedDependencyView;
+import stroom.processor.client.presenter.EditFeedDependencyPresenter.EditFeedDependencyView;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -27,7 +27,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-public class NewFeedDependencyViewImpl extends ViewImpl implements NewFeedDependencyView {
+public class EditFeedDependencyViewImpl extends ViewImpl implements EditFeedDependencyView {
 
     private final Widget widget;
     @UiField
@@ -36,7 +36,7 @@ public class NewFeedDependencyViewImpl extends ViewImpl implements NewFeedDepend
     SimplePanel type;
 
     @Inject
-    public NewFeedDependencyViewImpl(final Binder binder) {
+    public EditFeedDependencyViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -58,7 +58,7 @@ public class NewFeedDependencyViewImpl extends ViewImpl implements NewFeedDepend
         this.type.setWidget(w);
     }
 
-    public interface Binder extends UiBinder<Widget, NewFeedDependencyViewImpl> {
+    public interface Binder extends UiBinder<Widget, EditFeedDependencyViewImpl> {
 
     }
 }

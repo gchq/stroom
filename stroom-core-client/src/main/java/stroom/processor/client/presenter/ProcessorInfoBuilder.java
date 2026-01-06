@@ -20,6 +20,7 @@ import stroom.data.client.presenter.OpenLinkUtil;
 import stroom.data.client.presenter.OpenLinkUtil.LinkType;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.preferences.client.DateTimeFormatter;
+import stroom.processor.shared.FeedDependencies;
 import stroom.processor.shared.FeedDependency;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
@@ -41,7 +42,6 @@ import stroom.widget.util.client.TableCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -127,17 +127,27 @@ public class ProcessorInfoBuilder {
                             ? "Unlimited"
                             : String.valueOf(filter.getMaxProcessingTasks()));
 
-            final List<FeedDependency> feedDependencyList = NullSafe.getOrElse(
+            final FeedDependencies feedDependencies = NullSafe.get(
                     filter,
                     ProcessorFilter::getQueryData,
-                    QueryData::getFeedDependencies,
-                    new ArrayList<>());
-            if (!NullSafe.isEmptyCollection(feedDependencyList)) {
-                tb.row("Feed Dependencies",
-                        feedDependencyList
-                                .stream()
-                                .map(fd -> fd.getFeedName() + " - " + fd.getStreamType())
-                                .collect(Collectors.joining(", ")));
+                    QueryData::getFeedDependencies);
+            if (feedDependencies != null) {
+                final List<FeedDependency> feedDependencyList = NullSafe.list(feedDependencies.getFeedDependencies());
+                if (!NullSafe.isEmptyCollection(feedDependencyList)) {
+                    tb.row("Feed Dependencies",
+                            feedDependencyList
+                                    .stream()
+                                    .map(fd -> fd.getFeedName() + " - " + fd.getStreamType())
+                                    .collect(Collectors.joining(", ")));
+                }
+                if (feedDependencies.getMinProcessingDelay() != null) {
+                    tb.row("Min Processing Delay",
+                            feedDependencies.getMinProcessingDelay().toLongString());
+                }
+                if (feedDependencies.getMaxProcessingDelay() != null) {
+                    tb.row("Max Processing Delay",
+                            feedDependencies.getMaxProcessingDelay().toLongString());
+                }
             }
 
             final ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();

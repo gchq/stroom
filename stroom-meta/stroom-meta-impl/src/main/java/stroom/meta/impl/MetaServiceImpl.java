@@ -143,6 +143,11 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
     }
 
     @Override
+    public Long getMaxId(final long maxCreateTimeMs) {
+        return metaDao.getMaxId(maxCreateTimeMs);
+    }
+
+    @Override
     public Meta create(final MetaProperties metaProperties) {
         return metaDao.create(metaProperties);
     }

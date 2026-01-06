@@ -348,6 +348,17 @@ public class MetaDaoImpl implements MetaDao {
     }
 
     @Override
+    public Long getMaxId(final long maxCreateTimeMs) {
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                        .select(DSL.max(META_M.ID))
+                        .from(META_M)
+                        .where(META_M.CREATE_TIME.le(maxCreateTimeMs))
+                        .fetchOptional())
+                .map(Record1::value1)
+                .orElse(null);
+    }
+
+    @Override
     public Meta create(final MetaProperties metaProperties) {
         final Integer feedId = feedDao.getOrCreate(metaProperties.getFeedName());
         final Integer typeId = metaTypeDao.getOrCreate(metaProperties.getTypeName());

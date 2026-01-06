@@ -89,6 +89,11 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
+    public Long getMaxId(final long maxCreateTimeMs) {
+        return getMaxId();
+    }
+
+    @Override
     public Meta create(final MetaProperties properties) {
         feeds.add(properties.getFeedName());
         types.add(properties.getTypeName());

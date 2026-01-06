@@ -25,7 +25,7 @@ import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.shared.CreateProcessFilterRequest;
-import stroom.processor.shared.FeedDependency;
+import stroom.processor.shared.FeedDependencies;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorType;
@@ -54,7 +54,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -70,11 +69,11 @@ public class ProcessorEditPresenter
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final ClientSecurityContext clientSecurityContext;
-    private final Provider<FeedDependencyListPresenter> feedDependencyListPresenterProvider;
+    private final Provider<FeedDependencyPresenter> feedDependencyPresenterProvider;
 
     private ProcessorType processorType;
     private DocRef pipelineRef;
-    private List<FeedDependency> feedDependencies;
+    private FeedDependencies feedDependencies;
     private Consumer<ProcessorFilter> consumer;
 
     @Inject
@@ -85,7 +84,7 @@ public class ProcessorEditPresenter
                                   final DateTimeSettingsFactory dateTimeSettingsFactory,
                                   final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
                                   final ClientSecurityContext clientSecurityContext,
-                                  final Provider<FeedDependencyListPresenter> feedDependencyListPresenterProvider) {
+                                  final Provider<FeedDependencyPresenter> feedDependencyPresenterProvider) {
         super(eventBus, view);
         view.setUiHandlers(this);
 
@@ -94,7 +93,7 @@ public class ProcessorEditPresenter
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
         this.clientSecurityContext = clientSecurityContext;
-        this.feedDependencyListPresenterProvider = feedDependencyListPresenterProvider;
+        this.feedDependencyPresenterProvider = feedDependencyPresenterProvider;
         view.setExpressionView(editExpressionPresenter.getView());
         view.setRunAsUserView(userRefSelectionBoxPresenter.getView());
         userRefSelectionBoxPresenter.setContext(FindUserContext.RUN_AS);
@@ -155,7 +154,7 @@ public class ProcessorEditPresenter
         final QueryData queryData = getOrCreateQueryData(filter, defaultExpression);
         final List<QueryField> fields = MetaFields.getProcessorFilterFields();
         final boolean export = NullSafe.getOrElse(filter, ProcessorFilter::isExport, false);
-        feedDependencies = NullSafe.getOrElse(queryData, QueryData::getFeedDependencies, new ArrayList<>());
+        feedDependencies = NullSafe.get(queryData, QueryData::getFeedDependencies);
         read(
                 queryData.getExpression(),
                 MetaFields.STREAM_STORE_DOC_REF,
@@ -231,8 +230,8 @@ public class ProcessorEditPresenter
 
     @Override
     public void onEditFeedDependencies() {
-        final FeedDependencyListPresenter feedDependencyListPresenter = feedDependencyListPresenterProvider.get();
-        feedDependencyListPresenter.show(feedDependencies, updated -> this.feedDependencies = updated);
+        final FeedDependencyPresenter feedDependencyPresenter = feedDependencyPresenterProvider.get();
+        feedDependencyPresenter.show(feedDependencies, updated -> this.feedDependencies = updated);
     }
 
     private void validateExpression(final List<QueryField> fields,
@@ -350,11 +349,6 @@ public class ProcessorEditPresenter
                                          final Long maxMetaCreateTimeMs,
                                          final boolean export,
                                          final HidePopupRequestEvent event) {
-        List<FeedDependency> feedDependencies = null;
-        if (!NullSafe.isEmptyCollection(this.feedDependencies)) {
-            feedDependencies = new ArrayList<>(this.feedDependencies);
-        }
-
         if (filter != null) {
             // Now update the processor filter using the find stream criteria.
             filter.setQueryData(queryData.copy().feedDependencies(feedDependencies).build());

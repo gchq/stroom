@@ -28,6 +28,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.CreateProcessFilterRequest;
+import stroom.processor.shared.FeedDependencies;
 import stroom.processor.shared.FeedDependency;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorType;
@@ -185,16 +186,21 @@ class TestProcessorTaskCreator extends AbstractCoreIntegrationTest {
         List<Meta> streams = metaService.find(new FindMetaCriteria()).getValues();
         assertThat(streams.size()).isEqualTo(2);
 
+        final FeedDependencies feedDependencies = FeedDependencies
+                .builder()
+                .feedDependencies(List.of(new FeedDependency(
+                        UUID.randomUUID().toString(),
+                        refFeed,
+                        StreamTypeNames.REFERENCE)))
+                .build();
+
         // Now create the processor filter using the find stream criteria.
         final QueryData findStreamQueryData = QueryData.builder()
                 .dataSource(MetaFields.STREAM_STORE_DOC_REF)
                 .expression(ExpressionOperator.builder()
                         .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                         .build())
-                .feedDependencies(List.of(new FeedDependency(
-                        UUID.randomUUID().toString(),
-                        refFeed,
-                        StreamTypeNames.REFERENCE)))
+                .feedDependencies(feedDependencies)
                 .build();
         final CreateProcessFilterRequest request = CreateProcessFilterRequest
                 .builder()

@@ -26,7 +26,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -44,7 +43,7 @@ public class QueryData {
     @JsonProperty
     private final Limits limits;
     @JsonProperty
-    private final List<FeedDependency> feedDependencies;
+    private final FeedDependencies feedDependencies;
 
     @JsonCreator
     public QueryData(@JsonProperty("dataSource") final DocRef dataSource,
@@ -52,7 +51,7 @@ public class QueryData {
                      @JsonProperty("params") final List<Param> params,
                      @JsonProperty("timeRange") final TimeRange timeRange,
                      @JsonProperty("limits") final Limits limits,
-                     @JsonProperty("feedDependencies") final List<FeedDependency> feedDependencies) {
+                     @JsonProperty("feedDependencies") final FeedDependencies feedDependencies) {
         this.dataSource = dataSource;
         this.expression = expression;
         this.params = params;
@@ -81,7 +80,7 @@ public class QueryData {
         return limits;
     }
 
-    public List<FeedDependency> getFeedDependencies() {
+    public FeedDependencies getFeedDependencies() {
         return feedDependencies;
     }
 
@@ -131,7 +130,7 @@ public class QueryData {
         private List<Param> params;
         private TimeRange timeRange;
         private Limits limits;
-        private List<FeedDependency> feedDependencies;
+        private FeedDependencies feedDependencies;
 
         private Builder() {
         }
@@ -142,9 +141,7 @@ public class QueryData {
             this.params = queryData.params;
             this.timeRange = queryData.timeRange;
             this.limits = queryData.limits;
-            this.feedDependencies = queryData.feedDependencies == null
-                    ? null
-                    : new ArrayList<>(queryData.feedDependencies);
+            this.feedDependencies = queryData.feedDependencies;
         }
 
         public Builder dataSource(final DocRef dataSource) {
@@ -172,7 +169,7 @@ public class QueryData {
             return this;
         }
 
-        public Builder feedDependencies(final List<FeedDependency> feedDependencies) {
+        public Builder feedDependencies(final FeedDependencies feedDependencies) {
             this.feedDependencies = feedDependencies;
             return this;
         }

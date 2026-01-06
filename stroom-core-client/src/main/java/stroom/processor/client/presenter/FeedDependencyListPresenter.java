@@ -46,9 +46,9 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
 
-public class FeedDependencyListPresenter extends MyPresenterWidget<PagerView>
+public class FeedDependencyListPresenter
+        extends MyPresenterWidget<PagerView>
         implements HasDirtyHandlers {
 
     private final MyDataGrid<FeedDependency> dataGrid;
@@ -57,14 +57,14 @@ public class FeedDependencyListPresenter extends MyPresenterWidget<PagerView>
     private final ButtonView editButton;
     private final ButtonView removeButton;
     private final List<FeedDependency> feedDependencies = new ArrayList<>();
-    private final Provider<NewFeedDependencyPresenter> newFeedDependencyPresenter;
+    private final Provider<EditFeedDependencyPresenter> newFeedDependencyPresenter;
 
     private boolean readOnly = false;
 
     @Inject
     public FeedDependencyListPresenter(final EventBus eventBus,
                                        final PagerView view,
-                                       final Provider<NewFeedDependencyPresenter> newFeedDependencyPresenter) {
+                                       final Provider<EditFeedDependencyPresenter> newFeedDependencyPresenter) {
         super(eventBus, view);
 
         view.asWidget().addStyleName("form-control-background form-control-border");
@@ -108,33 +108,48 @@ public class FeedDependencyListPresenter extends MyPresenterWidget<PagerView>
         }));
     }
 
-    public void show(final List<FeedDependency> list,
-                     final Consumer<List<FeedDependency>> consumer) {
+    public void focus() {
+        addButton.focus();
+    }
+
+    public void setFeedDependencies(final List<FeedDependency> list) {
         this.feedDependencies.clear();
         if (list != null) {
             this.feedDependencies.addAll(list);
         }
         refresh();
-
-        // Show the feed dependencies dialog.
-        final PopupSize popupSize = PopupSize.resizable(800, 600);
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Set Feed Dependencies")
-                .modal(true)
-                .onShow(e -> addButton.focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        consumer.accept(new ArrayList<>(this.feedDependencies));
-                    } else {
-                        consumer.accept(list);
-                    }
-                    e.hide();
-                })
-                .fire();
     }
 
+    public List<FeedDependency> getFeedDependencies() {
+        return new ArrayList<>(feedDependencies);
+    }
+
+    //    public void show(final List<FeedDependency> list,
+//                     final Consumer<List<FeedDependency>> consumer) {
+//        this.feedDependencies.clear();
+//        if (list != null) {
+//            this.feedDependencies.addAll(list);
+//        }
+//        refresh();
+//
+//        // Show the feed dependencies dialog.
+//        final PopupSize popupSize = PopupSize.resizable(800, 600);
+//        ShowPopupEvent.builder(this)
+//                .popupType(PopupType.OK_CANCEL_DIALOG)
+//                .popupSize(popupSize)
+//                .caption("Set Feed Dependencies")
+//                .modal(true)
+//                .onShow(e -> addButton.focus())
+//                .onHideRequest(e -> {
+//                    if (e.isOk()) {
+//                        consumer.accept(new ArrayList<>(this.feedDependencies));
+//                    } else {
+//                        consumer.accept(list);
+//                    }
+//                    e.hide();
+//                })
+//                .fire();
+//    }
 
     private void addColumns() {
         addFeedColumn();
@@ -185,7 +200,7 @@ public class FeedDependencyListPresenter extends MyPresenterWidget<PagerView>
     private void showEditor(final FeedDependency feedDependency,
                             final boolean isNew) {
         if (feedDependency != null) {
-            final NewFeedDependencyPresenter editor = newFeedDependencyPresenter.get();
+            final EditFeedDependencyPresenter editor = newFeedDependencyPresenter.get();
             final HidePopupRequestEvent.Handler handler = e -> {
                 if (e.isOk()) {
                     final FeedDependency updated = editor.write();

@@ -38,8 +38,8 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
 
-public class NewFeedDependencyPresenter
-        extends MyPresenterWidget<NewFeedDependencyPresenter.NewFeedDependencyView>
+public class EditFeedDependencyPresenter
+        extends MyPresenterWidget<EditFeedDependencyPresenter.EditFeedDependencyView>
         implements Focus {
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
@@ -53,11 +53,11 @@ public class NewFeedDependencyPresenter
     private boolean initialised;
 
     @Inject
-    public NewFeedDependencyPresenter(final EventBus eventBus,
-                                      final NewFeedDependencyView view,
-                                      final DocSelectionBoxPresenter feedPresenter,
-                                      final RestFactory restFactory,
-                                      final FeedClient feedClient) {
+    public EditFeedDependencyPresenter(final EventBus eventBus,
+                                       final EditFeedDependencyView view,
+                                       final DocSelectionBoxPresenter feedPresenter,
+                                       final RestFactory restFactory,
+                                       final FeedClient feedClient) {
         super(eventBus, view);
         this.feedPresenter = feedPresenter;
         this.restFactory = restFactory;
@@ -140,7 +140,7 @@ public class NewFeedDependencyPresenter
         this.dirty = dirty;
     }
 
-    public interface NewFeedDependencyView extends View {
+    public interface EditFeedDependencyView extends View {
 
         void setFeedView(View view);
 

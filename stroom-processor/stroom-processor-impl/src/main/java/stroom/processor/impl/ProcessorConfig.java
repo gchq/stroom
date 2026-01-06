@@ -58,8 +58,6 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     private final StroomDuration waitToQueueTasksDuration;
     private StroomDuration skipNonProducingFiltersDuration;
 
-    private final StroomDuration feedDependencyDelay;
-
     public ProcessorConfig() {
         dbConfig = new ProcessorDbConfig();
         assignTasks = true;
@@ -91,7 +89,6 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         disownDeadTasksAfter = StroomDuration.ofMinutes(10);
         waitToQueueTasksDuration = StroomDuration.ofSeconds(10);
         skipNonProducingFiltersDuration = StroomDuration.ofSeconds(10);
-        feedDependencyDelay = StroomDuration.ofMinutes(20);
     }
 
     @SuppressWarnings("unused")
@@ -112,9 +109,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                            @JsonProperty("disownDeadTasksAfter") final StroomDuration disownDeadTasksAfter,
                            @JsonProperty("waitToQueueTasksDuration") final StroomDuration waitToQueueTasksDuration,
                            @JsonProperty("skipNonProducingFiltersDuration") final StroomDuration
-                                   skipNonProducingFiltersDuration,
-                           @JsonProperty("feedDependencyDelay") final StroomDuration
-                                   feedDependencyDelay) {
+                                   skipNonProducingFiltersDuration) {
         this.dbConfig = dbConfig;
         this.assignTasks = assignTasks;
         this.deleteAge = deleteAge;
@@ -131,7 +126,6 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         this.disownDeadTasksAfter = disownDeadTasksAfter;
         this.waitToQueueTasksDuration = waitToQueueTasksDuration;
         this.skipNonProducingFiltersDuration = skipNonProducingFiltersDuration;
-        this.feedDependencyDelay = feedDependencyDelay;
     }
 
     @Override
@@ -230,14 +224,6 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         this.skipNonProducingFiltersDuration = skipNonProducingFiltersDuration;
     }
 
-    @JsonPropertyDescription("When using feed dependencies for processor filters, how long should we delay before " +
-                             "creating processing tasks for streams with creation times before the combined " +
-                             "effective time for the reference data. Note that this needs to be at least as long as " +
-                             "the cache timeout for the effective stream cache used by reference data.")
-    public StroomDuration getFeedDependencyDelay() {
-        return feedDependencyDelay;
-    }
-
     @Override
     public String toString() {
         return "ProcessorConfig{" +
@@ -256,7 +242,6 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                ", disownDeadTasksAfter=" + disownDeadTasksAfter +
                ", waitToQueueTasksDuration=" + waitToQueueTasksDuration +
                ", skipNonProducingFiltersDuration=" + skipNonProducingFiltersDuration +
-               ", feedDependencyDelay=" + feedDependencyDelay +
                '}';
     }
 
