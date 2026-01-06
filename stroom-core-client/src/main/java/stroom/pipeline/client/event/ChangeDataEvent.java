@@ -16,9 +16,6 @@
 
 package stroom.pipeline.client.event;
 
-import stroom.pipeline.structure.client.presenter.PipelineModel;
-
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 

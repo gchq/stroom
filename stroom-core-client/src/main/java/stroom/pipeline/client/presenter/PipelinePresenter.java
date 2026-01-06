@@ -138,7 +138,6 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
                                final DocRef docRef,
                                final PipelineDoc document,
                                final boolean readOnly) {
-//                presenter.setPipelineModel(pipelineModel);
                 presenter.read(docRef, document, readOnly);
             }
         };

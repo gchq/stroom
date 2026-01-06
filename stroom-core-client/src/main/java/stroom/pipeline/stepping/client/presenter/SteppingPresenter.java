@@ -798,8 +798,6 @@ public class SteppingPresenter
     private void step(final StepType stepType,
                       final StepLocation stepLocation) {
         if (!busyTranslating) {
-            GWT.log("step: " + stepType + " " + stepLocation);
-
             Objects.requireNonNull(pipelineModel);
 
             busyTranslating = true;

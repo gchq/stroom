@@ -592,7 +592,6 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
 
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-//        pipelineDoc.getPipelineData().getAddedElements().add(new PipelineElement("Source", "Source"));
 
         requestBuilder.pipelineDoc(pipelineDoc);
         requestBuilder.criteria(findMetaCriteria);
