@@ -621,6 +621,10 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         return parentPipeline;
     }
 
+    public PipelineDoc getPipelineDoc() {
+        return pipelineDoc;
+    }
+
     private void changeParentPipeline(final DocRef parentPipeline) {
         // Don't do anything if the parent pipeline has not changed.
         if (Objects.equals(this.parentPipeline, parentPipeline)) {
@@ -628,12 +632,13 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         }
 
         this.parentPipeline = parentPipeline;
+        this.pipelineDoc.setParentPipeline(parentPipeline);
 
         if (parentPipeline == null) {
             pipelineModel.setBaseStack(null);
-
             try {
                 pipelineModel.build();
+                setDirty(true);
             } catch (final PipelineModelException e) {
                 AlertEvent.fireError(this, e.getMessage(), null);
             }
@@ -647,6 +652,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
                         try {
                             pipelineModel.build();
+                            setDirty(true);
                         } catch (final PipelineModelException e) {
                             AlertEvent.fireError(
                                     PipelineStructurePresenter.this,
@@ -657,9 +663,6 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                     .taskMonitorFactory(this)
                     .exec();
         }
-
-        // We have changed the parent pipeline so set dirty.
-        setDirty(true);
     }
 
     // --------------------------------------------------------------------------------

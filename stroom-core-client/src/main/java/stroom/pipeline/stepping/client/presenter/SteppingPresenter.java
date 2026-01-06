@@ -131,7 +131,6 @@ public class SteppingPresenter
     private final InlineSvgButton terminateButton;
     private final InlineSvgToggleButton toggleLogPaneButton;
     private boolean foundRecord;
-    private boolean showingData;
     private boolean busyTranslating;
     private SteppingResult lastFoundResult;
     private SteppingResult currentResult;
@@ -140,6 +139,7 @@ public class SteppingPresenter
     final ButtonView streamListFilter;
 
     private Meta meta;
+    private String childStreamType;
     private PipelineDoc pipelineDoc;
     private String classification;
     private ElementPresenter currentElementPresenter = null;
@@ -194,14 +194,7 @@ public class SteppingPresenter
         pipelineTreePresenter.setPipelineTreeBuilder(new DefaultPipelineTreeBuilder());
         pipelineTreePresenter.setAllowNullSelection(false);
 
-        stepControlPresenter.setEnabledButtons(
-                false,
-                requestBuilder.build().getStepType(),
-                showingData,
-                foundRecord,
-                false,
-                false,
-                null);
+        stepControlPresenter.initButtons();
 
         leftButtons = new ButtonPanel();
 
@@ -653,13 +646,8 @@ public class SteppingPresenter
         steppingMetaListPresenter.refresh();
     }
 
-    public void beginStepping(final StepType stepType,
-                     final StepLocation stepLocation,
-                     final Meta stream,
-                     final String childStreamType) {
-        this.meta = stream;
-
-        if (meta == null) {
+    public void beginStepping() {
+        if (this.meta == null) {
             if (steppingMetaListPresenter.getSelected() == null) {
                 sourcePresenter.clear();
 
@@ -669,11 +657,27 @@ public class SteppingPresenter
 
                 return;
             }
-            meta = steppingMetaListPresenter.getSelected().getMeta();
+            this.meta = steppingMetaListPresenter.getSelected().getMeta();
         }
 
+        beginStepping(StepType.REFRESH,
+                NullSafe.requireNonNullElse(requestBuilder.build().getStepLocation(),
+                        new StepLocation(meta.getId(), 0, 0)),
+                meta, childStreamType);
+    }
+
+    public void beginStepping(final StepType stepType,
+                     final StepLocation stepLocation,
+                     final Meta meta,
+                     final String childStreamType) {
+        Objects.requireNonNull(meta);
+        Objects.requireNonNull(stepLocation);
+
+        this.meta = meta;
+        this.childStreamType = childStreamType;
+
         // Load the stream.
-        final SourceLocation sourceLocation = SourceLocation.builder(meta.getId())
+        final SourceLocation sourceLocation = SourceLocation.builder(this.meta.getId())
                 .withChildStreamType(childStreamType)
                 .withPartIndex(stepLocation.getPartIndex())
                 .withRecordIndex(Math.max(stepLocation.getRecordIndex(), 0))
@@ -684,7 +688,7 @@ public class SteppingPresenter
         requestBuilder.pipelineDoc(pipelineDoc);
 
         // Set the stream id on the stepping action.
-        final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromMeta(meta);
+        final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromMeta(this.meta);
         requestBuilder.criteria(findMetaCriteria);
 
         requestBuilder.childStreamType(childStreamType);
@@ -794,9 +798,10 @@ public class SteppingPresenter
     private void step(final StepType stepType,
                       final StepLocation stepLocation) {
         if (!busyTranslating) {
-            if (pipelineModel == null) {
-                throw new RuntimeException("PipelineModel not set");
-            }
+            GWT.log("step: " + stepType + " " + stepLocation);
+
+            Objects.requireNonNull(pipelineModel);
+
             busyTranslating = true;
             stepMessage.getElement().setInnerHTML("Stepping...");
             stepMessage.setVisible(true);
@@ -963,7 +968,6 @@ public class SteppingPresenter
             currentResult = result;
             foundRecord = result.isFoundRecord();
             if (foundRecord) {
-                showingData = true;
                 lastFoundResult = result;
             }
 
@@ -1026,14 +1030,14 @@ public class SteppingPresenter
                 });
             }
         } finally {
-            stepControlPresenter.setEnabledButtons(
-                    true,
-                    requestBuilder.build().getStepType(),
-                    showingData,
-                    foundRecord,
-                    fatalErrors.isPresent(),
-                    result.hasActiveFilter(),
-                    result.getFoundLocation());
+            if (pipelineModel.getCombinedData().getElements().size() > 1) {
+                stepControlPresenter.setEnabledButtons(
+                        requestBuilder.build().getStepType(),
+                        foundRecord,
+                        result.hasActiveFilter(),
+                        result.getFoundLocation());
+            }
+
             busyTranslating = false;
         }
     }

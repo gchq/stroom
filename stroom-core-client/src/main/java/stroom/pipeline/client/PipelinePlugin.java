@@ -116,7 +116,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
             callbackOnOpen = presenter -> {
                 final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;
                 pipelinePresenter.setMetaListExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION);
-                pipelinePresenter.initPipelineModel();
+                pipelinePresenter.initPipelineModel(docRef);
             };
         }
 
@@ -248,7 +248,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                         pipelinePresenter.beginStepping(stepType, stepLocation, meta, childStreamType);
                     });
 
-                    pipelinePresenter.initPipelineModel();
+                    pipelinePresenter.initPipelineModel(pipeline);
                 }, new DefaultTaskMonitorFactory(this));
     }
 }

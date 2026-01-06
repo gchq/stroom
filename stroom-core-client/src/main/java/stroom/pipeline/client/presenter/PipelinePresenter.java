@@ -73,6 +73,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
     private final PipelineModelFactory pipelineModelFactory;
 
     private PipelineModel pipelineModel;
+    private boolean doStepping = true;
 
     private boolean isAdmin;
     private boolean hasManageProcessorsPermission;
@@ -240,10 +241,13 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
 
             replaceTab(STRUCTURE, steppingTabProvider);
 
-            if (isDirty()) {
+            if (doStepping) {
+                doStepping = false;
+                if (pipelineStructurePresenter.getPipelineDoc() != null) {
+                    steppingPresenter.setPipelineDoc(pipelineStructurePresenter.getPipelineDoc());
+                }
                 steppingPresenter.setPipelineModel(pipelineModel);
-                beginStepping(StepType.REFRESH, new StepLocation(0, 0, 0),
-                        null, null);
+                steppingPresenter.beginStepping();
             }
 
             if (!initSize) {
@@ -281,7 +285,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
     @Override
     public void onChange(final ChangeDataEvent<PipelineModel> event) {
         this.pipelineModel = event.getData();
-
+        doStepping = true;
         this.setDirty(true);
     }
 
@@ -310,7 +314,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
         steppingPresenter.setPipelineDoc(document);
     }
 
-    public void initPipelineModel() {
+    public void initPipelineModel(final DocRef docRef) {
         pipelineElementTypesFactory.get(this, elementTypes ->
                 pipelineModelFactory.get(this, docRef, elementTypes, model -> {
                     if (pipelineModel == null) {

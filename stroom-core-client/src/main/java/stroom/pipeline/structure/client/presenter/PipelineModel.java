@@ -51,7 +51,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class    PipelineModel implements HasChangeDataHandlers<PipelineModel> {
+public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
 
     private static final String SOURCE = "Source";
     public static final PipelineElement SOURCE_ELEMENT = new PipelineElement(SOURCE, SOURCE);
@@ -614,9 +614,7 @@ public class    PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     }
 
     public boolean hasElement(final PipelineElement element) {
-        final PipelineData pipelineData = pipelineLayer.getPipelineData();
-        return pipelineData.getAddedElements().contains(element) &&
-               !pipelineData.getRemovedElements().contains(element);
+        return getCombinedData().getElements().containsValue(element);
     }
 
     public List<PipelineElement> getPipelineElements(final Predicate<PipelineElement> predicate) {
