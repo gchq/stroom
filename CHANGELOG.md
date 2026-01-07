@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#5100** : Fix selection filters auto quoting parameter replacements.
+
 * Issue **#5318** : Fix Plan B session condensation.
 
 * Issue **#5288** : Fix config defaults for `ForwardHttpPostConfig` and `HttpClientConfiguration`.
