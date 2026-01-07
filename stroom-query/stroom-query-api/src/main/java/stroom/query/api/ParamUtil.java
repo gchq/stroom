@@ -143,13 +143,15 @@ public final class ParamUtil {
 
                 final String paramValue = paramValues.getParamValue(key);
                 if (paramValue != null) {
-                    if (containsWhitespace(paramValue)) {
-                        sb.append("'");
+                    // gh-5100 WE DO NOT WANT TO AUTOMATICALLY QUOTE REPLACED PARAMS, QUOTES SHOULD BE ADDED TO QUERIES
+                    // IF NEEDED
+//                    if (containsWhitespace(paramValue)) {
+//                        sb.append("'");
+//                        sb.append(paramValue);
+//                        sb.append("'");
+//                    } else {
                         sb.append(paramValue);
-                        sb.append("'");
-                    } else {
-                        sb.append(paramValue);
-                    }
+//                    }
                 } else if (defaultValue != null) {
                     sb.append(defaultValue);
                 } else if (keepUnmatched) {
