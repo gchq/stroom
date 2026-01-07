@@ -9241,6 +9241,8 @@ components:
           $ref: "#/components/schemas/DuplicateNotificationConfig"
         errorFeed:
           $ref: "#/components/schemas/DocRef"
+        includeRuleDocumentation:
+          type: boolean
         languageVersion:
           type: string
           enum:
@@ -12148,6 +12150,8 @@ components:
       type: object
       properties:
         message:
+          type: string
+        node:
           type: string
         severity:
           type: string
@@ -15126,8 +15130,6 @@ components:
             $ref: "#/components/schemas/DocRef"
           useSourceFeedIfPossible:
             type: boolean
-          includeRuleDocumentation:
-            type: boolean
     NumberFormatSettings:
       type: object
       allOf:
@@ -15783,8 +15785,8 @@ components:
             type: string
         criteria:
           $ref: "#/components/schemas/FindMetaCriteria"
-        pipeline:
-          $ref: "#/components/schemas/DocRef"
+        pipelineDoc:
+          $ref: "#/components/schemas/PipelineDoc"
         sessionUuid:
           type: string
         stepFilterMap:
@@ -16898,6 +16900,8 @@ components:
           $ref: "#/components/schemas/DuplicateNotificationConfig"
         errorFeed:
           $ref: "#/components/schemas/DocRef"
+        includeRuleDocumentation:
+          type: boolean
         languageVersion:
           type: string
           enum:
