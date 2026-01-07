@@ -155,10 +155,10 @@ public final class ParamUtil {
                 } else if (defaultValue != null) {
                     sb.append(defaultValue);
                 } else if (keepUnmatched) {
-                    sb.append(token.getText());
+                    sb.append(token.getUnescapedText());
                 }
             } else {
-                sb.append(token.getText());
+                sb.append(token.getUnescapedText());
             }
         }
 
