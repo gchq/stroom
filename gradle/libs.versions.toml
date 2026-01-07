@@ -121,6 +121,7 @@ jaxb-impl = { module = "com.sun.xml.bind:jaxb-impl", version = "4.0.6" }
 #jaxws-api = { module = "javax.xml.ws:jaxws-api", version = "2.2.6" }
 jcl-over-slf4j = { module = "org.slf4j:jcl-over-slf4j" } # version controlled by dropwizard-dependencies
 jcommander = { module = "com.beust:jcommander", version = "1.82" }
+jetcd = { module = "io.etcd:jetcd-core", version = "0.8.6" }
 jersey-client = { module = "org.glassfish.jersey.core:jersey-client" } # version controlled by dropwizard-dependencies
 jersey-common = { module = "org.glassfish.jersey.core:jersey-common" } # version controlled by dropwizard-dependencies
 jersey-server = { module = "org.glassfish.jersey.core:jersey-server" } # version controlled by dropwizard-dependencies

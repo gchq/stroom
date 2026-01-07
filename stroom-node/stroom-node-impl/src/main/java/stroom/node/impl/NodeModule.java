@@ -24,11 +24,13 @@ import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.pipeline.writer.ExtendedPathCreator;
 import stroom.util.RunnableWrapper;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.io.PathCreator;
 import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
+import io.dropwizard.lifecycle.Managed;
 import jakarta.inject.Inject;
 
 public class NodeModule extends AbstractModule {
@@ -42,6 +44,10 @@ public class NodeModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(NodeResourceImpl.class);
+
+        // Make sure the node is managed by the dropwizard lifecycle.
+        GuiceUtil.buildMultiBinder(binder(), Managed.class)
+                .addBinding(NodeLifecycle.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
