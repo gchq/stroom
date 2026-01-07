@@ -150,7 +150,7 @@ public final class ParamUtil {
 //                        sb.append(paramValue);
 //                        sb.append("'");
 //                    } else {
-                        sb.append(paramValue);
+                    sb.append(paramValue);
 //                    }
                 } else if (defaultValue != null) {
                     sb.append(defaultValue);
