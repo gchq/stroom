@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.15] - 2026-01-07
+
+* Issue **#5100** : Fix selection filters auto quoting parameter replacements.
+
+
 ## [v7.10.14] - 2025-12-19
 
 * Issue **#5318** : Fix Plan B session condensation.
@@ -1795,7 +1800,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.15...HEAD
+[v7.10.15]: https://github.com/gchq/stroom/compare/v7.10.14...v7.10.15
 [v7.10.14]: https://github.com/gchq/stroom/compare/v7.10.13...v7.10.14
 [v7.10.13]: https://github.com/gchq/stroom/compare/v7.10.12...v7.10.13
 [v7.10.12]: https://github.com/gchq/stroom/compare/v7.10.11...v7.10.12
