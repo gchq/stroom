@@ -456,6 +456,10 @@ public class ElementPresenter
         this.properties = properties;
     }
 
+    public List<PipelineProperty> getProperties() {
+        return properties;
+    }
+
     public void setFeedName(final String feedName) {
         this.feedName = feedName;
     }
@@ -485,7 +489,6 @@ public class ElementPresenter
     }
 
     private EditorPresenter getCodePresenter(final PipelineElement element) {
-        GWT.log("id: " + element.getId() + ", type: " + element.getType());
         if (codePresenter == null) {
             codePresenter = editorProvider.get();
             presenterMap.put(IndicatorType.CODE, codePresenter);
@@ -530,9 +533,6 @@ public class ElementPresenter
                     mode = AceEditorMode.STROOM_COMBINED_PARSER;
                 }
             }
-            GWT.log("id: " + element.getId()
-                    + ", type: " + element.getType()
-                    + ", mode: " + mode);
         }
         return mode;
     }

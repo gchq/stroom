@@ -16,8 +16,8 @@
 
 package stroom.pipeline.shared.stepping;
 
-import stroom.docref.DocRef;
 import stroom.meta.shared.FindMetaCriteria;
+import stroom.pipeline.shared.PipelineDoc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -45,7 +45,7 @@ public class PipelineStepRequest {
     @JsonProperty
     private final Map<String, SteppingFilterSettings> stepFilterMap;
     @JsonProperty
-    private final DocRef pipeline;
+    private final PipelineDoc pipelineDoc;
     @JsonProperty
     private final Map<String, String> code;
     @JsonProperty
@@ -61,7 +61,7 @@ public class PipelineStepRequest {
                                @JsonProperty("stepLocation") final StepLocation stepLocation,
                                @JsonProperty("stepType") final StepType stepType,
                                @JsonProperty("stepFilterMap") final Map<String, SteppingFilterSettings> stepFilterMap,
-                               @JsonProperty("pipeline") final DocRef pipeline,
+                               @JsonProperty("pipelineDoc") final PipelineDoc pipelineDoc,
                                @JsonProperty("code") final Map<String, String> code,
                                @JsonProperty("stepSize") final int stepSize,
                                @JsonProperty("timeout") final Long timeout) {
@@ -71,7 +71,7 @@ public class PipelineStepRequest {
         this.stepLocation = stepLocation;
         this.stepType = stepType;
         this.stepFilterMap = stepFilterMap;
-        this.pipeline = pipeline;
+        this.pipelineDoc = pipelineDoc;
         this.code = code;
         this.stepSize = stepSize;
         this.timeout = timeout;
@@ -89,8 +89,8 @@ public class PipelineStepRequest {
         return childStreamType;
     }
 
-    public DocRef getPipeline() {
-        return pipeline;
+    public PipelineDoc getPipelineDoc() {
+        return pipelineDoc;
     }
 
     public Map<String, String> getCode() {
@@ -140,7 +140,7 @@ public class PipelineStepRequest {
         private StepLocation stepLocation;
         private StepType stepType;
         private Map<String, SteppingFilterSettings> stepFilterMap;
-        private DocRef pipeline;
+        private PipelineDoc pipelineDoc;
         private Map<String, String> code;
         private int stepSize = 1;
         private Long timeout = 1000L;
@@ -155,7 +155,7 @@ public class PipelineStepRequest {
             this.stepLocation = request.stepLocation;
             this.stepType = request.stepType;
             this.stepFilterMap = request.stepFilterMap;
-            this.pipeline = request.pipeline;
+            this.pipelineDoc = request.pipelineDoc;
             this.code = request.code;
             this.stepSize = request.stepSize;
             this.timeout = request.timeout;
@@ -191,8 +191,8 @@ public class PipelineStepRequest {
             return this;
         }
 
-        public Builder pipeline(final DocRef pipeline) {
-            this.pipeline = pipeline;
+        public Builder pipelineDoc(final PipelineDoc pipelineDoc) {
+            this.pipelineDoc = pipelineDoc;
             return this;
         }
 
@@ -219,7 +219,7 @@ public class PipelineStepRequest {
                     stepLocation,
                     stepType,
                     stepFilterMap,
-                    pipeline,
+                    pipelineDoc,
                     code,
                     stepSize,
                     timeout);

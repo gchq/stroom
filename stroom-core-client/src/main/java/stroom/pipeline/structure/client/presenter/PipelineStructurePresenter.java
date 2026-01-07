@@ -34,7 +34,6 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
@@ -70,6 +69,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineStructureView, PipelineDoc>
         implements PipelineStructureUiHandlers {
@@ -88,7 +88,6 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
     private final PipelineReferenceListPresenter pipelineReferenceListPresenter;
     private final Provider<EditorPresenter> jsonEditorProvider;
     private final PipelineTreePresenter pipelineTreePresenter;
-    private final PipelineElementTypesFactory pipelineElementTypesFactory;
     private PipelineElement selectedElement;
     private PipelineModel pipelineModel;
     private DocRef docRef;
@@ -99,6 +98,8 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
     private List<Item> addMenuItems;
     private List<Item> restoreMenuItems;
 
+    private final List<Consumer<PipelineModel>> pipelineChangeHandlers = new ArrayList<>();
+
     @Inject
     public PipelineStructurePresenter(final EventBus eventBus,
                                       final PipelineStructureView view,
@@ -108,8 +109,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                                       final NewElementPresenter newElementPresenter,
                                       final PropertyListPresenter propertyListPresenter,
                                       final PipelineReferenceListPresenter pipelineReferenceListPresenter,
-                                      final Provider<EditorPresenter> jsonEditorProvider,
-                                      final PipelineElementTypesFactory pipelineElementTypesFactory) {
+                                      final Provider<EditorPresenter> jsonEditorProvider) {
         super(eventBus, view);
         this.pipelineTreePresenter = pipelineTreePresenter;
         this.pipelinePresenter = pipelinePresenter;
@@ -118,7 +118,6 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         this.propertyListPresenter = propertyListPresenter;
         this.pipelineReferenceListPresenter = pipelineReferenceListPresenter;
         this.jsonEditorProvider = jsonEditorProvider;
-        this.pipelineElementTypesFactory = pipelineElementTypesFactory;
 
         getView().setUiHandlers(this);
         getView().setInheritanceTree(pipelinePresenter.getView());
@@ -188,68 +187,59 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
     @Override
     protected void onRead(final DocRef docRef, final PipelineDoc document, final boolean readOnly) {
-        pipelineElementTypesFactory.get(this, elementTypes -> {
-            pipelinePresenter.setEnabled(!readOnly);
-            propertyListPresenter.setReadOnly(readOnly);
-            pipelineReferenceListPresenter.setReadOnly(readOnly);
-            enableButtons();
+        pipelinePresenter.setEnabled(!readOnly);
+        propertyListPresenter.setReadOnly(readOnly);
+        pipelineReferenceListPresenter.setReadOnly(readOnly);
+        enableButtons();
 
-            if (document != null) {
-                final PipelineElement previousSelection = this.selectedElement;
+        if (document != null) {
+            final PipelineElement previousSelection = this.selectedElement;
 
-                this.docRef = docRef;
-                this.pipelineDoc = document;
-                this.selectedElement = null;
+            this.docRef = docRef;
+            this.pipelineDoc = document;
+            this.selectedElement = null;
 
-                if (pipelineModel == null) {
-                    pipelineModel = new PipelineModel(elementTypes);
-                    pipelineTreePresenter.setModel(pipelineModel);
-                }
-
-                if (document.getParentPipeline() != null) {
-                    this.parentPipeline = document.getParentPipeline();
-                }
-                pipelinePresenter.setSelectedEntityReference(document.getParentPipeline(), true);
-
-                restFactory
-                        .create(PIPELINE_RESOURCE)
-                        .method(res -> res.fetchPipelineLayers(docRef))
-                        .onSuccess(result -> {
-                            final PipelineLayer pipelineLayer = result.get(result.size() - 1);
-                            final List<PipelineLayer> baseStack = new ArrayList<>(result.size() - 1);
-
-                            // If there is a stack of pipeline data then we need
-                            // to make sure changes are reflected appropriately.
-                            for (int i = 0; i < result.size() - 1; i++) {
-                                baseStack.add(result.get(i));
-                            }
-
-                            try {
-                                pipelineModel.setPipelineLayer(pipelineLayer);
-                                pipelineModel.setBaseStack(baseStack);
-                                pipelineModel.build();
-                                pipelineTreePresenter.getSelectionModel().setSelected(previousSelection, true);
-
-                                // We have just loaded the pipeline so set dirty to
-                                // false.
-                                setDirty(false);
-                            } catch (final PipelineModelException e) {
-                                AlertEvent.fireError(
-                                        PipelineStructurePresenter.this,
-                                        e.getMessage(),
-                                        null);
-                            }
-                        })
-                        .taskMonitorFactory(this)
-                        .exec();
+            if (document.getParentPipeline() != null) {
+                this.parentPipeline = document.getParentPipeline();
             }
-        });
+            pipelinePresenter.setSelectedEntityReference(document.getParentPipeline(), true);
+
+            pipelineTreePresenter.getSelectionModel().setSelected(previousSelection, true);
+        }
+    }
+
+    public void addPipelineChangeHandler(final Consumer<PipelineModel> handler) {
+        pipelineChangeHandlers.add(handler);
+    }
+
+    private void handlePipelineChange() {
+        pipelineChangeHandlers.forEach(handler -> handler.accept(pipelineModel));
     }
 
     @Override
-    protected PipelineDoc onWrite(final PipelineDoc document) {
-        // Only write if we have been revealed and therefore created a pipeline
-        // model.
+    public void setDirty(final boolean dirty) {
+        super.setDirty(dirty);
+
+        if (dirty) {
+            handlePipelineChange();
+            setPipelineModel(pipelineModel);
+        }
+    }
+
+    public void setPipelineModel(final PipelineModel model) {
+        try {
+            final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
+            pipelineModel = model;
+            pipelineTreePresenter.setModel(pipelineModel);
+            pipelineTreePresenter.getSelectionModel().setSelected(selectedElement, true);
+        } catch (final PipelineModelException e) {
+            AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
+        }
+    }
+
+    @Override
+    public PipelineDoc onWrite(final PipelineDoc document) {
+        // Only write if we have been revealed and therefore created a pipeline model.
         if (pipelineModel != null) {
             try {
                 // Set the parent pipeline.
@@ -631,6 +621,10 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         return parentPipeline;
     }
 
+    public PipelineDoc getPipelineDoc() {
+        return pipelineDoc;
+    }
+
     private void changeParentPipeline(final DocRef parentPipeline) {
         // Don't do anything if the parent pipeline has not changed.
         if (Objects.equals(this.parentPipeline, parentPipeline)) {
@@ -638,12 +632,13 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         }
 
         this.parentPipeline = parentPipeline;
+        this.pipelineDoc.setParentPipeline(parentPipeline);
 
         if (parentPipeline == null) {
             pipelineModel.setBaseStack(null);
-
             try {
                 pipelineModel.build();
+                setDirty(true);
             } catch (final PipelineModelException e) {
                 AlertEvent.fireError(this, e.getMessage(), null);
             }
@@ -657,6 +652,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
                         try {
                             pipelineModel.build();
+                            setDirty(true);
                         } catch (final PipelineModelException e) {
                             AlertEvent.fireError(
                                     PipelineStructurePresenter.this,
@@ -667,9 +663,6 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                     .taskMonitorFactory(this)
                     .exec();
         }
-
-        // We have changed the parent pipeline so set dirty.
-        setDirty(true);
     }
 
     // --------------------------------------------------------------------------------

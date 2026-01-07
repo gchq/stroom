@@ -17,6 +17,7 @@
 package stroom.widget.popup.client.view;
 
 public enum DialogAction {
+    CREATE,
     OK,
     CANCEL,
     CLOSE,

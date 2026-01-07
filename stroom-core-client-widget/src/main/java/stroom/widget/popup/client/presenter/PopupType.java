@@ -21,5 +21,6 @@ public enum PopupType {
     DIALOG,
     CLOSE_DIALOG,
     OK_CANCEL_DIALOG,
+    CREATE_OK_CANCEL_DIALOG,
     ACCEPT_REJECT_DIALOG
 }

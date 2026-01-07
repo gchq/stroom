@@ -66,4 +66,10 @@ public abstract class AbstractAddRemove<T> {
     public int hashCode() {
         return Objects.hash(add, remove);
     }
+
+    @Override
+    public String toString() {
+        return "add=" + add +
+               ", remove=" + remove;
+    }
 }
