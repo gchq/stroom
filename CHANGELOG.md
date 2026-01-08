@@ -13,6 +13,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Issue **#5100** : Fix selection filters auto quoting parameter replacements.
+
+
 ## [v7.11-beta.15] - 2026-01-07
 
 * Issue **#4124** : Fix NodeResultSerialiser and add node name to errors.

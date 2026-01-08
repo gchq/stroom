@@ -363,7 +363,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
 
                             } else {
                                 final String value = term.getValue();
-                                final String resolved = ParamUtil.replaceParameters(term.getValue(),
+                                final String resolved = ParamUtil.replaceTermValueParameters(term.getValue(),
                                         v -> getParamValue(v, componentStates), keepUnmatched);
                                 if (NullSafe.isNonBlankString(resolved)) {
                                     if (Objects.equals(value, resolved)) {

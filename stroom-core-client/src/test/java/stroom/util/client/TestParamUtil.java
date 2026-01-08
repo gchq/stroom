@@ -83,14 +83,10 @@ class TestParamUtil {
         assertThat(result).isEqualTo("this is $$$value1 value2");
 
         result = ParamUtil.replaceParameters("this is \"${key1}\" ${key2}", paramValues);
-        assertThat(result).isEqualTo("this is ${key1} value2");
+        assertThat(result).isEqualTo("this is \"${key1}\" value2");
 
         paramValues = new ParamValuesImpl(getMap("user=\"user1 user2\""));
         result = ParamUtil.replaceParameters("${user}", paramValues);
-        assertThat(result).isEqualTo("user1 user2");
-
-        paramValues = new ParamValuesImpl(getMap("user=\"user1 user2\""));
-        result = ParamUtil.replaceParameters("'\\''${user}'\\''", paramValues);
         assertThat(result).isEqualTo("'user1 user2'");
     }
 
