@@ -271,9 +271,10 @@ public class VisPresenter
         if (queryId != null) {
             final Component component = getDashboardContext().getComponents().get(queryId);
             if (component instanceof final QueryPresenter queryPresenter) {
-                currentSearchModel = queryPresenter.getSearchModel();
-                if (currentSearchModel != null) {
-                    currentSearchModel.addComponent(getComponentConfig().getId(), this);
+                final SearchModel searchModel = queryPresenter.getSearchModel();
+                currentSearchModel = searchModel;
+                if (searchModel != null) {
+                    searchModel.addComponent(getComponentConfig().getId(), this);
                 }
             }
         }
@@ -311,26 +312,30 @@ public class VisPresenter
     }
 
     private void cleanupSearchModelAssociation() {
-        if (currentSearchModel != null) {
+        final SearchModel searchModel = currentSearchModel;
+        if (searchModel != null) {
             // Remove this component from the list of components the search
             // model expects to update.
-            currentSearchModel.removeComponent(getComponentConfig().getId());
+            searchModel.removeComponent(getComponentConfig().getId());
             currentSearchModel = null;
         }
     }
 
     private void refresh() {
+        final SearchModel searchModel = currentSearchModel;
         getView().getRefreshButton().setRefreshing(true);
-        currentSearchModel.refresh(getComponentConfig().getId(), result -> {
-            try {
-                if (result != null) {
-                    setDataInternal(result);
+        if (searchModel != null) {
+            searchModel.refresh(getComponentConfig().getId(), result -> {
+                try {
+                    if (result != null) {
+                        setDataInternal(result);
+                    }
+                } catch (final Exception e) {
+                    GWT.log(e.getMessage());
                 }
-            } catch (final Exception e) {
-                GWT.log(e.getMessage());
-            }
-            getView().getRefreshButton().setRefreshing(currentSearchModel.isSearching());
-        });
+                getView().getRefreshButton().setRefreshing(searchModel.isSearching());
+            });
+        }
     }
 
     void clear() {
