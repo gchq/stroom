@@ -13,7 +13,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
-## [v7.11-beta.16] - 2026-01-08
+## [v7.10.16] - 2026-01-08
 
 * Issue **#5100** : Fix selection filters auto quoting parameter replacements.
 
