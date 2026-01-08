@@ -40,6 +40,7 @@ import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.processor.shared.FeedDependency;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Builder;
@@ -58,6 +59,7 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
@@ -138,6 +140,11 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
     @Override
     public Long getMaxId() {
         return metaDao.getMaxId();
+    }
+
+    @Override
+    public Long getMaxId(final long maxCreateTimeMs) {
+        return metaDao.getMaxId(maxCreateTimeMs);
     }
 
     @Override
@@ -811,5 +818,53 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
     @Override
     public Set<Long> findLockedMeta(final Collection<Long> metaIdCollection) {
         return metaDao.findLockedMeta(metaIdCollection);
+    }
+
+    @Override
+    public Instant getFeedDependencyEffectiveTime(final List<FeedDependency> feedDependencies) {
+        Instant maxEffectiveTime = null;
+        if (!NullSafe.isEmptyCollection(feedDependencies)) {
+            for (final FeedDependency feedDependency : feedDependencies) {
+                final List<CriteriaFieldSort> criteriaFieldSort = Collections.singletonList(new CriteriaFieldSort(
+                        MetaFields.EFFECTIVE_TIME.getFldName(),
+                        true,
+                        false));
+                final ExpressionOperator expressionOperator = ExpressionOperator.builder()
+                        .addTextTerm(MetaFields.FEED, Condition.EQUALS, feedDependency.getFeedName())
+                        .addTextTerm(MetaFields.TYPE, Condition.EQUALS, feedDependency.getStreamType())
+                        .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
+                        .build();
+                final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(
+                        PageRequest.oneRow(),
+                        criteriaFieldSort,
+                        expressionOperator,
+                        false);
+                final ResultPage<Meta> resultPage = find(findMetaCriteria);
+                if (resultPage != null) {
+                    final List<Meta> list = resultPage.getValues();
+                    if (!NullSafe.isEmptyCollection(list)) {
+                        if (list.size() > 1) {
+                            throw new RuntimeException("Unexpected number of results");
+                        }
+
+                        final Meta meta = list.getFirst();
+                        final Instant effectiveTime = NullSafe.get(meta, Meta::getEffectiveMs, Instant::ofEpochMilli);
+                        if (effectiveTime != null) {
+                            if (maxEffectiveTime == null) {
+                                maxEffectiveTime = effectiveTime;
+                            } else if (maxEffectiveTime.isAfter(effectiveTime)) {
+                                maxEffectiveTime = effectiveTime;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (maxEffectiveTime == null) {
+                maxEffectiveTime = Instant.ofEpochMilli(0L);
+            }
+        }
+
+        return maxEffectiveTime;
     }
 }

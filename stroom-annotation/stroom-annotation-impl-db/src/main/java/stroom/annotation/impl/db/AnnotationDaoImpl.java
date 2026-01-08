@@ -411,7 +411,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                                                final List<Condition> conditions,
                                                final FindAnnotationRequest request,
                                                final Predicate<Annotation> viewPredicate) {
-        var select = context
+        SelectJoinStep<Record> select = context
                 .select()
                 .from(ANNOTATION);
         if (request.getSourceId() != null) {

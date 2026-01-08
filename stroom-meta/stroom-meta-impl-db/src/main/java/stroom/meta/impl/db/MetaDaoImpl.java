@@ -41,6 +41,7 @@ import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 import stroom.meta.impl.db.jooq.tables.MetaType;
+import stroom.meta.impl.db.jooq.tables.records.MetaRecord;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -86,18 +87,29 @@ import org.jooq.Condition;
 import org.jooq.Cursor;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.InsertOnDuplicateStep;
+import org.jooq.InsertValuesStep10;
 import org.jooq.Name;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record1;
+import org.jooq.Record11;
+import org.jooq.Record12;
 import org.jooq.Record2;
 import org.jooq.Record4;
 import org.jooq.Result;
 import org.jooq.Select;
 import org.jooq.SelectConditionStep;
 import org.jooq.SelectField;
+import org.jooq.SelectHavingStep;
 import org.jooq.SelectJoinStep;
+import org.jooq.SelectLimitPercentStep;
+import org.jooq.SelectOnConditionStep;
+import org.jooq.SelectOrderByStep;
+import org.jooq.SelectWithTiesAfterOffsetStep;
 import org.jooq.Table;
+import org.jooq.TableOnConditionStep;
+import org.jooq.UpdateConditionStep;
 import org.jooq.exception.DataTypeException;
 import org.jooq.impl.DSL;
 
@@ -263,6 +275,8 @@ public class MetaDaoImpl implements MetaDao {
                 MetaStatusId.getPrimitiveValue(value.toUpperCase()));
         expressionMapper.map(MetaFields.PARENT_CREATE_TIME, parent.CREATE_TIME, value ->
                 DateExpressionParser.getMs(MetaFields.PARENT_CREATE_TIME.getFldName(), value));
+        expressionMapper.map(MetaFields.PARENT_EFFECTIVE_TIME, parent.EFFECTIVE_TIME, value ->
+                DateExpressionParser.getMs(MetaFields.PARENT_EFFECTIVE_TIME.getFldName(), value));
         expressionMapper.multiMap(MetaFields.PARENT_FEED, parent.FEED_ID, this::getFeedIds);
 
         valueMapper = new ValueMapper();
@@ -328,6 +342,17 @@ public class MetaDaoImpl implements MetaDao {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
                         .select(DSL.max(META_M.ID))
                         .from(META_M)
+                        .fetchOptional())
+                .map(Record1::value1)
+                .orElse(null);
+    }
+
+    @Override
+    public Long getMaxId(final long maxCreateTimeMs) {
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                        .select(DSL.max(META_M.ID))
+                        .from(META_M)
+                        .where(META_M.CREATE_TIME.le(maxCreateTimeMs))
                         .fetchOptional())
                 .map(Record1::value1)
                 .orElse(null);
@@ -421,7 +446,18 @@ public class MetaDaoImpl implements MetaDao {
                 .batch(
                         BatchingIterator.batchedStreamOf(metaPropertiesList, MAX_VALUES_PER_INSERT)
                                 .map(metaPropertiesBatch -> {
-                                    final var insertStep = context
+                                    final InsertValuesStep10<
+                                            MetaRecord,
+                                            Long,
+                                            Long,
+                                            Long,
+                                            Byte,
+                                            Long,
+                                            Integer,
+                                            Integer,
+                                            Integer,
+                                            Integer,
+                                            Long> insertStep = context
                                             .insertInto(META,
                                                     META.CREATE_TIME,
                                                     META.EFFECTIVE_TIME,
@@ -499,7 +535,7 @@ public class MetaDaoImpl implements MetaDao {
         final Integer updateCount = JooqUtil.contextResult(metaDbConnProvider, context -> {
             // If expression is not targeting rows by ID then this is likely to create gap or next key locks
             // which will block ingest/processing.
-            final var update = context.update(metaWithJoins)
+            final UpdateConditionStep<?> update = context.update(metaWithJoins)
                     .set(META_M.STATUS, newStatusId)
                     .set(META_M.STATUS_TIME, statusTime)
                     .where(conditions);
@@ -567,7 +603,7 @@ public class MetaDaoImpl implements MetaDao {
                             .column(metaIdColField)
                             .execute();
 
-                    final var insert = context.insertInto(metaIdsTempTbl)
+                    final InsertOnDuplicateStep<Record> insert = context.insertInto(metaIdsTempTbl)
                             .select(select);
                     LOGGER.trace("Insert SQL:\n{}", insert);
 
@@ -576,7 +612,7 @@ public class MetaDaoImpl implements MetaDao {
                             () -> LogUtil.message("Inserted {} meta ids into temporary table", insertCount));
 
                     if (insertCount.get() > 0) {
-                        final var update = context
+                        final UpdateConditionStep<Record> update = context
                                 .update(META_M.innerJoin(metaIdsTempTbl)
                                         .on(META_M.ID.eq(metaIdColField)))
                                 .set(META_M.STATUS, newStatusId)
@@ -806,7 +842,7 @@ public class MetaDaoImpl implements MetaDao {
 
             return JooqUtil.contextResult(metaDbConnProvider,
                             context -> {
-                                var fromClause = META_M
+                                TableOnConditionStep<Record> fromClause = META_M
                                         .straightJoin(META_FEED_F).on(META_M.FEED_ID.eq(META_FEED_F.ID))
                                         .straightJoin(META_TYPE_T).on(META_M.TYPE_ID.eq(META_TYPE_T.ID));
                                 // If any of the rules have a predicate on the Pipeline field then we need to
@@ -818,7 +854,7 @@ public class MetaDaoImpl implements MetaDao {
                                 // Get all meta records that are impacted by a rule and for each determine
                                 // which rule wins and get its rule number, along with feed and type
                                 // The OR condition is here to try and help the DB use indexes.
-                                final var detailTable = context
+                                final Table<Record4<String, String, Integer, Long>> detailTable = context
                                         .select(
                                                 META_FEED_F.NAME.as(feedNameField),
                                                 META_TYPE_T.NAME.as(typeNameField),
@@ -838,7 +874,7 @@ public class MetaDaoImpl implements MetaDao {
                                         detailTable);
 
                                 // Now get counts grouped by feed, type and rule
-                                final var query = context
+                                final SelectHavingStep<Record4<String, String, Integer, Integer>> query = context
                                         .select(
                                                 detailTable.field(feedNameField),
                                                 detailTable.field(typeNameField),
@@ -1001,7 +1037,7 @@ public class MetaDaoImpl implements MetaDao {
 
                             // If any of the rules have a predicate on the Pipeline field then we need to
                             // add the join to meta_processor
-                            final var tableClause = rulesUsePipelineField
+                            final Table<?> tableClause = rulesUsePipelineField
                                     ? META_M.leftOuterJoin(META_PROCESSOR_P)
                                     .on(META_M.PROCESSOR_ID.eq(META_PROCESSOR_P.ID))
                                     : META_M;
@@ -1009,7 +1045,7 @@ public class MetaDaoImpl implements MetaDao {
                             // We might want to do this delete using a temp table like we do for
                             // MetaDaoImpl#updateStatusWithTempTable. Only if locking other rows is
                             // an issue.
-                            final var query = context
+                            final UpdateConditionStep<?> query = context
                                     .update(tableClause)
                                     .set(META_M.STATUS, statusIdDeleted)
                                     .set(META_M.STATUS_TIME, Instant.now().toEpochMilli())
@@ -1071,11 +1107,12 @@ public class MetaDaoImpl implements MetaDao {
         // For a given set of conditions (that may already contain some create_time bounds
         // get the create_time range for a batch n records
         final Optional<TimePeriod> timePeriod =
-                LOGGER.logDurationIfDebugEnabled(() -> JooqUtil.contextResult(metaDbConnProvider,
+                LOGGER.logDurationIfDebugEnabled(() -> JooqUtil
+                        .contextResult(metaDbConnProvider,
                                 context -> {
                                     // If any of the rules have a predicate on the Pipeline field then we need to
                                     // add the join to meta_processor
-                                    final var fromClause = includesMetaProcessorTbl
+                                    final Table<?> fromClause = includesMetaProcessorTbl
                                             ? META_M.straightJoin(META_PROCESSOR_P)
                                             .on(META_M.PROCESSOR_ID.eq(META_PROCESSOR_P.ID))
                                             : META_M;
@@ -1299,7 +1336,7 @@ public class MetaDaoImpl implements MetaDao {
                 numberOfRows = pageRequest.getLength();
             }
 
-            var select = context.select(dbFields).from(META_M);
+            SelectJoinStep<Record> select = context.select(dbFields).from(META_M);
             if (feedUsed) {
                 select = select.straightJoin(META_FEED_F).on(META_M.FEED_ID.eq(META_FEED_F.ID));
             }
@@ -1459,7 +1496,19 @@ public class MetaDaoImpl implements MetaDao {
         return JooqUtil.contextResult(
                         metaDbConnProvider,
                         context -> {
-                            final var select = metaExpressionMapper.addJoins(
+                            final SelectWithTiesAfterOffsetStep<Record12<
+                                    Long,
+                                    String,
+                                    String,
+                                    String,
+                                    String,
+                                    Long,
+                                    Byte,
+                                    Long,
+                                    Long,
+                                    Long,
+                                    Integer,
+                                    Long>> select = metaExpressionMapper.addJoins(
                                             context
                                                     .selectDistinct(
                                                             META_M.ID,
@@ -1666,7 +1715,18 @@ public class MetaDaoImpl implements MetaDao {
         return JooqUtil.contextResult(
                         metaDbConnProvider,
                         context -> {
-                            final var baseQuery = context.select(
+                            final SelectOnConditionStep<Record11<
+                                    Integer,
+                                    Integer,
+                                    String,
+                                    Integer,
+                                    String,
+                                    Integer,
+                                    Integer,
+                                    Integer,
+                                    String,
+                                    Long,
+                                    Long>> baseQuery = context.select(
                                             DSL.countDistinct(parent.ID),
                                             DSL.countDistinct(parent.FEED_ID),
                                             DSL.groupConcatDistinct(PARENT_FEED.NAME)
@@ -1694,7 +1754,18 @@ public class MetaDaoImpl implements MetaDao {
                             // stroom.processor.impl.ProcessorTaskCreatorImpl.runSelectMetaQuery
                             // The default status=Unlocked term gets removed by the UI prior to
                             // getting here.
-                            final var sql = metaExpressionMapper.addJoins(
+                            final SelectWithTiesAfterOffsetStep<Record11<
+                                    Integer,
+                                    Integer,
+                                    String,
+                                    Integer,
+                                    String,
+                                    Integer,
+                                    Integer,
+                                    Integer,
+                                    String,
+                                    Long,
+                                    Long>> sql = metaExpressionMapper.addJoins(
                                             baseQuery,
                                             META_M.ID,
                                             usedValKeys)
@@ -1769,6 +1840,8 @@ public class MetaDaoImpl implements MetaDao {
                 field = META_M.ID;
             } else if (MetaFields.CREATE_TIME.getFldName().equals(sort.getId())) {
                 field = META_M.CREATE_TIME;
+            } else if (MetaFields.EFFECTIVE_TIME.getFldName().equals(sort.getId())) {
+                field = META_M.EFFECTIVE_TIME;
             } else if (MetaFields.FEED.getFldName().equals(sort.getId())) {
                 field = META_FEED_F.NAME;
             } else if (MetaFields.TYPE.getFldName().equals(sort.getId())) {
@@ -1777,6 +1850,8 @@ public class MetaDaoImpl implements MetaDao {
                 field = META_M.PARENT_ID;
             } else if (MetaFields.PARENT_CREATE_TIME.getFldName().equals(sort.getId())) {
                 field = parent.CREATE_TIME;
+            } else if (MetaFields.PARENT_EFFECTIVE_TIME.getFldName().equals(sort.getId())) {
+                field = parent.EFFECTIVE_TIME;
             } else {
                 field = META_M.ID;
             }
@@ -1873,20 +1948,21 @@ public class MetaDaoImpl implements MetaDao {
                     // Try to get a single stream that is just before our range.  This is so that we always
                     // have a stream (unless there are no streams at all) that was effective at the start
                     // of our range.
-                    final var selectUpToRange = createBaseEffectiveStreamsQuery(
-                            context, feedId, typeId)
-                            .and(META_M.EFFECTIVE_TIME.lessOrEqual(fromMs))
-                            .orderBy(META_M.EFFECTIVE_TIME.desc())
-                            .limit(1);
+                    final SelectLimitPercentStep<Record2<Long, Long>> selectUpToRange =
+                            createBaseEffectiveStreamsQuery(
+                                    context, feedId, typeId)
+                                    .and(META_M.EFFECTIVE_TIME.lessOrEqual(fromMs))
+                                    .orderBy(META_M.EFFECTIVE_TIME.desc())
+                                    .limit(1);
 
                     // Get the streams in our range
-                    final var selectInRange = createBaseEffectiveStreamsQuery(
+                    final SelectConditionStep<Record2<Long, Long>> selectInRange = createBaseEffectiveStreamsQuery(
                             context, feedId, typeId)
                             .and(META_M.EFFECTIVE_TIME.greaterThan(fromMs))
                             .and(META_M.EFFECTIVE_TIME.lessThan(toMs));
 
                     // We want to include dups so that we can log and remove them later
-                    final var select = selectUpToRange.unionAll(selectInRange);
+                    final SelectOrderByStep<Record2<Long, Long>> select = selectUpToRange.unionAll(selectInRange);
 
                     LOGGER.debug("select:\n{}", select);
 
@@ -1926,7 +2002,7 @@ public class MetaDaoImpl implements MetaDao {
                     metaDbConnProvider,
                     LOGGER.isDebugEnabled(),
                     context -> {
-                        final var select = context
+                        final SelectConditionStep<Record> select = context
                                 .select(SIMPLE_META_SELECT_FIELDS)
                                 .from(META_M)
                                 .straightJoin(META_TYPE_T).on(META_M.TYPE_ID.eq(META_TYPE_T.ID))

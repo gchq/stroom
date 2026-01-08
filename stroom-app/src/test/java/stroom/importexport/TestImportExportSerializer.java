@@ -323,8 +323,10 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, "TEST-FEED-EVENTS")
                 .addTerm(MetaFields.FIELD_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                 .build();
-        final QueryData filterConstraints = new QueryData();
-        filterConstraints.setExpression(expression);
+        final QueryData filterConstraints = QueryData
+                .builder()
+                .expression(expression)
+                .build();
 
         final Processor processor = processorService.create(
                 ProcessorType.PIPELINE,
@@ -382,8 +384,10 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, "TEST-FEED-EVENTS")
                 .addTerm(MetaFields.FIELD_TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
                 .build();
-        final QueryData filterConstraints = new QueryData();
-        filterConstraints.setExpression(expression);
+        final QueryData filterConstraints = QueryData
+                .builder()
+                .expression(expression)
+                .build();
 
         final Processor processor = processorService.create(
                 ProcessorType.PIPELINE,

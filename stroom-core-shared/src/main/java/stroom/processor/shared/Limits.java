@@ -16,7 +16,6 @@
 
 package stroom.processor.shared;
 
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -26,16 +25,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class Limits {
 
     @JsonProperty
-    private Long streamCount;
-
+    private final Long streamCount;
     @JsonProperty
-    private Long eventCount;
-
+    private final Long eventCount;
     @JsonProperty
-    private Long durationMs;
-
-    public Limits() {
-    }
+    private final Long durationMs;
 
     @JsonCreator
     public Limits(@JsonProperty("streamCount") final Long streamCount,
@@ -50,24 +44,12 @@ public class Limits {
         return streamCount;
     }
 
-    public void setStreamCount(final Long streamCount) {
-        this.streamCount = streamCount;
-    }
-
     public Long getEventCount() {
         return eventCount;
     }
 
-    public void setEventCount(final Long eventCount) {
-        this.eventCount = eventCount;
-    }
-
     public Long getDurationMs() {
         return durationMs;
-    }
-
-    public void setDurationMs(final Long durationMs) {
-        this.durationMs = durationMs;
     }
 
     public static Builder builder() {

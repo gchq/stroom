@@ -25,8 +25,8 @@ import stroom.data.shared.UploadDataRequest;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.feed.client.FeedClient;
 import stroom.feed.shared.FeedDoc;
-import stroom.feed.shared.FeedResource;
 import stroom.importexport.client.presenter.ImportUtil;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.NullSafe;
@@ -50,22 +50,24 @@ public class DataUploadPresenter
         extends MyPresenterWidget<DataUploadPresenter.DataUploadView> {
 
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
-    private static final FeedResource FEED_RESOURCE = GWT.create(FeedResource.class);
 
     private DocRef feedRef;
     private MetaPresenter metaPresenter;
     private final DataTypeUiManager dataTypeUiManager;
     private final RestFactory restFactory;
+    private final FeedClient feedClient;
     private HidePopupRequestEvent currentHideRequest;
 
     @Inject
     public DataUploadPresenter(final EventBus eventBus,
                                final DataUploadView view,
                                final RestFactory restFactory,
+                               final FeedClient feedClient,
                                final DataTypeUiManager dataTypeUiManager) {
         super(eventBus, view);
         this.dataTypeUiManager = dataTypeUiManager;
         this.restFactory = restFactory;
+        this.feedClient = feedClient;
 
         view.getFileUpload().setAction(ImportUtil.getImportFileURL());
         view.getFileUpload().setEncoding(FormPanel.ENCODING_MULTIPART);
@@ -150,13 +152,10 @@ public class DataUploadPresenter
     public void show(final MetaPresenter streamPresenter, final DocRef feedRef) {
         this.metaPresenter = streamPresenter;
         this.feedRef = feedRef;
-
-        restFactory.create(FEED_RESOURCE)
-                .method(resource -> resource.fetch(feedRef.getUuid()))
-                .onSuccess(this::fireShowPopup)
-                .onFailure(throwable -> error("Error fetching feed: " + throwable.getMessage()))
-                .taskMonitorFactory(DataUploadPresenter.this)
-                .exec();
+        feedClient.load(feedRef,
+                this::fireShowPopup,
+                throwable -> error("Error fetching feed: " + throwable.getMessage()),
+                DataUploadPresenter.this);
     }
 
     private void fireShowPopup(final FeedDoc feedDoc) {

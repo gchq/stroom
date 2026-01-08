@@ -27,6 +27,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.jooq.Record;
+import org.jooq.Record2;
 
 import java.util.Optional;
 
@@ -46,12 +47,13 @@ public class AnalyticTrackerDaoImpl implements AnalyticTrackerDao {
 
     @Override
     public Optional<AnalyticTracker> get(final String analyticUuid) {
-        final var result = JooqUtil.contextResult(analyticsDbConnProvider, context -> context
-                .select(ANALYTIC_TRACKER.FK_ANALYTIC_UUID,
-                        ANALYTIC_TRACKER.DATA)
-                .from(ANALYTIC_TRACKER)
-                .where(ANALYTIC_TRACKER.FK_ANALYTIC_UUID.eq(analyticUuid))
-                .fetchOptional());
+        final Optional<Record2<String, String>> result = JooqUtil
+                .contextResult(analyticsDbConnProvider, context -> context
+                        .select(ANALYTIC_TRACKER.FK_ANALYTIC_UUID,
+                                ANALYTIC_TRACKER.DATA)
+                        .from(ANALYTIC_TRACKER)
+                        .where(ANALYTIC_TRACKER.FK_ANALYTIC_UUID.eq(analyticUuid))
+                        .fetchOptional());
         return result.map(this::recordToAnalyticTracker);
     }
 

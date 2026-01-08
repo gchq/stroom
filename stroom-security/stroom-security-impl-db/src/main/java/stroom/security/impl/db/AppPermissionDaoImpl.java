@@ -44,6 +44,7 @@ import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record8;
 import org.jooq.Select;
+import org.jooq.SelectLimitPercentAfterOffsetStep;
 import org.jooq.Table;
 import org.jooq.exception.DataAccessException;
 import org.jooq.exception.DataTypeException;
@@ -245,7 +246,15 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
 
             // Join recursive select to user.
             try {
-                final var sql = context
+                final SelectLimitPercentAfterOffsetStep<Record8<
+                        String,
+                        String,
+                        String,
+                        String,
+                        Boolean,
+                        Boolean,
+                        String,
+                        String>> sql = context
                         .select(STROOM_USER.UUID,
                                 STROOM_USER.NAME,
                                 STROOM_USER.DISPLAY_NAME,

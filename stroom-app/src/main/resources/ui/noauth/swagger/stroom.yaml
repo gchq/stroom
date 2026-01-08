@@ -12620,6 +12620,15 @@ components:
           - REJECT_ALL
         uiConfig:
           $ref: "#/components/schemas/UiConfig"
+    FeedDependency:
+      type: object
+      properties:
+        feedName:
+          type: string
+        streamType:
+          type: string
+        uuid:
+          type: string
     FeedDoc:
       type: object
       properties:
@@ -16306,6 +16315,10 @@ components:
           $ref: "#/components/schemas/DocRef"
         expression:
           $ref: "#/components/schemas/ExpressionOperator"
+        feedDependencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeedDependency"
         limits:
           $ref: "#/components/schemas/Limits"
         params:

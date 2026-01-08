@@ -21,6 +21,7 @@ import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexFieldDao;
+import stroom.index.impl.db.jooq.tables.records.IndexFieldRecord;
 import stroom.index.shared.AddField;
 import stroom.index.shared.DeleteField;
 import stroom.index.shared.IndexFieldImpl;
@@ -47,8 +48,11 @@ import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.InsertValuesStep9;
 import org.jooq.JSON;
 import org.jooq.OrderField;
+import org.jooq.Record1;
+import org.jooq.SelectConditionStep;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
@@ -117,7 +121,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
     private Optional<Integer> getFieldSource(final DSLContext context,
                                              final DocRef docRef,
                                              final boolean lockFieldSource) {
-        final var c = context
+        final SelectConditionStep<Record1<Integer>> c = context
                 .select(INDEX_FIELD_SOURCE.ID)
                 .from(INDEX_FIELD_SOURCE)
                 .where(INDEX_FIELD_SOURCE.TYPE.eq(docRef.getType()))
@@ -173,7 +177,17 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                                 .fetch(INDEX_FIELD.NAME));
 
                         // Insert any new fields under lock
-                        var c = txnContext.insertInto(INDEX_FIELD,
+                        InsertValuesStep9<
+                                IndexFieldRecord,
+                                Integer,
+                                Byte,
+                                String,
+                                String,
+                                Boolean,
+                                Boolean,
+                                Boolean,
+                                Boolean,
+                                JSON> c = txnContext.insertInto(INDEX_FIELD,
                                 INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID,
                                 INDEX_FIELD.TYPE,
                                 INDEX_FIELD.NAME,
