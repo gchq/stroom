@@ -2112,6 +2112,10 @@ button.main-menu svg {
     color: var(--text-color--disabled) ;
 }
 
+.messageContainer {
+    padding: 10px 0px
+}
+
 .listContainer {
     overflow: auto;
 }
