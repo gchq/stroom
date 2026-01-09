@@ -22,6 +22,8 @@ import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.DenseVectorFieldConfig.VectorSimilarityFunctionType;
 import stroom.query.api.datasource.IndexField;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
 import com.google.inject.Inject;
@@ -32,6 +34,8 @@ import org.apache.lucene.index.VectorSimilarityFunction;
 @Singleton
 public class DenseVectorFieldCreatorFactory {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DenseVectorFieldCreatorFactory.class);
+
     private final OpenAIService openAIService;
 
     @Inject
@@ -40,28 +44,33 @@ public class DenseVectorFieldCreatorFactory {
     }
 
     public DenseVectorFieldCreator create(final IndexField indexField) {
+        LOGGER.debug("Creating DenseVectorFieldCreator for field {}", indexField);
         final LuceneIndexField luceneIndexField = LuceneIndexField.fromIndexField(indexField);
         final DenseVectorFieldConfig denseVectorFieldConfig = indexField.getDenseVectorFieldConfig();
 
-        if (denseVectorFieldConfig == null ||
-            denseVectorFieldConfig.getModelRef() == null) {
+        if (denseVectorFieldConfig == null || denseVectorFieldConfig.getModelRef() == null) {
+            LOGGER.error("Embedding model is not defined for field {}", indexField);
             throw new IllegalArgumentException("Embedding model is not defined for field " +
                                                indexField);
         }
 
         // Query the embeddings API for a vector representation of the query expression
+        LOGGER.trace("Fetching model doc {}", denseVectorFieldConfig.getModelRef());
         final OpenAIModelDoc modelDoc = openAIService
                 .getOpenAIModelDoc(denseVectorFieldConfig.getModelRef());
 
+        LOGGER.trace("Fetching embedding model {}", modelDoc);
         final EmbeddingModel embeddingModel = openAIService.getEmbeddingModel(modelDoc);
         final VectorSimilarityFunctionType vectorSimilarityFunctionType =
                 NullSafe.getOrElse(luceneIndexField,
                         LuceneIndexField::getDenseVectorFieldConfig,
                         DenseVectorFieldConfig::getVectorSimilarityFunction,
                         VectorSimilarityFunctionType.EUCLIDEAN);
+        LOGGER.trace("VectorSimilarityFunctionType = {}", vectorSimilarityFunctionType);
         final VectorSimilarityFunction vectorSimilarityFunction =
                 getVectorSimilarityFunction(vectorSimilarityFunctionType);
 
+        LOGGER.debug(() -> "Returning DenseVectorFieldCreator");
         return new DenseVectorFieldCreator(
                 luceneIndexField,
                 denseVectorFieldConfig.getSegmentSize(),
