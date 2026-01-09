@@ -21,6 +21,7 @@ import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.http.client.presenter.HttpTlsConfigPresenter.HttpTlsConfigView;
 import stroom.item.client.SelectionBox;
+import stroom.util.shared.NullSafe;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -33,7 +34,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -97,7 +98,7 @@ public class HttpTlsConfigViewImpl
 
     @Override
     public String getProtocol() {
-        return protocol.getValue();
+        return getText(protocol.getValue());
     }
 
     @Override
@@ -107,7 +108,7 @@ public class HttpTlsConfigViewImpl
 
     @Override
     public String getProvider() {
-        return provider.getValue();
+        return getText(provider.getValue());
     }
 
     @Override
@@ -142,30 +143,52 @@ public class HttpTlsConfigViewImpl
 
     @Override
     public void setSupportedProtocols(final List<String> supportedProtocols) {
-        if (supportedProtocols == null) {
-            this.supportedProtocols.setValue("");
-        } else {
-            this.supportedProtocols.setValue(supportedProtocols.stream().collect(Collectors.joining("\n")));
-        }
+        this.supportedProtocols.setValue(listToText(supportedProtocols));
     }
 
     @Override
     public List<String> getSupportedProtocols() {
-        return Arrays.stream(supportedProtocols.getValue().split("\n")).collect(Collectors.toList());
+        return textToList(supportedProtocols.getValue());
     }
 
     @Override
     public void setSupportedCiphers(final List<String> supportedCiphers) {
-        if (supportedCiphers == null) {
-            this.supportedCiphers.setValue("");
-        } else {
-            this.supportedCiphers.setValue(supportedCiphers.stream().collect(Collectors.joining("\n")));
-        }
+        this.supportedCiphers.setValue(listToText(supportedCiphers));
     }
 
     @Override
     public List<String> getSupportedCiphers() {
-        return Arrays.stream(supportedCiphers.getValue().split("\n")).collect(Collectors.toList());
+        return textToList(this.supportedCiphers.getValue());
+    }
+
+    private String listToText(final List<String> list) {
+        if (NullSafe.isEmptyCollection(list)) {
+            return "";
+        }
+        return list.stream().collect(Collectors.joining("\n"));
+    }
+
+    private List<String> textToList(final String text) {
+        if (!NullSafe.isBlankString(text)) {
+            final String[] parts = text.split("\n");
+            final List<String> list = new ArrayList<>(parts.length);
+            for (final String part : parts) {
+                if (!NullSafe.isBlankString(part)) {
+                    list.add(part);
+                }
+            }
+            if (!NullSafe.isEmptyCollection(list)) {
+                return list;
+            }
+        }
+        return null;
+    }
+
+    private String getText(final String value) {
+        if (NullSafe.isBlankString(value)) {
+            return null;
+        }
+        return value.trim();
     }
 
     @Override
@@ -175,7 +198,7 @@ public class HttpTlsConfigViewImpl
 
     @Override
     public String getCertAlias() {
-        return certAlias.getValue();
+        return getText(certAlias.getValue());
     }
 
     @UiHandler({

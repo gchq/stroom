@@ -106,8 +106,16 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
         }
         getView().setModelId(model.getModelId());
         getView().setMaxContextWindowTokens(model.getMaxContextWindowTokens());
-        httpClientConfiguration = NullSafe
-                .requireNonNullElse(model.getHttpClientConfiguration(), HttpClientConfig.builder().build());
+
+        httpClientConfiguration = model.getHttpClientConfiguration();
+        if (httpClientConfiguration == null) {
+            restFactory
+                    .create(OPEN_AI_MODEL_RESOURCE)
+                    .method(OpenAIModelResource::getDefaultHttpClientConfig)
+                    .onSuccess(result -> httpClientConfiguration = result)
+                    .taskMonitorFactory(this)
+                    .exec();
+        }
     }
 
     @Override
@@ -126,8 +134,8 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
 
     @Override
     public void onSetHttpClientConfiguration() {
-        httpClientSettingsPresenterProvider.get().show(httpClientConfiguration, updated ->
-                httpClientConfiguration = updated);
+        httpClientSettingsPresenterProvider.get()
+                .show(httpClientConfiguration, updated -> httpClientConfiguration = updated);
     }
 
     public interface OpenAIModelSettingsView

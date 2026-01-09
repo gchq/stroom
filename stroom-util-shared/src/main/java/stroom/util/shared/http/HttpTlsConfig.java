@@ -32,7 +32,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class HttpTlsConfig {
 
-    private static final String DEFAULT_PROTOCOL = "TLSv1.2";
+    private static final String DEFAULT_PROTOCOL = "TLSv1.3";
     private static final boolean DEFAULT_TRUST_SELF_SIGNED_CERTIFICATES = false;
     private static final boolean DEFAULT_VERIFY_HOSTNAME = true;
 
