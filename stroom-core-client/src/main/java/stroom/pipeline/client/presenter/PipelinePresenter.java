@@ -52,6 +52,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
+import java.util.List;
 import javax.inject.Provider;
 
 public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView, PipelineDoc>
@@ -327,9 +328,22 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
         );
     }
 
+    public List<DocRef> getDirtyDocs() {
+        final List<DocRef> dirtyDocs = steppingPresenter.getDirtyDocs();
+
+        if (pipelineStructurePresenter.isDirty()) {
+            dirtyDocs.add(docRef);
+        }
+
+        return dirtyDocs;
+    }
+
+    public void saveDocs(final List<DocRef> docRefs) {
+        steppingPresenter.save(docRefs);
+    }
+
     @Override
     protected PipelineDoc onWrite(final PipelineDoc document) {
-        steppingPresenter.save();
         return pipelineStructurePresenter.onWrite(document);
     }
 

@@ -476,8 +476,12 @@ public class ElementPresenter
         this.refreshRequired = refreshRequired;
     }
 
-    public boolean isDirtyCode() {
-        return dirtyCode;
+    public boolean isDirty() {
+        return loaded && hasData != null && dirtyCode;
+    }
+
+    public DocRef getDocRef() {
+        return loadedDoc;
     }
 
     public void clearAllIndicators() {
