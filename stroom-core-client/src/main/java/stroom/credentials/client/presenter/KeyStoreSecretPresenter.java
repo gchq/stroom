@@ -54,6 +54,10 @@ public class KeyStoreSecretPresenter
         registerHandler(getView().getFileUpload().addSubmitCompleteHandler(submitCompleteHandler));
     }
 
+    public void setType(final KeyStoreType type) {
+        getView().setType(type);
+    }
+
     /**
      * Returns the secrets object held by this object.
      *

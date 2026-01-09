@@ -103,15 +103,17 @@ public class HttpTlsConfigPresenter
     }
 
     public void read(final HttpTlsConfig config) {
-        getView().setProtocol(config.getProtocol());
-        getView().setProvider(config.getProvider());
-        setCredential(getView().getKeyStoreSelectionBox(), config.getKeyStoreName());
-        setCredential(getView().getTrustStoreSelectionBox(), config.getTrustStoreName());
-        getView().setTrustSelfSignedCertificates(config.isTrustSelfSignedCertificates());
-        getView().setVerifyHostname(config.isVerifyHostname());
-        getView().setSupportedProtocols(config.getSupportedProtocols());
-        getView().setSupportedCiphers(config.getSupportedCiphers());
-        getView().setCertAlias(config.getCertAlias());
+        if (config != null) {
+            getView().setProtocol(config.getProtocol());
+            getView().setProvider(config.getProvider());
+            setCredential(getView().getKeyStoreSelectionBox(), config.getKeyStoreName());
+            setCredential(getView().getTrustStoreSelectionBox(), config.getTrustStoreName());
+            getView().setTrustSelfSignedCertificates(config.isTrustSelfSignedCertificates());
+            getView().setVerifyHostname(config.isVerifyHostname());
+            getView().setSupportedProtocols(config.getSupportedProtocols());
+            getView().setSupportedCiphers(config.getSupportedCiphers());
+            getView().setCertAlias(config.getCertAlias());
+        }
     }
 
     public HttpTlsConfig write() {

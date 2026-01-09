@@ -74,19 +74,22 @@ public class CredentialSettingsPresenter
         this.docRef = docRef;
         if (cwp == null) {
             getView().setName("");
-            getView().setCredentialType(CredentialType.USERNAME_PASSWORD);
             getView().setCredExpire(false);
             getView().getExpiryTime().setValue(System.currentTimeMillis());
+            getView().setCredentialType(CredentialType.USERNAME_PASSWORD);
+            keyStoreSecretPresenter.setType(KeyStoreType.PKCS12);
         } else {
             final Credential credential = cwp.getCredential();
             getView().setName(credential.getName());
-            getView().setCredentialType(credential.getCredentialType());
             getView().setCredExpire(credential.getExpiryTimeMs() != null);
             if (credential.getExpiryTimeMs() != null) {
                 getView().getExpiryTime().setValue(credential.getExpiryTimeMs());
             } else {
                 getView().getExpiryTime().setValue(System.currentTimeMillis());
             }
+            getView().setCredentialType(credential.getCredentialType());
+            keyStoreSecretPresenter.setType(NullSafe
+                    .getOrElse(credential, Credential::getKeyStoreType, KeyStoreType.PKCS12));
         }
 
         onTypeChange(getView().getCredentialType());
@@ -147,8 +150,8 @@ public class CredentialSettingsPresenter
                 getView().getCredentialType(),
                 keyStoreType,
                 getView().isCredExpire()
-                        ? null
-                        : getView().getExpiryTime().getValue());
+                        ? getView().getExpiryTime().getValue()
+                        : null);
 
         return new PutCredentialRequest(credential, secret);
     }
