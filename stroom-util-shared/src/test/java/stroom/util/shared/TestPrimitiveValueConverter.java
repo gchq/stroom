@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,16 @@ class TestPrimitiveValueConverter {
         final PrimitiveValueConverter<Small> converter = PrimitiveValueConverter.create(
                 Small.class, Small.values());
 
+        final PrimitiveValueConverter<Small> converter2 = PrimitiveValueConverter.create(Small.class);
+
         assertThat(converter)
+                .isInstanceOf(PrimitiveValueConverterArrayImpl.class);
+        assertThat(converter2)
                 .isInstanceOf(PrimitiveValueConverterArrayImpl.class);
 
         assertThat(converter.fromPrimitiveValue((byte) 25))
+                .isEqualTo(Small.DOG);
+        assertThat(converter2.fromPrimitiveValue((byte) 25))
                 .isEqualTo(Small.DOG);
     }
 
@@ -40,11 +46,16 @@ class TestPrimitiveValueConverter {
 
         final PrimitiveValueConverter<Large> converter = PrimitiveValueConverter.create(
                 Large.class, Large.values());
+        final PrimitiveValueConverter<Large> converter2 = PrimitiveValueConverter.create(Large.class);
 
         assertThat(converter)
                 .isInstanceOf(PrimitiveValueConverterMapImpl.class);
+        assertThat(converter2)
+                .isInstanceOf(PrimitiveValueConverterMapImpl.class);
 
         assertThat(converter.fromPrimitiveValue((byte) 250))
+                .isEqualTo(Large.DOG);
+        assertThat(converter2.fromPrimitiveValue((byte) 250))
                 .isEqualTo(Large.DOG);
     }
 
@@ -53,14 +64,18 @@ class TestPrimitiveValueConverter {
 
         final PrimitiveValueConverter<BelowZero> converter = PrimitiveValueConverter.create(
                 BelowZero.class, BelowZero.values());
+        final PrimitiveValueConverter<BelowZero> converter2 = PrimitiveValueConverter.create(BelowZero.class);
 
         assertThat(converter)
+                .isInstanceOf(PrimitiveValueConverterMapImpl.class);
+        assertThat(converter2)
                 .isInstanceOf(PrimitiveValueConverterMapImpl.class);
 
         assertThat(converter.fromPrimitiveValue((byte) 25))
                 .isEqualTo(BelowZero.DOG);
+        assertThat(converter2.fromPrimitiveValue((byte) 25))
+                .isEqualTo(BelowZero.DOG);
     }
-
 
     @Test
     void testTypeArray_empty() {

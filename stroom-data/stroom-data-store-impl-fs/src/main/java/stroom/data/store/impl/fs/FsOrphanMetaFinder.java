@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,8 +151,8 @@ class FsOrphanMetaFinder {
             // root file to check existence.
             for (final DataVolume dataVolume : dataVolumes) {
                 if (!isTerminated(taskContext) &&
-                    FsVolumeType.STANDARD.equals(dataVolume.getVolume().getVolumeType())) {
-                    final long metaId = dataVolume.getMetaId();
+                    FsVolumeType.STANDARD.equals(dataVolume.volume().getVolumeType())) {
+                    final long metaId = dataVolume.metaId();
                     // Should never be null as we used the metaMap keys to find the data vols
                     final SimpleMeta meta = metaIdToMetaMap.get(metaId);
                     final String streamTypeName = meta.getTypeName();
@@ -162,7 +162,7 @@ class FsOrphanMetaFinder {
                     // ...042.evt.bgz.seg.dat
                     // ...042.evt.bgz.mf.dat
 
-                    final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
+                    final Path volumePath = pathCreator.toAppPath(dataVolume.volume().getPath());
                     final TimedResult<Path> rootFileResult = getRootPathIterationTimer.measureIf(
                             LOGGER.isDebugEnabled(),
                             () -> fsPathHelper.getRootPath(

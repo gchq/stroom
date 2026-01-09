@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -67,7 +66,7 @@ class TestStringUtil {
                                 "three"))
                 .addCase("""
                                  one
-
+                                
                                 two\s
                                 three""",
                         List.of(
@@ -103,7 +102,7 @@ class TestStringUtil {
                                 "three"))
                 .addCase("""
                                  one
-
+                                
                                 two\s
                                 three""",
                         List.of(
@@ -133,7 +132,7 @@ class TestStringUtil {
                         \sfoo\s
                         """, "foo")
                 .addCase("""
-
+                        
                         \s \s""", "")
                 .build();
     }
@@ -190,9 +189,9 @@ class TestStringUtil {
                 .withSingleArgTestFunction(StringUtil::createRandomCode)
                 .withAssertions(outcome -> {
                     final String actual = outcome.getActualOutput();
-                    Assertions.assertThat(actual.length())
+                    assertThat(actual.length())
                             .isEqualTo(outcome.getInput());
-                    Assertions.assertThat(actual)
+                    assertThat(actual)
                             .matches(allowedCharsPattern);
                 })
                 .addThrowsCase(-1, IllegalArgumentException.class)
@@ -219,9 +218,9 @@ class TestStringUtil {
                         StringUtil.createRandomCode(secureRandom, length, allowedChars))
                 .withAssertions(outcome -> {
                     final String actual = outcome.getActualOutput();
-                    Assertions.assertThat(actual.length())
+                    assertThat(actual.length())
                             .isEqualTo(outcome.getInput());
-                    Assertions.assertThat(actual)
+                    assertThat(actual)
                             .matches(allowedCharsPattern);
                 })
                 .addThrowsCase(-1, IllegalArgumentException.class)
@@ -248,9 +247,9 @@ class TestStringUtil {
                         StringUtil.createRandomCode(secureRandom, length, allowedChars))
                 .withAssertions(outcome -> {
                     final String actual = outcome.getActualOutput();
-                    Assertions.assertThat(actual.length())
+                    assertThat(actual.length())
                             .isEqualTo(outcome.getInput());
-                    Assertions.assertThat(actual)
+                    assertThat(actual)
                             .matches(allowedCharsPattern);
                 })
                 .addThrowsCase(-1, IllegalArgumentException.class)
@@ -477,5 +476,116 @@ class TestStringUtil {
                             }
                         })
         );
+    }
+
+    @Test
+    void testZeroPad_long() {
+        long val = 1;
+        for (int i = 0; i < StringUtil.MAX_LONG_DIGITS; i++) {
+            final String padded = StringUtil.zeroPad(val);
+            LOGGER.debug("val: {}, padded: {}", val, padded);
+            assertThat(padded)
+                    .hasSize(StringUtil.MAX_LONG_DIGITS);
+
+            final long dePadded = StringUtil.dePadLong(padded);
+            assertThat(dePadded)
+                    .isEqualTo(val);
+            val *= 10;
+        }
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testZeroPad2_long() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(long.class, int.class)
+                .withOutputType(String.class)
+                .withTestFunction(testCase ->
+                        StringUtil.zeroPad(testCase.getInput()._1(), testCase.getInput()._2()))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(1L, 3), "001")
+                .addCase(Tuple.of(123L, 5), "00123")
+                .addCase(Tuple.of(123_456L, 3), "123456")
+//                .addThrowsCase(Tuple.of(123_456L, 5), IllegalArgumentException.class)
+                .addThrowsCase(Tuple.of(123L, 99), IllegalArgumentException.class)
+                .build();
+    }
+
+    @Test
+    void testZeroPad_int() {
+        int val = 1;
+        for (int i = 0; i < StringUtil.MAX_INTEGER_DIGITS; i++) {
+            final String padded = StringUtil.zeroPad(val);
+            LOGGER.debug("val: {}, padded: {}", val, padded);
+            assertThat(padded)
+                    .hasSize(StringUtil.MAX_INTEGER_DIGITS);
+
+            final long dePadded = StringUtil.dePadLong(padded);
+            assertThat(dePadded)
+                    .isEqualTo(val);
+            val *= 10;
+        }
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testZeroPad2_int() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(int.class, int.class)
+                .withOutputType(String.class)
+                .withTestFunction(testCase ->
+                        StringUtil.zeroPad(testCase.getInput()._1(), testCase.getInput()._2()))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(1, 3), "001")
+                .addCase(Tuple.of(123, 5), "00123")
+                .addThrowsCase(Tuple.of(123_456, 5), IllegalArgumentException.class)
+                .addThrowsCase(Tuple.of(123, 99), IllegalArgumentException.class)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testDePadLong() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(long.class)
+                .withTestFunction(testCase ->
+                        StringUtil.dePadLong(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, -1L)
+                .addCase("", -1L)
+                .addCase("0", 0L)
+                .addCase("000", 0L)
+                .addCase("1", 1L)
+                .addCase("001", 1L)
+                .addCase("999", 999L)
+                .addCase("001000", 1_000L)
+                .addCase("999999", 999_999L)
+                .addCase("001000000", 1_000_000L)
+                .addCase("999999999", 999_999_999L)
+                .addCase("000ABC", -1L)
+                .addCase("ABC", -1L)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testDePadInteger() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(int.class)
+                .withTestFunction(testCase ->
+                        StringUtil.dePadInteger(testCase.getInput()))
+                .withSimpleEqualityAssertion()
+                .addCase(null, -1)
+                .addCase("", -1)
+                .addCase("0", 0)
+                .addCase("000", 0)
+                .addCase("1", 1)
+                .addCase("001", 1)
+                .addCase("999", 999)
+                .addCase("001000", 1_000)
+                .addCase("999999", 999_999)
+                .addCase("001000000", 1_000_000)
+                .addCase("999999999", 999_999_999)
+                .addCase("000ABC", -1)
+                .addCase("ABC", -1)
+                .build();
     }
 }

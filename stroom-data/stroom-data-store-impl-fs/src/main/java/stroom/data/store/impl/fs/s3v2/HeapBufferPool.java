@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ public class HeapBufferPool implements BufferPool, HasSystemInfo {
 
     @Override
     public ByteBuffer get(final int minCapacity) {
-        LOGGER.debug(() -> LogUtil.message("get() - minCapacity: {}", minCapacity));
+        LOGGER.trace(() -> LogUtil.message("get() - minCapacity: {}", minCapacity));
         final int offset = getOffset(minCapacity);
         final ByteBuffer buffer;
         if (isUnPooled(offset)) {
@@ -156,7 +156,8 @@ public class HeapBufferPool implements BufferPool, HasSystemInfo {
 
     @Override
     public void release(final ByteBuffer byteBuffer) {
-        LOGGER.debug(() -> LogUtil.message("release() - capacity: {}", NullSafe.get(byteBuffer, ByteBuffer::capacity)));
+        LOGGER.trace(() -> LogUtil.message("release() - capacity: {}",
+                NullSafe.get(byteBuffer, ByteBuffer::capacity)));
         if (byteBuffer != null) {
             if (byteBuffer.isDirect()) {
                 throw new IllegalArgumentException("Expecting a heap buffer");

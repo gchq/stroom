@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ public class TemplateCacheImpl implements TemplateCache {
     @Inject
     public TemplateCacheImpl(final CacheManager cacheManager) {
         // TODO config ought to come from config somewhere
+        // Templates are immutable so no expiry needed
         this.cache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> CacheConfig.builder()

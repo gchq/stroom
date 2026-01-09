@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import java.util.Collection;
@@ -37,8 +38,12 @@ public interface DataVolumeDao {
 
     interface DataVolume {
 
-        long getMetaId();
+        long metaId();
 
-        FsVolume getVolume();
+        FsVolume volume();
+
+        default Integer getVolumeId() {
+            return NullSafe.get(volume(), FsVolume::getId);
+        }
     }
 }

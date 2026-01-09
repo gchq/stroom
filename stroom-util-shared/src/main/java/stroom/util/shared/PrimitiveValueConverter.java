@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,13 @@ public interface PrimitiveValueConverter<E extends HasPrimitiveValue> {
             converter = new PrimitiveValueConverterMapImpl<>(clazz, values);
         }
         return converter;
+    }
+
+    /**
+     * Factory method to create an instance of a {@link PrimitiveValueConverter} for supplied enum class.
+     */
+    static <T extends Enum<T> & HasPrimitiveValue> PrimitiveValueConverter<T> create(final Class<T> clazz) {
+        return create(clazz, clazz.getEnumConstants());
     }
 
     /**

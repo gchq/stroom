@@ -65,8 +65,13 @@ public class LazyValue<T> {
      * @return The value, initialising it if required. If initialisation
      * is required synchronisation will be used to ensure the supplier is only
      * called once.
+     * <p>
+     * If the value is already initialised, there is no locking.
+     * </p>
+     * <p>
      * Use this method if supplier is not idempotent, has side effects or is
      * costly to run.
+     * </p>
      */
     public T getValueWithLocks() {
         if (!isInitialised) {

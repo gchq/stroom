@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,16 @@
 
 package stroom.data.store.impl.fs.s3v2;
 
-import stroom.aws.s3.impl.S3FileExtensions;
 import stroom.aws.s3.impl.S3Manager;
-import stroom.aws.s3.impl.S3MetaFieldsMapper;
-import stroom.cache.api.TemplateCache;
+import stroom.aws.s3.impl.S3ManagerFactory;
 import stroom.data.store.api.Source;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
-import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.logging.LogUtil;
-import stroom.util.shared.NullSafe;
-import stroom.util.zip.ZipUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -57,28 +51,48 @@ public class S3ZstdStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ZstdStore.class);
 
-    public static final String KEY_NAME_TEMPLATE_BASE = "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}";
+//    public static final String KEY_NAME_TEMPLATE_BASE = "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}";
 
     private static final int MAX_CACHED_ITEMS = 10;
 
-    private final TemplateCache templateCache;
+    //    private final TemplateCache templateCache;
     private final Map<Long, TrackedSource> cache = new ConcurrentHashMap<>();
     private final Set<TrackedSource> evictable = new HashSet<>();
     private final MetaService metaService;
-    private final S3MetaFieldsMapper s3MetaFieldsMapper;
+    //    private final S3MetaFieldsMapper s3MetaFieldsMapper;
+    private final S3StreamTypeExtensions s3StreamTypeExtensions;
+    //    private final S3ClientPool s3ClientPool;
+    private final ZstdSeekTableCache zstdSeekTableCache;
+    private final HeapBufferPool heapBufferPool;
+    private final S3ManagerFactory s3ManagerFactory;
+    private final ZstdDictionaryService zstdDictionaryService;
     private final Path tempDir;
 
     @Inject
-    S3ZstdStore(final TemplateCache templateCache,
-                final TempDirProvider tempDirProvider,
-                final MetaService metaService,
-                final S3MetaFieldsMapper s3MetaFieldsMapper) {
-        this.templateCache = templateCache;
+    S3ZstdStore(
+//            final TemplateCache templateCache,
+            final TempDirProvider tempDirProvider,
+            final MetaService metaService,
+//                final S3MetaFieldsMapper s3MetaFieldsMapper,
+            final S3StreamTypeExtensions s3StreamTypeExtensions,
+//                final S3ClientPool s3ClientPool,
+            final ZstdSeekTableCache zstdSeekTableCache,
+            final HeapBufferPool heapBufferPool,
+            final S3ManagerFactory s3ManagerFactory,
+            final ZstdDictionaryService zstdDictionaryService) {
+//        this.templateCache = templateCache;
         this.metaService = metaService;
-        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
+//        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
+        this.s3StreamTypeExtensions = s3StreamTypeExtensions;
+//        this.s3ClientPool = s3ClientPool;
+        this.zstdSeekTableCache = zstdSeekTableCache;
+        this.heapBufferPool = heapBufferPool;
+        this.s3ManagerFactory = s3ManagerFactory;
+        this.zstdDictionaryService = zstdDictionaryService;
 
         try {
             tempDir = tempDirProvider.get().resolve("s3v2_cache");
+            LOGGER.debug("ctor() - Ensuring and clearing tempDir: {}", tempDir);
             Files.createDirectories(tempDir);
             FileUtil.deleteContents(tempDir);
         } catch (final IOException e) {
@@ -87,69 +101,89 @@ public class S3ZstdStore {
     }
 
     public Source getSource(final DataVolume dataVolume, final Meta meta) {
+        LOGGER.debug("getSource() - dataVolume: {}, meta: {}", dataVolume, meta);
         final S3Manager s3Manager = createS3Manager(dataVolume);
-        final TrackedSource trackedSource = cache.compute(meta.getId(), (k, v) -> {
-            if (v == null) {
-                final Path tempPath = createTempDir(meta.getId());
-                try {
-                    // Create zip.
-                    Path zipFile = null;
-                    try {
-                        zipFile = tempPath.resolve(S3FileExtensions.ZIP_FILE_NAME);
-                        // Download the zip from S3.
-                        s3Manager.download(meta, zipFile);
+        final TrackedSource trackedSource = cache.compute(
+                meta.getId(),
+                (ignored, aTrackedSource) -> {
+                    if (aTrackedSource == null) {
+                        final Path tempPath = createTempDir(meta.getId());
+//                try {
+//                    // Create zip.
+//                    Path zipFile = null;
+//                    try {
+//                        zipFile = tempPath.resolve(S3FileExtensions.ZIP_FILE_NAME);
+//                        // Download the zip from S3.
+//                        s3Manager.download(meta, zipFile);
+//
+//                        ZipUtil.unzip(zipFile, tempPath);
+//                    } catch (final IOException e) {
+//                        LOGGER.error(e::getMessage, e);
+//                        throw new UncheckedIOException(e);
+//                    } finally {
+//                        deleteFile("Deleting source zip: ", zipFile);
+//                    }
+//                } catch (final RuntimeException e) {
+//                    LOGGER.debug(e::getMessage, e);
+//                    deleteDir("Deleting source dir: ", tempPath);
+//
+//                    throw e;
+//                }
 
-                        ZipUtil.unzip(zipFile, tempPath);
-                    } catch (final IOException e) {
-                        LOGGER.error(e::getMessage, e);
-                        throw new UncheckedIOException(e);
-                    } finally {
-                        deleteFile("Deleting source zip: ", zipFile);
+                        final TrackedSource trackedSource2 = new TrackedSource(
+                                meta.getId(),
+                                tempPath,
+                                Instant.now(),
+                                new AtomicInteger(1));
+                        LOGGER.debug("getSource() - Creating trackedSource: {}", trackedSource2);
+                        return trackedSource2;
+                    } else {
+                        synchronized (S3ZstdStore.this) {
+                            evictable.remove(aTrackedSource);
+                        }
+                        aTrackedSource.useCount().incrementAndGet();
+                        return aTrackedSource;
                     }
-                } catch (final RuntimeException e) {
-                    LOGGER.debug(e::getMessage, e);
-                    deleteDir("Deleting source dir: ", tempPath);
-
-                    throw e;
-                }
-
-                return new TrackedSource(meta.getId(), tempPath, Instant.now(), new AtomicInteger(1));
-
-            } else {
-                synchronized (S3ZstdStore.this) {
-                    evictable.remove(v);
-                }
-                v.getUseCount().incrementAndGet();
-                return v;
-            }
-        });
+                });
 
         return new S3ZstdSource(
                 this,
-                trackedSource.getPath(),
-                getS3Path(dataVolume, meta),
+                trackedSource.path(),
+                getS3KeyPrefix(dataVolume, meta),
                 s3Manager,
-                meta);
+                meta,
+                dataVolume);
     }
 
     public S3ZstdTarget getTarget(final DataVolume dataVolume, final Meta meta) {
+        LOGGER.debug("getTarget() - dataVolume: {}, meta: {}", dataVolume, meta);
         final Path tempDir = createTempDir(meta.getId());
-        return new S3ZstdTarget(metaService, this, tempDir, dataVolume, meta);
+        final S3Manager s3Manager = createS3Manager(dataVolume);
+        return S3ZstdTarget.create(
+                metaService,
+                this,
+                s3Manager,
+                s3StreamTypeExtensions,
+                heapBufferPool,
+                tempDir,
+                dataVolume,
+                meta);
     }
 
-    private String getS3Path(final DataVolume dataVolume, final Meta meta) {
+    /**
+     * The key prefix for all items belonging to this meta.
+     */
+    private String getS3KeyPrefix(final DataVolume dataVolume, final Meta meta) {
         final S3Manager s3Manager = createS3Manager(dataVolume);
-        return "S3 > " +
-               s3Manager.createBucketName(s3Manager.getBucketNamePattern(), meta) +
-               " > " +
-               s3Manager.createKey(s3Manager.getKeyNamePattern(), meta);
+        return String.join(
+                " > ",
+                "S3",
+                s3Manager.getBucketNamePattern(),
+                S3StreamTypeExtensions.getPrefix(meta.getId()));
     }
 
     private S3Manager createS3Manager(final DataVolume dataVolume) {
-        return new S3Manager(
-                this.templateCache,
-                dataVolume.getVolume().getS3ClientConfig(),
-                s3MetaFieldsMapper);
+        return s3ManagerFactory.createS3Manager(dataVolume.volume().getS3ClientConfig());
     }
 
     public void release(final Meta meta, final Path path) {
@@ -157,7 +191,7 @@ public class S3ZstdStore {
             if (v == null) {
                 deleteDir("Release deleting: ", path);
             } else {
-                final int count = v.getUseCount().decrementAndGet();
+                final int count = v.useCount().decrementAndGet();
                 assert count >= 0;
                 if (count == 0) {
                     synchronized (S3ZstdStore.this) {
@@ -177,13 +211,13 @@ public class S3ZstdStore {
             synchronized (S3ZstdStore.this) {
                 list = new ArrayList<>(evictable);
             }
-            list.sort(Comparator.comparing(TrackedSource::getCreateTime));
+            list.sort(Comparator.comparing(TrackedSource::createTime));
 
             for (final TrackedSource trackedSource : list) {
                 if (cache.size() > MAX_CACHED_ITEMS) {
                     cache.compute(trackedSource.metaId, (k, v) -> {
-                        if (v == null || v.getUseCount().get() == 0) {
-                            deleteDir("Evict delete dir: ", trackedSource.getPath());
+                        if (v == null || v.useCount().get() == 0) {
+                            deleteDir("Evict delete dir: ", trackedSource.path());
                             synchronized (S3ZstdStore.this) {
                                 evictable.remove(trackedSource);
                             }
@@ -196,32 +230,32 @@ public class S3ZstdStore {
         }
     }
 
-    /**
-     * Zips the contents of tempDir into a single ZIP file then uploads it to S3
-     */
-    public void upload(final Path tempDir,
-                       final DataVolume dataVolume,
-                       final Meta meta,
-                       final AttributeMap attributeMap) {
-        LOGGER.debug(() -> LogUtil.message("upload() - tempDir: {}, metaId: {}, attributeMap: {}",
-                tempDir, NullSafe.get(meta, Meta::getId), attributeMap));
-        // Create zip.
-        Path zipFile = null;
-        try {
-            zipFile = tempDir.resolve(S3FileExtensions.ZIP_FILE_NAME);
-            ZipUtil.zip(zipFile, tempDir);
-
-            // Upload the zip to S3.
-            final S3Manager s3Manager = createS3Manager(dataVolume);
-            s3Manager.upload(meta, attributeMap, zipFile);
-
-        } catch (final IOException e) {
-            LOGGER.error(e::getMessage, e);
-            throw new UncheckedIOException(e);
-        } finally {
-            deleteFile("Deleting target zip: ", zipFile);
-        }
-    }
+//    /**
+//     * Zips the contents of tempDir into a single ZIP file then uploads it to S3
+//     */
+//    public void upload(final Path tempDir,
+//                       final DataVolume dataVolume,
+//                       final Meta meta,
+//                       final AttributeMap attributeMap) {
+//        LOGGER.debug(() -> LogUtil.message("upload() - tempDir: {}, metaId: {}, attributeMap: {}",
+//                tempDir, NullSafe.get(meta, Meta::getId), attributeMap));
+//        // Create zip.
+//        Path zipFile = null;
+//        try {
+//            zipFile = tempDir.resolve(S3FileExtensions.ZIP_FILE_NAME);
+//            ZipUtil.zip(zipFile, tempDir);
+//
+//            // Upload the zip to S3.
+//            final S3Manager s3Manager = createS3Manager(dataVolume);
+//            s3Manager.upload(meta, attributeMap, zipFile);
+//
+//        } catch (final IOException e) {
+//            LOGGER.error(e::getMessage, e);
+//            throw new UncheckedIOException(e);
+//        } finally {
+//            deleteFile("Deleting target zip: ", zipFile);
+//        }
+//    }
 
     private Path createTempDir(final Long metaId) {
         try {
@@ -256,38 +290,31 @@ public class S3ZstdStore {
         }
     }
 
+    ZstdDictionaryService getZstdDictionaryService() {
+        return zstdDictionaryService;
+    }
+
+    ZstdSeekTableCache getZstdSeekTableCache() {
+        return zstdSeekTableCache;
+    }
+
+    //    Optional<ZstdDictionary> getZstdDictionary(final ZstdDictionaryKey zstdDictionaryKey,
+//                                               final DataVolume dataVolume) {
+//        return zstdDictionaryService.getZstdDictionary(zstdDictionaryKey, dataVolume);
+//    }
+//
+//    void createRecompressTask(final ZstdDictionaryKey zstdDictionaryKey,
+//                              final long metaId,
+//                              final DataVolume dataVolume)
+
 
     // --------------------------------------------------------------------------------
 
 
-    private static class TrackedSource {
-
-        private final Long metaId;
-        private final Path path;
-        private final Instant createTime;
-        private final AtomicInteger useCount;
-
-        public TrackedSource(final Long metaId,
-                             final Path path,
-                             final Instant createTime,
-                             final AtomicInteger useCount) {
-            this.metaId = metaId;
-            this.path = path;
-            this.createTime = createTime;
-            this.useCount = useCount;
-        }
-
-        public Path getPath() {
-            return path;
-        }
-
-        public Instant getCreateTime() {
-            return createTime;
-        }
-
-        public AtomicInteger getUseCount() {
-            return useCount;
-        }
+    private record TrackedSource(Long metaId,
+                                 Path path,
+                                 Instant createTime,
+                                 AtomicInteger useCount) {
 
         @Override
         public boolean equals(final Object o) {

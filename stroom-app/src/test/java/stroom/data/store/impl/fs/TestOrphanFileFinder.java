@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
                             meta.getId(),
                             FileUtil.getCanonicalPath(
                                     pathCreator.toAppPath(dataVolumeService
-                                            .findDataVolume(meta.getId()).getVolume().getPath())));
+                                            .findDataVolume(meta.getId()).volume().getPath())));
                     metaService.delete(meta.getId());
                 });
 
@@ -432,7 +432,7 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
                                 FileUtil.getCanonicalPath(
                                         pathCreator
                                                 .toAppPath(dataVolumeService
-                                                        .findDataVolume(meta.getId()).getVolume().getPath())));
+                                                        .findDataVolume(meta.getId()).volume().getPath())));
                     });
 
             listAllVolsContent();

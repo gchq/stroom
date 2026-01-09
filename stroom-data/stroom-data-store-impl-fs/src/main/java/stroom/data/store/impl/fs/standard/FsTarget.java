@@ -74,14 +74,13 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
     private FsTarget(final MetaService metaService,
                      final FsPathHelper fileSystemStreamPathHelper,
                      final Meta requestMetaData,
-                     final Path volumePath,
-                     final String streamType) {
+                     final Path volumePath) {
         this.metaService = metaService;
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.meta = requestMetaData;
         this.volumePath = volumePath;
         this.parent = null;
-        this.streamType = streamType;
+        this.streamType = meta.getTypeName();
 
         validate();
     }
@@ -109,11 +108,10 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
     public static FsTarget create(final MetaService metaService,
                                   final FsPathHelper fileSystemStreamPathHelper,
                                   final Meta meta,
-                                  final Path rootPath,
-                                  final String streamType) {
+                                  final Path rootPath) {
         LOGGER.debug(() -> LogUtil.message("create() - metaId: {}, rootPath: {}, streamType: {}",
-                meta.getId(), rootPath, streamType));
-        return new FsTarget(metaService, fileSystemStreamPathHelper, meta, rootPath, streamType);
+                meta.getId(), rootPath, meta.getTypeName()));
+        return new FsTarget(metaService, fileSystemStreamPathHelper, meta, rootPath);
     }
 
     private void validate() {
@@ -319,12 +317,12 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
 
     @Override
     public SegmentOutputStreamProvider getSegmentOutputStreamProvider(final String streamTypeName) {
-        return outputStreamMap.computeIfAbsent(streamTypeName, k -> {
-            final FsTarget target = getChild(k);
+        return outputStreamMap.computeIfAbsent(streamTypeName, aStreamTypeName -> {
+            final FsTarget target = getChild(aStreamTypeName);
             if (target == null) {
                 return null;
             }
-            return new SegmentOutputStreamProvider(target, k);
+            return new SegmentOutputStreamProvider(target, aStreamTypeName);
         });
     }
 

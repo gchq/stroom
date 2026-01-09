@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.Objects;
 
 /**
  * Class that holds a range of some number type. A null upper or lower bound
- * means an open ended range. The upper bound is not included i.e. [0..10) means
+ * means an open-ended range. The upper bound is not included i.e. [0..10) means
  * 0,1,2,3,4,5,6,7,8,9 or this can be represented by the toString [0..9]
  * <p>
  * From is inclusive, to is exclusive.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,6 +86,8 @@ public class MetaFields {
     public static final QueryField DURATION = QueryField.createLong("Duration");
     public static final QueryField FILE_SIZE = QueryField.createLong("File Size");
     public static final QueryField RAW_SIZE = QueryField.createLong("Raw Size");
+    public static final QueryField SEGMENTATION_TYPE = QueryField.createText("Segmentation Type");
+    public static final QueryField ZSTD_DICTIONARY_UUID = QueryField.createText("Zstd Dictionary UUID");
 
     // Parent fields.
     public static final QueryField PARENT_ID = QueryField.createId("Parent Id");

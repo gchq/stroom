@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,8 +56,9 @@ public class DataVolumeService {
     }
 
     public DataVolume createDataVolume(final long metaId, final FsVolume volume) {
-        return securityContext.secureResult(() ->
-                dataVolumeDao.createDataVolume(metaId, volume));
+        return securityContext.secureResult(() -> {
+            return dataVolumeDao.createDataVolume(metaId, volume);
+        });
     }
 
     public long getOrphanedMetaTrackerValue() {

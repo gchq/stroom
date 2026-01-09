@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,8 @@ public class TestS3Manager {
         final S3Manager s3Manager = new S3Manager(
                 new TemplateCacheImpl(new CacheManagerImpl()),
                 s3ClientConfig,
-                new S3MetaFieldsMapper());
+                new S3MetaFieldsMapper(),
+                new S3ClientPoolImpl(new CacheManagerImpl()));
         final Path file = tempDir.resolve("test.txt");
 
         Files.writeString(file,
@@ -107,7 +108,8 @@ public class TestS3Manager {
         final S3Manager s3Manager = new S3Manager(
                 new TemplateCacheImpl(new CacheManagerImpl()),
                 s3ClientConfig,
-                new S3MetaFieldsMapper());
+                new S3MetaFieldsMapper(),
+                new S3ClientPoolImpl(new CacheManagerImpl()));
         final Path file = tempDir.resolve("test.txt");
 
         Files.writeString(file,

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class AwsAssumeRoleRequest {
@@ -124,5 +125,42 @@ public class AwsAssumeRoleRequest {
 
     public List<AwsProvidedContext> getProvidedContexts() {
         return providedContexts;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final AwsAssumeRoleRequest that = (AwsAssumeRoleRequest) o;
+        return Objects.equals(roleArn, that.roleArn)
+               && Objects.equals(roleSessionName, that.roleSessionName)
+               && Objects.equals(policyArns, that.policyArns)
+               && Objects.equals(policy, that.policy)
+               && Objects.equals(durationSeconds, that.durationSeconds)
+               && Objects.equals(tags, that.tags)
+               && Objects.equals(transitiveTagKeys, that.transitiveTagKeys)
+               && Objects.equals(externalId, that.externalId)
+               && Objects.equals(serialNumber, that.serialNumber)
+               && Objects.equals(tokenCode, that.tokenCode)
+               && Objects.equals(sourceIdentity, that.sourceIdentity)
+               && Objects.equals(providedContexts, that.providedContexts);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                roleArn,
+                roleSessionName,
+                policyArns,
+                policy,
+                durationSeconds,
+                tags,
+                transitiveTagKeys,
+                externalId,
+                serialNumber,
+                tokenCode,
+                sourceIdentity,
+                providedContexts);
     }
 }

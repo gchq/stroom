@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,19 +19,23 @@ package stroom.data.store.impl.fs.s3v2;
 import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.impl.fs.s3v2.ZstdSeekTable.InsufficientSeekTableDataException;
+import stroom.test.common.TestUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import com.github.luben.zstd.ZstdInputStream;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
+import it.unimi.dsi.fastutil.ints.IntSortedSets;
 import net.datafaker.Faker;
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.data.Percentage;
-import org.jspecify.annotations.NonNull;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -46,6 +50,7 @@ import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -117,7 +122,7 @@ class TestZstdSeekTable {
             }
         }
 
-        final IntSortedSet includeSet = new IntAVLTreeSet(IntSet.of(2, 4, 7));
+        final IntSortedSet includeSet = sortedSet(2, 4, 7);
         final double percentageOfCompressed = zstdSeekTable.getPercentageOfCompressed(includeSet);
         final long filtered = includeSet.intStream()
                 .mapToLong(i -> zstdSeekTable.getFrameLocation(i).compressedSize())
@@ -284,7 +289,37 @@ class TestZstdSeekTable {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    private byte @NonNull [] createCompressedData() throws IOException {
+    @TestFactory
+    Stream<DynamicTest> testFrameRanges() throws IOException {
+        final byte[] compressedBytes = createCompressedData();
+        final ZstdSeekTable zstdSeekTable = ZstdSeekTable.parse(ByteBuffer.wrap(compressedBytes))
+                .orElseThrow();
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(IntSortedSet.class)
+                .withOutputType(String.class)
+                .withTestFunction(testCase -> {
+                    final List<FrameRange> ranges = zstdSeekTable.getContiguousRanges(testCase.getInput());
+                    return NullSafe.stream(ranges)
+                            .map(frameRange ->
+                                    frameRange.startFrame().frameIdx() + "-" +
+                                    frameRange.endFrame().frameIdx())
+                            .collect(Collectors.joining(","));
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(null, "")
+                .addCase(sortedSet(), "")
+                .addCase(sortedSet(1), "1-1")
+                .addCase(sortedSet(5), "5-5")
+                .addCase(sortedSet(0, 9), "0-0,9-9")
+                .addCase(sortedSet(0, 1, 2), "0-2")
+                .addCase(sortedSet(0, 1, 2, 5, 7, 8), "0-2,5-5,7-8")
+                .addCase(sortedSet(0, 1, 3, 4, 6, 7, 9), "0-1,3-4,6-7,9-9")
+                .addCase(sortedSet(0, 1, 2, 3, 4, 5, 6, 7, 8, 9), "0-9")
+                .build();
+    }
+
+    private byte[] createCompressedData() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         final Faker faker = new Faker(new Random(RANDOM_SEED));
         this.data = new ArrayList<>(ITERATIONS);
@@ -323,5 +358,13 @@ class TestZstdSeekTable {
 //            LOGGER.info("str: {}", str);
         data.add(str);
         dataBytes.add(bytes);
+    }
+
+    private static IntSortedSet sortedSet(final int... ints) {
+        if (ints == null || ints.length == 0) {
+            return IntSortedSets.emptySet();
+        } else {
+            return new IntAVLTreeSet(IntSet.of(ints));
+        }
     }
 }

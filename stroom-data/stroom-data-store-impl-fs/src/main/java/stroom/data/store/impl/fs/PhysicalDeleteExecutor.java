@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.s3v2.ZstdDictionaryTaskDao;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.data.store.impl.fs.standard.FsFileDeleter;
 import stroom.data.store.impl.fs.standard.FsPathHelper;
@@ -82,6 +83,7 @@ public class PhysicalDeleteExecutor {
     private final MetaService metaService;
     private final PhysicalDelete physicalDelete;
     private final DataVolumeDao dataVolumeDao;
+    private final ZstdDictionaryTaskDao zstdDictionaryTaskDao;
     private final TaskContextFactory taskContextFactory;
     private final ExecutorProvider executorProvider;
     private final FsFileDeleter fsFileDeleter;
@@ -97,6 +99,7 @@ public class PhysicalDeleteExecutor {
             final MetaService metaService,
             final PhysicalDelete physicalDelete,
             final DataVolumeDao dataVolumeDao,
+            final ZstdDictionaryTaskDao zstdDictionaryTaskDao,
             final TaskContextFactory taskContextFactory,
             final ExecutorProvider executorProvider,
             final FsFileDeleter fsFileDeleter,
@@ -107,6 +110,7 @@ public class PhysicalDeleteExecutor {
         this.metaService = metaService;
         this.physicalDelete = physicalDelete;
         this.dataVolumeDao = dataVolumeDao;
+        this.zstdDictionaryTaskDao = zstdDictionaryTaskDao;
         this.taskContextFactory = taskContextFactory;
         this.executorProvider = executorProvider;
         this.fsFileDeleter = fsFileDeleter;
@@ -312,6 +316,8 @@ public class PhysicalDeleteExecutor {
 
                 deleteVolumes(progress, successfulMetaIdSet, successCount);
 
+                deleteDictionaryTasks(progress, successfulMetaIdSet, successCount);
+
                 deleteMetaRecords(progress, successfulMetaIdSet, successCount);
             } else {
                 LOGGER.debug("{} - Aborting as failure threshold breached", TASK_NAME);
@@ -363,6 +369,19 @@ public class PhysicalDeleteExecutor {
         info(() -> LogUtil.message("Deleting data volumes for {} meta IDs", successCount));
         final DurationTimer volDeleteTimer = DurationTimer.start();
         final int volCount = dataVolumeDao.delete(successfulMetaIdSet);
+        progress.addVolumeDeletionDuration(volDeleteTimer);
+        LOGGER.debug(() -> LogUtil.message(
+                "{} - Deleted {} data volume records for {} meta IDs in {}",
+                TASK_NAME, volCount, successfulMetaIdSet.size(), volDeleteTimer.get()));
+    }
+
+    private void deleteDictionaryTasks(final Progress progress,
+                                       final Set<Long> successfulMetaIdSet,
+                                       final int successCount) {
+        // Delete data volumes.
+        info(() -> LogUtil.message("Deleting Zstd dictionary tasks for {} meta IDs", successCount));
+        final DurationTimer volDeleteTimer = DurationTimer.start();
+        final int volCount = zstdDictionaryTaskDao.deleteByMetaIds(successfulMetaIdSet);
         progress.addVolumeDeletionDuration(volDeleteTimer);
         LOGGER.debug(() -> LogUtil.message(
                 "{} - Deleted {} data volume records for {} meta IDs in {}",
@@ -452,10 +471,10 @@ public class PhysicalDeleteExecutor {
                                 LOGGER.warn(() -> TASK_NAME + " - Unable to find any volume for " + simpleMeta);
                                 isSuccessful = true;
                             } else {
-                                final FsVolumeType volumeType = dataVolume.getVolume().getVolumeType();
+                                final FsVolumeType volumeType = dataVolume.volume().getVolumeType();
                                 switch (volumeType) {
                                     case STANDARD -> {
-                                        final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
+                                        final Path volumePath = pathCreator.toAppPath(dataVolume.volume().getPath());
                                         final Path file = fileSystemStreamPathHelper.getRootPath(
                                                 volumePath,
                                                 simpleMeta,

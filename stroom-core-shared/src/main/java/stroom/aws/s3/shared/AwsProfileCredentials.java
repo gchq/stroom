@@ -76,10 +76,14 @@ public final class AwsProfileCredentials implements AwsCredentials {
     @Override
     public String toString() {
         return "AwsProfileCredentials{" +
-                "profileName='" + profileName + '\'' +
-                ", profileFilePath='" + profileFilePath + '\'' +
-                '}';
+               "profileName='" + profileName + '\'' +
+               ", profileFilePath='" + profileFilePath + '\'' +
+               '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 

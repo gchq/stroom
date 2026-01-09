@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,8 @@ public class FsFileFinder {
 
 
     Optional<Path> findRootStreamFile(final SimpleMeta meta, final DataVolume dataVolume) {
-        if (dataVolume != null && dataVolume.getVolume().getPath() != null) {
-            final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
+        if (dataVolume != null && dataVolume.volume().getPath() != null) {
+            final Path volumePath = pathCreator.toAppPath(dataVolume.volume().getPath());
             final Path rootFile = fileSystemStreamPathHelper.getRootPath(
                     volumePath,
                     meta,

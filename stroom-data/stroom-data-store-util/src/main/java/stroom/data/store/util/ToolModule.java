@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package stroom.data.store.util;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.data.retention.api.DataRetentionRulesProvider;
-import stroom.data.retention.shared.DataRetentionRules;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.node.mock.MockNodeServiceModule;
@@ -56,6 +55,7 @@ public class ToolModule extends AbstractModule {
         install(new stroom.activity.mock.MockActivityModule());
         install(new stroom.cache.impl.CacheModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
+        install(new stroom.data.store.impl.fs.s3v2.ZstdModule());
         install(new stroom.data.store.impl.fs.db.FsDataStoreDaoModule());
         install(new stroom.data.store.impl.fs.db.FsDataStoreDaoModule());
         install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());

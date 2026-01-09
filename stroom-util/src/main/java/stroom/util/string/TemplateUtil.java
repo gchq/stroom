@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -349,12 +349,25 @@ public class TemplateUtil {
             return template;
         }
 
+        /**
+         * @return True if the template is empty.
+         */
         public boolean isEmpty() {
             return template.isEmpty();
         }
 
+        /**
+         * @return True if the template is empty or contains only whitespace.
+         */
         public boolean isBlank() {
             return template.isBlank();
+        }
+
+        /**
+         * @return True if all the template is static text, i.e. it has no vars in it.
+         */
+        public boolean isStatic() {
+            return isAllStaticText;
         }
 
         @Override

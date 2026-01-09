@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.cache.api.CacheManager;
 import stroom.util.shared.string.CIKey;
 import stroom.util.string.TemplateUtil.Template;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,6 +75,18 @@ class TestTemplateCacheImpl {
             final Template template4 = templatorCache.getTemplate("foo");
             assertThat(template4)
                     .isNotSameAs(template1);
+        }
+    }
+
+    @Test
+    void testBadTemplate() {
+        try (final CacheManager cacheManager = new CacheManagerImpl()) {
+            final TemplateCacheImpl templatorCache = new TemplateCacheImpl(cacheManager);
+
+            Assertions.assertThatThrownBy(() ->
+                            templatorCache.getTemplate("foo${"))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessageContaining("Unclosed variable in template");
         }
     }
 }

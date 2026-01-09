@@ -75,10 +75,14 @@ public final class AwsBasicCredentials implements AwsCredentials {
     @Override
     public String toString() {
         return "AwsBasicCredentials{" +
-                "accessKeyId='" + accessKeyId + '\'' +
-                ", secretAccessKey='" + secretAccessKey + '\'' +
-                '}';
+               "accessKeyId='" + accessKeyId + '\'' +
+               ", secretAccessKey='" + secretAccessKey + '\'' +
+               '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 

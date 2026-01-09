@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import stroom.data.store.impl.fs.FsVolumeCache;
 import stroom.data.store.impl.fs.FsVolumeDao;
 import stroom.data.store.impl.fs.FsVolumeGroupDao;
 import stroom.data.store.impl.fs.FsVolumeStateDao;
+import stroom.data.store.impl.fs.s3v2.ZstdDictionaryDao;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
@@ -42,6 +43,7 @@ public class FsDataStoreDaoModule extends AbstractModule {
         bind(FsVolumeGroupDao.class).to(FsVolumeGroupDaoImpl.class);
         bind(FsVolumeStateDao.class).to(FsVolumeStateDaoImpl.class);
         bind(FsOrphanedMetaDao.class).to(FsOrphanedMetaDaoImpl.class);
+        bind(ZstdDictionaryDao.class).to(ZstdDictionaryDaoImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(FsVolumeCache.class);

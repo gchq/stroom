@@ -18,7 +18,6 @@ package stroom.data.store.impl.fs;
 
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.NullSafe;
 
 import java.nio.file.Path;
 
@@ -39,7 +38,7 @@ public final class FsPrefixUtil {
     }
 
     /**
-     * Pad a prefix.
+     * Pad a prefix to a length that is a multiple of 3, e.g. {@code 001}, {@code 023456}, etc.
      */
     public static String padId(final Long current) {
         if (current == null) {
@@ -54,38 +53,6 @@ public final class FsPrefixUtil {
                 default -> throw new IllegalStateException("Unexpected value: " + remainder);
             };
             return output;
-        }
-    }
-
-    /**
-     * Remove padding from the string, e.g. '000099' => 99
-     *
-     * @return The de-padded value, 0 if blank/null or -1 if not a number.
-     */
-    public static long dePadId(final String paddedId) {
-        if (NullSafe.isBlankString(paddedId)) {
-            return -1L;
-        } else {
-            final int len = paddedId.length();
-            int startIdx = 0;
-            while (startIdx < len) {
-                if (paddedId.charAt(startIdx) == '0') {
-                    startIdx++;
-                } else {
-                    break;
-                }
-            }
-            final String dePaddedId = paddedId.substring(startIdx);
-            if (dePaddedId.isBlank()) {
-                return 0L;
-            } else {
-                try {
-                    return Long.parseLong(dePaddedId);
-                } catch (final NumberFormatException e) {
-                    LOGGER.debug("Unable to convert '{}' to a long", dePaddedId, e);
-                    return -1;
-                }
-            }
         }
     }
 

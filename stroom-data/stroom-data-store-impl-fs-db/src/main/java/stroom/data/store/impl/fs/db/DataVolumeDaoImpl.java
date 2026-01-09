@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,25 +113,7 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
     // --------------------------------------------------------------------------------
 
 
-    private static class DataVolumeImpl implements DataVolume {
+    private record DataVolumeImpl(long metaId, FsVolume volume) implements DataVolume {
 
-        private final long metaId;
-        private final FsVolume volume;
-
-        DataVolumeImpl(final long metaId,
-                       final FsVolume volume) {
-            this.metaId = metaId;
-            this.volume = volume;
-        }
-
-        @Override
-        public long getMetaId() {
-            return metaId;
-        }
-
-        @Override
-        public FsVolume getVolume() {
-            return volume;
-        }
     }
 }

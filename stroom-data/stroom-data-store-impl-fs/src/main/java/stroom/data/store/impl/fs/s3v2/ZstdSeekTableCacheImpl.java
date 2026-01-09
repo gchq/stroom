@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import stroom.aws.s3.impl.S3Manager;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
 import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.s3v2.ZstdSeekTable.InsufficientSeekTableDataException;
 import stroom.data.store.impl.fs.s3v2.ZstdSeekTable.InvalidSeekTableDataException;
 import stroom.meta.api.AttributeMap;
@@ -80,75 +81,102 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
     public static final String CACHE_NAME = "Zstandard Seek Table Cache";
 
     private final MetaService metaService;
-    private final S3Manager s3Manager;
-    private final StroomCache<CacheKey, Optional<ZstdSeekTable>> cache;
+    private final StroomCache<FileKey, Optional<ZstdSeekTable>> cache;
 
     @Inject
     public ZstdSeekTableCacheImpl(final MetaService metaService,
-                                  final S3Manager s3Manager,
                                   final CacheManager cacheManager) {
         this.metaService = metaService;
-        this.s3Manager = s3Manager;
         // TODO add config for cache
         // Seek tables are immutable things, so no expiry needed
         this.cache = cacheManager.create(
                 CACHE_NAME,
                 () -> CacheConfig.builder()
                         .maximumSize(1_000)
-                        .build());
+                        .build(),
+                (fileKey, optSeekTable) ->
+                        LOGGER.debug("Removing fileKey: {}, optSeekTable: {} from cache {}",
+                                fileKey, optSeekTable, CACHE_NAME));
     }
 
     @Override
-    public Optional<ZstdSeekTable> getSeekTable(final Meta meta,
+    public Optional<ZstdSeekTable> getSeekTable(final S3Manager s3Manager,
+                                                final DataVolume dataVolume,
+                                                final Meta meta,
                                                 final String childStreamType,
                                                 final int segmentCount,
                                                 final long fileSize) {
-        final CacheKey cacheKey = makeKey(meta, childStreamType);
-        return cache.get(cacheKey, ignored ->
-                fetchSeekTable(meta, childStreamType, segmentCount, fileSize));
+        final FileKey fileKey = FileKey.of(dataVolume, meta, childStreamType);
+        return cache.get(fileKey, ignored ->
+                fetchSeekTable(s3Manager, meta, childStreamType, segmentCount, fileSize));
     }
 
     @Override
-    public Optional<ZstdSeekTable> getSeekTable(final Meta meta, final String childStreamType) {
-        final CacheKey cacheKey = makeKey(meta, childStreamType);
-        return cache.get(cacheKey, ignored ->
-                fetchSeekTable(meta, childStreamType));
+    public Optional<ZstdSeekTable> getSeekTable(final S3Manager s3Manager,
+                                                final DataVolume dataVolume,
+                                                final Meta meta,
+                                                final String childStreamType,
+                                                final long fileSize) {
+        final FileKey fileKey = FileKey.of(dataVolume, meta, childStreamType);
+        return cache.get(fileKey, ignored ->
+                fetchSeekTable(s3Manager, meta, childStreamType, fileSize));
     }
 
     @Override
-    public void evict(final Meta meta, final String childStreamType) {
-        final CacheKey cacheKey = makeKey(meta, childStreamType);
-        cache.remove(cacheKey);
+    public Optional<ZstdSeekTable> getSeekTable(final S3Manager s3Manager,
+                                                final DataVolume dataVolume,
+                                                final Meta meta,
+                                                final String childStreamType) {
+        final FileKey fileKey = FileKey.of(dataVolume, meta, childStreamType);
+        return cache.get(fileKey, ignored ->
+                fetchSeekTable(s3Manager, meta, childStreamType, null));
     }
 
-    private CacheKey makeKey(final Meta meta, final String childStreamType) {
-        Objects.requireNonNull(meta);
-        Objects.requireNonNull(meta.getTypeName());
-        return new CacheKey(meta.getId(), meta.getTypeName(), childStreamType);
+//    @Override
+//    public Optional<ZstdSeekTable> getSeekTableIfPresent(final S3Manager s3Manager,
+//                                                         final Meta meta,
+//                                                         final String childStreamType) {
+//        final CacheKey cacheKey = makeKey(meta, childStreamType);
+//        cache.getIfPresent(cacheKey)
+//    }
+
+    @Override
+    public void evict(final DataVolume dataVolume,
+                      final Meta meta,
+                      final String childStreamType) {
+        final FileKey fileKey = FileKey.of(dataVolume, meta, childStreamType);
+        LOGGER.debug("evict() - fileKey: {}", fileKey);
+        cache.remove(fileKey);
     }
 
-    private Optional<ZstdSeekTable> fetchSeekTable(final Meta meta, final String childStreamType) {
-        LOGGER.debug("fetchSeekTable() - meta: {}", meta);
+    private Optional<ZstdSeekTable> fetchSeekTable(final S3Manager s3Manager,
+                                                   final Meta meta,
+                                                   final String childStreamType,
+                                                   final Long fileSize) {
+        LOGGER.debug("fetchSeekTable() - meta: {}, childStreamType: {}, fileSize: {}",
+                meta, childStreamType, fileSize);
         Optional<ZstdSeekTable> optZstdSeekTable;
 
         try {
             // Need to know the file size because S3 range requests don't support negative ranges,
             // i.e. to get the last N bytes.
-            final long fileSize = getFileSize(meta, childStreamType);
+            final long actualFileSize = fileSize == null
+                    ? getFileSize(s3Manager, meta, childStreamType)
+                    : fileSize;
 
             // We don't know how many frames there are, so we don't know how big a chunk of the
             // end of the file we need to get the complete seek table. Therefore, we have to have a guess
             // and hope it is big enough. If it's not the data we get back will include the frame count
             // so we can make a 2nd request with the correct range.
-            long rangeSize = getSpeculativeSeekTableFrameSize(meta, childStreamType, fileSize);
+            long rangeSize = getSpeculativeSeekTableFrameSize(meta, childStreamType, actualFileSize);
             boolean isSpeculativeRange = true;
             Range<Long> range;
             while (true) {
-                range = ZstdSegmentUtil.getLastNRange(fileSize, rangeSize);
+                range = ZstdSegmentUtil.getLastNRange(actualFileSize, rangeSize);
                 try {
                     // If we have a speculative range we want to copy the buffer as we may have fetched
                     // way more data than we need, so don't want pointless bytes in our cache.
-                    optZstdSeekTable = fetchSeekTable(meta, childStreamType, range, isSpeculativeRange);
+                    optZstdSeekTable = fetchSeekTable(s3Manager, meta, childStreamType, range, isSpeculativeRange);
                     break;
                 } catch (final InsufficientSeekTableDataException e) {
                     if (isSpeculativeRange) {
@@ -191,7 +219,9 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
         }
     }
 
-    private long getFileSize(final Meta meta, final String childStreamType) {
+    private long getFileSize(final S3Manager s3Manager,
+                             final Meta meta,
+                             final String childStreamType) {
         Long fileSize = null;
         // Attribute will only be present for the main stream, not the child ones.
         if (childStreamType == null) {
@@ -213,17 +243,19 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
         return fileSize;
     }
 
-    private Optional<ZstdSeekTable> fetchSeekTable(final Meta meta,
+    private Optional<ZstdSeekTable> fetchSeekTable(final S3Manager s3Manager,
+                                                   final Meta meta,
                                                    final String childStreamType,
                                                    final int segmentCount,
                                                    final long fileSize) {
         LOGGER.debug("fetchSeekTable() - meta: {}, segmentCount: {}, fileSize: {}", meta, segmentCount, fileSize);
         final Range<Long> frameRange = ZstdSegmentUtil.createSeekTableFrameRange(segmentCount, fileSize);
         // We have an exact size for the range fetch so don't copy the byte array returned.
-        return fetchSeekTable(meta, childStreamType, frameRange, false);
+        return fetchSeekTable(s3Manager, meta, childStreamType, frameRange, false);
     }
 
-    private Optional<ZstdSeekTable> fetchSeekTable(final Meta meta,
+    private Optional<ZstdSeekTable> fetchSeekTable(final S3Manager s3Manager,
+                                                   final Meta meta,
                                                    final String childStreamType,
                                                    final Range<Long> range,
                                                    final boolean copyBufferContents) {
@@ -264,7 +296,7 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
     // --------------------------------------------------------------------------------
 
 
-    private record CacheKey(long metaId, String streamType, String childStreamType) {
-
-    }
+//    private record CacheKey(long metaId, String streamType, String childStreamType) {
+//
+//    }
 }

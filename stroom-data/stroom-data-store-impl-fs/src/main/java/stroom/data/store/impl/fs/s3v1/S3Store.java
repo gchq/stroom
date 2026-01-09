@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,7 @@ package stroom.data.store.impl.fs.s3v1;
 
 import stroom.aws.s3.impl.S3FileExtensions;
 import stroom.aws.s3.impl.S3Manager;
-import stroom.aws.s3.impl.S3MetaFieldsMapper;
-import stroom.cache.api.TemplateCache;
+import stroom.aws.s3.impl.S3ManagerFactory;
 import stroom.data.store.api.Source;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.meta.api.AttributeMap;
@@ -59,21 +58,18 @@ public class S3Store {
 
     private static final int MAX_CACHED_ITEMS = 10;
 
-    private final TemplateCache templateCache;
     private final Map<Long, TrackedSource> cache = new ConcurrentHashMap<>();
     private final Set<TrackedSource> evictable = new HashSet<>();
     private final MetaService metaService;
-    private final S3MetaFieldsMapper s3MetaFieldsMapper;
+    private final S3ManagerFactory s3ManagerFactory;
     private final Path tempDir;
 
     @Inject
-    S3Store(final TemplateCache templateCache,
-            final TempDirProvider tempDirProvider,
+    S3Store(final TempDirProvider tempDirProvider,
             final MetaService metaService,
-            final S3MetaFieldsMapper s3MetaFieldsMapper) {
-        this.templateCache = templateCache;
+            final S3ManagerFactory s3ManagerFactory) {
         this.metaService = metaService;
-        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
+        this.s3ManagerFactory = s3ManagerFactory;
 
         try {
             tempDir = tempDirProvider.get().resolve("s3_cache");
@@ -112,7 +108,6 @@ public class S3Store {
                 }
 
                 return new TrackedSource(meta.getId(), tempPath, Instant.now(), new AtomicInteger(1));
-
             } else {
                 synchronized (S3Store.this) {
                     evictable.remove(v);
@@ -242,10 +237,7 @@ public class S3Store {
     }
 
     private S3Manager createS3Manager(final DataVolume dataVolume) {
-        return new S3Manager(
-                this.templateCache,
-                dataVolume.getVolume().getS3ClientConfig(),
-                s3MetaFieldsMapper);
+        return s3ManagerFactory.createS3Manager(dataVolume.volume().getS3ClientConfig());
     }
 
 

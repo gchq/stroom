@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.data.store.impl.fs.s3v2;
 
 
+import stroom.aws.s3.impl.S3ClientPoolImpl;
 import stroom.aws.s3.impl.S3Manager;
 import stroom.aws.s3.impl.S3MetaFieldsMapper;
 import stroom.aws.s3.shared.AwsBasicCredentials;
@@ -69,7 +70,8 @@ public class TestS3 {
         final S3Manager s3Manager = new S3Manager(
                 new TemplateCacheImpl(new CacheManagerImpl()),
                 s3ClientConfig,
-                new S3MetaFieldsMapper());
+                new S3MetaFieldsMapper(),
+                new S3ClientPoolImpl(new CacheManagerImpl()));
 
         final Path file = tempDir.resolve("test.txt");
         Files.writeString(file, """
@@ -126,7 +128,8 @@ public class TestS3 {
         final S3Manager s3Manager = new S3Manager(
                 new TemplateCacheImpl(new CacheManagerImpl()),
                 s3ClientConfig,
-                new S3MetaFieldsMapper());
+                new S3MetaFieldsMapper(),
+                new S3ClientPoolImpl(new CacheManagerImpl()));
 
         final int iterations = 10;
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();

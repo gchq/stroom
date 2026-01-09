@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 package stroom.data.store.impl.fs.db;
 
 
+import stroom.cache.impl.CacheManagerImpl;
+import stroom.cache.impl.TemplateCacheImpl;
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.DataStoreServiceConfig.DataStoreServiceDbConfig;
 import stroom.data.store.impl.fs.FsVolumeConfig;
@@ -78,7 +80,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
 //            FileUtil.getCanonicalPath(tempDir.resolve("PUBLIC_2B")),
 //            FsVolumeState.create(0, 1000));
 //    //    private final SecurityContext securityContext = new MockSecurityContext();
-////    private FileSystemVolumeConfig volumeConfig = new FileSystemVolumeConfig();
+    /// /    private FileSystemVolumeConfig volumeConfig = new FileSystemVolumeConfig();
     private FsVolumeService volumeService = null;
 
     @TempDir
@@ -119,6 +121,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
                 null,
                 null,
                 pathCreator,
+                new TemplateCacheImpl(new CacheManagerImpl()),
                 nodeInfo,
                 new SimpleTaskContextFactory(),
                 new HasCapacitySelectorFactory());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,18 @@
 package stroom.data.store.impl.fs.s3v2;
 
 
-import java.io.IOException;
-import java.util.Optional;
+import java.util.Collection;
+import java.util.Map;
 
-public interface ZstdDictionarySupplier {
+public interface ZstdDictionaryTaskDao {
 
-    Optional<ZstdDictionary> getZstdDictionary(final String dictionaryUuid) throws IOException;
+    ZstdDictionaryTask create(ZstdDictionaryKey zstdDictionaryKey,
+                              FileKey fileKey);
+
+    void delete(final Collection<ZstdDictionaryTask> dictionaryTasks);
+
+    int deleteByMetaIds(final Collection<Long> metaIds);
+
+    Map<ZstdDictionaryKey, ZstdDictionaryTask> fetchTasks(final int limit);
 
 }

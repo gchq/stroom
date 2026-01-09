@@ -48,30 +48,6 @@ class TestFsPrefixUtil {
     }
 
     @TestFactory
-    Stream<DynamicTest> testDePadId() {
-        return TestUtil.buildDynamicTestStream()
-                .withInputType(String.class)
-                .withOutputType(long.class)
-                .withTestFunction(testCase ->
-                        FsPrefixUtil.dePadId(testCase.getInput()))
-                .withSimpleEqualityAssertion()
-                .addCase(null, -1L)
-                .addCase("", -1L)
-                .addCase("0", 0L)
-                .addCase("000", 0L)
-                .addCase("1", 1L)
-                .addCase("001", 1L)
-                .addCase("999", 999L)
-                .addCase("001000", 1_000L)
-                .addCase("999999", 999_999L)
-                .addCase("001000000", 1_000_000L)
-                .addCase("999999999", 999_999_999L)
-                .addCase("000ABC", -1L)
-                .addCase("ABC", -1L)
-                .build();
-    }
-
-    @TestFactory
     Stream<DynamicTest> testAppendIdPath_long() {
         final Path root = Paths.get("");
         return TestUtil.buildDynamicTestStream()

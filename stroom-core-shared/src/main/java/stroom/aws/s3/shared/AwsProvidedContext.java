@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class AwsProvidedContext {
 
@@ -42,5 +44,20 @@ public class AwsProvidedContext {
 
     public String getContextAssertion() {
         return contextAssertion;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final AwsProvidedContext that = (AwsProvidedContext) o;
+        return Objects.equals(providerArn, that.providerArn)
+               && Objects.equals(contextAssertion, that.contextAssertion);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(providerArn, contextAssertion);
     }
 }

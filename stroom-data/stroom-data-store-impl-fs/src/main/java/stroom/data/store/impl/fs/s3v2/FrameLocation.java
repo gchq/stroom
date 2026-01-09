@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@ package stroom.data.store.impl.fs.s3v2;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Range;
 
+import java.lang.foreign.MemorySegment;
+import java.util.Objects;
+
 /**
  * Defines the location of a compressed frame in a segmented Zstd file.
  *
@@ -32,16 +35,54 @@ import stroom.util.shared.Range;
  */
 public record FrameLocation(int frameIdx, long position, long compressedSize, long originalSize) {
 
+    /**
+     * @return The byte position of the end of the frame (inclusive).
+     */
     long getToInc() {
         return position + compressedSize - 1;
     }
 
+    /**
+     * @return The byte position of the end of the frame (exclusive).
+     */
     long getToExc() {
         return position + compressedSize;
     }
 
-    Range<Long> asRange() {
+    /**
+     * @return This {@link FrameLocation} in the form of a {@link Range} of the compressed bytes.
+     */
+    Range<Long> asCompressedByteRange() {
         return new Range<>(position, getToExc());
+    }
+
+    /**
+     * @param endFrameLocation The {@link FrameLocation} of the end of the range (inclusive).
+     * @return A {@link FrameRange} from this {@link FrameLocation} to endFrameLocation.
+     * Assumes both {@link FrameLocation}s have come from the same {@link ZstdSeekTable}.
+     */
+    FrameRange asFrameRange(final FrameLocation endFrameLocation) {
+        Objects.requireNonNull(endFrameLocation);
+        return new FrameRange(this, endFrameLocation);
+    }
+
+    /**
+     * Creates a {@link MemorySegment} that is a slice of memorySegment using this {@link FrameRange}'s
+     * position and size.
+     */
+    public MemorySegment asSlice(final MemorySegment memorySegment) {
+        Objects.requireNonNull(memorySegment);
+        return memorySegment.asSlice(position(), compressedSize());
+    }
+
+    /**
+     * @param endFrameLocation The {@link FrameLocation} of the end of the range (inclusive).
+     * @return A {@link Range} of compressed bytes from this {@link FrameLocation} to endFrameLocation.
+     * Assumes both {@link FrameLocation}s have come from the same {@link ZstdSeekTable}.
+     */
+    Range<Long> asCompressedByteRange(final FrameLocation endFrameLocation) {
+        Objects.requireNonNull(endFrameLocation);
+        return asFrameRange(endFrameLocation).asCompressedByteRange();
     }
 
     /**
@@ -61,6 +102,15 @@ public record FrameLocation(int frameIdx, long position, long compressedSize, lo
         } catch (final NumberFormatException e) {
             return "NaN";
         }
+    }
+
+    /**
+     * Create a new {@link FrameLocation} with the same values except for a new position.
+     * This allows for translating the position of a {@link FrameLocation}, e.g. when only downloading
+     * a sub-set of frames to a non-sparse file.
+     */
+    FrameLocation withPosition(final long position) {
+        return new FrameLocation(this.frameIdx, position, this.compressedSize, this.originalSize);
     }
 
     @Override

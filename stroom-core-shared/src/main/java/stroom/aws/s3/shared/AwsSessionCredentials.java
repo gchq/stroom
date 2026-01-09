@@ -83,11 +83,15 @@ public final class AwsSessionCredentials implements AwsCredentials {
     @Override
     public String toString() {
         return "AwsSessionCredentials{" +
-                "accessKeyId='" + accessKeyId + '\'' +
-                ", secretAccessKey='" + secretAccessKey + '\'' +
-                ", sessionToken='" + sessionToken + '\'' +
-                '}';
+               "accessKeyId='" + accessKeyId + '\'' +
+               ", secretAccessKey='" + secretAccessKey + '\'' +
+               ", sessionToken='" + sessionToken + '\'' +
+               '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 

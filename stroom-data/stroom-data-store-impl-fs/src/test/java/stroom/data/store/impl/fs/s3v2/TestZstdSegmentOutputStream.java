@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,8 +93,10 @@ class TestZstdSegmentOutputStream {
                     .orElseThrow();
             assertThat(zstdSeekTable.isEmpty())
                     .isEqualTo(false);
+            assertThat(zstdSeekTable.hasDictionary())
+                    .isFalse();
             assertThat(zstdSeekTable.getDictionaryUuid())
-                    .isEqualTo(ZstdConstants.ZERO_UUID);
+                    .isEmpty();
 
             // Try and retrieve each event individually and check it matches what we expect
             for (int i = 0; i < data.size(); i++) {
@@ -152,8 +154,10 @@ class TestZstdSegmentOutputStream {
             final ZstdSeekTable zstdSeekTable = optZstdSeekTable.get();
             assertThat(zstdSeekTable.getFrameCount())
                     .isEqualTo(1);
+            assertThat(zstdSeekTable.hasDictionary())
+                    .isFalse();
             assertThat(zstdSeekTable.getDictionaryUuid())
-                    .isEqualTo(ZstdConstants.ZERO_UUID);
+                    .isEmpty();
         }
     }
 
@@ -221,8 +225,10 @@ class TestZstdSegmentOutputStream {
             final ZstdSeekTable zstdSeekTable = optZstdSeekTable.get();
             assertThat(zstdSeekTable.getFrameCount())
                     .isEqualTo(iterations);
+            assertThat(zstdSeekTable.hasDictionary())
+                    .isFalse();
             assertThat(zstdSeekTable.getDictionaryUuid())
-                    .isEqualTo(ZstdConstants.ZERO_UUID);
+                    .isEmpty();
 
             // Try and retrieve each event individually and check it matches what we expect
             for (int i = 0; i < data.size(); i++) {
@@ -301,8 +307,10 @@ class TestZstdSegmentOutputStream {
             final ZstdSeekTable zstdSeekTable = optZstdSeekTable.get();
             assertThat(zstdSeekTable.getFrameCount())
                     .isEqualTo(iterations);
+            assertThat(zstdSeekTable.hasDictionary())
+                    .isFalse();
             assertThat(zstdSeekTable.getDictionaryUuid())
-                    .isEqualTo(ZstdConstants.ZERO_UUID);
+                    .isEmpty();
 
             // Try and retrieve each event individually and check it matches what we expect
             for (int i = 0; i < data.size(); i++) {
@@ -373,8 +381,13 @@ class TestZstdSegmentOutputStream {
             generateTestData(faker, i, data, dataBytes);
         }
 
+        // Make sure we can set the dict with a compression level that is different to that
+        // actually used during compression. I believe setting it on the dict is just an optimisation
+        // for that level.
+        final int dictCompressionLevel = COMPRESSION_LEVEL - 1;
+
         final ZstdDictTrainer zstdDictTrainer = new ZstdDictTrainer(
-                10_000, 1_000, COMPRESSION_LEVEL);
+                10_000, 1_000, dictCompressionLevel);
         dataBytes.forEach(zstdDictTrainer::addSample);
         final byte[] dict;
         try {
@@ -421,8 +434,10 @@ class TestZstdSegmentOutputStream {
 
             final ZstdSeekTable zstdSeekTable = ZstdSeekTable.parse(compressedBuffer)
                     .orElseThrow();
+            assertThat(zstdSeekTable.hasDictionary())
+                    .isTrue();
             assertThat(zstdSeekTable.getDictionaryUuid())
-                    .isEqualTo(dictUuid);
+                    .hasValue(dictUuid);
 
             // Try and retrieve each event individually and check it matches what we expect
             for (int i = 0; i < data.size(); i++) {

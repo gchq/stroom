@@ -11,7 +11,7 @@ dependencies {
 }
 
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ jooq {
                         outputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
-                        includes = 'fs.volume|fs.volume.group|fs.volume.state|fs.feed.path|fs.type.path|fs.meta.volume|fs.orphaned.meta.tracker'
+                        includes = 'fs.volume|fs.volume.group|fs.volume.state|fs.feed.path|fs.type.path|fs.meta.volume|fs.orphaned.meta.tracker|zstd.dictionary|zstd.dictionary.task'
                         // We don't want to include flyway versioning
                         excludes = 'fs.schema.history'
                         // Specify 'version' for use in optimistic concurrency control

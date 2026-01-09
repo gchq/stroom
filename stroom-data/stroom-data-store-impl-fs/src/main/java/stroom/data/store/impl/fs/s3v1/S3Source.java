@@ -32,6 +32,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.string.StringUtil;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -210,7 +211,7 @@ final class S3Source implements Source {
                 if (index >= 0) {
                     final String extension = fileName.substring(index);
                     final String numPart = fileName.substring(0, index);
-                    final long partNo = FsPrefixUtil.dePadId(numPart);
+                    final long partNo = StringUtil.dePadLong(numPart);
                     counts.compute(extension, (k, v) -> {
                         if (v == null) {
                             return partNo;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs.s3v2;
 
 
 import stroom.data.store.api.SegmentInputStream;
+import stroom.util.NullSafeExtra;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -137,7 +138,7 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
 
     @Override
     public int read(final byte[] bytes, final int off, final int len) throws IOException {
-        LOGGER.debug(() -> LogUtil.message("read() - bytes.length: {}, off: {}, len: {}", bytes.length, off, len));
+        LOGGER.trace(() -> LogUtil.message("read() - bytes.length: {}, off: {}, len: {}", bytes.length, off, len));
         if (startedReading.compareAndSet(false, true)) {
             final boolean success = initialiseForReading();
             if (!success) {
@@ -171,7 +172,7 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
                     }
                 }
             }
-            LOGGER.debug("read() - totalUncompressedBytesRead: {}, remainingUncompressedToRead: {}",
+            LOGGER.trace("read() - totalUncompressedBytesRead: {}, remainingUncompressedToRead: {}",
                     totalUncompressedBytesRead, remainingUncompressedToRead);
             if (totalUncompressedBytesRead > len) {
                 throw new IllegalStateException(LogUtil.message("totalUncompressedBytesRead {} is > len {}",
@@ -197,9 +198,12 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
     @Override
     public void close() throws IOException {
         super.close();
-        if (currentZstdInputStream != null) {
-            currentZstdInputStream.close();
-        }
+        closeCurrentInputStream();
+    }
+
+    private void closeCurrentInputStream() {
+        currentZstdInputStream = NullSafeExtra.close(
+                currentZstdInputStream, true, "currentZstdInputStream");
     }
 
     private boolean initialiseForReading() throws IOException {
@@ -221,6 +225,9 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
     private boolean advanceFrame() throws IOException {
         final boolean didAdvance;
         if (frameIterator.hasNext()) {
+            // Need to close off the previous stream if there is one
+            closeCurrentInputStream();
+
 //            final int nextFrameIdx = includedSegmentsIterator.nextInt();
 //            currentFrameLocation = zstdSeekTable.getFrameLocation(nextFrameIdx);
 

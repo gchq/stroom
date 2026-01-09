@@ -21,8 +21,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class AwsPolicyDescriptorType {
+
     @JsonProperty
     private final String arn;
 
@@ -33,5 +36,19 @@ public class AwsPolicyDescriptorType {
 
     public String getArn() {
         return arn;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final AwsPolicyDescriptorType that = (AwsPolicyDescriptorType) o;
+        return Objects.equals(arn, that.arn);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(arn);
     }
 }

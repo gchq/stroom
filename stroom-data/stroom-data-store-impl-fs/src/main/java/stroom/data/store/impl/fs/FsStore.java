@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,29 +111,27 @@ class FsStore implements Store, AttributeMapFactory {
         // First time call (no file yet exists)
         final Meta meta = metaService.create(metaProperties);
         final DataVolume dataVolume = dataVolumeService.createDataVolume(meta.getId(), volume);
-        final FsVolumeType volumeType = dataVolume.getVolume().getVolumeType();
+        final FsVolumeType volumeType = dataVolume.volume().getVolumeType();
         final Target target = switch (volumeType) {
             case STANDARD -> createFsTarget(dataVolume, meta);
             case S3_V1 -> s3Store.getTarget(dataVolume, meta);
             case S3_V2 -> s3ZstdStore.getTarget(dataVolume, meta);
             case null -> throw new UnsupportedOperationException(LogUtil.message(
                     "Null volume type for metaId: {}, volumeId {}",
-                    dataVolume.getMetaId(), dataVolume.getVolume().getId()));
+                    dataVolume.metaId(), dataVolume.volume().getId()));
         };
         LOGGER.debug(() -> LogUtil.message("openTarget() - returning target: {}, volumeId: {}, meta: {}",
-                target.getClass(), dataVolume.getVolume().getId(), meta));
+                target.getClass(), dataVolume.volume().getId(), meta));
         return target;
     }
 
     private @NonNull Target createFsTarget(final DataVolume dataVolume, final Meta meta) {
-        final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
-        final String streamType = meta.getTypeName();
+        final Path volumePath = pathCreator.toAppPath(dataVolume.volume().getPath());
         final FsTarget fsTarget = FsTarget.create(
                 metaService,
                 fileSystemStreamPathHelper,
                 meta,
-                volumePath,
-                streamType);
+                volumePath);
         // Force Creation of the files
         fsTarget.getOutputStream();
         return fsTarget;
@@ -202,11 +200,11 @@ class FsStore implements Store, AttributeMapFactory {
                 throw new DataException("Unable to find any volume for " + meta);
             }
 
-            final FsVolume volume = dataVolume.getVolume();
+            final FsVolume volume = dataVolume.volume();
             final FsVolumeType volumeType = volume.getVolumeType();
             final Source source = switch (volumeType) {
                 case STANDARD -> {
-                    final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
+                    final Path volumePath = pathCreator.toAppPath(dataVolume.volume().getPath());
                     yield FsSource.create(fileSystemStreamPathHelper, meta, volumePath, meta.getTypeName());
                 }
                 case S3_V1 -> s3Store.getSource(dataVolume, meta);
@@ -214,7 +212,7 @@ class FsStore implements Store, AttributeMapFactory {
                 case null -> throw new UnsupportedOperationException("Null volume type for metaId: " + meta.getId());
             };
             LOGGER.debug(() -> LogUtil.message("openSource() - returning target: {}, volumeId: {}, meta: {}",
-                    source.getClass(), dataVolume.getVolume().getId(), meta));
+                    source.getClass(), dataVolume.volume().getId(), meta));
             return source;
         } catch (final DataException e) {
             LOGGER.debug(e::getMessage, e);

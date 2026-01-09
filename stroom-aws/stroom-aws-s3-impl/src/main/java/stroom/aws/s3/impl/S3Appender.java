@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package stroom.aws.s3.impl;
 
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.aws.s3.shared.S3ConfigDoc;
-import stroom.cache.api.TemplateCache;
 import stroom.docref.DocRef;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
@@ -73,12 +72,14 @@ public class S3Appender extends AbstractAppender {
     private static final String DEFAULT_COMPRESSION_METHOD_PROP_VALUE = CompressorStreamFactory.GZIP;
 
     private final S3AppenderTempDir s3AppenderTempDir;
-    private final TemplateCache templateCache;
+    //    private final TemplateCache templateCache;
     private final OutputFactory outputFactory;
     private final S3ClientConfigCache s3ClientConfigCache;
     private final MetaDataHolder metaDataHolder;
     private final MetaHolder metaHolder;
-    private final S3MetaFieldsMapper s3MetaFieldsMapper;
+    //    private final S3MetaFieldsMapper s3MetaFieldsMapper;
+//    private final S3ClientPool s3ClientPool;
+    private final S3ManagerFactory s3ManagerFactory;
     private DocRef s3ConfigRef;
     private String bucketNamePattern;
     private String keyNamePattern;
@@ -89,17 +90,21 @@ public class S3Appender extends AbstractAppender {
                       final MetaDataHolder metaDataHolder,
                       final MetaHolder metaHolder,
                       final S3AppenderTempDir s3AppenderTempDir,
-                      final TemplateCache templateCache,
+//                      final TemplateCache templateCache,
                       final S3ClientConfigCache s3ClientConfigCache,
-                      final S3MetaFieldsMapper s3MetaFieldsMapper) {
+//                      final S3MetaFieldsMapper s3MetaFieldsMapper,
+//                      final S3ClientPool s3ClientPool,
+                      final S3ManagerFactory s3ManagerFactory) {
         super(errorReceiverProxy);
         this.s3AppenderTempDir = s3AppenderTempDir;
-        this.templateCache = templateCache;
+//        this.templateCache = templateCache;
         this.s3ClientConfigCache = s3ClientConfigCache;
         this.metaDataHolder = metaDataHolder;
         this.metaHolder = metaHolder;
         this.outputFactory = new OutputFactory(metaDataHolder);
-        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
+//        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
+//        this.s3ClientPool = s3ClientPool;
+        this.s3ManagerFactory = s3ManagerFactory;
 
         // Ensure outputStreamSupport has the defaults for S3Appender
         setUseCompression(DEFAULT_USE_COMPRESSION_PROP_VALUE_BOOLEAN);
@@ -138,7 +143,7 @@ public class S3Appender extends AbstractAppender {
                     super.close();
 
                     try {
-                        final S3Manager s3Manager = new S3Manager(templateCache, s3ClientConfig, s3MetaFieldsMapper);
+                        final S3Manager s3Manager = s3ManagerFactory.createS3Manager(s3ClientConfig);
                         final String bucketNamePattern = NullSafe
                                 .nonBlank(S3Appender.this.bucketNamePattern)
                                 .orElse(s3Manager.getBucketNamePattern());

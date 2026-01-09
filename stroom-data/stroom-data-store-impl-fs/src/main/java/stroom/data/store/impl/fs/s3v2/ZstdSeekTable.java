@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,15 +22,19 @@ import stroom.util.UuidUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
 import it.unimi.dsi.fastutil.ints.IntBidirectionalIterator;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
+import org.jspecify.annotations.NullMarked;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -50,13 +54,17 @@ import java.util.UUID;
  * see {@link ZstdSegmentOutputStream}.
  * </p>
  */
+@NullMarked
 public class ZstdSeekTable implements Iterable<FrameLocation> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZstdSeekTable.class);
 
     private static final int VALUE_BUFFER_CAPACITY = Long.BYTES;
+    private static final UUID NO_DICTIONARY_UUID = ZstdConstants.ZERO_UUID;
+    private static final byte[] NO_DICTIONARY_UUID_BYTES = UuidUtil.toByteArray(NO_DICTIONARY_UUID);
+
     static final ZstdSeekTable EMPTY = new ZstdSeekTable(
-            ZstdConstants.ZERO_UUID,
+            NO_DICTIONARY_UUID,
             0,
             ByteBuffer.wrap(new byte[0]));
 
@@ -178,7 +186,6 @@ public class ZstdSeekTable implements Iterable<FrameLocation> {
      * @param frameInfoList  The details of the frames already written to outputStream.
      * @param zstdDictionary The dictionary that is being used to compress the associated data.
      * @param heapBufferPool A buffer pool if available, can be null.
-     * @throws IOException
      */
     public static void writeSeekTable(final OutputStream outputStream,
                                       final List<FrameInfo> frameInfoList,
@@ -241,7 +248,7 @@ public class ZstdSeekTable implements Iterable<FrameLocation> {
         final byte[] dictUuidBytes = NullSafe.getOrElse(
                 zstdDictionary,
                 ZstdDictionary::getUuidBytes,
-                ZstdConstants.ZERO_UUID_BYTES);
+                NO_DICTIONARY_UUID_BYTES);
         outputStream.write(dictUuidBytes);
     }
 
@@ -330,15 +337,17 @@ public class ZstdSeekTable implements Iterable<FrameLocation> {
      * @return The UUID of the dictionary that compressed the frames that this {@link ZstdSeekTable} describes.
      * The dictionary is applicable to ALL frames.
      */
-    public UUID getDictionaryUuid() {
-        return dictionaryUuid;
+    public Optional<UUID> getDictionaryUuid() {
+        return hasDictionary()
+                ? Optional.of(dictionaryUuid)
+                : Optional.empty();
     }
 
     /**
      * @return True if a dictionary was used to compress the data frames.
      */
     public boolean hasDictionary() {
-        return !ZstdConstants.ZERO_UUID.equals(dictionaryUuid);
+        return !NO_DICTIONARY_UUID.equals(dictionaryUuid);
     }
 
     /**
@@ -375,6 +384,22 @@ public class ZstdSeekTable implements Iterable<FrameLocation> {
         }
         LOGGER.debug("getFrameLocation() - frameIdx {}, frameLocation: {}", frameIdx, frameLocation);
         return frameLocation;
+    }
+
+    /**
+     * @return The total size of the compressed data frames, excluding the seek table frame.
+     */
+    public long getTotalCompressedDataSize() {
+        final int cumCompressedValueIdx = getEntryIdx(frameCount - 1);
+        return ZstdSegmentUtil.getLongLE(seekTableEntriesBuffer, cumCompressedValueIdx);
+    }
+
+    /**
+     * @return The total size of the file including all data frames and this seek table frame.
+     */
+    public long getCompressedFileSize() {
+        final int seekTableFrameSize = ZstdSegmentUtil.calculateSeekTableFrameSize(frameCount);
+        return getTotalCompressedDataSize() + seekTableFrameSize;
     }
 
     /**
@@ -459,10 +484,68 @@ public class ZstdSeekTable implements Iterable<FrameLocation> {
         return new ZstdSeekTableFilteredIterator(frameIdxSet);
     }
 
+    /**
+     * For a given set of frame indexes, build a list of {@link FrameRange} objects, with one
+     * frameRange per contiguous block of frames.
+     * <p>
+     * e.g. If there are 10 frames (0-9) and frameIdxSet contains [0,1,2,5,6,9] you will get
+     * three ranges as follows: 0-2, 5-6 & 9-9 (inclusive-inclusive).
+     * </p>
+     *
+     * @param frameIdxSet The frame indexes to include
+     * @return The list of {@link FrameRange}s in frame index order.
+     */
+    public List<FrameRange> getContiguousRanges(final IntSortedSet frameIdxSet) {
+        if (NullSafe.hasItems(frameIdxSet)) {
+            final List<FrameRange> frameRanges = new ArrayList<>();
+            final Iterator<FrameLocation> iterator = iterator(frameIdxSet);
+            FrameLocation firstFrameInRange = null;
+            FrameLocation lastFrameLocation = null;
+            while (iterator.hasNext()) {
+                final FrameLocation frameLocation = iterator.next();
+
+                if (lastFrameLocation == null || (frameLocation.frameIdx() - lastFrameLocation.frameIdx() > 1)) {
+                    // Start of new range, so record the last range if there was one
+                    if (firstFrameInRange != null) {
+                        final FrameRange frameRange = firstFrameInRange.asFrameRange(lastFrameLocation);
+                        LOGGER.debug("getContiguousRanges() - Creating range {}", frameRange);
+                        frameRanges.add(frameRange);
+                    }
+
+                    // Now set the start point for the new range
+                    firstFrameInRange = frameLocation;
+                }
+                lastFrameLocation = frameLocation;
+            }
+
+            if (firstFrameInRange != null) {
+                // Add the last range
+                final FrameRange frameRange = firstFrameInRange.asFrameRange(lastFrameLocation);
+                LOGGER.debug("getContiguousRanges() - Creating final range {}", frameRange);
+                frameRanges.add(frameRange);
+            }
+            LOGGER.debug(() -> LogUtil.message("getCompressedRanges() - Returning {} ranges", frameRanges.size()));
+            return Collections.unmodifiableList(frameRanges);
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "ZstdSeekTable{" +
+               "frameCount=" + frameCount +
+               ", hasDictionary=" + hasDictionary() +
+               ", dictionaryUuid=" + dictionaryUuid +
+               ", totalCompressedSize=" + ModelStringUtil.formatCsv(getTotalCompressedDataSize()) +
+               ", totalUncompressedSize=" + ModelStringUtil.formatCsv(getTotalUncompressedSize()) +
+               '}';
+    }
 
     // --------------------------------------------------------------------------------
 
 
+    @NullMarked
     private class ZstdSeekTableIterator implements Iterator<FrameLocation> {
 
         private int lastFrameIdx = -1;
@@ -490,6 +573,7 @@ public class ZstdSeekTable implements Iterable<FrameLocation> {
     // --------------------------------------------------------------------------------
 
 
+    @NullMarked
     private class ZstdSeekTableFilteredIterator implements Iterator<FrameLocation> {
 
         private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZstdSeekTableFilteredIterator.class);
@@ -503,7 +587,7 @@ public class ZstdSeekTable implements Iterable<FrameLocation> {
         @Override
         public boolean hasNext() {
             final boolean hasNext = frameIdxIterator.hasNext();
-            LOGGER.debug("hasNext() - Returning hasNext: {}, zstdSeekTable: {}", hasNext, ZstdSeekTable.this);
+            LOGGER.trace("hasNext() - Returning hasNext: {}, zstdSeekTable: {}", hasNext, ZstdSeekTable.this);
             return hasNext;
         }
 
@@ -512,7 +596,7 @@ public class ZstdSeekTable implements Iterable<FrameLocation> {
             final int nextFrameIdx = frameIdxIterator.nextInt();
             if (isValidFrame(nextFrameIdx)) {
                 final FrameLocation frameLocation = getFrameLocation(nextFrameIdx);
-                LOGGER.debug("next() - Returning frameLocation: {}, zstdSeekTable: {}",
+                LOGGER.trace("next() - Returning frameLocation: {}, zstdSeekTable: {}",
                         frameLocation,
                         ZstdSeekTable.this);
                 return frameLocation;
@@ -521,15 +605,6 @@ public class ZstdSeekTable implements Iterable<FrameLocation> {
                         nextFrameIdx, ZstdSeekTable.this));
             }
         }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public enum FilterMode {
-        INCLUDE,
-        EXCLUDE,
     }
 
 
@@ -551,6 +626,7 @@ public class ZstdSeekTable implements Iterable<FrameLocation> {
     // --------------------------------------------------------------------------------
 
 
+    @NullMarked
     public static class InsufficientSeekTableDataException extends RuntimeException {
 
         private final long requiredSeekTableFrameSize;

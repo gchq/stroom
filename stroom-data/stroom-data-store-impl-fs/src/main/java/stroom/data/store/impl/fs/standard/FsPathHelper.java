@@ -29,6 +29,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.string.StringUtil;
 
 import com.google.inject.Inject;
 
@@ -100,7 +101,7 @@ public class FsPathHelper {
             if (end != -1) {
                 final String fullIdString = fileName.substring(start + 1, end);
                 if (!fullIdString.isEmpty()) {
-                    return FsPrefixUtil.dePadId(fullIdString);
+                    return StringUtil.dePadLong(fullIdString);
                 }
             }
         }
@@ -409,7 +410,7 @@ public class FsPathHelper {
                 final String paddedMetaId = dotIdx != -1
                         ? fileName.substring(fileSeparatorIdx + 1, dotIdx)
                         : null;
-                final long id = FsPrefixUtil.dePadId(paddedMetaId);
+                final long id = StringUtil.dePadLong(paddedMetaId);
                 metaId = id != -1
                         ? id
                         : null;

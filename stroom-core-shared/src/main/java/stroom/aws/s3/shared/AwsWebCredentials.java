@@ -132,18 +132,19 @@ public final class AwsWebCredentials implements AwsCredentials {
             return false;
         }
         final AwsWebCredentials that = (AwsWebCredentials) o;
-        return Objects.equals(roleArn, that.roleArn) && Objects.equals(roleSessionName,
-                that.roleSessionName) && Objects.equals(webIdentityTokenFile,
-                that.webIdentityTokenFile) && Objects.equals(asyncCredentialUpdateEnabled,
-                that.asyncCredentialUpdateEnabled) && Objects.equals(prefetchTime,
-                that.prefetchTime) && Objects.equals(staleTime, that.staleTime) && Objects.equals(
-                sessionDuration,
-                that.sessionDuration);
+        return Objects.equals(roleArn, that.roleArn)
+               && Objects.equals(roleSessionName, that.roleSessionName)
+               && Objects.equals(webIdentityTokenFile, that.webIdentityTokenFile)
+               && Objects.equals(asyncCredentialUpdateEnabled, that.asyncCredentialUpdateEnabled)
+               && Objects.equals(prefetchTime, that.prefetchTime)
+               && Objects.equals(staleTime, that.staleTime)
+               && Objects.equals(sessionDuration, that.sessionDuration);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(roleArn,
+        return Objects.hash(
+                roleArn,
                 roleSessionName,
                 webIdentityTokenFile,
                 asyncCredentialUpdateEnabled,
@@ -155,13 +156,13 @@ public final class AwsWebCredentials implements AwsCredentials {
     @Override
     public String toString() {
         return "AwsWebCredentials{" +
-                "roleArn='" + roleArn + '\'' +
-                ", roleSessionName='" + roleSessionName + '\'' +
-                ", webIdentityTokenFile='" + webIdentityTokenFile + '\'' +
-                ", asyncCredentialUpdateEnabled=" + asyncCredentialUpdateEnabled +
-                ", prefetchTime='" + prefetchTime + '\'' +
-                ", staleTime='" + staleTime + '\'' +
-                ", sessionDuration='" + sessionDuration + '\'' +
-                '}';
+               "roleArn='" + roleArn + '\'' +
+               ", roleSessionName='" + roleSessionName + '\'' +
+               ", webIdentityTokenFile='" + webIdentityTokenFile + '\'' +
+               ", asyncCredentialUpdateEnabled=" + asyncCredentialUpdateEnabled +
+               ", prefetchTime='" + prefetchTime + '\'' +
+               ", staleTime='" + staleTime + '\'' +
+               ", sessionDuration='" + sessionDuration + '\'' +
+               '}';
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ public abstract class AbstractZstdFrameSupplier implements ZstdFrameSupplier {
     protected ZstdSeekTable zstdSeekTable = null;
     protected IntSortedSet includedFrameIndexes = IntSortedSets.emptySet();
     protected boolean includeAll = false;
-    protected boolean downloadAll = false;
     protected FrameLocation currentFrameLocation = null;
 
     private Iterator<FrameLocation> frameLocationIterator = null;
@@ -67,7 +66,6 @@ public abstract class AbstractZstdFrameSupplier implements ZstdFrameSupplier {
         this.frameLocationIterator = includeAll
                 ? zstdSeekTable.iterator()
                 : zstdSeekTable.iterator(includedFrameIndexes);
-        this.downloadAll = shouldDownloadAll(zstdSeekTable, includedFrameIndexes, includeAll);
     }
 
     @Override
@@ -101,26 +99,9 @@ public abstract class AbstractZstdFrameSupplier implements ZstdFrameSupplier {
 
     public abstract void close() throws Exception;
 
-    private boolean shouldDownloadAll(final ZstdSeekTable zstdSeekTable,
-                                      final IntSortedSet includedFrameIndexes,
-                                      final boolean includeAll) {
-        final long totalUncompressedSize = getTotalUncompressedSize(includedFrameIndexes, includeAll);
-        LOGGER.debug("shouldDownloadAll() - totalUncompressedSize: {}", totalUncompressedSize);
-        if (totalUncompressedSize == 0) {
-            return false;
-        } else {
-            if (includeAll) {
-                return true;
-            } else {
-                final double percentageOfCompressed = zstdSeekTable.getPercentageOfCompressed(includedFrameIndexes);
-                LOGGER.debug("shouldDownloadAll() - totalUncompressedSize: {}, percentageOfCompressed: {}",
-                        totalUncompressedSize, percentageOfCompressed);
-                return percentageOfCompressed > DOWNLOAD_ALL_PCT_THRESHOLD;
-            }
-        }
-    }
 
-    private long getTotalUncompressedSize(final IntSortedSet includedFrameIndexes, final boolean includeAll) {
+    protected long getTotalUncompressedSize(final IntSortedSet includedFrameIndexes,
+                                            final boolean includeAll) {
         if (includeAll) {
             return zstdSeekTable.getTotalUncompressedSize();
         } else {

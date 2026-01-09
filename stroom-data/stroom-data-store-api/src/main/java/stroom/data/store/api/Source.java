@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,22 +45,20 @@ public interface Source extends Closeable {
     AttributeMap getAttributes();
 
     /**
-     * Get an input stream provider for the nested data item specified by the provided 0 based index.
+     * Get an input stream provider for the nested data item (i.e. part) specified by the provided 0 based index.
      *
-     * @param index The index of the nested data item to get an input stream provider for.
+     * @param index The zero based index of the nested data item (i.e. part) to get an input stream provider for.
      * @return An input stream provider for the specified index or throw an IOException if the index is out of bounds.
-     * @throws IOException
      */
     InputStreamProvider get(long index) throws IOException;
 
     /**
-     * How many nested data items does this source contain.
-     *
-     * @return
-     * @throws IOException
+     * How many nested data items (i.e. parts) does this source contain.
      */
     long count() throws IOException;
 
-
+    /**
+     * How many nested data items (i.e. parts) does this child stream source contain.
+     */
     long count(final String childStreamType) throws IOException;
 }

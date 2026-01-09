@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,19 @@
 package stroom.data.store.impl.fs.s3v2;
 
 
-import stroom.util.io.NoCloseInputStream;
+import stroom.util.NullSafeExtra;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import com.esotericsoftware.kryo.io.ByteBufferInputStream;
+
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.channels.Channels;
+import java.lang.foreign.Arena;
+import java.lang.foreign.MemorySegment;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.MapMode;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -36,11 +40,35 @@ public class FileFrameSupplierImpl extends AbstractZstdFrameSupplier {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FileFrameSupplierImpl.class);
 
     private final Path file;
-    private final FileChannel fileChannel;
+    private final boolean closeResources;
+    private final MemorySegment fileMemorySegment;
+    private FileChannel fileChannel = null;
+    private Arena arena = null;
 
     public FileFrameSupplierImpl(final Path file) throws IOException {
         this.file = Objects.requireNonNull(file);
         this.fileChannel = createFileChannel();
+        this.arena = Arena.ofConfined();
+        this.closeResources = true;
+        // Memory map the whole file so we can have random access to any frames in it
+        this.fileMemorySegment = fileChannel.map(
+                MapMode.READ_ONLY,
+                0,
+                zstdSeekTable.getTotalCompressedDataSize(),
+                arena);
+    }
+
+    /**
+     * Caller is responsible for closing fileChannel and arena.
+     *
+     * @param fileMemorySegment A memory segment covering all data frames in the seek table.
+     */
+    public FileFrameSupplierImpl(final Path file,
+                                 final MemorySegment fileMemorySegment) throws IOException {
+        this.file = Objects.requireNonNull(file);
+        this.closeResources = false;
+        this.fileMemorySegment = Objects.requireNonNull(fileMemorySegment);
+        // We are using the provided fileMemorySegment, so don't need to create the fileChannel and arena
     }
 
     private FileChannel createFileChannel() throws IOException {
@@ -56,10 +84,9 @@ public class FileFrameSupplierImpl extends AbstractZstdFrameSupplier {
 
     @Override
     public void close() throws Exception {
-        if (fileChannel != null) {
-            LOGGER.debug(() ->
-                    LogUtil.message("Closed fileChannel {}", file.toAbsolutePath().normalize().toString()));
-            fileChannel.close();
+        if (closeResources) {
+            fileChannel = NullSafeExtra.close(fileChannel, true, "fileChannel");
+            fileChannel = NullSafeExtra.close(arena, true, "arena");
         }
     }
 
@@ -70,17 +97,14 @@ public class FileFrameSupplierImpl extends AbstractZstdFrameSupplier {
     @Override
     public InputStream next() {
         checkInitialised();
-        final FrameLocation frameLocation = getCurrentFrameLocation();
-        try {
-            fileChannel.position(frameLocation.position());
-        } catch (final IOException e) {
-            throw new RuntimeException(LogUtil.message(
-                    "Error positioning fileChannel '{}' at frameLocation: {} - {}",
-                    file.toAbsolutePath().normalize(), frameLocation, LogUtil.exceptionMessage(e)), e);
+        final FrameLocation frameLocation = nextFrameLocation();
+        if (frameLocation != null) {
+            LOGGER.debug("next() - frameLocation: {}", frameLocation);
+            final MemorySegment frameMemSegment = frameLocation.asSlice(fileMemorySegment);
+            return new ByteBufferInputStream(frameMemSegment.asByteBuffer());
+        } else {
+            return null;
         }
-
-        // TODO not sure we need to create it for each frame
-        return new NoCloseInputStream(Channels.newInputStream(fileChannel));
     }
 
     @Override

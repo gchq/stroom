@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,42 @@
 package stroom.data.store.impl.fs.s3v2;
 
 
+import stroom.aws.s3.impl.S3Manager;
+import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.meta.shared.Meta;
 
 import java.util.Optional;
 
 public interface ZstdSeekTableCache {
 
-    Optional<ZstdSeekTable> getSeekTable(final Meta meta,
+    Optional<ZstdSeekTable> getSeekTable(final S3Manager s3Manager,
+                                         final DataVolume dataVolume,
+                                         final Meta meta,
                                          final String childStreamType,
                                          final int segmentCount,
                                          final long fileSize);
 
-    Optional<ZstdSeekTable> getSeekTable(final Meta meta,
+    Optional<ZstdSeekTable> getSeekTable(final S3Manager s3Manager,
+                                         final DataVolume dataVolume,
+                                         final Meta meta,
+                                         final String childStreamType,
+                                         final long fileSize);
+
+    Optional<ZstdSeekTable> getSeekTable(final S3Manager s3Manager,
+                                         final DataVolume dataVolume,
+                                         final Meta meta,
                                          final String childStreamType);
 
-    void evict(final Meta meta, final String childStreamType);
+//    /**
+//     * Gets the seek table if it is already in the cache but does not load it if not.
+//     * An empty could mean it is not cached or there is no such file for the meta and
+//     * childStreamType.
+//     */
+//    Optional<ZstdSeekTable> getSeekTableIfPresent(final S3Manager s3Manager,
+//                                                  final Meta meta,
+//                                                  final String childStreamType);
+
+    void evict(final DataVolume dataVolume,
+               final Meta meta,
+               final String childStreamType);
 }

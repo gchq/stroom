@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class AwsAssumeRole {
 
@@ -42,5 +44,20 @@ public class AwsAssumeRole {
 
     public AwsAssumeRoleRequest getRequest() {
         return request;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final AwsAssumeRole that = (AwsAssumeRole) o;
+        return Objects.equals(clientConfig, that.clientConfig)
+               && Objects.equals(request, that.request);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(clientConfig, request);
     }
 }

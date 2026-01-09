@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.aws.s3.impl;
 
+import stroom.aws.s3.impl.S3ClientPool.PooledClient;
 import stroom.aws.s3.shared.AwsAssumeRole;
 import stroom.aws.s3.shared.AwsAssumeRoleClientConfig;
 import stroom.aws.s3.shared.AwsAssumeRoleRequest;
@@ -57,7 +58,6 @@ import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.crt.S3CrtHttpConfiguration;
 import software.amazon.awssdk.services.s3.crt.S3CrtProxyConfiguration;
-import software.amazon.awssdk.services.s3.crt.S3CrtRetryConfiguration;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 import software.amazon.awssdk.services.s3.model.CreateBucketResponse;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -141,50 +141,70 @@ public class S3Manager {
     private final TemplateCache templateCache;
     private final S3ClientConfig s3ClientConfig;
     private final S3MetaFieldsMapper s3MetaFieldsMapper;
+    private final S3ClientPool s3ClientPool;
+    // Clients are thread safe and designed to be reused
+    // https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/best-practices.html#bestpractice1
+//    private final LazyValue<S3Client> lazyS3Client;
+//    private final LazyValue<S3AsyncClient> lazyS3AsyncClient;
 
     public S3Manager(final TemplateCache templateCache,
                      final S3ClientConfig s3ClientConfig,
-                     final S3MetaFieldsMapper s3MetaFieldsMapper) {
+                     final S3MetaFieldsMapper s3MetaFieldsMapper,
+                     final S3ClientPool clientPool) {
         this.templateCache = templateCache;
         this.s3ClientConfig = s3ClientConfig;
         this.s3MetaFieldsMapper = s3MetaFieldsMapper;
+        this.s3ClientPool = clientPool;
+
+//        lazyS3Client = LazyValue.initialisedBy(() ->
+//                createClient(s3ClientConfig));
+//        lazyS3AsyncClient = LazyValue.initialisedBy(() ->
+//                createAsyncClient(s3ClientConfig));
     }
 
-    private S3AsyncClient createAsyncClient(final S3ClientConfig s3ClientConfig) {
-        final AwsCredentialsProvider awsCredentialsProvider = createCredentialsProvider(s3ClientConfig);
-        return S3AsyncClient
-                .crtBuilder()
-                .credentialsProvider(awsCredentialsProvider)
-                .region(createRegion(s3ClientConfig.getRegion()))
-                .minimumPartSizeInBytes(s3ClientConfig.getMinimalPartSizeInBytes())
-                .targetThroughputInGbps(s3ClientConfig.getTargetThroughputInGbps())
-                .maxConcurrency(s3ClientConfig.getMaxConcurrency())
-                .endpointOverride(createUri(s3ClientConfig.getEndpointOverride()))
-                .checksumValidationEnabled(s3ClientConfig.getChecksumValidationEnabled())
-                .initialReadBufferSizeInBytes(s3ClientConfig.getReadBufferSizeInBytes())
-                .httpConfiguration(createHttpConfiguration(s3ClientConfig.getHttpConfiguration()))
-                .retryConfiguration(S3CrtRetryConfiguration
-                        .builder()
-                        .numRetries(s3ClientConfig.getNumRetries())
-                        .build())
-                .accelerate(s3ClientConfig.getAccelerate())
-                .forcePathStyle(s3ClientConfig.getForcePathStyle())
-                .crossRegionAccessEnabled(s3ClientConfig.isCrossRegionAccessEnabled())
-                .thresholdInBytes(s3ClientConfig.getThresholdInBytes())
-                .build();
+//    private S3AsyncClient createAsyncClient(final S3ClientConfig s3ClientConfig) {
+//        final AwsCredentialsProvider awsCredentialsProvider = createCredentialsProvider(s3ClientConfig);
+//        return S3AsyncClient
+//                .crtBuilder()
+//                .credentialsProvider(awsCredentialsProvider)
+//                .region(createRegion(s3ClientConfig.getRegion()))
+//                .minimumPartSizeInBytes(s3ClientConfig.getMinimalPartSizeInBytes())
+//                .targetThroughputInGbps(s3ClientConfig.getTargetThroughputInGbps())
+//                .maxConcurrency(s3ClientConfig.getMaxConcurrency())
+//                .endpointOverride(createUri(s3ClientConfig.getEndpointOverride()))
+//                .checksumValidationEnabled(s3ClientConfig.getChecksumValidationEnabled())
+//                .initialReadBufferSizeInBytes(s3ClientConfig.getReadBufferSizeInBytes())
+//                .httpConfiguration(createHttpConfiguration(s3ClientConfig.getHttpConfiguration()))
+//                .retryConfiguration(S3CrtRetryConfiguration
+//                        .builder()
+//                        .numRetries(s3ClientConfig.getNumRetries())
+//                        .build())
+//                .accelerate(s3ClientConfig.getAccelerate())
+//                .forcePathStyle(s3ClientConfig.getForcePathStyle())
+//                .crossRegionAccessEnabled(s3ClientConfig.isCrossRegionAccessEnabled())
+//                .thresholdInBytes(s3ClientConfig.getThresholdInBytes())
+//                .build();
+//    }
+
+    private PooledClient<S3AsyncClient> getAsyncClient() {
+        return s3ClientPool.getPooledS3AsyncClient(s3ClientConfig);
     }
 
-    private S3Client createClient(final S3ClientConfig s3ClientConfig) {
-        final AwsCredentialsProvider awsCredentialsProvider = createCredentialsProvider(s3ClientConfig);
-        return S3Client
-                .builder()
-                .credentialsProvider(awsCredentialsProvider)
-                .region(createRegion(s3ClientConfig.getRegion()))
-                .endpointOverride(createUri(s3ClientConfig.getEndpointOverride()))
-                .accelerate(s3ClientConfig.getAccelerate())
-                .forcePathStyle(s3ClientConfig.getForcePathStyle())
-                .crossRegionAccessEnabled(s3ClientConfig.isCrossRegionAccessEnabled())
-                .build();
+//    private S3Client createClient(final S3ClientConfig s3ClientConfig) {
+//        final AwsCredentialsProvider awsCredentialsProvider = createCredentialsProvider(s3ClientConfig);
+//        return S3Client
+//                .builder()
+//                .credentialsProvider(awsCredentialsProvider)
+//                .region(createRegion(s3ClientConfig.getRegion()))
+//                .endpointOverride(createUri(s3ClientConfig.getEndpointOverride()))
+//                .accelerate(s3ClientConfig.getAccelerate())
+//                .forcePathStyle(s3ClientConfig.getForcePathStyle())
+//                .crossRegionAccessEnabled(s3ClientConfig.isCrossRegionAccessEnabled())
+//                .build();
+//    }
+
+    private PooledClient<S3Client> getSyncClient() {
+        return s3ClientPool.getPooledS3Client(s3ClientConfig);
     }
 
     private URI createUri(final String uri) {
@@ -507,7 +527,8 @@ public class S3Manager {
 
         final PutObjectResponse response;
         if (s3ClientConfig.isAsync()) {
-            try (final S3AsyncClient s3AsyncClient = createAsyncClient(s3ClientConfig)) {
+            try (final PooledClient<S3AsyncClient> pooledClient = getAsyncClient()) {
+                final S3AsyncClient s3AsyncClient = pooledClient.getClient();
                 if (s3ClientConfig.isMultipart()) {
                     try (final S3TransferManager transferManager =
                             S3TransferManager.builder()
@@ -536,8 +557,8 @@ public class S3Manager {
                 }
             }
         } else {
-            try (final S3Client s3Client = createClient(s3ClientConfig)) {
-                response = s3Client.putObject(request, source);
+            try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
+                response = pooledClient.getClient().putObject(request, source);
             }
         }
 
@@ -551,16 +572,17 @@ public class S3Manager {
 
         final CreateBucketResponse response;
         if (s3ClientConfig.isAsync()) {
-            try (final S3AsyncClient s3AsyncClient = createAsyncClient(s3ClientConfig)) {
-                response = s3AsyncClient.createBucket(
-                        request).join();
+            try (final PooledClient<S3AsyncClient> pooledClient = getAsyncClient()) {
+                response = pooledClient.getClient()
+                        .createBucket(request)
+                        .join();
             } catch (final S3Exception e) {
                 error("Error creating bucket: ", bucketName, null, e);
                 throw e;
             }
         } else {
-            try (final S3Client s3Client = createClient(s3ClientConfig)) {
-                response = s3Client.createBucket(request);
+            try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
+                response = pooledClient.getClient().createBucket(request);
             } catch (final S3Exception e) {
                 error("Error creating bucket: ", bucketName, null, e);
                 throw e;
@@ -593,10 +615,29 @@ public class S3Manager {
 
         logRequest("GET (range) : ", bucketName, key, byteRange, request);
 
-        try (final S3Client s3Client = createClient(s3ClientConfig)) {
-            return s3Client.getObject(request);
+        try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
+            return pooledClient.getClient().getObject(request);
         } catch (final RuntimeException e) {
             error("Error getting: ", bucketName, key, byteRange, e);
+            throw e;
+        }
+    }
+
+    public ResponseInputStream<GetObjectResponse> getObject(final String bucketName,
+                                                            final String key) {
+        NullSafe.requireNonBlankString(bucketName);
+        NullSafe.requireNonBlankString(key);
+        final GetObjectRequest request = GetObjectRequest.builder()
+                .bucket(bucketName)
+                .key(key)
+                .build();
+
+        logRequest("GET: ", bucketName, key, request);
+
+        try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
+            return pooledClient.getClient().getObject(request);
+        } catch (final RuntimeException e) {
+            error("Error getting: ", bucketName, key, e);
             throw e;
         }
     }
@@ -640,9 +681,9 @@ public class S3Manager {
 
         logRequest("GET (range) : ", bucketName, key, byteRange, request);
 
-        try (final S3Client s3Client = createClient(s3ClientConfig)) {
+        try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
             return LOGGER.logDurationIfDebugEnabled(
-                    () -> s3Client.getObject(request),
+                    () -> pooledClient.getClient().getObject(request),
                     () -> LogUtil.message("getByteRange() - bucket: '{}', key: '{}', byteRange: '{}'",
                             bucketName, key, byteRange));
         } catch (final RuntimeException e) {
@@ -670,9 +711,9 @@ public class S3Manager {
 
         logRequest("HEAD: ", bucketName, key, request);
 
-        try (final S3Client s3Client = createClient(s3ClientConfig)) {
+        try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
             final HeadObjectResponse headObjectResponse = LOGGER.logDurationIfDebugEnabled(
-                    () -> s3Client.headObject(request),
+                    () -> pooledClient.getClient().headObject(request),
                     () -> LogUtil.message("getFileSize() - bucket: '{}', key: '{}'",
                             bucketName, key));
             return Objects.requireNonNullElse(headObjectResponse.contentLength(), 0L);
@@ -693,36 +734,34 @@ public class S3Manager {
 
         logRequest("HEAD: ", bucketName, key, request);
 
-        try (final S3Client s3Client = createClient(s3ClientConfig)) {
+        try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
             final HeadObjectResponse headObjectResponse = LOGGER.logDurationIfDebugEnabled(
-                    () -> s3Client.headObject(request),
+                    () -> pooledClient.getClient().headObject(request),
                     () -> LogUtil.message("getObjectInfo() - bucket: '{}', key: '{}'",
                             bucketName, key));
 
             final Map<String, String> metadata = headObjectResponse.metadata();
-            final S3ObjectInfo s3ObjectInfo;
+            final long contentLength = Objects.requireNonNullElse(
+                    headObjectResponse.contentLength(),
+                    0L);
 
+            final AttributeMap manifest;
+            final List<AttributeMap> attributeMaps;
             if (NullSafe.hasEntries(metadata)) {
-                final AttributeMap manifest = readManifest(metadata);
-                final List<AttributeMap> attributeMaps = readMeta(metadata);
-
-                s3ObjectInfo = new S3ObjectInfo(
-                        bucketName,
-                        key,
-                        attributeMaps,
-                        manifest,
-                        false);
+                manifest = readManifest(metadata);
+                attributeMaps = readMeta(metadata);
             } else {
-                s3ObjectInfo = new S3ObjectInfo(
-                        bucketName,
-                        key,
-                        Collections.emptyList(),
-                        new AttributeMap(),
-                        false);
+                manifest = new AttributeMap();
+                attributeMaps = Collections.emptyList();
             }
 
-            return s3ObjectInfo;
-
+            return new S3ObjectInfo(
+                    bucketName,
+                    key,
+                    contentLength,
+                    attributeMaps,
+                    manifest,
+                    false);
         } catch (final RuntimeException e) {
             error("Error downloading: ", bucketName, key, e);
             throw e;
@@ -860,7 +899,8 @@ public class S3Manager {
 
         final GetObjectResponse response;
         if (allowAsync && s3ClientConfig.isAsync()) {
-            try (final S3AsyncClient s3AsyncClient = createAsyncClient(s3ClientConfig)) {
+            try (final PooledClient<S3AsyncClient> pooledClient = getAsyncClient()) {
+                final S3AsyncClient s3AsyncClient = pooledClient.getClient();
                 if (s3ClientConfig.isMultipart()) {
                     try (final S3TransferManager transferManager =
                             S3TransferManager.builder()
@@ -891,9 +931,9 @@ public class S3Manager {
                 throw e;
             }
         } else {
-            try (final S3Client s3Client = createClient(s3ClientConfig)) {
+            try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
                 response = LOGGER.logDurationIfDebugEnabled(
-                        () -> s3Client.getObject(request, dest),
+                        () -> pooledClient.getClient().getObject(request, dest),
                         () -> LogUtil.message("Download() - bucket: '{}', key: '{}', dest: '{}'",
                                 bucketName, key, dest));
             } catch (final RuntimeException e) {
@@ -917,8 +957,9 @@ public class S3Manager {
                 .prefix(key)
                 .build();
 
-        try (final S3Client s3Client = createClient(s3ClientConfig)) {
-            final ListObjectsV2Response listObjectsV2Response = s3Client.listObjectsV2(listObjectsV2Request);
+        try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
+            final ListObjectsV2Response listObjectsV2Response = pooledClient.getClient()
+                    .listObjectsV2(listObjectsV2Request);
             return NullSafe.stream(listObjectsV2Response.contents())
                     .map(S3Object::key)
                     .toList();
@@ -940,15 +981,15 @@ public class S3Manager {
 
         final DeleteObjectResponse response;
         if (s3ClientConfig.isAsync()) {
-            try (final S3AsyncClient s3AsyncClient = createAsyncClient(s3ClientConfig)) {
-                response = s3AsyncClient.deleteObject(request).join();
+            try (final PooledClient<S3AsyncClient> pooledClient = getAsyncClient()) {
+                response = pooledClient.getClient().deleteObject(request).join();
             } catch (final S3Exception e) {
                 error("Error deleting: ", bucketName, key, e);
                 throw e;
             }
         } else {
-            try (final S3Client s3Client = createClient(s3ClientConfig)) {
-                response = s3Client.deleteObject(request);
+            try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
+                response = pooledClient.getClient().deleteObject(request);
             } catch (final S3Exception e) {
                 error("Error deleting: ", bucketName, key, e);
                 throw e;
@@ -1143,6 +1184,7 @@ public class S3Manager {
     public record S3ObjectInfo(
             String bucketName,
             String key,
+            long contentLength,
             List<AttributeMap> meta,
             AttributeMap manifest,
             boolean hasMetaFile) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,10 @@ public class PrimitiveValueConverterArrayImpl<E extends HasPrimitiveValue>
         this.itemType = itemType;
         for (final HasPrimitiveValue value : values) {
             final int idx = value.getPrimitiveValue();
+            final HasPrimitiveValue currVal = sparseArray[idx];
+            if (currVal != null) {
+                throw new IllegalArgumentException(("Duplicate primitive value " + currVal));
+            }
             sparseArray[idx] = value;
         }
     }

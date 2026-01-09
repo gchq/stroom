@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package stroom.util.string;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
@@ -35,6 +37,11 @@ import java.util.stream.Stream;
  * use only so can contain java regex goodness.
  */
 public class StringUtil {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StringUtil.class);
+
+    public static int MAX_LONG_DIGITS = Long.toString(Long.MAX_VALUE).length();
+    public static int MAX_INTEGER_DIGITS = Integer.toString(Integer.MAX_VALUE).length();
 
     // Split on one or more unix/windows/dos line ends
     private static final Pattern LINE_SPLIT_PATTERN = Pattern.compile("(\r?\n)");
@@ -59,6 +66,17 @@ public class StringUtil {
                     str.toUpperCase()
             ))
             .collect(Collectors.toSet());
+
+    private static final String[] PAD_ARRAY = new String[MAX_LONG_DIGITS];
+
+    static {
+        final StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < PAD_ARRAY.length; i++) {
+            PAD_ARRAY[i] = stringBuilder.toString();
+            stringBuilder.append("0");
+        }
+    }
+
 
     private StringUtil() {
     }
@@ -299,6 +317,136 @@ public class StringUtil {
                 return str;
             } else {
                 return new String(outputArray, 0, endIdxInc - startIdxInc + 1);
+            }
+        }
+    }
+
+    public static String getZeroPadding(final int padLen) {
+        if (padLen < 0 || padLen > MAX_LONG_DIGITS) {
+            throw new IllegalArgumentException("padLen must be >=0 and <= " + MAX_LONG_DIGITS);
+        }
+        return PAD_ARRAY[padLen];
+    }
+
+    /**
+     * Zero pads positive longs to 19 digits to support up to {@link Long#MAX_VALUE}.
+     *
+     * @param val The long to pad
+     * @return val padded to 19 digits.
+     */
+    public static String zeroPad(final long val) {
+        return zeroPad(val, MAX_LONG_DIGITS);
+    }
+
+    /**
+     * Zero pads positive longs to length digits
+     *
+     * @param val The long to pad
+     * @return val padded to 19 digits.
+     */
+    public static String zeroPad(final long val, final int length) {
+        if (val < 0) {
+            throw new IllegalArgumentException("Negative values are not supported");
+        }
+        if (length < 0 || length > MAX_LONG_DIGITS) {
+            throw new IllegalArgumentException("length must be >=0 and <= " + MAX_LONG_DIGITS);
+        }
+        String valStr = String.valueOf(val);
+        final int valLen = valStr.length();
+        final int padLen = length - valLen;
+        if (padLen > 0) {
+            valStr = PAD_ARRAY[padLen] + valStr;
+        }
+        return valStr;
+    }
+
+    /**
+     * Pads positive integers to 10 digits to support up to {@link Integer#MAX_VALUE}.
+     *
+     * @param val The long to pad
+     * @return val padded to 10 digits.
+     */
+    public static String zeroPad(final int val) {
+        return zeroPad(val, MAX_INTEGER_DIGITS);
+    }
+
+    public static String zeroPad(final int val, final int length) {
+        if (val < 0) {
+            throw new IllegalArgumentException("Negative values are not supported");
+        }
+        if (length < 0 || length > MAX_INTEGER_DIGITS) {
+            throw new IllegalArgumentException("length must be >=0 and <= " + MAX_INTEGER_DIGITS);
+        }
+
+        String valStr = String.valueOf(val);
+        final int valLen = valStr.length();
+        final int padLen = length - valLen;
+        if (padLen > 0) {
+            valStr = PAD_ARRAY[padLen] + valStr;
+        }
+        return valStr;
+    }
+
+    /**
+     * Remove padding from the string, e.g. '000099' => 99
+     *
+     * @return The de-padded value, 0 if blank/null or -1 if not a number.
+     */
+    public static long dePadLong(final String paddedVal) {
+        if (NullSafe.isBlankString(paddedVal)) {
+            return -1L;
+        } else {
+            final int len = paddedVal.length();
+            int startIdx = 0;
+            while (startIdx < len) {
+                if (paddedVal.charAt(startIdx) == '0') {
+                    startIdx++;
+                } else {
+                    break;
+                }
+            }
+            final String dePaddedId = paddedVal.substring(startIdx);
+            if (dePaddedId.isBlank()) {
+                return 0L;
+            } else {
+                try {
+                    return Long.parseLong(dePaddedId);
+                } catch (final NumberFormatException e) {
+                    LOGGER.debug("Unable to convert '{}' to a long", dePaddedId, e);
+                    return -1;
+                }
+            }
+        }
+    }
+
+    /**
+     * Remove padding from the string, e.g. '000099' => 99
+     *
+     * @return The de-padded value, 0 if blank/null or -1 if not a number.
+     */
+    public static int dePadInteger(final String paddedVal) {
+        if (NullSafe.isBlankString(paddedVal)) {
+            return -1;
+        } else {
+            final int len = paddedVal.length();
+            int startIdx = 0;
+            while (startIdx < len) {
+                if (paddedVal.charAt(startIdx) == '0') {
+                    startIdx++;
+                } else {
+                    break;
+                }
+            }
+            final String dePaddedId = paddedVal.substring(startIdx);
+            if (dePaddedId.isBlank()) {
+                return 0;
+            } else {
+                try {
+                    return Integer.parseInt(dePaddedId);
+                } catch (final NumberFormatException e) {
+                    LOGGER.debug("Unable to convert '{}' to an integer", dePaddedId, e);
+                    return -1;
+                }
             }
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package stroom.data.store.impl.fs;
 
+import stroom.aws.s3.shared.S3ClientConfig;
+import stroom.cache.api.TemplateCache;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
@@ -52,6 +54,7 @@ import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.string.TemplateUtil.Template;
 import stroom.util.sysinfo.HasSystemInfo;
 import stroom.util.sysinfo.SystemInfoResult;
 import stroom.util.time.StroomDuration;
@@ -105,6 +108,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     private final ClusterLockService clusterLockService;
     private final Provider<EntityEventBus> entityEventBusProvider;
     private final PathCreator pathCreator;
+    private final TemplateCache templateCache;
     // Hold a cache of the current picture of available volumes, with their used/free/total/etc. stats.
     // Allows for fast volume selection without having to hit the db each time.
     private final AtomicReference<Volumes> currentVolumes = new AtomicReference<>();
@@ -125,6 +129,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                            final ClusterLockService clusterLockService,
                            final Provider<EntityEventBus> entityEventBusProvider,
                            final PathCreator pathCreator,
+                           final TemplateCache templateCache,
                            final NodeInfo nodeInfo,
                            final TaskContextFactory taskContextFactory,
                            final HasCapacitySelectorFactory hasCapacitySelectorFactory) {
@@ -137,6 +142,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         this.clusterLockService = clusterLockService;
         this.entityEventBusProvider = entityEventBusProvider;
         this.pathCreator = pathCreator;
+        this.templateCache = templateCache;
         this.nodeInfo = nodeInfo;
         this.taskContextFactory = taskContextFactory;
         this.hasCapacitySelectorFactory = hasCapacitySelectorFactory;
@@ -171,6 +177,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                         //filesystem from running out of space, assuming they have 500MB free of course.
                         getDefaultVolumeLimit(volPath).ifPresent(fileVolume::setByteLimit);
                     }
+                } else if (FsVolumeType.S3_V2.equals(fileVolume.getVolumeType())) {
+                    validateS3V2Volume(fileVolume);
                 }
                 fileVolume.setStatus(FsVolume.VolumeUseStatus.ACTIVE);
 
@@ -209,8 +217,39 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         });
     }
 
+    private void validateS3V2Volume(final FsVolume fileVolume) {
+        final S3ClientConfig s3ClientConfig = fileVolume.getS3ClientConfig();
+        Objects.requireNonNull(s3ClientConfig, "S3 Client Configuration must be provided.");
+
+        if (NullSafe.isNonBlankString(s3ClientConfig.getBucketName())) {
+            final Template template;
+            try {
+                template = templateCache.getTemplate(s3ClientConfig.getBucketName());
+            } catch (final RuntimeException e) {
+                throw new RuntimeException(LogUtil.message("Bucket name '{}' must be a valid static template - {}",
+                        s3ClientConfig.getBucketName(), e.getMessage()), e);
+            }
+
+            if (!template.isStatic()) {
+                throw new RuntimeException(LogUtil.message("Bucket name '{}' must be a valid static template - {}",
+                        s3ClientConfig.getBucketName()));
+            }
+        } else {
+            throw new RuntimeException(LogUtil.message("Bucket name must be provided"));
+        }
+
+        if (s3ClientConfig.getKeyPattern() != null) {
+            throw new RuntimeException(LogUtil.message("Key name pattern is not supported for volume type {}. " +
+                                                       "Please remove the key name pattern.",
+                    fileVolume.getVolumeType().getDisplayValue()));
+        }
+    }
+
     public FsVolume update(final FsVolume fileVolume) {
         return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> {
+            if (FsVolumeType.S3_V2 == fileVolume.getVolumeType()) {
+                validateS3V2Volume(fileVolume);
+            }
             AuditUtil.stamp(securityContext, fileVolume);
             final FsVolume result = fsVolumeDao.update(fileVolume);
 

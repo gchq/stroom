@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,33 +17,36 @@
 package stroom.data.store.impl.fs.s3v2;
 
 import stroom.aws.s3.impl.S3FileExtensions;
+import stroom.aws.s3.impl.S3Manager;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
 import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
-import stroom.data.store.impl.fs.FsPrefixUtil;
-import stroom.data.store.impl.fs.RASegmentOutputStream;
+import stroom.data.store.impl.fs.standard.FileSystemUtil;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.query.api.datasource.QueryField;
+import stroom.util.io.ByteCountOutputStream;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,29 +60,87 @@ import java.util.stream.Stream;
 public final class S3ZstdTarget implements Target {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ZstdTarget.class);
+    private static final int DEFAULT_ZSTD_COMPRESSION_LEVEL = 3;
 
     private final MetaService metaService;
     private final S3ZstdStore s3ZstdStore;
+    private final S3Manager s3Manager;
+    private final S3StreamTypeExtensions s3StreamTypeExtensions;
+    private final HeapBufferPool heapBufferPool;
     private final DataVolume dataVolume;
     private final Map<Long, S3OutputStreamProvider> partMap = new HashMap<>();
+    private final FileKey fileKey;
+    private final String s3Bucket;
+    private final String s3Key;
+    private final Path tempFilePath;
     private final Path tempDir;
-    private AttributeMap attributeMap;
+    private final S3ZstdTarget parentTarget;
+    /**
+     * childStreamTypeName => {@link S3ZstdTarget}
+     */
+    private final Map<String, S3ZstdTarget> childMap = new HashMap<>();
 
+    private ByteCountOutputStream byteCountOutputStream;
+    private ZstdSegmentOutputStream zstdSegmentOutputStream;
+    private AttributeMap attributeMap;
     private Meta meta;
     private boolean closed;
     private boolean deleted;
+    /**
+     * One based
+     */
     private long partNo;
 
-    public S3ZstdTarget(final MetaService metaService,
-                        final S3ZstdStore s3ZstdStore,
-                        final Path tempDir,
-                        final DataVolume dataVolume,
-                        final Meta meta) {
+    private S3ZstdTarget(final MetaService metaService,
+                         final S3ZstdStore s3ZstdStore,
+                         final S3Manager s3Manager,
+                         final S3StreamTypeExtensions s3StreamTypeExtensions,
+                         final HeapBufferPool heapBufferPool,
+                         final Path tempDir,
+                         final DataVolume dataVolume,
+                         final Meta meta,
+                         final S3ZstdTarget parentTarget,
+                         final String childStreamType) {
+        this.heapBufferPool = heapBufferPool;
         this.dataVolume = dataVolume;
         this.metaService = metaService;
         this.s3ZstdStore = s3ZstdStore;
+        this.s3Manager = s3Manager;
+        this.s3StreamTypeExtensions = s3StreamTypeExtensions;
         this.meta = meta;
+        // This is specific to the metaId
         this.tempDir = tempDir;
+        this.parentTarget = parentTarget;
+        this.fileKey = FileKey.of(dataVolume, meta, childStreamType);
+        this.s3Key = s3StreamTypeExtensions.getkey(fileKey);
+        this.s3Bucket = s3Manager.getBucketNamePattern();
+        this.tempFilePath = createTempFilePath(tempDir, s3Key);
+        LOGGER.debug(() ->
+                LogUtil.message(
+                        "ctor() - tempDir: '{}', metaId: {}, streamTypeName: {}, childStreamType: {}, " +
+                        "s3Bucket: {}, s3Key: '{}', tempFilePath: {}",
+                        tempDir, meta.getId(), meta.getTypeName(), childStreamType, s3Bucket, s3Key, tempFilePath));
+    }
+
+    static S3ZstdTarget create(final MetaService metaService,
+                               final S3ZstdStore s3ZstdStore,
+                               final S3Manager s3Manager,
+                               final S3StreamTypeExtensions s3StreamTypeExtensions,
+                               final HeapBufferPool heapBufferPool,
+                               final Path tempDir,
+                               final DataVolume dataVolume,
+                               final Meta meta) {
+        return new S3ZstdTarget(
+                metaService,
+                s3ZstdStore,
+                s3Manager,
+                s3StreamTypeExtensions,
+                heapBufferPool,
+                tempDir,
+                dataVolume,
+                meta,
+                null,
+                null);
     }
 
     @Override
@@ -93,30 +154,59 @@ public final class S3ZstdTarget implements Target {
         return attributeMap;
     }
 
-    private void writeManifest() {
-        try {
-            final Path manifestFile = tempDir.resolve(S3FileExtensions.MANIFEST_FILE_NAME);
-            LOGGER.debug("writeManifest() - manifestFile: {}", manifestFile);
-            try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(manifestFile))) {
-                AttributeMapUtil.write(getAttributes(), outputStream);
-            }
-        } catch (final IOException e) {
-            LOGGER.error(() -> "closeStreamTarget() - Error on writing Manifest " + this, e);
-        }
+//    private void writeManifest() {
+//        try {
+//            final Path manifestFile = tempDir.resolve(S3FileExtensions.MANIFEST_FILE_NAME);
+//            LOGGER.debug("writeManifest() - manifestFile: {}", manifestFile);
+//            try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(manifestFile))) {
+//                AttributeMapUtil.write(getAttributes(), outputStream);
+//            }
+//        } catch (final IOException e) {
+//            LOGGER.error(() -> "closeStreamTarget() - Error on writing Manifest " + this, e);
+//        }
+//    }
+
+
+    private FileKey getFileKey() {
+        return fileKey;
     }
 
     private void updateAttribute(final S3ZstdTarget target, final QueryField key, final String value) {
         final String keyFldName = key.getFldName();
-        if (!target.getAttributes().containsKey(keyFldName)) {
+        final AttributeMap targetAttributes = target.getAttributes();
+        if (!targetAttributes.containsKey(keyFldName)) {
             LOGGER.debug("updateAttribute() - keyFldName: {}, value: {}", keyFldName, value);
-            target.getAttributes().put(keyFldName, value);
+            targetAttributes.put(keyFldName, value);
         }
     }
 
-    private void closeAllStreams() throws IOException {
-        LOGGER.debug("closeAllStreams()");
+    private void closeStreams() throws IOException {
+        LOGGER.debug(() -> LogUtil.message("closeStreams() - fileKey: {}, parentFileKey: {}",
+                fileKey, NullSafe.get(parentTarget, S3ZstdTarget::getFileKey)));
         // If we get error on closing the stream we must return it to the caller
-        IOException streamCloseException = null;
+        IOException exception = null;
+
+        if (zstdSegmentOutputStream != null) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "closeStreams() - Closing zstdSegmentOutputStream, " +
+                    "fileKey: {}, averageUncompressedFrameSize: {}, segmentOutputStream: {}, zstdDictionary: {}",
+                    fileKey,
+                    zstdSegmentOutputStream.getAverageUncompressedFrameSize(),
+                    zstdSegmentOutputStream.getSegmentCount(),
+                    zstdSegmentOutputStream.getZstdDictionary()));
+
+            try {
+                zstdSegmentOutputStream.flush();
+                zstdSegmentOutputStream.close();
+            } catch (final IOException e) {
+                LOGGER.error(() -> "closeStreams() - Error on closing stream " + this, e);
+                exception = e;
+            }
+        }
+
+        for (final S3ZstdTarget child : childMap.values()) {
+            child.close();
+        }
 
         // Close the streams.
         for (final OutputStreamProvider outputStreamProvider : partMap.values()) {
@@ -125,20 +215,22 @@ public final class S3ZstdTarget implements Target {
             } catch (final ClosedByInterruptException e) {
                 // WE expect these exceptions if a user is trying to terminate.
                 LOGGER.debug(() -> "closeStreamTarget() - Error on closing stream " + this, e);
-                streamCloseException = e;
+                exception = e;
             } catch (final IOException e) {
                 LOGGER.error(() -> "closeStreamTarget() - Error on closing stream " + this, e);
-                streamCloseException = e;
+                exception = e;
             }
         }
 
-        if (streamCloseException != null) {
-            throw streamCloseException;
+        if (exception != null) {
+            throw exception;
         }
     }
 
     @Override
     public void close() {
+        LOGGER.debug(() -> LogUtil.message("close() - fileKey: {}, parentFileKey: {}",
+                fileKey, NullSafe.get(parentTarget, S3ZstdTarget::getFileKey)));
         if (closed) {
             throw new DataException("Target already closed");
         }
@@ -148,30 +240,39 @@ public final class S3ZstdTarget implements Target {
                 // If we get error on closing the stream we must return it to the caller
                 IOException streamCloseException = null;
                 try {
-                    closeAllStreams();
+                    // This will close the internal outputStream for this and any of our children,
+                    // plus call close() on any children
+                    closeStreams();
                 } catch (final IOException e) {
                     streamCloseException = e;
                 }
-                partMap.clear();
 
                 // Update attributes and write the manifest.
-                final String totalFileSize = String.valueOf(getTotalFileSize());
-                updateAttribute(this, MetaFields.RAW_SIZE, totalFileSize);
-                updateAttribute(this, MetaFields.FILE_SIZE, totalFileSize);
-                writeManifest();
+                final long rawSize = NullSafe.getOrElse(zstdSegmentOutputStream,
+                        SegmentOutputStream::getPosition,
+                        0L);
+                final long fileSize = NullSafe.getOrElse(byteCountOutputStream,
+                        ByteCountOutputStream::getCount,
+                        0L);
+
+                if (parentTarget == null) {
+                    // These only get set on the parent
+                    updateAttribute(this, MetaFields.RAW_SIZE, String.valueOf(rawSize));
+                    updateAttribute(this, MetaFields.FILE_SIZE, String.valueOf(fileSize));
+                }
+                updateAttribute(this, MetaFields.SEGMENTATION_TYPE, getZstdSegmentationType().toString());
+
+                NullSafe.consume(zstdSegmentOutputStream.getZstdDictionary(), zstdDictionary -> {
+                    // The dict UUID is embedded in the file itself, but it may be helpful to have it here too
+                    updateAttribute(this, MetaFields.ZSTD_DICTIONARY_UUID, zstdDictionary.getUuid().toString());
+                });
 
                 if (streamCloseException == null) {
-
                     try {
-                        final AttributeMap attributeMap = getAttributes();
-
-                        // Zip and upload.
-                        s3ZstdStore.upload(tempDir, dataVolume, meta, attributeMap);
-
-                        // Unlock will update the meta data so set it back on the stream
+                        final AttributeMap attributeMap = uploadFile();
+                        // Unlock will update the meta-data so set it back on the stream
                         // target so the client has the up to date copy
                         unlock(getMeta(), attributeMap);
-
                     } catch (final RuntimeException e) {
                         LOGGER.error(e::getMessage, e);
                         throw e;
@@ -184,11 +285,32 @@ public final class S3ZstdTarget implements Target {
             closed = true;
 
             try {
+                LOGGER.debug("close() - Deleting tempDir: {}", tempDir);
                 FileUtil.deleteDir(tempDir);
             } catch (final RuntimeException e) {
                 LOGGER.debug(e::getMessage, e);
             }
         }
+    }
+
+    private AttributeMap uploadFile() {
+        final AttributeMap attributeMap = getAttributes();
+        s3Manager.upload(s3Bucket, s3Key, meta, attributeMap, tempFilePath);
+        LOGGER.debug("close() - Uploaded fileKey: {}, tempFilePath: {}, s3Bucket: {}, " +
+                     "s3Key: {}, attributeMap: {}",
+                fileKey, tempFilePath, s3Bucket, s3Key, attributeMap);
+        return attributeMap;
+    }
+
+    /**
+     * @return This target plus any children.
+     */
+    private List<S3ZstdTarget> getAllTargets() {
+        if (parentTarget != null) {
+            throw new RuntimeException("Should only be called on the parent target");
+        }
+        return Stream.concat(Stream.of(this), childMap.values().stream())
+                .toList();
     }
 
     private void unlock(final Meta meta, final AttributeMap attributeMap) {
@@ -220,7 +342,7 @@ public final class S3ZstdTarget implements Target {
         try {
             // Close the stream target.
             try {
-                closeAllStreams();
+                closeStreams();
             } catch (final IOException e) {
                 LOGGER.debug(e::getMessage, e);
             }
@@ -274,7 +396,7 @@ public final class S3ZstdTarget implements Target {
     public OutputStreamProvider next() {
         final long no = ++partNo;
         LOGGER.debug("next() - meta: {}, no: {}, tempDir: {}", meta, no, tempDir);
-        final S3OutputStreamProvider s3OutputStreamProvider = new S3OutputStreamProvider(tempDir, no);
+        final S3OutputStreamProvider s3OutputStreamProvider = new S3OutputStreamProvider(this, no);
         partMap.put(no, s3OutputStreamProvider);
         return s3OutputStreamProvider;
     }
@@ -282,6 +404,118 @@ public final class S3ZstdTarget implements Target {
     @Override
     public String toString() {
         return "id=" + meta.getId();
+    }
+
+    /**
+     * @return The target for the given streamTypeName or this if streamTypeName
+     * is null
+     */
+    private S3ZstdTarget getTarget(final String childStreamTypeName) {
+        if (closed) {
+            throw new RuntimeException("Closed");
+        }
+
+        if (childStreamTypeName == null) {
+            return this;
+        } else {
+            return childMap.computeIfAbsent(childStreamTypeName, this::createChildTarget);
+        }
+    }
+
+    private S3ZstdTarget createChildTarget(final String streamTypeName) {
+        Objects.requireNonNull(streamTypeName);
+        return new S3ZstdTarget(
+                metaService,
+                s3ZstdStore,
+                s3Manager,
+                s3StreamTypeExtensions,
+                heapBufferPool,
+                tempDir,
+                dataVolume,
+                meta,
+                this,
+                streamTypeName);
+    }
+
+    private Path createTempFilePath(final Path tempDir, final String s3Key) {
+        Objects.requireNonNull(s3Key);
+        final int idx = s3Key.lastIndexOf("/");
+        final String fileName = s3Key.substring(idx + 1);
+        final Path tempFilePath = tempDir.resolve(fileName).normalize().toAbsolutePath();
+        LOGGER.debug("createTempFilePath() - fileKey: {}, tempDir: {}, s3Key: {}, path: {}",
+                fileKey, tempDir, s3Key, tempFilePath);
+        return tempFilePath;
+    }
+
+    private ZstdSegmentationType getZstdSegmentationType() {
+        if (partNo <= 1) {
+            return ZstdSegmentationType.SEGMENTS;
+        } else {
+            return ZstdSegmentationType.PARTS;
+        }
+    }
+
+    private ZstdSegmentOutputStream getInternalOutputStream() {
+        if (zstdSegmentOutputStream == null) {
+            try {
+                FileSystemUtil.mkdirs(tempFilePath.getParent());
+
+                // If the file already exists then delete it.
+                if (Files.exists(tempFilePath)) {
+                    LOGGER.warn(() -> "About to overwrite file: " + FileUtil.getCanonicalPath(tempFilePath));
+                    Files.delete(tempFilePath);
+                }
+                // Don't need to worry about locking the file as we are in a dedicated temp dir
+                Files.createFile(tempFilePath);
+                LOGGER.debug(() -> LogUtil.message(
+                        "getOrCreateSegmentOutputStream() - Created file: {}, fileKey: {}",
+                        FileUtil.getCanonicalPath(tempFilePath), fileKey));
+                byteCountOutputStream = new ByteCountOutputStream(new FileOutputStream(tempFilePath.toFile()));
+                final ZstdDictionary zstdDictionary = getZstdDictionary();
+                zstdSegmentOutputStream = new ZstdSegmentOutputStream(
+                        new BufferedOutputStream(byteCountOutputStream),
+                        zstdDictionary,
+                        heapBufferPool,
+                        DEFAULT_ZSTD_COMPRESSION_LEVEL);
+            } catch (final IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        return zstdSegmentOutputStream;
+    }
+
+    private @Nullable ZstdDictionary getZstdDictionary() {
+        final ZstdDictionaryKey zstdDictionaryKey = ZstdDictionaryKey.of(
+                meta.getFeedName(),
+                fileKey.streamType(),
+                fileKey.childStreamType());
+        final ZstdDictionaryService zstdDictionaryService = s3ZstdStore.getZstdDictionaryService();
+        final ZstdDictionary zstdDictionary = zstdDictionaryService.getZstdDictionary(zstdDictionaryKey, dataVolume)
+                .orElse(null);
+
+        if (zstdDictionary == null) {
+            // There is no dict available. We will have to compress without a dict.
+            // Thus, we record the details of this file so that the service can (async) train a dict
+            // from the data, recompress it using that dict and make the dict available for future use.
+            zstdDictionaryService.createReCompressTask(zstdDictionaryKey, fileKey);
+        }
+        LOGGER.debug("getZstdDictionary() - zstdDictionaryKey: {}, zstdDictionary: {}",
+                zstdDictionaryKey, zstdDictionary);
+        return zstdDictionary;
+    }
+
+    private ZstdSegmentOutputStream getInternalOutputStream(final String childStreamTypeName) {
+        final S3ZstdTarget target = getTarget(childStreamTypeName);
+        return target.getInternalOutputStream();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class S3OutputStreamProviderFactory {
+
+
     }
 
 
@@ -292,16 +526,17 @@ public final class S3ZstdTarget implements Target {
 
         private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3OutputStreamProvider.class);
 
-        private final Path dir;
-        private final String partString;
-        private final List<SegmentOutputStream> segmentOutputStreams = new ArrayList<>();
+        private final long partNo;
+        private final S3ZstdTarget s3ZstdTarget;
+        // childStreamType => segmentOutputStream
+        private final Map<String, SegmentOutputStream> childStreamTypeToStreamMap = new HashMap<>();
+
         private SegmentOutputStream dataStream;
 
-        public S3OutputStreamProvider(final Path dir, final long partNo) {
-            this.dir = dir;
-            this.partString = FsPrefixUtil.padId(partNo);
-            LOGGER.debug(() -> LogUtil.message("ctor() - dir: {}, partNo: {}, partString: {}",
-                    dir, partNo, partString));
+        public S3OutputStreamProvider(final S3ZstdTarget s3ZstdTarget, final long partNo) {
+            this.partNo = partNo;
+            this.s3ZstdTarget = s3ZstdTarget;
+            LOGGER.debug(() -> LogUtil.message("ctor() - partNo: {}", partNo));
         }
 
         @Override
@@ -310,42 +545,42 @@ public final class S3ZstdTarget implements Target {
                 throw new RuntimeException("Unexpected get");
             }
             LOGGER.debug("get()");
-            dataStream = create(S3FileExtensions.DATA_EXTENSION);
+            dataStream = create(null);
             return dataStream;
         }
 
         @Override
         public SegmentOutputStream get(final String childStreamType) {
-            LOGGER.debug("get() - childStreamType: {}, dir: {}", childStreamType, dir);
+            LOGGER.debug("get() - childStreamType: {}", childStreamType);
             if (childStreamType == null) {
                 return get();
+            } else {
+                final SegmentOutputStream childOutputStream = childStreamTypeToStreamMap.get(childStreamType);
+                if (childStreamTypeToStreamMap.containsKey(childStreamType)) {
+                    throw new RuntimeException("Unexpected get");
+                }
+                final SegmentOutputStream segmentOutputStream = create(childStreamType);
+                childStreamTypeToStreamMap.put(childStreamType, segmentOutputStream);
+                return segmentOutputStream;
             }
-
-            final String extension = S3FileExtensions.EXTENSION_MAP.get(childStreamType);
-            Objects.requireNonNull(extension, () -> "Unexpected child stream type: " + childStreamType);
-            return create(extension);
         }
 
-        private SegmentOutputStream create(final String extension) {
-            try {
-                final String fileName = partString + extension;
-                final Path dataFile = dir.resolve(fileName);
-                final Path indexFile = dir.resolve(fileName + S3FileExtensions.INDEX_EXTENSION);
-                LOGGER.debug("create() - dataFile: {}, indexFile: {}", dataFile, indexFile);
-                final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(dataFile));
-                final SegmentOutputStream segmentOutputStream = new RASegmentOutputStream(outputStream, () ->
-                        new BufferedOutputStream(Files.newOutputStream(indexFile)));
-                segmentOutputStreams.add(segmentOutputStream);
-                return segmentOutputStream;
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
-            }
+        private SegmentOutputStream create(final String childStreamType) {
+            LOGGER.debug("create() - childStreamType: {}, partNo: {}", childStreamType, partNo);
+            final ZstdSegmentOutputStream internalOutputStream = s3ZstdTarget.getInternalOutputStream(
+                    childStreamType);
+
+            // We do not support multipart and multi-segment at the same time.
+            // Thus by wrapping it, we will make it error if the caller tries to add
+            // any segments to this part.
+            final boolean allowSegmentsInPart = partNo <= 1;
+            return new WrappedSegmentOutputStream(partNo, internalOutputStream, allowSegmentsInPart);
         }
 
         @Override
         public void close() throws IOException {
             IOException exception = null;
-            for (final SegmentOutputStream segmentOutputStream : segmentOutputStreams) {
+            for (final SegmentOutputStream segmentOutputStream : getAllSegmentOutputStreams()) {
                 try {
                     segmentOutputStream.close();
                 } catch (final IOException e) {
@@ -358,6 +593,80 @@ public final class S3ZstdTarget implements Target {
             if (exception != null) {
                 throw exception;
             }
+        }
+
+        private @NonNull List<SegmentOutputStream> getAllSegmentOutputStreams() {
+            return Stream.concat(Stream.of(dataStream),
+                            childStreamTypeToStreamMap.values().stream())
+                    .toList();
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class WrappedSegmentOutputStream extends SegmentOutputStream {
+
+        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(WrappedSegmentOutputStream.class);
+
+        private final long partNo;
+        private final SegmentOutputStream delegate;
+        private final boolean allowSegments;
+
+        private WrappedSegmentOutputStream(final long partNo,
+                                           final SegmentOutputStream delegate,
+                                           final boolean allowSegments) {
+            this.partNo = partNo;
+            this.delegate = delegate;
+            this.allowSegments = allowSegments;
+        }
+
+        @Override
+        public void addSegment() throws IOException {
+            if (!allowSegments) {
+                throw new UnsupportedOperationException("Multiple segments are not supported");
+            }
+        }
+
+        @Override
+        public void addSegment(final long position) throws IOException {
+            if (!allowSegments) {
+                throw new UnsupportedOperationException("Multiple segments are not supported");
+            }
+        }
+
+        @Override
+        public long getPosition() {
+            return delegate.getPosition();
+        }
+
+        @Override
+        public void write(final int b) throws IOException {
+            delegate.write(b);
+        }
+
+        @Override
+        public void write(final byte[] b) throws IOException {
+            delegate.write(b);
+        }
+
+        @Override
+        public void write(final byte[] b, final int off, final int len) throws IOException {
+            delegate.write(b, off, len);
+        }
+
+        @Override
+        public void flush() throws IOException {
+            delegate.flush();
+        }
+
+        @Override
+        public void close() throws IOException {
+            // No-op as we don't want the part stream to close the underlying zstd stream.
+            LOGGER.debug("close() - Close called and ignored for partNo: {}", partNo);
+            // Ensure everything is flushed down though
+            delegate.flush();
         }
     }
 }

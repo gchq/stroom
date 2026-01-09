@@ -44,7 +44,7 @@ public interface Target extends Closeable {
     AttributeMap getAttributes();
 
     /**
-     * Get a supplier of output streams.
+     * Get a supplier of output streams for the next part.
      *
      * @return a supplier of output streams.
      */
