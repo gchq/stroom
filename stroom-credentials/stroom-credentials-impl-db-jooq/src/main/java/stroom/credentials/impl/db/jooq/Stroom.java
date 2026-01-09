@@ -20,15 +20,14 @@
 package stroom.credentials.impl.db.jooq;
 
 
-import stroom.credentials.impl.db.jooq.tables.Credentials;
-import stroom.credentials.impl.db.jooq.tables.CredentialsSecret;
+import java.util.Arrays;
+import java.util.List;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.credentials.impl.db.jooq.tables.Credential;
 
 
 /**
@@ -45,14 +44,9 @@ public class Stroom extends SchemaImpl {
     public static final Stroom STROOM = new Stroom();
 
     /**
-     * The table <code>stroom.credentials</code>.
+     * The table <code>stroom.credential</code>.
      */
-    public final Credentials CREDENTIALS = Credentials.CREDENTIALS;
-
-    /**
-     * The table <code>stroom.credentials_secret</code>.
-     */
-    public final CredentialsSecret CREDENTIALS_SECRET = CredentialsSecret.CREDENTIALS_SECRET;
+    public final Credential CREDENTIAL = Credential.CREDENTIAL;
 
     /**
      * No further instances allowed
@@ -70,8 +64,7 @@ public class Stroom extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
-            Credentials.CREDENTIALS,
-            CredentialsSecret.CREDENTIALS_SECRET
+            Credential.CREDENTIAL
         );
     }
 }

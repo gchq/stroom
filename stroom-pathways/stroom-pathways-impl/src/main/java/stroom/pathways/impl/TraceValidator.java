@@ -29,6 +29,9 @@ import stroom.pathways.shared.pathway.ConstraintValue;
 import stroom.pathways.shared.pathway.IntegerRange;
 import stroom.pathways.shared.pathway.IntegerSet;
 import stroom.pathways.shared.pathway.IntegerValue;
+import stroom.pathways.shared.pathway.LongRange;
+import stroom.pathways.shared.pathway.LongSet;
+import stroom.pathways.shared.pathway.LongValue;
 import stroom.pathways.shared.pathway.NanoTimeRange;
 import stroom.pathways.shared.pathway.PathKey;
 import stroom.pathways.shared.pathway.PathNode;
@@ -208,6 +211,27 @@ public class TraceValidator implements TraceWalker {
         }
     }
 
+    private void validateLong(final Supplier<String> location,
+                                 final ConstraintValue constraint,
+                                 final long value,
+                                 final MessageReceiver messageReceiver) {
+        if (constraint instanceof final LongValue longValue) {
+            if (!longValue.validate(value)) {
+                messageReceiver.log(Severity.ERROR, () -> location.get() + " '" + value + "' not equal");
+            }
+        } else if (constraint instanceof final LongSet longSet) {
+            if (!longSet.validate(value)) {
+                messageReceiver.log(Severity.ERROR, () -> location.get() + " '" + value + "' not equal");
+            }
+        } else if (constraint instanceof final LongRange longRange) {
+            if (longRange.getMin() > value) {
+                messageReceiver.log(Severity.ERROR, () -> location.get() + " '" + value + "' less than expected");
+            } else if (longRange.getMax() < value) {
+                messageReceiver.log(Severity.ERROR, () -> location.get() + " '" + value + "' greater than expected");
+            }
+        }
+    }
+
     private void validateBooleanConstraint(final Supplier<String> location,
                                            final ConstraintValue constraint,
                                            final boolean value,
@@ -255,7 +279,7 @@ public class TraceValidator implements TraceWalker {
         } else if (value.getBoolValue() != null) {
             validateBooleanConstraint(location, constraint, value.getBoolValue(), messageReceiver);
         } else if (value.getIntValue() != null) {
-            validateInteger(location, constraint, value.getIntValue(), messageReceiver);
+            validateLong(location, constraint, value.getIntValue(), messageReceiver);
         }
         // TODO : Add validation for other attribute types.
 

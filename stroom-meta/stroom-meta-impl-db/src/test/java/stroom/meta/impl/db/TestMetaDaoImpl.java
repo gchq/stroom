@@ -35,6 +35,9 @@ import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaServiceConfig;
 import stroom.meta.impl.MetaValueDao;
+import stroom.meta.impl.db.jooq.tables.MetaFeed;
+import stroom.meta.impl.db.jooq.tables.MetaProcessor;
+import stroom.meta.impl.db.jooq.tables.MetaType;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
@@ -70,6 +73,7 @@ import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
 import jakarta.inject.Inject;
 import org.jooq.Record1;
+import org.jooq.Record9;
 import org.jooq.impl.DSL;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DynamicTest;
@@ -96,10 +100,6 @@ import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.meta.impl.db.MetaDaoImpl.meta;
-import static stroom.meta.impl.db.MetaDaoImpl.metaFeed;
-import static stroom.meta.impl.db.MetaDaoImpl.metaProcessor;
-import static stroom.meta.impl.db.MetaDaoImpl.metaType;
 
 @ExtendWith(MockitoExtension.class)
 class TestMetaDaoImpl {
@@ -125,6 +125,10 @@ class TestMetaDaoImpl {
     private static final DocRef REF1_FEED =
             new DocRef(FeedDoc.TYPE, UUID.randomUUID().toString(), REF1_FEED_NAME);
 
+    private static final stroom.meta.impl.db.jooq.tables.Meta META_M = MetaDaoImpl.META_M;
+    private static final MetaFeed META_FEED_F = MetaDaoImpl.META_FEED_F;
+    private static final MetaProcessor META_PROCESSOR_P = MetaDaoImpl.META_PROCESSOR_P;
+    private static final MetaType META_TYPE_T = MetaDaoImpl.META_TYPE_T;
 
     @Inject
     private Cleanup cleanup;
@@ -213,10 +217,10 @@ class TestMetaDaoImpl {
         JooqUtil.context(metaDbConnProvider, context -> {
             final byte unlockedId = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
             final byte lockedId = MetaStatusId.getPrimitiveValue(Status.LOCKED);
-            final int count = context.update(meta)
-                    .set(meta.STATUS, unlockedId)
-                    .set(meta.STATUS_TIME, Instant.now().toEpochMilli())
-                    .where(meta.STATUS.eq(lockedId))
+            final int count = context.update(META_M)
+                    .set(META_M.STATUS, unlockedId)
+                    .set(META_M.STATUS_TIME, Instant.now().toEpochMilli())
+                    .where(META_M.STATUS.eq(lockedId))
                     .execute();
             LOGGER.debug("Unlocked {} meta records", count);
         });
@@ -253,8 +257,8 @@ class TestMetaDaoImpl {
         // Make sure all meta records are a day or so old
         JooqUtil.context(metaDbConnProvider, context -> {
             context
-                    .update(meta)
-                    .set(meta.CREATE_TIME, newCreateTimeMs)
+                    .update(META_M)
+                    .set(META_M.CREATE_TIME, newCreateTimeMs)
                     .execute();
         });
     }
@@ -314,40 +318,40 @@ class TestMetaDaoImpl {
 
     private void dumpMetaTableToDebug() {
         JooqUtil.context(metaDbConnProvider, context -> {
-            final var metaRows = context
+            final List<Record9<Long, Long, Long, Long, Byte, Integer, String, String, String>> metaRows = context
                     .select(
-                            meta.ID,
-                            meta.CREATE_TIME,
-                            meta.EFFECTIVE_TIME,
-                            meta.PARENT_ID,
-                            meta.STATUS,
-                            meta.FEED_ID,
-                            metaFeed.NAME,
-                            metaProcessor.PIPELINE_UUID,
-                            metaType.NAME)
-                    .from(meta)
-                    .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                    .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                    .leftOuterJoin(metaProcessor).on(meta.PROCESSOR_ID.eq(metaProcessor.ID))
-                    .orderBy(meta.ID)
+                            META_M.ID,
+                            META_M.CREATE_TIME,
+                            META_M.EFFECTIVE_TIME,
+                            META_M.PARENT_ID,
+                            META_M.STATUS,
+                            META_M.FEED_ID,
+                            META_FEED_F.NAME,
+                            META_PROCESSOR_P.PIPELINE_UUID,
+                            META_TYPE_T.NAME)
+                    .from(META_M)
+                    .straightJoin(META_FEED_F).on(META_M.FEED_ID.eq(META_FEED_F.ID))
+                    .straightJoin(META_TYPE_T).on(META_M.TYPE_ID.eq(META_TYPE_T.ID))
+                    .leftOuterJoin(META_PROCESSOR_P).on(META_M.PROCESSOR_ID.eq(META_PROCESSOR_P.ID))
+                    .orderBy(META_M.ID)
                     .stream()
                     .toList();
 
             LOGGER.debug("meta rows:\n{}",
                     AsciiTable.builder(metaRows)
-                            .withColumn(Column.of("Id", row -> row.get(meta.ID)))
+                            .withColumn(Column.of("Id", row -> row.get(META_M.ID)))
                             .withColumn(Column.of("Create Time", row ->
-                                    Instant.ofEpochMilli(row.get(meta.CREATE_TIME))
-                                    + " (" + row.get(meta.CREATE_TIME) + ")"))
+                                    Instant.ofEpochMilli(row.get(META_M.CREATE_TIME))
+                                    + " (" + row.get(META_M.CREATE_TIME) + ")"))
                             .withColumn(Column.of("Effective Time", row ->
-                                    Instant.ofEpochMilli(row.get(meta.EFFECTIVE_TIME))
-                                    + " (" + row.get(meta.EFFECTIVE_TIME) + ")"))
-                            .withColumn(Column.of("Parent Id", row -> row.get(meta.PARENT_ID)))
-                            .withColumn(Column.of("Status", row -> row.get(meta.STATUS)))
+                                    Instant.ofEpochMilli(row.get(META_M.EFFECTIVE_TIME))
+                                    + " (" + row.get(META_M.EFFECTIVE_TIME) + ")"))
+                            .withColumn(Column.of("Parent Id", row -> row.get(META_M.PARENT_ID)))
+                            .withColumn(Column.of("Status", row -> row.get(META_M.STATUS)))
                             .withColumn(Column.of("Feed", row ->
-                                    row.get(metaFeed.NAME) + " (" + row.get(meta.FEED_ID) + ")"))
-                            .withColumn(Column.of("Pipe UUID", row -> row.get(metaProcessor.PIPELINE_UUID)))
-                            .withColumn(Column.of("Type Name", row -> row.get(metaType.NAME)))
+                                    row.get(META_FEED_F.NAME) + " (" + row.get(META_M.FEED_ID) + ")"))
+                            .withColumn(Column.of("Pipe UUID", row -> row.get(META_PROCESSOR_P.PIPELINE_UUID)))
+                            .withColumn(Column.of("Type Name", row -> row.get(META_TYPE_T.NAME)))
                             .build());
         });
     }
@@ -1133,7 +1137,7 @@ class TestMetaDaoImpl {
     }
 
     private Instant addDeletedData(final List<Meta> metaList) {
-        assertThat(JooqUtil.getTableCount(metaDbConnProvider, meta))
+        assertThat(JooqUtil.getTableCount(metaDbConnProvider, META_M))
                 .isEqualTo(40);
 
 //        dumpMetaTable();
@@ -1152,14 +1156,14 @@ class TestMetaDaoImpl {
         }
         // Logically delete all the added ones
         JooqUtil.context(metaDbConnProvider, context ->
-                context.update(meta)
-                        .set(meta.STATUS, MetaStatusId.DELETED)
-                        .where(meta.ID.in(metaList.stream()
+                context.update(META_M)
+                        .set(META_M.STATUS, MetaStatusId.DELETED)
+                        .where(META_M.ID.in(metaList.stream()
                                 .map(Meta::getId)
                                 .collect(Collectors.toSet())))
                         .execute());
 
-        assertThat(JooqUtil.getTableCount(metaDbConnProvider, meta))
+        assertThat(JooqUtil.getTableCount(metaDbConnProvider, META_M))
                 .isEqualTo(40 + 10);
 
         return baseTime;
@@ -1170,8 +1174,8 @@ class TestMetaDaoImpl {
      */
     Long getMinMetaId() {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
-                        .select(DSL.min(meta.ID))
-                        .from(meta)
+                        .select(DSL.min(META_M.ID))
+                        .from(META_M)
                         .fetchOptional())
                 .map(Record1::value1)
                 .orElse(null);
@@ -1180,16 +1184,16 @@ class TestMetaDaoImpl {
     static void dumpMetaTable(final MetaDbConnProvider metaDbConnProvider) {
         JooqUtil.context(metaDbConnProvider, context ->
                 LOGGER.debug("processor:\n{}", JooqUtil.toAsciiTable(context.select(
-                                meta.ID,
-                                meta.STATUS,
-                                metaType.NAME,
-                                metaFeed.NAME,
-                                meta.CREATE_TIME,
-                                meta.STATUS_TIME)
-                        .from(meta)
-                        .straightJoin(metaType).on(meta.TYPE_ID.eq(metaType.ID))
-                        .straightJoin(metaFeed).on(meta.FEED_ID.eq(metaFeed.ID))
-                        .orderBy(meta.ID)
+                                META_M.ID,
+                                META_M.STATUS,
+                                META_TYPE_T.NAME,
+                                META_FEED_F.NAME,
+                                META_M.CREATE_TIME,
+                                META_M.STATUS_TIME)
+                        .from(META_M)
+                        .straightJoin(META_TYPE_T).on(META_M.TYPE_ID.eq(META_TYPE_T.ID))
+                        .straightJoin(META_FEED_F).on(META_M.FEED_ID.eq(META_FEED_F.ID))
+                        .orderBy(META_M.ID)
                         .fetch(), false)));
     }
 

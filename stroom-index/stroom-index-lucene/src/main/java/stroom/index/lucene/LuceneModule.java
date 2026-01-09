@@ -21,6 +21,7 @@ import stroom.search.extraction.MemoryIndex;
 import stroom.util.guice.GuiceUtil;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 
 public class LuceneModule extends AbstractModule {
 
@@ -31,5 +32,10 @@ public class LuceneModule extends AbstractModule {
         // Bind this provider.
         GuiceUtil.buildMultiBinder(binder(), LuceneProvider.class).addBinding(Lucene980Provider.class);
         GuiceUtil.buildMultiBinder(binder(), LuceneProvider.class).addBinding(Lucene1031Provider.class);
+    }
+
+    @Provides
+    public FieldFactory getFieldFactory(final DenseVectorFieldCreatorFactory denseVectorFieldCreatorFactory) {
+        return new FieldFactory(denseVectorFieldCreatorFactory);
     }
 }

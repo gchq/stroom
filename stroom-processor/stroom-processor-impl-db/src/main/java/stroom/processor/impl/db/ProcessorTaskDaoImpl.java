@@ -76,6 +76,8 @@ import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.Record6;
 import org.jooq.Result;
+import org.jooq.SelectJoinStep;
+import org.jooq.UpdateConditionStep;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
@@ -97,7 +99,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static java.util.Map.entry;
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFeed.PROCESSOR_FEED;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
@@ -127,18 +128,18 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private static final Field<Integer> COUNT = DSL.count();
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.ofEntries(
-            entry(ProcessorTaskFields.FIELD_ID, PROCESSOR_TASK.ID),
-            entry(ProcessorTaskFields.FIELD_CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS),
-            entry(ProcessorTaskFields.FIELD_START_TIME, PROCESSOR_TASK.START_TIME_MS),
-            entry(ProcessorTaskFields.FIELD_END_TIME_DATE, PROCESSOR_TASK.END_TIME_MS),
-            entry(ProcessorTaskFields.FIELD_FEED, PROCESSOR_FEED.NAME),
-            entry(ProcessorTaskFields.FIELD_PRIORITY, PROCESSOR_FILTER.PRIORITY),
-            entry(ProcessorTaskFields.FIELD_PIPELINE, PROCESSOR.PIPELINE_UUID),
-            entry(ProcessorTaskFields.FIELD_PIPELINE_NAME, PROCESSOR.PIPELINE_UUID),
-            entry(ProcessorTaskFields.FIELD_STATUS, PROCESSOR_TASK.STATUS),
-            entry(ProcessorTaskFields.FIELD_COUNT, COUNT),
-            entry(ProcessorTaskFields.FIELD_NODE, PROCESSOR_NODE.NAME),
-            entry(ProcessorTaskFields.FIELD_POLL_AGE, PROCESSOR_FILTER_TRACKER.LAST_POLL_MS)
+            Map.entry(ProcessorTaskFields.FIELD_ID, PROCESSOR_TASK.ID),
+            Map.entry(ProcessorTaskFields.FIELD_CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS),
+            Map.entry(ProcessorTaskFields.FIELD_START_TIME, PROCESSOR_TASK.START_TIME_MS),
+            Map.entry(ProcessorTaskFields.FIELD_END_TIME_DATE, PROCESSOR_TASK.END_TIME_MS),
+            Map.entry(ProcessorTaskFields.FIELD_FEED, PROCESSOR_FEED.NAME),
+            Map.entry(ProcessorTaskFields.FIELD_PRIORITY, PROCESSOR_FILTER.PRIORITY),
+            Map.entry(ProcessorTaskFields.FIELD_PIPELINE, PROCESSOR.PIPELINE_UUID),
+            Map.entry(ProcessorTaskFields.FIELD_PIPELINE_NAME, PROCESSOR.PIPELINE_UUID),
+            Map.entry(ProcessorTaskFields.FIELD_STATUS, PROCESSOR_TASK.STATUS),
+            Map.entry(ProcessorTaskFields.FIELD_COUNT, COUNT),
+            Map.entry(ProcessorTaskFields.FIELD_NODE, PROCESSOR_NODE.NAME),
+            Map.entry(ProcessorTaskFields.FIELD_POLL_AGE, PROCESSOR_FILTER_TRACKER.LAST_POLL_MS)
     );
 
     private static final Field<?>[] PROCESSOR_TASK_COLUMNS = new Field<?>[]{
@@ -394,7 +395,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
         try {
             // Create all bind values.
-            final Object[][] allBindValues = new Object[streams.entrySet().size()][];
+            final Object[][] allBindValues = new Object[streams.size()][];
             int rowCount = 0;
             for (final Entry<Meta, InclusiveRanges> entry : streams.entrySet()) {
                 final Meta meta = entry.getKey();
@@ -889,7 +890,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 numberOfRows = pageRequest.getLength();
             }
 
-            var select = context.select(dbFields).from(PROCESSOR_TASK);
+            SelectJoinStep<Record> select = context.select(dbFields).from(PROCESSOR_TASK);
             if (nodeUsed) {
                 select = select.leftOuterJoin(PROCESSOR_NODE)
                         .on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID));
@@ -1191,7 +1192,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     public int logicalDeleteByProcessorId(final int processorId) {
         final int count = JooqUtil.withDeadlockRetries(
                 () -> JooqUtil.contextResult(processorDbConnProvider, context -> {
-                    final var query = context
+                    final UpdateConditionStep<ProcessorTaskRecord> query = context
                             .update(PROCESSOR_TASK)
                             .set(PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
                             .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))

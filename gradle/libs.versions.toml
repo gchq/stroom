@@ -18,15 +18,15 @@ jgit = "7.3.0.202506031305-r"
 jmh = "1.37"
 jooq = "3.20.8"
 junit-jupiter = "5.13.1"
-langchain4j = "1.8.0"
-langchain4j-cohere = "1.8.0-beta15"
-langchain4j-jina = "1.8.0-beta15"
+langchain4j = "1.10.0"
+langchain4j-cohere = "1.10.0-beta18"
+langchain4j-jina = "1.10.0-beta18"
 kafka = "3.9.0"
 openai = "4.3.0"
 poi = "5.4.1"
 scylladb = "4.19.0.1"
 simple-java-mail = "8.8.0"
-swagger = "2.2.38"
+swagger = "2.2.41"
 
 [libraries]
 #------Stroom-libs---------------
@@ -116,7 +116,7 @@ javax-inject-gwt = { module = "javax.inject:javax.inject", version = "1" }
 jakarta-inject = { module = "jakarta.inject:jakarta.inject-api", version = "2.0.1" }
 jaxb-api = { module = "jakarta.xml.bind:jakarta.xml.bind-api", version = "4.0.2" }
 jaxb-api-gwt = { module = "javax.xml.bind:jaxb-api", version = "2.3.1" }#"jakarta.xml.bind:jakarta.xml.bind-api", version = "3.0.1" } # Using beta versions of jaxb libs as they resolve the split pkg problem between jaxb-core and jaxb-runtime
-jaxb-impl = { module = "com.sun.xml.bind:jaxb-impl", version = "4.0.5" }
+jaxb-impl = { module = "com.sun.xml.bind:jaxb-impl", version = "4.0.6" }
 #jaxb-impl-gwt = { module = "org.glassfish.jaxb:jaxb-runtime", version = "2.3.1" }#"com.sun.xml.bind:jaxb-impl", version = "3.0.2" }
 #jaxws-api = { module = "javax.xml.ws:jaxws-api", version = "2.2.6" }
 jcl-over-slf4j = { module = "org.slf4j:jcl-over-slf4j" } # version controlled by dropwizard-dependencies
@@ -131,7 +131,7 @@ jetty-servlet = { module = "org.eclipse.jetty:jetty-servlet" } # version control
 jetty-servlets = { module = "org.eclipse.jetty:jetty-servlets" } # version controlled by dropwizard-dependencies
 jgit = { module = "org.eclipse.jgit:org.eclipse.jgit", version.ref = "jgit" }
 jgitssh = { module = "org.eclipse.jgit:org.eclipse.jgit.ssh.apache", version.ref = "jgit" }
-jinjava = { module = "com.hubspot.jinjava:jinjava", version = "2.7.2" }
+jinjava = { module = "com.hubspot.jinjava:jinjava", version = "2.8.2" }
 jmh-core = { module = "org.openjdk.jmh:jmh-core", version.ref = "jmh" }
 jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess", version.ref = "jmh" }
 jooq = { module = "org.jooq:jooq", version.ref = "jooq" }
@@ -163,7 +163,7 @@ mockito-core = { module = "org.mockito:mockito-core" } # version controlled by d
 mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter" } # version controlled by dropwizard-dependencies
 mysql-connector-java = { module = "com.mysql:mysql-connector-j", version = "9.4.0" }
 langchain4j = { module = "dev.langchain4j:langchain4j", version.ref = "langchain4j" }
-langchain4j-http-client-jdk = { module = "dev.langchain4j:langchain4j-http-client-jdk", version.ref = "langchain4j" }
+#langchain4j-http-client-jdk = { module = "dev.langchain4j:langchain4j-http-client-jdk", version.ref = "langchain4j" }
 langchain4j-open-ai = { module = "dev.langchain4j:langchain4j-open-ai", version.ref = "langchain4j" }
 langchain4j-cohere = { module = "dev.langchain4j:langchain4j-cohere", version.ref = "langchain4j-cohere" }
 langchain4j-jina = { module = "dev.langchain4j:langchain4j-jina", version.ref = "langchain4j-jina" }
@@ -204,10 +204,13 @@ download = { id = "de.undercouch.download", version = "4.1.2" }
 # Plugin for producing a tree of task dependencies, run task 'taskTree'
 task-tree = { id = "com.dorongold.task-tree", version = "4.0.1" }
 
-shadow = { id = "com.gradleup.shadow", version = "9.0.0-beta6" }
+# Plugin for producing fat jars and/or shaded jars
+shadow = { id = "com.gradleup.shadow", version = "9.3.0" }
 
+# Plugin for producing the the Jooq generated code for 'writing' SQL in java.
 jooq = { id = "nu.studer.jooq", version = "8.2.3" }
 
+# Plugin for performing DB migrations
 flyway = { id = "org.flywaydb.flyway", version = "11.9.1" }
 
 jdeps = { id = "org.kordamp.gradle.jdeps", version = "0.20.0" }

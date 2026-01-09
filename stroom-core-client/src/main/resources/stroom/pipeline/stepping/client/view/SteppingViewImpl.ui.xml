@@ -8,7 +8,7 @@
         </g:FlowPanel>
         <g:ThinSplitLayoutPanel ui:field="bottomLayout" styleName="dock-max">
             <g:north size="31">
-                <g:ScrollPanel ui:field="treeContainer" addStyleNames="max"/>
+                <g:ScrollPanel ui:field="treeContainer" addStyleNames="max steppingViewImpl-treeContainer"/>
             </g:north>
             <g:center>
                 <tab:LayerContainerImpl ui:field="layerContainer" styleName="max"/>

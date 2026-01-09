@@ -29,6 +29,9 @@ import stroom.pathways.shared.pathway.ConstraintValue;
 import stroom.pathways.shared.pathway.IntegerRange;
 import stroom.pathways.shared.pathway.IntegerSet;
 import stroom.pathways.shared.pathway.IntegerValue;
+import stroom.pathways.shared.pathway.LongRange;
+import stroom.pathways.shared.pathway.LongSet;
+import stroom.pathways.shared.pathway.LongValue;
 import stroom.pathways.shared.pathway.NanoTimeRange;
 import stroom.pathways.shared.pathway.NanoTimeValue;
 import stroom.pathways.shared.pathway.PathKey;
@@ -183,24 +186,25 @@ public class TracePredicate implements Predicate<Trace> {
 
         } else {
             return switch (value) {
-                case final Integer integer -> checkIntConstraint(getConstraintValue(constraint), integer);
-                case final Boolean bool -> checkBooleanConstraint(getConstraintValue(constraint), bool);
-                case final String string -> checkStringConstraint(getConstraintValue(constraint), string);
-                case final NanoTime nanoTime -> checkNanoTimeConstraint(getConstraintValue(constraint), nanoTime);
-                case final AnyValue anyValue -> {
+                case final Integer val -> checkIntConstraint(getConstraintValue(constraint), val);
+                case final Long val -> checkLongConstraint(getConstraintValue(constraint), val);
+                case final Boolean val -> checkBooleanConstraint(getConstraintValue(constraint), val);
+                case final String val -> checkStringConstraint(getConstraintValue(constraint), val);
+                case final NanoTime val -> checkNanoTimeConstraint(getConstraintValue(constraint), val);
+                case final AnyValue val -> {
                     // Unwrap.
-                    if (anyValue.getStringValue() != null) {
+                    if (val.getStringValue() != null) {
                         yield checkConstraint(constraints,
                                 name,
-                                anyValue.getStringValue());
-                    } else if (anyValue.getBoolValue() != null) {
+                                val.getStringValue());
+                    } else if (val.getBoolValue() != null) {
                         yield checkConstraint(constraints,
                                 name,
-                                anyValue.getBoolValue());
-                    } else if (anyValue.getIntValue() != null) {
+                                val.getBoolValue());
+                    } else if (val.getIntValue() != null) {
                         yield checkConstraint(constraints,
                                 name,
-                                anyValue.getIntValue());
+                                val.getIntValue());
                     }
 
                     yield false;
@@ -243,6 +247,27 @@ public class TracePredicate implements Predicate<Trace> {
             }
             case final IntegerRange intRange -> {
                 return intRange.getMin() <= value && intRange.getMax() >= value;
+            }
+            default -> {
+                return current instanceof AnyTypeValue;
+            }
+        }
+    }
+
+    private boolean checkLongConstraint(final ConstraintValue current,
+                                       final long value) {
+        switch (current) {
+            case null -> {
+                return false;
+            }
+            case final LongValue longValue -> {
+                return Objects.equals(longValue.getValue(), value);
+            }
+            case final LongSet longSet -> {
+                return longSet.getSet().contains(value);
+            }
+            case final LongRange longRange -> {
+                return longRange.getMin() <= value && longRange.getMax() >= value;
             }
             default -> {
                 return current instanceof AnyTypeValue;

@@ -16,13 +16,14 @@
 
 package stroom.credentials.shared;
 
-import stroom.util.shared.PageRequest;
+import stroom.docref.DocRef;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -39,24 +40,31 @@ public interface CredentialsResource extends RestResource, DirectRestService {
      * Returns the list of all credentials, paged as necessary.
      */
     @POST
-    @Path("/list")
+    @Path("/findCredentialsWithPermissions")
     @Operation(
-            summary = "Lists credentials",
-            operationId = "listCredentials")
-    ResultPage<CredentialsWithPerms> listCredentials(PageRequest pageRequest);
+            summary = "Find credentials with permissions",
+            operationId = "findCredentialsWithPermissions")
+    ResultPage<CredentialWithPerms> findCredentialsWithPermissions(FindCredentialRequest request);
 
     /**
-     * Creates credential in the DB. Errors are indicated in the return value.
-     * Note that the UUID of the created credential will be new - UUIDs must
-     * be created on the server for security.
+     * Returns the list of all credentials, paged as necessary.
      */
     @POST
-    @Path("/create")
+    @Path("/findCredentials")
     @Operation(
-            summary = "Creates the credential",
-            operationId = "createCredential")
-    CredentialsResponse createCredentials(CredentialsCreateRequest request);
+            summary = "Find credentials",
+            operationId = "findCredentials")
+    ResultPage<Credential> findCredentials(FindCredentialRequest request);
 
+    /**
+     * Create a temporary doc ref to use for new credentials so that we can assign permissions straight away.
+     */
+    @GET
+    @Path("/createDocRef")
+    @Operation(
+            summary = "Returns a newly generated DocRef that can be used to for permissions",
+            operationId = "createDocRef")
+    DocRef createDocRef();
 
     /**
      * Stores a credential in the DB. Errors are indicated in the return value.
@@ -67,17 +75,27 @@ public interface CredentialsResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Stores the credential",
             operationId = "storeCredential")
-    CredentialsResponse storeCredentials(Credentials credentials);
+    Credential storeCredential(PutCredentialRequest credential);
 
     /**
      * Gets one credential by UUID.
      */
     @POST
-    @Path("/get")
+    @Path("/getByUuid")
     @Operation(
-            summary = "Returns the credentials with the given UUID, if it exists, or null if it does not exist",
-            operationId = "getCredentialsWithUuid")
-    CredentialsResponse getCredentials(String uuid);
+            summary = "Returns the credential with the given UUID, if it exists, or null if it does not exist",
+            operationId = "getCredentialByUuid")
+    Credential getCredentialByUuid(String uuid);
+
+    /**
+     * Gets one credential by name.
+     */
+    @POST
+    @Path("/getByName")
+    @Operation(
+            summary = "Returns the credential with the given name, if it exists, or null if it does not exist",
+            operationId = "getCredentialByName")
+    Credential getCredentialByName(String name);
 
     /**
      * Deletes one credential by UUID.
@@ -87,26 +105,5 @@ public interface CredentialsResource extends RestResource, DirectRestService {
     @Operation(
             summary = "Deletes the credentials and secret with the given UUID",
             operationId = "deleteCredential")
-    CredentialsResponse deleteCredentials(String uuid);
-
-    /**
-     * Stores the secret to the database.
-     */
-    @POST
-    @Path("/storeSecret")
-    @Operation(
-            summary = "Stores the secret in the database under the given ID",
-            operationId = "storeSecret")
-    CredentialsResponse storeSecret(CredentialsSecret secret);
-
-    /**
-     * Gets the secret from the database.
-     */
-    @POST
-    @Path("/getSecret")
-    @Operation(
-            summary = "Gets a secret from the database given the ID",
-            operationId = "getSecret")
-    CredentialsResponse getSecret(String credentialsId);
-
+    Boolean deleteCredentials(String uuid);
 }

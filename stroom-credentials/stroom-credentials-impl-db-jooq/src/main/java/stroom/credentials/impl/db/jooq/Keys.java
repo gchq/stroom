@@ -20,15 +20,13 @@
 package stroom.credentials.impl.db.jooq;
 
 
-import stroom.credentials.impl.db.jooq.tables.Credentials;
-import stroom.credentials.impl.db.jooq.tables.CredentialsSecret;
-import stroom.credentials.impl.db.jooq.tables.records.CredentialsRecord;
-import stroom.credentials.impl.db.jooq.tables.records.CredentialsSecretRecord;
-
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
+
+import stroom.credentials.impl.db.jooq.tables.Credential;
+import stroom.credentials.impl.db.jooq.tables.records.CredentialRecord;
 
 
 /**
@@ -42,6 +40,6 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final UniqueKey<CredentialsRecord> KEY_CREDENTIALS_PRIMARY = Internal.createUniqueKey(Credentials.CREDENTIALS, DSL.name("KEY_credentials_PRIMARY"), new TableField[] { Credentials.CREDENTIALS.UUID }, true);
-    public static final UniqueKey<CredentialsSecretRecord> KEY_CREDENTIALS_SECRET_PRIMARY = Internal.createUniqueKey(CredentialsSecret.CREDENTIALS_SECRET, DSL.name("KEY_credentials_secret_PRIMARY"), new TableField[] { CredentialsSecret.CREDENTIALS_SECRET.UUID }, true);
+    public static final UniqueKey<CredentialRecord> KEY_CREDENTIAL_NAME = Internal.createUniqueKey(Credential.CREDENTIAL, DSL.name("KEY_credential_name"), new TableField[] { Credential.CREDENTIAL.NAME }, true);
+    public static final UniqueKey<CredentialRecord> KEY_CREDENTIAL_PRIMARY = Internal.createUniqueKey(Credential.CREDENTIAL, DSL.name("KEY_credential_PRIMARY"), new TableField[] { Credential.CREDENTIAL.UUID }, true);
 }

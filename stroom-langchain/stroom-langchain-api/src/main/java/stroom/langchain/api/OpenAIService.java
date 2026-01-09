@@ -19,7 +19,6 @@ package stroom.langchain.api;
 import stroom.docref.DocRef;
 import stroom.openai.shared.OpenAIModelDoc;
 
-import com.openai.models.models.Model;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.scoring.ScoringModel;
@@ -28,11 +27,9 @@ public interface OpenAIService {
 
     OpenAIModelDoc getOpenAIModelDoc(DocRef docRef);
 
-    Model getModel(OpenAIModelDoc modelDoc);
+    String getModel(OpenAIModelDoc modelDoc);
 
     ChatModel getChatModel(OpenAIModelDoc modelDoc);
-
-    ChatModel getChatModel(String modelId, String baseUrl, String apiKey);
 
     EmbeddingModel getEmbeddingModel(OpenAIModelDoc modelDoc);
 

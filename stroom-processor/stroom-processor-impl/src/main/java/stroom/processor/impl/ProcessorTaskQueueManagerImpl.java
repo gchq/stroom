@@ -352,8 +352,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                             CompletableFuture
                                     .supplyAsync(taskContextFactory.contextResult(
                                                     "Fill task queue",
-                                                    (taskContext) ->
-                                                            queueNewTasks(taskContext)),
+                                                    this::queueNewTasks),
                                             executor)
                                     .whenComplete((result, error) -> {
                                         try {

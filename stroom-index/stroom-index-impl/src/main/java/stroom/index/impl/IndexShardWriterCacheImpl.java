@@ -394,7 +394,6 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private void clean(final IndexShard indexShard) {
         try {
             LOGGER.info(() -> "Changing shard status to closed (" + indexShard + ")");
-            indexShard.setStatus(IndexShardStatus.CLOSED);
             indexShardDao.reset(indexShard.getId());
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);

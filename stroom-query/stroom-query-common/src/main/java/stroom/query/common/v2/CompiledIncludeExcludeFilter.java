@@ -19,6 +19,7 @@ package stroom.query.common.v2;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.query.api.IncludeExcludeFilter;
+import stroom.util.PredicateUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +27,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-
-import static stroom.util.PredicateUtil.createWildCardedInPredicate;
 
 public class CompiledIncludeExcludeFilter {
 
@@ -54,7 +53,7 @@ public class CompiledIncludeExcludeFilter {
 
         if (!filter.getIncludeDictionaries().isEmpty()) {
             for (final DocRef dictionary : filter.getIncludeDictionaries()) {
-                final Predicate<String> includeDictionary = createWildCardedInPredicate(
+                final Predicate<String> includeDictionary = PredicateUtil.createWildCardedInPredicate(
                         loadWords(dictionary, wordListProvider), true);
                 optional = optional
                         .map(predicate -> predicate.or(includeDictionary))
@@ -79,7 +78,7 @@ public class CompiledIncludeExcludeFilter {
 
         if (!filter.getExcludeDictionaries().isEmpty()) {
             for (final DocRef dictionary : filter.getExcludeDictionaries()) {
-                final Predicate<String> excludeDictionary = Predicate.not(createWildCardedInPredicate(
+                final Predicate<String> excludeDictionary = Predicate.not(PredicateUtil.createWildCardedInPredicate(
                         loadWords(dictionary, wordListProvider), true));
                 optional = optional
                         .map(predicate -> predicate.and(excludeDictionary))

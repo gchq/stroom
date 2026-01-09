@@ -68,6 +68,7 @@ include 'stroom-cluster:stroom-cluster-task-impl'
 // Config
 include 'stroom-config:stroom-config-app'
 include 'stroom-config:stroom-config-common'
+include 'stroom-config:stroom-config-global-api'
 include 'stroom-config:stroom-config-global-impl'
 include 'stroom-config:stroom-config-global-impl-db'
 include 'stroom-config:stroom-config-global-impl-db-jooq'
@@ -184,6 +185,7 @@ include 'stroom-kafka:stroom-kafka-impl'
 // LangChain (LLM integration)
 include 'stroom-langchain:stroom-langchain-api'
 include 'stroom-langchain:stroom-langchain-impl'
+include 'stroom-langchain:stroom-langchain-mock'
 
 // Lifecycle
 include 'stroom-lifecycle:stroom-lifecycle-api'

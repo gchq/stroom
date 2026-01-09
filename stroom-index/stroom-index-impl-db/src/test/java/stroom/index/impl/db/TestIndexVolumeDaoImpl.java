@@ -24,6 +24,7 @@ import stroom.util.AuditUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.assertj.core.api.Assertions;
 import org.jooq.exception.DataAccessException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -35,7 +36,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestIndexVolumeDaoImpl {
 
@@ -95,7 +95,6 @@ class TestIndexVolumeDaoImpl {
         assertThat(updatedIndexVolume.getNodeName()).isEqualTo(newNodeName);
         assertThat(updatedIndexVolume.getPath()).isEqualTo(newPath);
     }
-
 
     @Test
     void testDelete() {
@@ -163,7 +162,8 @@ class TestIndexVolumeDaoImpl {
 
         // When / then
         indexVolume.setIndexVolumeGroupId(null);
-        assertThrows(DataAccessException.class, () -> indexVolumeDao.update(indexVolume));
+        Assertions.assertThatThrownBy(() -> indexVolumeDao.update(indexVolume))
+                .isInstanceOf(DataAccessException.class);
     }
 
     private IndexVolume createVolume(final int indexVolumeGroupId) {

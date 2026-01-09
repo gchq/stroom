@@ -23,6 +23,7 @@ import stroom.app.uri.UriFactoryModule;
 import stroom.config.global.impl.GlobalConfigBootstrapModule;
 import stroom.config.global.impl.db.GlobalConfigDaoModule;
 import stroom.index.VolumeTestConfigModule;
+import stroom.langchain.impl.MockOpenAIModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockUserSecurityContextModule;
@@ -54,5 +55,6 @@ public class CoreTestModule extends AbstractModule {
         install(new MockMetaStatisticsModule());
         install(new stroom.test.DatabaseTestControlModule());
         install(new JerseyModule());
+        install(new MockOpenAIModule());
     }
 }

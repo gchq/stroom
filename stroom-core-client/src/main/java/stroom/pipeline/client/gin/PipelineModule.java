@@ -27,7 +27,6 @@ import stroom.pipeline.client.presenter.TextConverterSettingsPresenter;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.client.presenter.XsltPresenter;
 import stroom.pipeline.client.view.TextConverterSettingsViewImpl;
-import stroom.pipeline.stepping.client.PipelineSteppingPlugin;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter;
@@ -66,11 +65,17 @@ import stroom.pipeline.structure.client.view.PipelineStructureViewImpl;
 import stroom.pipeline.structure.client.view.PipelineTreeViewImpl;
 import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter;
 import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter.BatchProcessorFilterEditView;
+import stroom.processor.client.presenter.EditFeedDependencyPresenter;
+import stroom.processor.client.presenter.EditFeedDependencyPresenter.EditFeedDependencyView;
+import stroom.processor.client.presenter.FeedDependencyPresenter;
+import stroom.processor.client.presenter.FeedDependencyPresenter.FeedDependencyView;
 import stroom.processor.client.presenter.ProcessorEditPresenter;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
 import stroom.processor.client.view.BatchProcessorFilterEditViewImpl;
+import stroom.processor.client.view.EditFeedDependencyViewImpl;
+import stroom.processor.client.view.FeedDependencyViewImpl;
 import stroom.processor.client.view.ProcessorEditViewImpl;
 import stroom.processor.client.view.ProcessorViewImpl;
 import stroom.processor.task.client.ProcessorTaskPlugin;
@@ -93,7 +98,6 @@ public class PipelineModule extends PluginModule {
         bind(XsltPresenter.class);
 
         bindPlugin(PipelinePlugin.class);
-        bindPlugin(PipelineSteppingPlugin.class);
         bind(PipelinePresenter.class);
         bindPresenterWidget(
                 StepLocationLinkPresenter.class,
@@ -125,6 +129,14 @@ public class PipelineModule extends PluginModule {
                 BatchProcessorFilterEditPresenter.class,
                 BatchProcessorFilterEditView.class,
                 BatchProcessorFilterEditViewImpl.class);
+        bindPresenterWidget(
+                FeedDependencyPresenter.class,
+                FeedDependencyView.class,
+                FeedDependencyViewImpl.class);
+        bindPresenterWidget(
+                EditFeedDependencyPresenter.class,
+                EditFeedDependencyView.class,
+                EditFeedDependencyViewImpl.class);
 
         bindPlugin(ProcessorTaskPlugin.class);
         bindPresenterWidget(ProcessorTaskPresenter.class, ProcessorTaskView.class,

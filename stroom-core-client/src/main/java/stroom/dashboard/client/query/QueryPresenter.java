@@ -20,6 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.FireAlertEventFunction;
 import stroom.core.client.LocationManager;
 import stroom.core.client.event.WindowCloseEvent;
+import stroom.core.client.messages.ErrorMessageTemplates;
 import stroom.dashboard.client.main.AbstractRefreshableComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
@@ -90,6 +91,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class QueryPresenter
         extends AbstractRefreshableComponentPresenter<QueryView>
@@ -99,6 +101,7 @@ public class QueryPresenter
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final ResultStoreResource RESULT_STORE_RESOURCE = GWT.create(ResultStoreResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
+    private static final ErrorMessageTemplates ERROR_MESSAGE_TEMPLATES = GWT.create(ErrorMessageTemplates.class);
 
     public static final ComponentType TYPE = new ComponentType(0, "query", "Query", ComponentUse.PANEL);
     static final int TEN_SECONDS = 10000;
@@ -480,11 +483,13 @@ public class QueryPresenter
         final ExpressionOperator root = expressionPresenter.write();
 
         final DashboardContext dashboardContext = getDashboardContext();
-        final QueryData queryData = new QueryData();
-        queryData.setDataSource(getQuerySettings().getDataSource());
-        queryData.setExpression(root);
-        queryData.setParams(dashboardContext.getParams());
-        queryData.setTimeRange(dashboardContext.getResolvedTimeRange());
+        final QueryData queryData = QueryData
+                .builder()
+                .dataSource(getQuerySettings().getDataSource())
+                .expression(root)
+                .params(dashboardContext.getParams())
+                .timeRange(dashboardContext.getResolvedTimeRange())
+                .build();
 
         final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");
@@ -511,15 +516,14 @@ public class QueryPresenter
                         .onShow(e -> processorLimitsPresenter.getView().focus())
                         .onHideRequest(e -> {
                             if (e.isOk()) {
-                                final Limits limits = new Limits();
+                                final Limits.Builder limitsBuilder = Limits.builder();
                                 if (processorLimitsPresenter.getRecordLimit() != null) {
-                                    limits.setEventCount(processorLimitsPresenter.getRecordLimit());
+                                    limitsBuilder.eventCount(processorLimitsPresenter.getRecordLimit());
                                 }
                                 if (processorLimitsPresenter.getTimeLimitMins() != null) {
-                                    limits.setDurationMs(processorLimitsPresenter.getTimeLimitMins() * 60 * 1000);
+                                    limitsBuilder.durationMs(processorLimitsPresenter.getTimeLimitMins() * 60 * 1000);
                                 }
-                                queryData.setLimits(limits);
-                                openEditor(queryData, pipeline);
+                                createProcessFilter(queryData.copy().limits(limitsBuilder.build()).build(), pipeline);
                             }
                             e.hide();
                         })
@@ -528,7 +532,8 @@ public class QueryPresenter
         }, this);
     }
 
-    private void openEditor(final QueryData queryData, final DocRef pipeline) {
+    private void createProcessFilter(final QueryData queryData,
+                                     final DocRef pipeline) {
         // Now create the processor filter using the find stream criteria.
         final CreateProcessFilterRequest request = CreateProcessFilterRequest
                 .builder()
@@ -553,28 +558,39 @@ public class QueryPresenter
     private void showErrors() {
         if (!currentErrors.isEmpty()) {
             if (currentErrors.containsAny(Severity.FATAL_ERROR, Severity.ERROR)) {
-                fireAlertEvent(AlertEvent::fireError, "error", Severity.FATAL_ERROR, Severity.ERROR);
+                fireAlertEvent(AlertEvent::fireError);
             } else if (currentErrors.containsAny(Severity.WARNING)) {
-                fireAlertEvent(AlertEvent::fireWarn, "warning", Severity.WARNING);
+                fireAlertEvent(AlertEvent::fireWarn);
             } else if (currentErrors.containsAny(Severity.INFO)) {
-                fireAlertEvent(AlertEvent::fireInfo, "message", Severity.INFO);
+                fireAlertEvent(AlertEvent::fireInfo);
             }
         }
     }
 
-    private void fireAlertEvent(final FireAlertEventFunction fireAlertEventFunction,
-                           final String messageType, final Severity...severity) {
-        final List<String> messages = currentErrors.get(severity);
-        final String msg = getMessage(messageType, messages.size());
-        final String errorMessages = String.join("\n", messages);
-        fireAlertEventFunction.apply(this, msg, errorMessages, null);
+    private void fireAlertEvent(final FireAlertEventFunction fireAlertEventFunction) {
+        final List<ErrorMessage> errorMessages = currentErrors.getErrorMessagesOrderedBySeverity();
+        final String msg = getAlertMessage(errorMessages.size());
+        final List<String> messages = errorMessages.stream()
+                .map(this::toDisplayMessage)
+                .collect(Collectors.toList());
+
+        fireAlertEventFunction.apply(this, msg, String.join("\n", messages), null);
     }
 
-    private String getMessage(final String messageType, final int numberOfMessages) {
+    private String toDisplayMessage(final ErrorMessage errorMessage) {
+        if (errorMessage.getNode() == null) {
+            return ERROR_MESSAGE_TEMPLATES.errorMessage(errorMessage.getSeverity().getDisplayValue(),
+                    errorMessage.getMessage());
+        }
+        return ERROR_MESSAGE_TEMPLATES.errorMessageWithNode(errorMessage.getSeverity().getDisplayValue(),
+                errorMessage.getMessage(), errorMessage.getNode());
+    }
+
+    private String getAlertMessage(final int numberOfMessages) {
         return numberOfMessages == 1
-                ? ("The following " + messageType + " was created while running this search:")
-                : ("The following " + numberOfMessages
-                   + " " + messageType + "s have been created while running this search:");
+                ? ERROR_MESSAGE_TEMPLATES.errorMessageCreatedSingular()
+                :
+                        ERROR_MESSAGE_TEMPLATES.errorMessagesCreatedPlural();
     }
 
     @Override
@@ -609,7 +625,7 @@ public class QueryPresenter
 
     @Override
     public void run(final boolean incremental,
-                     final boolean storeHistory) {
+                    final boolean storeHistory) {
         run(incremental, storeHistory, null);
     }
 
@@ -907,7 +923,9 @@ public class QueryPresenter
     }
 
     private void setErrorsVisible(final boolean show) {
-        errorsButton.asWidget().getElement().getStyle().setOpacity(show ? 1 : 0);
+        errorsButton.asWidget().getElement().getStyle().setOpacity(show
+                ? 1
+                : 0);
     }
 
     @Override

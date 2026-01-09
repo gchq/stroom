@@ -37,6 +37,7 @@ import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
+import stroom.processor.shared.FeedDependency;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
@@ -85,6 +86,11 @@ public class MockMetaService implements MetaService, Clearable {
             return null;
         }
         return currentId;
+    }
+
+    @Override
+    public Long getMaxId(final long maxCreateTimeMs) {
+        return getMaxId();
     }
 
     @Override
@@ -418,5 +424,10 @@ public class MockMetaService implements MetaService, Clearable {
     @Override
     public Set<Long> exists(final Set<Long> ids) {
         return Collections.emptySet();
+    }
+
+    @Override
+    public Instant getFeedDependencyEffectiveTime(final List<FeedDependency> feedDependencies) {
+        return null;
     }
 }

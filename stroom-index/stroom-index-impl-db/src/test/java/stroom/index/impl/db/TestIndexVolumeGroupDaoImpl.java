@@ -46,10 +46,10 @@ class TestIndexVolumeGroupDaoImpl {
     @Test
     void testCreate() {
         // Given
-        final var groupName = TestData.createVolumeGroupName();
+        final String groupName = TestData.createVolumeGroupName();
 
         // When
-        final var group = createGroup(groupName);
+        final IndexVolumeGroup group = createGroup(groupName);
 
         // Then
         assertThat(group.getName()).isEqualTo(groupName);
@@ -59,17 +59,17 @@ class TestIndexVolumeGroupDaoImpl {
     @Test
     void testUpdate() {
         // Given
-        final var groupName = TestData.createVolumeGroupName();
-        final var group = createGroup(groupName);
-        final var newGroupName = TestData.createVolumeGroupName();
-        final var reloadedGroup = indexVolumeGroupDao.get(group.getId());
+        final String groupName = TestData.createVolumeGroupName();
+        final IndexVolumeGroup group = createGroup(groupName);
+        final String newGroupName = TestData.createVolumeGroupName();
+        final IndexVolumeGroup reloadedGroup = indexVolumeGroupDao.get(group.getId());
 
         // When
         reloadedGroup.setName(newGroupName);
         indexVolumeGroupDao.update(reloadedGroup);
 
         // Then
-        final var updatedGroup = indexVolumeGroupDao.get(group.getId());
+        final IndexVolumeGroup updatedGroup = indexVolumeGroupDao.get(group.getId());
         assertThat(updatedGroup).isNotNull();
         assertThat(updatedGroup.getName()).isEqualTo(newGroupName);
     }
@@ -78,14 +78,14 @@ class TestIndexVolumeGroupDaoImpl {
     @Test
     void testDelete() {
         // Given
-        final var groupName = TestData.createVolumeGroupName();
-        final var group = createGroup(groupName);
+        final String groupName = TestData.createVolumeGroupName();
+        final IndexVolumeGroup group = createGroup(groupName);
 
         // When
         indexVolumeGroupDao.delete(group.getId());
 
         // Then
-        final var deletedGroup = indexVolumeGroupDao.get(group.getId());
+        final IndexVolumeGroup deletedGroup = indexVolumeGroupDao.get(group.getId());
         assertThat(deletedGroup).isNull();
     }
 

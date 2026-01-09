@@ -25,6 +25,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.item.client.SelectionBox;
 import stroom.meta.shared.MetaResource;
+import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
@@ -98,7 +99,8 @@ public class NewPropertyPresenter
         }
     }
 
-    public void edit(final PipelinePropertyType propertyType,
+    public void edit(final PipelineElement pipelineElement,
+                     final PipelinePropertyType propertyType,
                      final PipelineProperty defaultProperty,
                      final PipelineProperty inheritedProperty,
                      final PipelineProperty localProperty,
@@ -112,7 +114,7 @@ public class NewPropertyPresenter
         this.localProperty = localProperty;
         this.source = source;
 
-        getView().setElement(defaultProperty.getElement());
+        getView().setElement(pipelineElement.getDisplayName());
         getView().setName(defaultProperty.getName());
         getView().setDescription(propertyType.getDescription());
         getView().setDefaultValue(defaultValue);

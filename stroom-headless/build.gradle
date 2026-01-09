@@ -77,6 +77,8 @@ shadowJar {
 
     // A transformer to merges files in META-INF/services
     mergeServiceFiles()
+    // Without INCLUDE, it drops any duplicates
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
 
     archiveFileName = fatJarName
 }

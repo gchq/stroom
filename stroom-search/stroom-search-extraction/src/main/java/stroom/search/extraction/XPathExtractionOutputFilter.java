@@ -16,6 +16,7 @@
 
 package stroom.search.extraction;
 
+import stroom.index.shared.IndexConstants;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -55,9 +56,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import static stroom.index.shared.IndexConstants.EVENT_ID;
-import static stroom.index.shared.IndexConstants.STREAM_ID;
 
 
 @ConfigurableElement(
@@ -180,10 +178,10 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
             if (fieldName != null) {
                 String xpathPart = fieldName;
 
-                if (EVENT_ID.equals(xpathPart)) {
-                    xpathPart = "@" + EVENT_ID;
-                } else if (STREAM_ID.equals(xpathPart)) {
-                    xpathPart = "@" + STREAM_ID;
+                if (IndexConstants.EVENT_ID.equals(xpathPart)) {
+                    xpathPart = "@" + IndexConstants.EVENT_ID;
+                } else if (IndexConstants.STREAM_ID.equals(xpathPart)) {
+                    xpathPart = "@" + IndexConstants.STREAM_ID;
                 }
 
                 final String xpath = "/" + topLevelElementToSkip

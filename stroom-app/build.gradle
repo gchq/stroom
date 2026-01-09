@@ -152,6 +152,7 @@ dependencies {
     implementation project(':stroom-job:stroom-job-impl-db-jooq')
     implementation project(':stroom-kafka:stroom-kafka-api')
     implementation project(':stroom-kafka:stroom-kafka-impl')
+    implementation project(':stroom-langchain:stroom-langchain-api')
     implementation project(':stroom-langchain:stroom-langchain-impl')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-impl')
@@ -287,6 +288,7 @@ dependencies {
     testImplementation project(':stroom-headless')
     testImplementation project(':stroom-importexport:stroom-importexport-api')
     testImplementation project(':stroom-index:stroom-index-mock')
+    testImplementation project(':stroom-langchain:stroom-langchain-mock')
     testImplementation project(':stroom-meta:stroom-meta-api')
     testImplementation project(':stroom-meta:stroom-meta-mock')
     testImplementation project(':stroom-node:stroom-node-mock')
@@ -316,6 +318,7 @@ dependencies {
     testImplementation libs.guice.grapher
     testImplementation libs.hikari
     testImplementation libs.jinjava
+    testImplementation libs.langchain4j
     testImplementation libs.lmdbjava
     testImplementation libs.saxon.he
     testImplementation libs.slf4j.api
@@ -396,6 +399,8 @@ shadowJar {
 
     // A transformer to merges files in META-INF/services
     mergeServiceFiles()
+    // Without INCLUDE, it drops any duplicates
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
 
     archiveFileName = fatJarName
     exclude '**/gwt-unitCache'

@@ -2,9 +2,9 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FormPanel ui:field="form" styleName="max form">
+    <g:FlowPanel styleName="max form">
         <form:FormGroup identity="importConfigFile" label="File">
-            <g:FileUpload ui:field="fileUpload" addStyleNames="w-100" name="fileUpload"/>
+            <form:CustomFileUpload ui:field="fileUpload"/>
         </form:FormGroup>
-    </g:FormPanel>
+    </g:FlowPanel>
 </ui:UiBinder>

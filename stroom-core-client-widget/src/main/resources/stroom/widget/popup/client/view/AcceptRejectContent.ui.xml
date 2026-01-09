@@ -20,7 +20,7 @@
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:SimplePanel ui:field="content" styleName="dialog-content"/>
-        <g:FlowPanel styleName="dialog-buttons">
+        <g:FlowPanel styleName="dialog-buttons dialog-buttons-right">
             <b:Button ui:field="accept" addStyleNames="allow-focus acceptRejectContent-button acceptRejectContent-accept Button--contained-primary"
                       text="Accept"/>
             <b:Button ui:field="reject" addStyleNames="allow-focus acceptRejectContent-button acceptRejectContent-reject Button--contained-secondary"

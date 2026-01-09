@@ -51,7 +51,7 @@ public class FindAccountRequest extends ExpressionCriteria {
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder extends AbstractBuilder<FindAccountRequest, Builder> {
+    public static class Builder extends ExpressionCriteriaBuilder<FindAccountRequest, Builder> {
 
         @Override
         protected Builder self() {

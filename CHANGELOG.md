@@ -13,6 +13,73 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.17] - 2026-01-08
+
+* Issue **#5282** : Processor task creation now supports feed dependencies to delay processing until reference data is available.
+
+* Issue **#5339** : Fix NPE thrown when adding vises to dashboards.
+
+* Issue **#5337** : Fix analytic doc serialisation.
+
+
+## [v7.11-beta.16] - 2026-01-08
+
+* Issue **#5100** : Fix selection filters auto quoting parameter replacements.
+
+
+## [v7.11-beta.15] - 2026-01-07
+
+* Issue **#4124** : Fix NodeResultSerialiser and add node name to errors.
+
+* Issue **#5256** : Add option to omit documentation from rule detection.
+
+* Issue **#5309** : Add long support to pathway values.
+
+* Remove static imports except in test classes.
+
+* Uplift base docker images to eclipse-temurin:25.0.1_8-jdk-alpine-3.23.
+
+* Uplift dependency com.hubspot.jinjava:jinjava from 2.7.2 to 2.8.2.
+
+* Uplift dependency swagger-* from 2.2.38 to 2.2.41.
+
+* Uplift com.sun.xml.bind:jaxb-impl from 4.0.5 to 4.0.6.
+
+* Uplift lanchain4j dependencies from 1.8.0-beta15 to 1.10.0-beta18 and 1.8.0 to 1.10.0.
+
+* Issue **#5303** : Make AI HTTP connection configurable.
+
+* Issue **#5303** : Make AI HTTP SSL certificate stores configurable.
+
+* Issue **#5303** : Add KNN dense vector support to Lucene indexes.
+
+* Issue **#5303** : Pass only visible columns to the Ask Stroom AI service.
+
+* Issue **#5317** : Pathways now load current state to not endlessly output mutations.
+
+* Issue **#4123** : New pipeline stepping mode.
+
+* Issue **#5100** : Fix selection filters auto quoting parameter replacements.
+
+* Issue **#5318** : Fix Plan B session condensation.
+
+* Issue **#5288** : Fix config defaults for `ForwardHttpPostConfig` and `HttpClientConfiguration`.
+
+* Issue **#5281** : Fix behaviour of query expression IN condition.
+
+
+## [v7.11-beta.14] - 2025-12-10
+
+* Issue **#5290** : Plan B trace store now requires data to conform to Plan B trace schema.
+
+* Fix build issue causing Stroom to not boot.
+
+
+## [v7.11-beta.13] - 2025-12-09
+
+* Issue **#5304** : Fix error when unzipping the stroom-app-all jar file. This problem was also leading to AV scan alerts.
+
+
 ## [v7.11-beta.12] - 2025-12-03
 
 * Fix Files list on Stream Info pane so that you can copy each file path individually.
@@ -1246,7 +1313,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 ## [v7.5-beta.2] - 2024-06-17
 
-* Issue **#4278** : Make document deletion also delete the permission records for that document. Also run migration `V07_04_00_005__Orphaned_Doc_Perms` which will delete all document permissions (in table `doc_permission`) for docs that are not a folder, not the System doc, are not a valid doc (i.e. in the `doc` table) and are not a pipeline filter. Deleted document permission records will first be copied to a backup table `doc_permission_backup_V07_04_00_005`. 
+* Issue **#4278** : Make document deletion also delete the permission records for that document. Also run migration `V07_04_00_005__Orphaned_Doc_Perms` which will delete all document permissions (in table `doc_permission`) for docs that are not a folder, not the System doc, are not a valid doc (i.e. in the `doc` table) and are not a pipeline filter. Deleted document permission records will first be copied to a backup table `doc_permission_backup_V07_04_00_005`.
 
 * Change document Copy and Move to check that the user has Owner permission (or admin) on the document being copied/moved if the permissions mode is None, Destination or Combined. This is because those modes will change the permissions which is something only an Owner/admin can do.
 
@@ -1865,7 +1932,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.17...HEAD
+[v7.11-beta.17]: https://github.com/gchq/stroom/compare/v7.11-beta.16...v7.11-beta.17
+[v7.11-beta.16]: https://github.com/gchq/stroom/compare/v7.11-beta.15...v7.11-beta.16
+[v7.11-beta.15]: https://github.com/gchq/stroom/compare/v7.11-beta.14...v7.11-beta.15
+[v7.11-beta.14]: https://github.com/gchq/stroom/compare/v7.11-beta.13...v7.11-beta.14
+[v7.11-beta.13]: https://github.com/gchq/stroom/compare/v7.11-beta.12...v7.11-beta.13
 [v7.11-beta.12]: https://github.com/gchq/stroom/compare/v7.11-beta.11...v7.11-beta.12
 [v7.11-beta.11]: https://github.com/gchq/stroom/compare/v7.11-beta.10...v7.11-beta.11
 [v7.11-beta.10]: https://github.com/gchq/stroom/compare/v7.11-beta.9...v7.11-beta.10

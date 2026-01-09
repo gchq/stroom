@@ -366,7 +366,13 @@ public class PropertyListPresenter
             final Source source = getSource(editing);
 
             final NewPropertyPresenter editor = newPropertyPresenter.get();
-            editor.edit(pipelinePropertyType, property, inheritedProperty, editing, source,
+            editor.edit(
+                    currentElement,
+                    pipelinePropertyType,
+                    property,
+                    inheritedProperty,
+                    editing,
+                    source,
                     defaultValue,
                     inheritedValue,
                     inheritedFrom);
@@ -374,7 +380,6 @@ public class PropertyListPresenter
             final HidePopupRequestEvent.Handler handler = e -> {
                 if (e.isOk()) {
                     if (editor.isDirty()) {
-                        setDirty(true);
 
                         final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineModel.getPipelineData());
 
@@ -403,6 +408,8 @@ public class PropertyListPresenter
                         final PipelineData pipelineData = builder.build();
                         pipelineModel.setPipelineLayer(
                                 new PipelineLayer(pipelineModel.getPipelineLayer().getSourcePipeline(), pipelineData));
+
+                        setDirty(true);
 
                         refresh();
                     }

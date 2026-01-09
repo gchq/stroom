@@ -90,6 +90,11 @@ public class TabContentProvider<E>
         tabProviders.put(tab, provider);
     }
 
+    public void replace(final TabData tab, final TabProvider<E> provider) {
+        tabProviders.replace(tab, provider);
+        presenterCache.replace(tab, provider);
+    }
+
     public PresenterWidget<?> getPresenter(final TabData tab, final TaskMonitorFactory taskMonitorFactory) {
         currentTabProvider = presenterCache.get(tab);
         if (currentTabProvider == null) {

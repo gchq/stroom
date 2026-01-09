@@ -37,6 +37,7 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.type.DataType;
 import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import jakarta.inject.Provider;
 
@@ -44,8 +45,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
 
 public class SearchHelper {
 
@@ -118,7 +117,7 @@ public class SearchHelper {
             throw new RuntimeException("You must select one or more columns");
         }
 
-        final SimpleStatement statement = selectFrom(table)
+        final SimpleStatement statement = QueryBuilder.selectFrom(table)
                 .columns(columns.toArray(new CqlIdentifier[0]))
                 .where(relations)
                 .allowFiltering()

@@ -26,7 +26,8 @@ public enum ValueType implements HasPrimitiveValue {
     DOUBLE(3),
     ARRAY_VALUE(4),
     KEY_VALUE_LIST(5),
-    BYTES(6);
+    BYTES(6),
+    LONG(7);
 
     public static final PrimitiveValueConverter<ValueType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(ValueType.class, ValueType.values());

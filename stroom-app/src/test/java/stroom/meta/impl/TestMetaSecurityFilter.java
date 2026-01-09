@@ -22,6 +22,7 @@ import stroom.app.uri.UriFactoryModule;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.index.VolumeTestConfigModule;
+import stroom.langchain.impl.MockOpenAIModule;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
@@ -58,6 +59,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
+@IncludeModule(MockOpenAIModule.class)
 class TestMetaSecurityFilter extends StroomIntegrationTest {
 
     private static final String TEST_USER = "test_user";

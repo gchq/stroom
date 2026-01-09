@@ -25,7 +25,6 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ErrorMessage;
-import stroom.util.shared.Severity;
 import stroom.util.shared.UserRef;
 
 import com.esotericsoftware.kryo.KryoException;
@@ -199,11 +198,8 @@ public class ResultStore {
             final ErrorConsumer errorConsumer = entry.getValue();
             final List<ErrorMessage> errors = errorConsumer.getErrorMessages();
 
-            if (!errors.isEmpty()) {
-                err.add(new ErrorMessage(Severity.ERROR, "Node: " + nodeName));
-                for (final ErrorMessage error : errors) {
-                    err.add(new ErrorMessage(error.getSeverity(), "\t" + error.getMessage()));
-                }
+            for (final ErrorMessage error : errors) {
+                err.add(new ErrorMessage(error.getSeverity(), error.getMessage(), nodeName));
             }
         }
         // Add any errors from the coprocessors

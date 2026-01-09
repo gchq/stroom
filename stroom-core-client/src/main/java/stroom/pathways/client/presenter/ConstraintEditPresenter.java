@@ -30,6 +30,9 @@ import stroom.pathways.shared.pathway.DoubleValue;
 import stroom.pathways.shared.pathway.IntegerRange;
 import stroom.pathways.shared.pathway.IntegerSet;
 import stroom.pathways.shared.pathway.IntegerValue;
+import stroom.pathways.shared.pathway.LongRange;
+import stroom.pathways.shared.pathway.LongSet;
+import stroom.pathways.shared.pathway.LongValue;
 import stroom.pathways.shared.pathway.NanoTimeRange;
 import stroom.pathways.shared.pathway.NanoTimeValue;
 import stroom.pathways.shared.pathway.Regex;
@@ -299,6 +302,20 @@ public class ConstraintEditPresenter extends MyPresenterWidget<ConstraintEditVie
 
                 getView().setValue(constraint.getValue().toString());
             }
+            case LONG -> {
+                getView().setValue(constraint.getValue().toString());
+            }
+            case LONG_SET -> {
+                final LongSet set = (LongSet) constraint.getValue();
+                getView().setValue(set.getSet().stream().map(String::valueOf)
+                        .collect(Collectors.joining(",")));
+            }
+            case LONG_RANGE -> {
+                final LongRange range = (LongRange) constraint.getValue();
+                getView().setValue(range.getMin() + "," + range.getMax());
+
+                getView().setValue(constraint.getValue().toString());
+            }
             case DOUBLE -> {
                 getView().setValue(constraint.getValue().toString());
             }
@@ -394,6 +411,22 @@ public class ConstraintEditPresenter extends MyPresenterWidget<ConstraintEditVie
                         .map(Integer::parseInt)
                         .collect(Collectors.toList());
                 builder.value(new IntegerRange(list.get(0), list.get(1)));
+            }
+            case LONG -> {
+                builder.value(new LongValue(Long.parseLong(value)));
+            }
+            case LONG_SET -> {
+                builder.value(new LongSet(Arrays
+                        .stream(value.split(","))
+                        .map(Long::parseLong)
+                        .collect(Collectors.toSet())));
+            }
+            case LONG_RANGE -> {
+                final List<Long> list = Arrays
+                        .stream(value.split(","))
+                        .map(Long::parseLong)
+                        .collect(Collectors.toList());
+                builder.value(new LongRange(list.get(0), list.get(1)));
             }
             case DOUBLE -> {
                 builder.value(new DoubleValue(Double.parseDouble(value)));

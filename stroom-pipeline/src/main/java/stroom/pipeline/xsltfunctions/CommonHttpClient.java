@@ -21,6 +21,7 @@ import stroom.util.config.OkHttpClientConfig;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.http.HttpClientUtil;
 import stroom.util.http.HttpTlsConfiguration;
+import stroom.util.jersey.HttpClientCache;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

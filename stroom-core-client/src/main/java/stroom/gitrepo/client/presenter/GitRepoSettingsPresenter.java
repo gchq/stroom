@@ -17,10 +17,12 @@
 package stroom.gitrepo.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.credentials.client.presenter.CredentialClient;
+import stroom.credentials.client.presenter.CredentialListModel;
 import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
-import stroom.credentials.shared.Credentials;
+import stroom.credentials.shared.Credential;
+import stroom.credentials.shared.CredentialType;
 import stroom.credentials.shared.CredentialsResource;
-import stroom.credentials.shared.CredentialsWithPerms;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -28,10 +30,10 @@ import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
 import stroom.gitrepo.shared.GitRepoResource;
+import stroom.item.client.SelectionBox;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.PageRequest;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 
 import com.google.gwt.core.client.GWT;
@@ -40,9 +42,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 /**
  * Provides the main functionality on the client behind the GitRepo Settings tab.
@@ -97,12 +97,15 @@ public class GitRepoSettingsPresenter
      */
     private static final int MAX_NUMBER_OF_CREDENTIALS = 1000;
 
+    private final CredentialClient credentialClient;
+
     /**
      * Injected constructor.
-     * @param eventBus For parent class
-     * @param view The View for showing stuff to users
-     * @param restFactory For talking to the server
-     * @param commitDialog Injected dialog for commit message
+     *
+     * @param eventBus                 For parent class
+     * @param view                     The View for showing stuff to users
+     * @param restFactory              For talking to the server
+     * @param commitDialog             Injected dialog for commit message
      * @param credentialsManagerDialog Injected dialog for credentials
      */
     @Inject
@@ -111,14 +114,20 @@ public class GitRepoSettingsPresenter
                                     final RestFactory restFactory,
                                     final ClientSecurityContext securityContext,
                                     final GitRepoCommitDialogPresenter commitDialog,
-                                    final CredentialsManagerDialogPresenter credentialsManagerDialog) {
+                                    final CredentialsManagerDialogPresenter credentialsManagerDialog,
+                                    final CredentialClient credentialClient) {
         super(eventBus, view);
         this.restFactory = restFactory;
+        this.credentialClient = credentialClient;
         view.setUiHandlers(this);
         this.commitDialog = commitDialog;
         this.credentialsManagerDialog = credentialsManagerDialog;
         this.hasCredentialsAppPermission = securityContext.hasAppPermission(AppPermission.CREDENTIALS);
         view.setHasCredentialsAppPermission(this.hasCredentialsAppPermission);
+        final CredentialListModel credentialListModel = new CredentialListModel(eventBus, credentialClient,
+                Set.of(CredentialType.KEY_PAIR, CredentialType.USERNAME_PASSWORD, CredentialType.ACCESS_TOKEN));
+        credentialListModel.setTaskMonitorFactory(this);
+        view.getCredentialSelectionBox().setModel(credentialListModel);
     }
 
     /**
@@ -145,7 +154,7 @@ public class GitRepoSettingsPresenter
         view.setAutoPush(doc.isAutoPush());
 
         // Credentials - store locally
-        grabCredentialsList(doc.getCredentialsId());
+        grabCredentialsList(doc.getCredentialName());
 
         // Set the initial state of the UI
         view.setState();
@@ -172,7 +181,10 @@ public class GitRepoSettingsPresenter
         }
 
         // Credentials - store from local values
-        doc.setCredentialsId(view.getCredentialsId());
+        final Credential credential = view.getCredentialSelectionBox().getValue();
+        doc.setCredentialName(credential == null
+                ? null
+                : credential.getName());
 
         return doc;
     }
@@ -187,6 +199,7 @@ public class GitRepoSettingsPresenter
 
     /**
      * Called when Git Push button is pressed.
+     *
      * @param taskMonitorFactory Where the wait icon is displayed.
      */
     @Override
@@ -196,25 +209,23 @@ public class GitRepoSettingsPresenter
         if (gitRepoDoc != null) {
             final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(commitDialog);
             commitDialog.setupDialog(builder);
-            builder.onHideRequest(e -> {
-                if (e.isOk()) {
-                    // OK pressed so check if the dialog is valid
-                    if (commitDialog.isValid()) {
-                        e.hide();
-                        requestGitRepoPush(taskMonitorFactory,
-                                           commitDialog.getView().getCommitMessage());
-                    } else {
-                        // Something is wrong - tell user what it is and reset the dialog
-                        AlertEvent.fireWarn(commitDialog,
-                                            commitDialog.getValidationMessage(),
-                                            e::reset);
-                    }
-                } else {
-                    // Cancel pressed
-                    e.hide();
-                }
-            })
-                .fire();
+            builder
+                    .onHideRequest(e -> {
+                        if (e.isOk()) {
+                            // OK pressed so check if the dialog is valid
+                            if (commitDialog.isValid()) {
+                                e.hide();
+                                requestGitRepoPush(taskMonitorFactory, commitDialog.getView().getCommitMessage());
+                            } else {
+                                // Something is wrong - tell user what it is and reset the dialog
+                                AlertEvent.fireWarn(commitDialog, commitDialog.getValidationMessage(), e::reset);
+                            }
+                        } else {
+                            // Cancel pressed
+                            e.hide();
+                        }
+                    })
+                    .fire();
         } else {
             AlertEvent.fireWarn(this,
                     "Git repository information not available",
@@ -225,8 +236,9 @@ public class GitRepoSettingsPresenter
 
     /**
      * Does the push into Git, once the CommitDialog has been OK'd.
+     *
      * @param taskMonitorFactory Where to display the wait icon
-     * @param commitMessage The commit message, from the dialog box.
+     * @param commitMessage      The commit message, from the dialog box.
      */
     private void requestGitRepoPush(final TaskMonitorFactory taskMonitorFactory,
                                     final String commitMessage) {
@@ -256,6 +268,7 @@ public class GitRepoSettingsPresenter
 
     /**
      * Called when the Git Pull button is pressed.
+     *
      * @param taskMonitorFactory Where to display the wait icon.
      */
     @Override
@@ -288,6 +301,7 @@ public class GitRepoSettingsPresenter
 
     /**
      * Called when the check for updates button is pressed.
+     *
      * @param taskMonitorFactory Where to display the wait icon.
      */
     @Override
@@ -333,76 +347,45 @@ public class GitRepoSettingsPresenter
      */
     @Override
     public void onShowCredentialsDialog(final TaskMonitorFactory taskMonitorFactory) {
-        if (gitRepoDoc != null) {
-            final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsManagerDialog);
-            credentialsManagerDialog.setupDialog(
-                    builder,
-                    EMPTY_LABEL,
-                    getView().getCredentialsId());
-            builder.onHideRequest(e -> {
-                if (e.isOk()) {
-                    e.hide();
-                    grabCredentialsList(credentialsManagerDialog.getCredentialsId());
-                    this.setDirty(true);
-                } else {
-                    // Cancel pressed
-                    e.hide();
-                }
-            })
-                    .fire();
-        }
+//        if (gitRepoDoc != null) {
+//            final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsManagerDialog);
+//            credentialsManagerDialog.setupDialog(
+//                    builder,
+//                    EMPTY_LABEL,
+//                    getView().getCredentialName());
+//            builder.onHideRequest(e -> {
+//                        if (e.isOk()) {
+//                            e.hide();
+//                            grabCredentialsList(credentialsManagerDialog.getCredentialName());
+//                            this.setDirty(true);
+//                        } else {
+//                            // Cancel pressed
+//                            e.hide();
+//                        }
+//                    })
+//                    .fire();
+//        }
     }
 
     /**
      * Gets the list of credentials and puts them into the selection list.
-     * @param credentialsId The ID of the currently selected credentials, or
-     *                      null if nothing is selected.
+     *
+     * @param credentialName The name of the currently selected credential, or
+     *                       null if nothing is selected.
      */
-    private void grabCredentialsList(final String credentialsId) {
-        if (hasCredentialsAppPermission) {
-            final PageRequest pageRequest = new PageRequest(0, MAX_NUMBER_OF_CREDENTIALS);
-            restFactory.create(CREDENTIALS_RESOURCE)
-                    .method(res -> res.listCredentials(pageRequest))
-                    .onSuccess(res -> {
-                        final List<Credentials> creds = new ArrayList<>();
-                        for (final CredentialsWithPerms cwp : res.getValues()) {
-                            if (cwp != null) {
-                                final Credentials credentials = cwp.getCredentials();
-                                if (credentials != null) {
-                                    creds.add(credentials);
-                                }
-                            }
-                        }
-                        getView().setCredentialsList(creds, credentialsId);
-                    })
-                    .onFailure(error -> {
-                        AlertEvent.fireError(this,
-                                "Error getting list of credentials",
-                                error.getMessage(),
-                                null);
-                    })
-                    .taskMonitorFactory(GitRepoSettingsPresenter.this)
-                    .exec();
+    private void grabCredentialsList(final String credentialName) {
+        if (credentialName == null) {
+            getView().getCredentialSelectionBox().setValue(null);
         } else {
-            getView().setCredentialsList(Collections.emptyList(), credentialsId);
+            credentialClient.getCredentialByName(credentialName, credential ->
+                    getView().getCredentialSelectionBox().setValue(credential), this);
         }
     }
-
-    /**
-     * Writes to the Javascript console for debugging.
-     * @param text What to write.
-     */
-    public static native void console(String text)
-        /*-{
-        console.log(text);
-         }-*/;
 
     public interface GitRepoSettingsView
             extends View, HasUiHandlers<GitRepoSettingsUiHandlers> {
 
-        void setCredentialsList(final List<Credentials> credentialsList, final String selectedCredentialsId);
-
-        String getCredentialsId();
+        SelectionBox<Credential> getCredentialSelectionBox();
 
         void setContentStoreName(String contentStoreName);
 

@@ -17,6 +17,7 @@
 package stroom.search.elastic.shared;
 
 import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.Field;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.IndexField;
@@ -43,7 +44,8 @@ import java.util.Objects;
         "fldName",
         "fldType",
         "nativeType",
-        "indexed"
+        "indexed",
+        "denseVectorFieldConfig"
 })
 @JsonInclude(Include.NON_NULL)
 public class ElasticIndexField implements IndexField {
@@ -58,7 +60,6 @@ public class ElasticIndexField implements IndexField {
     @JsonProperty("fieldType")
     private String fieldType;
 
-
     @JsonProperty
     private final String fldName;
     @JsonProperty
@@ -67,6 +68,8 @@ public class ElasticIndexField implements IndexField {
     private final String nativeType;
     @JsonProperty
     private final boolean indexed;
+    @JsonProperty
+    private final DenseVectorFieldConfig denseVectorFieldConfig;
 
     @JsonCreator
     public ElasticIndexField(
@@ -77,11 +80,13 @@ public class ElasticIndexField implements IndexField {
             @JsonProperty("fldName") final String fldName,
             @JsonProperty("fldType") final FieldType fldType,
             @JsonProperty("nativeType") final String nativeType,
-            @JsonProperty("indexed") final boolean indexed) {
+            @JsonProperty("indexed") final boolean indexed,
+            @JsonProperty("denseVectorFieldConfig") final DenseVectorFieldConfig denseVectorFieldConfig) {
         this.fldName = convertLegacyName(fldName, fieldName);
         this.fldType = convertLegacyType(fldType, fieldUse);
         this.nativeType = convertLegacyNativeType(nativeType, fieldType);
         this.indexed = indexed;
+        this.denseVectorFieldConfig = denseVectorFieldConfig;
     }
 
     private static String convertLegacyName(final String name, final String fieldName) {
@@ -150,6 +155,10 @@ public class ElasticIndexField implements IndexField {
         return IndexField.super.isTermPositions();
     }
 
+    public DenseVectorFieldConfig getDenseVectorFieldConfig() {
+        return denseVectorFieldConfig;
+    }
+
     @Override
     @JsonIgnore
     public String getDisplayValue() {
@@ -166,12 +175,12 @@ public class ElasticIndexField implements IndexField {
         }
         final ElasticIndexField that = (ElasticIndexField) o;
         return indexed == that.indexed &&
-                fieldUse == that.fieldUse &&
-                Objects.equals(fieldName, that.fieldName) &&
-                Objects.equals(fieldType, that.fieldType) &&
-                Objects.equals(fldName, that.fldName) &&
-                fldType == that.fldType &&
-                Objects.equals(nativeType, that.nativeType);
+               fieldUse == that.fieldUse &&
+               Objects.equals(fieldName, that.fieldName) &&
+               Objects.equals(fieldType, that.fieldType) &&
+               Objects.equals(fldName, that.fldName) &&
+               fldType == that.fldType &&
+               Objects.equals(nativeType, that.nativeType);
     }
 
     @Override
@@ -198,6 +207,7 @@ public class ElasticIndexField implements IndexField {
         private FieldType fldType = FieldType.TEXT;
         private String nativeType;
         private boolean indexed = true;
+        private DenseVectorFieldConfig denseVectorFieldConfig;
 
         private Builder() {
         }
@@ -207,6 +217,7 @@ public class ElasticIndexField implements IndexField {
             this.fldType = indexField.fldType;
             this.nativeType = indexField.nativeType;
             this.indexed = indexField.indexed;
+            this.denseVectorFieldConfig = indexField.denseVectorFieldConfig;
         }
 
         public Builder fldName(final String fldName) {
@@ -229,6 +240,10 @@ public class ElasticIndexField implements IndexField {
             return this;
         }
 
+        public Builder denseVectorFieldConfig(final DenseVectorFieldConfig denseVectorFieldConfig) {
+            this.denseVectorFieldConfig = denseVectorFieldConfig;
+            return this;
+        }
 
         public ElasticIndexField build() {
             return new ElasticIndexField(
@@ -238,7 +253,8 @@ public class ElasticIndexField implements IndexField {
                     fldName,
                     fldType,
                     nativeType,
-                    indexed);
+                    indexed,
+                    denseVectorFieldConfig);
         }
     }
 }

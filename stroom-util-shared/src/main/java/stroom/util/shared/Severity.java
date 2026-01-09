@@ -103,7 +103,7 @@ public enum Severity implements HasDisplayValue {
         return summaryValue;
     }
 
-    private int getId() {
+    public int getId() {
         return id;
     }
 

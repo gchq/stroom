@@ -16,14 +16,25 @@
 
 package stroom.credentials.impl.db;
 
+import stroom.collection.mock.MockCollectionModule;
 import stroom.credentials.impl.CredentialsModule;
+import stroom.dictionary.mock.MockWordListProviderModule;
+import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.resource.impl.MockResourceModule;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserGroupsService;
 import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.db.DbTestModule;
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.TempDirProvider;
 
 import com.google.inject.AbstractModule;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class TestModule extends AbstractModule {
 
@@ -34,9 +45,21 @@ public class TestModule extends AbstractModule {
         install(new CredentialsDbModule());
         install(new CredentialsModule());
         install(new DbTestModule());
+        install(new MockCollectionModule());
+        install(new MockWordListProviderModule());
+        install(new MockDocRefInfoModule());
+        install(new MockResourceModule());
 
         bind(SecurityContext.class).to(MockSecurityContext.class);
         bind(DocumentPermissionService.class).to(MockDocumentPermissionService.class);
         bind(UserGroupsService.class).to(MockUserGroupsService.class);
+
+        try {
+            final Path path = Files.createTempDirectory("stroom");
+            bind(HomeDirProvider.class).toInstance(() -> path);
+            bind(TempDirProvider.class).toInstance(() -> path);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

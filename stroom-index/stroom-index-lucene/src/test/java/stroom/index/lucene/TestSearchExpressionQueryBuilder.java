@@ -95,7 +95,8 @@ public class TestSearchExpressionQueryBuilder {
                 new DocRef("test", "test"),
                 indexFieldCache,
                 wordListProvider,
-                DateTimeSettings.builder().build());
+                DateTimeSettings.builder().build().withoutReferenceTime(),
+                null);
 
         final ExpressionOperator expressionOperator = ExpressionOperator.builder()
                 .addDocRefTerm(

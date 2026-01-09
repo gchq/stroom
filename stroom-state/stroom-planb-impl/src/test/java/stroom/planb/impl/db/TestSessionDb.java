@@ -30,6 +30,7 @@ import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.SessionKeySchema;
 import stroom.planb.shared.SessionSettings;
 import stroom.planb.shared.TemporalPrecision;
+import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -38,6 +39,7 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.PageRequest;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -49,8 +51,10 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -117,6 +121,77 @@ class TestSessionDb {
             assertThat(results.getFirst()[0].toString()).isEqualTo("TEST");
             assertThat(results.getFirst()[1]).isEqualTo(minTime);
             assertThat(results.getFirst()[2]).isEqualTo(maxTime);
+        }
+    }
+
+    @Test
+    void testSessionQuery() throws IOException {
+        final Path dbDir = Files.createTempDirectory("stroom");
+        final KeyPrefix prefix = KeyPrefix.create("User1");
+        final Instant refTime = Instant.parse("2025-12-01T00:00:00.000Z");
+        try (final SessionDb db = SessionDb.create(dbDir, BYTE_BUFFERS, DOC, false)) {
+            db.write(writer -> {
+                Instant day = refTime;
+                for (int i = 0; i < 9; i++) {
+                    for (int j = 6; j < 15; j++) {
+                        final Instant start = day.plus(j, ChronoUnit.HOURS);
+                        final Instant end = day.plus(j + 1, ChronoUnit.HOURS);
+                        final Session session = Session.builder().prefix(prefix).start(start).end(end).build();
+                        db.insert(writer, session);
+                    }
+                    day = day.plus(1, ChronoUnit.DAYS);
+                }
+            });
+
+            final FieldIndex fieldIndex = new FieldIndex();
+            fieldIndex.create(SessionFields.KEY);
+            fieldIndex.create(SessionFields.START);
+            fieldIndex.create(SessionFields.END);
+            final ExpressionCriteria criteria = new ExpressionCriteria(
+                    PageRequest.unlimited(),
+                    Collections.emptyList(),
+                    ExpressionOperator.builder().build());
+            final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().build();
+            final List<Val[]> results = new ArrayList<>();
+            final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory();
+            db.search(
+                    criteria,
+                    fieldIndex,
+                    dateTimeSettings,
+                    expressionPredicateFactory,
+                    results::add);
+
+            // Assert the data is as expected.
+            validateResults(results, refTime, 9);
+
+            // Condense and delete.
+            db.condense(Instant.parse("2025-12-07T00:10:00.000Z"));
+            db.deleteOldData(Instant.parse("2025-12-04T00:10:00.000Z"), true);
+
+            results.clear();
+            db.search(
+                    criteria,
+                    fieldIndex,
+                    dateTimeSettings,
+                    expressionPredicateFactory,
+                    results::add);
+
+            // Assert the data is as expected.
+            validateResults(results, refTime.plus(3, ChronoUnit.DAYS), 6);
+        }
+    }
+
+    private void validateResults(final List<Val[]> results,
+                                 final Instant refTime,
+                                 final int expectedSize) {
+        assertThat(results.size()).isEqualTo(expectedSize);
+        Instant day = refTime;
+        for (final Val[] vals : results) {
+            final Instant start = day.plus(6, ChronoUnit.HOURS);
+            final Instant end = day.plus(15, ChronoUnit.HOURS);
+            assertThat(vals[1]).isEqualTo(ValDate.create(start));
+            assertThat(vals[2]).isEqualTo(ValDate.create(end));
+            day = day.plus(1, ChronoUnit.DAYS);
         }
     }
 

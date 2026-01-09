@@ -1,0 +1,31 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:p="urn:import:stroom.widget.button.client">
+    <g:FlowPanel styleName="askStroomAiViewImpl max default-min-sizes dock-container-vertical">
+<!--        <form:FormGroup identity="dockTypeSelectionBox" label="Dock Type">-->
+<!--            <l:SelectionBox ui:field="dockTypeSelectionBox"/>-->
+<!--        </form:FormGroup>-->
+<!--        <form:FormGroup identity="dockLocationSelectionBox" label="Dock Location">-->
+<!--            <l:SelectionBox ui:field="dockLocationSelectionBox"/>-->
+<!--        </form:FormGroup>-->
+
+        <g:SimplePanel ui:field="markdownPreview" styleName="dock-max markdown-container form-control"/>
+        <g:FlowPanel styleName="dock-min askStroomAiViewImpl-bottom">
+            <g:TextBox ui:field="message" addStyleNames="dock-max w-100"/>
+            <b:Button ui:field="sendMessage" text="Send" addStyleNames="allow-focus Button--contained-primary"/>
+            <b:Button ui:field="clearHistory" text="Clear" addStyleNames="allow-focus"/>
+        </g:FlowPanel>
+        <g:FlowPanel styleName="dock-min askStroomAiViewImpl-bottom">
+            <g:SimplePanel ui:field="modelRef"/>
+            <b:Button ui:field="setDefaultModel"
+                      text="Set Default"
+                      width="150px"
+                      addStyleNames="allow-focus"/>
+            <p:InlineSvgButton ui:field="configure" addStyleNames="allow-focus"/>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

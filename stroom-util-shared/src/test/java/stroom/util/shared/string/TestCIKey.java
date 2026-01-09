@@ -63,13 +63,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.util.shared.string.CIKey.equalsIgnoreCase;
-import static stroom.util.shared.string.CIKey.listOf;
-import static stroom.util.shared.string.CIKeys.commonKeys;
-import static stroom.util.shared.string.CIKeys.getCommonKey;
-import static stroom.util.shared.string.TestCIKeys.CI_KEYS_RESOURCE_LOCK;
 
-@ResourceLock(CI_KEYS_RESOURCE_LOCK)
+@ResourceLock(TestCIKeys.CI_KEYS_RESOURCE_LOCK)
 @Execution(ExecutionMode.SAME_THREAD) // clearCommonKeys breaks other tests
 public class TestCIKey {
 
@@ -126,7 +121,7 @@ public class TestCIKey {
     void testOf() {
         final String str = "MrFlibble";
         // Not a common key
-        assertThat(getCommonKey(str))
+        assertThat(CIKeys.getCommonKey(str))
                 .isNull();
 
         final CIKey ciKey1 = CIKey.of(str);
@@ -395,11 +390,11 @@ public class TestCIKey {
                 .withTestFunction(testCase -> {
                     final String str = testCase.getInput()._1;
                     final CIKey ciKey = CIKey.of(testCase.getInput()._2);
-                    final boolean isEqual = equalsIgnoreCase(str, ciKey);
+                    final boolean isEqual = CIKey.equalsIgnoreCase(str, ciKey);
                     // Test the other overloaded equalsIgnoreCase methods too
-                    assertThat(equalsIgnoreCase(ciKey, str))
+                    assertThat(CIKey.equalsIgnoreCase(ciKey, str))
                             .isEqualTo(isEqual);
-                    assertThat(equalsIgnoreCase(str, NullSafe.get(ciKey, CIKey::get)))
+                    assertThat(CIKey.equalsIgnoreCase(str, NullSafe.get(ciKey, CIKey::get)))
                             .isEqualTo(isEqual);
                     return isEqual;
                 })
@@ -485,15 +480,15 @@ public class TestCIKey {
 
     @Test
     void testListOf() {
-        assertThat(listOf("a", "B", "c"))
+        assertThat(CIKey.listOf("a", "B", "c"))
                 .extracting(CIKey::getAsLowerCase)
                 .containsExactly("a", "b", "c");
 
-        assertThat(listOf((String[]) null))
+        assertThat(CIKey.listOf((String[]) null))
                 .extracting(CIKey::getAsLowerCase)
                 .isEmpty();
 
-        assertThat(listOf())
+        assertThat(CIKey.listOf())
                 .extracting(CIKey::getAsLowerCase)
                 .isEmpty();
     }
@@ -690,7 +685,7 @@ public class TestCIKey {
                 .isEqualTo(ciKey2.hashCode());
 
         // Make sure not a common key
-        assertThat(commonKeys())
+        assertThat(CIKeys.commonKeys())
                 .doesNotContain(ciKey1);
     }
 
@@ -724,7 +719,7 @@ public class TestCIKey {
                 .isEqualTo(ciKey4.hashCode());
 
         // Make sure not a common key
-        assertThat(commonKeys())
+        assertThat(CIKeys.commonKeys())
                 .doesNotContain(ciKey1);
     }
 
@@ -766,7 +761,7 @@ public class TestCIKey {
                 .isEqualTo(ciKey5.hashCode());
 
         // Make sure not a common key
-        assertThat(commonKeys())
+        assertThat(CIKeys.commonKeys())
                 .contains(ciKey1);
     }
 
@@ -810,7 +805,7 @@ public class TestCIKey {
                 .isEqualTo(ciKey5.hashCode());
 
         // Make sure not a common key
-        assertThat(commonKeys())
+        assertThat(CIKeys.commonKeys())
                 .contains(ciKey1);
     }
 
@@ -1014,7 +1009,7 @@ public class TestCIKey {
     @Disabled
         // manual run only
     void testOfLowerKeyPerf() {
-        final List<String> lowerKeys = commonKeys()
+        final List<String> lowerKeys = CIKeys.commonKeys()
                 .stream()
                 .map(CIKey::getAsLowerCase)
                 .toList();
@@ -1075,7 +1070,7 @@ public class TestCIKey {
     @Disabled
     // manual run only
     void testPerf() {
-        final List<CIKey> ciKeys = new ArrayList<>(commonKeys());
+        final List<CIKey> ciKeys = new ArrayList<>(CIKeys.commonKeys());
 
         LOGGER.info("Key count: {}", ciKeys.size());
 

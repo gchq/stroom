@@ -16,7 +16,7 @@
 
 package stroom.credentials.client.view;
 
-import stroom.credentials.client.presenter.CredentialsDetailsTabDialogPresenter;
+import stroom.credentials.client.presenter.CredentialEditPresenter;
 import stroom.credentials.client.presenter.CredentialsListPresenter;
 import stroom.credentials.client.presenter.CredentialsPresenter.CredentialsView;
 
@@ -64,7 +64,7 @@ public class CredentialsViewImpl extends ViewImpl implements CredentialsView {
     public void setInSlot(final Object slot, final Widget content) {
         if (CredentialsListPresenter.CREDENTIALS_LIST.equals(slot)) {
             credentialsList.setWidget(content);
-        } else if (CredentialsDetailsTabDialogPresenter.CREDENTIALS_TABS.equals(slot)) {
+        } else if (CredentialEditPresenter.CREDENTIALS_TABS.equals(slot)) {
             credentialsList.setWidget(content);
         }
     }
@@ -75,14 +75,4 @@ public class CredentialsViewImpl extends ViewImpl implements CredentialsView {
     public interface Binder extends UiBinder<Widget, CredentialsViewImpl> {
         // No code
     }
-
-    /**
-     * Writes to the Javascript console for debugging.
-     * @param text What to write.
-     */
-    public static native void console(String text)
-        /*-{
-        console.log(text);
-         }-*/;
-
 }

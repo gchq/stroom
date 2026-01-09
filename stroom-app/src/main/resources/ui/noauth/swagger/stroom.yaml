@@ -310,6 +310,125 @@ paths:
       summary: Update an Activity
       tags:
       - Activities
+  /ai/v1/askStroomAi:
+    post:
+      operationId: askStroomAi
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskStroomAiRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AskStroomAiResponse"
+          description: default response
+      summary: Ask Stroom AI a question relating to the current search context
+      tags:
+      - AI
+  /ai/v1/askStroomAi/{nodeName}:
+    post:
+      operationId: askStroomAi_1
+      parameters:
+      - in: path
+        name: nodeName
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AskStroomAiRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AskStroomAiResponse"
+          description: default response
+      summary: Ask Stroom AI a question relating to the current search context
+      tags:
+      - AI
+  /ai/v1/getDefaultConfig:
+    post:
+      operationId: getDefaultConfig
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AskStroomAIConfig"
+          description: default response
+      summary: Get the default config to use for asking questions
+      tags:
+      - AI
+  /ai/v1/setDefaultChatMemoryConfigConfig:
+    post:
+      operationId: setDefaultChatMemoryConfigConfig
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatMemoryConfig"
+        description: config
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Set the default chat memory config to use for asking questions
+      tags:
+      - AI
+  /ai/v1/setDefaultModel:
+    post:
+      operationId: setDefaultModel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocRef"
+        description: modelRef
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Set the default model to use for asking questions
+      tags:
+      - AI
+  /ai/v1/setDefaultTableSummaryConfig:
+    post:
+      operationId: setDefaultTableSummaryConfig
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TableSummaryConfig"
+        description: config
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Set the default table summary config to use for asking questions
+      tags:
+      - AI
   /analyticDataShard/v1/find:
     post:
       operationId: findAnalyticDataShards
@@ -1712,22 +1831,17 @@ paths:
       summary: Upgrades the content pack and its content
       tags:
       - ContentStoreContentPacks
-  /credentials/create:
-    post:
-      operationId: createCredential
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CredentialsCreateRequest"
+  /credentials/createDocRef:
+    get:
+      operationId: createDocRef
       responses:
         default:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CredentialsResponse"
+                $ref: "#/components/schemas/DocRef"
           description: default response
-      summary: Creates the credential
+      summary: Returns a newly generated DocRef that can be used to for permissions
       tags:
       - Credentials
   /credentials/delete:
@@ -1743,14 +1857,50 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CredentialsResponse"
+                type: boolean
           description: default response
       summary: Deletes the credentials and secret with the given UUID
       tags:
       - Credentials
-  /credentials/get:
+  /credentials/findCredentials:
     post:
-      operationId: getCredentialsWithUuid
+      operationId: findCredentials
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindCredentialRequest"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultPageCredential"
+          description: default response
+      summary: Find credentials
+      tags:
+      - Credentials
+  /credentials/findCredentialsWithPermissions:
+    post:
+      operationId: findCredentialsWithPermissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindCredentialRequest"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultPageCredentialWithPerms"
+          description: default response
+      summary: Find credentials with permissions
+      tags:
+      - Credentials
+  /credentials/getByName:
+    post:
+      operationId: getCredentialByName
       requestBody:
         content:
           application/json:
@@ -1761,15 +1911,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CredentialsResponse"
+                $ref: "#/components/schemas/Credential"
           description: default response
-      summary: "Returns the credentials with the given UUID, if it exists, or null\
+      summary: "Returns the credential with the given name, if it exists, or null\
         \ if it does not exist"
       tags:
       - Credentials
-  /credentials/getSecret:
+  /credentials/getByUuid:
     post:
-      operationId: getSecret
+      operationId: getCredentialByUuid
       requestBody:
         content:
           application/json:
@@ -1780,27 +1930,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CredentialsResponse"
+                $ref: "#/components/schemas/Credential"
           description: default response
-      summary: Gets a secret from the database given the ID
-      tags:
-      - Credentials
-  /credentials/list:
-    post:
-      operationId: listCredentials
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PageRequest"
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResultPageCredentialsWithPerms"
-          description: default response
-      summary: Lists credentials
+      summary: "Returns the credential with the given UUID, if it exists, or null\
+        \ if it does not exist"
       tags:
       - Credentials
   /credentials/store:
@@ -1810,81 +1943,17 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Credentials"
+              $ref: "#/components/schemas/PutCredentialRequest"
       responses:
         default:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CredentialsResponse"
+                $ref: "#/components/schemas/Credential"
           description: default response
       summary: Stores the credential
       tags:
       - Credentials
-  /credentials/storeSecret:
-    post:
-      operationId: storeSecret
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CredentialsSecret"
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CredentialsResponse"
-          description: default response
-      summary: Stores the secret in the database under the given ID
-      tags:
-      - Credentials
-  /dashboard/v1/askStroomAi:
-    post:
-      operationId: askStroomAi
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AskStroomAiRequest"
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AskStroomAiResponse"
-          description: default response
-      summary: Ask Stroom AI a question relating to the current search context
-      tags:
-      - Dashboards
-  /dashboard/v1/askStroomAi/{nodeName}:
-    post:
-      operationId: askStroomAi_1
-      parameters:
-      - in: path
-        name: nodeName
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AskStroomAiRequest"
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AskStroomAiResponse"
-          description: default response
-      summary: Ask Stroom AI a question relating to the current search context
-      tags:
-      - Dashboards
   /dashboard/v1/columnValues:
     post:
       operationId: getColumnValues
@@ -8878,6 +8947,14 @@ components:
           type: string
       required:
       - type
+    AccessTokenSecret:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Secret"
+      - type: object
+        properties:
+          accessToken:
+            type: string
     Account:
       type: object
       properties:
@@ -9164,6 +9241,8 @@ components:
           $ref: "#/components/schemas/DuplicateNotificationConfig"
         errorFeed:
           $ref: "#/components/schemas/DocRef"
+        includeRuleDocumentation:
+          type: boolean
         languageVersion:
           type: string
           enum:
@@ -9397,7 +9476,7 @@ components:
           format: double
         intValue:
           type: integer
-          format: int32
+          format: int64
         kvlistValue:
           $ref: "#/components/schemas/KeyValueList"
         stringValue:
@@ -9672,13 +9751,35 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AnyValue"
+    AskStroomAIConfig:
+      type: object
+      properties:
+        chatMemory:
+          $ref: "#/components/schemas/ChatMemoryConfig"
+        modelRef:
+          $ref: "#/components/schemas/DocRef"
+        tableSummary:
+          $ref: "#/components/schemas/TableSummaryConfig"
+    AskStroomAiContext:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        chatMemoryId:
+          type: string
+        type:
+          type: string
+      required:
+      - type
     AskStroomAiRequest:
       type: object
       properties:
+        config:
+          $ref: "#/components/schemas/AskStroomAIConfig"
+        context:
+          $ref: "#/components/schemas/AskStroomAiContext"
         message:
           type: string
-        searchRequest:
-          $ref: "#/components/schemas/DashboardSearchRequest"
     AskStroomAiResponse:
       type: object
       properties:
@@ -10059,6 +10160,14 @@ components:
         properties:
           title:
             type: string
+    ChatMemoryConfig:
+      type: object
+      properties:
+        timeToLive:
+          $ref: "#/components/schemas/SimpleDuration"
+        tokenLimit:
+          type: integer
+          format: int32
     CheckDocumentPermissionRequest:
       type: object
       properties:
@@ -10480,7 +10589,7 @@ components:
       properties:
         contentPack:
           $ref: "#/components/schemas/ContentStoreContentPack"
-        credentialsId:
+        credentialName:
           type: string
     ContentStoreMetadata:
       type: object
@@ -10726,67 +10835,46 @@ components:
           type: boolean
         runAsUser:
           $ref: "#/components/schemas/UserRef"
-    Credentials:
+    Credential:
       type: object
       properties:
-        credsExpire:
-          type: boolean
-        expires:
+        createTimeMs:
           type: integer
           format: int64
-        name:
+        createUser:
           type: string
-        type:
+        credentialType:
           type: string
           enum:
           - USERNAME_PASSWORD
           - ACCESS_TOKEN
-          - PRIVATE_CERT
-        uuid:
-          type: string
-    CredentialsCreateRequest:
-      type: object
-      properties:
-        credentials:
-          $ref: "#/components/schemas/Credentials"
-        secret:
-          $ref: "#/components/schemas/CredentialsSecret"
-    CredentialsResponse:
-      type: object
-      properties:
-        credentialsWithPerms:
-          $ref: "#/components/schemas/CredentialsWithPerms"
-        message:
-          type: string
-        secret:
-          $ref: "#/components/schemas/CredentialsSecret"
-        status:
+          - KEY_PAIR
+          - KEY_STORE
+        expiryTimeMs:
+          type: integer
+          format: int64
+        keyStoreType:
           type: string
           enum:
-          - OK
-          - GENERAL_ERR
-    CredentialsSecret:
-      type: object
-      properties:
-        accessToken:
+          - JCEKS
+          - JKS
+          - DKS
+          - PKCS11
+          - PKCS12
+        name:
           type: string
-        passphrase:
-          type: string
-        password:
-          type: string
-        privateKey:
-          type: string
-        serverPublicKey:
-          type: string
-        username:
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
           type: string
         uuid:
           type: string
-    CredentialsWithPerms:
+    CredentialWithPerms:
       type: object
       properties:
-        credentials:
-          $ref: "#/components/schemas/Credentials"
+        credential:
+          $ref: "#/components/schemas/Credential"
         delete:
           type: boolean
         edit:
@@ -10959,6 +11047,14 @@ components:
             $ref: "#/components/schemas/Result"
         tokenError:
           $ref: "#/components/schemas/TokenError"
+    DashboardTableContext:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AskStroomAiContext"
+      - type: object
+        properties:
+          searchRequest:
+            $ref: "#/components/schemas/DashboardSearchRequest"
     DataInfoSection:
       type: object
       properties:
@@ -11182,6 +11278,27 @@ components:
           $ref: "#/components/schemas/DocRef"
         name:
           type: string
+    DenseVectorFieldConfig:
+      type: object
+      properties:
+        modelRef:
+          $ref: "#/components/schemas/DocRef"
+        nearestNeighbourCount:
+          type: integer
+          format: int32
+        overlapSize:
+          type: integer
+          format: int32
+        segmentSize:
+          type: integer
+          format: int32
+        vectorSimilarityFunction:
+          type: string
+          enum:
+          - EUCLIDEAN
+          - DOT_PRODUCT
+          - COSINE
+          - MAXIMUM_INNER_PRODUCT
     Dependency:
       type: object
       properties:
@@ -11884,6 +12001,8 @@ components:
     ElasticIndexField:
       type: object
       properties:
+        denseVectorFieldConfig:
+          $ref: "#/components/schemas/DenseVectorFieldConfig"
         fieldName:
           type: string
         fieldType:
@@ -12031,6 +12150,8 @@ components:
       type: object
       properties:
         message:
+          type: string
+        node:
           type: string
         severity:
           type: string
@@ -12499,6 +12620,15 @@ components:
           - REJECT_ALL
         uiConfig:
           $ref: "#/components/schemas/UiConfig"
+    FeedDependency:
+      type: object
+      properties:
+        feedName:
+          type: string
+        streamType:
+          type: string
+        uuid:
+          type: string
     FeedDoc:
       type: object
       properties:
@@ -12855,6 +12985,38 @@ components:
           $ref: "#/components/schemas/UserRef"
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaFieldSort"
+    FindCredentialRequest:
+      type: object
+      properties:
+        credentialTypes:
+          type: array
+          items:
+            type: string
+            enum:
+            - USERNAME_PASSWORD
+            - ACCESS_TOKEN
+            - KEY_PAIR
+            - KEY_STORE
+          uniqueItems: true
+        filter:
+          type: string
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
+        requiredPermission:
+          type: string
+          enum:
+          - OWNER
+          - DELETE
+          - EDIT
+          - VIEW
+          - USE
         sort:
           type: string
           writeOnly: true
@@ -13353,6 +13515,22 @@ components:
         version:
           type: integer
           format: int32
+    GeneralTableContext:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AskStroomAiContext"
+      - type: object
+        properties:
+          columns:
+            type: array
+            items:
+              type: string
+          rows:
+            type: array
+            items:
+              type: array
+              items:
+                type: string
     GetAnalyticShardDataRequest:
       type: object
       properties:
@@ -13490,7 +13668,7 @@ components:
           format: int64
         createUser:
           type: string
-        credentialsId:
+        credentialName:
           type: string
         description:
           type: string
@@ -13695,6 +13873,109 @@ components:
             type: string
           windowSize:
             type: string
+    HttpAuthConfig:
+      type: object
+      properties:
+        authScheme:
+          type: string
+        credentialType:
+          type: string
+        domain:
+          type: string
+        hostname:
+          type: string
+        password:
+          type: string
+        realm:
+          type: string
+        username:
+          type: string
+    HttpClientConfig:
+      type: object
+      properties:
+        connectionRequestTimeout:
+          $ref: "#/components/schemas/SimpleDuration"
+        connectionTimeout:
+          $ref: "#/components/schemas/SimpleDuration"
+        cookiesEnabled:
+          type: boolean
+        keepAlive:
+          $ref: "#/components/schemas/SimpleDuration"
+        maxConnections:
+          type: integer
+          format: int32
+          maximum: 2147483647
+          minimum: 1
+        maxConnectionsPerRoute:
+          type: integer
+          format: int32
+          maximum: 2147483647
+          minimum: 1
+        proxy:
+          $ref: "#/components/schemas/HttpProxyConfig"
+        retries:
+          type: integer
+          format: int32
+          maximum: 1000
+          minimum: 0
+        timeToLive:
+          $ref: "#/components/schemas/SimpleDuration"
+        timeout:
+          $ref: "#/components/schemas/SimpleDuration"
+        tls:
+          $ref: "#/components/schemas/HttpTlsConfig"
+        userAgent:
+          type: string
+        validateAfterInactivityPeriod:
+          $ref: "#/components/schemas/SimpleDuration"
+      required:
+      - connectionRequestTimeout
+      - connectionTimeout
+      - keepAlive
+      - timeToLive
+      - timeout
+      - validateAfterInactivityPeriod
+    HttpProxyConfig:
+      type: object
+      properties:
+        auth:
+          $ref: "#/components/schemas/HttpAuthConfig"
+        host:
+          type: string
+        nonProxyHosts:
+          type: array
+          items:
+            type: string
+        port:
+          type: integer
+          format: int32
+        scheme:
+          type: string
+    HttpTlsConfig:
+      type: object
+      properties:
+        certAlias:
+          type: string
+        keyStoreName:
+          type: string
+        protocol:
+          type: string
+        provider:
+          type: string
+        supportedCiphers:
+          type: array
+          items:
+            type: string
+        supportedProtocols:
+          type: array
+          items:
+            type: string
+        trustSelfSignedCertificates:
+          type: boolean
+        trustStoreName:
+          type: string
+        verifyHostname:
+          type: boolean
     ImportConfigRequest:
       type: object
       properties:
@@ -13801,6 +14082,8 @@ components:
           - STANDARD
         caseSensitive:
           type: boolean
+        denseVectorFieldConfig:
+          $ref: "#/components/schemas/DenseVectorFieldConfig"
         fldName:
           type: string
         fldType:
@@ -14152,6 +14435,18 @@ components:
         time:
           type: string
           format: date-time
+    KeyPairSecret:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Secret"
+      - type: object
+        properties:
+          passphrase:
+            type: string
+          privateKey:
+            type: string
+          publicKey:
+            type: string
     KeyPrefix:
       type: object
       properties:
@@ -14161,6 +14456,24 @@ components:
             $ref: "#/components/schemas/Tag"
         val:
           $ref: "#/components/schemas/Val"
+    KeyStoreSecret:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Secret"
+      - type: object
+        properties:
+          keyStorePassword:
+            type: string
+          keyStoreType:
+            type: string
+            enum:
+            - JCEKS
+            - JKS
+            - DKS
+            - PKCS11
+            - PKCS12
+          resourceKey:
+            $ref: "#/components/schemas/ResourceKey"
     KeyValue:
       type: object
       properties:
@@ -14310,6 +14623,39 @@ components:
           type: string
         requirePasswordChange:
           type: boolean
+    LongRange:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ConstraintValue"
+      - type: object
+        properties:
+          max:
+            type: integer
+            format: int64
+          min:
+            type: integer
+            format: int64
+    LongSet:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ConstraintValue"
+      - type: object
+        properties:
+          set:
+            type: array
+            items:
+              type: integer
+              format: int64
+            uniqueItems: true
+    LongValue:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/ConstraintValue"
+      - type: object
+        properties:
+          value:
+            type: integer
+            format: int64
     LuceneIndexDoc:
       type: object
       properties:
@@ -14377,6 +14723,8 @@ components:
           - STANDARD
         caseSensitive:
           type: boolean
+        denseVectorFieldConfig:
+          $ref: "#/components/schemas/DenseVectorFieldConfig"
         fieldName:
           type: string
         fieldType:
@@ -14829,7 +15177,7 @@ components:
     OpenAIModelDoc:
       type: object
       properties:
-        apiKey:
+        apiKeyName:
           type: string
         baseUrl:
           type: string
@@ -14840,6 +15188,8 @@ components:
           type: string
         description:
           type: string
+        httpClientConfiguration:
+          $ref: "#/components/schemas/HttpClientConfig"
         maxContextWindowTokens:
           type: integer
           format: int32
@@ -15444,8 +15794,8 @@ components:
             type: string
         criteria:
           $ref: "#/components/schemas/FindMetaCriteria"
-        pipeline:
-          $ref: "#/components/schemas/DocRef"
+        pipelineDoc:
+          $ref: "#/components/schemas/PipelineDoc"
         sessionUuid:
           type: string
         stepFilterMap:
@@ -15838,6 +16188,13 @@ components:
           type: array
           items:
             type: string
+    PutCredentialRequest:
+      type: object
+      properties:
+        credential:
+          $ref: "#/components/schemas/Credential"
+        secret:
+          $ref: "#/components/schemas/Secret"
     QLVisResult:
       type: object
       allOf:
@@ -15958,6 +16315,10 @@ components:
           $ref: "#/components/schemas/DocRef"
         expression:
           $ref: "#/components/schemas/ExpressionOperator"
+        feedDependencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeedDependency"
         limits:
           $ref: "#/components/schemas/Limits"
         params:
@@ -16255,6 +16616,14 @@ components:
         timeout:
           type: integer
           format: int64
+    QueryTableContext:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/AskStroomAiContext"
+      - type: object
+        properties:
+          searchRequest:
+            $ref: "#/components/schemas/QuerySearchRequest"
     QueryTablePreferences:
       type: object
       properties:
@@ -16544,6 +16913,8 @@ components:
           $ref: "#/components/schemas/DuplicateNotificationConfig"
         errorFeed:
           $ref: "#/components/schemas/DocRef"
+        includeRuleDocumentation:
+          type: boolean
         languageVersion:
           type: string
           enum:
@@ -16737,7 +17108,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ContentStoreContentPackWithDynamicState"
-    ResultPageCredentialsWithPerms:
+    ResultPageCredential:
       type: object
       description: A page of results.
       properties:
@@ -16746,7 +17117,17 @@ components:
         values:
           type: array
           items:
-            $ref: "#/components/schemas/CredentialsWithPerms"
+            $ref: "#/components/schemas/Credential"
+    ResultPageCredentialWithPerms:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/CredentialWithPerms"
     ResultPageCustomRollUpMask:
       type: object
       description: A page of results.
@@ -17522,6 +17903,15 @@ components:
           format: int64
         userRef:
           $ref: "#/components/schemas/UserRef"
+    Secret:
+      type: object
+      discriminator:
+        propertyName: type
+      properties:
+        type:
+          type: string
+      required:
+      - type
     SelectionIndexShardStatus:
       type: object
       properties:
@@ -17970,6 +18360,8 @@ components:
       properties:
         defaultValue:
           type: string
+        denseVectorFieldConfig:
+          $ref: "#/components/schemas/DenseVectorFieldConfig"
         docValues:
           type: boolean
         fieldName:
@@ -19095,6 +19487,15 @@ components:
           $ref: "#/components/schemas/QLVisSettings"
         window:
           $ref: "#/components/schemas/Window"
+    TableSummaryConfig:
+      type: object
+      properties:
+        maximumBatchSize:
+          type: integer
+          format: int32
+        maximumTableInputRows:
+          type: integer
+          format: int32
     Tag:
       type: object
       properties:
@@ -19805,6 +20206,16 @@ components:
           - Offset
       required:
       - use
+    UsernamePasswordSecret:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Secret"
+      - type: object
+        properties:
+          password:
+            type: string
+          username:
+            type: string
     Val:
       type: object
       discriminator:
