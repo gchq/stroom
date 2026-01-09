@@ -51,7 +51,8 @@ public class S3ZstdStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ZstdStore.class);
 
-//    public static final String KEY_NAME_TEMPLATE_BASE = "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}";
+//    public static final String KEY_NAME_TEMPLATE_BASE =
+//    "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}";
 
     private static final int MAX_CACHED_ITEMS = 10;
 

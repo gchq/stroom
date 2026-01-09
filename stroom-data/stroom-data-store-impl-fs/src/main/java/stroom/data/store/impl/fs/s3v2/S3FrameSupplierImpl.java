@@ -260,7 +260,8 @@ public class S3FrameSupplierImpl extends AbstractZstdFrameSupplier {
         }
 
         // TODO See comment in initialise()
-        final ResponseInputStream<GetObjectResponse> responseInputStream = getByteRange(frameLocation.asCompressedByteRange());
+        final ResponseInputStream<GetObjectResponse> responseInputStream = getByteRange(
+                frameLocation.asCompressedByteRange());
 
         final WrappedInputStream wrappedInputStream = new WrappedInputStream(responseInputStream) {
             @Override

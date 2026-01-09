@@ -32,49 +32,12 @@ import org.jooq.impl.DSL;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.ZstdDictionary.ZSTD_DICTIONARY;
 
 public class ZstdDictionaryDaoImpl implements ZstdDictionaryDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZstdDictionaryDaoImpl.class);
-
-    static final Function<Record, LinkedZstdDictionary> RECORD_TO_DICT_MAPPER = record ->
-            new LinkedZstdDictionary(
-                    record.get(ZSTD_DICTIONARY.ID),
-                    record.get(ZSTD_DICTIONARY.VERSION),
-                    record.get(ZSTD_DICTIONARY.CREATE_TIME_MS),
-                    record.get(ZSTD_DICTIONARY.CREATE_USER),
-                    record.get(ZSTD_DICTIONARY.UPDATE_TIME_MS),
-                    record.get(ZSTD_DICTIONARY.UPDATE_USER),
-                    record.get(ZSTD_DICTIONARY.FEED_NAME),
-                    record.get(ZSTD_DICTIONARY.STREAM_TYPE_NAME),
-                    record.get(ZSTD_DICTIONARY.CHILD_STREAM_TYPE_NAME),
-//                    record.get(ZSTD_DICTIONARY.DICTIONARY_VERSION),
-                    record.get(ZSTD_DICTIONARY.UUID),
-                    ZstdDictionaryStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
-                            record.get(ZSTD_DICTIONARY.STATUS)));
-
-    @SuppressWarnings("checkstyle:LineLength")
-    private static final BiFunction<LinkedZstdDictionary, ZstdDictionaryRecord, ZstdDictionaryRecord>
-            DICT_TO_RECORD_MAPPER = (linkedZstdDictionary, record) -> {
-        record.from(linkedZstdDictionary);
-        record.set(ZSTD_DICTIONARY.ID, linkedZstdDictionary.getId());
-        record.set(ZSTD_DICTIONARY.VERSION, linkedZstdDictionary.getVersion());
-        record.set(ZSTD_DICTIONARY.CREATE_TIME_MS, linkedZstdDictionary.getCreateTimeMs());
-        record.set(ZSTD_DICTIONARY.CREATE_USER, linkedZstdDictionary.getCreateUser());
-        record.set(ZSTD_DICTIONARY.UPDATE_TIME_MS, linkedZstdDictionary.getUpdateTimeMs());
-        record.set(ZSTD_DICTIONARY.UPDATE_USER, linkedZstdDictionary.getUpdateUser());
-        record.set(ZSTD_DICTIONARY.FEED_NAME, linkedZstdDictionary.getFeedName());
-        record.set(ZSTD_DICTIONARY.STREAM_TYPE_NAME, linkedZstdDictionary.getStreamTypeName());
-        record.set(ZSTD_DICTIONARY.CHILD_STREAM_TYPE_NAME, linkedZstdDictionary.getChildStreamType());
-//        record.set(ZSTD_DICTIONARY.DICTIONARY_VERSION, linkedZstdDictionary.getDictionaryVersion());
-        record.set(ZSTD_DICTIONARY.UUID, linkedZstdDictionary.getUuid());
-        record.set(ZSTD_DICTIONARY.STATUS, linkedZstdDictionary.getStatus().getPrimitiveValue());
-        return record;
-    };
 
     private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
     private final GenericDao<ZstdDictionaryRecord, LinkedZstdDictionary, Integer> genericDao;
@@ -85,8 +48,8 @@ public class ZstdDictionaryDaoImpl implements ZstdDictionaryDao {
                 fsDataStoreDbConnProvider,
                 ZSTD_DICTIONARY,
                 ZSTD_DICTIONARY.ID,
-                DICT_TO_RECORD_MAPPER,
-                RECORD_TO_DICT_MAPPER);
+                ZstdDictionaryDaoImpl::mapToRecord,
+                ZstdDictionaryDaoImpl::mapFromRecord);
     }
 
     @Override
@@ -108,7 +71,7 @@ public class ZstdDictionaryDaoImpl implements ZstdDictionaryDao {
                                         .orderBy(ZSTD_DICTIONARY.CREATE_TIME_MS.desc())
                                         .limit(1)
                                         .fetchOptional())
-                .map(RECORD_TO_DICT_MAPPER);
+                .map(ZstdDictionaryDaoImpl::mapFromRecord);
 
         LOGGER.debug("fetchByKey() - zstdDictionaryKey: {}, optDict: {}", zstdDictionaryKey, optDict);
         return optDict;
@@ -146,5 +109,40 @@ public class ZstdDictionaryDaoImpl implements ZstdDictionaryDao {
                         .where(ZSTD_DICTIONARY.UUID.eq(uuid))
                         .execute());
         LOGGER.debug("updateStatus() - uuid: {}, status: {}, count: {}", uuid, status, count);
+    }
+
+    private static LinkedZstdDictionary mapFromRecord(final Record record) {
+        return new LinkedZstdDictionary(
+                record.get(ZSTD_DICTIONARY.ID),
+                record.get(ZSTD_DICTIONARY.VERSION),
+                record.get(ZSTD_DICTIONARY.CREATE_TIME_MS),
+                record.get(ZSTD_DICTIONARY.CREATE_USER),
+                record.get(ZSTD_DICTIONARY.UPDATE_TIME_MS),
+                record.get(ZSTD_DICTIONARY.UPDATE_USER),
+                record.get(ZSTD_DICTIONARY.FEED_NAME),
+                record.get(ZSTD_DICTIONARY.STREAM_TYPE_NAME),
+                record.get(ZSTD_DICTIONARY.CHILD_STREAM_TYPE_NAME),
+//                    record.get(ZSTD_DICTIONARY.DICTIONARY_VERSION),
+                record.get(ZSTD_DICTIONARY.UUID),
+                ZstdDictionaryStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                        record.get(ZSTD_DICTIONARY.STATUS)));
+    }
+
+    private static ZstdDictionaryRecord mapToRecord(final LinkedZstdDictionary linkedZstdDictionary,
+                                                    final ZstdDictionaryRecord record) {
+        record.from(linkedZstdDictionary);
+        record.set(ZSTD_DICTIONARY.ID, linkedZstdDictionary.getId());
+        record.set(ZSTD_DICTIONARY.VERSION, linkedZstdDictionary.getVersion());
+        record.set(ZSTD_DICTIONARY.CREATE_TIME_MS, linkedZstdDictionary.getCreateTimeMs());
+        record.set(ZSTD_DICTIONARY.CREATE_USER, linkedZstdDictionary.getCreateUser());
+        record.set(ZSTD_DICTIONARY.UPDATE_TIME_MS, linkedZstdDictionary.getUpdateTimeMs());
+        record.set(ZSTD_DICTIONARY.UPDATE_USER, linkedZstdDictionary.getUpdateUser());
+        record.set(ZSTD_DICTIONARY.FEED_NAME, linkedZstdDictionary.getFeedName());
+        record.set(ZSTD_DICTIONARY.STREAM_TYPE_NAME, linkedZstdDictionary.getStreamTypeName());
+        record.set(ZSTD_DICTIONARY.CHILD_STREAM_TYPE_NAME, linkedZstdDictionary.getChildStreamType());
+//        record.set(ZSTD_DICTIONARY.DICTIONARY_VERSION, linkedZstdDictionary.getDictionaryVersion());
+        record.set(ZSTD_DICTIONARY.UUID, linkedZstdDictionary.getUuid());
+        record.set(ZSTD_DICTIONARY.STATUS, linkedZstdDictionary.getStatus().getPrimitiveValue());
+        return record;
     }
 }

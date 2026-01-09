@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,10 +130,11 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
         this.volumeCache = volumeCache;
     }
 
-    @JsonPropertyDescription("How should volumes be selected for use? Possible volume selectors " +
-                             "include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', " +
-                             "'RoundRobinIgnoreLeastFree', 'RoundRobin', 'WeightedFreePercentRandom', 'WeightedFreeRandom') " +
-                             "default is 'RoundRobin'")
+    @JsonPropertyDescription(
+            "How should volumes be selected for use? Possible volume selectors " +
+            "include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', " +
+            "'RoundRobinIgnoreLeastFree', 'RoundRobin', 'WeightedFreePercentRandom', 'WeightedFreeRandom') " +
+            "default is 'RoundRobin'")
     @Pattern(regexp = HasCapacitySelectorFactory.VOLUME_SELECTOR_PATTERN)
     public String getVolumeSelector() {
         return volumeSelector;
@@ -164,8 +165,9 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
         return typePathCache;
     }
 
-    @JsonPropertyDescription("The paths used if the default stream volumes are created on application start." +
-                             "If a path is a relative path then it will be treated as being relative to stroom.path.home.")
+    @JsonPropertyDescription(
+            "The paths used if the default stream volumes are created on application start." +
+            "If a path is a relative path then it will be treated as being relative to stroom.path.home.")
     public List<String> getDefaultStreamVolumePaths() {
         return defaultStreamVolumePaths;
     }
@@ -216,12 +218,13 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
                 volumeCache);
     }
 
-    @JsonPropertyDescription("Map of meta type names to their file extension. " +
-                             "You should only change this property if you need to support legacy file extensions used " +
-                             "before Stroom v7. If a meta type does not have an entry in this map then the extension " +
-                             "'dat' will be used. The extension is entered without the leading dot. Changing the extension for a " +
-                             "meta type would require manual renaming of existing files on the file system. Only do " +
-                             "this if you understand the consequences.")
+    @JsonPropertyDescription(
+            "Map of meta type names to their file extension. " +
+            "You should only change this property if you need to support legacy file extensions used " +
+            "before Stroom v7. If a meta type does not have an entry in this map then the extension " +
+            "'dat' will be used. The extension is entered without the leading dot. Changing the extension for a " +
+            "meta type would require manual renaming of existing files on the file system. Only do " +
+            "this if you understand the consequences.")
     public Map<String, String> getMetaTypeExtensions() {
         return metaTypeExtensions;
     }
@@ -252,9 +255,10 @@ public class FsVolumeConfig extends AbstractConfig implements IsStroomConfig {
         }
     }
 
-    @JsonPropertyDescription("When refreshing the local cache of volumes, the state will only be updated in the " +
-                             "database if it is older then this threshold age. Value must be less than the period of the job " +
-                             "'File System Volume Status'.")
+    @JsonPropertyDescription(
+            "When refreshing the local cache of volumes, the state will only be updated in the " +
+            "database if it is older then this threshold age. Value must be less than the period of the job " +
+            "'File System Volume Status'.")
     public StroomDuration getMaxVolumeStateAge() {
         return maxVolumeStateAge;
     }

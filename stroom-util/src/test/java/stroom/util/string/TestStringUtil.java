@@ -39,6 +39,8 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+// Auto formatter keeps putting trailing spaces in the text blocks, which CS doesn't like
+@SuppressWarnings("checkstyle:RegexpSingleline")
 class TestStringUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStringUtil.class);

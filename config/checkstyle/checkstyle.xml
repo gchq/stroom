@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  ~ Copyright 2016-2025 Crown Copyright
+  ~ Copyright 2016-2026 Crown Copyright
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -184,6 +184,8 @@
       stroom.data.store.impl.fs.db.jooq.tables.FsVolume.*,
       stroom.data.store.impl.fs.db.jooq.tables.FsVolumeGroup.*,
       stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState.*,
+      stroom.data.store.impl.fs.db.jooq.tables.ZstdDictionary.*,
+      stroom.data.store.impl.fs.db.jooq.tables.ZstdDictionaryTask.*,
       stroom.explorer.impl.db.jooq.tables.ExplorerFavourite.*,
       stroom.explorer.impl.db.jooq.tables.ExplorerNode.*,
       stroom.explorer.impl.db.jooq.tables.ExplorerPath.*,
