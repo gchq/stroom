@@ -22,15 +22,27 @@ import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.contentstore.shared.ContentStoreCreateGitRepoRequest;
 import stroom.contentstore.shared.ContentStoreResponse;
 import stroom.contentstore.shared.ContentStoreResponse.Status;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.errors.GitAPIException;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -71,6 +83,22 @@ public class ContentStoreTestSetup {
     );
 
     /**
+     * Time of last pull from GIT
+     */
+    private static long timeOfLastGitPull = 0L;
+
+    /**
+     * Time between GIT pulls. We don't want to pull every time - just the first one in the test.
+     * Otherwise, the tests take a lot longer. Set to 30 minutes.
+     */
+    private static final long TIME_BETWEEN_GIT_PULLS = 1000L * 60L * 30L;
+
+    /**
+     * Logger
+     */
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentStoreTestSetup.class);
+
+    /**
      * Constructor - injected.
      *
      * @param contentStoreResourceProvider Injected service for managing content stores and packs.
@@ -80,34 +108,119 @@ public class ContentStoreTestSetup {
             final Provider<ContentStoreResourceImpl> contentStoreResourceProvider) {
 
         this.contentStoreResourceProvider = contentStoreResourceProvider;
+        LOGGER.info("Time of last GIT pull: {}", new Date(timeOfLastGitPull));
+    }
+
+    private synchronized Path cacheGitRepo(final String gitRepoUrl) throws IOException {
+        try {
+            // Derive the local repo path from the URL
+            final URI uri = new URI(gitRepoUrl);
+            String localName = uri.getPath();
+            final int iDot = localName.lastIndexOf('.');
+            if (iDot != -1) {
+                localName = localName.substring(0, iDot);
+            }
+
+            final Path repoPath = Path.of("../content-cache", localName).toAbsolutePath();
+
+            // Ensure directories exist
+            Files.createDirectories(repoPath);
+            final Path realRepoPath = repoPath.toRealPath();
+
+            // Do we already have a git repo?
+            final String[] repoContents = repoPath.toFile().list();
+            if (repoContents != null && repoContents.length > 0) {
+                final long timeNow = System.currentTimeMillis();
+                LOGGER.info("Time now: {}; Time of last GIT pull: {}; Time of next GIT pull: {}",
+                        new Date(timeNow),
+                        new Date(timeOfLastGitPull),
+                        new Date(timeOfLastGitPull + TIME_BETWEEN_GIT_PULLS));
+
+                if (timeNow > (timeOfLastGitPull + TIME_BETWEEN_GIT_PULLS)) {
+                    // Update repo
+                    try (final Git git = Git.open(repoPath.toFile())) {
+                        final PullResult pullResult = git.pull().call();
+                        if (!pullResult.isSuccessful()) {
+                            throw new IOException("Unsuccessful pull request: " + pullResult);
+                        } else {
+                            LOGGER.info("Successful pull from GIT repo into local content cache repo");
+                            timeOfLastGitPull = timeNow;
+                        }
+                    }
+                } else {
+                    LOGGER.info("Not pulling from GIT repo to update local content cache repo");
+                }
+            } else {
+                // Clone repo to filesystem. Not a bare repo as we want access to the content-store.yml file.
+                final CloneCommand cloneCommand = Git.cloneRepository()
+                        .setURI(gitRepoUrl)
+                        .setDirectory(repoPath.toFile())
+                        .setCloneAllBranches(true)
+                        .setBare(false);
+
+                try (@SuppressWarnings("unused") final Git git = cloneCommand.call()) {
+                    LOGGER.info("Cloned GIT repo '{}' to local repo '{}'", gitRepoUrl, repoPath);
+                    timeOfLastGitPull = System.currentTimeMillis();
+                }
+            }
+
+            return realRepoPath;
+
+        } catch (final URISyntaxException e) {
+            throw new IOException("Invalid remote GitRepo URI: " + e.getMessage(), e);
+        } catch (final IOException e) {
+            throw new IOException("IO error caching remote GIT repo: " + e.getMessage(), e);
+        } catch (final GitAPIException e) {
+            throw new IOException("GIT error caching remote GIT repo: " + e.getMessage(), e);
+        }
+
     }
 
     /**
      * Load the content store, if necessary.
      * Cannot be called from injected constructor.
      */
-    private synchronized void cacheContentStore() {
+    private synchronized void cacheContentStore() throws RuntimeException {
         if (contentStoreContents == null) {
+            try {
+                // Repositories that hold the content
+                final String contentRepo = "https://github.com/gchq/stroom-content.git";
+                final String visRepo = "https://github.com/gchq/stroom-visualisations-dev.git";
 
-            // Hack to force the content store config to use our content store config file
-            contentStoreResource = contentStoreResourceProvider.get();
-            contentStoreResource.addTestUriContentStoreUrl(
-                    "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/content-store.yml");
-            contentStoreResource.addTestUriContentStoreUrl(
-                    "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/sample-source/content-store.yml");
+                // Create local cache of the repos and get the paths to them
+                final Path localContentRepo = cacheGitRepo(contentRepo);
+                final Path localVisRepo = cacheGitRepo(visRepo);
 
-            // Get all the items in one go
-            final PageRequest pageRequest = new PageRequest(0, Integer.MAX_VALUE);
-            final ResultPage<ContentStoreContentPackWithDynamicState> page =
-                    contentStoreResource.list(pageRequest);
+                // Generate the file: URL of the content-store YAML file
+                final String contentStoreFileUrl = "file://" +
+                                                   localContentRepo.resolve("source/content-store.yml");
 
-            contentStoreContents = page.stream().toList();
+                // Hack to force the content store config to use our content store config file
+                contentStoreResource = contentStoreResourceProvider.get();
+                contentStoreResource.addTestUriContentStoreUrl(contentStoreFileUrl);
 
-            // List out all the IDs so we can install them if necessary
-            for (final ContentStoreContentPackWithDynamicState cpds : contentStoreContents) {
-                samplePackIds.add(cpds.getContentPack().getId());
+                // Tell the content store to get from our local GIT repo instead of the https version
+                contentStoreResource.remapGitUrl("https://github.com/gchq/stroom-content.git",
+                        "file://" + localContentRepo);
+                contentStoreResource.remapGitUrl("https://github.com/gchq/stroom-visualisations-dev.git",
+                        "file://" + localVisRepo);
+
+                // Get all the items from the content store in one go
+                final PageRequest pageRequest = new PageRequest(0, Integer.MAX_VALUE);
+                final ResultPage<ContentStoreContentPackWithDynamicState> page =
+                        contentStoreResource.list(pageRequest);
+
+                contentStoreContents = page.stream().toList();
+
+                // List out all the IDs so we can install them if necessary
+                for (final ContentStoreContentPackWithDynamicState cpds : contentStoreContents) {
+                    samplePackIds.add(cpds.getContentPack().getId());
+                }
+            } catch (final IOException e) {
+                throw new RuntimeException("Error caching content store: " + e.getMessage(), e);
             }
         }
+
     }
 
     /**
@@ -117,6 +230,7 @@ public class ContentStoreTestSetup {
      * @throws RuntimeException If something goes wrong.
      */
     public void install(final String contentPackId) throws RuntimeException {
+
         this.cacheContentStore();
 
         // Find the content pack

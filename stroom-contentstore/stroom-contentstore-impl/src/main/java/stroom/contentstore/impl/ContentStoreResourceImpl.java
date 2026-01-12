@@ -54,7 +54,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * REST server-side implementation for the ContentStore stuff.
@@ -87,6 +89,11 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
      * Allows test code to set a test content store file to use
      */
     private List<String> overrideContentStoreUrls = null;
+
+    /**
+     * Allows test code to override Git URLs
+     */
+    private Map<String, String> overrideGitUrls = null;
 
     /**
      * The size of the buffer used to copy stuff around
@@ -150,6 +157,19 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
     }
 
     /**
+     * Method to use when testing. Allows the repository URLs in the content pack to be
+     * overridden.
+     * @param originalUrl The gitUrl that we want to put elsewhere
+     * @param newUrl The new URL that we want to use
+     */
+    public synchronized void remapGitUrl(final String originalUrl, final String newUrl) {
+        if (overrideGitUrls == null) {
+            overrideGitUrls = new HashMap<>();
+        }
+        overrideGitUrls.put(originalUrl, newUrl);
+    }
+
+    /**
      * REST method to return the list of content packs to the client.
      *
      * @return A list of content packs. Never returns null but may
@@ -208,6 +228,19 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
                             new ContentStoreContentPackWithDynamicState(contentPack);
                     cpWithState.checkInstallationStatus(installedGitRepoDocs);
                     contentPacksWithState.add(cpWithState);
+
+                    // If testing then override the gitUrl value to point elsewhere
+                    // This allows us to use a file: git repo as a cache to speed things up
+                    if (overrideGitUrls != null) {
+                        final String gitUrl = contentPack.getGitUrl();
+                        final String overrideGitUrl = overrideGitUrls.get(gitUrl);
+                        if (overrideGitUrl != null) {
+                            LOGGER.info("Overriding GitURL '{}' with '{}'",
+                                    gitUrl,
+                                    overrideGitUrl);
+                            contentPack.overrideGitUrl(overrideGitUrl);
+                        }
+                    }
                 }
 
             } catch (final URISyntaxException | MalformedURLException e) {
