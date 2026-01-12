@@ -41,6 +41,7 @@ import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ParamKeys;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.DocumentPermissionService;
@@ -183,7 +184,8 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final DateTimeSettings dateTimeSettings,
-                       final ValuesConsumer consumer) {
+                       final ValuesConsumer valuesConsumer,
+                       final ErrorConsumer errorConsumer) {
         checkAppPermission();
 
         final ExpressionFilter expressionFilter = ExpressionFilter.builder()
@@ -197,7 +199,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         criteria.setExpression(expression);
 
         final Predicate<String> viewPermissionPredicate = getViewPermissionPredicate();
-        annotationDao.search(criteria, fieldIndex, consumer, viewPermissionPredicate);
+        annotationDao.search(criteria, fieldIndex, valuesConsumer, viewPermissionPredicate);
     }
 
     private Predicate<String> getViewPermissionPredicate() {
