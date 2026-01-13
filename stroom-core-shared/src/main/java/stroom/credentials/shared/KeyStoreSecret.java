@@ -16,6 +16,7 @@ import java.util.Objects;
  * All fields can be null except for UUID.
  */
 @JsonPropertyOrder({
+        "uuid",
         "keyStoreType",
         "keyStorePassword",
         "resourceKey"
@@ -23,6 +24,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public final class KeyStoreSecret implements Secret {
 
+    @JsonProperty
+    private final String uuid;
     @JsonProperty
     private final KeyStoreType keyStoreType;
     @JsonProperty
@@ -32,12 +35,18 @@ public final class KeyStoreSecret implements Secret {
 
     @JsonCreator
     public KeyStoreSecret(
+            @JsonProperty("uuid") final String uuid,
             @JsonProperty("keyStoreType") final KeyStoreType keyStoreType,
             @JsonProperty("keyStorePassword") final String keyStorePassword,
             @JsonProperty("resourceKey") final ResourceKey resourceKey) {
+        this.uuid = uuid;
         this.keyStoreType = keyStoreType;
         this.keyStorePassword = keyStorePassword;
         this.resourceKey = resourceKey;
+    }
+
+    public String getUuid() {
+        return uuid;
     }
 
     public KeyStoreType getKeyStoreType() {
@@ -58,13 +67,14 @@ public final class KeyStoreSecret implements Secret {
             return false;
         }
         final KeyStoreSecret that = (KeyStoreSecret) o;
-        return keyStoreType == that.keyStoreType &&
+        return Objects.equals(uuid, that.uuid) &&
+               keyStoreType == that.keyStoreType &&
                Objects.equals(keyStorePassword, that.keyStorePassword) &&
                Objects.equals(resourceKey, that.resourceKey);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(keyStoreType, keyStorePassword, resourceKey);
+        return Objects.hash(uuid, keyStoreType, keyStorePassword, resourceKey);
     }
 }
