@@ -13,6 +13,19 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.18] - 2026-01-13
+
+* Issue **#5303** : Add debug to index dense vector retrieval.
+
+* Issue **#5344** : Fix credential manager UI.
+
+* Issue **#5342** : Fix issue querying Plan B shards where some stores have been deleted.
+
+* Issue **#5351** : Make SSH key and known host configuration clearer.
+
+* Issue **#5353** : Fix keystore config issue.
+
+
 ## [v7.11-beta.17] - 2026-01-08
 
 * Issue **#5282** : Processor task creation now supports feed dependencies to delay processing until reference data is available.
@@ -1932,7 +1945,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.17...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.18...HEAD
+[v7.11-beta.18]: https://github.com/gchq/stroom/compare/v7.11-beta.17...v7.11-beta.18
 [v7.11-beta.17]: https://github.com/gchq/stroom/compare/v7.11-beta.16...v7.11-beta.17
 [v7.11-beta.16]: https://github.com/gchq/stroom/compare/v7.11-beta.15...v7.11-beta.16
 [v7.11-beta.15]: https://github.com/gchq/stroom/compare/v7.11-beta.14...v7.11-beta.15
