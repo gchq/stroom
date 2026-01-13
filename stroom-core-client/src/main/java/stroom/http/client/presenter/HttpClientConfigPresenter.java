@@ -31,6 +31,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class HttpClientConfigPresenter
@@ -70,14 +71,16 @@ public class HttpClientConfigPresenter
 
     @Override
     public void onDirty() {
-
     }
 
     @Override
     public void onSetHttpTlsConfig() {
         final HttpTlsConfigPresenter httpTlsConfigPresenter = httpTlsConfigPresenterProvider.get();
-        httpTlsConfigPresenter.show(httpTlsConfig, updated ->
-                httpTlsConfig = updated);
+        httpTlsConfigPresenter.show(httpTlsConfig, updated -> {
+            if (!Objects.equals(httpTlsConfig, updated)) {
+                httpTlsConfig = updated;
+            }
+        });
     }
 
     public void read(final HttpClientConfig config) {

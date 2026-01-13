@@ -364,6 +364,7 @@ public class OpenAIServiceImpl implements OpenAIService {
         }
 
         return builder
+                .protocol(config.getProtocol())
                 .provider(config.getProvider())
                 .trustSelfSignedCertificates(config.isTrustSelfSignedCertificates())
                 .verifyHostname(config.isVerifyHostname())

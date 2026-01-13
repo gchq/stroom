@@ -34,6 +34,8 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
@@ -42,11 +44,15 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
@@ -54,6 +60,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class CredentialsService implements StoredSecrets {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CredentialsService.class);
 
     private final CredentialsDao credentialsDao;
     private final SecurityContext securityContext;
@@ -172,6 +180,10 @@ public class CredentialsService implements StoredSecrets {
             if (path == null) {
                 throw new RuntimeException("Temporary key store upload not found");
             }
+
+            // Verify keystore can be read and that the password is valid
+            verifyKeystore(keyStoreSecret, path);
+
             try {
                 keyStore = Files.readAllBytes(path);
             } catch (final IOException e) {
@@ -357,13 +369,18 @@ public class CredentialsService implements StoredSecrets {
             throw new RuntimeException("Unable to find secret '" + name + "'");
         }
 
-        if (storedSecret.secret() instanceof KeyStoreSecret keyStoreSecret) {
+        if (storedSecret.secret() instanceof final KeyStoreSecret keyStoreSecret) {
             final Path path = pathCreator
                     .toAppPath(NullSafe.getOrElse(
                             credentialsConfigProvider.get(),
                             CredentialsConfig::getKeyStoreCachePath,
                             CredentialsConfig.DEFAULT_KEY_STORE_CACHE_PATH));
-            final Path keyStorePath = path.resolve(storedSecret.credential().getUuid() + ".keystore");
+            final KeyStoreType keyStoreType = NullSafe.getOrElse(
+                    keyStoreSecret,
+                    KeyStoreSecret::getKeyStoreType,
+                    KeyStoreType.JKS);
+            final String fileExtension = "." + keyStoreType.getFileExtension();
+            final Path keyStorePath = path.resolve(keyStoreSecret.getUuid() + fileExtension);
 
             // See if the key store file exists and if it is old.
             boolean exists = Files.exists(keyStorePath);
@@ -392,11 +409,14 @@ public class CredentialsService implements StoredSecrets {
                             Files.createDirectories(path);
 
                             // Write temporary keystore
-                            final Path tempFile = path.resolve(UUID.randomUUID() + ".keystore");
+                            final Path tempFile = path.resolve(UUID.randomUUID() + fileExtension);
                             Files.write(tempFile, bytes);
 
                             // Move keystore
                             Files.move(tempFile, keyStorePath, StandardCopyOption.ATOMIC_MOVE);
+
+                            // Verify the store.
+                            verifyKeystore(keyStoreSecret, keyStorePath);
                         }
                     }
                 }
@@ -404,7 +424,7 @@ public class CredentialsService implements StoredSecrets {
                 return new KeyStore(
                         FileUtil.getCanonicalPath(keyStorePath),
                         keyStoreSecret.getKeyStorePassword(),
-                        NullSafe.getOrElse(keyStoreSecret, KeyStoreSecret::getKeyStoreType, KeyStoreType.JKS).name(),
+                        keyStoreType.name(),
                         null);
 
             } catch (final IOException e) {
@@ -412,6 +432,24 @@ public class CredentialsService implements StoredSecrets {
             }
         } else {
             throw new RuntimeException("Secret '" + name + "' is not a key store");
+        }
+    }
+
+    private void verifyKeystore(final KeyStoreSecret keyStoreSecret,
+                                final Path path) {
+        try {
+            final java.security.KeyStore keyStore = java.security.KeyStore.getInstance(
+                    keyStoreSecret.getKeyStoreType().getDisplayValue());
+            final char[] password = NullSafe.get(
+                    keyStoreSecret,
+                    KeyStoreSecret::getKeyStorePassword,
+                    String::toCharArray);
+            try (final InputStream inputStream = Files.newInputStream(path)) {
+                keyStore.load(inputStream, password);
+            }
+        } catch (final KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
+            LOGGER.error(e::getMessage, e);
+            throw new RuntimeException(e.getMessage(), e);
         }
     }
 
