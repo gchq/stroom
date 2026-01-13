@@ -524,10 +524,19 @@ public class DataGridUtil {
                                                final MyDataGrid<T_ROW> dataGrid,
                                                final String name,
                                                final Function<T_ROW, DocRef> docRefExtractionFunction) {
+        addDocRefColumn(eventBus, dataGrid, name, docRefExtractionFunction, true);
+    }
+
+    public static <T_ROW> void addDocRefColumn(final EventBus eventBus,
+                                               final MyDataGrid<T_ROW> dataGrid,
+                                               final String name,
+                                               final Function<T_ROW, DocRef> docRefExtractionFunction,
+                                               final boolean hasOpenAndCopy) {
         final Column<T_ROW, T_ROW> column = new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(Function.identity(),
                 () -> new DocRefCell
                         .Builder<T_ROW>()
                         .eventBus(eventBus)
+                        .hasOpenAndCopy(hasOpenAndCopy)
                         .docRefFunction(docRefExtractionFunction)
                         .showIcon(true)
                         .build())
