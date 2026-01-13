@@ -105,7 +105,7 @@ public class TestCredentialDaoImpl {
         // Try other types
         final ResultPage<CredentialWithPerms> listOfAT = find(CredentialType.ACCESS_TOKEN);
         assertThat(listOfAT.size()).isEqualTo(0);
-        final ResultPage<CredentialWithPerms> listOfPC = find(CredentialType.KEY_PAIR);
+        final ResultPage<CredentialWithPerms> listOfPC = find(CredentialType.SSH_KEY);
         assertThat(listOfPC.size()).isEqualTo(0);
     }
 

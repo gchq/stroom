@@ -1,8 +1,7 @@
 package stroom.gitrepo.impl;
 
 import stroom.credentials.api.StoredSecret;
-import stroom.credentials.api.StoredSecrets;
-import stroom.credentials.shared.KeyPairSecret;
+import stroom.credentials.shared.SshKeySecret;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -29,37 +28,35 @@ public class CredentialsJgitSshTransportCallback implements TransportConfigCallb
     private static final LambdaLogger LOGGER =
             LambdaLoggerFactory.getLogger(CredentialsJgitSshTransportCallback.class);
 
-    /** DAO to get credentials given the credentialsID */
-    private final StoredSecrets storedSecrets;
+    private final StoredSecret storedSecret;
+    private final SshKeySecret sshKeySecret;
 
-    /** Temporary directory to use for home and ssh directories. Not used but must exist. */
+    /**
+     * Temporary directory to use for home and ssh directories. Not used but must exist.
+     */
     private final File tempDir;
 
-    /** The name of the credentials object within the database */
-    private final String credentialName;
-
-    /** Comma separated list of authentication mechanisms */
+    /**
+     * Comma separated list of authentication mechanisms
+     */
     private static final String PREFERRED_AUTHENTICATIONS = "publickey";
 
     /**
      * Constructor
-     * @param credentialName The ID of the credentials object in the database. Must not be null.
+     *
+     * @param storedSecret The ssh key secret in the database. Must not be null.
      */
-    public CredentialsJgitSshTransportCallback(final StoredSecrets storedSecrets,
-                                               final File tempDir,
-                                               final String credentialName) {
-
-        Objects.requireNonNull(storedSecrets);
-        Objects.requireNonNull(credentialName);
-        Objects.requireNonNull(tempDir);
-
-        this.storedSecrets = storedSecrets;
-        this.credentialName = credentialName;
-        this.tempDir = tempDir;
+    public CredentialsJgitSshTransportCallback(final StoredSecret storedSecret,
+                                               final SshKeySecret sshKeySecret,
+                                               final File tempDir) {
+        this.storedSecret = Objects.requireNonNull(storedSecret);
+        this.sshKeySecret = Objects.requireNonNull(sshKeySecret);
+        this.tempDir = Objects.requireNonNull(tempDir);
     }
 
     /**
      * Callback to configure the Transport link.
+     *
      * @param transport a {@link org.eclipse.jgit.transport.Transport} object.
      */
     @Override
@@ -67,39 +64,35 @@ public class CredentialsJgitSshTransportCallback implements TransportConfigCallb
         LOGGER.debug("Configuring transport ");
 
         if (transport instanceof final SshTransport sshTransport) {
-
             try {
                 // Create key pair from DB
-                final StoredSecret storedSecret = storedSecrets.get(credentialName);
                 final CredentialsJgitSshServerKeyDatabase serverKeyDatabase =
-                        new CredentialsJgitSshServerKeyDatabase(storedSecret);
+                        new CredentialsJgitSshServerKeyDatabase(storedSecret, sshKeySecret);
 
-                if (storedSecret.secret() instanceof final KeyPairSecret keyPairSecret) {
-                    LOGGER.debug("Configuring transport to use credentials: {}", storedSecret);
+                LOGGER.debug("Configuring transport to use credentials: {}", storedSecret);
 
-                    // Store the name of the credentials to improve error messages
-                    final Property.StringProperty credentialsName =
-                            new StringProperty(storedSecret.credential().getName());
+                // Store the name of the credentials to improve error messages
+                final Property.StringProperty credentialsName =
+                        new StringProperty(storedSecret.credential().getName());
 
-                    // Generate the key pair from the private key using the passphrase
-                    final Iterable<KeyPair> keyPairs = SecurityUtils.loadKeyPairIdentities(
-                            null,
-                            credentialsName,
-                            new ByteArrayInputStream(keyPairSecret.getPrivateKey().getBytes()),
-                            (sessionContext,
-                             namedResource,
-                             retryIndex) -> keyPairSecret.getPassphrase());
+                // Generate the key pair from the private key using the passphrase
+                final Iterable<KeyPair> keyPairs = SecurityUtils.loadKeyPairIdentities(
+                        null,
+                        credentialsName,
+                        new ByteArrayInputStream(sshKeySecret.getPrivateKey().getBytes()),
+                        (sessionContext,
+                         namedResource,
+                         retryIndex) -> sshKeySecret.getPassphrase());
 
-                    final SshSessionFactory sshFactory = new SshdSessionFactoryBuilder()
-                            .setPreferredAuthentications(PREFERRED_AUTHENTICATIONS)
-                            .setDefaultKeysProvider(ignored -> keyPairs)
-                            .setHomeDirectory(tempDir)
-                            .setSshDirectory(tempDir)
-                            .setServerKeyDatabase((ignoredHomeDir, ignoredSshDir) -> serverKeyDatabase)
-                            .build(null);
+                final SshSessionFactory sshFactory = new SshdSessionFactoryBuilder()
+                        .setPreferredAuthentications(PREFERRED_AUTHENTICATIONS)
+                        .setDefaultKeysProvider(ignored -> keyPairs)
+                        .setHomeDirectory(tempDir)
+                        .setSshDirectory(tempDir)
+                        .setServerKeyDatabase((ignoredHomeDir, ignoredSshDir) -> serverKeyDatabase)
+                        .build(null);
 
-                    sshTransport.setSshSessionFactory(sshFactory);
-                }
+                sshTransport.setSshSessionFactory(sshFactory);
 
             } catch (final IOException | GeneralSecurityException e) {
                 LOGGER.error("Error configuring credentials for transport: {}", e.getMessage(), e);
