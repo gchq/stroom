@@ -19,10 +19,8 @@ package stroom.gitrepo.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.credentials.client.presenter.CredentialClient;
 import stroom.credentials.client.presenter.CredentialListModel;
-import stroom.credentials.client.presenter.CredentialsManagerDialogPresenter;
 import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
-import stroom.credentials.shared.CredentialsResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
@@ -31,8 +29,6 @@ import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
 import stroom.gitrepo.shared.GitRepoResource;
 import stroom.item.client.SelectionBox;
-import stroom.security.client.api.ClientSecurityContext;
-import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 
@@ -62,70 +58,38 @@ public class GitRepoSettingsPresenter
     private final GitRepoCommitDialogPresenter commitDialog;
 
     /**
-     * Shows the credentials dialog box.
-     */
-    private final CredentialsManagerDialogPresenter credentialsManagerDialog;
-
-    /**
-     * Checks for Credentials App Permissions.
-     */
-    private boolean hasCredentialsAppPermission = false;
-
-    /**
      * Server REST API for GitRepoDocs
      */
     private static final GitRepoResource GIT_REPO_RESOURCE = GWT.create(GitRepoResource.class);
-
-    /**
-     * Server REST API for Credentials
-     */
-    private static final CredentialsResource CREDENTIALS_RESOURCE = GWT.create(CredentialsResource.class);
 
     /**
      * Local copy of the gitRepoDoc, saved in the onRead() method.
      * Might be null if onRead() hasn't been called yet.
      */
     private GitRepoDoc gitRepoDoc = null;
-
-    /**
-     * Provides a label for the Credentials dialog that doesn't show anything.
-     */
-    private static final String EMPTY_LABEL = null;
-
-    /**
-     * How many credentials to get in one request.
-     */
-    private static final int MAX_NUMBER_OF_CREDENTIALS = 1000;
-
     private final CredentialClient credentialClient;
 
     /**
      * Injected constructor.
      *
-     * @param eventBus                 For parent class
-     * @param view                     The View for showing stuff to users
-     * @param restFactory              For talking to the server
-     * @param commitDialog             Injected dialog for commit message
-     * @param credentialsManagerDialog Injected dialog for credentials
+     * @param eventBus     For parent class
+     * @param view         The View for showing stuff to users
+     * @param restFactory  For talking to the server
+     * @param commitDialog Injected dialog for commit message
      */
     @Inject
     public GitRepoSettingsPresenter(final EventBus eventBus,
                                     final GitRepoSettingsView view,
                                     final RestFactory restFactory,
-                                    final ClientSecurityContext securityContext,
                                     final GitRepoCommitDialogPresenter commitDialog,
-                                    final CredentialsManagerDialogPresenter credentialsManagerDialog,
                                     final CredentialClient credentialClient) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.credentialClient = credentialClient;
         view.setUiHandlers(this);
         this.commitDialog = commitDialog;
-        this.credentialsManagerDialog = credentialsManagerDialog;
-        this.hasCredentialsAppPermission = securityContext.hasAppPermission(AppPermission.CREDENTIALS);
-        view.setHasCredentialsAppPermission(this.hasCredentialsAppPermission);
         final CredentialListModel credentialListModel = new CredentialListModel(eventBus, credentialClient,
-                Set.of(CredentialType.KEY_PAIR, CredentialType.USERNAME_PASSWORD, CredentialType.ACCESS_TOKEN));
+                Set.of(CredentialType.SSH_KEY, CredentialType.USERNAME_PASSWORD, CredentialType.ACCESS_TOKEN));
         credentialListModel.setTaskMonitorFactory(this);
         view.getCredentialSelectionBox().setModel(credentialListModel);
     }
@@ -343,31 +307,6 @@ public class GitRepoSettingsPresenter
     }
 
     /**
-     * Called from View when the Set Credentials button is pressed.
-     */
-    @Override
-    public void onShowCredentialsDialog(final TaskMonitorFactory taskMonitorFactory) {
-//        if (gitRepoDoc != null) {
-//            final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(credentialsManagerDialog);
-//            credentialsManagerDialog.setupDialog(
-//                    builder,
-//                    EMPTY_LABEL,
-//                    getView().getCredentialName());
-//            builder.onHideRequest(e -> {
-//                        if (e.isOk()) {
-//                            e.hide();
-//                            grabCredentialsList(credentialsManagerDialog.getCredentialName());
-//                            this.setDirty(true);
-//                        } else {
-//                            // Cancel pressed
-//                            e.hide();
-//                        }
-//                    })
-//                    .fire();
-//        }
-    }
-
-    /**
      * Gets the list of credentials and puts them into the selection list.
      *
      * @param credentialName The name of the currently selected credential, or
@@ -415,7 +354,5 @@ public class GitRepoSettingsPresenter
          * Called by presenter on startup to set the state of the UI.
          */
         void setState();
-
-        void setHasCredentialsAppPermission(final boolean hasCredentialsAppPermission);
     }
 }

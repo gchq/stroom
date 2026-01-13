@@ -18,6 +18,10 @@ import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 /**
@@ -33,11 +37,6 @@ public class CredentialSettingsViewImpl
      * Underlying Widget created by UiBinder
      */
     private final Widget widget;
-
-    /**
-     * Underlying credentials object's UUID
-     */
-    private String uuid;
 
     @UiField
     TextBox name;
@@ -59,7 +58,11 @@ public class CredentialSettingsViewImpl
     @SuppressWarnings("unused")
     public CredentialSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        for (final CredentialType type : CredentialType.values()) {
+        final List<CredentialType> sortedCredentialType = Arrays
+                .stream(CredentialType.values())
+                .sorted(Comparator.comparing(CredentialType::getDisplayValue))
+                .collect(Collectors.toList());
+        for (final CredentialType type : sortedCredentialType) {
             credentialType.addItem(type);
         }
     }
