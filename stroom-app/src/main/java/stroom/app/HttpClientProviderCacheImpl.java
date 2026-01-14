@@ -73,16 +73,16 @@ public class HttpClientProviderCacheImpl implements HttpClientProviderCache {
     }
 
     private HttpClientProviderImpl create(final HttpClientConfiguration httpClientConfiguration) {
-        LOGGER.debug(() -> "Creating client");
+        LOGGER.debug("Creating client");
         final CloseableHttpClient httpClient = httpClientFactory.get(
                 "HttpClientCache-" + UUID.randomUUID(),
                 httpClientConfiguration);
-        LOGGER.debug(() -> "Creating client provider");
+        LOGGER.debug("Creating client provider");
         return new HttpClientProviderImpl(httpClient);
     }
 
     private void destroy(final HttpClientConfiguration key, final HttpClientProviderImpl value) {
-        LOGGER.debug(() -> "Destroying client provider");
+        LOGGER.debug("Destroying client provider");
         try {
             value.release();
         } catch (final Exception e) {
@@ -126,7 +126,7 @@ public class HttpClientProviderCacheImpl implements HttpClientProviderCache {
                     : count) == 0) {
                 // Make sure we only ever try to close once.
                 if (closed.compareAndSet(false, true)) {
-                    LOGGER.debug(() -> "Closing client");
+                    LOGGER.debug("Closing client");
                     httpClient.close(CloseMode.GRACEFUL);
                 }
             }
