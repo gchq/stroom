@@ -32,7 +32,8 @@ import stroom.util.http.HttpClientUtil;
 import stroom.util.http.HttpTlsConfiguration;
 import stroom.util.io.CompressionUtil;
 import stroom.util.io.TempDirProvider;
-import stroom.util.jersey.HttpClientCache;
+import stroom.util.jersey.HttpClientProvider;
+import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -121,7 +122,7 @@ public class HTTPAppender extends AbstractAppender {
 
     private final MetaDataHolder metaDataHolder;
     private final TempDirProvider tempDirProvider;
-    private final HttpClientCache httpClientCache;
+    private final HttpClientProviderCache httpClientProviderCache;
     private final ErrorReceiverProxy errorReceiverProxy;
 
     private String forwardUrl;
@@ -156,11 +157,11 @@ public class HTTPAppender extends AbstractAppender {
     HTTPAppender(final ErrorReceiverProxy errorReceiverProxy,
                  final MetaDataHolder metaDataHolder,
                  final TempDirProvider tempDirProvider,
-                 final HttpClientCache httpClientCache) {
+                 final HttpClientProviderCache httpClientProviderCache) {
         super(errorReceiverProxy);
         this.metaDataHolder = metaDataHolder;
         this.tempDirProvider = tempDirProvider;
-        this.httpClientCache = httpClientCache;
+        this.httpClientProviderCache = httpClientProviderCache;
         this.outputStreamSupport = new OutputFactory(metaDataHolder);
         this.errorReceiverProxy = errorReceiverProxy;
 
@@ -232,7 +233,7 @@ public class HTTPAppender extends AbstractAppender {
     private void postFile(final HttpClientConfiguration httpClientConfiguration,
                           final Path file,
                           final AttributeMap effectiveAttributeMap) throws IOException {
-        try {
+        try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
             final HttpUriRequestBase request =
                     new HttpUriRequestBase(requestMethod, URI.create(forwardUrl));
             request.addHeader("Content-Type", contentType);
@@ -252,8 +253,7 @@ public class HTTPAppender extends AbstractAppender {
                 logConnectionToDebug();
             }
 
-
-            final HttpClient httpClient = httpClientCache.get(httpClientConfiguration);
+            final HttpClient httpClient = httpClientProvider.get();
             httpClient.execute(request, response -> {
 
                 LOGGER.debug(() -> "closeConnection() - header fields " +

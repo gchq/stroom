@@ -18,9 +18,10 @@ package stroom.util.jersey;
 
 import stroom.util.http.HttpClientConfiguration;
 
-import org.apache.hc.client5.http.classic.HttpClient;
+public class MockHttpClientProviderCache implements HttpClientProviderCache {
 
-public interface HttpClientCache {
-
-    HttpClient get(HttpClientConfiguration httpClientConfiguration);
+    @Override
+    public HttpClientProvider get(final HttpClientConfiguration httpClientConfiguration) {
+        return null;
+    }
 }

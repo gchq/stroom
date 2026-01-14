@@ -1,5 +1,9 @@
 package stroom.langchain.impl;
 
+import stroom.util.http.HttpClientConfiguration;
+import stroom.util.jersey.HttpClientProvider;
+import stroom.util.jersey.HttpClientProviderCache;
+
 import dev.langchain4j.http.client.HttpClient;
 import dev.langchain4j.http.client.HttpRequest;
 import dev.langchain4j.http.client.SuccessfulHttpResponse;
@@ -12,6 +16,7 @@ import org.apache.hc.client5.http.classic.methods.HttpOptions;
 import org.apache.hc.client5.http.classic.methods.HttpPatch;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
@@ -30,16 +35,21 @@ import java.util.Map;
 
 public class ApacheHttpClient implements HttpClient {
 
-    private final org.apache.hc.client5.http.classic.HttpClient httpClient;
+    private final HttpClientProviderCache httpClientProviderCache;
+    private final HttpClientConfiguration httpClientConfiguration;
 
-    public ApacheHttpClient(final org.apache.hc.client5.http.classic.HttpClient httpClient) {
-        this.httpClient = httpClient;
+    public ApacheHttpClient(final HttpClientProviderCache httpClientProviderCache,
+                            final HttpClientConfiguration httpClientConfiguration) {
+        this.httpClientProviderCache = httpClientProviderCache;
+        this.httpClientConfiguration = httpClientConfiguration;
     }
 
     @Override
     public SuccessfulHttpResponse execute(final HttpRequest request) {
-        try {
+        try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
             final ClassicHttpRequest apacheRequest = createApacheRequest(request);
+
+            final org.apache.hc.client5.http.classic.HttpClient httpClient = httpClientProvider.get();
             return httpClient.execute(apacheRequest, this::convertResponse);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
@@ -51,11 +61,20 @@ public class ApacheHttpClient implements HttpClient {
                         final ServerSentEventParser parser,
                         final ServerSentEventListener listener) {
         final ClassicHttpRequest apacheRequest = createApacheRequest(request);
-        try {
-            httpClient.execute(apacheRequest, response -> {
-                handleServerSentEvents(response, parser, listener);
-                return null;
-            });
+        try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
+            final org.apache.hc.client5.http.classic.HttpClient httpClient = httpClientProvider.get();
+            if (httpClient instanceof final CloseableHttpClient closeableHttpClient) {
+                httpClient.execute(apacheRequest, response -> {
+                    handleServerSentEvents(response, parser, listener);
+                    closeableHttpClient.close();
+                    return null;
+                });
+            } else {
+                httpClient.execute(apacheRequest, response -> {
+                    handleServerSentEvents(response, parser, listener);
+                    return null;
+                });
+            }
         } catch (final IOException e) {
             listener.onError(e);
         }
