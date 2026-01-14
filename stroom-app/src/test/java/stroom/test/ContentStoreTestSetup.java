@@ -22,8 +22,11 @@ import stroom.contentstore.shared.ContentStoreContentPackWithDynamicState;
 import stroom.contentstore.shared.ContentStoreCreateGitRepoRequest;
 import stroom.contentstore.shared.ContentStoreResponse;
 import stroom.contentstore.shared.ContentStoreResponse.Status;
+import stroom.util.io.HomeDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
@@ -37,12 +40,16 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -56,6 +63,8 @@ public class ContentStoreTestSetup {
      * Provider of the Thing to do the actual import
      */
     private final Provider<ContentStoreResourceImpl> contentStoreResourceProvider;
+
+    private final HomeDirProvider homeDirProvider;
 
     /**
      * Thing to do the actual work
@@ -85,13 +94,13 @@ public class ContentStoreTestSetup {
     /**
      * Time of last pull from GIT
      */
-    private static long timeOfLastGitPull = 0L;
+    private static Instant timeOfLastGitPull;
 
     /**
      * Time between GIT pulls. We don't want to pull every time - just the first one in the test.
      * Otherwise, the tests take a lot longer. Set to 30 minutes.
      */
-    private static final long TIME_BETWEEN_GIT_PULLS = 1000L * 60L * 30L;
+    private static final Duration TIME_BETWEEN_GIT_PULLS = Duration.ofMinutes(30);
 
     /**
      * Logger
@@ -104,14 +113,20 @@ public class ContentStoreTestSetup {
      * @param contentStoreResourceProvider Injected service for managing content stores and packs.
      */
     @Inject
-    public ContentStoreTestSetup(
-            final Provider<ContentStoreResourceImpl> contentStoreResourceProvider) {
-
+    public ContentStoreTestSetup(final Provider<ContentStoreResourceImpl> contentStoreResourceProvider,
+                                 final HomeDirProvider homeDirProvider) {
         this.contentStoreResourceProvider = contentStoreResourceProvider;
-        LOGGER.info("Time of last GIT pull: {}", new Date(timeOfLastGitPull));
+        this.homeDirProvider = homeDirProvider;
+        LOGGER.info("Time of last GIT pull: {}", getTime(timeOfLastGitPull));
     }
 
-    private synchronized Path cacheGitRepo(final String gitRepoUrl) throws IOException {
+    private String getTime(final Instant instant) {
+        return instant == null
+                ? "never"
+                : instant.toString();
+    }
+
+    private Path cacheGitRepo(final String gitRepoUrl) throws IOException {
         try {
             // Derive the local repo path from the URL
             final URI uri = new URI(gitRepoUrl);
@@ -120,60 +135,89 @@ public class ContentStoreTestSetup {
             if (iDot != -1) {
                 localName = localName.substring(0, iDot);
             }
+            final String[] parts = localName.split("/");
 
-            final Path repoPath = Path.of("../content-cache", localName).toAbsolutePath();
+            // Determine where we are going to store repository data.
+            Path repoPath = homeDirProvider.get().resolve("content-cache");
+            for (final String part : parts) {
+                if (NullSafe.isNonBlankString(part)) {
+                    repoPath = repoPath.resolve(part);
+                }
+            }
+            repoPath = repoPath.toAbsolutePath();
 
             // Ensure directories exist
             Files.createDirectories(repoPath);
-            final Path realRepoPath = repoPath.toRealPath();
+            repoPath = repoPath.toRealPath();
 
-            // Do we already have a git repo?
-            final String[] repoContents = repoPath.toFile().list();
-            if (repoContents != null && repoContents.length > 0) {
-                final long timeNow = System.currentTimeMillis();
-                LOGGER.info("Time now: {}; Time of last GIT pull: {}; Time of next GIT pull: {}",
-                        new Date(timeNow),
-                        new Date(timeOfLastGitPull),
-                        new Date(timeOfLastGitPull + TIME_BETWEEN_GIT_PULLS));
+            // Create a lock file.
+            final Path lockPath = repoPath.getParent().resolve(repoPath.getFileName().toString() + ".lock");
 
-                if (timeNow > (timeOfLastGitPull + TIME_BETWEEN_GIT_PULLS)) {
-                    // Update repo
-                    try (final Git git = Git.open(repoPath.toFile())) {
-                        final PullResult pullResult = git.pull().call();
-                        if (!pullResult.isSuccessful()) {
-                            throw new IOException("Unsuccessful pull request: " + pullResult);
-                        } else {
-                            LOGGER.info("Successful pull from GIT repo into local content cache repo");
-                            timeOfLastGitPull = timeNow;
+            // Perform read under lock.
+            try (final FileChannel channel = FileChannel.open(lockPath,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.READ,
+                    StandardOpenOption.WRITE);
+                    final FileLock lock = channel.lock()) {
+
+                // Do we already have a git repo?
+                final String[] repoContents = repoPath.toFile().list();
+                if (repoContents != null && repoContents.length > 0) {
+                    final Instant timeNow = Instant.now();
+                    final Instant nextPull;
+                    if (timeOfLastGitPull == null) {
+                        nextPull = timeNow;
+                    } else {
+                        nextPull = timeOfLastGitPull.plus(TIME_BETWEEN_GIT_PULLS);
+                    }
+
+                    LOGGER.info(() -> LogUtil.message(
+                            "Time now: {}; Time of last GIT pull: {}; Time of next GIT pull: {}",
+                            getTime(timeNow),
+                            getTime(timeOfLastGitPull),
+                            getTime(nextPull)));
+
+                    if (timeNow.isAfter(nextPull) || timeNow.equals(nextPull)) {
+                        // Update repo
+                        try (final Git git = Git.open(repoPath.toFile())) {
+                            final PullResult pullResult = git.pull().call();
+                            if (!pullResult.isSuccessful()) {
+                                throw new IOException("Unsuccessful pull request: " + pullResult);
+                            } else {
+                                LOGGER.info("Successful pull from GIT repo into local content cache repo");
+                                timeOfLastGitPull = timeNow;
+                            }
                         }
+                    } else {
+                        LOGGER.info("Not pulling from GIT repo to update local content cache repo");
                     }
                 } else {
-                    LOGGER.info("Not pulling from GIT repo to update local content cache repo");
-                }
-            } else {
-                // Clone repo to filesystem. Not a bare repo as we want access to the content-store.yml file.
-                final CloneCommand cloneCommand = Git.cloneRepository()
-                        .setURI(gitRepoUrl)
-                        .setDirectory(repoPath.toFile())
-                        .setCloneAllBranches(true)
-                        .setBare(false);
+                    // Clone repo to filesystem. Not a bare repo as we want access to the content-store.yml file.
+                    final CloneCommand cloneCommand = Git.cloneRepository()
+                            .setURI(gitRepoUrl)
+                            .setDirectory(repoPath.toFile())
+                            .setCloneAllBranches(true)
+                            .setBare(false);
 
-                try (@SuppressWarnings("unused") final Git git = cloneCommand.call()) {
-                    LOGGER.info("Cloned GIT repo '{}' to local repo '{}'", gitRepoUrl, repoPath);
-                    timeOfLastGitPull = System.currentTimeMillis();
+                    try (@SuppressWarnings("unused") final Git git = cloneCommand.call()) {
+                        LOGGER.info("Cloned GIT repo '{}' to local repo '{}'", gitRepoUrl, repoPath);
+                        timeOfLastGitPull = Instant.now();
+                    }
                 }
+
+                return repoPath;
+
+            } catch (final GitAPIException e) {
+                throw new IOException("GIT error caching remote GIT repo: " + e.getMessage(), e);
+            } finally {
+                Files.deleteIfExists(lockPath);
             }
-
-            return realRepoPath;
 
         } catch (final URISyntaxException e) {
             throw new IOException("Invalid remote GitRepo URI: " + e.getMessage(), e);
         } catch (final IOException e) {
             throw new IOException("IO error caching remote GIT repo: " + e.getMessage(), e);
-        } catch (final GitAPIException e) {
-            throw new IOException("GIT error caching remote GIT repo: " + e.getMessage(), e);
         }
-
     }
 
     /**
