@@ -1,7 +1,9 @@
 package stroom.langchain.impl;
 
 import stroom.util.http.HttpClientConfiguration;
+import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.shared.NullSafe;
+import stroom.util.time.StroomDuration;
 
 import dev.langchain4j.http.client.HttpClient;
 import dev.langchain4j.http.client.HttpClientBuilder;
@@ -10,12 +12,12 @@ import java.time.Duration;
 
 public class ApacheHttpClientBuilder implements HttpClientBuilder {
 
-    private final org.apache.hc.client5.http.classic.HttpClient httpClient;
-    private final HttpClientConfiguration httpClientConfiguration;
+    private final HttpClientProviderCache httpClientProviderCache;
+    private HttpClientConfiguration httpClientConfiguration;
 
-    public ApacheHttpClientBuilder(final org.apache.hc.client5.http.classic.HttpClient httpClient,
+    public ApacheHttpClientBuilder(final HttpClientProviderCache httpClientProviderCache,
                                    final HttpClientConfiguration httpClientConfiguration) {
-        this.httpClient = httpClient;
+        this.httpClientProviderCache = httpClientProviderCache;
         this.httpClientConfiguration = httpClientConfiguration;
     }
 
@@ -29,6 +31,7 @@ public class ApacheHttpClientBuilder implements HttpClientBuilder {
 
     @Override
     public HttpClientBuilder connectTimeout(final Duration timeout) {
+        httpClientConfiguration = httpClientConfiguration.copy().connectionTimeout(StroomDuration.of(timeout)).build();
         return this;
     }
 
@@ -42,11 +45,12 @@ public class ApacheHttpClientBuilder implements HttpClientBuilder {
 
     @Override
     public HttpClientBuilder readTimeout(final Duration timeout) {
+        httpClientConfiguration = httpClientConfiguration.copy().timeout(StroomDuration.of(timeout)).build();
         return this;
     }
 
     @Override
     public HttpClient build() {
-        return new ApacheHttpClient(httpClient);
+        return new ApacheHttpClient(httpClientProviderCache, httpClientConfiguration);
     }
 }

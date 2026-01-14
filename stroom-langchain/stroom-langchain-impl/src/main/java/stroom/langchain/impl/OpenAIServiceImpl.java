@@ -29,7 +29,8 @@ import stroom.util.http.HttpAuthConfiguration;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.http.HttpProxyConfiguration;
 import stroom.util.http.HttpTlsConfiguration;
-import stroom.util.jersey.HttpClientCache;
+import stroom.util.jersey.HttpClientProvider;
+import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.http.HttpAuthConfig;
 import stroom.util.shared.http.HttpClientConfig;
@@ -53,7 +54,6 @@ import dev.langchain4j.model.scoring.ScoringModel;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 
 import java.io.IOException;
@@ -67,13 +67,13 @@ public class OpenAIServiceImpl implements OpenAIService {
     private final Provider<OpenAIModelStore> openAIModelStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
     private final Provider<StoredSecrets> storedSecretsProvider;
-    private final Provider<HttpClientCache> httpClientCacheProvider;
+    private final Provider<HttpClientProviderCache> httpClientCacheProvider;
 
     @Inject
     OpenAIServiceImpl(final Provider<OpenAIModelStore> openAIModelStoreProvider,
                       final Provider<DocumentResourceHelper> documentResourceHelperProvider,
                       final Provider<StoredSecrets> storedSecretsProvider,
-                      final Provider<HttpClientCache> httpClientCacheProvider) {
+                      final Provider<HttpClientProviderCache> httpClientCacheProvider) {
         this.openAIModelStoreProvider = openAIModelStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.storedSecretsProvider = storedSecretsProvider;
@@ -87,21 +87,19 @@ public class OpenAIServiceImpl implements OpenAIService {
             //   -H "Authorization: Bearer $OPENAI_API_KEY"
 
 
-            final HttpClientCache httpClientCache = httpClientCacheProvider.get();
+            final HttpClientProviderCache httpClientProviderCache = httpClientCacheProvider.get();
             final HttpClientConfiguration httpClientConfiguration = new HttpClientConfiguration();
-            final HttpClient httpClient = httpClientCache.get(httpClientConfiguration);
+            try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
+                final String url = getUrl(modelDoc, "models");
+                final String apiKey = getApiKey(modelDoc);
 
+                final HttpGet httpGet = new HttpGet(url);
+                httpGet.addHeader("Content-Type", "application/audit");
+                if (NullSafe.isNonBlankString(apiKey)) {
+                    httpGet.addHeader("Authorization", "Bearer " + apiKey);
+                }
 
-            final String url = getUrl(modelDoc, "models");
-            final String apiKey = getApiKey(modelDoc);
-
-            final HttpGet httpGet = new HttpGet(url);
-            httpGet.addHeader("Content-Type", "application/audit");
-            if (NullSafe.isNonBlankString(apiKey)) {
-                httpGet.addHeader("Authorization", "Bearer " + apiKey);
-            }
-
-            return httpClient.execute(httpGet, response -> {
+                return httpClientProvider.get().execute(httpGet, response -> {
 //                        final StringBuilder sb = new StringBuilder()
 //                    .append("Model ID: ")
 //                    .append(model.id())
@@ -112,13 +110,14 @@ public class OpenAIServiceImpl implements OpenAIService {
 //                    .append("\nValid: ")
 //                    .append(model.isValid());
 
-                if (response.getCode() != 200) {
-                    return response.toString();
-                }
+                    if (response.getCode() != 200) {
+                        return response.toString();
+                    }
 
-                final byte[] bytes = response.getEntity().getContent().readAllBytes();
-                return new String(bytes, StandardCharsets.UTF_8);
-            });
+                    final byte[] bytes = response.getEntity().getContent().readAllBytes();
+                    return new String(bytes, StandardCharsets.UTF_8);
+                });
+            }
 
 //        final OpenAIOkHttpClient.Builder clientBuilder = OpenAIOkHttpClient.builder()
 //                .fromEnv();
@@ -242,9 +241,7 @@ public class OpenAIServiceImpl implements OpenAIService {
                 modelDoc,
                 OpenAIModelDoc::getHttpClientConfiguration,
                 HttpClientConfig.builder().build()));
-        final HttpClientCache httpClientCache = httpClientCacheProvider.get();
-        final HttpClient httpClient = httpClientCache.get(httpClientConfiguration);
-        return new ApacheHttpClientBuilder(httpClient, httpClientConfiguration);
+        return new ApacheHttpClientBuilder(httpClientCacheProvider.get(), httpClientConfiguration);
     }
 
     @Override

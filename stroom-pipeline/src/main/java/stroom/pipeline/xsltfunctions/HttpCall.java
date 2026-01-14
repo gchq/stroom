@@ -18,7 +18,8 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.util.io.StreamUtil;
-import stroom.util.jersey.HttpClientCache;
+import stroom.util.jersey.HttpClientProvider;
+import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -63,8 +64,8 @@ class HttpCall extends StroomExtensionFunctionCall {
     private final CommonHttpClient commonHttpClient;
 
     @Inject
-    HttpCall(final HttpClientCache httpClientCache) {
-        commonHttpClient = new CommonHttpClient(httpClientCache);
+    HttpCall(final HttpClientProviderCache httpClientProviderCache) {
+        commonHttpClient = new CommonHttpClient(httpClientProviderCache);
     }
 
     @Override
@@ -82,8 +83,8 @@ class HttpCall extends StroomExtensionFunctionCall {
             log(context, Severity.WARNING, "No URL specified for HTTP call", null);
 
         } else {
-            try {
-                final HttpClient httpClient = commonHttpClient.createClient(clientConfigStr);
+            try (final HttpClientProvider httpClientProvider = commonHttpClient.createClientProvider(clientConfigStr)) {
+                final HttpClient httpClient = httpClientProvider.get();
                 sequence = execute(url, headers, mediaType, data, httpClient, response ->
                         createSequence(context, response));
 

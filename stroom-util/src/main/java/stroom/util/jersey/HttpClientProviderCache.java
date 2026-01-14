@@ -16,22 +16,9 @@
 
 package stroom.util.jersey;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import jakarta.inject.Singleton;
+import stroom.util.http.HttpClientConfiguration;
 
-public class MockJerseyModule extends AbstractModule {
+public interface HttpClientProviderCache {
 
-    @Override
-    protected void configure() {
-        bind(JerseyClientFactory.class).to(MockJerseyClientFactory.class);
-        bind(HttpClientProviderCache.class).to(MockHttpClientProviderCache.class);
-    }
-
-    @Provides
-    @Singleton
-    WebTargetFactory provideJerseyRequestBuilder(final JerseyClientFactory jerseyClientFactory) {
-        return url ->
-                jerseyClientFactory.getDefaultClient().target(url);
-    }
+    HttpClientProvider get(HttpClientConfiguration httpClientConfiguration);
 }
