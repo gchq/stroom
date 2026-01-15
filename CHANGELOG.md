@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.19-gwt-sourcemaps] - 2026-01-15
+
+* Add GWT debug.
+
+
 ## [v7.11-beta.19] - 2026-01-14
 
 * Issue **#5355** : Fix HttpClient being closed by cache while in use.
@@ -1950,7 +1955,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.19...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.19-gwt-sourcemaps...HEAD
+[v7.11-beta.19-gwt-sourcemaps]: https://github.com/gchq/stroom/compare/v7.11-beta.19...v7.11-beta.19-gwt-sourcemaps
 [v7.11-beta.19]: https://github.com/gchq/stroom/compare/v7.11-beta.18...v7.11-beta.19
 [v7.11-beta.18]: https://github.com/gchq/stroom/compare/v7.11-beta.17...v7.11-beta.18
 [v7.11-beta.17]: https://github.com/gchq/stroom/compare/v7.11-beta.16...v7.11-beta.17
