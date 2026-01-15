@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,15 @@ import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.node.api.NodeService;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.TableResult;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionsRequest;
 import stroom.query.shared.CompletionsRequest.TextType;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryColumnValuesRequest;
+import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryHelpDetail;
 import stroom.query.shared.QueryHelpRequest;
@@ -38,6 +41,7 @@ import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.rest.RestUtil;
 import stroom.util.resultpage.ResultPageBuilder;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.PageRequest;
@@ -66,6 +70,7 @@ class QueryResourceImpl implements QueryResource {
     private final Provider<QueryService> queryServiceProvider;
     private final Provider<DataSources> dataSourcesProvider;
     private final Provider<Structures> structuresProvider;
+    private final Provider<AnnotationFields> annotationFieldsProvider;
     private final Provider<Fields> fieldsProvider;
     private final Provider<Functions> functionsProvider;
     private final Provider<Visualisations> visualisationProvider;
@@ -77,6 +82,7 @@ class QueryResourceImpl implements QueryResource {
                       final Provider<QueryService> dashboardServiceProvider,
                       final Provider<DataSources> dataSourcesProvider,
                       final Provider<Structures> structuresProvider,
+                      final Provider<AnnotationFields> annotationFieldsProvider,
                       final Provider<Fields> fieldsProvider,
                       final Provider<Functions> functionsProvider,
                       final Provider<Visualisations> visualisationProvider,
@@ -86,6 +92,7 @@ class QueryResourceImpl implements QueryResource {
         this.queryServiceProvider = dashboardServiceProvider;
         this.dataSourcesProvider = dataSourcesProvider;
         this.structuresProvider = structuresProvider;
+        this.annotationFieldsProvider = annotationFieldsProvider;
         this.fieldsProvider = fieldsProvider;
         this.functionsProvider = functionsProvider;
         this.visualisationProvider = visualisationProvider;
@@ -194,6 +201,31 @@ class QueryResourceImpl implements QueryResource {
         }
     }
 
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public String csvSearch(final String query, final int offset, final int length) {
+        RestUtil.requireNonNull(query, "query not supplied");
+        try {
+            final QuerySearchRequest request = QuerySearchRequest.builder()
+                    .requestedRange(OffsetRange.builder().offset(offset).length(length).build())
+                    .queryContext(QueryContext.builder().build())
+                    .query(query)
+                    .build();
+            final DashboardSearchResponse response = search(null, request);
+
+            final TableResult tableResult = (TableResult) response.getResults().get(0);
+
+            if (tableResult.getColumns().isEmpty() || tableResult.getRows().isEmpty()) {
+                return null;
+            }
+
+            return new TableResultCsvWriter(tableResult).toCsv();
+        } catch (final Exception e) {
+            LOGGER.debug(e::getMessage, e);
+            throw e;
+        }
+    }
+
     @Override
     @AutoLogged(OperationType.UNLOGGED)
     public List<String> fetchTimeZones() {
@@ -218,6 +250,10 @@ class QueryResourceImpl implements QueryResource {
             pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
         }
         request.setPageRequest(pageRequest);
+        if (request.isTypeIncluded(QueryHelpType.FIELD)) {
+            annotationFieldsProvider.get().addRows(request, resultPageBuilder);
+            pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
+        }
         if (request.isTypeIncluded(QueryHelpType.FIELD)) {
             fieldsProvider.get().addRows(request, resultPageBuilder);
             pageRequest = reducePageRequest(pageRequest, resultPageBuilder.size());
@@ -271,9 +307,15 @@ class QueryResourceImpl implements QueryResource {
                     applicableStructureItems);
         }
         if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.FIELD)) {
-            fieldsProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list, null);
+            annotationFieldsProvider.get()
+                    .addCompletions(request, reduceMaxCompletions(maxCompletions, list), list, null);
+            fieldsProvider.get()
+                    .addCompletions(request, reduceMaxCompletions(maxCompletions, list), list, null);
         } else if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.QUERYABLE_FIELD)) {
-            fieldsProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list, true);
+            annotationFieldsProvider.get()
+                    .addCompletions(request, reduceMaxCompletions(maxCompletions, list), list, true);
+            fieldsProvider.get()
+                    .addCompletions(request, reduceMaxCompletions(maxCompletions, list), list, true);
         }
         if (isTypeIncluded(request, contextualHelpTypes, QueryHelpType.FUNCTION)) {
             functionsProvider.get().addCompletions(request, reduceMaxCompletions(maxCompletions, list), list);
@@ -305,6 +347,7 @@ class QueryResourceImpl implements QueryResource {
         Optional<QueryHelpDetail> result = Optional.empty();
         result = result.or(() -> dataSourcesProvider.get().fetchDetail(row));
         result = result.or(() -> structuresProvider.get().fetchDetail(row));
+        result = result.or(() -> annotationFieldsProvider.get().fetchDetail(row));
         result = result.or(() -> fieldsProvider.get().fetchDetail(row));
         result = result.or(() -> functionsProvider.get().fetchDetail(row));
         result = result.or(() -> visualisationProvider.get().fetchDetail(row));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.test;
@@ -27,6 +26,7 @@ import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexFields;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 import stroom.index.shared.LuceneIndexField;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.StandardHeaderArguments;
@@ -44,6 +44,7 @@ import jakarta.inject.Inject;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -99,10 +100,6 @@ public class CommonTestScenarioCreator {
         return createIndex(name, createIndexFields(), LuceneIndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
     }
 
-    public DocRef createIndex(final String name, final List<LuceneIndexField> indexFields) {
-        return createIndex(name, indexFields, LuceneIndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
-    }
-
     public DocRef createIndex(final String name, final List<LuceneIndexField> indexFields, final int maxDocsPerShard) {
         // Create a test index.
         final DocRef indexRef = indexStore.createDocument(name);
@@ -112,6 +109,7 @@ public class CommonTestScenarioCreator {
         index.setMaxDocsPerShard(maxDocsPerShard);
         index.setFields(indexFields);
         index.setVolumeGroupName(VolumeCreator.DEFAULT_VOLUME_GROUP);
+        index.setPartitionBy(PartitionBy.YEAR);
         indexStore.writeDocument(index);
         assertThat(index).isNotNull();
         return indexRef;
@@ -123,14 +121,23 @@ public class CommonTestScenarioCreator {
         return indexFields;
     }
 
+    public Meta createSample2LineRawFile(final String feed,
+                                         final String streamType) {
+        return createSample2LineRawFile(feed, streamType, Instant.now());
+    }
+
     /**
      * @param feed related
      * @return a basic raw file
      */
-    public Meta createSample2LineRawFile(final String feed, final String streamType) {
+    public Meta createSample2LineRawFile(final String feed,
+                                         final String streamType,
+                                         final Instant effectiveTime) {
         final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feed)
                 .typeName(streamType)
+                .createMs(effectiveTime.toEpochMilli())
+                .effectiveMs(effectiveTime.toEpochMilli())
                 .build();
         try (final Target target = streamStore.openTarget(metaProperties)) {
             TargetUtil.write(target, "line1\nline2");

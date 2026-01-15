@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.security.api.AppPermissionService;
 import stroom.security.api.ContentPackUserService;
 import stroom.security.api.DocumentPermissionService;
+import stroom.security.api.HashFunctionFactory;
 import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserGroupsService;
 import stroom.security.api.UserIdentityFactory;
@@ -28,6 +29,7 @@ import stroom.security.common.impl.ContentSecurityFilter;
 import stroom.security.common.impl.DelegatingServiceUserFactory;
 import stroom.security.common.impl.ExternalIdpConfigurationProvider;
 import stroom.security.common.impl.ExternalServiceUserFactory;
+import stroom.security.common.impl.HashFunctionFactoryImpl;
 import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.RefreshManager;
@@ -77,6 +79,7 @@ public class SecurityModule extends AbstractModule {
         bind(UserInfoLookup.class).to(UserInfoLookupImpl.class);
         bind(AuthProxyService.class).to(AuthProxyServiceImpl.class);
         bind(UserGroupsService.class).to(UserGroupsCache.class);
+        bind(HashFunctionFactory.class).to(HashFunctionFactoryImpl.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ExternalIdpConfigurationProvider.class);

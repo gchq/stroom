@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.security.api.SecurityContext;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.ElementId;
 
 import jakarta.inject.Inject;
 
@@ -90,12 +91,12 @@ public class SchemaFilterSplit extends AbstractXMLFilter {
     }
 
     @Override
-    public String getElementId() {
+    public ElementId getElementId() {
         return schemaFilter.getElementId();
     }
 
     @Override
-    public void setElementId(final String id) {
+    public void setElementId(final ElementId id) {
         schemaFilter.setElementId(id);
     }
 

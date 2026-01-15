@@ -1,18 +1,30 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.data.client.presenter;
 
 import stroom.data.grid.client.EventCell;
-import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
-import stroom.util.shared.NullSafe;
-import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.menu.client.presenter.Item;
-import stroom.widget.menu.client.presenter.ShowMenuEvent;
-import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.GwtEvent;
@@ -21,24 +33,19 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.google.gwt.dom.client.BrowserEvents.MOUSEDOWN;
-
 public class CopyTextCell extends AbstractCell<String> implements HasHandlers, EventCell {
 
     private final EventBus eventBus;
 
     public CopyTextCell(final EventBus eventBus) {
-        super(MOUSEDOWN);
+        super(BrowserEvents.MOUSEDOWN);
         this.eventBus = eventBus;
     }
 
     @Override
     public boolean isConsumed(final CellPreviewEvent<?> event) {
         final NativeEvent nativeEvent = event.getNativeEvent();
-        if (MOUSEDOWN.equals(nativeEvent.getType()) && MouseUtil.isPrimary(nativeEvent)) {
+        if (BrowserEvents.MOUSEDOWN.equals(nativeEvent.getType()) && MouseUtil.isPrimary(nativeEvent)) {
             final Element element = nativeEvent.getEventTarget().cast();
             return ElementUtil.hasClassName(element, CopyTextUtil.COPY_CLASS_NAME, 5);
         }
@@ -52,22 +59,9 @@ public class CopyTextCell extends AbstractCell<String> implements HasHandlers, E
                                final NativeEvent event,
                                final ValueUpdater<String> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
-        if (MOUSEDOWN.equals(event.getType())) {
+        if (BrowserEvents.MOUSEDOWN.equals(event.getType())) {
             if (MouseUtil.isPrimary(event)) {
                 onEnterKeyDown(context, parent, value, event, valueUpdater);
-            } else if (NullSafe.isNonBlankString(value)) {
-                final List<Item> menuItems = new ArrayList<>();
-                menuItems.add(new IconMenuItem.Builder()
-                        .priority(1)
-                        .icon(SvgImage.COPY)
-                        .text("Copy")
-                        .command(() -> ClipboardUtil.copy(value))
-                        .build());
-                ShowMenuEvent
-                        .builder()
-                        .items(menuItems)
-                        .popupPosition(new PopupPosition(event.getClientX(), event.getClientY()))
-                        .fire(this);
             }
         }
     }
@@ -93,6 +87,6 @@ public class CopyTextCell extends AbstractCell<String> implements HasHandlers, E
 
     @Override
     public void render(final Context context, final String value, final SafeHtmlBuilder sb) {
-        CopyTextUtil.render(value, sb);
+        CopyTextUtil.render(value, new HtmlBuilder(sb), false);
     }
 }

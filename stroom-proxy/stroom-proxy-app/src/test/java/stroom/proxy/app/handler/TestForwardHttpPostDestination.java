@@ -1,7 +1,24 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
+import stroom.proxy.app.DownstreamHostConfig;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -50,11 +67,13 @@ class TestForwardHttpPostDestination {
     void test_success() throws Exception {
         final ForwardHttpPostConfig forwardHttpPostConfig = ForwardHttpPostConfig.builder()
                 .build();
+        final DownstreamHostConfig downstreamHostConfig = new DownstreamHostConfig();
         final ForwardHttpPostDestination forwardHttpPostDestination = new ForwardHttpPostDestination(
                 "TestDest",
                 mockStreamDestination,
                 cleanupDirQueue,
-                forwardHttpPostConfig);
+                forwardHttpPostConfig,
+                downstreamHostConfig);
 
         final CountDownLatch sentLatch = new CountDownLatch(1);
         Mockito.doAnswer(
@@ -83,11 +102,13 @@ class TestForwardHttpPostDestination {
     void test_Fail() throws Exception {
         final ForwardHttpPostConfig forwardHttpPostConfig = ForwardHttpPostConfig.builder()
                 .build();
+        final DownstreamHostConfig downstreamHostConfig = new DownstreamHostConfig();
         final ForwardHttpPostDestination forwardHttpPostDestination = new ForwardHttpPostDestination(
                 "TestDest",
                 mockStreamDestination,
                 cleanupDirQueue,
-                forwardHttpPostConfig);
+                forwardHttpPostConfig,
+                downstreamHostConfig);
 
         Mockito.doThrow(new RuntimeException("Send failed"))
                 .when(mockStreamDestination).send(Mockito.any(), Mockito.any());
@@ -112,11 +133,13 @@ class TestForwardHttpPostDestination {
         final ForwardHttpPostConfig forwardHttpPostConfig = ForwardHttpPostConfig.builder()
                 .livenessCheckUrl(null)
                 .build();
+        final DownstreamHostConfig downstreamHostConfig = new DownstreamHostConfig();
         final ForwardHttpPostDestination forwardHttpPostDestination = new ForwardHttpPostDestination(
                 "TestDest",
                 mockStreamDestination,
                 cleanupDirQueue,
-                forwardHttpPostConfig);
+                forwardHttpPostConfig,
+                downstreamHostConfig);
 
         Assertions.assertThat(forwardHttpPostDestination.hasLivenessCheck())
                 .isFalse();
@@ -128,11 +151,16 @@ class TestForwardHttpPostDestination {
         final ForwardHttpPostConfig forwardHttpPostConfig = ForwardHttpPostConfig.builder()
                 .livenessCheckUrl("aUrl")
                 .build();
+        final DownstreamHostConfig downstreamHostConfig = new DownstreamHostConfig();
         final ForwardHttpPostDestination forwardHttpPostDestination = new ForwardHttpPostDestination(
                 "TestDest",
                 mockStreamDestination,
                 cleanupDirQueue,
-                forwardHttpPostConfig);
+                forwardHttpPostConfig,
+                downstreamHostConfig);
+
+        Mockito.when(mockStreamDestination.hasLivenessCheck())
+                .thenReturn(true);
 
         Assertions.assertThat(forwardHttpPostDestination.hasLivenessCheck())
                 .isTrue();
@@ -148,11 +176,16 @@ class TestForwardHttpPostDestination {
         final ForwardHttpPostConfig forwardHttpPostConfig = ForwardHttpPostConfig.builder()
                 .livenessCheckUrl("aUrl")
                 .build();
+        final DownstreamHostConfig downstreamHostConfig = new DownstreamHostConfig();
         final ForwardHttpPostDestination forwardHttpPostDestination = new ForwardHttpPostDestination(
                 "TestDest",
                 mockStreamDestination,
                 cleanupDirQueue,
-                forwardHttpPostConfig);
+                forwardHttpPostConfig,
+                downstreamHostConfig);
+
+        Mockito.when(mockStreamDestination.hasLivenessCheck())
+                .thenReturn(true);
 
         Assertions.assertThat(forwardHttpPostDestination.hasLivenessCheck())
                 .isTrue();

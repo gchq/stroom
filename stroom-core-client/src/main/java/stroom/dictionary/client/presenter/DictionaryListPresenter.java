@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
 
         addButton = docRefListPresenter.getView().addButton(SvgPresets.ADD);
         removeButton = docRefListPresenter.getView().addButton(SvgPresets.DELETE);
+        docRefListPresenter.initTableColumns("Document Name", true);
 
         enableButtons();
     }

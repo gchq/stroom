@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.mock;
 
 import stroom.security.api.ServiceUserFactory;
@@ -18,7 +34,7 @@ public class MockServiceUserFactory implements ServiceUserFactory {
     public boolean isServiceUser(final UserIdentity userIdentity,
                                  final UserIdentity serviceUserIdentity) {
         return Objects.equals(
-                userIdentity.getSubjectId(),
+                userIdentity.subjectId(),
                 MockProcessingUserIdentity.PROCESSING_USER_ID);
     }
 
@@ -31,7 +47,7 @@ public class MockServiceUserFactory implements ServiceUserFactory {
         protected static final String PROCESSING_USER_ID = "MOCK_PROCESSING_USER";
 
         @Override
-        public String getSubjectId() {
+        public String subjectId() {
             return PROCESSING_USER_ID;
         }
 
@@ -44,17 +60,17 @@ public class MockServiceUserFactory implements ServiceUserFactory {
                 return false;
             }
             final MockProcessingUserIdentity that = (MockProcessingUserIdentity) o;
-            return Objects.equals(getSubjectId(), that.getSubjectId());
+            return Objects.equals(subjectId(), that.subjectId());
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(getSubjectId());
+            return Objects.hash(subjectId());
         }
 
         @Override
         public String toString() {
-            return getSubjectId();
+            return subjectId();
         }
     }
 }

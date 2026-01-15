@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.google.gwt.event.dom.client.HasKeyDownHandlers;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HasText;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -31,7 +32,9 @@ public class NewElementViewImpl extends ViewImpl implements NewElementView {
 
     private final Widget widget;
     @UiField
-    TextBox id;
+    TextBox name;
+    @UiField
+    TextArea description;
 
     @Inject
     public NewElementViewImpl(final Binder binder) {
@@ -45,17 +48,27 @@ public class NewElementViewImpl extends ViewImpl implements NewElementView {
 
     @Override
     public void focus() {
-        id.setFocus(true);
+        name.setFocus(true);
     }
 
     @Override
-    public HasKeyDownHandlers getIdBox() {
-        return id;
+    public HasKeyDownHandlers getNameBox() {
+        return name;
     }
 
     @Override
-    public HasText getId() {
-        return id;
+    public HasText getName() {
+        return name;
+    }
+
+    @Override
+    public HasText getDescription() {
+        return description;
+    }
+
+    @Override
+    public HasKeyDownHandlers getDescriptionBox() {
+        return description;
     }
 
     public interface Binder extends UiBinder<Widget, NewElementViewImpl> {

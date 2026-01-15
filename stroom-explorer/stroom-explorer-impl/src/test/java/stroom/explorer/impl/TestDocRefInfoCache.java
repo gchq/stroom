@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.explorer.impl;
 
 import stroom.cache.impl.CacheManagerImpl;
@@ -113,36 +129,6 @@ class TestDocRefInfoCache {
     }
 
     @Test
-    void testGet_noType() {
-        DocRef docRef = DOC_REF_1;
-        Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(stripType(docRef));
-
-        assertThat(docRefInfo).isNotEmpty();
-        assertThat(docRefInfo.get().getDocRef()).isEqualTo(docRef);
-        assertThat(docRefInfoCache.get(docRef)).isEqualTo(docRefInfoCache.get(docRef));
-
-        docRef = DOC_REF_4;
-        docRefInfo = docRefInfoCache.get(stripType(docRef));
-
-        assertThat(docRefInfo).isNotEmpty();
-        assertThat(docRefInfo.get().getDocRef()).isEqualTo(docRef);
-        assertThat(docRefInfoCache.get(docRef)).isEqualTo(docRefInfoCache.get(docRef));
-    }
-
-    @Test
-    void testGet_noType_folder() {
-        final DocRef docRef = DOC_REF_FOLDER;
-        Mockito.when(mockExplorerActionHandlers.stream())
-                .thenReturn(Stream.of(new MyFolderExplorerActionHandler()));
-
-        final Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(stripType(docRef));
-
-        assertThat(docRefInfo).isNotEmpty();
-        assertThat(docRefInfo.get().getDocRef()).isEqualTo(docRef);
-        assertThat(docRefInfoCache.get(docRef)).isEqualTo(docRefInfoCache.get(docRef));
-    }
-
-    @Test
     void testGet_noName() {
         final DocRef docRef = DOC_REF_1;
         final Optional<DocRefInfo> docRefInfo = docRefInfoCache.get(docRef.withoutName());
@@ -151,12 +137,6 @@ class TestDocRefInfoCache {
                 .isNotEmpty();
         assertThat(docRefInfo.get().getDocRef())
                 .isEqualTo(docRef);
-    }
-
-    private static DocRef stripType(final DocRef docRef) {
-        return docRef.copy()
-                .type(null)
-                .build();
     }
 
     private static DocRefInfo buildInfo(final DocRef docRef) {

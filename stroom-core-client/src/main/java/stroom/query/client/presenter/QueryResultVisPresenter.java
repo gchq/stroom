@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.query.api.ColumnRef;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.QLVisResult;
 import stroom.query.api.Result;
@@ -583,7 +584,7 @@ public class QueryResultVisPresenter
     }
 
     @Override
-    public Set<String> getOpenGroups() {
+    public GroupSelection getGroupSelection() {
         return null;
     }
 
@@ -627,8 +628,8 @@ public class QueryResultVisPresenter
     }
 
     @Override
-    public List<ColumnRef> getColumns() {
-        return NullSafe.get(visSelectionModel, VisSelectionModel::getColumns);
+    public List<ColumnRef> getColumnRefs() {
+        return NullSafe.get(visSelectionModel, VisSelectionModel::getColumnRefs);
     }
 
     @Override

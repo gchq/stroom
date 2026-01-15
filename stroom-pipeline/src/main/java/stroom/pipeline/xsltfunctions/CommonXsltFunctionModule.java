@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.xsltfunctions;
 
 import stroom.util.pipeline.scope.PipelineScoped;
@@ -18,6 +34,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
 
     @Override
     protected void configureFunctions() {
+        bindFunction(AddMetaFunction.class);
         bindFunction(CidrToNumericIPRangeFunction.class);
         bindFunction(ClassificationFunction.class);
         bindFunction(ColFromFunction.class);
@@ -64,8 +81,25 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(RandomFunction.class);
         bindFunction(RecordNoFunction.class);
         bindFunction(SearchIdFunction.class);
+        bindFunction(SplitDocumentFunction.class);
         bindFunction(SourceFunction.class);
         bindFunction(ToUnixTimeFunction.class);
+    }
+
+    private static class AddMetaFunction extends StroomExtensionFunctionDefinition<AddMeta> {
+
+        @Inject
+        AddMetaFunction(final Provider<AddMeta> functionCallProvider) {
+            super(
+                    AddMeta.FUNCTION_NAME,
+                    2,
+                    2,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_STRING},
+                    SequenceType.EMPTY_SEQUENCE,
+                    functionCallProvider);
+        }
     }
 
     private static class CidrToNumericIPRangeFunction extends StroomExtensionFunctionDefinition<CidrToNumericIPRange> {
@@ -757,6 +791,24 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     0,
                     new SequenceType[]{},
                     SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
+    private static class SplitDocumentFunction extends StroomExtensionFunctionDefinition<SplitDocument> {
+
+        @Inject
+        SplitDocumentFunction(final Provider<SplitDocument> functionCallProvider) {
+            super(
+                    SplitDocument.FUNCTION_NAME,
+                    3,
+                    3,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_NUMERIC,
+                            SequenceType.SINGLE_NUMERIC
+                    },
+                    ArrayItemType.SINGLE_ARRAY,
                     functionCallProvider);
         }
     }

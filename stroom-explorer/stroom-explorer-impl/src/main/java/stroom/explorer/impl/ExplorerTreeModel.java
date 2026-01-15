@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,8 +55,6 @@ import java.util.stream.Collectors;
 class ExplorerTreeModel implements EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerTreeModel.class);
-
-    static final String BRANCH_NODE_INFO = "Descendants have issues";
 
     private static final long ONE_HOUR = 60 * 60 * 1000;
     private static final long TEN_MINUTES = 10 * 60 * 1000;

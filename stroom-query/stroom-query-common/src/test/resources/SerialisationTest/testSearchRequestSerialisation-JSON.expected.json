@@ -44,7 +44,9 @@
         },
         "filter" : {
           "includes" : "include1",
-          "excludes" : "exclude1"
+          "excludes" : "exclude1",
+          "includeDictionaries" : [ ],
+          "excludeDictionaries" : [ ]
         },
         "format" : {
           "type" : "NUMBER",
@@ -68,7 +70,9 @@
         },
         "filter" : {
           "includes" : "include2",
-          "excludes" : "exclude2"
+          "excludes" : "exclude2",
+          "includeDictionaries" : [ ],
+          "excludeDictionaries" : [ ]
         },
         "format" : {
           "type" : "DATE_TIME",
@@ -100,6 +104,11 @@
     "requestedRange" : {
       "offset" : 1,
       "length" : 100
+    },
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
     }
   } ],
   "incremental" : true,
@@ -107,8 +116,6 @@
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }

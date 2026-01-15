@@ -102,6 +102,15 @@ appConfig:
     defaultRetentionPeriod: "5y"
     physicalDeleteAge: "P7D"
     standardComments: []
+  askStroomAi:
+    chatMemory:
+      timeToLive:
+        time: 1
+        timeUnit: "HOURS"
+      tokenLimit: 30000
+    tableSummary:
+      maximumBatchSize: 16384
+      maximumTableInputRows: 100
   autoContentCreation:
     additionalGroupTemplate: "grp-${accountid}-sandbox"
     createAsSubjectId: "Administrators"
@@ -172,6 +181,27 @@ appConfig:
     importAsSubjectId: "Administrators"
     importAsType: "GROUP"
     importDirectory: "content_pack_import"
+  contentStore:
+    urls:
+    - "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/content-store.yml"
+  credentials:
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+    keyStoreCachePath: "${stroom.home}/keystores"
   crossModule:
     db:
       connection:
@@ -370,8 +400,6 @@ appConfig:
       initialRetryBackoffPeriodMs: 1000
       maxNestedElementDepth: 10
       retryCount: 5
-    retention:
-      scrollSize: 10000
     search:
       highlight: true
       scrollDuration: "PT1M"
@@ -418,6 +446,22 @@ appConfig:
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
     unknownClassification: "UNKNOWN CLASSIFICATION"
   gitRepo:
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
     localDir: "git_repo"
   haltBootOnConfigValidationFailure: true
   index:
@@ -767,6 +811,49 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     itemsRetention: 100
+  receiptPolicy:
+    obfuscatedFields:
+    - "AccountId"
+    - "AccountName"
+    - "Component"
+    - "Feed"
+    - "ReceivedPath"
+    - "RemoteDN"
+    - "RemoteHost"
+    - "System"
+    - "UploadUserId"
+    - "UploadUsername"
+    - "X-Forwarded-For"
+    obfuscationHashAlgorithm: "SHA2_512"
+    receiptRulesInitialFields:
+      AccountId: "Text"
+      Component: "Text"
+      Compression: "Text"
+      content-length: "Text"
+      ContextEncoding: "Text"
+      ContextFormat: "Text"
+      EffectiveTime: "Date"
+      Encoding: "Text"
+      Environment: "Text"
+      Feed: "Text"
+      Format: "Text"
+      ReceiptId: "Text"
+      ReceiptIdPath: "Text"
+      ReceivedPath: "Text"
+      ReceivedTime: "Date"
+      ReceivedTimeHistory: "Text"
+      RemoteCertExpiry: "Date"
+      RemoteDN: "Text"
+      RemoteHost: "Text"
+      RemoteAddress: "Text"
+      Schema: "Text"
+      SchemaVersion: "Text"
+      System: "Text"
+      Type: "Text"
+      UploadUsername: "Text"
+      UploadUserId: "Text"
+      user-agent: "Text"
+      X-Forwarded-For: "Text"
   receive:
     allowedCertificateProviders: []
     authenticatedDataFeedKeyCache:
@@ -779,7 +866,9 @@ appConfig:
     dataFeedKeyOwnerMetaKey: "AccountId"
     dataFeedKeysDir: "data_feed_keys"
     enabledAuthenticationTypes:
+    - "TOKEN"
     - "CERTIFICATE"
+    fallbackReceiveAction: "RECEIVE"
     feedNameGenerationEnabled: false
     feedNameGenerationMandatoryHeaders:
     - "AccountId"
@@ -787,6 +876,7 @@ appConfig:
     - "Format"
     - "Schema"
     feedNameTemplate: "${accountid}-${component}-${format}-${schema}"
+    maxRequestSize: null
     metaTypes:
     - "Context"
     - "Detections"
@@ -799,7 +889,7 @@ appConfig:
     - "Reference"
     - "Test Events"
     - "Test Reference"
-    receiptPolicyUuid: null
+    receiptCheckMode: "FEED_STATUS"
     x509CertificateDnFormat: "LDAP"
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
     x509CertificateHeader: "X-SSL-CERT"
@@ -963,6 +1053,7 @@ appConfig:
       secretEncryptionKey: ""
     identity:
       allowCertificateAuthentication: false
+      autoCreateAdminAccountOnBoot: false
       certificateCnCaptureGroupIndex: 1
       certificateCnPattern: ".*\\((.*)\\)"
       db:

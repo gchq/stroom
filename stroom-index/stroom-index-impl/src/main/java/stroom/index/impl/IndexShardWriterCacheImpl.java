@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -394,7 +394,6 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     private void clean(final IndexShard indexShard) {
         try {
             LOGGER.info(() -> "Changing shard status to closed (" + indexShard + ")");
-            indexShard.setStatus(IndexShardStatus.CLOSED);
             indexShardDao.reset(indexShard.getId());
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);

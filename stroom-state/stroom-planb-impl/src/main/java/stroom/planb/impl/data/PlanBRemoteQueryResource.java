@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ public interface PlanBRemoteQueryResource extends RestResource {
             summary = "Gets a value from a remote Plan B store.",
             operationId = "planBQueryGetValue")
     PlanBValue getValue(GetRequest request);
-
 
     @POST
     @Path(GET_STORE_INFO)

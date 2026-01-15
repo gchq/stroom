@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.validation;
 
 import stroom.test.common.util.test.TestingHomeAndTempProvidersModule;
@@ -44,7 +60,7 @@ public class TestAppConfigValidator {
     @Test
     void testMyPojo_good() {
 
-        final var myPojo = new MyPojoErrors();
+        final MyPojoErrors myPojo = new MyPojoErrors();
 
         final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(myPojo);
 
@@ -64,7 +80,7 @@ public class TestAppConfigValidator {
 //        final Injector injector = Guice.createInjector(new ValidationModule());
 //        injector.injectMembers(this);
 
-        final var myPojo = new MyPojoErrors();
+        final MyPojoErrors myPojo = new MyPojoErrors();
         myPojo.setBooleanValue(false);
         myPojo.setRegexValue("(((");
         myPojo.setCronValue("xxxxxxxxxxxxx");
@@ -92,7 +108,7 @@ public class TestAppConfigValidator {
 //        final Injector injector = Guice.createInjector(new ValidationModule());
 //        injector.injectMembers(this);
 
-        final var myPojo = new MyPojoErrors();
+        final MyPojoErrors myPojo = new MyPojoErrors();
         myPojo.setBooleanValue(false);
         myPojo.setRegexValue("(((");
         myPojo.setCronValue("xxxxxxxxxxxxx");
@@ -120,7 +136,7 @@ public class TestAppConfigValidator {
 //        final Injector injector = Guice.createInjector(new ValidationModule());
 //        injector.injectMembers(this);
 
-        final var myPojo = new MyPojoWarnings();
+        final MyPojoWarnings myPojo = new MyPojoWarnings();
         myPojo.setBooleanValue(false);
         myPojo.setRegexValue("(((");
         myPojo.setCronValue("xxxxxxxxxxxxx");
@@ -147,6 +163,10 @@ public class TestAppConfigValidator {
         Assertions.assertThat(result.getErrorCount())
                 .isEqualTo(1);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class MyPojoErrors extends AbstractConfig {
 
@@ -220,12 +240,16 @@ public class TestAppConfigValidator {
         @Override
         public String toString() {
             return "MyPojo{" +
-                    "booleanValue=" + booleanValue +
-                    ", regexValue='" + regexValue + '\'' +
-                    ", intValue=" + intValue +
-                    '}';
+                   "booleanValue=" + booleanValue +
+                   ", regexValue='" + regexValue + '\'' +
+                   ", intValue=" + intValue +
+                   '}';
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class MyPojoWarnings extends AbstractConfig {
 
@@ -286,12 +310,15 @@ public class TestAppConfigValidator {
         @Override
         public String toString() {
             return "MyPojo{" +
-                    "booleanValue=" + booleanValue +
-                    ", regexValue='" + regexValue + '\'' +
-                    ", intValue=" + intValue +
-                    '}';
+                   "booleanValue=" + booleanValue +
+                   ", regexValue='" + regexValue + '\'' +
+                   ", intValue=" + intValue +
+                   '}';
         }
     }
+
+
+    // --------------------------------------------------------------------------------
 
 
     public static class NoddyPojo {
@@ -307,6 +334,10 @@ public class TestAppConfigValidator {
             this.value = value;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class NoddyPojoWithValidationMethod extends AbstractConfig {
 

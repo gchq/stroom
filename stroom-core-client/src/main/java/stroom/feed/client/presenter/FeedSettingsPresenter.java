@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.feed.client.presenter;
@@ -24,12 +23,14 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.feed.client.FeedClient;
 import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
-import stroom.feed.shared.FeedResource;
 import stroom.item.client.SelectionBox;
 import stroom.meta.shared.DataFormatNames;
+import stroom.receive.rules.shared.ReceiptCheckMode;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -48,30 +49,35 @@ import java.util.stream.Collectors;
 public class FeedSettingsPresenter
         extends DocumentEditPresenter<FeedSettingsView, FeedDoc> {
 
-    private static final FeedResource FEED_RESOURCE = GWT.create(FeedResource.class);
     @SuppressWarnings("SimplifyStreamApiCallChains") // Cos GWT
     private static final List<String> FORMATS = DataFormatNames.ALL_HARD_CODED_FORMAT_NAMES.stream()
             .sorted()
             .collect(Collectors.toUnmodifiableList());
     private static final FsVolumeGroupResource VOLUME_GROUP_RESOURCE = GWT.create(FsVolumeGroupResource.class);
 
+    private final UiConfigCache uiConfigCache;
     private final DataTypeUiManager dataTypeUiManager;
     private final RestFactory restFactory;
+    private final FeedClient feedClient;
 
     @Inject
     public FeedSettingsPresenter(final EventBus eventBus,
                                  final FeedSettingsView view,
+                                 final UiConfigCache uiConfigCache,
                                  final DataTypeUiManager dataTypeUiManager,
-                                 final RestFactory restFactory) {
+                                 final RestFactory restFactory,
+                                 final FeedClient feedClient) {
         super(eventBus, view);
+        this.uiConfigCache = uiConfigCache;
         this.dataTypeUiManager = dataTypeUiManager;
         this.restFactory = restFactory;
+        this.feedClient = feedClient;
 
         updateEncodings();
         updateVolumeGroups();
         updateTypes();
+        updateFeedStatus();
 
-        view.getFeedStatus().addItems(FeedStatus.values());
         view.getDataFormat().addItems(FORMATS);
         view.getContextFormat().addItems(FORMATS);
     }
@@ -125,28 +131,23 @@ public class FeedSettingsPresenter
     }
 
     private void updateEncodings() {
-        restFactory
-                .create(FEED_RESOURCE)
-                .method(FeedResource::fetchSupportedEncodings)
-                .onSuccess(result -> {
-                    getView().getDataEncoding().clear();
-                    getView().getContextEncoding().clear();
+        feedClient.fetchSupportedEncodings(result -> {
+            getView().getDataEncoding().clear();
+            getView().getContextEncoding().clear();
 
-                    if (NullSafe.hasItems(result)) {
-                        for (final String encoding : result) {
-                            getView().getDataEncoding().addItem(encoding);
-                            getView().getContextEncoding().addItem(encoding);
-                        }
-                    }
+            if (NullSafe.hasItems(result)) {
+                for (final String encoding : result) {
+                    getView().getDataEncoding().addItem(encoding);
+                    getView().getContextEncoding().addItem(encoding);
+                }
+            }
 
-                    final FeedDoc feed = getEntity();
-                    if (feed != null) {
-                        getView().getDataEncoding().setValue(ensureEncoding(feed.getEncoding()));
-                        getView().getContextEncoding().setValue(ensureEncoding(feed.getContextEncoding()));
-                    }
-                })
-                .taskMonitorFactory(this)
-                .exec();
+            final FeedDoc feed = getEntity();
+            if (feed != null) {
+                getView().getDataEncoding().setValue(ensureEncoding(feed.getEncoding()));
+                getView().getContextEncoding().setValue(ensureEncoding(feed.getContextEncoding()));
+            }
+        }, this);
     }
 
     private void updateVolumeGroups() {
@@ -172,15 +173,33 @@ public class FeedSettingsPresenter
     }
 
     private void updateTypes() {
-        dataTypeUiManager.getTypes(list -> {
-            getView().getReceivedType().clear();
-            if (list != null && !list.isEmpty()) {
-                getView().getReceivedType().addItems(list);
-                final FeedDoc feed = getEntity();
-                if (feed != null) {
-                    getView().getReceivedType().setValue(feed.getStreamType());
+        uiConfigCache.get(extendedUiConfig -> {
+            dataTypeUiManager.getTypes(list -> {
+                final SelectionBox<String> receivedTypeSelectionBox = getView().getReceivedType();
+                receivedTypeSelectionBox.clear();
+                if (list != null && !list.isEmpty()) {
+                    receivedTypeSelectionBox.addItems(list);
+                    final FeedDoc feed = getEntity();
+                    if (feed != null) {
+                        receivedTypeSelectionBox.setValue(feed.getStreamType());
+                    }
                 }
-            }
+            }, this);
+        }, this);
+    }
+
+    private void updateFeedStatus() {
+        final SelectionBox<FeedStatus> feedStatusSelectionBox = getView().getFeedStatus();
+        feedStatusSelectionBox.clear();
+        feedStatusSelectionBox.addItems(FeedStatus.values());
+        updateFeedStatusEnabledState();
+    }
+
+    private void updateFeedStatusEnabledState() {
+        uiConfigCache.get(extendedUiConfig -> {
+            final SelectionBox<FeedStatus> feedStatusSelectionBox = getView().getFeedStatus();
+            final boolean isEnabled = extendedUiConfig.getReceiptCheckMode() == ReceiptCheckMode.FEED_STATUS;
+            feedStatusSelectionBox.setEnabled(isEnabled);
         }, this);
     }
 
@@ -197,6 +216,7 @@ public class FeedSettingsPresenter
         getView().getSchemaVersion().setValue(feed.getSchemaVersion());
         getView().getFeedStatus().setValue(feed.getStatus());
         getView().getVolumeGroup().setValue(feed.getVolumeGroup());
+        updateFeedStatusEnabledState();
     }
 
     @Override

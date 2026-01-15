@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import stroom.pipeline.filter.SchemaFilter;
 import stroom.pipeline.xml.converter.SchemaFilterFactory;
 import stroom.test.common.StroomPipelineTestFileUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.xml.XMLUtil;
 
 import org.slf4j.Logger;
@@ -118,7 +119,7 @@ class DS3PerformanceTest {
         writer.write("Time,Action,User,File\n");
         for (int i = 1; i <= INPUT_LINES; i++) {
             writer.write("01/01/2009:00:00:01" + i + ",OPEN" + i + ",userone" + i
-                    + ",D:\\TranslationKit\\example\\VerySimple\\OpenFileEvents" + i + ".txt\n");
+                         + ",D:\\TranslationKit\\example\\VerySimple\\OpenFileEvents" + i + ".txt\n");
         }
         writer.flush();
         writer.close();
@@ -153,14 +154,14 @@ class DS3PerformanceTest {
 
         final LocationFactory locationFactory = new DefaultLocationFactory();
         ds3ParserFactory.configure(Files.newBufferedReader(config),
-                new ErrorHandlerAdaptor("DS3ParserFactory", locationFactory, errorReceiver));
+                new ErrorHandlerAdaptor(new ElementId("DS3ParserFactory"), locationFactory, errorReceiver));
 
         assertThat(errorReceiver.isAllOk())
                 .as("Configuration of parser failed: " + errorReceiver.getMessage())
                 .isTrue();
 
         final XMLReader reader = ds3ParserFactory.getParser();
-        reader.setErrorHandler(new ErrorHandlerAdaptor("XMLReader", locationFactory, errorReceiver));
+        reader.setErrorHandler(new ErrorHandlerAdaptor(new ElementId("XMLReader"), locationFactory, errorReceiver));
         return reader;
     }
 
@@ -189,14 +190,14 @@ class DS3PerformanceTest {
             while (a != -1 && b != -1) {
                 assertThat(b)
                         .as("Expected and actual files do not match for: " +
-                                FileUtil.getCanonicalPath(actualFile))
+                            FileUtil.getCanonicalPath(actualFile))
                         .isEqualTo(a);
                 a = actualIS.read();
                 b = expectedIS.read();
             }
             assertThat(b)
                     .as("Expected and actual files do not match for: " +
-                            FileUtil.getCanonicalPath(actualFile))
+                        FileUtil.getCanonicalPath(actualFile))
                     .isEqualTo(a);
 
             success = true;

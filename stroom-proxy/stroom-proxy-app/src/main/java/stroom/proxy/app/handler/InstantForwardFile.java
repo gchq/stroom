@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
@@ -13,6 +29,7 @@ import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -64,6 +81,8 @@ public class InstantForwardFile {
     }
 
     public ReceiverFactory get(final ForwardFileConfig forwardFileConfig) {
+        LOGGER.info("Creating instant file forward destination to {}",
+                forwardFileConfig.getPath());
         final InstantForwardFileReceiver instantForwardFileReceiver = new InstantForwardFileReceiver(
                 receivingDirProvider,
                 forwardFileDestinationFactory.create(forwardFileConfig),
@@ -125,6 +144,7 @@ public class InstantForwardFile {
                             final AttributeMap attributeMap,
                             final String requestUri,
                             final InputStreamSupplier inputStreamSupplier) {
+            final String receiptId = NullSafe.get(attributeMap, map -> map.get(StandardHeaderArguments.RECEIPT_ID));
             try {
                 final Path dir = receivingDirProvider.get();
 
@@ -169,10 +189,9 @@ public class InstantForwardFile {
                         EventType.RECEIVE,
                         requestUri,
                         StroomStatusCode.OK,
-                        attributeMap.get(StandardHeaderArguments.RECEIPT_ID),
+                        receiptId,
                         receivedBytes,
                         duration.toMillis());
-
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }

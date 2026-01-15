@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
@@ -85,6 +84,11 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
                 .addCase(1, true)
                 .addCase(2, false)
                 .addCase(3, false)
+                .addCase(8, false)
+                .addCase(10, false)
+                .addCase(100, false)
+                .addCase(1000, false)
+                .addCase(10000, false)
                 .addCase(16_000_000, false)
                 .build();
     }
@@ -174,6 +178,7 @@ class TestValueStoreMetaSerde extends AbstractSerdeTest<ValueStoreMeta, ValueSto
 
     @Override
     TypeLiteral<ValueStoreMetaSerde> getSerdeType() {
-        return new TypeLiteral<ValueStoreMetaSerde>(){};
+        return new TypeLiteral<ValueStoreMetaSerde>() {
+        };
     }
 }

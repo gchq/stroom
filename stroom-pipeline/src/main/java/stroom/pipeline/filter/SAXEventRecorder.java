@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.stepping.Recorder;
 import stroom.pipeline.stepping.SteppingFilter;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.OutputState;
@@ -59,7 +60,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     private Set<CompiledXPathFilter> xPathFilters;
     private int currentElementDepth;
     private int maxElementDepth;
-    private String elementId;
+    private ElementId elementId;
 
     @Inject
     public SAXEventRecorder(final MetaHolder metaHolder,
@@ -224,26 +225,20 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
             case EXISTS -> {
                 return true;
             }
+            case NOT_EXISTS -> {
+                return objects.isEmpty();
+            }
             case CONTAINS -> {
-                for (final Object object : objects) {
-                    if (contains(object, xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
-                        return true;
-                    }
-                }
+                return contains(objects, xPathFilter);
+            }
+            case NOT_CONTAINS -> {
+                return !contains(objects, xPathFilter);
             }
             case EQUALS -> {
-                for (final Object object : objects) {
-                    if (equals(object, xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
-                        return true;
-                    }
-                }
+                return equals(objects, xPathFilter);
             }
             case NOT_EQUALS -> {
-                for (final Object object : objects) {
-                    if (!equals(object, xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
-                        return true;
-                    }
-                }
+                return !equals(objects, xPathFilter);
             }
             case UNIQUE -> {
                 for (final Object object : objects) {
@@ -293,6 +288,16 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                         : val.trim());
     }
 
+    private static boolean contains(final List<Object> objects,
+                                    final XPathFilter xPathFilter) {
+        for (final Object object : objects) {
+            if (contains(object, xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static boolean contains(final Object value, final String text, final Boolean ignoreCase) {
         // Contains doesn't really make any sense for any type other than string, so just convert whatever it
         // is to a string and do contains on that.
@@ -309,6 +314,16 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
             txt = text.toLowerCase();
         }
         return valueStr.contains(txt);
+    }
+
+    private static boolean equals(final List<Object> objects,
+                                  final XPathFilter xPathFilter) {
+        for (final Object object : objects) {
+            if (equals(object, xPathFilter.getValue(), xPathFilter.isIgnoreCase())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean equals(final Object value, final String text, final Boolean ignoreCase) {
@@ -396,12 +411,12 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
     }
 
     @Override
-    public String getElementId() {
+    public ElementId getElementId() {
         return elementId;
     }
 
     @Override
-    public void setElementId(final String elementId) {
+    public void setElementId(final ElementId elementId) {
         this.elementId = elementId;
     }
 

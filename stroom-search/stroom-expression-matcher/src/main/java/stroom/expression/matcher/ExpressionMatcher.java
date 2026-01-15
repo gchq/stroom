@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.expression.matcher;
@@ -44,6 +43,7 @@ public class ExpressionMatcher {
     private final Map<String, QueryField> fieldMap;
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
+    // TODO Ideally we should be holding a map of Set<S
     private final Map<DocRef, String[]> wordMap = new ConcurrentHashMap<>();
     private final Map<String, Pattern> patternMap = new ConcurrentHashMap<>();
     private final DateTimeSettings dateTimeSettings;

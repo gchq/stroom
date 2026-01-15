@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,22 +23,26 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
+import java.util.List;
+
 public class ShowTabMenuEvent extends GwtEvent<ShowTabMenuEvent.Handler> {
 
     private static Type<Handler> TYPE;
     private final TabData tabData;
+    private final List<TabData> tabList;
     private final PopupPosition popupPosition;
 
-    private ShowTabMenuEvent(final TabData tabData,
+    private ShowTabMenuEvent(final TabData tabData, final List<TabData> tabList,
                              final PopupPosition popupPosition) {
         this.tabData = tabData;
+        this.tabList = tabList;
         this.popupPosition = popupPosition;
     }
 
     public static void fire(final HasHandlers handlers,
-                            final TabData tabData,
+                            final TabData tabData, final List<TabData> tabList,
                             final PopupPosition popupPosition) {
-        handlers.fireEvent(new ShowTabMenuEvent(tabData, popupPosition));
+        handlers.fireEvent(new ShowTabMenuEvent(tabData,  tabList, popupPosition));
     }
 
     public static Type<Handler> getType() {
@@ -60,6 +64,10 @@ public class ShowTabMenuEvent extends GwtEvent<ShowTabMenuEvent.Handler> {
 
     public TabData getTabData() {
         return tabData;
+    }
+
+    public List<TabData> getTabList() {
+        return tabList;
     }
 
     public PopupPosition getPopupPosition() {

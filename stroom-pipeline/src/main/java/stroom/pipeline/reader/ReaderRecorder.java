@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import stroom.pipeline.reader.ByteStreamDecoder.DecodedChar;
 import stroom.pipeline.stepping.Recorder;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.ErrorType;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
@@ -310,7 +311,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
         private final ByteBuffer byteBuffer = new ByteBuffer();
         private final RangeMode rangeMode;
         private final ErrorReceiverProxy errorReceiverProxy;
-        private final String elementId;
+        private final ElementId elementId;
 
         private int lineNo = BASE_LINE_NO;
         private int colNo = BASE_COL_NO;
@@ -319,7 +320,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                     final String encoding,
                     final RangeMode rangeMode,
                     final ErrorReceiverProxy errorReceiverProxy,
-                    final String elementId) {
+                    final ElementId elementId) {
             super(in);
             this.encoding = encoding;
             this.rangeMode = rangeMode;

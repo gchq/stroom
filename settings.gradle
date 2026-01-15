@@ -1,7 +1,7 @@
 rootProject.name = 'stroom'
 
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@ rootProject.name = 'stroom'
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 // Activity
@@ -37,6 +36,9 @@ include 'stroom-annotation:stroom-annotation-impl'
 include 'stroom-annotation:stroom-annotation-impl-db'
 include 'stroom-annotation:stroom-annotation-impl-db-jooq'
 include 'stroom-annotation:stroom-annotation-pipeline'
+
+include 'stroom-contentstore:stroom-contentstore-api'
+include 'stroom-contentstore:stroom-contentstore-impl'
 
 // AWS
 include 'stroom-aws:stroom-aws-s3-impl'
@@ -66,6 +68,7 @@ include 'stroom-cluster:stroom-cluster-task-impl'
 // Config
 include 'stroom-config:stroom-config-app'
 include 'stroom-config:stroom-config-common'
+include 'stroom-config:stroom-config-global-api'
 include 'stroom-config:stroom-config-global-impl'
 include 'stroom-config:stroom-config-global-impl-db'
 include 'stroom-config:stroom-config-global-impl-db-jooq'
@@ -75,6 +78,10 @@ include 'stroom-core-client'
 include 'stroom-core-client-widget'
 include 'stroom-core'
 include 'stroom-core-shared'
+
+// Credentials Store
+include 'stroom-credentials:stroom-credentials-api'
+include 'stroom-credentials:stroom-credentials-impl-db'
 
 // Dashboard
 include 'stroom-dashboard-gwt'
@@ -157,10 +164,10 @@ include 'stroom-importexport:stroom-importexport-impl'
 
 // Index
 include 'stroom-index:lucene553-shaded'
-include 'stroom-index:lucene980-shaded'
+//include 'stroom-index:lucene980-shaded'
 include 'stroom-index:stroom-index-impl'
 include 'stroom-index:stroom-index-lucene553'
-include 'stroom-index:stroom-index-lucene980'
+include 'stroom-index:stroom-index-lucene'
 include 'stroom-index:stroom-index-mock'
 include 'stroom-index:stroom-index-impl-db'
 include 'stroom-index:stroom-index-impl-db-jooq'
@@ -174,6 +181,11 @@ include 'stroom-job:stroom-job-impl-db-jooq'
 // Kafka
 include 'stroom-kafka:stroom-kafka-api'
 include 'stroom-kafka:stroom-kafka-impl'
+
+// LangChain (LLM integration)
+include 'stroom-langchain:stroom-langchain-api'
+include 'stroom-langchain:stroom-langchain-impl'
+include 'stroom-langchain:stroom-langchain-mock'
 
 // Lifecycle
 include 'stroom-lifecycle:stroom-lifecycle-api'
@@ -215,6 +227,9 @@ include 'stroom-processor:stroom-processor-mock'
 include 'stroom-proxy:stroom-proxy-app'
 include 'stroom-proxy:stroom-proxy-repo'
 include 'stroom-proxy:stroom-proxy-remote-api'
+
+// Pathways
+include 'stroom-pathways:stroom-pathways-impl'
 
 // Query
 include 'stroom-query:stroom-query-api'
@@ -292,3 +307,12 @@ include 'stroom-index:stroom-index-api'
 include 'stroom-cache:stroom-cache-service-impl'
 include 'stroom-gitrepo:stroom-gitrepo-impl'
 include 'stroom-gitrepo:stroom-gitrepo-api'
+
+include 'stroom-contentstore:stroom-contentstore-api'
+include 'stroom-contentstore'
+include 'stroom-gitrepo:stroom-gitrepo-impl-db'
+include 'stroom-gitrepo:stroom-gitrepo-impl-db-jooq'
+include 'stroom-gitrepo:stroom-gitrepo-mock'
+
+include 'stroom-credentials:stroom-credentials-impl'
+include 'stroom-credentials:stroom-credentials-impl-db-jooq'

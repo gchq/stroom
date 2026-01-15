@@ -1,7 +1,25 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.xsltfunctions;
 
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.util.io.StreamUtil;
+import stroom.util.jersey.HttpClientProvider;
+import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -46,8 +64,8 @@ class HttpCall extends StroomExtensionFunctionCall {
     private final CommonHttpClient commonHttpClient;
 
     @Inject
-    HttpCall(final HttpClientCache httpClientCache) {
-        commonHttpClient = new CommonHttpClient(httpClientCache);
+    HttpCall(final HttpClientProviderCache httpClientProviderCache) {
+        commonHttpClient = new CommonHttpClient(httpClientProviderCache);
     }
 
     @Override
@@ -65,8 +83,8 @@ class HttpCall extends StroomExtensionFunctionCall {
             log(context, Severity.WARNING, "No URL specified for HTTP call", null);
 
         } else {
-            try {
-                final HttpClient httpClient = commonHttpClient.createClient(clientConfigStr);
+            try (final HttpClientProvider httpClientProvider = commonHttpClient.createClientProvider(clientConfigStr)) {
+                final HttpClient httpClient = httpClientProvider.get();
                 sequence = execute(url, headers, mediaType, data, httpClient, response ->
                         createSequence(context, response));
 

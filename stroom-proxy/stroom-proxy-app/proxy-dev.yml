@@ -120,13 +120,20 @@ proxyConfig:
 
   path:
     # Versioned dirs for dev to allow running multiple proxy instances
-    home: "${STROOM_PROXY_HOME:-~/.stroom-proxy/v7}"
-    temp: "${STROOM_PROXY_TEMP:-/tmp/stroom-proxy/v7}"
+    home: "${STROOM_PROXY_HOME:-~/.stroom-proxy-local/v7}"
+    temp: "${STROOM_PROXY_TEMP:-/tmp/stroom-proxy-local/v7}"
+
+  # This will be used by forwarder, feedStatus, dataReceiptRules, apiKeyVerification
+  downstreamHost:
+    scheme: "http"
+    port: 8080
+    hostname: "localhost"
+    # This is the TEST_CREDS token
+    apiKey: "eyJhbGciOiJSUzI1NiIsImtpZCI6ImYzNzQyZTBlLWQ2ZTQtNDZlYS04MmM0LTBmZGE0MjE5ZTk5MiJ9.eyJleHAiOjIzMDIxMDc3NzksInN1YiI6ImRlZmF1bHQtdGVzdC1vbmx5LWFwaS1rZXktdXNlciIsImlzcyI6ImRlZmF1bHQtdGVzdC1vbmx5LWlzc3VlciIsImF1ZCI6IkJ5VXVYUEVVQndxVmZBbTladHI5SzEyTmhxV3lNRnoxVG1YU2xXeVAuY2xpZW50LWlkLmFwcHMuc3Ryb29tLWlkcCJ9.pvP3ojlYnbjpRdvuRcj7R9gbTgb-pirCDwGwPTWrDa4MTb30IS0DRNi6wdBL6K4FQJVwOwkRsc3xBIhF2cRAxLgZ1qWr7Zeh0bGB25y1womshnDvFQQFsl6vM-taxSRXrZ2b8by7KbDu9-PitxIaLssD9ZDe9hoi5vZlWlVUe6CI3EfUCQGcyqbVPrkwPpWg_tQa6Mvx7UxUf_GslYt6YVibF8FVelM5ISVZEZRM8GRUTeoKZGSySiFR18CzUn7XsRpffEtmwpo8JuEoOprvgPk-n8y6nQfZnPCdr45bthTi4tzARPTCLaK0XUiiAP58_LfaeldjMhSdYnefgT3gXg"
 
   # If you want to use a receipt policy then the RuleSet must exist
   # in Stroom and have the UUID as specified below in receiptPolicyUuid
   receive:
-    receiptPolicyUuid:
     authenticationRequired: false
     enabledAuthenticationTypes:
       - CERTIFICATE
@@ -144,7 +151,6 @@ proxyConfig:
     - enabled: true
       name: "Local filesystem"
       path: "file_forwarder"
-      queue: null
       subPathTemplate:
         pathTemplate: "${feed}"
         templatingMode: "REPLACE_UNKNOWN_PARAMS"
@@ -152,8 +158,8 @@ proxyConfig:
   forwardHttpDestinations:
     - enabled: true
       name: "downstream"
-      forwardUrl: "http://localhost:8080/stroom/noauth/datafeed"
-      livenessCheckUrl: "http://localhost:8080/stroom/noauth/status"
+#      forwardUrl: "http://localhost:8080/datafeed"
+#      livenessCheckUrl: "http://localhost:8080/status"
       apiKey: ""
       queue:
         retryDelay: "PT2S"
@@ -170,8 +176,7 @@ proxyConfig:
   #    apiKey: ""
 
   feedStatus:
-    url: "http://localhost:8080/api/feedStatus/v2"
-    apiKey: ""
+#    url: "http://localhost:8080/api/feedStatus/v2"
 
   security:
     authentication:

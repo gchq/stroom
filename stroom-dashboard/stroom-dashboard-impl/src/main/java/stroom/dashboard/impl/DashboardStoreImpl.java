@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ class DashboardStoreImpl implements DashboardStore {
     DashboardStoreImpl(final StoreFactory storeFactory,
                        final DashboardSerialiser serialiser,
                        final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, DashboardDoc.TYPE, DashboardDoc.class);
+        this.store = storeFactory.createStore(serialiser, DashboardDoc.TYPE, DashboardDoc::builder);
         this.serialiser = serialiser;
         this.securityContext = securityContext;
     }

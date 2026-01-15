@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1940,10 +1940,11 @@ class TestExpressionParser extends AbstractExpressionParserTest {
 
     @Test
     void testBadFunction() {
-        Assertions.assertThatThrownBy(() -> {
-                    compute("foo(1)", out -> {
-                    });
-                })
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            compute("foo(1)", out -> {
+                            });
+                        })
                 .isInstanceOf(TokenException.class)
                 .hasMessageContainingAll("Unknown function", "foo");
     }

@@ -1,19 +1,35 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.impl.db;
 
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.lmdb.stream.LmdbIterable;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.Format;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
-import stroom.query.common.v2.ValArrayFunctionFactory;
+import stroom.query.common.v2.ValuesFunctionFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.Values;
 import stroom.query.language.functions.ValuesConsumer;
 
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.Txn;
 
@@ -37,33 +53,31 @@ public class PlanBSearchHelper {
         final List<String> fields = ExpressionUtil.fields(criteria.getExpression());
         fields.forEach(fieldIndex::create);
 
-        final ValueFunctionFactories<Val[]> valueFunctionFactories = createValueFunctionFactories(fieldIndex);
-        final Optional<Predicate<Val[]>> optionalPredicate = expressionPredicateFactory
+        final ValueFunctionFactories<Values> valueFunctionFactories = createValueFunctionFactories(fieldIndex);
+        final Optional<Predicate<Values>> optionalPredicate = expressionPredicateFactory
                 .createOptional(criteria.getExpression(), valueFunctionFactories, dateTimeSettings);
-        final Predicate<Val[]> predicate = optionalPredicate.orElse(vals -> true);
+        final Predicate<Values> predicate = optionalPredicate.orElse(vals -> true);
 
         // TODO : It would be faster if we limit the iteration to keys based on the criteria.
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn)) {
-            for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                final Val[] vals = valuesExtractor.apply(readTxn, keyVal);
-                if (predicate.test(vals)) {
-                    consumer.accept(vals);
-                }
+        LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
+            final Values vals = valuesExtractor.apply(readTxn, key, val);
+            if (predicate.test(vals)) {
+                consumer.accept(vals.toArray());
             }
-        }
+        });
     }
 
-    public static ValueFunctionFactories<Val[]> createValueFunctionFactories(final FieldIndex fieldIndex) {
+    public static ValueFunctionFactories<Values> createValueFunctionFactories(final FieldIndex fieldIndex) {
         return fieldName -> {
             final Integer index = fieldIndex.getPos(fieldName);
             if (index == null) {
                 throw new RuntimeException("Unexpected field: " + fieldName);
             }
-            return new ValArrayFunctionFactory(Column.builder().format(Format.TEXT).build(), index);
+            return new ValuesFunctionFactory(Column.builder().format(Format.TEXT).build(), index);
         };
     }
 
-    public record Context(Txn<ByteBuffer> readTxn, KeyVal<ByteBuffer> kv) {
+    public record Context(Txn<ByteBuffer> readTxn, ByteBuffer key, ByteBuffer val) {
 
     }
 
@@ -105,6 +119,6 @@ public class PlanBSearchHelper {
 
     public interface ValuesExtractor {
 
-        Val[] apply(Txn<ByteBuffer> readTxn, KeyVal<ByteBuffer> kv);
+        Values apply(Txn<ByteBuffer> readTxn, ByteBuffer key, ByteBuffer value);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import stroom.editor.client.view.Marker;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.QLVisResult;
 import stroom.query.api.Result;
@@ -61,7 +62,6 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceRange;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Function;
 import javax.inject.Provider;
 
@@ -129,7 +129,7 @@ public class QueryEditPresenter
             }
 
             @Override
-            public Set<String> getOpenGroups() {
+            public GroupSelection getGroupSelection() {
                 return null;
             }
 
@@ -396,6 +396,8 @@ public class QueryEditPresenter
 
         // Start search.
         queryModel.startNewSearch(
+                null,
+                null,
                 editorPresenter.getText(),
                 null, //getDashboardContext().getCombinedParams(),
                 queryToolbarPresenter.getTimeRange(),
@@ -460,6 +462,9 @@ public class QueryEditPresenter
         }
     }
 
+    public void onContentTabVisible(final boolean visible) {
+        queryResultPresenter.onContentTabVisible(visible);
+    }
 
     // --------------------------------------------------------------------------------
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.security.mock;
 
+import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.SecurityContext;
 
 import com.google.inject.AbstractModule;
@@ -24,6 +25,9 @@ public class MockSecurityContextModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(SecurityContext.class).to(MockSecurityContext.class);
+        // There are the same thing
+        final MockSecurityContext mockSecurityContext = new MockSecurityContext();
+        bind(SecurityContext.class).toInstance(mockSecurityContext);
+        bind(CommonSecurityContext.class).toInstance(mockSecurityContext);
     }
 }

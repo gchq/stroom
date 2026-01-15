@@ -1,15 +1,33 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
+import stroom.proxy.app.DownstreamHostConfig;
+import stroom.proxy.app.servlet.ProxyStatusServlet;
+import stroom.receive.common.ReceiveDataServlet;
 import stroom.util.collections.CollectionUtil;
 import stroom.util.http.HttpClientConfiguration;
+import stroom.util.io.PathCreator;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.NullSafe;
-import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -26,16 +44,20 @@ public final class ForwardHttpPostConfig
         extends AbstractConfig
         implements IsProxyConfig, ForwarderConfig {
 
-    private static final StroomDuration DEFAULT_FORWARD_DELAY = StroomDuration.ZERO;
-    private static final StroomDuration DEFAULT_RETRY_DELAY = StroomDuration.ofSeconds(10);
-    private static final StroomDuration DEFAULT_FORWARD_TIMEOUT = StroomDuration.ofMinutes(1);
-    private static final Integer DEFAULT_MAX_RETRIES = 3;
+    public static final boolean DEFAULT_ADD_OPEN_ID_ACCESS_TOKEN = false;
+    public static final boolean DEFAULT_IS_ENABLED = true;
+    public static final boolean DEFAULT_LIVENESS_CHECK_ENABLED = true;
+    public static final boolean DEFAULT_IS_INSTANT = false;
+
+    public static final String DEFAULT_FORWARD_PATH = ReceiveDataServlet.DATA_FEED_PATH_PART;
+    public static final String DEFAULT_LIVENESS_CHECK_PATH = ProxyStatusServlet.PATH_PART;
 
     private final boolean enabled;
     private final boolean instant;
     private final String name;
     private final String forwardUrl;
     private final String livenessCheckUrl;
+    private final boolean livenessCheckEnabled;
     private final String apiKey;
     private final boolean addOpenIdAccessToken;
     private final HttpClientConfiguration httpClient;
@@ -43,40 +65,43 @@ public final class ForwardHttpPostConfig
     private final Set<String> forwardHeadersAdditionalAllowSet;
 
     public ForwardHttpPostConfig() {
-        enabled = true;
-        instant = false;
+        enabled = DEFAULT_IS_ENABLED;
+        instant = DEFAULT_IS_INSTANT;
         name = null;
         forwardUrl = null;
         livenessCheckUrl = null;
+        livenessCheckEnabled = DEFAULT_LIVENESS_CHECK_ENABLED;
         apiKey = null;
-        addOpenIdAccessToken = false;
+        addOpenIdAccessToken = DEFAULT_ADD_OPEN_ID_ACCESS_TOKEN;
         httpClient = createDefaultHttpClientConfiguration();
         forwardQueueConfig = new ForwardHttpQueueConfig();
         forwardHeadersAdditionalAllowSet = Collections.emptySet();
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "checkstyle:linelength"})
     @JsonCreator
     public ForwardHttpPostConfig(
-            @JsonProperty("enabled") final boolean enabled,
-            @JsonProperty("instant") final boolean instant,
+            @JsonProperty("enabled") final Boolean enabled,
+            @JsonProperty("instant") final Boolean instant,
             @JsonProperty("name") final String name,
             @JsonProperty("forwardUrl") final String forwardUrl,
             @JsonProperty("livenessCheckUrl") final String livenessCheckUrl,
+            @JsonProperty("livenessCheckEnabled") final Boolean livenessCheckEnabled,
             @JsonProperty("apiKey") final String apiKey,
-            @JsonProperty("addOpenIdAccessToken") final boolean addOpenIdAccessToken,
+            @JsonProperty("addOpenIdAccessToken") final Boolean addOpenIdAccessToken,
             @JsonProperty("httpClient") final HttpClientConfiguration httpClient,
             @JsonProperty("queue") final ForwardHttpQueueConfig forwardQueueConfig,
             @JsonProperty("forwardHeadersAdditionalAllowSet") final Set<String> forwardHeadersAdditionalAllowSet) {
 
-        this.enabled = enabled;
-        this.instant = instant;
+        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_IS_ENABLED);
+        this.instant = Objects.requireNonNullElse(instant, DEFAULT_IS_INSTANT);
         this.name = name;
         this.forwardUrl = forwardUrl;
         this.livenessCheckUrl = livenessCheckUrl;
+        this.livenessCheckEnabled = Objects.requireNonNullElse(livenessCheckEnabled, DEFAULT_LIVENESS_CHECK_ENABLED);
         this.apiKey = apiKey;
-        this.addOpenIdAccessToken = addOpenIdAccessToken;
-        this.httpClient = Objects.requireNonNullElse(httpClient, createDefaultHttpClientConfiguration());
+        this.addOpenIdAccessToken = Objects.requireNonNullElse(addOpenIdAccessToken, DEFAULT_ADD_OPEN_ID_ACCESS_TOKEN);
+        this.httpClient = Objects.requireNonNullElseGet(httpClient, this::createDefaultHttpClientConfiguration);
         this.forwardQueueConfig = Objects.requireNonNullElseGet(forwardQueueConfig, ForwardHttpQueueConfig::new);
         this.forwardHeadersAdditionalAllowSet = NullSafe.unmodifialbeSet(forwardHeadersAdditionalAllowSet);
     }
@@ -84,10 +109,10 @@ public final class ForwardHttpPostConfig
     private HttpClientConfiguration createDefaultHttpClientConfiguration() {
         return HttpClientConfiguration
                 .builder()
-                .timeout(StroomDuration.ofMinutes(1))
-                .connectionTimeout(StroomDuration.ofMinutes(1))
-                .connectionRequestTimeout(StroomDuration.ofMinutes(1))
-                .timeToLive(StroomDuration.ofHours(1))
+                .timeout(HttpClientConfiguration.DEFAULT_TIMEOUT)
+                .connectionTimeout(HttpClientConfiguration.DEFAULT_CONNECTION_TIMEOUT)
+                .connectionRequestTimeout(HttpClientConfiguration.DEFAULT_CONNECTION_REQUEST_TIMEOUT)
+                .timeToLive(HttpClientConfiguration.DEFAULT_TIME_TO_LIVE)
                 .build();
     }
 
@@ -119,22 +144,41 @@ public final class ForwardHttpPostConfig
         return name;
     }
 
-    @NotNull
     @JsonProperty
-    @JsonPropertyDescription("The URL to forward onto. This is pass-through mode if instant is set.")
+    @JsonPropertyDescription(
+            "The URL/path to forward on to. " +
+            "If this property is not set, the downstreamHost configuration will be combined with the default API " +
+            "path (/datafeed). " +
+            "If this property is just a path, it will be combined with the downstreamHost configuration. " +
+            "Only set this property if you wish to use a non-default path. " +
+            "This is pass-through mode if instant is set. " +
+            "This property must be set and does NOT fallback to downstreamHost " +
+            "or you want to use a different host/port/scheme to that defined in downstreamHost.")
     public String getForwardUrl() {
         return forwardUrl;
     }
 
     @JsonProperty
     @JsonPropertyDescription(
-            "The URL to check for liveness of the forward destination. The URL should return a 200 response " +
-            "to a GET request for the destination to be considered live. If null, empty or property 'queue' " +
-            "is not configured then no liveness check will be " +
-            "made and the destination will be assumed to be live. If the response is not a 200, forwarding " +
-            "will be paused at least until the next liveness check is performed.")
+            "The URL/path to check for liveness of the forward destination. The URL should return a 200 response " +
+            "to a GET request for the destination to be considered live. " +
+            "If the response from the liveness check is not a 200, forwarding " +
+            "will be paused at least until the next liveness check is performed. " +
+            "If this property is not set, the downstreamHost configuration will be combined with the default API " +
+            "path (/status). " +
+            "If this property is just a path, it will be combined with the downstreamHost configuration. " +
+            "Only set this property if you wish to use a non-default path. " +
+            "or you want to use a different host/port/scheme to that defined in downstreamHost.")
     public String getLivenessCheckUrl() {
         return livenessCheckUrl;
+    }
+
+    @JsonProperty
+    @JsonPropertyDescription(
+            "Whether liveness checking of the HTTP destination will take place. The queue property " +
+            "must also be configured for liveness checking to happen.")
+    public boolean isLivenessCheckEnabled() {
+        return livenessCheckEnabled;
     }
 
     @JsonProperty
@@ -177,10 +221,18 @@ public final class ForwardHttpPostConfig
         return forwardHeadersAdditionalAllowSet;
     }
 
-    @JsonIgnore
     @Override
-    public String getDestinationDescription() {
-        return forwardUrl;
+    public String getDestinationDescription(final DownstreamHostConfig downstreamHostConfig,
+                                            final PathCreator ignored) {
+        return createForwardUrl(downstreamHostConfig);
+    }
+
+    public String createForwardUrl(final DownstreamHostConfig downstreamHostConfig) {
+        return downstreamHostConfig.createUri(forwardUrl, DEFAULT_FORWARD_PATH);
+    }
+
+    public String createLivenessCheckUrl(final DownstreamHostConfig downstreamHostConfig) {
+        return downstreamHostConfig.createUri(livenessCheckUrl, DEFAULT_LIVENESS_CHECK_PATH);
     }
 
     public static Builder builder() {
@@ -206,6 +258,7 @@ public final class ForwardHttpPostConfig
                && Objects.equals(name, that.name)
                && Objects.equals(forwardUrl, that.forwardUrl)
                && Objects.equals(livenessCheckUrl, that.livenessCheckUrl)
+               && livenessCheckEnabled == that.livenessCheckEnabled
                && Objects.equals(apiKey, that.apiKey)
                && Objects.equals(httpClient, that.httpClient)
                && Objects.equals(forwardQueueConfig, that.forwardQueueConfig);
@@ -218,6 +271,7 @@ public final class ForwardHttpPostConfig
                 name,
                 forwardUrl,
                 livenessCheckUrl,
+                livenessCheckEnabled,
                 apiKey,
                 addOpenIdAccessToken,
                 httpClient,
@@ -232,6 +286,7 @@ public final class ForwardHttpPostConfig
                ", name='" + name + '\'' +
                ", forwardUrl='" + forwardUrl + '\'' +
                ", livenessCheckUrl='" + livenessCheckUrl + '\'' +
+               ", livenessCheckEnabled=" + livenessCheckEnabled +
                ", apiKey='" + apiKey + '\'' +
                ", addOpenIdAccessToken=" + addOpenIdAccessToken +
                ", httpClient=" + httpClient +
@@ -248,13 +303,14 @@ public final class ForwardHttpPostConfig
 
     public static class Builder {
 
-        private boolean enabled;
-        private boolean instant;
+        private Boolean enabled;
+        private Boolean instant;
         private String name;
         private String forwardUrl;
         private String livenessCheckUrl;
+        private Boolean livenessCheckEnabled;
         private String apiKey;
-        private boolean addOpenIdAccessToken;
+        private Boolean addOpenIdAccessToken;
         private HttpClientConfiguration httpClient;
         private ForwardHttpQueueConfig forwardQueueConfig;
         private Set<String> forwardHeadersAdditionalAllowSet;
@@ -270,6 +326,7 @@ public final class ForwardHttpPostConfig
             this.name = forwardHttpPostConfig.name;
             this.forwardUrl = forwardHttpPostConfig.forwardUrl;
             this.livenessCheckUrl = forwardHttpPostConfig.livenessCheckUrl;
+            this.livenessCheckEnabled = forwardHttpPostConfig.livenessCheckEnabled;
             this.apiKey = forwardHttpPostConfig.apiKey;
             this.addOpenIdAccessToken = forwardHttpPostConfig.addOpenIdAccessToken;
             this.httpClient = forwardHttpPostConfig.httpClient;
@@ -300,6 +357,11 @@ public final class ForwardHttpPostConfig
 
         public Builder livenessCheckUrl(final String livenessCheckUrl) {
             this.livenessCheckUrl = livenessCheckUrl;
+            return this;
+        }
+
+        public Builder livenessCheckEnabled(final boolean livenessCheckEnabled) {
+            this.livenessCheckEnabled = livenessCheckEnabled;
             return this;
         }
 
@@ -341,6 +403,7 @@ public final class ForwardHttpPostConfig
                     name,
                     forwardUrl,
                     livenessCheckUrl,
+                    livenessCheckEnabled,
                     apiKey,
                     addOpenIdAccessToken,
                     httpClient,

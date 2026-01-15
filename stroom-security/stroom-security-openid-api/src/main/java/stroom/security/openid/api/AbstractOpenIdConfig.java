@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.openid.api;
 
 import stroom.util.collections.CollectionUtil;
@@ -29,6 +45,13 @@ public abstract class AbstractOpenIdConfig
     public static final String PROP_NAME_CONFIGURATION_ENDPOINT = "openIdConfigurationEndpoint";
     public static final String PROP_NAME_IDP_TYPE = "identityProviderType";
     public static final String PROP_NAME_EXPECTED_SIGNER_PREFIXES = "expectedSignerPrefixes";
+    public static final String DEFAULT_POST_LOGOUT_REDIRECT_URI = OpenId.POST_LOGOUT_REDIRECT_URI;
+    public static final List<String> DEFAULT_REQUEST_SCOPES = OpenId.DEFAULT_REQUEST_SCOPES;
+    public static final List<String> DEFAULT_CLIENT_CREDENTIALS_SCOPES = OpenId.DEFAULT_CLIENT_CREDENTIALS_SCOPES;
+    public static final String DEFAULT_CLAIM_SUBJECT = OpenId.CLAIM__SUBJECT;
+    public static final String DEFAULT_CLAIM_PREFERRED_USERNAME = OpenId.CLAIM__PREFERRED_USERNAME;
+    public static final boolean DEFAULT_FORM_TOKEN_REQUEST = true;
+    public static final boolean DEFAULT_VALIDATE_AUDIENCE = true;
     public static final boolean DEFAULT_AUDIENCE_CLAIM_REQUIRED = false;
     public static final String DEFAULT_FULL_NAME_CLAIM_TEMPLATE = "${name}";
     public static final String DEFAULT_AWS_PUBLIC_KEY_URI_TEMPLATE =
@@ -155,17 +178,17 @@ public abstract class AbstractOpenIdConfig
         tokenEndpoint = null;
         jwksUri = null;
         logoutEndpoint = null;
-        logoutRedirectParamName = OpenId.POST_LOGOUT_REDIRECT_URI;
-        formTokenRequest = true;
+        logoutRedirectParamName = DEFAULT_POST_LOGOUT_REDIRECT_URI;
+        formTokenRequest = DEFAULT_FORM_TOKEN_REQUEST;
         clientSecret = null;
         clientId = null;
-        requestScopes = OpenId.DEFAULT_REQUEST_SCOPES;
-        clientCredentialsScopes = OpenId.DEFAULT_CLIENT_CREDENTIALS_SCOPES;
+        requestScopes = DEFAULT_REQUEST_SCOPES;
+        clientCredentialsScopes = DEFAULT_CLIENT_CREDENTIALS_SCOPES;
         allowedAudiences = Collections.emptySet();
         audienceClaimRequired = DEFAULT_AUDIENCE_CLAIM_REQUIRED;
         validIssuers = Collections.emptySet();
-        uniqueIdentityClaim = OpenId.CLAIM__SUBJECT;
-        userDisplayNameClaim = OpenId.CLAIM__PREFERRED_USERNAME;
+        uniqueIdentityClaim = DEFAULT_CLAIM_SUBJECT;
+        userDisplayNameClaim = DEFAULT_CLAIM_PREFERRED_USERNAME;
         fullNameClaimTemplate = DEFAULT_FULL_NAME_CLAIM_TEMPLATE;
         expectedSignerPrefixes = Collections.emptySet();
         publicKeyUriPattern = DEFAULT_AWS_PUBLIC_KEY_URI_TEMPLATE;
@@ -184,7 +207,7 @@ public abstract class AbstractOpenIdConfig
             @JsonProperty("jwksUri") final String jwksUri,
             @JsonProperty("logoutEndpoint") final String logoutEndpoint,
             @JsonProperty("logoutRedirectParamName") final String logoutRedirectParamName,
-            @JsonProperty("formTokenRequest") final boolean formTokenRequest,
+            @JsonProperty("formTokenRequest") final Boolean formTokenRequest,
             @JsonProperty("clientId") final String clientId,
             @JsonProperty("clientSecret") final String clientSecret,
             @JsonProperty("requestScopes") final List<String> requestScopes,
@@ -198,27 +221,29 @@ public abstract class AbstractOpenIdConfig
             @JsonProperty(PROP_NAME_EXPECTED_SIGNER_PREFIXES) final Set<String> expectedSignerPrefixes,
             @JsonProperty("publicKeyUriPattern") final String publicKeyUriPattern) {
 
-        this.identityProviderType = identityProviderType;
+        this.identityProviderType = Objects.requireNonNullElseGet(identityProviderType, this::getDefaultIdpType);
         this.openIdConfigurationEndpoint = openIdConfigurationEndpoint;
         this.issuer = issuer;
         this.authEndpoint = authEndpoint;
         this.tokenEndpoint = tokenEndpoint;
         this.jwksUri = jwksUri;
         this.logoutEndpoint = logoutEndpoint;
-        this.logoutRedirectParamName = logoutRedirectParamName;
-        this.formTokenRequest = formTokenRequest;
+        this.logoutRedirectParamName = Objects.requireNonNullElse(
+                logoutRedirectParamName, DEFAULT_POST_LOGOUT_REDIRECT_URI);
+        this.formTokenRequest = Objects.requireNonNullElse(formTokenRequest, DEFAULT_FORM_TOKEN_REQUEST);
         this.clientId = clientId;
         this.clientSecret = clientSecret;
-        this.requestScopes = requestScopes;
-        this.clientCredentialsScopes = clientCredentialsScopes;
+        this.requestScopes = Objects.requireNonNullElse(requestScopes, DEFAULT_REQUEST_SCOPES);
+        this.clientCredentialsScopes = Objects.requireNonNullElse(
+                clientCredentialsScopes, DEFAULT_CLIENT_CREDENTIALS_SCOPES);
         this.allowedAudiences = CollectionUtil.cleanItems(allowedAudiences, String::trim);
         this.audienceClaimRequired = Objects.requireNonNullElse(audienceClaimRequired, DEFAULT_AUDIENCE_CLAIM_REQUIRED);
-        this.validIssuers = Objects.requireNonNullElseGet(validIssuers, Collections::emptySet);
+        this.validIssuers = NullSafe.set(validIssuers);
         this.uniqueIdentityClaim = uniqueIdentityClaim;
         this.userDisplayNameClaim = userDisplayNameClaim;
         this.fullNameClaimTemplate = NullSafe.nonBlankStringElse(
                 fullNameClaimTemplate, DEFAULT_FULL_NAME_CLAIM_TEMPLATE);
-        this.expectedSignerPrefixes = expectedSignerPrefixes;
+        this.expectedSignerPrefixes = NullSafe.set(expectedSignerPrefixes);
         this.publicKeyUriPattern = publicKeyUriPattern;
     }
 

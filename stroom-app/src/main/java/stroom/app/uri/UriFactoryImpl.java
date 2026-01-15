@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.app.uri;
 
 import stroom.config.app.AppConfig;
@@ -5,8 +21,9 @@ import stroom.config.app.Config;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
-import stroom.config.common.UriConfig;
 import stroom.config.common.UriFactory;
+import stroom.util.net.UriConfig;
+import stroom.util.shared.NullSafe;
 
 import io.dropwizard.core.server.DefaultServerFactory;
 import io.dropwizard.jetty.ConnectorFactory;
@@ -154,12 +171,9 @@ class UriFactoryImpl implements UriFactory {
     }
 
     private String resolveHost(final String bindHost) {
-        if (bindHost != null && bindHost.length() > 0) {
-            return bindHost;
-        }
-
-        return "localhost";
-
+        return NullSafe.isNonEmptyString(bindHost)
+                ? bindHost
+                : "localhost";
 //        try {
 //            return InetAddress.getLocalHost().getHostName();
 //        } catch (final UnknownHostException e) {

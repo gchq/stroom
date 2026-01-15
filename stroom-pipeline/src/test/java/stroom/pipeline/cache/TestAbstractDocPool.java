@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.cache;
 
 import stroom.cache.api.CacheManager;
@@ -5,13 +21,14 @@ import stroom.cache.impl.CacheManagerImpl;
 import stroom.cache.service.impl.CacheManagerService;
 import stroom.cache.service.impl.CacheManagerServiceImpl;
 import stroom.cache.service.impl.FindCacheInfoCriteria;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.StringCriteria;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,7 +75,7 @@ class TestAbstractDocPool {
                 documentPermissionCache,
                 this::createPoolValueWithCounter);
 
-        final MyDoc myDoc = new MyDoc("foo");
+        final MyDoc myDoc = MyDoc.builder().uuid("foo").build();
         final PoolItem<String> poolItem1 = myDocPool.borrowObject(myDoc, true);
 
         Assertions.assertThat(valueCreationCounter)
@@ -106,7 +123,7 @@ class TestAbstractDocPool {
                 this::createPoolValueWithCounter);
 
 
-        final MyDoc myDoc = new MyDoc("foo");
+        final MyDoc myDoc = MyDoc.builder().uuid("foo").build();
         final PoolItem<String> poolItem1 = myDocPool.borrowObject(myDoc, false);
 
         Assertions.assertThat(valueCreationCounter)
@@ -135,7 +152,7 @@ class TestAbstractDocPool {
                 documentPermissionCache,
                 this::createPoolValueWithCounter);
 
-        final MyDoc myDoc = new MyDoc("foo");
+        final MyDoc myDoc = MyDoc.builder().uuid("foo").build();
         final PoolItem<String> poolItem1 = myDocPool.borrowObject(myDoc, true);
 
         Assertions.assertThat(poolItem1.getValue())
@@ -192,16 +209,67 @@ class TestAbstractDocPool {
         }
     }
 
-    private static class MyDoc extends Doc {
+    private static class MyDoc extends AbstractDoc {
 
         private final String content;
 
-        private MyDoc(final String content) {
+        public MyDoc(@JsonProperty("uuid") final String uuid,
+                     @JsonProperty("name") final String name,
+                     @JsonProperty("version") final String version,
+                     @JsonProperty("createTimeMs") final Long createTimeMs,
+                     @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                     @JsonProperty("createUser") final String createUser,
+                     @JsonProperty("updateUser") final String updateUser,
+                     final String content) {
+            super("MyDoc", uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
             this.content = content;
         }
 
         public String getContent() {
             return content;
+        }
+
+        public Builder copy() {
+            return new Builder(this);
+        }
+
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        public static final class Builder extends AbstractDoc.AbstractBuilder<MyDoc, MyDoc.Builder> {
+
+            private String content = "";
+
+            private Builder() {
+            }
+
+            private Builder(final MyDoc doc) {
+                super(doc);
+                this.content = doc.content;
+            }
+
+            public Builder content(final String content) {
+                this.content = content;
+                return self();
+            }
+
+            @Override
+            protected Builder self() {
+                return this;
+            }
+
+            public MyDoc build() {
+                return new MyDoc(
+                        uuid,
+                        name,
+                        version,
+                        createTimeMs,
+                        updateTimeMs,
+                        createUser,
+                        updateUser,
+                        content);
+            }
         }
     }
 }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.receive.common;
 
 import stroom.cache.api.CacheManager;
@@ -6,6 +22,8 @@ import stroom.meta.api.AttributeMap;
 import stroom.proxy.StroomStatusCode;
 import stroom.security.api.UserIdentity;
 import stroom.util.PredicateUtil;
+import stroom.util.collections.CollectionUtil;
+import stroom.util.collections.CollectionUtil.DuplicateMode;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -27,7 +45,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +56,6 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -95,17 +111,12 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
 
     private Map<DataFeedKeyHashAlgorithm, DataFeedKeyHasher> buildHashFunctionMap(
             final Set<DataFeedKeyHasher> dataFeedKeyHashers) {
-        final Map<DataFeedKeyHashAlgorithm, DataFeedKeyHasher> hashFunctionMap;
-        hashFunctionMap = NullSafe.stream(dataFeedKeyHashers)
-                .collect(Collectors.toMap(
-                        DataFeedKeyHasher::getAlgorithm,
-                        Function.identity(),
-                        (dataFeedKeyHasher, dataFeedKeyHasher2) -> {
-                            throw new IllegalArgumentException("Dupplicate keys");
-                        },
-                        () -> new EnumMap<>(DataFeedKeyHashAlgorithm.class))
-                );
-        return hashFunctionMap;
+
+        return CollectionUtil.enumMapBy(
+                DataFeedKeyHashAlgorithm.class,
+                DataFeedKeyHasher::getAlgorithm,
+                DuplicateMode.THROW,
+                dataFeedKeyHashers);
     }
 
     private Optional<HashedDataFeedKey> getDataFeedKey(final HttpServletRequest request,

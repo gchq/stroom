@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.search.extraction;
 
 import stroom.data.store.api.DataException;
@@ -61,7 +77,6 @@ public class ExtractionDecorator {
     private final TaskContextFactory taskContextFactory;
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final SecurityContext securityContext;
-    private final AnnotationsDecoratorFactory receiverDecoratorFactory;
     private final MetaService metaService;
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
@@ -83,7 +98,6 @@ public class ExtractionDecorator {
                         final TaskContextFactory taskContextFactory,
                         final PipelineScopeRunnable pipelineScopeRunnable,
                         final SecurityContext securityContext,
-                        final AnnotationsDecoratorFactory receiverDecoratorFactory,
                         final MetaService metaService,
                         final PipelineStore pipelineStore,
                         final PipelineDataCache pipelineDataCache,
@@ -97,7 +111,6 @@ public class ExtractionDecorator {
         this.taskContextFactory = taskContextFactory;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
         this.securityContext = securityContext;
-        this.receiverDecoratorFactory = receiverDecoratorFactory;
         this.metaService = metaService;
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
@@ -126,15 +139,13 @@ public class ExtractionDecorator {
             final FieldIndex fieldIndex = coprocessors.getFieldIndex();
 
             // Create a receiver that will send data to all coprocessors.
-            ValuesConsumer valuesConsumer;
+            final ValuesConsumer valuesConsumer;
             if (coprocessorSet.size() == 1) {
                 valuesConsumer = coprocessorSet.iterator().next();
             } else {
                 valuesConsumer = values -> coprocessorSet.forEach(coprocessor -> coprocessor.accept(values));
             }
 
-            // Decorate result with annotations.
-            valuesConsumer = receiverDecoratorFactory.create(valuesConsumer, fieldIndex, query);
             receivers.put(docRef, new Receiver(fieldIndex, valuesConsumer));
         });
 

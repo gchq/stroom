@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,31 @@ public enum TimeUnit implements HasDisplayValue, HasPrimitiveValue {
         this.displayValue = displayValue;
         this.primitiveValue = (byte) primitiveValue;
         this.shortForm = shortForm;
+    }
+
+    public static TimeUnit parse(final String string) {
+        if (string != null) {
+            if (string.endsWith(NANOSECONDS.shortForm)) {
+                return NANOSECONDS;
+            } else if (string.endsWith(MILLISECONDS.shortForm)) {
+                return MILLISECONDS;
+            } else if (string.endsWith(SECONDS.shortForm)) {
+                return SECONDS;
+            } else if (string.endsWith(MINUTES.shortForm)) {
+                return MINUTES;
+            } else if (string.endsWith(HOURS.shortForm)) {
+                return HOURS;
+            } else if (string.endsWith(DAYS.shortForm)) {
+                return DAYS;
+            } else if (string.endsWith(WEEKS.shortForm)) {
+                return WEEKS;
+            } else if (string.endsWith(MONTHS.shortForm)) {
+                return MONTHS;
+            } else if (string.endsWith(YEARS.shortForm)) {
+                return YEARS;
+            }
+        }
+        return null;
     }
 
     @Override

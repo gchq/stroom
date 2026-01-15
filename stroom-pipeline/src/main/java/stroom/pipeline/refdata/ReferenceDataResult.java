@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import stroom.pipeline.refdata.store.RefDataValueProxy;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.ErrorType;
 import stroom.util.shared.Location;
 import stroom.util.shared.NullSafe;
@@ -182,7 +183,7 @@ public class ReferenceDataResult implements ErrorReceiver {
     @Override
     public void logTemplate(final Severity severity,
                             final Location location,
-                            final String elementId,
+                            final ElementId elementId,
                             final String messageTemplate,
                             final Throwable e,
                             final Object... messageArgs) {
@@ -234,7 +235,7 @@ public class ReferenceDataResult implements ErrorReceiver {
     @Override
     public void log(final Severity severity,
                     final Location location,
-                    final String elementId,
+                    final ElementId elementId,
                     final String message,
                     final ErrorType errorType,
                     final Throwable e) {
@@ -277,7 +278,7 @@ public class ReferenceDataResult implements ErrorReceiver {
 
         private final Severity severity;
         private final Location location;
-        private final String elementId;
+        private final ElementId elementId;
         // Hold template and args separately to save memory, e.g. if we have loads of messages of a similar
         // type.
         private final String messageTemplate;
@@ -287,7 +288,7 @@ public class ReferenceDataResult implements ErrorReceiver {
 
         private LazyMessage(final Severity severity,
                             final Location location,
-                            final String elementId,
+                            final ElementId elementId,
                             final String messageTemplate,
                             final Object... messageArgs) {
             this.severity = severity;
@@ -301,7 +302,7 @@ public class ReferenceDataResult implements ErrorReceiver {
 
         private LazyMessage(final Severity severity,
                             final Location location,
-                            final String elementId,
+                            final ElementId elementId,
                             final String messageTemplate,
                             final Supplier<List<Object>> messageArgsSupplier) {
             this.severity = severity;
@@ -321,7 +322,7 @@ public class ReferenceDataResult implements ErrorReceiver {
             return location;
         }
 
-        public String getElementId() {
+        public ElementId getElementId() {
             return elementId;
         }
 

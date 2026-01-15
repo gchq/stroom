@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.pipeline.stepping.client.presenter;
 
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.XPathFilter.MatchType;
+import stroom.pipeline.shared.XPathFilter.SearchType;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -41,6 +42,7 @@ public class XPathFilterPresenter extends MyPresenterWidget<XPathFilterPresenter
 
     public void write() {
         xPathFilter.setPath(getView().getXPath());
+        xPathFilter.setSearchType(getView().getSearchType());
         xPathFilter.setMatchType(getView().getMatchType());
 
         if (getView().getMatchType().isNeedsValue()) {
@@ -54,6 +56,7 @@ public class XPathFilterPresenter extends MyPresenterWidget<XPathFilterPresenter
 
     public void read(final XPathFilter xPathFilter) {
         getView().setXPath(xPathFilter.getPath());
+        getView().setSearchType(xPathFilter.getSearchType());
         getView().setMatchType(xPathFilter.getMatchType());
         if (xPathFilter.getValue() == null) {
             getView().setValue("");
@@ -96,6 +99,10 @@ public class XPathFilterPresenter extends MyPresenterWidget<XPathFilterPresenter
 
 
     public interface XPathFilterView extends View, Focus {
+
+        SearchType getSearchType();
+
+        void setSearchType(SearchType searchType);
 
         String getXPath();
 

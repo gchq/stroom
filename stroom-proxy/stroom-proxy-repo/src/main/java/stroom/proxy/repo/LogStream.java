@@ -1,7 +1,25 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.repo;
 
 import stroom.meta.api.AttributeMap;
 import stroom.proxy.StroomStatusCode;
+import stroom.receive.common.StroomStreamException;
+import stroom.receive.common.StroomStreamStatus;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -44,6 +62,28 @@ public class LogStream {
         } else {
             return Collections.emptyMap();
         }
+    }
+
+    public void log(final Logger logger,
+                    final StroomStreamException stroomStreamException,
+                    final String url,
+                    final String receiptId,
+                    final long bytes,
+                    final long duration) {
+        Objects.requireNonNull(stroomStreamException);
+        final EventType eventType = EventType.fromStreamException(stroomStreamException);
+        final StroomStatusCode stroomStatusCode = stroomStreamException.getStroomStatusCode();
+        log(logger,
+                stroomStreamException.getAttributeMap(),
+                eventType,
+                url,
+                stroomStatusCode.getHttpCode(),
+                stroomStatusCode.getCode(),
+                receiptId,
+                bytes,
+                duration,
+                stroomStreamException.getMessage());
+
     }
 
     public void log(final Logger logger,
@@ -169,6 +209,29 @@ public class LogStream {
         @Override
         public String toString() {
             return name();
+        }
+
+        public static EventType fromStroomStatusCode(final StroomStatusCode stroomStatusCode) {
+            return switch (stroomStatusCode) {
+                case FEED_IS_NOT_SET_TO_RECEIVE_DATA,
+                        FEED_IS_NOT_DEFINED,
+                        FEED_MUST_BE_SPECIFIED,
+                        INVALID_FEED_NAME,
+                        REJECTED_BY_POLICY_RULES,
+                        INVALID_TYPE,
+                        UNEXPECTED_DATA_TYPE,
+                        MISSING_MANDATORY_HEADER -> REJECT;
+                default -> ERROR;
+            };
+        }
+
+        public static EventType fromStreamException(final StroomStreamException e) {
+            Objects.requireNonNull(e);
+            return NullSafe.getOrElse(
+                    e.getStroomStreamStatus(),
+                    StroomStreamStatus::getStroomStatusCode,
+                    EventType::fromStroomStatusCode,
+                    EventType.ERROR);
         }
     }
 }

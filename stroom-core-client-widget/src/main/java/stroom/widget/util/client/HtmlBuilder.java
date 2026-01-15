@@ -1,7 +1,24 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.widget.util.client;
 
 
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import java.util.Objects;
@@ -9,12 +26,42 @@ import java.util.function.Consumer;
 
 public class HtmlBuilder {
 
+    public static final SafeHtml NB_SPACE = SafeHtmlUtils.fromSafeConstant("&nbsp;");
     public static final SafeHtml EN_SPACE = SafeHtmlUtils.fromSafeConstant("&ensp;");
 
-    private final StringBuilder sb;
+    private static final SafeHtml ARROW_LEFT = SafeHtmlUtils.fromTrustedString("<");
+    private static final SafeHtml ARROW_RIGHT = SafeHtmlUtils.fromTrustedString(">");
+    private static final SafeHtml ARROW_LEFT_SLASH = SafeHtmlUtils.fromTrustedString("</");
+    private static final SafeHtml ARROW_RIGHT_SLASH = SafeHtmlUtils.fromTrustedString("/>");
+    private static final SafeHtml SPACE = SafeHtmlUtils.fromTrustedString(" ");
+    private static final SafeHtml QUOTE = SafeHtmlUtils.fromTrustedString("\"");
+    private static final SafeHtml EQUALS_QUOTE = SafeHtmlUtils.fromTrustedString("=\"");
+
+    private static final SafeHtml ELEMENT_B = SafeHtmlUtils.fromTrustedString("b");
+    private static final SafeHtml ELEMENT_BR = SafeHtmlUtils.fromTrustedString("br");
+    private static final SafeHtml ELEMENT_CODE = SafeHtmlUtils.fromTrustedString("code");
+    private static final SafeHtml ELEMENT_DEL = SafeHtmlUtils.fromTrustedString("del");
+    private static final SafeHtml ELEMENT_DIV = SafeHtmlUtils.fromTrustedString("div");
+    private static final SafeHtml ELEMENT_HR = SafeHtmlUtils.fromTrustedString("hr");
+    private static final SafeHtml ELEMENT_I = SafeHtmlUtils.fromTrustedString("i");
+    private static final SafeHtml ELEMENT_INS = SafeHtmlUtils.fromTrustedString("ins");
+    private static final SafeHtml ELEMENT_P = SafeHtmlUtils.fromTrustedString("p");
+    private static final SafeHtml ELEMENT_SPAN = SafeHtmlUtils.fromTrustedString("span");
+    private static final SafeHtml ELEMENT_TABLE = SafeHtmlUtils.fromTrustedString("table");
+    private static final SafeHtml ELEMENT_TD = SafeHtmlUtils.fromTrustedString("td");
+    private static final SafeHtml ELEMENT_TH = SafeHtmlUtils.fromTrustedString("th");
+    private static final SafeHtml ELEMENT_TR = SafeHtmlUtils.fromTrustedString("tr");
+    private static final SafeHtml ELEMENT_U = SafeHtmlUtils.fromTrustedString("u");
+
+
+    private final SafeHtmlBuilder sb;
 
     public HtmlBuilder() {
-        this.sb = new StringBuilder();
+        this.sb = new SafeHtmlBuilder();
+    }
+
+    public HtmlBuilder(final SafeHtmlBuilder sb) {
+        this.sb = sb;
     }
 
     public static HtmlBuilder builder() {
@@ -26,60 +73,118 @@ public class HtmlBuilder {
     // -----------------------------------------------
 
     public HtmlBuilder bold(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
-        return elem(content, "b", attributes);
+        return elem(content, ELEMENT_B, attributes);
     }
 
     public HtmlBuilder bold(final String textContent, final Attribute... attributes) {
-        return elem(htmlBuilder -> htmlBuilder.append(textContent), "b", attributes);
+        return elem(textContent, ELEMENT_B, attributes);
     }
 
     public HtmlBuilder br() {
-        return emptyElement("br");
+        return emptyElement(ELEMENT_BR);
     }
 
     public HtmlBuilder code(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
-        return elem(content, "code", attributes);
+        return elem(content, ELEMENT_CODE, attributes);
+    }
+
+    public HtmlBuilder del(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
+        return elem(content, ELEMENT_DEL, attributes);
+    }
+
+    public HtmlBuilder del(final String textContent, final Attribute... attributes) {
+        return elem(textContent, ELEMENT_DEL, attributes);
     }
 
     public HtmlBuilder div(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
-        return elem(content, "div", attributes);
+        return elem(content, ELEMENT_DIV, attributes);
     }
 
     public HtmlBuilder div(final String textContent, final Attribute... attributes) {
-        return elem(htmlBuilder -> htmlBuilder.append(textContent), "div", attributes);
+        return elem(textContent, ELEMENT_DIV, attributes);
     }
 
     public HtmlBuilder hr() {
-        return emptyElement("hr");
+        return emptyElement(ELEMENT_HR);
+    }
+
+    public HtmlBuilder ins(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
+        return elem(content, ELEMENT_INS, attributes);
+    }
+
+    public HtmlBuilder ins(final String textContent, final Attribute... attributes) {
+        return elem(textContent, ELEMENT_INS, attributes);
     }
 
     public HtmlBuilder italic(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
-        return elem(content, "i", attributes);
+        return elem(content, ELEMENT_I, attributes);
     }
 
     public HtmlBuilder italic(final String textContent, final Attribute... attributes) {
-        return elem(htmlBuilder -> htmlBuilder.append(textContent), "i", attributes);
+        return elem(textContent, ELEMENT_I, attributes);
+    }
+
+    public HtmlBuilder nbsp() {
+        return append(NB_SPACE);
     }
 
     public HtmlBuilder para(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
-        return elem(content, "p", attributes);
+        return elem(content, ELEMENT_P, attributes);
     }
 
     public HtmlBuilder para(final String textContent, final Attribute... attributes) {
-        return elem(htmlBuilder -> htmlBuilder.append(textContent), "p", attributes);
+        return elem(textContent, ELEMENT_P, attributes);
+    }
+
+    public HtmlBuilder span(final String textContent, final Attribute... attributes) {
+        return elem(textContent, ELEMENT_SPAN, attributes);
     }
 
     public HtmlBuilder span(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
-        return elem(content, "span", attributes);
+        return elem(content, ELEMENT_SPAN, attributes);
+    }
+
+    public HtmlBuilder table(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
+        return elem(content, ELEMENT_TABLE, attributes);
+    }
+
+    public HtmlBuilder td(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
+        return elem(content, ELEMENT_TD, attributes);
+    }
+
+    public HtmlBuilder td(final String textContent, final Attribute... attributes) {
+        return elem(textContent, ELEMENT_TD, attributes);
+    }
+
+    public HtmlBuilder th(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
+        return elem(content, ELEMENT_TH, attributes);
+    }
+
+    public HtmlBuilder th(final String textContent, final Attribute... attributes) {
+        return elem(textContent, ELEMENT_TH, attributes);
+    }
+
+    public HtmlBuilder tr(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
+        return elem(content, ELEMENT_TR, attributes);
+    }
+
+    public HtmlBuilder underline(final Consumer<HtmlBuilder> content, final Attribute... attributes) {
+        return elem(content, ELEMENT_U, attributes);
     }
 
     // -----------------------------------------------
     // END ELEMENTS
     // -----------------------------------------------
 
-    private HtmlBuilder elem(final Consumer<HtmlBuilder> content,
-                             final String elementName,
-                             final Attribute... attributes) {
+    public HtmlBuilder elem(final String textContent,
+                            final SafeHtml elementName,
+                            final Attribute... attributes) {
+        return elem(htmlBuilder -> htmlBuilder.append(textContent), elementName, attributes);
+    }
+
+    public HtmlBuilder elem(final Consumer<HtmlBuilder> content,
+                            final SafeHtml elementName,
+                            final Attribute... attributes) {
         openElement(elementName, attributes);
         // Allow for empty elements
         if (content != null) {
@@ -89,36 +194,43 @@ public class HtmlBuilder {
         return this;
     }
 
-    private HtmlBuilder openElement(final String elementName, final Attribute... attributes) {
-        sb.append("<");
+    public HtmlBuilder elem(final SafeHtml elementName,
+                            final Attribute... attributes) {
+        openElement(elementName, attributes);
+        closeElement(elementName);
+        return this;
+    }
+
+    private HtmlBuilder openElement(final SafeHtml elementName, final Attribute... attributes) {
+        sb.append(ARROW_LEFT);
         sb.append(elementName);
         appendAttributes(attributes);
-        sb.append(">");
+        sb.append(ARROW_RIGHT);
         return this;
     }
 
-    private HtmlBuilder emptyElement(final String elementName) {
-        sb.append("<");
+    private HtmlBuilder emptyElement(final SafeHtml elementName) {
+        sb.append(ARROW_LEFT);
         sb.append(elementName);
-        sb.append("/>");
+        sb.append(ARROW_RIGHT_SLASH);
         return this;
     }
 
-    private HtmlBuilder closeElement(final String elementName) {
-        sb.append("</");
+    private HtmlBuilder closeElement(final SafeHtml elementName) {
+        sb.append(ARROW_LEFT_SLASH);
         sb.append(elementName);
-        sb.append(">");
+        sb.append(ARROW_RIGHT);
         return this;
     }
 
     private HtmlBuilder appendAttributes(final Attribute... attributes) {
         if (attributes != null) {
             for (final Attribute attribute : attributes) {
-                sb.append(" ");
-                sb.append(attribute.name.asString());
-                sb.append("=\"");
-                sb.append(attribute.value.asString());
-                sb.append("\"");
+                sb.append(SPACE);
+                sb.append(attribute.name);
+                sb.append(EQUALS_QUOTE);
+                sb.append(attribute.value);
+                sb.append(QUOTE);
             }
         }
         return this;
@@ -135,7 +247,7 @@ public class HtmlBuilder {
     }
 
     public HtmlBuilder append(final char c) {
-        sb.append(SafeHtmlUtils.htmlEscape(c));
+        sb.append(c);
         return this;
     }
 
@@ -161,38 +273,37 @@ public class HtmlBuilder {
 
     public HtmlBuilder appendLink(final String url, final String title) {
         Objects.requireNonNull(url);
-        sb.append("<a href=\"");
+        appendTrustedString("<a href=\"");
         append(url);
-        sb.append("\" target=\"_blank\">");
+        appendTrustedString("\" target=\"_blank\">");
         if (title != null && !title.isEmpty()) {
             append(title);
         }
-        sb.append("</a>");
+        appendTrustedString("</a>");
         return this;
     }
 
     public HtmlBuilder appendTrustedString(final String string) {
-        sb.append(string);
+        sb.append(SafeHtmlUtils.fromTrustedString(string));
         return this;
     }
 
     public HtmlBuilder append(final String string) {
-        sb.append(SafeHtmlUtils.htmlEscape(string));
+        sb.appendEscaped(string);
         return this;
     }
 
     public HtmlBuilder append(final SafeHtml safeHtml) {
-        sb.append(safeHtml.asString());
+        sb.append(safeHtml);
         return this;
     }
 
     public HtmlBuilder appendEscapedLines(final String text) {
-        sb.append(SafeHtmlUtils.htmlEscape(text).replaceAll("\n", "<br/>"));
-        return this;
+        return appendTrustedString(SafeHtmlUtils.htmlEscape(text).replaceAll("\n", "<br/>"));
     }
 
     public SafeHtml toSafeHtml() {
-        return SafeHtmlUtils.fromTrustedString(sb.toString());
+        return sb.toSafeHtml();
     }
 
 
@@ -224,6 +335,10 @@ public class HtmlBuilder {
 
         public static Attribute title(final String name) {
             return new Attribute("title", name);
+        }
+
+        public static Attribute id(final String name) {
+            return new Attribute("id", name);
         }
     }
 }

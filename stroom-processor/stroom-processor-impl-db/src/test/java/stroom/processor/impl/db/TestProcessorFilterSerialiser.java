@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.processor.impl.db;
 
 import stroom.index.shared.LuceneIndexDoc;
@@ -23,22 +39,24 @@ class TestProcessorFilterSerialiser {
 
     @Test
     void testMarshall() throws JAXBException {
-        final QueryData queryData = new QueryData();
-        queryData.setDataSource(LuceneIndexDoc.buildDocRef()
-                .randomUuid()
-                .name("Some idx")
-                .build());
-        queryData.setParams(List.of(new Param("key1", "val1")));
-        queryData.setTimeRange(new TimeRange("MyName", Condition.BETWEEN, "week() -1w", "week()"));
-        queryData.setExpression(
-                ExpressionOperator.builder()
-                        .addTerm(ExpressionTerm.builder()
-                                .field("SomeField")
-                                .condition(Condition.EQUALS)
-                                .value("xxxx")
-                                .build())
-                        .build()
-        );
+        final QueryData queryData = QueryData
+                .builder()
+                .dataSource(LuceneIndexDoc.buildDocRef()
+                        .randomUuid()
+                        .name("Some idx")
+                        .build())
+                .params(List.of(new Param("key1", "val1")))
+                .timeRange(new TimeRange("MyName", Condition.BETWEEN, "week() -1w", "week()"))
+                .expression(
+                        ExpressionOperator.builder()
+                                .addTerm(ExpressionTerm.builder()
+                                        .field("SomeField")
+                                        .condition(Condition.EQUALS)
+                                        .value("xxxx")
+                                        .build())
+                                .build()
+                )
+                .build();
 
         final ProcessorFilter processorFilter = new ProcessorFilter();
         // Blank tracker

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@
 
 package stroom.pipeline.shared.data;
 
+import stroom.util.shared.ElementId;
+import stroom.util.shared.NullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -26,19 +29,36 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder({"id", "type"})
+@JsonPropertyOrder({"id", "type", "name", "description"})
 public class PipelineElement implements Comparable<PipelineElement> {
 
     @JsonProperty
-    private final String id;
+    private String id;
     @JsonProperty
-    private final String type;
+    private String type;
+    @JsonProperty
+    private String name;
+    @JsonProperty
+    private String description;
+
+    public PipelineElement(final String id,
+                           final String type) {
+        this(id, type, null, null);
+    }
 
     @JsonCreator
-    public PipelineElement(@JsonProperty("id") final String id,
-                           @JsonProperty("type") final String type) {
+    public PipelineElement(
+            @JsonProperty("id") final String id,
+            @JsonProperty("type") final String type,
+            @JsonProperty("name") final String name,
+            @JsonProperty("description") final String description) {
         this.id = id;
         this.type = type;
+        this.name = name;
+        this.description = description;
+    }
+
+    public PipelineElement() {
     }
 
     public String getId() {
@@ -47,6 +67,14 @@ public class PipelineElement implements Comparable<PipelineElement> {
 
     public String getType() {
         return type;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     @Override
@@ -79,27 +107,26 @@ public class PipelineElement implements Comparable<PipelineElement> {
 
     /**
      * E.g.
-     * <pre>{@code CombinedParser 'myCombinedParser'}</pre>
+     * <pre>{@code 'myCombinedParser'}</pre>
      */
     @JsonIgnore
     public String getDisplayName() {
-        return type + " '" + id + "'";
+        return !NullSafe.isBlankString(name)
+                ? name
+                : id;
+    }
+
+    @JsonIgnore
+    public ElementId getElementId() {
+        return new ElementId(id, name);
     }
 
     public static class Builder {
 
         private String id;
         private String type;
-
-        public Builder() {
-        }
-
-        public Builder(final PipelineElement element) {
-            if (element != null) {
-                this.id = element.id;
-                this.type = element.type;
-            }
-        }
+        private String name;
+        private String description;
 
         public Builder id(final String id) {
             this.id = id;
@@ -111,8 +138,18 @@ public class PipelineElement implements Comparable<PipelineElement> {
             return this;
         }
 
+        public Builder name(final String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return this;
+        }
+
         public PipelineElement build() {
-            return new PipelineElement(id, type);
+            return new PipelineElement(id, type, name, description);
         }
     }
 }

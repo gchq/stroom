@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
     public FsVolumeGroup create() {
         ensureDefaultVolumes();
         final FsVolumeGroup indexVolumeGroup = new FsVolumeGroup();
-        final var newName = NextNameGenerator.getNextName(volumeGroupDao.getNames(), "New group");
+        final String newName = NextNameGenerator.getNextName(volumeGroupDao.getNames(), "New group");
         indexVolumeGroup.setName(newName);
         AuditUtil.stamp(securityContext, indexVolumeGroup);
         final FsVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
@@ -209,7 +209,7 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
 //                            }
                         } else {
                             LOGGER.warn(() -> "Unable to create default index " +
-                                    "Property defaultVolumeGroupName must be defined.");
+                                              "Property defaultVolumeGroupName must be defined.");
                         }
                     } else {
                         LOGGER.info(() -> "Creation of default index group is currently disabled");

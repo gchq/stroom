@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,6 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
     ResizableDialog(final DialogActionUiHandlers dialogEventHandler,
                     final PopupSize popupSize) {
         this(dialogEventHandler, false, popupSize);
-        spinner.setSoft(true);
         spinner.setVisible(false);
     }
 
@@ -148,7 +147,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
         addDomHandler(mouseHandler, MouseMoveEvent.getType());
 
         setResizeEnabled((popupSize != null && popupSize.getWidth() != null && popupSize.getWidth().isResizable()) ||
-                (popupSize != null && popupSize.getHeight() != null && popupSize.getHeight().isResizable()));
+                         (popupSize != null && popupSize.getHeight() != null && popupSize.getHeight().isResizable()));
 
         SvgImageUtil.setSvgAsInnerHtml(resizeSE, SvgImage.RESIZE_HANDLE);
     }
@@ -413,7 +412,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
         final NativeEvent nativeEvent = event.getNativeEvent();
 
         if (!event.isCanceled() && (event.getTypeInt() == Event.ONMOUSEDOWN)
-                && (isCaptionEvent(nativeEvent) || isResizeHandleEvent(nativeEvent))) {
+            && (isCaptionEvent(nativeEvent) || isResizeHandleEvent(nativeEvent))) {
             nativeEvent.preventDefault();
         }
 
@@ -451,13 +450,13 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
         if (Element.is(target)) {
             final Element element = Element.as(target);
             return resizeN.getElement().isOrHasChild(element) ||
-                    resizeE.getElement().isOrHasChild(element) ||
-                    resizeS.getElement().isOrHasChild(element) ||
-                    resizeW.getElement().isOrHasChild(element) ||
-                    resizeNE.getElement().isOrHasChild(element) ||
-                    resizeNW.getElement().isOrHasChild(element) ||
-                    resizeSE.getElement().isOrHasChild(element) ||
-                    resizeSW.getElement().isOrHasChild(element);
+                   resizeE.getElement().isOrHasChild(element) ||
+                   resizeS.getElement().isOrHasChild(element) ||
+                   resizeW.getElement().isOrHasChild(element) ||
+                   resizeNE.getElement().isOrHasChild(element) ||
+                   resizeNW.getElement().isOrHasChild(element) ||
+                   resizeSE.getElement().isOrHasChild(element) ||
+                   resizeSW.getElement().isOrHasChild(element);
         }
         return false;
     }

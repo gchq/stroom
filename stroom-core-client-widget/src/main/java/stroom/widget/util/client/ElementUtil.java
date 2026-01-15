@@ -1,7 +1,25 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.widget.util.client;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
+
+import java.util.function.Predicate;
 
 public class ElementUtil {
 
@@ -26,6 +44,25 @@ public class ElementUtil {
                     final Node node = element.getChildNodes().getItem(i);
                     if (Element.is(node)) {
                         final Element child = findChild(Element.as(node), className);
+                        if (child != null) {
+                            return child;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public static Element findChild(final Element element, final Predicate<Element> predicate) {
+        if (element != null) {
+            if (predicate.test(element)) {
+                return element;
+            } else if (element.getChildNodes() != null) {
+                for (int i = 0; i < element.getChildNodes().getLength(); i++) {
+                    final Node node = element.getChildNodes().getItem(i);
+                    if (Element.is(node)) {
+                        final Element child = findChild(Element.as(node), predicate);
                         if (child != null) {
                             return child;
                         }
@@ -66,6 +103,31 @@ public class ElementUtil {
 
         if (depth < maxDepth) {
             return findParent(element.getParentElement(), className, depth + 1, maxDepth);
+        }
+
+        return null;
+    }
+
+    public static Element findParent(final Element element,
+                                     final Predicate<Element> predicate,
+                                     final int maxDepth) {
+        return findParent(element, predicate, 0, maxDepth);
+    }
+
+    private static Element findParent(final Element element,
+                                      final Predicate<Element> predicate,
+                                      final int depth,
+                                      final int maxDepth) {
+        if (element == null) {
+            return null;
+        }
+
+        if (predicate.test(element)) {
+            return element;
+        }
+
+        if (depth < maxDepth) {
+            return findParent(element.getParentElement(), predicate, depth + 1, maxDepth);
         }
 
         return null;

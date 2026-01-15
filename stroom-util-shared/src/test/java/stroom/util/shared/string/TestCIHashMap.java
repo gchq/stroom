@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,8 @@ package stroom.util.shared.string;
 
 import org.junit.jupiter.api.Test;
 
-import static java.util.Map.Entry.comparingByKey;
+import java.util.Map.Entry;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestCIHashMap {
@@ -69,7 +70,7 @@ class TestCIHashMap {
 
         assertThat(map.entrySet()
                 .stream()
-                .sorted(comparingByKey())
+                .sorted(Entry.comparingByKey())
                 .toList())
                 .extracting(entry -> entry.getKey().getAsLowerCase())
                 .containsExactly(

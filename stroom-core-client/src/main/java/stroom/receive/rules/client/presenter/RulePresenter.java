@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.receive.rules.client.presenter;
@@ -21,8 +20,8 @@ import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.receive.rules.client.presenter.RulePresenter.RuleView;
+import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
-import stroom.receive.rules.shared.RuleAction;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -66,6 +65,10 @@ public class RulePresenter extends MyPresenterWidget<RuleView> {
                 getView().getAction());
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface RuleView extends View {
 
         void setExpressionView(View view);
@@ -74,8 +77,8 @@ public class RulePresenter extends MyPresenterWidget<RuleView> {
 
         void setName(String name);
 
-        RuleAction getAction();
+        ReceiveAction getAction();
 
-        void setAction(RuleAction action);
+        void setAction(ReceiveAction action);
     }
 }

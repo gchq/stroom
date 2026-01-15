@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.index.impl.db;
 
 import stroom.db.util.JooqUtil;
@@ -37,7 +53,6 @@ import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static stroom.db.util.JooqUtil.count;
 import static stroom.index.impl.db.jooq.tables.IndexField.INDEX_FIELD;
 import static stroom.index.impl.db.jooq.tables.IndexFieldSource.INDEX_FIELD_SOURCE;
 
@@ -91,9 +106,9 @@ class TestIndexFieldDaoImpl {
             context.deleteFrom(INDEX_FIELD).execute();
             context.deleteFrom(INDEX_FIELD_SOURCE).execute();
 
-            assertThat(count(context, INDEX_FIELD))
+            assertThat(JooqUtil.count(context, INDEX_FIELD))
                     .isEqualTo(0);
-            assertThat(count(context, INDEX_FIELD_SOURCE))
+            assertThat(JooqUtil.count(context, INDEX_FIELD_SOURCE))
                     .isEqualTo(0);
         });
     }
@@ -169,7 +184,7 @@ class TestIndexFieldDaoImpl {
         final ExecutorService executorService = Executors.newFixedThreadPool(threads);
         final CountDownLatch startLatch = new CountDownLatch(1);
 
-        JooqUtil.context(indexDbConnProvider, context -> assertThat(count(context, INDEX_FIELD))
+        JooqUtil.context(indexDbConnProvider, context -> assertThat(JooqUtil.count(context, INDEX_FIELD))
                 .isEqualTo(0));
 
         final List<CompletableFuture<?>> futures = new ArrayList<>();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -242,7 +242,7 @@ public class VisPresenter
 
         builder.tableId(tableId);
 
-        final Component component = getDashboardContext().getComponents().get(getVisSettings().getTableId());
+        final Component component = getDashboardContext().getComponents().get(tableId);
         if (component instanceof final TablePresenter tablePresenter) {
             final TableComponentSettings tableComponentSettings = tablePresenter
                     .getTableComponentSettings();
@@ -271,9 +271,10 @@ public class VisPresenter
         if (queryId != null) {
             final Component component = getDashboardContext().getComponents().get(queryId);
             if (component instanceof final QueryPresenter queryPresenter) {
-                currentSearchModel = queryPresenter.getSearchModel();
-                if (currentSearchModel != null) {
-                    currentSearchModel.addComponent(getComponentConfig().getId(), this);
+                final SearchModel searchModel = queryPresenter.getSearchModel();
+                currentSearchModel = searchModel;
+                if (searchModel != null) {
+                    searchModel.addComponent(getComponentConfig().getId(), this);
                 }
             }
         }
@@ -311,26 +312,30 @@ public class VisPresenter
     }
 
     private void cleanupSearchModelAssociation() {
-        if (currentSearchModel != null) {
+        final SearchModel searchModel = currentSearchModel;
+        if (searchModel != null) {
             // Remove this component from the list of components the search
             // model expects to update.
-            currentSearchModel.removeComponent(getComponentConfig().getId());
+            searchModel.removeComponent(getComponentConfig().getId());
             currentSearchModel = null;
         }
     }
 
     private void refresh() {
+        final SearchModel searchModel = currentSearchModel;
         getView().getRefreshButton().setRefreshing(true);
-        currentSearchModel.refresh(getComponentConfig().getId(), result -> {
-            try {
-                if (result != null) {
-                    setDataInternal(result);
+        if (searchModel != null) {
+            searchModel.refresh(getComponentConfig().getId(), result -> {
+                try {
+                    if (result != null) {
+                        setDataInternal(result);
+                    }
+                } catch (final Exception e) {
+                    GWT.log(e.getMessage());
                 }
-            } catch (final Exception e) {
-                GWT.log(e.getMessage());
-            }
-            getView().getRefreshButton().setRefreshing(currentSearchModel.isSearching());
-        });
+                getView().getRefreshButton().setRefreshing(searchModel.isSearching());
+            });
+        }
     }
 
     void clear() {
@@ -638,6 +643,9 @@ public class VisPresenter
     public ComponentResultRequest getResultRequest(final Fetch fetch) {
         final VisComponentSettings visComponentSettings = getVisSettings();
 
+        // make sure table settings up to date
+        updateTableId(visComponentSettings.getTableId());
+
         // Update table settings.
         return VisResultRequest
                 .builder()
@@ -706,8 +714,8 @@ public class VisPresenter
     }
 
     @Override
-    public List<ColumnRef> getColumns() {
-        return visSelectionModel.getColumns();
+    public List<ColumnRef> getColumnRefs() {
+        return visSelectionModel.getColumnRefs();
     }
 
     @Override

@@ -1,4 +1,23 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.api;
+
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.Severity;
 
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +32,8 @@ class TableResultBuilderTest {
     @Test
     void doesBuild() {
         // Given
-        final List<String> error = Collections.singletonList("Something went wrong");
+        final List<ErrorMessage> error = Collections.singletonList(
+                new ErrorMessage(Severity.ERROR, "Something went wrong"));
         final String componentId = "someTabularComponentId";
 
         final Long offset = 30L;
@@ -25,7 +45,7 @@ class TableResultBuilderTest {
         final TableResultBuilder builder = TableResult
                 .builder()
                 .componentId(componentId)
-                .errors(error)
+                .errorMessages(error)
                 .resultRange(OffsetRange
                         .builder()
                         .offset(offset)
@@ -40,7 +60,7 @@ class TableResultBuilderTest {
 
         // Then
         assertThat(tableResult.getComponentId()).isEqualTo(componentId);
-        assertThat(tableResult.getErrors()).isEqualTo(error);
+        assertThat(tableResult.getErrorMessages()).isEqualTo(error);
         assertThat(tableResult.getResultRange().getOffset()).isEqualTo(offset);
         assertThat(tableResult.getResultRange().getLength()).isEqualTo(length);
 

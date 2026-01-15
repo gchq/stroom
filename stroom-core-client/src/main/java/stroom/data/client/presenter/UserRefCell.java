@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.data.client.presenter;
 
 import stroom.data.grid.client.EventCell;
@@ -16,15 +32,15 @@ import stroom.util.shared.string.CaseType;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
+import stroom.widget.util.client.Templates;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -32,8 +48,6 @@ import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Function;
-
-import static com.google.gwt.dom.client.BrowserEvents.MOUSEDOWN;
 
 public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
         implements HasHandlers, EventCell {
@@ -52,8 +66,6 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
     private final Function<T_ROW, String> cssClassFunction;
     private final DisplayType displayType;
 
-    private static volatile Template template;
-
     private UserRefCell(final EventBus eventBus,
                         final ClientSecurityContext securityContext,
                         final boolean showIcon,
@@ -61,7 +73,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
                         final Function<T_ROW, UserRef> docRefFunction,
                         final Function<T_ROW, String> cssClassFunction,
                         final DisplayType displayType) {
-        super(MOUSEDOWN);
+        super(BrowserEvents.MOUSEDOWN);
         this.eventBus = eventBus;
         this.securityContext = securityContext;
         this.showIcon = showIcon;
@@ -69,15 +81,12 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
         this.docRefFunction = docRefFunction;
         this.cssClassFunction = cssClassFunction;
         this.displayType = displayType;
-        if (template == null) {
-            template = GWT.create(Template.class);
-        }
     }
 
     @Override
     public boolean isConsumed(final CellPreviewEvent<?> event) {
         final NativeEvent nativeEvent = event.getNativeEvent();
-        if (MOUSEDOWN.equals(nativeEvent.getType()) && MouseUtil.isPrimary(nativeEvent)) {
+        if (BrowserEvents.MOUSEDOWN.equals(nativeEvent.getType()) && MouseUtil.isPrimary(nativeEvent)) {
             final Element element = nativeEvent.getEventTarget().cast();
             return ElementUtil.hasClassName(element, COPY_CLASS_NAME, 5) ||
                    ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5);
@@ -94,7 +103,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
         final UserRef userRef = docRefFunction.apply(value);
         if (userRef != null) {
-            if (MOUSEDOWN.equals(event.getType()) && MouseUtil.isPrimary(event)) {
+            if (BrowserEvents.MOUSEDOWN.equals(event.getType()) && MouseUtil.isPrimary(event)) {
                 onEnterKeyDown(context, parent, value, event, valueUpdater);
             }
         }
@@ -148,7 +157,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
                         cssClasses += " " + additionalClasses;
                     }
                 }
-                final SafeHtml textDiv = template.div(cssClasses, cellHtmlText);
+                final SafeHtml textDiv = Templates.div(cssClasses, cellHtmlText);
 
                 final String containerClasses = String.join(
                         " ",
@@ -173,7 +182,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
 
                 final SafeHtml copySvg = SvgImageUtil.toSafeHtml(
                         SvgImage.COPY, ICON_CLASS_NAME, COPY_CLASS_NAME, HOVER_ICON_CLASS_NAME);
-                sb.append(template.divWithToolTip(
+                sb.append(Templates.divWithTitle(
                         "Copy " + displayType.getTypeName() + " '" + cellPlainText + "' to clipboard",
                         copySvg));
 
@@ -181,7 +190,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
                 if (userRef.getUuid() != null && hasPermissionToOpen(userRef)) {
                     final SafeHtml openSvg = SvgImageUtil.toSafeHtml(
                             SvgImage.OPEN, ICON_CLASS_NAME, OPEN_CLASS_NAME, HOVER_ICON_CLASS_NAME);
-                    sb.append(template.divWithToolTip(
+                    sb.append(Templates.divWithTitle(
                             "Open " + userRef.getType(CaseType.LOWER) + " " + cellPlainText + " in new tab",
                             openSvg));
                 }
@@ -194,19 +203,6 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
     private boolean hasPermissionToOpen(final UserRef userRef) {
         return securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
                || securityContext.isCurrentUser(userRef);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    interface Template extends SafeHtmlTemplates {
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml div(String cssClass, SafeHtml content);
-
-        @Template("<div title=\"{0}\">{1}</div>")
-        SafeHtml divWithToolTip(String title, SafeHtml content);
     }
 
     public static class Builder<T> {

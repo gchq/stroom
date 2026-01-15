@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.receive.common;
 
 import stroom.meta.api.StandardHeaderArguments;
@@ -25,7 +41,7 @@ public class DataFeedKeyGenerator {
                         DataFeedKeyServiceImpl.DATA_FEED_KEY_RANDOM_PART_LENGTH,
                         StringUtil.ALLOWED_CHARS_BASE_58_STYLE);
 
-        final HashMap<String, String> attrMap = new HashMap<>(NullSafe.map(attributeMap));
+        final Map<String, String> attrMap = new HashMap<>(NullSafe.map(attributeMap));
         attrMap.put(StandardHeaderArguments.ACCOUNT_ID, accountId);
         final HashOutput hashOutput = HASHER.hash(key);
 

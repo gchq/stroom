@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocRefInfoCache.class);
     private static final String CACHE_NAME = "Doc Ref Info Cache";
+    public static final String UNKNOWN_TYPE = "UNKNOWN";
 
     // Effectively docUuid => optDocRefInfo
     private final LoadingStroomCache<DocRef, Optional<DocRefInfo>> cache;
@@ -81,10 +82,10 @@ class DocRefInfoCache implements EntityEvent.Handler, Clearable {
 
         try {
             docRefInfo = securityContext.asProcessingUserResult(() -> {
-                if (docRef.getType() != null) {
-                    return getDocRefInfoWithType(docRef);
-                } else {
+                if (UNKNOWN_TYPE.equals(docRef.getType())) {
                     return getDocRefInfoWithoutType(docRef);
+                } else {
+                    return getDocRefInfoWithType(docRef);
                 }
             });
         } catch (final RuntimeException e) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.core.receive;
 
 import stroom.receive.common.CertificateExtractorImpl;
+import stroom.receive.common.ContentAutoCreationAttrMapFilterFactory;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RequestHandler;
@@ -31,6 +32,7 @@ public class ReceiveDataModule extends AbstractModule {
     protected void configure() {
         bind(CertificateExtractor.class).to(CertificateExtractorImpl.class);
         bind(ContentAutoCreationService.class).to(ContentAutoCreationServiceImpl.class);
+        bind(ContentAutoCreationAttrMapFilterFactory.class).to(StroomContentAutoCreationAttrMapFactoryImpl.class);
         bind(FeedStatusService.class).to(FeedStatusServiceImpl.class);
         bind(ReceiptIdGenerator.class).to(StroomReceiptIdGenerator.class).asEagerSingleton();
         bind(RequestHandler.class).to(ReceiveDataRequestHandler.class);

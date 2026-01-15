@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.receive.rules.client.gin;
@@ -22,6 +21,7 @@ import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.data.client.presenter.EditExpressionPresenter.EditExpressionView;
 import stroom.data.client.view.EditExpressionViewImpl;
 import stroom.receive.rules.client.DataRetentionPlugin;
+import stroom.receive.rules.client.ReceiveDataRuleSetPlugin;
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter;
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
 import stroom.receive.rules.client.presenter.DataRetentionPresenter;
@@ -45,10 +45,7 @@ public class PolicyModule extends PluginModule {
 
     @Override
     protected void configure() {
-        // Commented out pending re-visiting receipt rules as the current implementation
-        // was not fully thought through
-        // See https://github.com/gchq/stroom/issues/1125
-//        bindPlugin(RuleSetPlugin.class);
+        bindPlugin(ReceiveDataRuleSetPlugin.class);
         bindPlugin(DataRetentionPlugin.class);
         bindPresenterWidget(EditExpressionPresenter.class, EditExpressionView.class, EditExpressionViewImpl.class);
         bindPresenterWidget(RulePresenter.class, RuleView.class, RuleViewImpl.class);

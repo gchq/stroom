@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package stroom.widget.dropdowntree.client.view;
 
-import stroom.svg.client.SvgPresets;
-import stroom.widget.button.client.SvgButton;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.HtmlBuilder;
 
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -47,24 +47,25 @@ public class QuickFilter extends FlowPanel
 
     private static final int DEBOUNCE_DELAY_MS = 400;
     private static final SafeHtml DEFAULT_POPUP_TEXT = new HtmlBuilder()
-            .bold(hb -> hb.append("Quick Filter"))
+            .bold("Quick Filter")
             .br()
             .append("Field values containing the characters input will be included.")
             .br()
             .toSafeHtml();
 
     private final TextBox textBox = new TextBox();
-    private final SvgButton clearButton;
-    private final SvgButton helpButton;
+    private final InlineSvgButton clearButton;
+    private final InlineSvgButton helpButton;
     private final HandlerManager handlerManager = new HandlerManager(this);
     private Supplier<SafeHtml> popupTextSupplier;
     private String lastInput = "";
+    private boolean updateOnValueChange = true;
+    private HelpPopup helpPopup = null;
 
     private final Timer filterRefreshTimer = new Timer() {
         @Override
         public void run() {
-            // Fire the event to update the data based on the filter
-            ValueChangeEvent.fire(QuickFilter.this, textBox.getText());
+            updateValue(true);
         }
     };
 
@@ -74,63 +75,92 @@ public class QuickFilter extends FlowPanel
         textBox.addStyleName("allow-focus");
         textBox.getElement().setAttribute("placeholder", "Quick Filter");
 
-        clearButton = SvgButton.create(SvgPresets.CLEAR.title("Clear Filter"));
+        clearButton = new InlineSvgButton();
+        clearButton.setSvg(SvgImage.CLEAR);
+        clearButton.setTitle("Clear Filter");
         clearButton.addStyleName("clear");
 
-        helpButton = SvgButton.create(SvgPresets.HELP.title("Quick Filter Syntax Help"));
-        helpButton.addStyleName("info");
+        helpButton = new InlineSvgButton();
+        helpButton.setSvg(SvgImage.HELP_OUTLINE);
+        helpButton.setTitle("Quick Filter Syntax Help");
+        helpButton.addStyleName("help-button info");
 
         add(textBox);
         add(clearButton);
         add(helpButton);
 
-        textBox.addValueChangeHandler(event -> onChange());
+        textBox.addValueChangeHandler(event -> onValueChange());
         textBox.addKeyDownHandler(this::onKeyDown);
         helpButton.addClickHandler(event -> showHelpPopup());
         clearButton.addClickHandler(event -> clear());
 
-        onChange();
+        enableButtons();
     }
 
     private void showHelpPopup() {
-        final SafeHtml popupText = Optional.ofNullable(popupTextSupplier)
-                .map(Supplier::get)
-                .filter(safeHtml -> !safeHtml.asString().isEmpty())
-                .orElse(DEFAULT_POPUP_TEXT);
+        if (helpPopup != null) {
+            helpPopup.hide();
+            helpPopup = null;
+        } else {
+            final SafeHtml popupText = Optional.ofNullable(popupTextSupplier)
+                    .map(Supplier::get)
+                    .filter(safeHtml -> !safeHtml.asString().isEmpty())
+                    .orElse(DEFAULT_POPUP_TEXT);
 
-        final HelpPopup popup = new HelpPopup(popupText);
-        popup.setStyleName("quickFilter-tooltip");
-        popup.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
+            final HelpPopup popup = new HelpPopup(popupText);
+            popup.setStyleName("quickFilter-tooltip");
+            popup.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
 
-            // Position it below the filter
-            popup.setPopupPosition(
-                    getAbsoluteLeft() + 4,
-                    getAbsoluteTop() + 26);
-        });
+                // Position it below the filter
+                popup.setPopupPosition(
+                        getAbsoluteLeft() + 4,
+                        getAbsoluteTop() + 26);
+            });
+            this.helpPopup = popup;
+        }
     }
 
-    private void onChange() {
-        final String text = textBox.getText();
-        final boolean isNotEmpty = text.length() > 0;
-        clearButton.setEnabled(isNotEmpty);
-        clearButton.setVisible(isNotEmpty);
+    private void onValueChange() {
+        enableButtons();
+        if (updateOnValueChange) {
+            // Add in a slight delay to give the user a chance to type a few chars before we fire off
+            // a rest call. This helps to reduce the logging too
+            filterRefreshTimer.cancel();
+            filterRefreshTimer.schedule(DEBOUNCE_DELAY_MS);
+        }
+    }
 
+    private void onChange(final boolean fireEvents) {
+        enableButtons();
+        updateValue(fireEvents);
+    }
+
+    private void updateValue(final boolean fireEvents) {
+        final String text = textBox.getText();
         if (!Objects.equals(text, lastInput)) {
             lastInput = text;
-            if (handlerManager != null) {
-                // Add in a slight delay to give the user a chance to type a few chars before we fire off
-                // a rest call. This helps to reduce the logging too
-                if (!filterRefreshTimer.isRunning()) {
-                    filterRefreshTimer.schedule(DEBOUNCE_DELAY_MS);
-                }
+            // Cancel an update timer if one is running.
+            filterRefreshTimer.cancel();
+            if (fireEvents) {
+                // Fire the event to update the data based on the filter
+                ValueChangeEvent.fire(QuickFilter.this, text);
             }
         }
+    }
+
+    private void enableButtons() {
+        final String text = textBox.getText();
+        final boolean isNotEmpty = !text.isEmpty();
+        clearButton.setEnabled(isNotEmpty);
+        clearButton.setVisible(isNotEmpty);
     }
 
     protected void onKeyDown(final KeyDownEvent event) {
         // Clear the text box if ESC is pressed
         if (event.getNativeKeyCode() == KeyCodes.KEY_ESCAPE) {
-            textBox.setText("");
+            clear();
+        } else if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+            onChange(true);
         }
     }
 
@@ -141,16 +171,12 @@ public class QuickFilter extends FlowPanel
     @Override
     public void clear() {
         textBox.setText("");
-        onChange();
+        onChange(true);
     }
 
     public void registerPopupTextProvider(final Supplier<SafeHtml> popupTextSupplier) {
         this.popupTextSupplier = popupTextSupplier;
     }
-
-//    public void registerClickHandler(final Supplier<String> popupTextProvider) {
-//        this.popupTextSupplier = popupTextSupplier;
-//    }
 
     @Override
     public String getText() {
@@ -159,8 +185,12 @@ public class QuickFilter extends FlowPanel
 
     @Override
     public void setText(final String text) {
-        textBox.setText(text);
-        onChange();
+        setText(text, true);
+    }
+
+    public void setText(final String text, final boolean fireEvents) {
+        textBox.setValue(text, fireEvents);
+        onChange(fireEvents);
     }
 
     @Override

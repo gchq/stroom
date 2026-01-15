@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# **********************************************************************
-# Copyright 2021 Crown Copyright
+#
+# Copyright 2016-2025 Crown Copyright
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# **********************************************************************
+#
 
 # Version: v0.4.1
 # Date: 2023-01-16T14:59:06+00:00
 
 # This script is for tagging a git repository for the purpose of driving a
-# separate release process from that tagged commit. It also updates the 
+# separate release process from that tagged commit. It also updates the
 # changelog with details of the release.
 #
 # Assuming there are unreleased changes in the changelog, there are no
@@ -29,13 +29,13 @@
 #
 # 1. Prompt the user for the release version, v1.0.1 will be suggested.
 # 2. Validate the provided version against a regex and against existing tags.
-# 3. Add a heading to the changlog for the version and add/modify the 
+# 3. Add a heading to the changlog for the version and add/modify the
 #    compare links.
 # 4. git add, commit, push the changelog changes.
 # 5. Prompt the user for conformation of the releasing tagging.
 # 6. Create an annotated tag and push it to the remote.
 #
-# The script can be configured to some degree by means of the 
+# The script can be configured to some degree by means of the
 # tag_release_config.env file.
 #
 # The script is interactive and intended to be run by a human that can
@@ -44,7 +44,7 @@
 # Usage: ./tag_release.sh [version]
 # version: Only used when you want to state up front what the version will be.
 #          If omitted the user will be prompted for the version with a
-#          suggestion based on the last released version. 
+#          suggestion based on the last released version.
 #
 # The changelog (CHANGELOG.md) should look something like this:
 
@@ -100,7 +100,7 @@ UNRELEASED_LINK_REGEX='^\[Unreleased\]:'
 # Matches an issue line [* ......]
 ISSUE_LINE_REGEX='^\* .*'
 # Finds version part but only in a '## [v1.2.3xxxxx]' heading
-RELEASE_VERSION_IN_HEADING_REGEX="(?<=## \[)v[0-9]+\.[0-9]+[^\]]*(?=\])" 
+RELEASE_VERSION_IN_HEADING_REGEX="(?<=## \[)v[0-9]+\.[0-9]+[^\]]*(?=\])"
 # Example git tag for use in help text
 TAG_EXAMPLE='v6.0-beta.19'
 # Example of a tag that is older than TAG_EXAMPLE, for use in help text
@@ -219,7 +219,7 @@ do_release() {
 
   local commit_msg
   # delete all lines up to and including the desired version header
-  # then output all lines until quitting when you hit the next 
+  # then output all lines until quitting when you hit the next
   # version header ('## [' or '[')
   commit_msg="$( \
     sed  \
@@ -270,7 +270,7 @@ init_changelog_file() {
       echo -e
       echo -e
       echo -e "## [Unreleased]"
-      echo -e 
+      echo -e
       echo -e "~~~"
       echo -e "DO NOT ADD CHANGES HERE - Add them using ${LOG_CHANGE_SCRIPT_NAME}, view them with './${LOG_CHANGE_SCRIPT_NAME} list'"
       echo -e "~~~"
@@ -362,7 +362,7 @@ validate_compare_link_exists() {
 validate_for_uncommitted_work() {
   debug "validate_for_uncommitted_work() called"
   if [ "$(git status --porcelain 2>/dev/null | wc -l)" -ne 0 ]; then
-    
+
     validation_exit "There are uncommitted changes or untracked files." \
       "\nCommit them before running this script or if the changes are from a failed" \
       "\nrun of this script then consider running" \
@@ -466,10 +466,10 @@ commit_changelog() {
   )"
 
   if [[ -n "${changed_files}" ]]; then
-    echo 
+    echo
     error "Unexpected local changes in git status:"
 
-    echo 
+    echo
     echo -e "${DGREY}------------------------------------------------------------------------${NC}"
     echo -e "${DGREY}${changed_files}${NC}"
     echo -e "${DGREY}------------------------------------------------------------------------${NC}"
@@ -552,7 +552,7 @@ modify_changelog() {
   # Write our unreleased change entries and the new heading to a temp file
   # with a blank line above
   {
-    echo -e 
+    echo -e
     echo -e "~~~"
     echo -e "DO NOT ADD CHANGES HERE - ADD THEM USING ${LOG_CHANGE_SCRIPT_NAME}"
     echo -e "~~~"
@@ -601,7 +601,7 @@ modify_changelog() {
 
   local new_link_line
   if [ -n "${prev_release_version}" ]; then
-    # We have a prev release to compare to so add in the compare link for 
+    # We have a prev release to compare to so add in the compare link for
     # prev release to next release
     new_link_line="[${next_release_version}]: ${GITHUB_URL_BASE}/compare/${prev_release_version}...${next_release_version}"
   else
@@ -627,7 +627,7 @@ modify_changelog() {
 
 tidy_blank_lines() {
   local changelog_file="$1"; shift
-  
+
   # Treats the whole file as one big line which is a bit sub-prime
   # for a big changelog, but not a massive issue.
   # 1st expr - tidy up any instances of 3 or more blank lines replacing them
@@ -648,7 +648,7 @@ tidy_blank_lines() {
 
 prompt_user_for_version() {
   local suggested_version="$1"; shift
-  
+
   # Ask the user what version tag they want and validate what
   # they provide
   local is_valid_version_str=false
@@ -782,7 +782,7 @@ create_config_file() {
   #RELEASE_VERSION_REGEX='^v[0-9]+\.[0-9]+.*$'
 
   # Finds version part but only in a '## [v1.2.3xxxxx]' heading
-  #RELEASE_VERSION_IN_HEADING_REGEX="(?<=## \[)v[0-9]+\.[0-9]+[^\]]*(?=\])" 
+  #RELEASE_VERSION_IN_HEADING_REGEX="(?<=## \[)v[0-9]+\.[0-9]+[^\]]*(?=\])"
 
   # Example git tag for use in help text
   #TAG_EXAMPLE='v6.0-beta.19'

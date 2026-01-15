@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.index.shared.IndexConstants;
 import stroom.pipeline.shared.SourceLocation;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Result;
 import stroom.query.api.SpecialColumns;
@@ -35,7 +36,6 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -148,8 +148,8 @@ public class QueryResultTableSplitPresenter
     }
 
     @Override
-    public Set<String> getOpenGroups() {
-        return tablePresenter.getOpenGroups();
+    public GroupSelection getGroupSelection() {
+        return tablePresenter.getGroupSelection();
     }
 
     @Override
@@ -195,6 +195,10 @@ public class QueryResultTableSplitPresenter
 
     public void setQuery(final String query) {
         tablePresenter.setQuery(query);
+    }
+
+    public void onContentTabVisible(final boolean visible) {
+        tablePresenter.onContentTabVisible(visible);
     }
 
     public interface QueryResultTableSplitView extends View {

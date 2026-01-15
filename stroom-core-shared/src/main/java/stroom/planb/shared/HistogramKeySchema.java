@@ -1,7 +1,24 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.shared;
 
 import stroom.query.api.UserTimeZone;
 import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -21,10 +38,10 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class HistogramKeySchema {
 
-    public static final KeyType DEFAULT_KEY_TYPE = KeyType.TAGS;
-    public static final HashLength DEFAULT_HASH_LENGTH = HashLength.INTEGER;
-    public static final TemporalResolution DEFAULT_TEMPORAL_RESOLUTION = TemporalResolution.SECOND;
-    public static final UserTimeZone DEFAULT_TIME_ZONE = UserTimeZone.utc();
+    private static final KeyType DEFAULT_KEY_TYPE = KeyType.TAGS;
+    private static final HashLength DEFAULT_HASH_LENGTH = HashLength.INTEGER;
+    private static final TemporalResolution DEFAULT_TEMPORAL_RESOLUTION = TemporalResolution.SECOND;
+    private static final UserTimeZone DEFAULT_TIME_ZONE = UserTimeZone.utc();
 
     @JsonProperty
     private final KeyType keyType;
@@ -41,10 +58,10 @@ public class HistogramKeySchema {
                               @JsonProperty("hashLength") final HashLength hashLength,
                               @JsonProperty("temporalResolution") final TemporalResolution temporalResolution,
                               @JsonProperty("timeZone") final UserTimeZone timeZone) {
-        this.keyType = keyType;
-        this.hashLength = hashLength;
-        this.temporalResolution = temporalResolution;
-        this.timeZone = timeZone;
+        this.keyType = NullSafe.requireNonNullElse(keyType, DEFAULT_KEY_TYPE);
+        this.hashLength = NullSafe.requireNonNullElse(hashLength, DEFAULT_HASH_LENGTH);
+        this.temporalResolution = NullSafe.requireNonNullElse(temporalResolution, DEFAULT_TEMPORAL_RESOLUTION);
+        this.timeZone = NullSafe.requireNonNullElse(timeZone, DEFAULT_TIME_ZONE);
     }
 
     public KeyType getKeyType() {
@@ -95,19 +112,21 @@ public class HistogramKeySchema {
 
     public static class Builder extends AbstractBuilder<HistogramKeySchema, Builder> {
 
-        private KeyType keyType = KeyType.TAGS;
-        private HashLength hashLength = HashLength.INTEGER;
-        private TemporalResolution temporalResolution = TemporalResolution.SECOND;
-        private UserTimeZone timeZone = UserTimeZone.utc();
+        private KeyType keyType;
+        private HashLength hashLength;
+        private TemporalResolution temporalResolution;
+        private UserTimeZone timeZone;
 
         public Builder() {
         }
 
         public Builder(final HistogramKeySchema schema) {
-            this.keyType = schema.keyType;
-            this.hashLength = schema.hashLength;
-            this.temporalResolution = schema.temporalResolution;
-            this.timeZone = schema.timeZone;
+            if (schema != null) {
+                this.keyType = schema.keyType;
+                this.hashLength = schema.hashLength;
+                this.temporalResolution = schema.temporalResolution;
+                this.timeZone = schema.timeZone;
+            }
         }
 
         public Builder keyType(final KeyType keyType) {
@@ -137,11 +156,7 @@ public class HistogramKeySchema {
 
         @Override
         public HistogramKeySchema build() {
-            return new HistogramKeySchema(
-                    keyType,
-                    hashLength,
-                    temporalResolution,
-                    timeZone);
+            return new HistogramKeySchema(keyType, hashLength, temporalResolution, timeZone);
         }
     }
 }

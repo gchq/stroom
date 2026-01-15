@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,6 +123,10 @@ public class TabManager {
         }
     }
 
+    public void duplicateTabTo(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+        dashboardPresenter.duplicateTabTo(tabLayoutConfig, tabConfig);
+    }
+
     private void duplicateTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
         dashboardPresenter.duplicateTab(tabLayoutConfig, tabConfig);
     }
@@ -136,6 +140,14 @@ public class TabManager {
         flexLayout.clear();
         flexLayout.refresh();
         dashboardPresenter.onDirty();
+    }
+
+    private void maximiseTab(final TabConfig tabConfig) {
+        dashboardPresenter.maximiseTabs(tabConfig);
+    }
+
+    private void restoreTabs() {
+        dashboardPresenter.restoreTabs();
     }
 
     private void hideTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
@@ -171,25 +183,31 @@ public class TabManager {
         // Create settings menu.
         menuItems.add(createSettingsMenu(tabConfig));
 
-        // Create hide menu.
-        menuItems.add(createHideMenu(tabLayoutConfig, tabConfig));
+        if (!dashboardPresenter.isMaximised()) {
+            // Create hide menu.
+            menuItems.add(createHideMenu(tabLayoutConfig, tabConfig));
 
-        // Create show menu.
-        final Item showMenu = createShowMenu(tabLayoutConfig);
-        if (showMenu != null) {
-            menuItems.add(showMenu);
-        }
+            // Create show menu.
+            final Item showMenu = createShowMenu(tabLayoutConfig);
+            if (showMenu != null) {
+                menuItems.add(showMenu);
+            }
 
-        // Create duplicate menus.
-        menuItems.add(createDuplicateMenu(tabLayoutConfig, tabConfig));
-        if (tabLayoutConfig.getAllTabCount() > 1) {
-            menuItems.add(createDuplicateTabPanelMenu(tabLayoutConfig));
-        }
+            // Create duplicate menus.
+            menuItems.add(createDuplicateMenu(tabLayoutConfig, tabConfig));
+            menuItems.add(createDuplicateToMenu(tabLayoutConfig, tabConfig));
+            if (tabLayoutConfig.getAllTabCount() > 1) {
+                menuItems.add(createDuplicateTabPanelMenu(tabLayoutConfig));
+            }
 
-        // Create remove menus.
-        menuItems.add(createRemoveMenu(tabLayoutConfig, tabConfig));
-        if (tabLayoutConfig.getAllTabCount() > 1) {
-            menuItems.add(createRemoveTabPanel(tabLayoutConfig));
+            // Create remove menus.
+            menuItems.add(createRemoveMenu(tabLayoutConfig, tabConfig));
+            if (tabLayoutConfig.getAllTabCount() > 1) {
+                menuItems.add(createRemoveTabPanel(tabLayoutConfig));
+            }
+            menuItems.add(createMaximiseMenu(tabConfig));
+        } else {
+            menuItems.add(createRestoreMenu());
         }
 
         if (component instanceof EmbeddedQueryPresenter) {
@@ -279,6 +297,15 @@ public class TabManager {
                 .build();
     }
 
+    private Item createDuplicateToMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+        return new IconMenuItem.Builder()
+                .priority(8)
+                .icon(SvgImage.COPY)
+                .text("Duplicate To...")
+                .command(() -> duplicateTabTo(tabLayoutConfig, tabConfig))
+                .build();
+    }
+
     private Item createDuplicateTabPanelMenu(final TabLayoutConfig tabLayoutConfig) {
         return new IconMenuItem.Builder()
                 .priority(9)
@@ -303,6 +330,24 @@ public class TabManager {
                 .icon(SvgImage.DELETE)
                 .text("Remove All")
                 .command(() -> removeTabPanel(tabLayoutConfig))
+                .build();
+    }
+
+    private Item createMaximiseMenu(final TabConfig tabConfig) {
+        return new IconMenuItem.Builder()
+                .priority(10)
+                .icon(SvgImage.MAXIMISE)
+                .text("Maximise")
+                .command(() -> maximiseTab(tabConfig))
+                .build();
+    }
+
+    private Item createRestoreMenu() {
+        return new IconMenuItem.Builder()
+                .priority(10)
+                .icon(SvgImage.MINIMISE)
+                .text("Restore")
+                .command(this::restoreTabs)
                 .build();
     }
 

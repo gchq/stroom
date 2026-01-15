@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.processor.client.presenter;
@@ -21,6 +20,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.data.client.presenter.ExpressionPresenter;
+import stroom.data.client.presenter.OpenLinkUtil;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -34,6 +34,7 @@ import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
+import stroom.processor.task.client.event.OpenProcessorTaskEvent;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.ExpressionTreePresenter;
@@ -91,6 +92,7 @@ public class ProcessorPresenter
     //    private ButtonView permissionsButton;
     private ButtonView filterButton;
     private ButtonView batchEditButton;
+    private ButtonView showTasksButton;
 
     private boolean allowCreate;
     private boolean allowUpdate;
@@ -223,6 +225,16 @@ public class ProcessorPresenter
                 }));
             }
 
+            showTasksButton = processorListPresenter.getView().addButton(new Preset(
+                    SvgImage.JOBS,
+                    "Show Tasks",
+                    true));
+            registerHandler(showTasksButton.addClickHandler(e -> {
+                if (MouseUtil.isPrimary(e)) {
+                    showTasksTab();
+                }
+            }));
+
             enableButtons(false);
         }
     }
@@ -233,6 +245,13 @@ public class ProcessorPresenter
         presenter.show(processorListPresenter.getExpression(),
                 NullSafe.get(processorListPresenter.getCurrentResultPageResponse(), ResultPage::getPageResponse),
                 processorListPresenter::refresh);
+    }
+
+    private void showTasksTab() {
+        final ProcessorListRow selectedProcessor = processorListPresenter.getSelectionModel().getSelected();
+        if (selectedProcessor instanceof final ProcessorFilterRow processorFilterRow) {
+            OpenProcessorTaskEvent.fire(this, processorFilterRow.getProcessorFilter());
+        }
     }
 
     private void onFilter() {
@@ -264,12 +283,14 @@ public class ProcessorPresenter
     }
 
     private void enableButtons(final boolean enabled) {
+        final boolean onlyOneRowSelected = processorListPresenter.getSelectionModel().getSelectedItems().size() == 1;
+
         if (addButton != null) {
             addButton.setEnabled(allowUpdate);
         }
         if (editButton != null) {
             if (allowUpdate) {
-                editButton.setEnabled(enabled);
+                editButton.setEnabled(enabled && onlyOneRowSelected);
             } else {
                 editButton.setEnabled(false);
             }
@@ -295,6 +316,9 @@ public class ProcessorPresenter
 //                permissionsButton.setEnabled(false);
 //            }
 //        }
+        if (showTasksButton != null) {
+            showTasksButton.setEnabled(enabled && onlyOneRowSelected);
+        }
     }
 
     @Override
@@ -320,6 +344,8 @@ public class ProcessorPresenter
     private void setData(final ProcessorListRow row) {
         final SafeHtml safeHtml = processorInfoBuilder.get(row);
         getView().setInfo(safeHtml);
+
+        OpenLinkUtil.addClickHandler(this, getWidget());
 
         ExpressionOperator expression = null;
         if (row instanceof ProcessorFilterRow) {

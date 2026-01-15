@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,14 +12,21 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.planb.impl.db;
 
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.planb.impl.PlanBConfig;
+import stroom.planb.impl.PlanBDocCache;
+import stroom.planb.impl.PlanBDocStore;
+import stroom.planb.impl.data.FileDescriptor;
+import stroom.planb.impl.data.FileHashUtil;
+import stroom.planb.impl.data.MergeProcessor;
+import stroom.planb.impl.data.ShardManager;
 import stroom.planb.impl.data.TemporalState;
 import stroom.planb.impl.db.StateValueTestUtil.ValueFunction;
 import stroom.planb.impl.db.temporalstate.TemporalStateDb;
@@ -29,6 +36,7 @@ import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.temporalkey.TemporalKey;
 import stroom.planb.shared.KeyType;
 import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.StateType;
 import stroom.planb.shared.StateValueSchema;
 import stroom.planb.shared.TemporalPrecision;
 import stroom.planb.shared.TemporalStateKeySchema;
@@ -46,14 +54,19 @@ import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValShort;
 import stroom.query.language.functions.ValString;
+import stroom.security.mock.MockSecurityContext;
+import stroom.task.api.SimpleTaskContext;
+import stroom.task.api.SimpleTaskContextFactory;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
+import stroom.util.zip.ZipUtil;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -62,7 +75,9 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -76,6 +91,8 @@ class TestTemporalStateDb {
             .maxStoreSize(ByteSize.ofGibibytes(100).getBytes())
             .build();
     private static final PlanBDoc DOC = getDoc(BASIC_SETTINGS);
+    private static final String MAP_UUID = "map-uuid";
+    private static final String MAP_NAME = "map-name";
 
     private final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
     private final List<KeyFunction> keyFunctions = List.of(
@@ -154,6 +171,124 @@ class TestTemporalStateDb {
 
 
 //            assertThat(count.get()).isEqualTo(100);
+        }
+    }
+
+
+    @Test
+    void testFullProcess(@TempDir final Path rootDir) {
+        final StatePaths statePaths = new StatePaths(rootDir);
+        final PlanBDocStore planBDocStore = Mockito.mock(PlanBDocStore.class);
+        final PlanBDoc doc = DOC;
+        Mockito.when(planBDocStore.findByName(Mockito.anyString()))
+                .thenReturn(Collections.singletonList(doc.asDocRef()));
+        Mockito.when(planBDocStore.readDocument(Mockito.any(DocRef.class)))
+                .thenReturn(doc);
+        final PlanBDocCache planBDocCache = Mockito.mock(PlanBDocCache.class);
+        Mockito.when(planBDocCache.get(Mockito.any(String.class)))
+                .thenReturn(doc);
+
+        final String path = rootDir.toAbsolutePath().toString();
+        final PlanBConfig planBConfig = new PlanBConfig(path);
+        final ByteBufferFactoryImpl byteBufferFactory = new ByteBufferFactoryImpl();
+        final ShardManager shardManager = new ShardManager(
+                new ByteBuffers(byteBufferFactory),
+                byteBufferFactory,
+                planBDocCache,
+                planBDocStore,
+                null,
+                () -> planBConfig,
+                statePaths,
+                null,
+                new SimpleTaskContextFactory());
+        final MergeProcessor mergeProcessor = new MergeProcessor(
+                statePaths,
+                new MockSecurityContext(),
+                new SimpleTaskContextFactory(),
+                shardManager);
+
+        final int threads = 10;
+
+        // Write parts.
+        final List<CompletableFuture<Void>> list = new ArrayList<>();
+        for (int thread = 0; thread < threads; thread++) {
+            list.add(CompletableFuture.runAsync(() ->
+                    writePart(mergeProcessor, KeyPrefix.create(StringUtils.repeat('T', 400)))));
+            list.add(CompletableFuture.runAsync(() ->
+                    writePart(mergeProcessor, KeyPrefix.create(StringUtils.repeat('U', 400)))));
+        }
+        CompletableFuture.allOf(list.toArray(new CompletableFuture[0])).join();
+
+        // Consume and merge parts.
+        mergeProcessor.mergeCurrent();
+
+        // Read merged
+        try (final TemporalStateDb db = TemporalStateDb.create(
+                statePaths.getShardDir().resolve(MAP_UUID),
+                new ByteBuffers(new ByteBufferFactoryImpl()),
+                DOC,
+                true)) {
+            assertThat(db.count()).isEqualTo(2);
+        }
+
+        // Try compaction.
+        shardManager.compactAll();
+        shardManager.compactAll();
+
+        // Read compacted
+        try (final TemporalStateDb db = TemporalStateDb.create(
+                statePaths.getShardDir().resolve(MAP_UUID),
+                new ByteBuffers(new ByteBufferFactoryImpl()),
+                DOC,
+                true)) {
+            assertThat(db.count()).isEqualTo(2);
+            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(14);
+        }
+
+        // Try deletion.
+        shardManager.condenseAll(new SimpleTaskContext());
+
+        // Read after deletion
+        try (final TemporalStateDb db = TemporalStateDb.create(
+                statePaths.getShardDir().resolve(MAP_UUID),
+                new ByteBuffers(new ByteBufferFactoryImpl()),
+                DOC,
+                true)) {
+            assertThat(db.count()).isEqualTo(2);
+            System.err.println(db.getInfoString());
+            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(14);
+        }
+
+        // Try compaction.
+        shardManager.compactAll();
+        shardManager.compactAll();
+
+        // Read compacted
+        try (final TemporalStateDb db = TemporalStateDb.create(
+                statePaths.getShardDir().resolve(MAP_UUID),
+                new ByteBuffers(new ByteBufferFactoryImpl()),
+                DOC,
+                true)) {
+            assertThat(db.count()).isEqualTo(2);
+            assertThat(db.getInfo().env().stat().entries).isEqualTo(14);
+        }
+    }
+
+    private void writePart(final MergeProcessor mergeProcessor, final KeyPrefix keyName) {
+        try {
+            final Function<Integer, TemporalKey> keyFunction = i -> new TemporalKey(keyName, Instant.ofEpochMilli(0));
+            final Function<Integer, Val> valueFunction = i -> ValString.create("test1" + i);
+            final Path partPath = Files.createTempDirectory("part");
+            final Path mapPath = partPath.resolve(MAP_UUID);
+            Files.createDirectories(mapPath);
+            testWrite(mapPath, BASIC_SETTINGS, 100, keyFunction, valueFunction);
+            final Path zipFile = Files.createTempFile("lmdb", "zip");
+            ZipUtil.zip(zipFile, partPath);
+            FileUtil.deleteDir(partPath);
+            final String fileHash = FileHashUtil.hash(zipFile);
+            mergeProcessor.add(new FileDescriptor(System.currentTimeMillis(), 1, fileHash), zipFile, false);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
@@ -348,6 +483,48 @@ class TestTemporalStateDb {
             }
         }
     }
+//
+//    @Test
+//    void testRepeatedCondense(@TempDir final Path rootDir) throws IOException {
+//        final Path dbPath = rootDir.resolve("db");
+//        Files.createDirectory(dbPath);
+//
+//        Instant refTime1 = Instant.parse("2000-01-01T00:00:00.000Z");
+//        final Path src = dbPath.resolve("src");
+//        Instant refTime2 = Instant.parse("2000-01-01T00:00:00.000Z");
+//        final Path dest = dbPath.resolve("dest");
+//        Files.createDirectory(dest);
+//
+//        for (int j = 0; j < 100; j++) {
+//            Files.createDirectories(src);
+//            try (final TemporalStateDb db = TemporalStateDb.create(src, BYTE_BUFFERS, DOC, false)) {
+//                for (int i = 100; i < 400; i++) {
+//                    final String prefix = StringUtils.repeat('T', i);
+//                    insertData(db, refTime1, KeyPrefix.create(prefix + i), prefix, 100, 60 * 60 * 24);
+//                    insertData(db, refTime1, KeyPrefix.create(prefix + i), prefix, 100, -60 * 60 * 24);
+//                }
+//                refTime1 = refTime1.plusSeconds(60 * 60 * 24);
+//            }
+//
+//            Files.createDirectories(dest);
+//            try (final TemporalStateDb db = TemporalStateDb.create(dest, BYTE_BUFFERS, DOC, false)) {
+//                db.merge(src);
+//
+//                for (int i = 0; i < 100; i++) {
+//                    long total = 0;
+//                    total += db.condense(refTime2);
+//                    total += db.deleteOldData(refTime2, true);
+//                    if (total > 0) {
+//                        // If we removed data then compact the shard.
+////                        taskContext.info(() -> "Compacting shard");
+////                        db.compact();
+//                    }
+//                }
+//
+//                refTime2 = refTime2.plusSeconds(60 * 60 * 24);
+//            }
+//        }
+//    }
 
     private void testWrite(final Path dbDir) {
         final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
@@ -426,7 +603,13 @@ class TestTemporalStateDb {
     }
 
     private static PlanBDoc getDoc(final TemporalStateSettings settings) {
-        return PlanBDoc.builder().name("test").settings(settings).build();
+        return PlanBDoc
+                .builder()
+                .uuid(MAP_UUID)
+                .name(MAP_NAME)
+                .stateType(StateType.TEMPORAL_STATE)
+                .settings(settings)
+                .build();
     }
 
     private record KeyFunction(String description,

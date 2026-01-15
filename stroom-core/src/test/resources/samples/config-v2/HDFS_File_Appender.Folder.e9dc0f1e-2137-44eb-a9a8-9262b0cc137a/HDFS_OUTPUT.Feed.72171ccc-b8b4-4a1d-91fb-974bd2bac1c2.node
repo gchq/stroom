@@ -1,0 +1,5 @@
+name=HDFS_OUTPUT
+path=/HDFS File Appender/HDFS_OUTPUT
+type=Feed
+uuid=72171ccc-b8b4-4a1d-91fb-974bd2bac1c2
+version=V2

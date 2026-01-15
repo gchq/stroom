@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.processor.shared;
 
 import stroom.docref.DocRef;
@@ -31,6 +47,7 @@ public class ProcessorFilterFields {
     public static final QueryField PRIORITY = QueryField.createInteger("Processor Filter Priority");
     public static final QueryField ENABLED = QueryField.createBoolean("Processor Filter Enabled");
     public static final QueryField DELETED = QueryField.createBoolean("Processor Filter Deleted");
+    public static final QueryField EXPORT = QueryField.createBoolean("Processor Filter Export");
     public static final QueryField UUID = QueryField.createText("Processor Filter UUID");
     public static final QueryField RUN_AS_USER = QueryField
             .builder()
@@ -46,6 +63,7 @@ public class ProcessorFilterFields {
         FIELDS.add(PRIORITY);
         FIELDS.add(ENABLED);
         FIELDS.add(DELETED);
+        FIELDS.add(EXPORT);
         FIELDS.add(UUID);
         FIELDS.add(RUN_AS_USER);
 

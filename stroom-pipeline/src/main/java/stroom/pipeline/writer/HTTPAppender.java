@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.writer;
 
 import stroom.meta.api.AttributeMap;
@@ -9,7 +25,6 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaDataHolder;
-import stroom.pipeline.xsltfunctions.HttpClientCache;
 import stroom.svg.shared.SvgImage;
 import stroom.util.cert.SSLConfig;
 import stroom.util.http.HttpClientConfiguration;
@@ -17,6 +32,8 @@ import stroom.util.http.HttpClientUtil;
 import stroom.util.http.HttpTlsConfiguration;
 import stroom.util.io.CompressionUtil;
 import stroom.util.io.TempDirProvider;
+import stroom.util.jersey.HttpClientProvider;
+import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -105,7 +122,7 @@ public class HTTPAppender extends AbstractAppender {
 
     private final MetaDataHolder metaDataHolder;
     private final TempDirProvider tempDirProvider;
-    private final HttpClientCache httpClientCache;
+    private final HttpClientProviderCache httpClientProviderCache;
     private final ErrorReceiverProxy errorReceiverProxy;
 
     private String forwardUrl;
@@ -140,11 +157,11 @@ public class HTTPAppender extends AbstractAppender {
     HTTPAppender(final ErrorReceiverProxy errorReceiverProxy,
                  final MetaDataHolder metaDataHolder,
                  final TempDirProvider tempDirProvider,
-                 final HttpClientCache httpClientCache) {
+                 final HttpClientProviderCache httpClientProviderCache) {
         super(errorReceiverProxy);
         this.metaDataHolder = metaDataHolder;
         this.tempDirProvider = tempDirProvider;
-        this.httpClientCache = httpClientCache;
+        this.httpClientProviderCache = httpClientProviderCache;
         this.outputStreamSupport = new OutputFactory(metaDataHolder);
         this.errorReceiverProxy = errorReceiverProxy;
 
@@ -216,7 +233,7 @@ public class HTTPAppender extends AbstractAppender {
     private void postFile(final HttpClientConfiguration httpClientConfiguration,
                           final Path file,
                           final AttributeMap effectiveAttributeMap) throws IOException {
-        try {
+        try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
             final HttpUriRequestBase request =
                     new HttpUriRequestBase(requestMethod, URI.create(forwardUrl));
             request.addHeader("Content-Type", contentType);
@@ -236,8 +253,7 @@ public class HTTPAppender extends AbstractAppender {
                 logConnectionToDebug();
             }
 
-
-            final HttpClient httpClient = httpClientCache.get(httpClientConfiguration);
+            final HttpClient httpClient = httpClientProvider.get();
             httpClient.execute(request, response -> {
 
                 LOGGER.debug(() -> "closeConnection() - header fields " +
@@ -364,7 +380,7 @@ public class HTTPAppender extends AbstractAppender {
                 attributeMapToLines(streamMetaAttributeMap, "  "),
                 httpHeadersStreamMetaDataAllowList, httpHeadersStreamMetaDataDenyList));
 
-        streamMetaAttributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
+        streamMetaAttributeMap.putRandomUuidIfAbsent(StandardHeaderArguments.GUID);
         final AttributeMap clonedAttributeMap = AttributeMapUtil.cloneAllowable(streamMetaAttributeMap);
         final AttributeMap effectiveAttributeMap;
 

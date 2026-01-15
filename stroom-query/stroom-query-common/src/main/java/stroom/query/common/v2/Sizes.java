@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,6 +19,7 @@ package stroom.query.common.v2;
 import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -62,9 +63,9 @@ public class Sizes {
      * @return A new set of sizes.
      */
     public static Sizes create(final List<Long> list) {
-        if (list != null && list.size() > 0) {
+        if (list != null && !list.isEmpty()) {
             // If the list has some values the set the default size to the last value in the list.
-            return create(list, list.get(list.size() - 1));
+            return create(list, list.getLast());
         }
         return unlimited();
     }
@@ -80,12 +81,7 @@ public class Sizes {
     public static Sizes create(final List<Long> list, final long defaultSize) {
         long[] sizes = new long[0];
         if (list != null) {
-            sizes = list.stream().mapToLong(i -> {
-                if (i != null) {
-                    return i;
-                }
-                return defaultSize;
-            }).toArray();
+            sizes = list.stream().mapToLong(i -> Objects.requireNonNullElse(i, defaultSize)).toArray();
         }
 
         return new Sizes(sizes, defaultSize);
@@ -145,8 +141,8 @@ public class Sizes {
     @Override
     public String toString() {
         return "StoreSize{" +
-                "sizes=" + Arrays.toString(sizes) +
-                ", defaultSize=" + defaultSize +
-                '}';
+               "sizes=" + Arrays.toString(sizes) +
+               ", defaultSize=" + defaultSize +
+               '}';
     }
 }

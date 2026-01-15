@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.concurrent;
 
 import stroom.util.concurrent.UniqueId.NodeType;
@@ -11,10 +27,19 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.regex.Pattern;
 
 /**
+ * <p>
  * A class for generating globally unique IDs that can be used on multiple nodes/threads.
  * This is stateful so the node should hold a singleton instance of this class.
- * IDs are globally unique on the conditions that each node only has one instance of this
- * class and each node provides a unique nodeId.
+ * It uses non-blocking CAS logic to avoid contention between threads generating IDs.
+ * </p>
+ * <p>
+ * IDs are globally unique IF the following conditions are met:
+ * <ul>
+ *     <li>Each node only has one instance of this class</li>
+ *     <li>Each node provides a nodeId that is unique across all nodes of that nodeType
+ *     in the environment that the {@link UniqueId}s will be used.</li>
+ * </ul>
+ * </p>
  */
 public class UniqueIdGenerator {
 
@@ -78,7 +103,11 @@ public class UniqueIdGenerator {
                 // one node.
                 long newEpochMs = System.currentTimeMillis();
 
-                LOGGER.debug("About to loop, epochMs {}, newEpochMs {}", epochMs, newEpochMs);
+                // With 24 threads generating a total of 2.5mil UniqueIds, you see this message
+                // <10 times, often not at all.
+                LOGGER.debug("Run out of sequence numbers, waiting for the next epoch milli so " +
+                             "we can restart at seq no zero. " +
+                             "epochMs: {}, newEpochMs: {}", epochMs, newEpochMs);
                 while (newEpochMs <= epochMs) {
                     LockSupport.parkNanos(PARK_NANOS);
                     newEpochMs = System.currentTimeMillis();

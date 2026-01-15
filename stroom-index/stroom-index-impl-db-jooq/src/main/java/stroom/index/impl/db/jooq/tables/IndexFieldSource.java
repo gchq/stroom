@@ -4,20 +4,24 @@
 package stroom.index.impl.db.jooq.tables;
 
 
-import stroom.index.impl.db.jooq.Keys;
-import stroom.index.impl.db.jooq.Stroom;
-import stroom.index.impl.db.jooq.tables.records.IndexFieldSourceRecord;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
+import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.Function4;
 import org.jooq.Identity;
+import org.jooq.InverseForeignKey;
 import org.jooq.Name;
+import org.jooq.Path;
+import org.jooq.PlainSQL;
+import org.jooq.QueryPart;
 import org.jooq.Record;
-import org.jooq.Records;
-import org.jooq.Row4;
+import org.jooq.SQL;
 import org.jooq.Schema;
-import org.jooq.SelectField;
+import org.jooq.Select;
+import org.jooq.Stringly;
 import org.jooq.Table;
 import org.jooq.TableField;
 import org.jooq.TableOptions;
@@ -26,9 +30,10 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Function;
+import stroom.index.impl.db.jooq.Keys;
+import stroom.index.impl.db.jooq.Stroom;
+import stroom.index.impl.db.jooq.tables.IndexField.IndexFieldPath;
+import stroom.index.impl.db.jooq.tables.records.IndexFieldSourceRecord;
 
 
 /**
@@ -73,11 +78,11 @@ public class IndexFieldSource extends TableImpl<IndexFieldSourceRecord> {
     public final TableField<IndexFieldSourceRecord, String> NAME = createField(DSL.name("name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     private IndexFieldSource(Name alias, Table<IndexFieldSourceRecord> aliased) {
-        this(alias, aliased, null);
+        this(alias, aliased, (Field<?>[]) null, null);
     }
 
-    private IndexFieldSource(Name alias, Table<IndexFieldSourceRecord> aliased, Field<?>[] parameters) {
-        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table());
+    private IndexFieldSource(Name alias, Table<IndexFieldSourceRecord> aliased, Field<?>[] parameters, Condition where) {
+        super(alias, null, aliased, parameters, DSL.comment(""), TableOptions.table(), where);
     }
 
     /**
@@ -101,8 +106,35 @@ public class IndexFieldSource extends TableImpl<IndexFieldSourceRecord> {
         this(DSL.name("index_field_source"), null);
     }
 
-    public <O extends Record> IndexFieldSource(Table<O> child, ForeignKey<O, IndexFieldSourceRecord> key) {
-        super(child, key, INDEX_FIELD_SOURCE);
+    public <O extends Record> IndexFieldSource(Table<O> path, ForeignKey<O, IndexFieldSourceRecord> childPath, InverseForeignKey<O, IndexFieldSourceRecord> parentPath) {
+        super(path, childPath, parentPath, INDEX_FIELD_SOURCE);
+    }
+
+    /**
+     * A subtype implementing {@link Path} for simplified path-based joins.
+     */
+    public static class IndexFieldSourcePath extends IndexFieldSource implements Path<IndexFieldSourceRecord> {
+        public <O extends Record> IndexFieldSourcePath(Table<O> path, ForeignKey<O, IndexFieldSourceRecord> childPath, InverseForeignKey<O, IndexFieldSourceRecord> parentPath) {
+            super(path, childPath, parentPath);
+        }
+        private IndexFieldSourcePath(Name alias, Table<IndexFieldSourceRecord> aliased) {
+            super(alias, aliased);
+        }
+
+        @Override
+        public IndexFieldSourcePath as(String alias) {
+            return new IndexFieldSourcePath(DSL.name(alias), this);
+        }
+
+        @Override
+        public IndexFieldSourcePath as(Name alias) {
+            return new IndexFieldSourcePath(alias, this);
+        }
+
+        @Override
+        public IndexFieldSourcePath as(Table<?> alias) {
+            return new IndexFieldSourcePath(alias.getQualifiedName(), this);
+        }
     }
 
     @Override
@@ -123,6 +155,19 @@ public class IndexFieldSource extends TableImpl<IndexFieldSourceRecord> {
     @Override
     public List<UniqueKey<IndexFieldSourceRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.KEY_INDEX_FIELD_SOURCE_INDEX_FIELD_SOURCE_TYPE_UUID);
+    }
+
+    private transient IndexFieldPath _indexField;
+
+    /**
+     * Get the implicit to-many join path to the
+     * <code>stroom_v7_11.index_field</code> table
+     */
+    public IndexFieldPath indexField() {
+        if (_indexField == null)
+            _indexField = new IndexFieldPath(this, null, Keys.INDEX_FIELD_FK_INDEX_FIELD_SOURCE_ID.getInverseKey());
+
+        return _indexField;
     }
 
     @Override
@@ -164,27 +209,87 @@ public class IndexFieldSource extends TableImpl<IndexFieldSourceRecord> {
         return new IndexFieldSource(name.getQualifiedName(), null);
     }
 
-    // -------------------------------------------------------------------------
-    // Row4 type methods
-    // -------------------------------------------------------------------------
-
+    /**
+     * Create an inline derived table from this table
+     */
     @Override
-    public Row4<Integer, String, String, String> fieldsRow() {
-        return (Row4) super.fieldsRow();
+    public IndexFieldSource where(Condition condition) {
+        return new IndexFieldSource(getQualifiedName(), aliased() ? this : null, null, condition);
     }
 
     /**
-     * Convenience mapping calling {@link SelectField#convertFrom(Function)}.
+     * Create an inline derived table from this table
      */
-    public <U> SelectField<U> mapping(Function4<? super Integer, ? super String, ? super String, ? super String, ? extends U> from) {
-        return convertFrom(Records.mapping(from));
+    @Override
+    public IndexFieldSource where(Collection<? extends Condition> conditions) {
+        return where(DSL.and(conditions));
     }
 
     /**
-     * Convenience mapping calling {@link SelectField#convertFrom(Class,
-     * Function)}.
+     * Create an inline derived table from this table
      */
-    public <U> SelectField<U> mapping(Class<U> toType, Function4<? super Integer, ? super String, ? super String, ? super String, ? extends U> from) {
-        return convertFrom(toType, Records.mapping(from));
+    @Override
+    public IndexFieldSource where(Condition... conditions) {
+        return where(DSL.and(conditions));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public IndexFieldSource where(Field<Boolean> condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public IndexFieldSource where(SQL condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public IndexFieldSource where(@Stringly.SQL String condition) {
+        return where(DSL.condition(condition));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public IndexFieldSource where(@Stringly.SQL String condition, Object... binds) {
+        return where(DSL.condition(condition, binds));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    @PlainSQL
+    public IndexFieldSource where(@Stringly.SQL String condition, QueryPart... parts) {
+        return where(DSL.condition(condition, parts));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public IndexFieldSource whereExists(Select<?> select) {
+        return where(DSL.exists(select));
+    }
+
+    /**
+     * Create an inline derived table from this table
+     */
+    @Override
+    public IndexFieldSource whereNotExists(Select<?> select) {
+        return where(DSL.notExists(select));
     }
 }

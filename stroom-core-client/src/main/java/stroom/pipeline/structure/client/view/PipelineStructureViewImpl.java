@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,8 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
     @UiField(provided = true)
     SvgButton remove;
     @UiField(provided = true)
+    SvgButton edit;
+    @UiField(provided = true)
     SvgButton restore;
     @UiField
     SimplePanel inherit;
@@ -59,10 +61,12 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
     public PipelineStructureViewImpl(final Binder binder) {
         add = SvgButton.create(SvgPresets.ADD);
         add.setTitle("Add New Pipeline Element");
-        restore = SvgButton.create(SvgPresets.UNDO);
-        restore.setTitle("Restore Pipeline Element");
         remove = SvgButton.create(SvgPresets.REMOVE);
         remove.setTitle("Remove Pipeline Element");
+        edit = SvgButton.create(SvgPresets.EDIT);
+        edit.setTitle("Edit Pipeline Element");
+        restore = SvgButton.create(SvgPresets.UNDO);
+        restore.setTitle("Restore Pipeline Element");
 
         widget = binder.createAndBindUi(this);
     }
@@ -98,13 +102,18 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
     }
 
     @Override
-    public void setRestoreEnabled(final boolean enabled) {
-        restore.setEnabled(enabled);
+    public void setRemoveEnabled(final boolean enabled) {
+        remove.setEnabled(enabled);
     }
 
     @Override
-    public void setRemoveEnabled(final boolean enabled) {
-        remove.setEnabled(enabled);
+    public void setEditEnabled(final boolean enabled) {
+        edit.setEnabled(enabled);
+    }
+
+    @Override
+    public void setRestoreEnabled(final boolean enabled) {
+        restore.setEnabled(enabled);
     }
 
     @UiHandler("add")
@@ -118,6 +127,13 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
     void onRemoveClick(final ClickEvent event) {
         if (getUiHandlers() != null) {
             getUiHandlers().onRemove(event);
+        }
+    }
+
+    @UiHandler("edit")
+    void onEditClick(final ClickEvent event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onEdit(event);
         }
     }
 

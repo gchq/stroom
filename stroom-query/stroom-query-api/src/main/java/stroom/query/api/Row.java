@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,6 +29,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder({
         "groupKey",
+        "annotationId",
         "values",
         "depth",
         "matchingRule"
@@ -39,6 +40,9 @@ public final class Row {
 
     @JsonProperty
     private final String groupKey;
+
+    @JsonProperty
+    private final Long annotationId;
 
     @Schema(description = "The value for this row of data. The values in the list are in the same order as the " +
                           "fields in the ResultRequest"
@@ -57,10 +61,12 @@ public final class Row {
 
     @JsonCreator
     public Row(@JsonProperty("groupKey") final String groupKey,
+               @JsonProperty("annotationId") final Long annotationId,
                @JsonProperty("values") final List<String> values,
                @JsonProperty("depth") final Integer depth,
                @JsonProperty("matchingRule") final String matchingRule) {
         this.groupKey = groupKey;
+        this.annotationId = annotationId;
         this.values = values;
         this.depth = depth;
         this.matchingRule = matchingRule;
@@ -68,6 +74,10 @@ public final class Row {
 
     public String getGroupKey() {
         return groupKey;
+    }
+
+    public Long getAnnotationId() {
+        return annotationId;
     }
 
     public List<String> getValues() {
@@ -92,6 +102,7 @@ public final class Row {
         }
         final Row row = (Row) o;
         return Objects.equals(groupKey, row.groupKey) &&
+               Objects.equals(annotationId, row.annotationId) &&
                Objects.equals(values, row.values) &&
                Objects.equals(depth, row.depth) &&
                Objects.equals(matchingRule, row.matchingRule);
@@ -99,13 +110,14 @@ public final class Row {
 
     @Override
     public int hashCode() {
-        return Objects.hash(groupKey, values, depth, matchingRule);
+        return Objects.hash(groupKey, annotationId, values, depth, matchingRule);
     }
 
     @Override
     public String toString() {
         return "Row{" +
                "groupKey='" + groupKey + '\'' +
+               ", annotationId=" + annotationId +
                ", values=" + values +
                ", depth=" + depth +
                ", matchingRule='" + matchingRule + '\'' +
@@ -126,6 +138,7 @@ public final class Row {
     public static final class Builder {
 
         private String groupKey;
+        private Long annotationId;
         private List<String> values;
         private Integer depth = 0;
         private String matchingRule;
@@ -135,6 +148,7 @@ public final class Row {
 
         private Builder(final Row row) {
             groupKey = row.groupKey;
+            annotationId = row.annotationId;
             values = row.values;
             depth = row.depth;
             matchingRule = row.matchingRule;
@@ -146,6 +160,11 @@ public final class Row {
          */
         public Builder groupKey(final String value) {
             this.groupKey = value;
+            return this;
+        }
+
+        public Builder annotationId(final Long annotationId) {
+            this.annotationId = annotationId;
             return this;
         }
 
@@ -180,7 +199,7 @@ public final class Row {
         }
 
         public Row build() {
-            return new Row(groupKey, values, depth, matchingRule);
+            return new Row(groupKey, annotationId, values, depth, matchingRule);
         }
     }
 }

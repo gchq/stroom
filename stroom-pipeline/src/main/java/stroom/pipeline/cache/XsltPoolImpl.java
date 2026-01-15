@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -57,7 +58,7 @@ import javax.xml.transform.stream.StreamSource;
 class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implements XsltPool, EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(XsltPoolImpl.class);
-    private static final String ELEMENT_ID = XsltPool.class.getSimpleName();
+    private static final ElementId ELEMENT_ID = new ElementId(XsltPool.class.getSimpleName());
 
     private final URIResolver uriResolver;
     private final Provider<StroomXsltFunctionLibrary> stroomXsltFunctionLibraryProvider;
@@ -172,8 +173,8 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
                 .filter(xsltDoc -> {
                     final String xsltData = xsltDoc.getData();
                     return xsltData != null
-                            && !xsltData.isBlank()
-                            && xsltData.contains(searchStr);
+                           && !xsltData.isBlank()
+                           && xsltData.contains(searchStr);
                 })
                 .peek(loggingPeekFunc)
                 .forEach(this::invalidate);

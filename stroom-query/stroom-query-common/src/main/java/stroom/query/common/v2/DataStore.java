@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.common.v2;
 
 import stroom.query.api.Column;
@@ -26,13 +42,13 @@ public interface DataStore extends ValuesConsumer {
      * @param timeFilter The time filter to use to limit the data returned.
      * @return The filtered child items for the parent key.
      */
-    <R> void fetch(List<Column> columns,
-                   OffsetRange range,
-                   OpenGroups openGroups,
-                   TimeFilter timeFilter,
-                   ItemMapper<R> mapper,
-                   Consumer<R> resultConsumer,
-                   Consumer<Long> totalRowCountConsumer);
+    void fetch(List<Column> columns,
+               OffsetRange range,
+               OpenGroups openGroups,
+               TimeFilter timeFilter,
+               ItemMapper mapper,
+               Consumer<Item> resultConsumer,
+               Consumer<Long> totalRowCountConsumer);
 
     /**
      * Clear the data store.

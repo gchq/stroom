@@ -1,13 +1,29 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.dashboard.client.table.cf;
 
+import stroom.main.client.view.DynamicStyles;
 import stroom.query.api.CustomConditionalFormattingStyle;
 import stroom.query.api.CustomRowStyle;
 
+import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
 import com.google.gwt.safecss.shared.SafeStylesHostedModeUtils;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,42 +31,25 @@ import java.util.Map;
 public class ConditionalFormattingDynamicStyles {
 
     private static final Map<CustomConditionalFormattingStyle, String> styles = new HashMap<>();
-    private static Element styleElement;
 
     public static String create(final CustomConditionalFormattingStyle formattingStyle) {
         if (formattingStyle == null) {
             return "";
         }
 
-        if (styleElement == null) {
-            styleElement = DOM.createElement("style");
-            RootPanel.getBodyElement().appendChild(styleElement);
-        }
-
         return styles.computeIfAbsent(formattingStyle, k -> {
             final String dynamicName = "cfDynamic" + (styles.size() + 1);
-            final String lightCss = makeCss(dynamicName, ".stroom-theme-light ", k.getLight());
-            final String darkCss = makeCss(dynamicName, ".stroom-theme-dark ", k.getDark());
-            styleElement.setInnerHTML(styleElement.getInnerHTML() + lightCss + darkCss);
+            DynamicStyles.put(
+                    SafeHtmlUtils.fromTrustedString(".stroom-theme-light ." + dynamicName),
+                    makeStyleDeclarations(k.getLight()));
+            DynamicStyles.put(
+                    SafeHtmlUtils.fromTrustedString(".stroom-theme-dark ." + dynamicName),
+                    makeStyleDeclarations(k.getDark()));
             return dynamicName;
         });
     }
 
-    private static String makeCss(final String dynamicName,
-                                  final String cssPrefix,
-                                  final CustomRowStyle customRowStyle) {
-        if (customRowStyle == null) {
-            return "";
-        }
-        final String declarations = makeStyleDeclarations(customRowStyle);
-        if (declarations == null) {
-            return "";
-        }
-        return cssPrefix + "." + dynamicName + " " +
-               "{" + declarations + "}\n\n";
-    }
-
-    private static String makeStyleDeclarations(final CustomRowStyle customRowStyle) {
+    private static SafeStyles makeStyleDeclarations(final CustomRowStyle customRowStyle) {
         // Custom row styles.
         final String backgroundColour = cleanValue(customRowStyle.getBackgroundColour());
         final String textColour = cleanValue(customRowStyle.getTextColour());
@@ -62,7 +61,7 @@ public class ConditionalFormattingDynamicStyles {
             if (textColour != null) {
                 builder.trustedColor(textColour);
             }
-            return builder.toSafeStyles().asString();
+            return builder.toSafeStyles();
         }
         return null;
     }
@@ -72,7 +71,7 @@ public class ConditionalFormattingDynamicStyles {
             return null;
         }
         final String trimmed = value.trim();
-        if (trimmed.length() == 0) {
+        if (trimmed.isEmpty()) {
             return null;
         }
         if (SafeStylesHostedModeUtils.isValidStyleValue(trimmed) != null) {

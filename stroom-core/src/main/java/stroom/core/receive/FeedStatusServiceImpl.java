@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.core.receive;
@@ -28,6 +27,7 @@ import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.receive.common.FeedStatusService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppPermissionSet;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -42,6 +42,9 @@ import java.util.regex.Pattern;
 class FeedStatusServiceImpl implements FeedStatusService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FeedStatusServiceImpl.class);
+    private static final AppPermissionSet REQUIRED_PERMISSION_SET = AppPermissionSet.oneOf(
+            AppPermission.CHECK_RECEIPT_STATUS,
+            AppPermission.STROOM_PROXY);
 
     private static final Pattern REPLACE_PATTERN = Pattern.compile("[^A-Z0-9_]");
     public static final String NAME_PART_DELIMITER = "-";
@@ -78,7 +81,7 @@ class FeedStatusServiceImpl implements FeedStatusService {
     public GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequestV2 request) {
         // Can't allow anyone with an api key to check feed statues.
         try {
-            return securityContext.secureResult(AppPermission.CHECK_RECEIPT_STATUS, () ->
+            return securityContext.secureResult(REQUIRED_PERMISSION_SET, () ->
                     securityContext.asProcessingUserResult(() -> {
 
                         final String feedName;

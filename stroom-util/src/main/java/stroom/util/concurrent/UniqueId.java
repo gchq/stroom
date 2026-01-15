@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.concurrent;
 
 import stroom.util.logging.LogUtil;
@@ -18,11 +34,12 @@ public final class UniqueId {
     public static final String UNIQUE_ID_DELIMITER = "_";
     public static final Pattern UNIQUE_ID_DELIMITER_PATTERN = Pattern.compile("_");
 
-    private static final int EPOCH_MS_DIGITS = String.valueOf(Long.MAX_VALUE).length();
+    // 13 digits is enough to take us to the year 2286, so plenty.
+    private static final int EPOCH_MS_DIGITS = 13;
     private static final int SEQUENCE_NO_DIGITS = String.valueOf(UniqueIdGenerator.MAX_SEQUENCE_NO).length();
 
     // Cache 0-9 inc. in padded form as a minor optimisation
-    private static final String[] CACHED_SEQUENCE_NOS = IntStream.range(0, 10)
+    private static final String[] CACHED_SEQUENCE_NO_STRINGS = IntStream.range(0, 10)
             .boxed()
             .map(i -> Strings.padStart(String.valueOf(i), SEQUENCE_NO_DIGITS, '0'))
             .toArray(String[]::new);
@@ -94,7 +111,7 @@ public final class UniqueId {
 //        return toString(epochMs, sequenceNo, nodeType, nodeId);
         // Minor optimisation as 0 will be used a lot, so have a hard coded zero string
         final String sequenceNoStr = sequenceNo < 10
-                ? CACHED_SEQUENCE_NOS[sequenceNo]
+                ? CACHED_SEQUENCE_NO_STRINGS[sequenceNo]
                 : Strings.padStart(String.valueOf(sequenceNo), SEQUENCE_NO_DIGITS, '0');
 
         return Strings.padStart(String.valueOf(epochMs), EPOCH_MS_DIGITS, '0')
@@ -141,7 +158,7 @@ public final class UniqueId {
         if (obj == null || obj.getClass() != this.getClass()) {
             return false;
         }
-        final var that = (UniqueId) obj;
+        final UniqueId that = (UniqueId) obj;
         return this.epochMs == that.epochMs &&
                this.sequenceNo == that.sequenceNo &&
                Objects.equals(this.nodeId, that.nodeId);

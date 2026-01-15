@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.entity.client.presenter;
@@ -60,7 +59,7 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     private String lastLabel;
     protected final ButtonPanel toolbar;
     private PresenterWidget<?> currentContent;
-    private DocRef docRef;
+    protected DocRef docRef;
 
     private final TabContentProvider<D> tabContentProvider;
     private final Map<CommonDocLinkTab, TabData> commonTabsMap;
@@ -136,6 +135,12 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     public void addTab(final TabData tab, final TabProvider<D> provider) {
         tabContentProvider.add(tab, provider);
         getView().getTabBar().addTab(tab);
+    }
+
+    public void replaceTab(final TabData tab, final TabProvider<D> provider) {
+        tabContentProvider.replace(tab, provider);
+        getView().getTabBar().selectTab(tab);
+        selectTab(tab);
     }
 
     public void setTabHidden(final TabData tab, final boolean hidden) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package stroom.app.docs;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docs.shared.Description;
 import stroom.docs.shared.NotDocumented;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.receive.rules.shared.ReceiveDataRules;
@@ -79,7 +79,7 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
     void generateDocumentsReference(final ScanResult scanResult) {
 
         final String generatedContent = scanResult
-                .getSubclasses(Doc.class)
+                .getSubclasses(AbstractDoc.class)
                 .parallelStream()
                 // Not visible in UI currently
                 .filter(Predicate.not(ClassInfo::isInterface))

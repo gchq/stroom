@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.processor.impl.db;
 
 import stroom.db.util.ExpressionMapper;
@@ -5,6 +21,7 @@ import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.impl.ProcessorFilterDao;
+import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
@@ -30,10 +47,9 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.UpdateConditionStep;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
@@ -53,7 +69,7 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
@@ -65,7 +81,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
             new RecordToProcessorFilterTrackerMapper();
 
     private final ProcessorDbConnProvider processorDbConnProvider;
-    private final QueryDataSerialiser queryDataXMLSerialiser;
+    private final QueryDataSerialiser queryDataSerialiser;
     private final ExpressionMapper expressionMapper;
     private final SecurityContext securityContext;
     private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDaoImpl;
@@ -74,19 +90,19 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     @Inject
     ProcessorFilterDaoImpl(final ProcessorDbConnProvider processorDbConnProvider,
                            final ExpressionMapperFactory expressionMapperFactory,
-                           final QueryDataSerialiser queryDataXMLSerialiser,
+                           final QueryDataSerialiser queryDataSerialiser,
                            final Provider<UserRefLookup> userRefLookupProvider,
                            final SecurityContext securityContext,
                            final ProcessorFilterTrackerDaoImpl processorFilterTrackerDaoImpl,
                            final Provider<ProcessorDaoImpl> processorDaoImplProvider) {
         this.processorDbConnProvider = processorDbConnProvider;
-        this.queryDataXMLSerialiser = queryDataXMLSerialiser;
+        this.queryDataSerialiser = queryDataSerialiser;
         this.securityContext = securityContext;
         this.processorFilterTrackerDaoImpl = processorFilterTrackerDaoImpl;
         this.processorDaoImplProvider = processorDaoImplProvider;
 
         recordToProcessorFilterMapper = new RecordToProcessorFilterMapper(
-                queryDataXMLSerialiser,
+                queryDataSerialiser,
                 userRefLookupProvider);
 
         expressionMapper = expressionMapperFactory.create();
@@ -95,6 +111,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         expressionMapper.map(ProcessorFilterFields.PRIORITY, PROCESSOR_FILTER.PRIORITY, Integer::valueOf);
         expressionMapper.map(ProcessorFilterFields.ENABLED, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
         expressionMapper.map(ProcessorFilterFields.DELETED, PROCESSOR_FILTER.DELETED, Boolean::valueOf);
+        expressionMapper.map(ProcessorFilterFields.EXPORT, PROCESSOR_FILTER.EXPORT, Boolean::valueOf);
         expressionMapper.map(ProcessorFilterFields.UUID, PROCESSOR_FILTER.UUID, value -> value);
         expressionMapper.map(ProcessorFilterFields.RUN_AS_USER, PROCESSOR_FILTER.RUN_AS_USER_UUID, value -> value);
 
@@ -166,7 +183,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     private ProcessorFilter createFilter(final DSLContext context, final ProcessorFilter filter) {
         filter.setVersion(1);
-        final String data = queryDataXMLSerialiser.serialise(filter.getQueryData());
+        final String data = queryDataSerialiser.serialise(filter.getQueryData());
         final Integer id = context
                 .insertInto(PROCESSOR_FILTER)
                 .columns(PROCESSOR_FILTER.VERSION,
@@ -182,6 +199,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         PROCESSOR_FILTER.REPROCESS,
                         PROCESSOR_FILTER.ENABLED,
                         PROCESSOR_FILTER.DELETED,
+                        PROCESSOR_FILTER.EXPORT,
                         PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS,
                         PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS,
                         PROCESSOR_FILTER.MAX_PROCESSING_TASKS,
@@ -199,6 +217,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         filter.isReprocess(),
                         filter.isEnabled(),
                         filter.isDeleted(),
+                        filter.isExport(),
                         filter.getMinMetaCreateTimeMs(),
                         filter.getMaxMetaCreateTimeMs(),
                         filter.getMaxProcessingTasks(),
@@ -211,7 +230,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     private ProcessorFilter updateFilter(final DSLContext context, final ProcessorFilter filter) {
-        final String data = queryDataXMLSerialiser.serialise(filter.getQueryData());
+        final String data = queryDataSerialiser.serialise(filter.getQueryData());
         final int count = context
                 .update(PROCESSOR_FILTER)
                 .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))
@@ -222,6 +241,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .set(PROCESSOR_FILTER.REPROCESS, filter.isReprocess())
                 .set(PROCESSOR_FILTER.ENABLED, filter.isEnabled())
                 .set(PROCESSOR_FILTER.DELETED, filter.isDeleted())
+                .set(PROCESSOR_FILTER.EXPORT, filter.isExport())
                 .set(PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS, filter.getMinMetaCreateTimeMs())
                 .set(PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS, filter.getMaxMetaCreateTimeMs())
                 .set(PROCESSOR_FILTER.MAX_PROCESSING_TASKS, filter.getMaxProcessingTasks())
@@ -367,7 +387,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     public int logicallyDeleteOldFilters(final Instant deleteThreshold, final DSLContext context) {
-        final var query = context
+        final UpdateConditionStep<ProcessorFilterRecord> query = context
                 .update(PROCESSOR_FILTER)
                 .set(PROCESSOR_FILTER.DELETED, true)
                 .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.config.global.impl;
 
 import stroom.activity.impl.db.ActivityConfig;
+import stroom.ai.shared.AskStroomAIConfig;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.aws.s3.impl.S3Config;
@@ -37,14 +38,16 @@ import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
+import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
+import stroom.credentials.impl.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
-import stroom.gitrepo.impl.GitRepoConfigImpl;
+import stroom.gitrepo.api.GitRepoConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
 import stroom.index.impl.IndexConfig;
@@ -61,6 +64,7 @@ import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.planb.impl.PlanBConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
@@ -72,6 +76,8 @@ import stroom.util.io.ByteSize;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
@@ -79,7 +85,6 @@ import stroom.util.time.StroomDuration;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.reflect.TypeToken;
-import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.core.Configuration;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -87,10 +92,7 @@ import io.vavr.Tuple8;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -112,28 +114,41 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestConfigMapper {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestConfigMapper.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestConfigMapper.class);
 
     @Test
-    void getGlobalProperties() throws IOException, ConfigurationException {
+    void getGlobalProperties() {
 
         final ConfigMapper configMapper = new ConfigMapper();
 
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
 
+        //noinspection VariableTypeCanBeExplicit
         final var rows = configProperties.stream()
                 .sorted(Comparator.comparing(ConfigProperty::getName))
                 .map(configProperty ->
                         Tuple.of(
                                 configProperty.getName().toString(),
                                 configProperty.getDataTypeName(),
-                                StringUtils.truncate(configProperty.getDefaultValue().orElse("").toString(), 0, 50),
-                                StringUtils.truncate(configProperty.getDatabaseOverrideValue().getValueOrElse("UNSET",
-                                        null), 0, 50),
-                                StringUtils.truncate(configProperty.getYamlOverrideValue().getValueOrElse("UNSET",
-                                        null), 0, 50),
-                                StringUtils.truncate(configProperty.getEffectiveValue().orElse("").toString(), 0, 50),
+                                StringUtils.truncate(
+                                        configProperty.getDefaultValue().orElse(""),
+                                        0,
+                                        50),
+                                StringUtils.truncate(
+                                        configProperty.getDatabaseOverrideValue().getValueOrElse(
+                                                "UNSET", null),
+                                        0,
+                                        50),
+                                StringUtils.truncate(
+                                        configProperty.getYamlOverrideValue().getValueOrElse(
+                                                "UNSET", null),
+                                        0,
+                                        50),
+                                StringUtils.truncate(
+                                        configProperty.getEffectiveValue().orElse(""),
+                                        0,
+                                        50),
                                 configProperty.getSource().getName(),
                                 StringUtils.truncate(configProperty.getDescription(), 0, 100)))
                 .collect(Collectors.toList());
@@ -921,12 +936,15 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
                 @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                 @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
+                @JsonProperty(PROP_NAME_ASK_STROOM_AI) final AskStroomAIConfig askStroomAIConfig,
                 @JsonProperty(PROP_NAME_AUTO_CONTENT_CREATION) final AutoContentCreationConfig autoContentCreationConfig,
                 @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL) final ByteBufferPoolConfig byteBufferPoolConfig,
                 @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
                 @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                 @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
                 @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
+                @JsonProperty(PROP_NAME_CONTENT_STORE) final ContentStoreConfig contentStoreConfig,
+                @JsonProperty(PROP_NAME_CREDENTIALS) final CredentialsConfig credentialsConfig,
                 @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                 @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
                 @JsonProperty(PROP_NAME_DOCSTORE) final DocStoreConfig docStoreConfig,
@@ -934,7 +952,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_EXPLORER) final ExplorerConfig explorerConfig,
                 @JsonProperty(PROP_NAME_EXPORT) final ExportConfig exportConfig,
                 @JsonProperty(PROP_NAME_FEED) final FeedConfig feedConfig,
-                @JsonProperty(PROP_NAME_GIT_REPO) final GitRepoConfigImpl gitRepoConfig,
+                @JsonProperty(PROP_NAME_GIT_REPO) final GitRepoConfig gitRepoConfig,
                 @JsonProperty(PROP_NAME_INDEX) final IndexConfig indexConfig,
                 @JsonProperty(PROP_NAME_JOB) final JobSystemConfig jobSystemConfig,
                 @JsonProperty(PROP_NAME_KAFKA) final KafkaConfig kafkaConfig,
@@ -949,6 +967,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
                 @JsonProperty(PROP_NAME_QUERY_DATASOURCE) final IndexFieldDbConfig queryDataSourceConfig,
                 @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
+                @JsonProperty(PROP_NAME_RECEIPT_POLICY) final StroomReceiptPolicyConfig receiptPolicyConfig,
                 @JsonProperty(PROP_NAME_S3) final S3Config s3Config,
                 @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
                 @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
@@ -983,12 +1002,15 @@ class TestConfigMapper {
                     activityConfig,
                     analyticsConfig,
                     annotationConfig,
+                    askStroomAIConfig,
                     autoContentCreationConfig,
                     byteBufferPoolConfig,
                     clusterConfig,
                     clusterLockConfig,
                     commonDbConfig,
                     contentPackImportConfig,
+                    contentStoreConfig,
+                    credentialsConfig,
                     dashboardConfig,
                     dataConfig,
                     docStoreConfig,
@@ -1011,6 +1033,7 @@ class TestConfigMapper {
                     publicUri,
                     queryDataSourceConfig,
                     receiveDataConfig,
+                    receiptPolicyConfig,
                     s3Config,
                     searchConfig,
                     securityConfig,

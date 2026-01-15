@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.xsltfunctions;
 
 import stroom.pipeline.errorhandler.ProcessException;
@@ -5,14 +21,14 @@ import stroom.util.config.OkHttpClientConfig;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.http.HttpClientUtil;
 import stroom.util.http.HttpTlsConfiguration;
+import stroom.util.jersey.HttpClientProvider;
+import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.time.StroomDuration;
-
-import org.apache.hc.client5.http.classic.HttpClient;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,14 +38,14 @@ public class CommonHttpClient {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CommonHttpClient.class);
 
-    private final HttpClientCache httpClientCache;
+    private final HttpClientProviderCache httpClientProviderCache;
     private final Map<String, HttpClientConfiguration> configCache = new HashMap<>();
 
-    CommonHttpClient(final HttpClientCache httpClientCache) {
-        this.httpClientCache = httpClientCache;
+    CommonHttpClient(final HttpClientProviderCache httpClientProviderCache) {
+        this.httpClientProviderCache = httpClientProviderCache;
     }
 
-    public HttpClient createClient(final String clientConfigStr) {
+    public HttpClientProvider createClientProvider(final String clientConfigStr) {
         final HttpClientConfiguration configuration = configCache.computeIfAbsent(clientConfigStr, k -> {
             RuntimeException exception = null;
             HttpClientConfiguration httpClientConfiguration = null;
@@ -62,7 +78,7 @@ public class CommonHttpClient {
         });
 
         LOGGER.debug(() -> "Creating client");
-        return httpClientCache.get(configuration);
+        return httpClientProviderCache.get(configuration);
     }
 
     @Deprecated // Moving to Apache HttpClientConfiguration

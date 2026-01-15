@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class PipelineStoreImpl implements PipelineStore {
                              final Provider<ProcessorService> processorServiceProvider,
                              final PipelineDataMigration pipelineDataMigration) {
         this.processorServiceProvider = processorServiceProvider;
-        this.store = storeFactory.createStore(serialiser, PipelineDoc.TYPE, PipelineDoc.class);
+        this.store = storeFactory.createStore(serialiser, PipelineDoc.TYPE, PipelineDoc::builder);
         this.processorFilterServiceProvider = processorFilterServiceProvider;
         this.pipelineDataMigration = pipelineDataMigration;
     }

@@ -1,0 +1,13 @@
+{
+  "type" : "Feed",
+  "uuid" : "de01b99a-6c66-4544-8be8-7994ba938127",
+  "name" : "TEST_CHARSETS_UTF32BE_BOM-REFERENCE",
+  "version" : "3232d6f2-93e9-4137-9b2a-19497989ae6c",
+  "description" : "",
+  "classification" : "",
+  "encoding" : "UTF-32BE",
+  "contextEncoding" : "UTF-32BE",
+  "reference" : false,
+  "streamType" : "Raw Reference",
+  "status" : "RECEIVE"
+}

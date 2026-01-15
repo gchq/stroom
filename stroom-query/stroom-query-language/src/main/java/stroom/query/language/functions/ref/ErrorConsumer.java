@@ -1,27 +1,42 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.language.functions.ref;
+
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.Severity;
 
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 public interface ErrorConsumer {
+
+    void add(final Severity severity, final Supplier<String> message);
+
+    void add(final Severity severity, final String node, final Supplier<String> message);
+
+    void add(final ErrorMessage errorMessage);
 
     void add(final Supplier<String> message);
 
     void add(final Throwable exception);
 
-    List<String> getErrors();
+    List<ErrorMessage> getErrorMessages();
 
-    default Stream<String> stream() {
-        final List<String> errors = getErrors();
-        if (errors == null || errors.size() == 0) {
-            return Stream.empty();
-        } else {
-            return errors.stream();
-        }
-    }
-
-    List<String> drain();
+    List<ErrorMessage> drain();
 
     void clear();
 

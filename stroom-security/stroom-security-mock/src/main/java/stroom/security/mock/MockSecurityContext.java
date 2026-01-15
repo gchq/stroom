@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.BasicUserIdentity;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppPermissionSet;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.UserRef;
 
@@ -76,6 +77,16 @@ public class MockSecurityContext implements SecurityContext, ContentPackUserServ
 
     @Override
     public boolean hasAppPermission(final AppPermission permission) {
+        return true;
+    }
+
+    @Override
+    public boolean hasAppPermissions(final AppPermissionSet permissions) {
+        return true;
+    }
+
+    @Override
+    public boolean hasAppPermissions(final UserIdentity userIdentity, final AppPermissionSet permissions) {
         return true;
     }
 
@@ -135,7 +146,17 @@ public class MockSecurityContext implements SecurityContext, ContentPackUserServ
     }
 
     @Override
+    public void secure(final AppPermissionSet permission, final Runnable runnable) {
+        runnable.run();
+    }
+
+    @Override
     public <T> T secureResult(final AppPermission permission, final Supplier<T> supplier) {
+        return supplier.get();
+    }
+
+    @Override
+    public <T> T secureResult(final AppPermissionSet permissionSet, final Supplier<T> supplier) {
         return supplier.get();
     }
 

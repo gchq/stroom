@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,23 @@
 
 package stroom.data.grid.client;
 
+import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.svg.shared.SvgImage;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
+import stroom.widget.menu.client.presenter.IconParentMenuItem;
+import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -34,6 +44,8 @@ import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
 import com.google.gwt.dom.client.TableSectionElement;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.DataGrid;
@@ -65,6 +77,8 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private final SimplePanel emptyTableWidget = new SimplePanel();
     private final SimplePanel loadingTableWidget = new SimplePanel();
     private final List<ColSettings> colSettings = new ArrayList<>();
+    private final MyDataGridAiSupport<R> aiSupport;
+    private final HasHandlers globalEventBus;
 
     private HeadingListener headingListener;
     private HandlerRegistration handlerRegistration;
@@ -80,12 +94,13 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
 
     private final DoubleClickTester doubleClickTester = new DoubleClickTester();
 
-    public MyDataGrid() {
-        this(DEFAULT_LIST_PAGE_SIZE);
+    public MyDataGrid(final HasHandlers globalEventBus) {
+        this(globalEventBus, DEFAULT_LIST_PAGE_SIZE);
     }
 
-    public MyDataGrid(final int size) {
+    public MyDataGrid(final HasHandlers globalEventBus, final int size) {
         super(size, RESOURCES);
+        this.globalEventBus = globalEventBus;
         setAutoHeaderRefreshDisabled(true);
         setAutoFooterRefreshDisabled(true);
 
@@ -119,6 +134,9 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 customScrollPanel.setHorizontalScrollPosition(horzPos);
             }
         });
+        sinkEvents(Event.ONCONTEXTMENU);
+
+        aiSupport = new MyDataGridAiSupport<>(globalEventBus, this);
     }
 
     public MultiSelectionModelImpl<R> addDefaultSelectionModel(final boolean allowMultiSelect) {
@@ -180,8 +198,415 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                     handlerRegistration = Event.addNativePreviewHandler(this);
                 }
             }
+        } else if (event.getTypeInt() == Event.ONCONTEXTMENU) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            final int clientX = event.getClientX();
+            final int clientY = event.getClientY();
+
+            //finding cell/row/column info
+            final Element target = event.getEventTarget().cast();
+            final TableCellElement cell = findParentCell(target);
+            int rowIndex = -1;
+            int colIndex = -1;
+            if (cell != null) {
+                final TableRowElement row = cell.getParentElement().cast();
+                rowIndex = row.getSectionRowIndex();
+                colIndex = cell.getCellIndex();
+            }
+
+            showContextMenu(clientX, clientY, rowIndex, colIndex, target);
+            return;
         }
         super.onBrowserEvent2(event);
+    }
+
+    private TableCellElement findParentCell(Element target) {
+        while (target != null && !"td".equalsIgnoreCase(target.getTagName())) {
+            target = target.getParentElement();
+        }
+        return (TableCellElement) target;
+    }
+
+    private void showContextMenu(final int x, final int y, final int rowIndex,
+                                 final int colIndex, final Element target) {
+        final List<Item> menuItems = new ArrayList<>();
+        boolean specialItems = false;
+
+        Hyperlink hyperlink = null;
+
+        if (rowIndex >= 0 && colIndex >= 0) {
+            final Column<R, ?> column = getColumn(colIndex);
+            final com.google.gwt.cell.client.Cell<?> cell = column.getCell();
+
+            // Checking if the cell has its own context menu
+            if (cell instanceof HasContextMenus) {
+                final R rowValue = getVisibleItem(rowIndex);
+                final Object cellValue = column.getValue(rowValue);
+                final Object key = getKeyProvider() != null
+                        ? getKeyProvider().getKey(rowValue)
+                        : null;
+                final Context context = new Context(rowIndex, colIndex, key);
+
+                @SuppressWarnings("unchecked") final HasContextMenus<Object> hasContextMenus =
+                        (HasContextMenus<Object>) cell;
+                final List<Item> cellMenuItems = hasContextMenus.getContextMenuItems(context, cellValue);
+
+                if (cellMenuItems != null && !cellMenuItems.isEmpty()) {
+                    menuItems.addAll(cellMenuItems);
+                    specialItems = true;
+                }
+            }
+
+            Element linkElement = target;
+            while (linkElement != null && !"a".equalsIgnoreCase(linkElement.getTagName())) {
+                linkElement = linkElement.getParentElement();
+            }
+
+            if (linkElement != null) {
+                final String href = linkElement.getAttribute("href");
+                if (href != null && !href.isEmpty() && !href.startsWith("javascript")) {
+                    hyperlink = new Hyperlink(
+                            normalizeWhitespace(linkElement.getInnerText()),
+                            URL.decodeQueryString(href),
+                            null,
+                            null,
+                            null);
+                }
+            }
+
+            if (hyperlink == null) {
+                Element customLinkElement = target;
+                while (customLinkElement != null && !customLinkElement.hasAttribute("link")) {
+                    customLinkElement = customLinkElement.getParentElement();
+                }
+
+                if (customLinkElement != null) {
+                    final String linkAttr = customLinkElement.getAttribute("link");
+                    if (linkAttr != null) {
+                        hyperlink = Hyperlink.create(linkAttr);
+                    }
+                }
+            }
+        }
+
+        boolean isLink = false;
+        if (hyperlink != null) {
+            isLink = true;
+            final Hyperlink finalHyperlink = hyperlink;
+            if (!menuItems.isEmpty()) {
+                menuItems.add(new stroom.widget.menu.client.presenter.Separator(1));
+            }
+            menuItems.add(new IconMenuItem.Builder()
+                    .icon(SvgImage.COPY)
+                    .text("Copy Link URL")
+                    .command(() -> copyToClipboard(finalHyperlink.getHref()))
+                    .build());
+            menuItems.add(new IconMenuItem.Builder()
+                    .icon(SvgImage.OPEN)
+                    .text("Follow URL")
+                    .command(() -> HyperlinkEvent.fire(
+                            globalEventBus,
+                            finalHyperlink,
+                            new DefaultTaskMonitorFactory(globalEventBus)))
+                    .build());
+
+            if ("dashboard".equals(hyperlink.getType())) {
+                if ("self".equals(hyperlink.getTarget())) {
+                    menuItems.add(new Builder()
+                            .icon(SvgImage.OPEN)
+                            .text("Open In New Tab")
+                            .command(() -> HyperlinkEvent.fire(
+                                    globalEventBus,
+                                    finalHyperlink.copy().target("tab").build(),
+                                    new DefaultTaskMonitorFactory(globalEventBus)))
+                            .build());
+                } else {
+                    menuItems.add(new Builder()
+                            .icon(SvgImage.OPEN)
+                            .text("Open In This Tab")
+                            .command(() -> HyperlinkEvent.fire(
+                                    globalEventBus,
+                                    finalHyperlink.copy().target("self").build(),
+                                    new DefaultTaskMonitorFactory(globalEventBus)))
+                            .build());
+                }
+            }
+        }
+
+        final List<Item> copyMenuItems = new ArrayList<>();
+        if (rowIndex >= 0 && colIndex >= 0) {
+            final Column<R, ?> column = getColumn(colIndex);
+            final com.google.gwt.cell.client.Cell<?> cell = column.getCell();
+            boolean cellItemsAdded = false;
+
+            if (!specialItems && cell instanceof HasContextMenus) {
+                final R rowValue = getVisibleItem(rowIndex);
+                final Object cellValue = column.getValue(rowValue);
+                final Object key = getKeyProvider() != null
+                        ? getKeyProvider().getKey(rowValue)
+                        : null;
+                final Context context = new Context(rowIndex, colIndex, key);
+
+                @SuppressWarnings("unchecked") final HasContextMenus<Object> hasContextMenus =
+                        (HasContextMenus<Object>) cell;
+                final List<Item> cellMenuItems = hasContextMenus.getContextMenuItems(context, cellValue);
+
+                if (cellMenuItems != null && !cellMenuItems.isEmpty()) {
+                    if (!menuItems.isEmpty()) {
+                        menuItems.add(new stroom.widget.menu.client.presenter.Separator(1));
+                    }
+                    menuItems.addAll(cellMenuItems);
+                    cellItemsAdded = true;
+                }
+            }
+
+            if (isLink || cellItemsAdded) {
+                menuItems.add(new stroom.widget.menu.client.presenter.Separator(1));
+            }
+
+            copyMenuItems.add(new IconMenuItem.Builder()
+                    .icon(SvgImage.COPY)
+                    .text("Cell")
+                    .command(() -> exportCell(rowIndex, colIndex))
+                    .build());
+
+            copyMenuItems.add(new IconMenuItem.Builder()
+                    .icon(SvgImage.COPY)
+                    .text("Row")
+                    .command(() -> exportRow(rowIndex))
+                    .build());
+
+            copyMenuItems.add(new IconMenuItem.Builder()
+                    .icon(SvgImage.COPY)
+                    .text("Selected Rows")
+                    .command(this::exportSelectedRows)
+                    .build());
+
+            copyMenuItems.add(new IconMenuItem.Builder()
+                    .icon(SvgImage.COPY)
+                    .text("Column")
+                    .command(() -> exportColumn(colIndex))
+                    .build());
+
+            copyMenuItems.add(new IconMenuItem.Builder()
+                    .icon(SvgImage.COPY)
+                    .text("Column For Selected Rows")
+                    .command(() -> exportColumnForSelectedRows(colIndex))
+                    .build());
+        }
+
+        copyMenuItems.add(new IconMenuItem.Builder()
+                .icon(SvgImage.COPY)
+                .text("Table")
+                .command(this::copyTableAsCSV)
+                .build());
+
+        menuItems.add(new IconParentMenuItem.Builder()
+                .icon(SvgImage.COPY)
+                .text("Copy")
+                .children(copyMenuItems)
+                .build());
+
+        menuItems.add(new IconMenuItem.Builder()
+                .icon(SvgImage.DOWNLOAD)
+                .text("Export Table")
+                .command(this::exportTableAsCSV)
+                .build());
+
+        menuItems.add(aiSupport.createContextMenu(rowIndex, colIndex));
+
+        ShowMenuEvent.builder()
+                .items(menuItems)
+                .popupPosition(new PopupPosition(x, y))
+                .fire(globalEventBus);
+    }
+
+    String getCellText(final int row, final int col) {
+        final TableRowElement rowElement = getRowElement(row);
+        if (rowElement != null) {
+            final TableCellElement cellElement = rowElement.getCells().getItem(col);
+            if (cellElement != null) {
+                //strip html tags
+                return normalizeWhitespace(cellElement.getInnerText());
+            }
+        }
+        return "";
+    }
+
+    private String escapeCsv(final String text) {
+        if (text == null) {
+            return "";
+        }
+        final String cleanedText = text.replace('\n', ' ');
+        if (cleanedText.contains(",") || cleanedText.contains("\"")) {
+            final String escapedText = cleanedText.replace("\"", "\"\"");
+            return "\"" + escapedText + "\"";
+        }
+        return cleanedText;
+    }
+
+
+    private void exportCell(final int row, final int col) {
+        if (row >= 0 && col >= 0) {
+            copyToClipboard(getCellText(row, col));
+        }
+    }
+
+    private void exportRow(final int row) {
+        final int columnOffset = getColumnOffset();
+        if (row >= 0) {
+            final StringBuilder sb = new StringBuilder();
+            for (int col = columnOffset; col < getColumnCount(); col++) {
+                addDelimiter(sb, col, columnOffset);
+                sb.append(escapeCsv(getCellText(row, col)));
+            }
+            copyToClipboard(sb.toString());
+        }
+    }
+
+    private void exportSelectedRows() {
+        final StringBuilder sb = new StringBuilder();
+        final int columnOffset = getColumnOffset();
+        for (int row = 0; row < getVisibleItemCount(); row++) {
+            final R item = getVisibleItem(row);
+            if (item != null) {
+                if (getSelectionModel().isSelected(item)) {
+                    addNewLine(sb);
+                    for (int col = columnOffset; col < getColumnCount(); col++) {
+                        addDelimiter(sb, col, columnOffset);
+                        sb.append(escapeCsv(getCellText(row, col)));
+                    }
+                }
+            }
+        }
+        copyToClipboard(sb.toString());
+    }
+
+    private void exportColumn(final int col) {
+        if (col >= 0) {
+            final StringBuilder sb = new StringBuilder();
+            for (int row = 0; row < getVisibleItemCount(); row++) {
+                addNewLine(sb);
+                sb.append(getCellText(row, col));
+            }
+            copyToClipboard(sb.toString());
+        }
+    }
+
+    private void exportColumnForSelectedRows(final int col) {
+        if (col >= 0) {
+            final StringBuilder sb = new StringBuilder();
+            for (int row = 0; row < getVisibleItemCount(); row++) {
+                final R item = getVisibleItem(row);
+                if (item != null) {
+                    if (getSelectionModel().isSelected(item)) {
+                        addNewLine(sb);
+                        sb.append(getCellText(row, col));
+                    }
+                }
+            }
+            copyToClipboard(sb.toString());
+        }
+    }
+
+    private void copyTableAsCSV() {
+        exportTableAsCSV(this::copyToClipboard);
+    }
+
+    private void exportTableAsCSV() {
+        exportTableAsCSV(csv -> downloadCSV("table.csv", csv));
+    }
+
+    private void exportTableAsCSV(final CommandWithCsv command) {
+        final StringBuilder sb = new StringBuilder();
+        final TableSectionElement head = getTableHeadElement();
+        final int columnOffset = getColumnOffset();
+
+        // Headers
+        if (head != null && head.getRows().getLength() > 0) {
+            addNewLine(sb);
+            final TableRowElement headerRow = head.getRows().getItem(0);
+            for (int col = columnOffset; col < getColumnCount(); col++) {
+                addDelimiter(sb, col, columnOffset);
+                final TableCellElement th = headerRow.getCells().getItem(col);
+                sb.append(escapeCsv(normalizeWhitespace(th.getInnerText())));
+            }
+        }
+
+        // Rows
+        for (int row = 0; row < getVisibleItemCount(); row++) {
+            addNewLine(sb);
+            for (int col = columnOffset; col < getColumnCount(); col++) {
+                addDelimiter(sb, col, columnOffset);
+                sb.append(escapeCsv(getCellText(row, col)));
+            }
+        }
+        command.execute(sb.toString());
+    }
+
+    /**
+     * Add new line between rows if we have written output.
+     *
+     * @param sb The StringBuilder to append to.
+     */
+    private void addNewLine(final StringBuilder sb) {
+        // GWT does not allow isEmpty()
+        if (sb.length() > 0) {
+            sb.append("\n");
+        }
+    }
+
+    private void addDelimiter(final StringBuilder sb, final int col, final int columnOffset) {
+        if (col > columnOffset) {
+            sb.append(",");
+        }
+    }
+
+    private interface CommandWithCsv {
+
+        void execute(String csv);
+    }
+
+    //browser api to export csv or copy
+    private native void copyToClipboard(String text) /*-{
+        $wnd.navigator.clipboard.writeText(text);
+    }-*/;
+
+    private native void downloadCSV(String filename, String csv) /*-{
+        var blob = new Blob([csv], { type: "text/csv" });
+        var link = $doc.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.style.display = "none";
+        $doc.body.appendChild(link);
+        link.click();
+        $doc.body.removeChild(link);
+    }-*/;
+
+    int getColumnOffset() {
+        final TableSectionElement head = getTableHeadElement();
+        int columnOffset = 0;
+
+        if (head != null && head.getRows().getLength() > 0) {
+            final TableRowElement headerRow = head.getRows().getItem(0);
+            for (int col = 0; col < getColumnCount(); col++) {
+                final TableCellElement th = headerRow.getCells().getItem(col);
+
+                final String string = escapeCsv(normalizeWhitespace(th.getInnerText()));
+                if (string.isEmpty()) {
+                    columnOffset++;
+                } else {
+                    break;
+                }
+            }
+        }
+        return columnOffset;
+    }
+
+    private String normalizeWhitespace(final String text) {
+        return text.replaceAll("\\s+", " ").trim();
     }
 
     @Override
@@ -387,16 +812,15 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         for (int row = 0; row < getVisibleItemCount(); row++) {
             final TableRowElement tableRowElement = getRowElement(row);
             final NodeList<TableCellElement> cells = tableRowElement.getCells();
-            final TableCellElement tableCellElement = cells.getItem(colNo);
 
-            Element el = tableCellElement;
+            Element el = cells.getItem(colNo);
             while (el.getFirstChildElement() != null) {
                 el = el.getFirstChildElement();
             }
 
             final String text = el.getInnerText();
 
-            if (text.length() > 0) {
+            if (!text.isEmpty()) {
                 tempDiv.setInnerHTML(text);
                 final double offsetWidth = ElementUtil.getSubPixelOffsetWidth(tempDiv) + 1;
                 minWidth = Math.max(minWidth, offsetWidth);
@@ -505,7 +929,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
      * Unless manually resized, it will expand to fill but not go below the initialMinimumWidth.
      * Once the user resizes it, it becomes a fixed width column under their control.
      *
-     * @param pct                 Set this when you want more than one column to expand to fill the space but with
+     * @param fillWeight          Set this when you want more than one column to expand to fill the space but with
      *                            different proportions. All columns pct values should add up to 100.
      * @param initialMinimumWidth Initial minimum width in pixels. Ignored once the user has resized it.
      */
@@ -628,7 +1052,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     }
 
     public void resizeTableToFitColumns(final boolean redistribute) {
-        int totalWidth = 0;
+        final int totalWidth;
         final int outerWidth = getElement().getClientWidth();
         final int tableWidth = getTableBodyElement().getClientWidth();
 

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.ProxyConfig;
@@ -166,16 +182,10 @@ public class ReceiverFactoryProvider implements Provider<ReceiverFactory> {
 
         final ForwarderConfig forwarderConfig = instantForwarders.getFirst();
         receiverFactory = switch (forwarderConfig) {
-            case final ForwardHttpPostConfig forwardHttpPostConfig -> {
-                LOGGER.info("Creating instant HTTP POST forward destination to {}",
-                        forwardHttpPostConfig.getForwardUrl());
-                yield instantForwardHttpPostProvider.get().get(forwardHttpPostConfig);
-            }
-            case final ForwardFileConfig forwardFileConfig -> {
-                LOGGER.info("Creating instant file forward destination to {}",
-                        forwardFileConfig.getPath());
-                yield instantForwardFileProvider.get().get(forwardFileConfig);
-            }
+            case final ForwardHttpPostConfig forwardHttpPostConfig -> instantForwardHttpPostProvider.get()
+                    .get(forwardHttpPostConfig);
+            case final ForwardFileConfig forwardFileConfig -> instantForwardFileProvider.get()
+                    .get(forwardFileConfig);
         };
     }
 

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.jersey;
 
 /**
@@ -14,20 +30,17 @@ public enum JerseyClientName {
     AWS_PUBLIC_KEYS,
 
     /**
-     * Client for Proxy to get content from a downstream stroom/proxy.
+     * Client for Proxy to communicate with a downstream (in datafeed flow terms) stroom
+     * or stroom-proxy instance. This client is used for obtaining receipt policy rules and
+     * verifying API keys.
      */
-    CONTENT_SYNC,
+    DOWNSTREAM,
 
     /**
      * The default client. Used if a named client has not been configured or where
      * you want multiple named clients to share similar config.
      */
     DEFAULT,
-
-    /**
-     * Client for proxy to get the feed status from a downstream stroom/proxy.
-     */
-    FEED_STATUS,
 
     /**
      * Client for the HttpPostFilter.

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.dropwizard.common;
 
 import stroom.util.ConsoleColour;
@@ -181,36 +197,33 @@ public class Servlets {
                 protected HealthCheck.Result check() {
                     // Decorate the existing health check results with the full path spec
                     // as the servlet doesn't know its own full path
-                    HealthCheck.Result result = hasHealthCheck.getHealth();
-
                     final HealthCheck.ResultBuilder builder = Result.builder();
-                    if (result.isHealthy()) {
-                        builder
-                                .healthy()
-                                .withMessage(result.getMessage())
-                                .withDetail(SERVLET_PATH_KEY, fullPathSpec)
-                                .build();
-                    } else {
-                        builder
-                                .unhealthy(result.getError())
-                                .withMessage(result.getMessage())
-                                .withDetail(SERVLET_PATH_KEY, fullPathSpec)
-                                .build();
-                    }
-                    builder
-                            .withMessage(result.getMessage())
-                            .withDetail(SERVLET_PATH_KEY, fullPathSpec);
-
-                    if (result.getDetails() != null) {
-                        if (result.getDetails().containsKey(SERVLET_PATH_KEY)) {
-                            LOGGER.warn("Overriding health check detail for {} {} in servlet {}",
-                                    SERVLET_PATH_KEY,
-                                    result.getDetails().get(SERVLET_PATH_KEY),
-                                    name);
+                    Result result = null;
+                    try {
+                        result = hasHealthCheck.getHealth();
+                        if (result.isHealthy()) {
+                            builder.healthy();
+                        } else {
+                            builder.unhealthy(result.getError());
                         }
-                        result.getDetails().forEach(builder::withDetail);
+                        builder.withMessage(result.getMessage());
+                        if (result.getDetails() != null) {
+                            if (result.getDetails().containsKey(SERVLET_PATH_KEY)) {
+                                LOGGER.warn("Overriding health check detail for {} {} in servlet {}",
+                                        SERVLET_PATH_KEY,
+                                        result.getDetails().get(SERVLET_PATH_KEY),
+                                        name);
+                            }
+                            result.getDetails()
+                                    .forEach(builder::withDetail);
+                        }
+                    } catch (final Exception e) {
+                        builder.unhealthy(e);
+                        LOGGER.error("Error getting health for servlet {}: {}",
+                                servlet.getClass().getSimpleName(), LogUtil.exceptionMessage(e), e);
                     }
 
+                    builder.withDetail(SERVLET_PATH_KEY, fullPathSpec);
                     result = builder.build();
 
                     return result;

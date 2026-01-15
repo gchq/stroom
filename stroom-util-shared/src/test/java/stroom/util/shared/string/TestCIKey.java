@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,14 @@ import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.parallel.ResourceLock;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -59,13 +63,19 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.util.shared.string.CIKey.equalsIgnoreCase;
-import static stroom.util.shared.string.CIKey.listOf;
-import static stroom.util.shared.string.CIKeys.commonKeys;
 
+@ResourceLock(TestCIKeys.CI_KEYS_RESOURCE_LOCK)
+@Execution(ExecutionMode.SAME_THREAD) // clearCommonKeys breaks other tests
 public class TestCIKey {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestCIKey.class);
+
+    @BeforeEach
+    void setUp() {
+        // As we are dealing with a static map, one test may impact another, so always
+        // start with an empty map.  Call addCommonKey to preload the map as required.
+        CIKeys.clearCommonKeys();
+    }
 
     @TestFactory
     Stream<DynamicTest> test() {
@@ -105,6 +115,127 @@ public class TestCIKey {
                 .addCase(Tuple.of("123", "123"), true)
                 .addCase(Tuple.of("", ""), true)
                 .build();
+    }
+
+    @Test
+    void testOf() {
+        final String str = "MrFlibble";
+        // Not a common key
+        assertThat(CIKeys.getCommonKey(str))
+                .isNull();
+
+        final CIKey ciKey1 = CIKey.of(str);
+        final CIKey ciKey2 = CIKey.of(str);
+
+        // Not in common keys so two different instances
+        assertThat(ciKey2)
+                .isEqualTo(ciKey1)
+                .isNotSameAs(ciKey1);
+
+        final CIKey ciKey3 = CIKey.internStaticKey(str);
+        assertThat(ciKey3)
+                .isEqualTo(ciKey1)
+                .isEqualTo(ciKey2)
+                .isNotSameAs(ciKey1)
+                .isNotSameAs(ciKey2);
+
+        // Now in common keys, so same instance as ciKey3
+        final CIKey ciKey4 = CIKey.of(str);
+        assertThat(ciKey4)
+                .isEqualTo(ciKey1)
+                .isEqualTo(ciKey2)
+                .isEqualTo(ciKey3)
+                .isNotSameAs(ciKey1)
+                .isNotSameAs(ciKey2)
+                .isSameAs(ciKey3);
+
+        // Different case, so it can't use the same instance as in common keys
+        final CIKey ciKey5 = CIKey.of(str.toUpperCase());
+        assertThat(ciKey5)
+                .isEqualTo(ciKey1)
+                .isEqualTo(ciKey2)
+                .isEqualTo(ciKey3)
+                .isEqualTo(ciKey4)
+                .isNotSameAs(ciKey1)
+                .isNotSameAs(ciKey2)
+                .isNotSameAs(ciKey3)
+                .isNotSameAs(ciKey4);
+    }
+
+    @Test
+    void testOfIgnoringCase() {
+        final String str = "MrFlibble";
+        final CIKey ciKey1 = CIKey.internStaticKey(str);
+
+        final CIKey ciKey2 = CIKey.of(str);
+        assertThat(ciKey2)
+                .isEqualTo(ciKey1)
+                .isSameAs(ciKey1);
+
+        final CIKey ciKey3 = CIKey.ofIgnoringCase(str);
+        assertThat(ciKey3)
+                .isEqualTo(ciKey1)
+                .isSameAs(ciKey1);
+
+        final CIKey ciKey4 = CIKey.of(str.toLowerCase());
+        assertThat(ciKey4)
+                .isEqualTo(ciKey1)
+                .isNotSameAs(ciKey1);
+
+        final CIKey ciKey5 = CIKey.ofIgnoringCase(str.toLowerCase());
+        assertThat(ciKey5)
+                .isEqualTo(ciKey1)
+                .isSameAs(ciKey1);
+
+        final CIKey ciKey6 = CIKey.ofIgnoringCase(str.toUpperCase());
+        assertThat(ciKey6)
+                .isEqualTo(ciKey1)
+                .isSameAs(ciKey1);
+    }
+
+    @Test
+    void testHashcode() {
+        final CIKey ciKey1 = new CIKey("FOO", "foo");
+        final CIKey ciKey2 = new CIKey("Foo", "foo");
+        // Single arg ctor is private so get at it via json de-ser
+        final CIKey ciKey3 = JsonUtil.readValue("""
+                {
+                    "key": "foO"
+                }""", CIKey.class);
+
+        final CIKey ciKey4 = new CIKey("BAR", "bar");
+
+        assertThat(ciKey1.get())
+                .isEqualTo("FOO");
+        assertThat(ciKey1.getAsLowerCase())
+                .isEqualTo("foo");
+
+        assertThat(ciKey2.get())
+                .isEqualTo("Foo");
+        assertThat(ciKey2.getAsLowerCase())
+                .isEqualTo("foo");
+        assertThat(ciKey2)
+                .isEqualTo(ciKey1);
+        assertThat(ciKey2.hashCode())
+                .isEqualTo(ciKey1.hashCode());
+
+        assertThat(ciKey3.get())
+                .isEqualTo("foO");
+        assertThat(ciKey3.getAsLowerCase())
+                .isEqualTo("foo");
+        assertThat(ciKey3)
+                .isEqualTo(ciKey1);
+        assertThat(ciKey3.hashCode())
+                .isEqualTo(ciKey1.hashCode());
+
+        assertThat(ciKey4.get())
+                .isEqualTo("BAR");
+        assertThat(ciKey4.getAsLowerCase())
+                .isEqualTo("bar");
+        assertThat(ciKey4)
+                .isNotEqualTo(ciKey1);
+        assertThat(ciKey4.hashCode())
+                .isNotEqualTo(ciKey1.hashCode());
     }
 
     @Test
@@ -178,6 +309,7 @@ public class TestCIKey {
                 "Feed", CIKey.ofDynamicKey("Feed"));
 
         // Feed
+        CIKeys.addCommonKey(CIKeys.FEED);
         final CIKey feed1a = CIKeys.FEED;
         final CIKey feed1b = CIKey.of("Feed");
         final CIKey feed1c = CIKey.of("Feed", "feed");
@@ -258,11 +390,11 @@ public class TestCIKey {
                 .withTestFunction(testCase -> {
                     final String str = testCase.getInput()._1;
                     final CIKey ciKey = CIKey.of(testCase.getInput()._2);
-                    final boolean isEqual = equalsIgnoreCase(str, ciKey);
+                    final boolean isEqual = CIKey.equalsIgnoreCase(str, ciKey);
                     // Test the other overloaded equalsIgnoreCase methods too
-                    assertThat(equalsIgnoreCase(ciKey, str))
+                    assertThat(CIKey.equalsIgnoreCase(ciKey, str))
                             .isEqualTo(isEqual);
-                    assertThat(equalsIgnoreCase(str, NullSafe.get(ciKey, CIKey::get)))
+                    assertThat(CIKey.equalsIgnoreCase(str, NullSafe.get(ciKey, CIKey::get)))
                             .isEqualTo(isEqual);
                     return isEqual;
                 })
@@ -348,15 +480,15 @@ public class TestCIKey {
 
     @Test
     void testListOf() {
-        assertThat(listOf("a", "B", "c"))
+        assertThat(CIKey.listOf("a", "B", "c"))
                 .extracting(CIKey::getAsLowerCase)
                 .containsExactly("a", "b", "c");
 
-        assertThat(listOf((String[]) null))
+        assertThat(CIKey.listOf((String[]) null))
                 .extracting(CIKey::getAsLowerCase)
                 .isEmpty();
 
-        assertThat(listOf())
+        assertThat(CIKey.listOf())
                 .extracting(CIKey::getAsLowerCase)
                 .isEmpty();
     }
@@ -416,6 +548,7 @@ public class TestCIKey {
                         Function.identity()));
 
         // Not in known keys, so uses one from built-in common keys
+        CIKeys.addCommonKey(CIKeys.UUID);
         final CIKey ciKey = CIKey.of(CIKeys.UUID.get(), knownCIKeys);
         assertThat(ciKey)
                 .isSameAs(CIKeys.UUID);
@@ -424,6 +557,7 @@ public class TestCIKey {
     @Test
     void testWithCommonKey() {
         // Not in known keys, so uses one from built-in common keys
+        CIKeys.addCommonKey(CIKeys.UUID);
         final CIKey ciKey = CIKey.of(CIKeys.UUID.get());
         assertThat(ciKey)
                 .isSameAs(CIKeys.UUID);
@@ -551,7 +685,7 @@ public class TestCIKey {
                 .isEqualTo(ciKey2.hashCode());
 
         // Make sure not a common key
-        assertThat(commonKeys())
+        assertThat(CIKeys.commonKeys())
                 .doesNotContain(ciKey1);
     }
 
@@ -585,12 +719,13 @@ public class TestCIKey {
                 .isEqualTo(ciKey4.hashCode());
 
         // Make sure not a common key
-        assertThat(commonKeys())
+        assertThat(CIKeys.commonKeys())
                 .doesNotContain(ciKey1);
     }
 
     @Test
     void testKnownLowerCase() {
+        CIKeys.addCommonKey(CIKeys.ACCEPT);
         final String key = CIKeys.ACCEPT.get();
 
         final CIKey ciKey1 = CIKey.of(key);
@@ -626,12 +761,13 @@ public class TestCIKey {
                 .isEqualTo(ciKey5.hashCode());
 
         // Make sure not a common key
-        assertThat(commonKeys())
+        assertThat(CIKeys.commonKeys())
                 .contains(ciKey1);
     }
 
     @Test
     void testKnownUpperCase() {
+        CIKeys.addCommonKey(CIKeys.UUID);
         final String key = CIKeys.UUID.get();
 
         final CIKey ciKey1 = CIKey.of(key);
@@ -669,13 +805,14 @@ public class TestCIKey {
                 .isEqualTo(ciKey5.hashCode());
 
         // Make sure not a common key
-        assertThat(commonKeys())
+        assertThat(CIKeys.commonKeys())
                 .contains(ciKey1);
     }
 
     @Test
     void testOfDynamicKey1() {
         final String key = "UUID";
+        CIKeys.addCommonKey(CIKeys.UUID);
         final CIKey ciKey1 = CIKeys.UUID;
         final CIKey ciKey2 = CIKey.of(key);
         final CIKey ciKey3 = CIKey.ofDynamicKey(key);
@@ -697,6 +834,7 @@ public class TestCIKey {
     @Test
     void testOfDynamicKey2() {
         final String key = "accept";
+        CIKeys.addCommonKey(CIKeys.ACCEPT);
         final CIKey ciKey1 = CIKeys.ACCEPT;
         final CIKey ciKey2 = CIKey.of(key);
         final CIKey ciKey3 = CIKey.ofDynamicKey(key);
@@ -740,7 +878,7 @@ public class TestCIKey {
 
     @Test
     void testMapOf_nullKey() {
-        final HashMap<String, String> map = new HashMap<>();
+        final Map<String, String> map = new HashMap<>();
         map.put(null, "bar");
         final Map<CIKey, String> ciMap = CIKey.mapOf(map);
         assertThat(ciMap.get(null))
@@ -749,7 +887,7 @@ public class TestCIKey {
 
     @Test
     void testMapOf_nullValue() {
-        final HashMap<String, String> map = new HashMap<>();
+        final Map<String, String> map = new HashMap<>();
         map.put("foo", null);
         Assertions.assertThatThrownBy(
                         () -> {
@@ -792,11 +930,86 @@ public class TestCIKey {
                 .build();
     }
 
+    @TestFactory
+    Stream<DynamicTest> testOf2() {
+        CIKeys.addCommonKey(CIKeys.FEED);
+        CIKeys.addCommonKey(CIKeys.ACCEPT);
+        CIKeys.addCommonKey(CIKeys.UUID);
+        Assertions.assertThat(CIKeys.getCommonKey("unknown"))
+                .isNull();
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(CIKey.class)
+                .withSingleArgTestFunction(CIKey::of)
+                .withAssertions(testOutcome -> {
+                    Assertions.assertThat(testOutcome.getActualOutput())
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    if (testOutcome.getInput().equals(testOutcome.getExpectedOutput().get())) {
+                        // Make sure it is same instance as the common one
+                        // Feed vs Feed, common instance
+                        Assertions.assertThat(testOutcome.getActualOutput())
+                                .isSameAs(testOutcome.getExpectedOutput());
+                    } else {
+                        // FEED vs Feed, new instance
+                        Assertions.assertThat(testOutcome.getActualOutput())
+                                .isNotSameAs(testOutcome.getExpectedOutput());
+                    }
+                })
+                // Common key is 'Feed'
+                .addCase("Feed", CIKeys.FEED)
+                .addCase("feed", CIKeys.FEED)
+                .addCase("FEED", CIKeys.FEED)
+                // Common key is 'accept'
+                .addCase("Accept", CIKeys.ACCEPT)
+                .addCase("accept", CIKeys.ACCEPT)
+                .addCase("ACCEPT", CIKeys.ACCEPT)
+                // Common key is 'UUID'
+                .addCase("Uuid", CIKeys.UUID)
+                .addCase("uuid", CIKeys.UUID)
+                .addCase("UUID", CIKeys.UUID)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testOfIgnoringCase2() {
+        CIKeys.addCommonKey(CIKeys.FEED);
+        CIKeys.addCommonKey(CIKeys.ACCEPT);
+        CIKeys.addCommonKey(CIKeys.UUID);
+        Assertions.assertThat(CIKeys.getCommonKey("unknown"))
+                .isNull();
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withOutputType(CIKey.class)
+                .withSingleArgTestFunction(CIKey::ofIgnoringCase)
+                .withAssertions(testOutcome -> {
+                    Assertions.assertThat(testOutcome.getActualOutput())
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    // Make sure it is same instance as the common one
+                    Assertions.assertThat(testOutcome.getActualOutput())
+                            .isSameAs(testOutcome.getExpectedOutput());
+                })
+                // Common key is 'Feed'
+                .addCase("Feed", CIKeys.FEED)
+                .addCase("feed", CIKeys.FEED)
+                .addCase("FEED", CIKeys.FEED)
+                // Common key is 'accept'
+                .addCase("Accept", CIKeys.ACCEPT)
+                .addCase("accept", CIKeys.ACCEPT)
+                .addCase("ACCEPT", CIKeys.ACCEPT)
+                // Common key is 'UUID'
+                .addCase("Uuid", CIKeys.UUID)
+                .addCase("uuid", CIKeys.UUID)
+                .addCase("UUID", CIKeys.UUID)
+                .build();
+    }
+
     @Test
     @Disabled
         // manual run only
     void testOfLowerKeyPerf() {
-        final List<String> lowerKeys = commonKeys()
+        final List<String> lowerKeys = CIKeys.commonKeys()
                 .stream()
                 .map(CIKey::getAsLowerCase)
                 .toList();
@@ -857,7 +1070,7 @@ public class TestCIKey {
     @Disabled
     // manual run only
     void testPerf() {
-        final List<CIKey> ciKeys = new ArrayList<>(commonKeys());
+        final List<CIKey> ciKeys = new ArrayList<>(CIKeys.commonKeys());
 
         LOGGER.info("Key count: {}", ciKeys.size());
 

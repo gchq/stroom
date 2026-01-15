@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.common.v2;
 
 import stroom.query.language.functions.Val;
@@ -14,17 +30,17 @@ public class Key {
     private final long timeMs;
     private final List<KeyPart> keyParts;
 
-    public Key(final long timeMs,
-               final List<KeyPart> keyParts) {
+    Key(final long timeMs,
+        final List<KeyPart> keyParts) {
         this.timeMs = timeMs;
         this.keyParts = keyParts;
     }
 
-    public long getTimeMs() {
+    long getTimeMs() {
         return timeMs;
     }
 
-    public List<KeyPart> getKeyParts() {
+    List<KeyPart> getKeyParts() {
         return keyParts;
     }
 
@@ -44,7 +60,7 @@ public class Key {
     }
 
     Key getParent() {
-        if (keyParts.size() > 0) {
+        if (!keyParts.isEmpty()) {
             return new Key(timeMs, keyParts.subList(0, keyParts.size() - 1));
         }
         return null;
@@ -64,8 +80,8 @@ public class Key {
     }
 
     private KeyPart getLast() {
-        if (keyParts.size() > 0) {
-            return keyParts.get(keyParts.size() - 1);
+        if (!keyParts.isEmpty()) {
+            return keyParts.getLast();
         }
         return null;
     }
@@ -80,7 +96,7 @@ public class Key {
         }
         final Key key = (Key) o;
         return Objects.equals(timeMs, key.timeMs) &&
-                Objects.equals(keyParts, key.keyParts);
+               Objects.equals(keyParts, key.keyParts);
     }
 
     @Override
@@ -90,7 +106,7 @@ public class Key {
 
     @Override
     public String toString() {
-        if (keyParts.size() == 0) {
+        if (keyParts.isEmpty()) {
             return "root";
         }
 

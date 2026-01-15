@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,8 @@ public class CreateProcessFilterRequest {
     @JsonProperty
     private final boolean enabled;
     @JsonProperty
+    private final boolean export;
+    @JsonProperty
     private final Long minMetaCreateTimeMs;
     @JsonProperty
     private final Long maxMetaCreateTimeMs;
@@ -61,6 +63,7 @@ public class CreateProcessFilterRequest {
                                       @JsonProperty("autoPriority") final boolean autoPriority,
                                       @JsonProperty("reprocess") final boolean reprocess,
                                       @JsonProperty("enabled") final boolean enabled,
+                                      @JsonProperty("export") final boolean export,
                                       @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
                                       @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs,
                                       @JsonProperty("runAsUser") final UserRef runAsUser) {
@@ -72,6 +75,7 @@ public class CreateProcessFilterRequest {
         this.autoPriority = autoPriority;
         this.reprocess = reprocess;
         this.enabled = enabled;
+        this.export = export;
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
         this.runAsUser = runAsUser;
@@ -109,6 +113,10 @@ public class CreateProcessFilterRequest {
         return enabled;
     }
 
+    public boolean isExport() {
+        return export;
+    }
+
     public Long getMinMetaCreateTimeMs() {
         return minMetaCreateTimeMs;
     }
@@ -142,6 +150,7 @@ public class CreateProcessFilterRequest {
                autoPriority == that.autoPriority &&
                reprocess == that.reprocess &&
                enabled == that.enabled &&
+               export == that.export &&
                Objects.equals(pipeline, that.pipeline) &&
                Objects.equals(queryData, that.queryData) &&
                Objects.equals(minMetaCreateTimeMs, that.minMetaCreateTimeMs) &&
@@ -156,6 +165,7 @@ public class CreateProcessFilterRequest {
                 autoPriority,
                 reprocess,
                 enabled,
+                export,
                 minMetaCreateTimeMs,
                 maxMetaCreateTimeMs);
     }
@@ -163,20 +173,20 @@ public class CreateProcessFilterRequest {
     @Override
     public String toString() {
         return "CreateProcessFilterRequest{" +
-               "pipeline=" + pipeline +
+               "processorType=" + processorType +
+               ", pipeline=" + pipeline +
                ", queryData=" + queryData +
                ", priority=" + priority +
+               ", maxProcessingTasks=" + maxProcessingTasks +
                ", autoPriority=" + autoPriority +
                ", reprocess=" + reprocess +
                ", enabled=" + enabled +
+               ", export=" + export +
                ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
                ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
+               ", runAsUser=" + runAsUser +
                '}';
     }
-
-
-    // --------------------------------------------------------------------------------
-
 
     public static class Builder {
 
@@ -188,6 +198,7 @@ public class CreateProcessFilterRequest {
         private boolean autoPriority;
         private boolean reprocess;
         private boolean enabled = true;
+        private boolean export = false;
         private Long minMetaCreateTimeMs;
         private Long maxMetaCreateTimeMs;
         private UserRef runAsUser;
@@ -204,6 +215,7 @@ public class CreateProcessFilterRequest {
             this.autoPriority = request.autoPriority;
             this.reprocess = request.reprocess;
             this.enabled = request.enabled;
+            this.export = request.export;
             this.minMetaCreateTimeMs = request.minMetaCreateTimeMs;
             this.maxMetaCreateTimeMs = request.maxMetaCreateTimeMs;
             this.runAsUser = request.runAsUser;
@@ -249,6 +261,11 @@ public class CreateProcessFilterRequest {
             return this;
         }
 
+        public Builder export(final boolean export) {
+            this.export = export;
+            return this;
+        }
+
         public Builder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
             this.minMetaCreateTimeMs = minMetaCreateTimeMs;
             return this;
@@ -274,6 +291,7 @@ public class CreateProcessFilterRequest {
                     autoPriority,
                     reprocess,
                     enabled,
+                    export,
                     minMetaCreateTimeMs,
                     maxMetaCreateTimeMs,
                     runAsUser);

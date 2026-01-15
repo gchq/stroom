@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,17 +39,18 @@ import java.util.Map;
 public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandlers> implements PipelineTreeView {
 
     private final PipelineTreePanel treePanel;
+    private final PipelineTreePanel subTreePanel;
     private final DraggableTreePanel<PipelineElement> layoutPanel;
     private SelectionModel<PipelineElement> selectionModel;
     private boolean allowNullSelection = true;
     private PipelineModel pipelineModel;
 
     @Inject
-    public PipelineTreeViewImpl(final PipelineElementBoxFactory pipelineElementBoxFactory) {
-        treePanel = new PipelineTreePanel(pipelineElementBoxFactory);
-        final PipelineTreePanel subTreePanel = new PipelineTreePanel(pipelineElementBoxFactory);
+    public PipelineTreeViewImpl() {
+        treePanel = new PipelineTreePanel();
+        subTreePanel = new PipelineTreePanel();
 
-        layoutPanel = new DraggableTreePanel<PipelineElement>(treePanel, subTreePanel) {
+        layoutPanel = new DraggableTreePanel<>(treePanel, subTreePanel) {
             @Override
             protected boolean isValidTarget(final PipelineElement parent, final PipelineElement child) {
                 final PipelineElementType parentType = pipelineModel.getElementType(parent);
@@ -90,6 +91,7 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     public void setPipelineModel(final PipelineModel pipelineModel) {
         this.pipelineModel = pipelineModel;
         treePanel.setPipelineModel(pipelineModel);
+        subTreePanel.setPipelineModel(pipelineModel);
     }
 
     @Override
@@ -136,6 +138,11 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     @Override
     public int getTreeHeight() {
         return treePanel.getTreeHeight();
+    }
+
+    @Override
+    public void setDisabledElements(final List<PipelineElement> disabledElements) {
+        treePanel.setDisabledElements(disabledElements);
     }
 
     @Override

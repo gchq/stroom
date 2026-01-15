@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -216,6 +216,10 @@ public class MockStore implements Store, Clearable, AttributeMapFactory {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private class MockTarget implements InternalTarget, SegmentOutputStreamProviderFactory {
 
         private final Meta meta;
@@ -224,7 +228,7 @@ public class MockStore implements Store, Clearable, AttributeMapFactory {
         private final String streamTypeName;
         private final AttributeMap attributeMap = new AttributeMap();
         private final Map<String, MockTarget> childMap = new HashMap<>();
-        private final HashMap<String, SegmentOutputStreamProvider> outputStreamMap = new HashMap<>(10);
+        private final Map<String, SegmentOutputStreamProvider> outputStreamMap = new HashMap<>(10);
         private ByteArrayOutputStream outputStream = null;
         private long index;
         private Target parent;
@@ -425,10 +429,14 @@ public class MockStore implements Store, Clearable, AttributeMapFactory {
 //        }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private class MockSource implements InternalSource, SegmentInputStreamProviderFactory {
 
         private final Map<String, MockSource> childMap = new HashMap<>();
-        private final HashMap<String, SegmentInputStreamProvider> inputStreamMap = new HashMap<>(10);
+        private final Map<String, SegmentInputStreamProvider> inputStreamMap = new HashMap<>(10);
         private final String streamType;
         private final Source parent;
         private AttributeMap attributeMap;

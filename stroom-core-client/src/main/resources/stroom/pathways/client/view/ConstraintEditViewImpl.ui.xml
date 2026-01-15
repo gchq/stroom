@@ -1,0 +1,21 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:l="urn:import:stroom.item.client">
+    <g:FlowPanel styleName="max form dock-container-vertical">
+        <form:FormGroup identity="constraintName" label="Name">
+            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="constraintType" label="Type">
+            <l:SelectionBox ui:field="type" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="constraintValue" label="Value">
+            <g:TextBox ui:field="value" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="constraintOptional" label="Optional">
+            <tickbox:CustomCheckBox ui:field="optional"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder> 

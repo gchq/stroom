@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.data.store.impl.fs;
@@ -605,7 +604,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         final Meta refData3 = buildRefData(feed2, 2010, 2, StreamTypeNames.REFERENCE, false);
 
         // These 2 should get ignored as one is locked and the other is RAW
-        final HashSet<Long> invalidFeeds = new HashSet<>();
+        final Set<Long> invalidFeeds = new HashSet<>();
         invalidFeeds.add(buildRefData(feed2, 2010, 2, StreamTypeNames.REFERENCE, true).getId());
 
         invalidFeeds.add(buildRefData(feed2, 2010, 2, StreamTypeNames.RAW_REFERENCE, false).getId());

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.impl.serde.temporalkey;
 
 import stroom.bytebuffer.ByteBufferUtils;
@@ -6,13 +22,13 @@ import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.KeyLength;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.time.TimeSerde;
+import stroom.planb.impl.serde.val.ValSerdeUtil;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -51,7 +67,7 @@ public class LimitedStringKeySerde implements TemporalKeySerde {
 
     @Override
     public void write(final Txn<ByteBuffer> txn, final TemporalKey key, final Consumer<ByteBuffer> consumer) {
-        final byte[] bytes = key.getPrefix().getVal().toString().getBytes(StandardCharsets.UTF_8);
+        final byte[] bytes = ValSerdeUtil.getBytes(key.getPrefix().getVal());
         KeyLength.check(bytes.length, limit);
 
         // We are in a single write transaction so should be able to reuse the same buffer again and again.
@@ -66,7 +82,7 @@ public class LimitedStringKeySerde implements TemporalKeySerde {
     public <R> R toBufferForGet(final Txn<ByteBuffer> txn,
                                 final TemporalKey key,
                                 final Function<Optional<ByteBuffer>, R> function) {
-        final byte[] bytes = key.getPrefix().getVal().toString().getBytes(StandardCharsets.UTF_8);
+        final byte[] bytes = ValSerdeUtil.getBytes(key.getPrefix().getVal());
         KeyLength.check(bytes.length, limit);
         return byteBuffers.use(bytes.length + timeSerde.getSize(), byteBuffer -> {
             byteBuffer.put(bytes);

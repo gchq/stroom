@@ -1,7 +1,22 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.client.presenter;
 
 import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.Hyperlink.UrlDecoder;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -25,30 +40,23 @@ public class TableRow {
 
     private final Expander expander;
     private final String groupKey;
+    private final Long annotationId;
     private final Map<String, Cell> cells;
     private final String matchingRule;
-    private final UrlDecoder urlDecoder;
+    private final int depth;
 
     public TableRow(final Expander expander,
                     final String groupKey,
-                    final Map<String, Cell> cells,
-                    final String matchingRule) {
-        this(expander, groupKey, cells, matchingRule, null);
-        if (template == null) {
-            template = GWT.create(Template.class);
-        }
-    }
-
-    public TableRow(final Expander expander,
-                    final String groupKey,
+                    final Long annotationId,
                     final Map<String, Cell> cells,
                     final String matchingRule,
-                    final UrlDecoder urlDecoder) {
+                    final int depth) {
         this.expander = expander;
         this.groupKey = groupKey;
+        this.annotationId = annotationId;
         this.cells = cells;
         this.matchingRule = matchingRule;
-        this.urlDecoder = urlDecoder;
+        this.depth = depth;
     }
 
     public Expander getExpander() {
@@ -59,6 +67,10 @@ public class TableRow {
         return groupKey;
     }
 
+    public Long getAnnotationId() {
+        return annotationId;
+    }
+
     public SafeHtml getValue(final String fieldId) {
         // Turn the raw value into html on demand
         final Cell cell = cells.get(fieldId);
@@ -67,6 +79,10 @@ public class TableRow {
         } else {
             return SafeHtmlUtil.NBSP;
         }
+    }
+
+    public int getDepth() {
+        return depth;
     }
 
     public String getMatchingRule() {
@@ -148,6 +164,9 @@ public class TableRow {
                     final SafeHtml displayValueHtml = NullSafe.isNonBlankString(hyperlink.getText())
                             ? SafeHtmlUtils.fromString(hyperlink.getText())
                             : SafeHtmlUtil.NBSP;
+                    if (template == null) {
+                        template = GWT.create(Template.class);
+                    }
                     final SafeHtml linkHtml = template.link(hyperlink.toString(), title, displayValueHtml);
                     sb.append(linkHtml);
                 }
@@ -187,7 +206,7 @@ public class TableRow {
                 final char c = value.charAt(i);
                 if (c == '[') {
                     // Might be the start of a hyperlink or could just be a square bracket
-                    final Hyperlink hyperlink = Hyperlink.create(value, i, urlDecoder);
+                    final Hyperlink hyperlink = Hyperlink.create(value, i);
                     if (hyperlink != null) {
                         //noinspection SizeReplaceableByIsEmpty // isEmpty() not in GWT yet
                         if (sb.length() > 0) {
@@ -220,6 +239,7 @@ public class TableRow {
         return "TableRow{" +
                "expander=" + expander +
                ", groupKey='" + groupKey + '\'' +
+               ", annotationId='" + annotationId + '\'' +
                ", cells=" + cells +
                '}';
     }
@@ -233,12 +253,13 @@ public class TableRow {
             return false;
         }
         final TableRow tableRow = (TableRow) o;
-        return Objects.equals(groupKey, tableRow.groupKey);
+        return Objects.equals(groupKey, tableRow.groupKey) &&
+               Objects.equals(annotationId, tableRow.annotationId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(groupKey);
+        return Objects.hash(groupKey, annotationId);
     }
 
 

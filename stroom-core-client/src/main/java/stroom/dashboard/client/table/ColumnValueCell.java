@@ -1,49 +1,73 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.dashboard.client.table;
 
-import stroom.cell.tickbox.client.TickBoxCell;
+import stroom.dashboard.shared.ColumnValue;
+import stroom.query.api.ColumnValueSelection;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
-public class ColumnValueCell extends AbstractCell<String> {
+public class ColumnValueCell extends AbstractCell<ColumnValue> {
 
-    private static Template template;
+    private final ColumnValueSelection.Builder columnValueSelection;
 
-    private final ColumnValueSelectionModel selectionModel;
-    private final TickBoxCell tickBoxCell;
-
-    public ColumnValueCell(final ColumnValueSelectionModel selectionModel) {
-        this.selectionModel = selectionModel;
-        if (template == null) {
-            template = GWT.create(Template.class);
-        }
-        tickBoxCell = TickBoxCell.create(true, false);
+    public ColumnValueCell(final ColumnValueSelection.Builder columnValueSelection) {
+        this.columnValueSelection = columnValueSelection;
     }
 
     @Override
-    public void render(final Context context, final String item, final SafeHtmlBuilder sb) {
+    public void render(final Context context, final ColumnValue item, final SafeHtmlBuilder sb) {
         if (item != null) {
-            final SafeHtml textHtml = template.text("columnValueCell-text",
-                    SafeHtmlUtils.fromString(item));
+            final HtmlBuilder hb = new HtmlBuilder(sb);
+            final ColumnValueSelection selection = columnValueSelection.build();
 
-            final SafeHtmlBuilder content = new SafeHtmlBuilder();
-            tickBoxCell.render(context, selectionModel.getState(item), content);
-            content.append(textHtml);
+            final boolean selected;
+            if (selection.getValues().contains(item.getValue())) {
+                selected = !selection.isInvert();
+            } else {
+                selected = selection.isInvert();
+            }
 
-            sb.append(template.outer(content.toSafeHtml()));
+            hb.div(outer -> {
+
+                final SafeHtml safeHtml;
+                if (selected) {
+                    safeHtml = SvgImageUtil.toSafeHtml(
+                            "Ticked",
+                            SvgImage.TICK,
+                            "tickBox",
+                            "tickBox-noBorder",
+                            "tickBox-tick");
+                    outer.append(safeHtml);
+
+                } else {
+                    outer.div("",
+                            Attribute.title("Not Ticked"),
+                            Attribute.className("tickBox tickBox-noBorder tickBox-untick"));
+                }
+
+                outer.div(item.getValue(), Attribute.className("columnValueCell-text"));
+            }, Attribute.className("columnValueCell"));
         }
-    }
-
-    interface Template extends SafeHtmlTemplates {
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml text(String textClass, SafeHtml text);
-
-        @Template("<div class=\"columnValueCell\">{0}</div>")
-        SafeHtml outer(SafeHtml content);
     }
 }

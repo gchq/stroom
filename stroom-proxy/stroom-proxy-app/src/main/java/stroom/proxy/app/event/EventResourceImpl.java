@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
 import stroom.util.concurrent.UniqueId;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -26,10 +28,10 @@ import jakarta.servlet.http.HttpServletRequest;
 @Singleton
 public class EventResourceImpl implements EventResource {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EventResourceImpl.class);
+
     private final EventStore eventStore;
-
     private final ReceiveDataHelper receiveDataHelper;
-
 
     @Inject
     public EventResourceImpl(final EventStore eventStore,
@@ -52,12 +54,13 @@ public class EventResourceImpl implements EventResource {
     private void consume(final AttributeMap attributeMap,
                          final UniqueId receiptId,
                          final String event) {
+        LOGGER.debug("consume() - receiptId: {}, attributeMap: {}\n{}", receiptId, attributeMap, event);
         eventStore.consume(attributeMap, receiptId, event);
     }
 
     private void drop(final HttpServletRequest request,
                       final AttributeMap attributeMap,
                       final UniqueId receiptId) {
-
+        LOGGER.debug("drop() - receiptId: {}, attributeMap: {}", receiptId, attributeMap);
     }
 }

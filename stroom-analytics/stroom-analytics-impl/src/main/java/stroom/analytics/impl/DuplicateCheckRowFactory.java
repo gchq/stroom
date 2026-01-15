@@ -1,12 +1,30 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.DuplicateCheckRow;
 import stroom.analytics.shared.DuplicateNotificationConfig;
-import stroom.query.api.Row;
 import stroom.query.common.v2.CompiledColumn;
 import stroom.query.common.v2.CompiledColumns;
+import stroom.query.language.functions.Val;
+import stroom.query.language.functions.Values;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +34,7 @@ class DuplicateCheckRowFactory {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DuplicateCheckRowSerde.class);
 
-    private final Function<Row, List<String>> function;
+    private final Function<Values, List<String>> function;
     private final List<Integer> selectedIndexes;
     private final List<String> columnNames;
 
@@ -34,7 +52,7 @@ class DuplicateCheckRowFactory {
             // If we are told to choose columns then add chosen columns.
             if (duplicateNotificationConfig.isChooseColumns()) {
                 if (duplicateNotificationConfig.getColumnNames() != null &&
-                        duplicateNotificationConfig.getColumnNames().contains(compiledColumn.getColumn().getName())) {
+                    duplicateNotificationConfig.getColumnNames().contains(compiledColumn.getColumn().getName())) {
                     selectedColumnNames.add(compiledColumn.getColumn().getName());
                     selectedIndexes.add(i);
                 }
@@ -49,31 +67,27 @@ class DuplicateCheckRowFactory {
 
         if (useSelectedIndexes) {
             this.columnNames = selectedColumnNames;
-            function = row -> {
-                final List<String> values = new ArrayList<>(row.getValues().size());
+            function = item -> {
+                final List<String> values = new ArrayList<>();
                 for (final Integer index : selectedIndexes) {
-                    final String value = row.getValues().get(index);
-                    if (value != null) {
-                        LOGGER.trace(() -> "Adding selected string (" + index + ") = " + value);
-                        values.add(value);
-                    } else {
-                        values.add("");
-                    }
+                    final Val val = item.getValue(index);
+                    final String str = NullSafe.getOrElse(val, Val::toString, "");
+                    LOGGER.trace(() -> "Adding selected string (" + index + ") = " + str);
+                    values.add(str);
                 }
                 LOGGER.trace(() -> "Selected row values = " + String.join(", ", values));
                 return values;
             };
         } else {
             this.columnNames = allColumnNames;
-            function = row -> {
-                final List<String> values = new ArrayList<>(row.getValues().size());
-                for (final String value : row.getValues()) {
-                    if (value != null) {
-                        LOGGER.trace(() -> "Adding string = " + value);
-                        values.add(value);
-                    } else {
-                        values.add("");
-                    }
+            function = item -> {
+                final List<String> values = new ArrayList<>();
+                for (int i = 0; i < columnNames.size(); i++) {
+                    final Val val = item.getValue(i);
+                    final String str = NullSafe.getOrElse(val, Val::toString, "");
+                    final int index = i;
+                    LOGGER.trace(() -> "Adding selected string (" + index + ") = " + str);
+                    values.add(str);
                 }
                 LOGGER.trace(() -> "Row values = " + String.join(", ", values));
                 return values;
@@ -85,8 +99,8 @@ class DuplicateCheckRowFactory {
         return columnNames;
     }
 
-    public DuplicateCheckRow createDuplicateCheckRow(final Row row) {
-        final List<String> values = function.apply(row);
-        return new DuplicateCheckRow(values);
+    public DuplicateCheckRow createDuplicateCheckRow(final Values values) {
+        final List<String> strings = function.apply(values);
+        return new DuplicateCheckRow(strings);
     }
 }

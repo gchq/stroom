@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
 import stroom.docref.DocRef;
 import stroom.index.VolumeTestConfigModule;
+import stroom.langchain.impl.MockOpenAIModule;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
@@ -43,6 +44,8 @@ import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.util.UUID;
+
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(UriFactoryModule.class)
 @IncludeModule(CoreModule.class)
@@ -53,6 +56,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
+@IncludeModule(MockOpenAIModule.class)
 class TestStreamingAnalytics extends AbstractAnalyticsTest {
 
     @Inject
@@ -106,6 +110,7 @@ class TestStreamingAnalytics extends AbstractAnalyticsTest {
                            final int expectedStreams,
                            final int expectedRecords) {
         final AnalyticRuleDoc analyticRuleDoc = AnalyticRuleDoc.builder()
+                .uuid(UUID.randomUUID().toString())
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.STREAMING)
@@ -115,9 +120,11 @@ class TestStreamingAnalytics extends AbstractAnalyticsTest {
         final DocRef analyticRuleDocRef = writeRule(analyticRuleDoc);
         final ExpressionOperator expressionOperator = analyticRuleProcessors
                 .getDefaultProcessingFilterExpression(query);
-        final QueryData queryData = new QueryData();
-        queryData.setDataSource(MetaFields.STREAM_STORE_DOC_REF);
-        queryData.setExpression(expressionOperator);
+        final QueryData queryData = QueryData
+                .builder()
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                .expression(expressionOperator)
+                .build();
 
         // Now create the processor filter using the find stream criteria.
         final CreateProcessFilterRequest request = CreateProcessFilterRequest

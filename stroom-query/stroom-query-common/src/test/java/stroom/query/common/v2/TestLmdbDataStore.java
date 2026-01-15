@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,13 +122,14 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 () -> executorService,
                 errorConsumer,
                 new ByteBufferFactoryImpl(),
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(),
+                AnnotationMapperFactory.NO_OP,
+                //TODO: DS
+                null);
     }
 
     @Test
     void testBigValues() {
-        final FormatterFactory formatterFactory = new FormatterFactory(null);
-
         final TableSettings tableSettings = TableSettings.builder()
                 .addColumns(Column.builder()
                         .id("Text")
@@ -171,9 +172,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                     .addMappings(tableSettings)
                     .requestedRange(new OffsetRange(0, 3000))
                     .build();
-            final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                    formatterFactory,
-                    new ExpressionPredicateFactory());
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator();
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);

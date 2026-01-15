@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.table.ColumnFilterPresenter;
+import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
 import stroom.dashboard.client.table.FilterCellManager;
 import stroom.dashboard.client.table.FormatPresenter;
@@ -48,17 +49,21 @@ import stroom.widget.util.client.Rect;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.cellview.client.SortIcon;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public class QueryTableColumnsManager implements HeadingListener, FilterCellManager {
+public class QueryTableColumnsManager implements HeadingListener, FilterCellManager, HasHandlers {
 
+    private final EventBus eventBus;
     private final QueryResultTablePresenter tablePresenter;
     private final FormatPresenter formatPresenter;
     private final Provider<RulesPresenter> rulesPresenterProvider;
@@ -69,11 +74,13 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
     private int currentFilterColIndex = -1;
     private boolean moving;
 
-    public QueryTableColumnsManager(final QueryResultTablePresenter tablePresenter,
+    public QueryTableColumnsManager(final EventBus eventBus,
+                                    final QueryResultTablePresenter tablePresenter,
                                     final FormatPresenter formatPresenter,
                                     final Provider<RulesPresenter> rulesPresenterProvider,
                                     final ColumnFilterPresenter columnFilterPresenter,
                                     final ColumnValuesFilterPresenter columnValuesFilterPresenter) {
+        this.eventBus = eventBus;
         this.tablePresenter = tablePresenter;
         this.formatPresenter = formatPresenter;
         this.rulesPresenterProvider = rulesPresenterProvider;
@@ -95,7 +102,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                     if (currentMenuColIndex == colIndex) {
                         HideMenuEvent
                                 .builder()
-                                .fire(tablePresenter);
+                                .fire(this);
                     }
                     if (currentFilterColIndex == colIndex) {
                         columnValuesFilterPresenter.hide();
@@ -116,6 +123,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
             final Heading heading = headingSupplier.get();
             if (heading != null && heading.getColIndex() >= columnsStartIndex) {
                 final int colIndex = heading.getColIndex();
+                final HasHandlers queryTableColumnsManager = this;
 
                 final Column column = getColumn(colIndex);
                 if (column != null) {
@@ -132,17 +140,20 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
 
                             } else if (isFilterButton) {
                                 currentFilterColIndex = colIndex;
+                                final ColumnValuesDataSupplier dataSupplier = tablePresenter
+                                        .getDataSupplier(column, null);
                                 columnValuesFilterPresenter.show(
-                                        button,
+                                        () -> button,
                                         th,
-                                        tablePresenter.getDataSupplier(column),
+                                        column,
+                                        () -> dataSupplier,
                                         hideEvent -> resetFilterColIndex(),
                                         column.getColumnValueSelection(),
                                         QueryTableColumnsManager.this);
                             }
 
                             if (currentMenuColIndex == colIndex) {
-                                HideMenuEvent.builder().fire(tablePresenter);
+                                HideMenuEvent.builder().fire(queryTableColumnsManager);
 
                             } else if (!isFilterButton) {
                                 currentMenuColIndex = colIndex;
@@ -159,7 +170,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                                         .popupPosition(popupPosition)
                                         .addAutoHidePartner(th)
                                         .onHide(e2 -> resetMenuColIndex())
-                                        .fire(tablePresenter);
+                                        .fire(queryTableColumnsManager);
                             }
                         }
                     }.schedule(0);
@@ -417,6 +428,20 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
             }
         }
         return null;
+    }
+
+    public int getColumnIndex(final Column column) {
+        final List<Column> columns = getColumns();
+        int index = columnsStartIndex;
+        for (final Column col : columns) {
+            if (col.isVisible()) {
+                if (col.getId().equals(column.getId())) {
+                    return index;
+                }
+                index++;
+            }
+        }
+        return -1;
     }
 
     public void setColumnsStartIndex(final int columnsStartIndex) {
@@ -761,5 +786,10 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                             .fire();
                 })
                 .build();
+    }
+
+    @Override
+    public void fireEvent(final GwtEvent<?> event) {
+        eventBus.fireEvent(event);
     }
 }

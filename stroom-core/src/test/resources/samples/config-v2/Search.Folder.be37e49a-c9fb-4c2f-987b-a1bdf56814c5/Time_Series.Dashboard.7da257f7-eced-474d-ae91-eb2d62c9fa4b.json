@@ -1,0 +1,273 @@
+{
+  "parameters" : "userId=user2",
+  "components" : [ {
+    "type" : "query",
+    "id" : "query-MRGPM",
+    "name" : "Query",
+    "settings" : {
+      "type" : "query",
+      "dataSource" : {
+        "type" : "Index",
+        "uuid" : "57a35b9a-083c-4a93-a813-fc3ddfe1ff44",
+        "name" : "Example index"
+      },
+      "expression" : {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "EventTime",
+          "condition" : "BETWEEN",
+          "value" : "2000-02-14T00:00:00.000Z,2010-12-14T00:00:00.000Z"
+        } ]
+      },
+      "automate" : {
+        "open" : false,
+        "refresh" : false,
+        "refreshInterval" : "10s"
+      },
+      "selectionHandlers" : [ ]
+    }
+  }, {
+    "type" : "table",
+    "id" : "table-BKJT6",
+    "name" : "Table",
+    "settings" : {
+      "type" : "table",
+      "queryId" : "query-MRGPM",
+      "fields" : [ {
+        "id" : "table-BKJT6|GEJY0",
+        "name" : "EventTime",
+        "expression" : "floorMinute(${EventTime})",
+        "sort" : {
+          "order" : 0,
+          "direction" : "ASCENDING"
+        },
+        "format" : {
+          "type" : "DATE_TIME"
+        },
+        "group" : 0,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-BKJT6|ON0QW",
+        "name" : "Count",
+        "expression" : "count()",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      } ],
+      "extractionPipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
+        "name" : "Example extraction"
+      },
+      "maxResults" : [ 1000000 ],
+      "showDetail" : false,
+      "conditionalFormattingRules" : [ ],
+      "modelVersion" : "6.1.26"
+    }
+  }, {
+    "type" : "vis",
+    "id" : "vis-I9PV9",
+    "name" : "Time Series",
+    "settings" : {
+      "type" : "vis",
+      "tableId" : "table-BKJT6",
+      "visualisation" : {
+        "type" : "Visualisation",
+        "uuid" : "083f905e-0f04-45a6-9b77-5a0852bc513e",
+        "name" : "TimeSeries"
+      },
+      "json" : "{\"x\":\"EventTime\", \"y\":\"Count\", \"interpolationMode\":\"basis-open\", \"maxValues\":\"1000\", \"sortXAxis\":\"Ascending\", \"sortLineSeries\":\"Ascending\", \"maxLineSeries\":\"100\", \"seriesDateFormat\":\"\", \"sortGridSeries\":\"Ascending\", \"maxGridSeries\":\"36\", \"gridSeriesDateFormat\":\"\", \"synchXAxis\":\"True\", \"displayXAxis\":\"True\", \"synchYAxis\":\"True\", \"displayYAxis\":\"True\", \"synchSeries\":\"True\", \"stateCounting\":\"False\", \"openSessionText\":\"Increment\", \"closeSessionText\":\"Decrement\"}"
+    }
+  }, {
+    "type" : "query",
+    "id" : "query-7JBGC",
+    "name" : "Query",
+    "settings" : {
+      "type" : "query",
+      "dataSource" : {
+        "type" : "Index",
+        "uuid" : "57a35b9a-083c-4a93-a813-fc3ddfe1ff44",
+        "name" : "Example index"
+      },
+      "expression" : {
+        "type" : "operator"
+      },
+      "automate" : {
+        "open" : false,
+        "refresh" : false,
+        "refreshInterval" : "10s"
+      },
+      "selectionHandlers" : [ {
+        "id" : "VY6BQ",
+        "componentId" : "vis-I9PV9",
+        "expression" : {
+          "type" : "operator",
+          "children" : [ {
+            "type" : "term",
+            "field" : "EventTime",
+            "condition" : "GREATER_THAN_OR_EQUAL_TO",
+            "value" : "${minTime}"
+          }, {
+            "type" : "term",
+            "field" : "EventTime",
+            "condition" : "LESS_THAN_OR_EQUAL_TO",
+            "value" : "${maxTime}"
+          } ]
+        },
+        "enabled" : true
+      } ]
+    }
+  }, {
+    "type" : "table",
+    "id" : "table-RZH8Y",
+    "name" : "Table",
+    "settings" : {
+      "type" : "table",
+      "queryId" : "query-7JBGC",
+      "fields" : [ {
+        "id" : "table-RZH8Y|RVM9R",
+        "name" : "EventTime",
+        "expression" : "${EventTime}",
+        "format" : {
+          "type" : "DATE_TIME"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-RZH8Y|6YD8T",
+        "name" : "UserId",
+        "expression" : "${UserId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      } ],
+      "extractionPipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
+        "name" : "Example extraction"
+      },
+      "maxResults" : [ 1000000 ],
+      "showDetail" : false,
+      "conditionalFormattingRules" : [ ],
+      "modelVersion" : "6.1.26"
+    }
+  } ],
+  "layout" : {
+    "type" : "splitLayout",
+    "preferredSize" : {
+      "width" : 0,
+      "height" : 0
+    },
+    "dimension" : 1,
+    "children" : [ {
+      "type" : "splitLayout",
+      "preferredSize" : {
+        "width" : 0,
+        "height" : 462
+      },
+      "dimension" : 0,
+      "children" : [ {
+        "type" : "splitLayout",
+        "preferredSize" : {
+          "width" : 572,
+          "height" : 0
+        },
+        "dimension" : 1,
+        "children" : [ {
+          "type" : "splitLayout",
+          "preferredSize" : {
+            "width" : 0,
+            "height" : 310
+          },
+          "dimension" : 0,
+          "children" : [ {
+            "type" : "splitLayout",
+            "preferredSize" : {
+              "width" : 0,
+              "height" : 0
+            },
+            "dimension" : 1,
+            "children" : [ {
+              "type" : "tabLayout",
+              "preferredSize" : {
+                "width" : 0,
+                "height" : 83
+              },
+              "tabs" : [ {
+                "id" : "query-MRGPM",
+                "visible" : true
+              } ],
+              "selected" : 0
+            }, {
+              "type" : "tabLayout",
+              "preferredSize" : {
+                "width" : 234,
+                "height" : 211
+              },
+              "tabs" : [ {
+                "id" : "table-BKJT6",
+                "visible" : true
+              }, {
+                "id" : "vis-I9PV9",
+                "visible" : true
+              } ],
+              "selected" : 1
+            } ]
+          } ]
+        } ]
+      } ]
+    }, {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 0,
+        "height" : 772
+      },
+      "tabs" : [ {
+        "id" : "query-7JBGC",
+        "visible" : true
+      }, {
+        "id" : "table-RZH8Y",
+        "visible" : true
+      } ],
+      "selected" : 1
+    } ]
+  }
+}

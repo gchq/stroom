@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,15 +27,12 @@ import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.pipeline.shared.data.PipelineElements;
 import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelineLink;
-import stroom.pipeline.shared.data.PipelineLinks;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
-import stroom.util.shared.NullSafe;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
@@ -51,6 +48,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
 
@@ -144,6 +143,38 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
         }
 
         return new PipelineLayer(pipelineLayer.getSourcePipeline(), pipelineData);
+    }
+
+    public PipelineElement renameElement(
+            final PipelineElement element,
+            final String newName) throws PipelineModelException {
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineLayer.getPipelineData());
+
+        builder.getElements().getAddList().remove(element);
+        final PipelineElement renamedElement = new PipelineElement(element.getId(), element.getType(),
+                newName, element.getDescription());
+        builder.addElement(renamedElement);
+
+        pipelineLayer = new PipelineLayer(pipelineLayer.getSourcePipeline(), builder.build());
+        buildCombinedData();
+        refresh();
+
+        return renamedElement;
+    }
+
+    public PipelineElement changeElementDescription(final PipelineElement element, final String newDescription)
+            throws PipelineModelException {
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineLayer.getPipelineData());
+        builder.getElements().getAddList().remove(element);
+        final PipelineElement updatedElement = new PipelineElement(element.getId(), element.getType(),
+                element.getName(), newDescription);
+
+        builder.addElement(updatedElement);
+        pipelineLayer = new PipelineLayer(pipelineLayer.getSourcePipeline(), builder.build());
+        buildCombinedData();
+        refresh();
+
+        return updatedElement;
     }
 
     private void buildCombinedData() throws PipelineModelException {
@@ -322,7 +353,9 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
 
     public PipelineElement addElement(final PipelineElement parent,
                                       final PipelineElementType elementType,
-                                      final String id) throws PipelineModelException {
+                                      final String id,
+                                      final String name,
+                                      final String description) throws PipelineModelException {
         final PipelineElement element;
 
         if (id == null || id.isEmpty()) {
@@ -337,7 +370,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
             }
 
             PipelineData pipelineData = pipelineLayer.getPipelineData();
-            element = PipelineDataUtil.createElement(id, elementType.getType());
+            element = PipelineDataUtil.createElement(id, elementType.getType(), name, description);
             if (pipelineData.getRemovedElements().contains(element)) {
                 throw new PipelineModelException("Attempt to add an element with an id that matches a hidden " +
                                                  "element. Restore the existing element if required or change " +
@@ -578,5 +611,15 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     @Override
     public void fireEvent(final GwtEvent<?> event) {
         eventBus.fireEventFromSource(event, this);
+    }
+
+    public boolean hasElement(final PipelineElement element) {
+        return getCombinedData().getElements().containsValue(element);
+    }
+
+    public List<PipelineElement> getPipelineElements(final Predicate<PipelineElement> predicate) {
+        return getCombinedData().getElements().values().stream()
+                .filter(predicate)
+                .collect(Collectors.toList());
     }
 }

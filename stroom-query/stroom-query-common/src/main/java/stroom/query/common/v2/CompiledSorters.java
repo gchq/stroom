@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.common.v2;
 
 import stroom.query.api.Column;
@@ -70,31 +86,29 @@ public class CompiledSorters<E extends Item> {
         for (int depth = 0; depth <= maxDepth; depth++) {
             for (int columnIndex = 0; columnIndex < columns.size(); columnIndex++) {
                 final Column originalColumn = columns.get(columnIndex);
-                if (originalColumn.getExpression() != null) {
-                    final Column newColumn = columnMap.getNewColumnFromOriginalColumn(originalColumn);
-                    if (newColumn != null) {
-                        if (newColumn.getSort() != null &&
-                            (newColumn.getGroup() == null || newColumn.getGroup() >= depth)) {
-                            if (limitResultCount) {
-                                throw new RuntimeException("Attempt to add sort to page limited results.\n" +
-                                                           "Please revert change or run a new query.");
-                            }
-
-                            // Get an appropriate comparator.
-                            final Comparator<Val> comparator = ComparatorFactory.create(newColumn);
-
-                            // Remember sorting info.
-                            final Sort sort = newColumn.getSort();
-                            final CompiledSort compiledSort = new CompiledSort(columnIndex, sort, comparator);
-
-                            CompiledSorter<E> sorter = sorters[depth];
-                            if (sorter == null) {
-                                sorter = new CompiledSorter<>();
-                                sorters[depth] = sorter;
-                            }
-
-                            sorter.add(compiledSort);
+                final Column newColumn = columnMap.getNewColumnFromOriginalColumn(originalColumn);
+                if (newColumn != null) {
+                    if (newColumn.getSort() != null &&
+                        (newColumn.getGroup() == null || newColumn.getGroup() >= depth)) {
+                        if (limitResultCount) {
+                            throw new RuntimeException("Attempt to add sort to page limited results.\n" +
+                                                       "Please revert change or run a new query.");
                         }
+
+                        // Get an appropriate comparator.
+                        final Comparator<Val> comparator = ComparatorFactory.create(newColumn);
+
+                        // Remember sorting info.
+                        final Sort sort = newColumn.getSort();
+                        final CompiledSort compiledSort = new CompiledSort(columnIndex, sort, comparator);
+
+                        CompiledSorter<E> sorter = sorters[depth];
+                        if (sorter == null) {
+                            sorter = new CompiledSorter<>();
+                            sorters[depth] = sorter;
+                        }
+
+                        sorter.add(compiledSort);
                     }
                 }
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,15 @@
 
 package stroom.util.io;
 
+import stroom.test.common.DirectorySnapshot;
+import stroom.test.common.DirectorySnapshot.PathFlag;
+import stroom.test.common.DirectorySnapshot.Snapshot;
+import stroom.test.common.TestUtil;
 import stroom.util.concurrent.SimpleExecutor;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import org.apache.commons.lang3.RandomUtils;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -162,9 +165,85 @@ class TestFileUtil {
 
         final long fileCount = FileUtil.deepListContents(tempDir, false, isFilePredicate)
                 .size();
-        Assertions.assertThat(fileCount)
+        assertThat(fileCount)
                 .isEqualTo(6);
-        Assertions.assertThat(totalSize)
+        assertThat(totalSize)
                 .hasValue(6L * "XFileX".getBytes(StandardCharsets.UTF_8).length);
+    }
+
+    @Test
+    void testDeleteEmptyDirs_alreadyEmpty(@TempDir final Path tempDir) throws IOException {
+        final int cnt = FileUtil.deleteEmptyDirs(tempDir);
+        // Not deleted
+        assertThat(tempDir)
+                .isDirectory()
+                .exists();
+
+        assertThat(cnt)
+                .isZero();
+    }
+
+    @Test
+    void testDeleteEmptyDirs_justFiles(@TempDir final Path tempDir) throws IOException {
+        TestUtil.createFiles(
+                tempDir.resolve("file1"),
+                tempDir.resolve("file2"),
+                tempDir.resolve("file3"),
+                tempDir.resolve("file4"),
+                tempDir.resolve("file5"));
+        final int cnt = FileUtil.deleteEmptyDirs(tempDir);
+        // Not deleted
+        assertThat(tempDir)
+                .isDirectory()
+                .exists();
+
+        assertThat(cnt)
+                .isZero();
+    }
+
+    @Test
+    void testDeleteEmptyDirs(@TempDir final Path tempDir) throws IOException {
+        Files.createDirectories(tempDir.resolve("emptyDir1/emptySubDir1/emptySubSubDir1"));
+        Files.createDirectories(tempDir.resolve("emptyDir1/emptySubDir1/emptySubSubDir2"));
+        Files.createDirectories(tempDir.resolve("emptyDir1/emptySubDir2"));
+        Files.createDirectories(tempDir.resolve("nonEmptyDir1/emptySubDir3"));
+        Files.createDirectories(tempDir.resolve("nonEmptyDir1/nonEmptySubDir2/emptySubSubDir3"));
+        TestUtil.createFiles(
+                tempDir.resolve("nonEmptyDir1/nonEmptySubDir2/nonEmptySubSubDir2/file1"),
+                tempDir.resolve("nonEmptyDir1/nonEmptySubDir2/nonEmptySubSubDir2/file2"),
+                tempDir.resolve("nonEmptyDir1/nonEmptySubDir2/file3"),
+                tempDir.resolve("nonEmptyDir1/file4"),
+                tempDir.resolve("nonEmptyDir2/file5"),
+                tempDir.resolve("nonEmptyDir3/nonEmptySubDir3/file6"));
+        Files.createDirectories(tempDir.resolve("emptyDir2"));
+        Files.createDirectories(tempDir.resolve("emptyDir3"));
+
+        Snapshot snapshot = DirectorySnapshot.of(tempDir);
+        LOGGER.debug("Snapshot of {}\n{}", tempDir, snapshot);
+
+        final int cnt = FileUtil.deleteEmptyDirs(tempDir);
+
+        snapshot = DirectorySnapshot.of(tempDir);
+        LOGGER.debug("Snapshot of {}\n{}", tempDir, snapshot);
+
+        // Not deleted
+        assertThat(tempDir)
+                .isDirectory()
+                .exists();
+
+        assertThat(cnt)
+                .isEqualTo(9);
+
+        assertThat(snapshot.stream()
+                .filter(pathSnapshot ->
+                        pathSnapshot.flags().contains(PathFlag.REGULAR_FILE))
+                .count())
+                .isEqualTo(6);
+
+        assertThat(snapshot.stream()
+                .filter(pathSnapshot ->
+                        pathSnapshot.flags().contains(PathFlag.DIRECTORY))
+                .count())
+                .isEqualTo(6);
     }
 }

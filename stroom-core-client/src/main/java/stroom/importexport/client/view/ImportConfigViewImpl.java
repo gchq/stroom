@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,10 @@
 package stroom.importexport.client.view;
 
 import stroom.importexport.client.presenter.ImportConfigPresenter.ImportConfigView;
+import stroom.widget.form.client.CustomFileUpload;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.FileUpload;
-import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
@@ -29,10 +28,9 @@ import com.gwtplatform.mvp.client.ViewImpl;
 public class ImportConfigViewImpl extends ViewImpl implements ImportConfigView {
 
     private final Widget widget;
+
     @UiField
-    FormPanel form;
-    @UiField
-    FileUpload fileUpload;
+    CustomFileUpload fileUpload;
 
     @Inject
     public ImportConfigViewImpl(final Binder binder) {
@@ -46,17 +44,12 @@ public class ImportConfigViewImpl extends ViewImpl implements ImportConfigView {
 
     @Override
     public void focus() {
-        fileUpload.setFocus(true);
+        fileUpload.focus();
     }
 
     @Override
-    public FormPanel getForm() {
-        return form;
-    }
-
-    @Override
-    public String getFilename() {
-        return fileUpload.getFilename();
+    public CustomFileUpload getFileUpload() {
+        return fileUpload;
     }
 
     public interface Binder extends UiBinder<Widget, ImportConfigViewImpl> {

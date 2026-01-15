@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.data.retention.impl;
@@ -33,6 +32,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 class TestDataRetentionPolicySerialisation {
 
@@ -53,7 +53,10 @@ class TestDataRetentionPolicySerialisation {
         list.add(createRule(2, expression, 1, TimeUnit.MONTHS));
         list.add(createRule(3, expression, 2, TimeUnit.WEEKS));
 
-        final DataRetentionRules policies = new DataRetentionRules(list);
+        final DataRetentionRules policies = DataRetentionRules.builder()
+                .uuid(UUID.randomUUID().toString())
+                .rules(list)
+                .build();
 
         final String json = JsonUtil.getMapper().writeValueAsString(policies);
 

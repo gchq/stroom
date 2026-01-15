@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -261,7 +261,7 @@ public class SteppingController {
         final LoggingErrorReceiver errorReceiver = getErrorReceiver();
         for (final ElementMonitor monitor : monitors) {
             final ElementData elementData = monitor.getElementData(errorReceiver, textRange);
-            stepData.getElementMap().put(monitor.getElementId(), elementData);
+            stepData.getElementMap().put(monitor.getElementId().getId(), elementData);
         }
 
         return stepData;

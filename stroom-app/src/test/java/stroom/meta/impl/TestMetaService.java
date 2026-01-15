@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.meta.impl;
@@ -24,6 +23,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.index.VolumeTestConfigModule;
+import stroom.langchain.impl.MockOpenAIModule;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaSecurityFilter;
 import stroom.meta.api.MetaService;
@@ -69,6 +69,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
+@IncludeModule(MockOpenAIModule.class)
 //@IncludeModule(GlobalConfigBootstrapModule.class)
 //@IncludeModule(GlobalConfigDaoModule.class)
 //@IncludeModule(DirProvidersModule.class)

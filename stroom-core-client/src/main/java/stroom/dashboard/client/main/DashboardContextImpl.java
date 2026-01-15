@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.main.DashboardContextChangeEvent.Handler;
@@ -108,10 +124,10 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
         return combinedParams;
     }
 
-    public SafeHtml toSafeHtml() {
+    public SafeHtml toSafeHtml(final boolean showInsert) {
         final TableBuilder tb = new TableBuilder();
         final List<ComponentState> componentStates = getComponentStates();
-        printContext(tb, componentStates);
+        printContext(tb, componentStates, showInsert);
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
         htmlBuilder.div(tb::write, Attribute.className("infoTable"));
         return htmlBuilder.toSafeHtml();
@@ -222,13 +238,15 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
     }
 
     private void printContext(final TableBuilder tb,
-                              final List<ComponentState> componentStates) {
+                              final List<ComponentState> componentStates,
+                              final boolean showInsert) {
         if (componentStates != null) {
             for (final ComponentState componentState : componentStates) {
                 tb.row(TableCell.header(componentState.name));
                 for (final Param param : componentState.params) {
                     final String key = ParamUtil.create(param.getKey());
-                    tb.row(TableCell.data(CopyTextUtil.render(key)), TableCell.data(param.getValue()));
+                    tb.row(TableCell.data(CopyTextUtil.render(key, showInsert)),
+                            TableCell.data(CopyTextUtil.render(param.getValue(), showInsert)));
                 }
 
                 if (NullSafe.hasItems(componentState.selectionList)) {
@@ -239,7 +257,9 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                         }
                         for (final Param param : selection) {
                             final String key = ParamUtil.create(param.getKey());
-                            tb.row(TableCell.data(CopyTextUtil.render(key)), TableCell.data(param.getValue()));
+
+                            tb.row(TableCell.data(CopyTextUtil.render(key, showInsert)),
+                                    TableCell.data(CopyTextUtil.render(param.getValue(), showInsert)));
                         }
                         first = false;
                     }
@@ -261,7 +281,8 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
                             }
 
                             final String key = ParamUtil.create(filter.id);
-                            tb.row(TableCell.data(CopyTextUtil.render(key)), TableCell.data(value));
+                            tb.row(TableCell.data(CopyTextUtil.render(key, showInsert)),
+                                    TableCell.data(CopyTextUtil.render(value, showInsert)));
                         }
                     }
                 }
@@ -342,7 +363,7 @@ public class DashboardContextImpl implements HasHandlers, DashboardContext {
 
                             } else {
                                 final String value = term.getValue();
-                                final String resolved = ParamUtil.replaceParameters(term.getValue(),
+                                final String resolved = ParamUtil.replaceTermValueParameters(term.getValue(),
                                         v -> getParamValue(v, componentStates), keepUnmatched);
                                 if (NullSafe.isNonBlankString(resolved)) {
                                     if (Objects.equals(value, resolved)) {

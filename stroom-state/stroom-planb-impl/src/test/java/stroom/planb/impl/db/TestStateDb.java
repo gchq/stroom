@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,11 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.planb.impl.db;
 
+import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.docref.DocRef;
@@ -77,12 +77,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.planb.impl.db.StateValueTestUtil.makeString;
 
 class TestStateDb {
 
@@ -125,9 +125,9 @@ class TestStateDb {
             new KeyFunction(KeyType.VARIABLE.name(), KeyType.VARIABLE,
                     i -> KeyPrefix.create(ValString.create("test-" + i))),
             new KeyFunction("Variable mid", KeyType.VARIABLE,
-                    i -> KeyPrefix.create(ValString.create(makeString(400)))),
+                    i -> KeyPrefix.create(ValString.create(StateValueTestUtil.makeString(400)))),
             new KeyFunction("Variable long", KeyType.VARIABLE,
-                    i -> KeyPrefix.create(ValString.create(makeString(1000)))));
+                    i -> KeyPrefix.create(ValString.create(StateValueTestUtil.makeString(1000)))));
 
     @Test
     void testReadWrite(@TempDir final Path tempDir) {
@@ -206,8 +206,10 @@ class TestStateDb {
 
         final String path = rootDir.toAbsolutePath().toString();
         final PlanBConfig planBConfig = new PlanBConfig(path);
+        final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         final ShardManager shardManager = new ShardManager(
-                new ByteBuffers(new ByteBufferFactoryImpl()),
+                new ByteBuffers(byteBufferFactory),
+                byteBufferFactory,
                 planBDocCache,
                 planBDocStore,
                 null,
@@ -256,7 +258,7 @@ class TestStateDb {
                 DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(2);
-            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(12);
+            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(14);
         }
 
         // Try deletion.
@@ -270,7 +272,7 @@ class TestStateDb {
                 true)) {
             assertThat(db.count()).isEqualTo(0);
             System.err.println(db.getInfoString());
-            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(12);
+            assertThat(db.getInfo().env().dbNames().size()).isEqualTo(14);
         }
 
         // Try compaction.
@@ -284,7 +286,7 @@ class TestStateDb {
                 DOC,
                 true)) {
             assertThat(db.count()).isEqualTo(0);
-            assertThat(db.getInfo().env().stat().entries).isEqualTo(12);
+            assertThat(db.getInfo().env().stat().entries).isEqualTo(14);
         }
     }
 
@@ -392,7 +394,10 @@ class TestStateDb {
             ZipUtil.zip(zipFile, partPath);
             FileUtil.deleteDir(partPath);
             final String fileHash = FileHashUtil.hash(zipFile);
-            mergeProcessor.add(new FileDescriptor(System.currentTimeMillis(), 1, fileHash), zipFile, false);
+            mergeProcessor.add(new FileDescriptor(
+                    System.currentTimeMillis(),
+                    1,
+                    fileHash), zipFile, false);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -622,7 +627,7 @@ class TestStateDb {
         tests.add(createStaticKeyTest(
                 "Hash lookup key (long)",
                 KeyType.HASH_LOOKUP,
-                KeyPrefix.create(ValString.create(makeString(800))),
+                KeyPrefix.create(ValString.create(StateValueTestUtil.makeString(800))),
                 iterations,
                 read));
 
@@ -635,13 +640,13 @@ class TestStateDb {
         tests.add(createStaticKeyTest(
                 "Variable string uid lookup key",
                 KeyType.VARIABLE,
-                KeyPrefix.create(ValString.create(makeString(200))),
+                KeyPrefix.create(ValString.create(StateValueTestUtil.makeString(200))),
                 iterations,
                 read));
         tests.add(createStaticKeyTest(
                 "Variable string hash lookup key",
                 KeyType.VARIABLE,
-                KeyPrefix.create(ValString.create(makeString(800))),
+                KeyPrefix.create(ValString.create(StateValueTestUtil.makeString(800))),
                 iterations,
                 read));
         return tests;
@@ -778,7 +783,7 @@ class TestStateDb {
     }
 
     private static PlanBDoc getDoc(final StateSettings settings) {
-        return PlanBDoc.builder().name("test").settings(settings).build();
+        return PlanBDoc.builder().uuid(UUID.randomUUID().toString()).name("test").settings(settings).build();
     }
 
     private record KeyFunction(String description,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,14 +32,12 @@ public class AnalyticProcessingPresenter
     @Inject
     public AnalyticProcessingPresenter(final EventBus eventBus,
                                        final AnalyticProcessingView view,
-                                       final DocSelectionBoxPresenter errorFeedPresenter,
                                        final ScheduledProcessingPresenter scheduledProcessingPresenter,
                                        final TableBuilderProcessingPresenter tableBuilderProcessingPresenter,
                                        final StreamingProcessingPresenter streamingProcessingPresenter,
                                        final UiConfigCache uiConfigCache) {
         super(eventBus,
                 view,
-                errorFeedPresenter,
                 scheduledProcessingPresenter,
                 tableBuilderProcessingPresenter,
                 streamingProcessingPresenter,
@@ -54,7 +52,6 @@ public class AnalyticProcessingPresenter
         return analyticRuleDoc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
-                .errorFeed(errorFeedPresenter.getSelectedEntityReference())
                 .analyticProcessType(getView().getProcessingType())
                 .analyticProcessConfig(writeProcessConfig())
                 .build();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,6 +95,12 @@ public interface StandardHeaderArguments {
      * To have ReceiptId appended to it by EACH proxy/stroom instance on receipt.
      */
     String RECEIPT_ID_PATH = "ReceiptIdPath";
+
+    /**
+     * The number of the Data Receipt rule that matched the data, or 'NO_MATCH' if
+     * no rule matched.
+     */
+    String DATA_RECEIPT_RULE = "DataReceiptRule";
     /**
      * The unique message from an AWS SQS queue.
      */

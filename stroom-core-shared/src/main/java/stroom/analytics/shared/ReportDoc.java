@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package stroom.analytics.shared;
 
-import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.DocumentType;
@@ -46,14 +45,9 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
     @JsonProperty
     private final ReportSettings reportSettings;
 
-    public ReportDoc() {
-        reportSettings = new ReportSettings(DownloadSearchResultFileType.EXCEL);
-    }
-
     @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
-    public ReportDoc(@JsonProperty("type") final String type,
-                     @JsonProperty("uuid") final String uuid,
+    public ReportDoc(@JsonProperty("uuid") final String uuid,
                      @JsonProperty("name") final String name,
                      @JsonProperty("version") final String version,
                      @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -61,6 +55,7 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                      @JsonProperty("createUser") final String createUser,
                      @JsonProperty("updateUser") final String updateUser,
                      @JsonProperty("description") final String description,
+                     @JsonProperty("includeRuleDocumentation") final Boolean includeRuleDocumentation,
                      @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
                      @JsonProperty("parameters") final List<Param> parameters,
                      @JsonProperty("timeRange") final TimeRange timeRange,
@@ -74,8 +69,7 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                      @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
                      @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
                      @JsonProperty("reportSettings") final ReportSettings reportSettings) {
-        super(type,
-                uuid,
+        super(TYPE, uuid,
                 name,
                 version,
                 createTimeMs,
@@ -83,6 +77,7 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                 createUser,
                 updateUser,
                 description,
+                includeRuleDocumentation,
                 languageVersion,
                 parameters,
                 timeRange,
@@ -96,6 +91,13 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                 suppressDuplicateNotifications,
                 duplicateNotificationConfig);
         this.reportSettings = reportSettings;
+    }
+
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(TYPE);
     }
 
     public ReportSettings getReportSettings() {
@@ -129,12 +131,12 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                '}';
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
     public Builder copy() {
         return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 
     public static class Builder extends AbstractAnalyticRuleDocBuilder<ReportDoc, Builder> {
@@ -162,7 +164,6 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
         @Override
         public ReportDoc build() {
             return new ReportDoc(
-                    type,
                     uuid,
                     name,
                     version,
@@ -171,6 +172,7 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                     createUser,
                     updateUser,
                     description,
+                    includeRuleDocumentation,
                     languageVersion,
                     parameters,
                     timeRange,

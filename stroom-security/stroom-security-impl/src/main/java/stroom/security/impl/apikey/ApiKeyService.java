@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl.apikey;
 
 import stroom.cache.api.CacheManager;
@@ -5,24 +21,28 @@ import stroom.cache.api.StroomCache;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
+import stroom.security.common.impl.ApiKeyGenerator;
 import stroom.security.common.impl.JwtUtil;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.BasicUserIdentity;
 import stroom.security.impl.HashedApiKeyParts;
 import stroom.security.impl.UserCache;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.AppPermissionSet;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashAlgorithm;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.User;
+import stroom.security.shared.VerifyApiKeyRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.UserDesc;
 import stroom.util.shared.UserRef;
 import stroom.util.string.Base58;
 
@@ -54,13 +74,18 @@ import java.util.stream.Stream;
 public class ApiKeyService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ApiKeyService.class);
+    private static final AppPermissionSet REQUIRED_PERMISSION_SET = AppPermissionSet.oneOf(
+            AppPermission.VERIFY_API_KEY,
+            AppPermission.STROOM_PROXY);
+
     private static final String CACHE_NAME = "API Key cache";
     private static final int MAX_CREATION_ATTEMPTS = 100;
     private static final Map<HashAlgorithm, ApiKeyHasher> API_KEY_HASHER_MAP = Stream.of(
                     new ShaThree256ApiKeyHasher(),
                     new ShaTwo256ApiKeyHasher(),
                     new BCryptApiKeyHasher(),
-                    new Argon2ApiKeyHasher())
+                    new Argon2ApiKeyHasher(),
+                    new ShaTwo512ApiKeyHasher())
             .collect(Collectors.toMap(ApiKeyHasher::getType, Function.identity()));
 
     static {
@@ -136,13 +161,30 @@ public class ApiKeyService {
         }
     }
 
+    public Optional<UserDesc> verifyApiKey(final VerifyApiKeyRequest request) {
+        return securityContext.secureResult(REQUIRED_PERMISSION_SET, () -> {
+            final Optional<UserDesc> optUserDesc = fetchVerifiedIdentity(request.getApiKey())
+                    .filter(userIdentity -> {
+                        final AppPermissionSet requiredAppPermissions = request.getRequiredAppPermissions();
+                        if (AppPermissionSet.isEmpty(requiredAppPermissions)) {
+                            return true;
+                        } else {
+                            return securityContext.hasAppPermissions(userIdentity, requiredAppPermissions);
+                        }
+                    })
+                    .map(UserIdentity::asUserDesc);
+            LOGGER.debug("verifyApiKey() - request: {}, optUserDesc: {}", request, optUserDesc);
+            return optUserDesc;
+        });
+    }
+
     /**
      * Fetch the verified {@link UserIdentity} for the passed API key.
      * If the hash of the API key matches one in the database and that key is enabled
      * and not expired then the {@link UserIdentity} will be returned, else an empty {@link Optional}
      * is returned.
      */
-    public Optional<UserIdentity> fetchVerifiedIdentity(final String apiKeyStr) {
+    Optional<UserIdentity> fetchVerifiedIdentity(final String apiKeyStr) {
         if (NullSafe.isBlankString(apiKeyStr)) {
             return Optional.empty();
         } else {
@@ -236,7 +278,8 @@ public class ApiKeyService {
         final CreateHashedApiKeyRequest request = ensureExpireTimeEpochMs(createHashedApiKeyRequest);
 
         final String apiKeyStr = apiKeyGenerator.generateRandomApiKey();
-        final HashAlgorithm hashAlgorithm = Objects.requireNonNull(createHashedApiKeyRequest.getHashAlgorithm());
+        final HashAlgorithm hashAlgorithm = Objects.requireNonNull(
+                createHashedApiKeyRequest.getHashAlgorithm());
         final String apiKeyHash = computeApiKeyHash(apiKeyStr, hashAlgorithm);
         final HashedApiKeyParts hashedApiKeyParts = new HashedApiKeyParts(
                 apiKeyHash,
@@ -358,7 +401,9 @@ public class ApiKeyService {
         return apiKeyHasher;
     }
 
-    boolean verifyApiKeyHash(final String apiKeyStr, final String hash, final HashAlgorithm hashAlgorithm) {
+    boolean verifyApiKeyHash(final String apiKeyStr,
+                             final String hash,
+                             final HashAlgorithm hashAlgorithm) {
         Objects.requireNonNull(apiKeyStr);
         Objects.requireNonNull(hash);
         Objects.requireNonNull(hashAlgorithm);
@@ -420,6 +465,10 @@ public class ApiKeyService {
     // --------------------------------------------------------------------------------
 
 
+    /**
+     * These hashers were written before {@link stroom.security.api.HashFunction} and differ
+     * slightly (even though they both share the same, so they can stay here just for api key use.
+     */
     private interface ApiKeyHasher {
 
         String hash(String apiKeyStr);
@@ -465,6 +514,23 @@ public class ApiKeyService {
         @Override
         public HashAlgorithm getType() {
             return HashAlgorithm.SHA2_256;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class ShaTwo512ApiKeyHasher implements ApiKeyHasher {
+
+        @Override
+        public String hash(final String value) {
+            return DigestUtils.sha512Hex(value);
+        }
+
+        @Override
+        public HashAlgorithm getType() {
+            return HashAlgorithm.SHA2_512;
         }
     }
 
@@ -537,6 +603,7 @@ public class ApiKeyService {
             // due to use in bitcoin.
             return Base58.encode(result);
         }
+
 
         @Override
         public HashAlgorithm getType() {

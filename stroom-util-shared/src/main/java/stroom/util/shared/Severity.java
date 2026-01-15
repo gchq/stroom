@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,7 @@ public enum Severity implements HasDisplayValue {
     INFO(1, "INFO", "Information"),
     WARNING(2, "WARN", "Warnings"),
     ERROR(3, "ERROR", "Errors"),
-    FATAL_ERROR(4, "FATAL", "Fatal Errors"),
-    ;
+    FATAL_ERROR(4, "FATAL", "Fatal Errors");
 
     /**
      * Comparator for comparing severities with nulls first then lowest to highest severity
@@ -104,7 +103,7 @@ public enum Severity implements HasDisplayValue {
         return summaryValue;
     }
 
-    private int getId() {
+    public int getId() {
         return id;
     }
 

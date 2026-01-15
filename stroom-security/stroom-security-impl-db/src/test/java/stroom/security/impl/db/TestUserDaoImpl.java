@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl.db;
 
 import stroom.dictionary.shared.DictionaryDoc;
@@ -19,6 +35,7 @@ import stroom.util.shared.UserInfo;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import jakarta.inject.Inject;
+import org.jooq.exception.IntegrityConstraintViolationException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,6 +49,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestUserDaoImpl {
 
@@ -495,6 +513,86 @@ class TestUserDaoImpl {
                 .isEmpty();
 
         assertUser2Perms.run();
+    }
+
+    @Test
+    void testCopyGroupsAndPermissions() {
+        // given we have two users with app and doc permissions and two groups containing one user each
+        final String docUuid1 = "doc1uuid";
+        final String docUuid2 = "doc2uuid";
+        final User user1 = createUser("user1", false);
+        final User user2 = createUser("user2", false);
+        final User group1 = createUser("group1", true);
+        final User group2 = createUser("group2", true);
+
+        userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
+        userDao.addUserToGroup(user2.getUuid(), group2.getUuid());
+
+        appPermissionDao.addPermission(user1.getUuid(), AppPermission.STEPPING_PERMISSION);
+        appPermissionDao.addPermission(user1.getUuid(), AppPermission.CHANGE_OWNER_PERMISSION);
+        appPermissionDao.addPermission(user2.getUuid(), AppPermission.CHANGE_OWNER_PERMISSION);
+        appPermissionDao.addPermission(user2.getUuid(), AppPermission.MANAGE_CACHE_PERMISSION);
+
+        documentPermissionDao.setDocumentUserPermission(docUuid1, user1.getUuid(), DocumentPermission.OWNER);
+        documentPermissionDao.setDocumentUserPermission(docUuid2, user1.getUuid(), DocumentPermission.VIEW);
+        documentPermissionDao.setDocumentUserCreatePermissions(
+                docUuid1, user1.getUuid(), Set.of(DictionaryDoc.TYPE, ScriptDoc.TYPE));
+        documentPermissionDao.setDocumentUserCreatePermissions(
+                docUuid2, user1.getUuid(), Set.of(DictionaryDoc.TYPE, ScriptDoc.TYPE));
+
+        assertThat(appPermissionDao.getPermissionsForUser(user1.getUuid()).size()).isEqualTo(2);
+        assertThat(appPermissionDao.getPermissionsForUser(user2.getUuid()).size()).isEqualTo(2);
+        assertThat(userDao.findUsersInGroup(group1.getUuid(), new FindUserCriteria()).size()).isEqualTo(1);
+        assertThat(userDao.findUsersInGroup(group2.getUuid(), new FindUserCriteria()).size()).isEqualTo(1);
+
+        assertThat(documentPermissionDao.getPermissionsForUser(user2.getUuid()).getPermissions()).isEmpty();
+        assertThat(documentPermissionDao.getDocumentUserCreatePermissions(docUuid1, user2.getUuid())).isEmpty();
+        assertThat(documentPermissionDao.getDocumentUserCreatePermissions(docUuid2, user2.getUuid())).isEmpty();
+
+        // when we copy the groups and permissions from one user to the other
+        userDao.copyGroupsAndPermissions(user1.getUuid(), user2.getUuid());
+
+        // then the 'to' user is found in the group of the 'from' user
+        final List<User> usersInGroup1 = userDao.findUsersInGroup(group1.getUuid(), new FindUserCriteria()).getValues();
+        assertThat(usersInGroup1).containsExactlyInAnyOrder(user1, user2);
+
+        // and the 'to' user is still in it original group
+        assertThat(userDao.findGroupsForUser(user2.getUuid(), new FindUserCriteria()).getValues())
+                .containsExactlyInAnyOrder(group1, group2);
+
+        // and the app and doc permissions have been copied to the user
+        assertThat(appPermissionDao.getPermissionsForUser(user1.getUuid()).size()).isEqualTo(2);
+
+        final Set<AppPermission> user2AppPermissions = appPermissionDao.getPermissionsForUser(user2.getUuid());
+        assertThat(user2AppPermissions).containsExactlyInAnyOrder(AppPermission.STEPPING_PERMISSION,
+                AppPermission.CHANGE_OWNER_PERMISSION, AppPermission.MANAGE_CACHE_PERMISSION);
+
+        assertThat(documentPermissionDao.getPermissionsForUser(user2.getUuid()).getPermissions())
+                .containsExactlyInAnyOrderEntriesOf(Map.of(
+                        docUuid1, DocumentPermission.OWNER,
+                        docUuid2, DocumentPermission.VIEW));
+        assertThat(documentPermissionDao.getDocumentUserCreatePermissions(docUuid1, user2.getUuid()))
+                .containsExactlyInAnyOrder(
+                        DictionaryDoc.TYPE,
+                        ScriptDoc.TYPE);
+        assertThat(documentPermissionDao.getDocumentUserCreatePermissions(docUuid2, user2.getUuid()))
+                .containsExactlyInAnyOrder(
+                        DictionaryDoc.TYPE,
+                        ScriptDoc.TYPE);
+    }
+
+    @Test
+    void testCopyGroupsAndPermissionsThrowsException() {
+        // given a user in a group
+        final User user1 = createUser("user1", false);
+        final User group1 = createUser("group1", true);
+
+        userDao.addUserToGroup(user1.getUuid(), group1.getUuid());
+
+        // when we copy the groups and permissions to a user that doesnt exist
+        // then an exception is thrown
+        assertThatThrownBy(() -> userDao.copyGroupsAndPermissions(user1.getUuid(), "doesnotexist"))
+                .isInstanceOf(IntegrityConstraintViolationException.class);
     }
 
     private User createUser(final String name, final boolean group) {

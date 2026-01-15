@@ -1,31 +1,44 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app;
 
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.NullSafe;
 import stroom.util.time.StroomDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.dropwizard.validation.ValidationMethod;
 import jakarta.validation.constraints.NotNull;
-
-import java.util.Collections;
-import java.util.Map;
 
 @JsonPropertyOrder(alphabetic = true)
 public class ContentSyncConfig extends AbstractConfig implements IsProxyConfig {
 
     private final boolean isContentSyncEnabled;
-    private final Map<String, String> upstreamUrl;
+    private final String receiveDataRulesUrl;
     private final StroomDuration syncFrequency;
     private final String apiKey;
 
     public ContentSyncConfig() {
         isContentSyncEnabled = false;
-        upstreamUrl = null;
+        receiveDataRulesUrl = null;
         syncFrequency = StroomDuration.ofMinutes(1);
         apiKey = null;
     }
@@ -33,13 +46,11 @@ public class ContentSyncConfig extends AbstractConfig implements IsProxyConfig {
     @SuppressWarnings("unused")
     @JsonCreator
     public ContentSyncConfig(@JsonProperty("contentSyncEnabled") final boolean isContentSyncEnabled,
-                             @JsonProperty("upstreamUrl") final Map<String, String> upstreamUrl,
+                             @JsonProperty("receiveDataRulesUrl") final String receiveDataRulesUrl,
                              @JsonProperty("syncFrequency") final StroomDuration syncFrequency,
                              @JsonProperty("apiKey") final String apiKey) {
         this.isContentSyncEnabled = isContentSyncEnabled;
-        this.upstreamUrl = upstreamUrl != null
-                ? Collections.unmodifiableMap(upstreamUrl)
-                : null;
+        this.receiveDataRulesUrl = receiveDataRulesUrl;
         this.syncFrequency = syncFrequency;
         this.apiKey = apiKey;
     }
@@ -49,11 +60,9 @@ public class ContentSyncConfig extends AbstractConfig implements IsProxyConfig {
         return isContentSyncEnabled;
     }
 
-    @JsonPropertyDescription("A map of document types (e.g. 'Dictionary' or 'ReceiveDataRuleSet') to the URLs. " +
-            "Content for each type will be downloaded from the associated URL.")
-    @JsonProperty
-    public Map<String, String> getUpstreamUrl() {
-        return upstreamUrl;
+    @JsonProperty("receiveDataRulesUrl")
+    public String getReceiveDataRulesUrl() {
+        return receiveDataRulesUrl;
     }
 
     @NotNull
@@ -72,7 +81,7 @@ public class ContentSyncConfig extends AbstractConfig implements IsProxyConfig {
     @ValidationMethod(message = "Content sync is enabled but no upstreamUrls have been provided in 'upstreamUrl'")
     public boolean isUpstreamUrlPresent() {
         return !isContentSyncEnabled
-                || (upstreamUrl != null && !upstreamUrl.isEmpty());
+               || NullSafe.isNonBlankString(receiveDataRulesUrl);
     }
 
     public void validateConfiguration() {

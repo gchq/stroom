@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.meta.api;
 
 import stroom.util.date.DateUtil;
@@ -9,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -17,25 +34,45 @@ import java.util.regex.Pattern;
  */
 public class AttributeMap extends CIStringHashMap {
 
+    // TODO change AttributeMap to not extend, and instead implement Map<CIKey, String> and delegate to
+    //  a Map<CIKey, String>.
+    //  See changes to AttributeMap, AttributeMapUtil and their tests in the branch
+    //  gh-4365-stroomql-case-sens-fields-7.6
+
     // Delimiter within a value
     static final String VALUE_DELIMITER = ",";
     static final Pattern VALUE_DELIMITER_PATTERN = Pattern.compile(Pattern.quote(VALUE_DELIMITER));
 
     private final boolean overrideEmbeddedMeta;
 
+    public AttributeMap() {
+        this.overrideEmbeddedMeta = false;
+    }
+
     public AttributeMap(final boolean overrideEmbeddedMeta) {
+        super();
         this.overrideEmbeddedMeta = overrideEmbeddedMeta;
     }
 
     public AttributeMap(final boolean overrideEmbeddedMeta, final Map<String, String> values) {
+        super(values != null
+                ? values.size()
+                : 16);
         this.overrideEmbeddedMeta = overrideEmbeddedMeta;
         if (values != null) {
             putAll(values);
         }
     }
 
-    public AttributeMap() {
-        this.overrideEmbeddedMeta = false;
+    /**
+     * Create a new {@link AttributeMap} from an existing {@link AttributeMap}, populating
+     * the new map with all attributeMap's entries.
+     *
+     * @param attributeMap Cannot be null.
+     */
+    public AttributeMap(final AttributeMap attributeMap) {
+        super(Objects.requireNonNull(attributeMap));
+        this.overrideEmbeddedMeta = attributeMap.overrideEmbeddedMeta;
     }
 
     public AttributeMap(final Map<String, String> values) {
@@ -58,6 +95,16 @@ public class AttributeMap extends CIStringHashMap {
         } else {
             return super.put(key, value);
         }
+    }
+
+    /**
+     * Puts a random UUID using the specified key, but only if the key doesn't
+     * already exist.
+     *
+     * @return The value associated with key, whether existing or computed.
+     */
+    public String putRandomUuidIfAbsent(final String key) {
+        return super.computeIfAbsent(key, k -> UUID.randomUUID().toString());
     }
 
     /**
@@ -97,6 +144,18 @@ public class AttributeMap extends CIStringHashMap {
             // Already normalised, so use super.put not the local one
             return super.put(key, dateStr);
         }
+    }
+
+    public Long getAsEpochMillis(final String key) {
+        return NullSafe.get(
+                get(key),
+                DateUtil::parseNormalDateTimeString);
+    }
+
+    public Instant getAsInstant(final String key) {
+        return NullSafe.get(
+                get(key),
+                DateUtil::parseNormalDateTimeStringToInstant);
     }
 
     /**
@@ -337,6 +396,18 @@ public class AttributeMap extends CIStringHashMap {
         public Builder put(final String key, final String value) {
             Objects.requireNonNull(key);
             attributes.put(key, value);
+            return this;
+        }
+
+        public Builder putDateTime(final String key, final Instant value) {
+            Objects.requireNonNull(key);
+            attributes.putDateTime(key, value);
+            return this;
+        }
+
+        public Builder putDateTime(final String key, final Long value) {
+            Objects.requireNonNull(key);
+            attributes.putDateTime(key, value);
             return this;
         }
 

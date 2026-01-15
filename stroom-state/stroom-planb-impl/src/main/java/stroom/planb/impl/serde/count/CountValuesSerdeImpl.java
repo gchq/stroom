@@ -1,9 +1,26 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.impl.serde.count;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.planb.impl.serde.temporalkey.TemporalKey;
 import stroom.planb.impl.serde.valtime.InsertTimeSerde;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.Values;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -117,7 +134,7 @@ public final class CountValuesSerdeImpl<T> implements CountValuesSerde<T> {
     public void getValues(final TemporalKey key,
                           final ByteBuffer byteBuffer,
                           final List<ValConverter<T>> valConverters,
-                          final Consumer<Val[]> consumer) {
+                          final Consumer<Values> consumer) {
         final ZonedDateTime zonedDateTime = ZonedDateTime.ofInstant(key.getTime(), zoneId);
         for (int entry = 0; entry < temporalIndex.getEntries(); entry++) {
             final T value = countSerde.get(byteBuffer);
@@ -129,7 +146,7 @@ public final class CountValuesSerdeImpl<T> implements CountValuesSerde<T> {
                 vals[i] = valConverter.convert(temporalKey, value);
                 i++;
             }
-            consumer.accept(vals);
+            consumer.accept(Values.of(vals));
         }
     }
 }

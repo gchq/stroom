@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore;
@@ -485,7 +484,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     public void purge(final long refStreamId, final long partIndex) {
         final TaskContext taskContext = taskContextFactory.current();
         final Instant startTime = Instant.now();
-        taskContext.info(() -> LogUtil.message("Purging data for reference stream {}:{} in store '{}'",
+        taskContext.info(() -> LogUtil.message("Purging data for reference stream_id={}, part={}, in store '{}'",
                 refStreamId, partIndex, storeName));
 
         final AtomicReference<PurgeCounts> countsRef = new AtomicReference<>(PurgeCounts.zero());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 
 package stroom.widget.help.client;
 
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.tooltip.client.event.ShowHelpEvent;
@@ -31,7 +30,6 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 public class HelpButton extends InlineSvgButton {
 
-    public static final Preset PRESET = SvgPresets.HELP;
     private String helpContentHeading;
     private SafeHtml helpContent;
 
@@ -39,10 +37,10 @@ public class HelpButton extends InlineSvgButton {
                        final SafeHtml helpContent) {
         super();
         this.helpContent = helpContent;
-        setSvg(PRESET.getSvgImage());
-        setTitle(NullSafe.nonBlankStringElseGet(title, PRESET::getTitle));
+        setSvg(SvgImage.HELP_OUTLINE);
+        setTitle(NullSafe.nonBlankStringElse(title, "Help"));
         setEnabled(true);
-        setStyleName(String.join(" ", getStyleName(), "help-button info"));
+        addStyleName("help-button info");
         addClickHandler(event -> showHelpPopup());
         addKeyDownHandler(event -> {
             if (Action.SELECT == KeyBinding.test(event.getNativeEvent())) {
@@ -99,8 +97,8 @@ public class HelpButton extends InlineSvgButton {
 
     public boolean hasHelpContent() {
         return helpContent != null
-                && !SafeHtmlUtils.EMPTY_SAFE_HTML.equals(helpContent)
-                && !NullSafe.isBlankString(helpContent.asString());
+               && !SafeHtmlUtils.EMPTY_SAFE_HTML.equals(helpContent)
+               && !NullSafe.isBlankString(helpContent.asString());
     }
 
     /**
@@ -129,7 +127,7 @@ public class HelpButton extends InlineSvgButton {
 
     private void updateVisibleState() {
         setVisible(helpContent != null
-                && !SafeHtmlUtils.EMPTY_SAFE_HTML.equals(helpContent)
-                && !NullSafe.isBlankString(helpContent.asString()));
+                   && !SafeHtmlUtils.EMPTY_SAFE_HTML.equals(helpContent)
+                   && !NullSafe.isBlankString(helpContent.asString()));
     }
 }

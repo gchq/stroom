@@ -1,0 +1,18 @@
+ext.moduleName = 'stroom.stroom-credentials.impl'
+
+dependencies {
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-credentials:stroom-credentials-api')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-resource:stroom-resource-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+
+    implementation libs.guice
+    implementation libs.jackson.annotations
+    implementation libs.restygwt
+    implementation libs.slf4j.api
+}

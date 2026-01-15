@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                         .append("Lists all users and user groups. User groups can be added and deleted."))
                 .para(paraBuilder -> paraBuilder
                         .append("To add/delete/disable users, open the ")
-                        .italic(italicBuilder -> italicBuilder.append("Users"))
+                        .italic("Users")
                         .append(" screen."))
                 .toSafeHtml());
         this.userList.setName("userList");
@@ -97,6 +97,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         this.userList.setValidUserScreensForActionMenu(UserScreen.allExcept(UserScreen.USER_GROUPS));
         this.userList.setResultPageConsumer(userResultPage ->
                 onSelection());
+        this.userList.setCopyPermissionsPopupFunction(this::getCopyPermissionsPopup);
 
         this.parentsList = userListPresenterProvider.get();
         // A parent can only be a group
@@ -404,6 +405,61 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
                         }
                     })
                     .taskMonitorFactory(userListPresenter.getPagerView())
+                    .exec();
+        }
+    }
+
+    private UserRefPopupPresenter getCopyPermissionsPopup(final UserRef toUser) {
+        final UserRefPopupPresenter userRefPopupPresenter = userRefPopupPresenterProvider.get();
+        userRefPopupPresenter.setAdditionalTerm(ExpressionTerm
+                .builder()
+                .field(UserFields.IS_GROUP.getFldName())
+                .condition(Condition.EQUALS)
+                .value("false")
+                .build());
+
+        userRefPopupPresenter.setUserConsumer(fromUser -> {
+            if (fromUser != null) {
+                copyPermissions(fromUser, toUser);
+            }
+        });
+
+        return userRefPopupPresenter;
+    }
+
+    private void copyPermissions(final UserRef fromUser,
+                                 final UserRef toUser) {
+        if (fromUser != null && toUser != null) {
+            restFactory
+                    .create(USER_RESOURCE)
+                    .method(res -> res.copyGroupsAndPermissions(fromUser.getUuid(), toUser.getUuid()))
+                    .onSuccess(user -> {
+                        // Add a consumer to monitor the new result list when there is a refresh.
+                        // This allows us to try to select the newly added item.
+//                        userListPresenter.setResultPageConsumer(resultPage -> {
+//                            userListPresenter.setResultPageConsumer(null);
+//                            if (selection == null) {
+//                                userListPresenter.getSelectionModel().clear();
+//                            } else {
+//                                if (resultPage != null && resultPage.getValues() != null) {
+//                                    final Optional<User> optional = resultPage
+//                                            .getValues()
+//                                            .stream()
+//                                            .filter(u -> u.getUuid().equals(selection.getUuid()))
+//                                            .findAny();
+//                                    if (optional.isPresent()) {
+//                                        userListPresenter.getSelectionModel().setSelected(optional.get());
+//                                    } else {
+//                                        userListPresenter.getSelectionModel().clear();
+//                                    }
+//                                }
+//                            }
+//                        });
+                        userList.refresh();
+                        parentsList.refresh();
+                        childrenList.refresh();
+                    })
+                    .taskMonitorFactory(parentsList.getPagerView())
                     .exec();
         }
     }

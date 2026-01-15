@@ -1,20 +1,32 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.widget.util.client;
 
 import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.UIObject;
 
 import java.util.Objects;
 
 public class SvgImageUtil {
-
-    private static final Template TEMPLATE = GWT.create(Template.class);
 
     private SvgImageUtil() {
     }
@@ -38,15 +50,34 @@ public class SvgImageUtil {
                                      + NullSafe.join(" ", classNames);
         final SafeHtml svgHtml = SafeHtmlUtil.getSafeHtmlFromSafeConstant(svgImage.getSvg());
 
-        final SafeHtml safeHtml = NullSafe.isBlankString(title)
-                ? TEMPLATE.icon(allClassNames, svgHtml)
-                : TEMPLATE.icon(allClassNames, title, svgHtml);
-//        GWT.log("safeHtml: " + safeHtml.asString());
-        return safeHtml;
+        //        GWT.log("safeHtml: " + safeHtml.asString());
+        return NullSafe.isBlankString(title)
+                ? Templates.div(allClassNames, svgHtml)
+                : Templates.div(allClassNames, title, svgHtml);
+    }
+
+    /**
+     * Utility method to render an SVG image from SVG characters.
+     * Assumes that the character sequence is safe.
+     * @param title The title of the image. Can be null or empty.
+     * @param svgData The character sequence holding the SVG data.
+     * @param classNames Any CSS classnames associated with the image.
+     * @return The character sequence to render.
+     */
+    public static SafeHtml toSafeHtml(final String title,
+                                      final String svgData,
+                                      final String... classNames) {
+        final String allClassNames = SvgImage.BASE_CLASS_NAME + " "
+                + NullSafe.join(" ", classNames);
+        final SafeHtml svgHtml = SafeHtmlUtil.getSafeHtmlFromSafeConstant(svgData);
+
+        return NullSafe.isBlankString(title)
+                ? Templates.div(allClassNames, svgHtml)
+                : Templates.div(allClassNames, title, svgHtml);
     }
 
     public static SafeHtml emptySvg(final String... classNames) {
-        return TEMPLATE.emptySvg(NullSafe.join(" ", classNames));
+        return Templates.emptySvg(NullSafe.join(" ", classNames));
     }
 
     public static void setSvgAsInnerHtml(final Element element,
@@ -94,21 +125,5 @@ public class SvgImageUtil {
             final SafeHtml safeHtml = toSafeHtml(title, svgImage, classNames);
             element.setInnerSafeHtml(safeHtml);
         }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    interface Template extends SafeHtmlTemplates {
-
-        @Template("<div class=\"{0}\"><svg></svg></div>")
-        SafeHtml emptySvg(String className);
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml icon(String className, SafeHtml icon);
-
-        @Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
-        SafeHtml icon(String className, String title, SafeHtml icon);
     }
 }

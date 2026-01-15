@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,12 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.dictionary.api.WordListProvider;
+import stroom.lmdb.stream.LmdbEntry;
+import stroom.lmdb.stream.LmdbKeyRange;
 import stroom.lmdb2.LmdbDb;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.ReadTxn;
@@ -56,10 +58,8 @@ import com.esotericsoftware.kryo.io.ByteBufferInput;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import jakarta.inject.Provider;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Env.MapFullException;
 import org.lmdbjava.EnvFlags;
-import org.lmdbjava.KeyRange;
 import org.lmdbjava.LmdbException;
 import org.lmdbjava.PutFlags;
 
@@ -77,22 +77,24 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public class LmdbDataStore implements DataStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbDataStore.class);
 
     private static final long COMMIT_FREQUENCY_MS = 10000;
+    private static final int MAX_LIST_SIZE = 10_000;
     public static final ByteBuffer DB_STATE_VALUE = ByteBuffer
             .allocateDirect(Long.BYTES + Long.BYTES + Long.BYTES);
 
     private final LmdbEnv env;
     private final LmdbDb db;
+    private final LmdbDb stateDb;
     private final ValueReferenceIndex valueReferenceIndex;
     private final CompiledColumns compiledColumns;
     private final CompiledColumn[] compiledColumnArray;
@@ -121,6 +123,7 @@ public class LmdbDataStore implements DataStore {
     private final LmdbPayloadCreator payloadCreator;
     private final TransferState transferState = new TransferState();
     private final WindowProcessor windowProcessor;
+    private final StoredValueMapper storedValueMapper;
 
     private final int maxPutsBeforeCommit;
     private final CurrentDbStateFactory currentDbStateFactory;
@@ -143,7 +146,9 @@ public class LmdbDataStore implements DataStore {
                          final Provider<Executor> executorProvider,
                          final ErrorConsumer errorConsumer,
                          final ByteBufferFactory bufferFactory,
-                         final ExpressionPredicateFactory expressionPredicateFactory) {
+                         final ExpressionPredicateFactory expressionPredicateFactory,
+                         final AnnotationMapperFactory annotationMapperFactory,
+                         final WordListProvider wordListProvider) {
         this.bufferFactory = bufferFactory;
         this.queryKey = queryKey;
         this.componentId = componentId;
@@ -173,9 +178,12 @@ public class LmdbDataStore implements DataStore {
         valueReferenceIndex = compiledColumns.getValueReferenceIndex();
         compiledDepths = new CompiledDepths(this.compiledColumnArray, tableSettings.showDetail());
         compiledSorters = new CompiledSorters<>(compiledDepths, columns);
-        writerFactory = new DataWriterFactory(
-                errorConsumer,
-                resultStoreConfig.getMaxStringFieldLength());
+        final int maxStringFieldLength = tableSettings.overrideMaxStringFieldLength() &&
+                                         tableSettings.getMaxStringFieldLength() != null
+                ?
+                tableSettings.getMaxStringFieldLength()
+                : resultStoreConfig.getMaxStringFieldLength();
+        writerFactory = new DataWriterFactory(errorConsumer, maxStringFieldLength);
         keyFactoryConfig = new KeyFactoryConfigImpl(sourceType, this.compiledColumnArray, compiledDepths);
         keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);
         final ValHasher valHasher = new ValHasher(writerFactory);
@@ -199,12 +207,13 @@ public class LmdbDataStore implements DataStore {
         maxPutsBeforeCommit = resultStoreConfig.getMaxPutsBeforeCommit();
 
         this.env = lmdbEnvBuilder
-                .maxDbs(1)
+                .maxDbs(2)
                 .addEnvFlag(EnvFlags.MDB_NOTLS)
                 .maxReaders(1)
                 .errorHandler(this::error)
                 .build();
         this.db = env.openDb(queryKey + "_" + componentId);
+        this.stateDb = env.openDb("state");
 
         // Create a filter for incoming data.
         valueFilter = ValFilter.create(
@@ -212,7 +221,7 @@ public class LmdbDataStore implements DataStore {
                 compiledColumns,
                 dateTimeSettings,
                 expressionPredicateFactory,
-                paramMap);
+                paramMap, wordListProvider);
 
         // Filter puts to the store if we need to. This filter has the effect of preventing addition of items if we have
         // reached the max result size if specified and aren't grouping or sorting.
@@ -225,6 +234,9 @@ public class LmdbDataStore implements DataStore {
 
         // Create a factory that makes DB state objects.
         currentDbStateFactory = new CurrentDbStateFactory(sourceType, fieldIndex, dataStoreSettings);
+
+        // Create a mapper to add annotation data.
+        storedValueMapper = annotationMapperFactory.createMapper(valueReferenceIndex);
 
         // Start transfer loop.
         executorProvider.get().execute(this::transfer);
@@ -326,19 +338,22 @@ public class LmdbDataStore implements DataStore {
                             final LmdbQueueItem queueItem = queue.poll(1, TimeUnit.SECONDS);
 
                             if (queueItem != null) {
-                                if (queueItem instanceof final LmdbKV lmdbKV) {
-                                    currentDbState = lmdbKV.getCurrentDbState();
-                                    insert(writeTxn, db, lmdbKV);
-                                    uncommittedCount++;
-                                } else if (queueItem instanceof
-                                        final CurrentDbStateLmdbQueueItem currentDbStateLmdbQueueItem) {
-                                    currentDbState = currentDbStateLmdbQueueItem.getCurrentDbState()
-                                            .mergeExisting(currentDbState);
-                                } else if (queueItem instanceof final Sync sync) {
-                                    commit(writeTxn, currentDbState);
-                                    sync.sync();
-                                } else if (queueItem instanceof final DeleteCommand deleteCommand) {
-                                    delete(writeTxn, deleteCommand);
+                                switch (queueItem) {
+                                    case final LmdbKV lmdbKV -> {
+                                        currentDbState = lmdbKV.getCurrentDbState();
+                                        insert(writeTxn, db, lmdbKV);
+                                        uncommittedCount++;
+                                    }
+                                    case final CurrentDbStateLmdbQueueItem currentDbStateLmdbQueueItem ->
+                                        currentDbState = currentDbStateLmdbQueueItem.getCurrentDbState()
+                                                .mergeExisting(currentDbState);
+                                    case final Sync sync -> {
+                                        commit(writeTxn, currentDbState);
+                                        sync.sync();
+                                    }
+                                    case final DeleteCommand deleteCommand -> delete(writeTxn, deleteCommand);
+                                    default -> {
+                                    }
                                 }
                             }
 
@@ -422,15 +437,14 @@ public class LmdbDataStore implements DataStore {
                         final DeleteCommand deleteCommand) {
         lmdbRowKeyFactory.createChildKeyRange(
                 deleteCommand.getParentKey(), deleteCommand.getTimeFilter(), keyRange -> {
-                    db.iterate(writeTxn, keyRange, iterator -> {
-                        while (iterator.hasNext()) {
-                            final KeyVal<ByteBuffer> keyVal = iterator.next();
-                            final ByteBuffer keyBuffer = keyVal.key();
+                    try (final Stream<LmdbEntry> stream = db.stream(writeTxn, keyRange)) {
+                        stream.forEach(entry -> {
+                            final ByteBuffer keyBuffer = entry.getKey();
                             if (keyBuffer.limit() > 1) {
                                 db.delete(writeTxn, keyBuffer);
                             }
-                        }
-                    });
+                        });
+                    }
                     writeTxn.commit();
                 });
     }
@@ -685,7 +699,6 @@ public class LmdbDataStore implements DataStore {
 
     private void putCurrentDbState(final WriteTxn writeTxn, final CurrentDbState currentDbState) {
         if (currentDbState != null) {
-            final ByteBuffer keyBuffer = LmdbRowKeyFactoryFactory.DB_STATE_KEY;
             ByteBuffer valueBuffer = DB_STATE_VALUE;
             valueBuffer.clear();
             putLong(valueBuffer, currentDbState.getStreamId());
@@ -695,8 +708,8 @@ public class LmdbDataStore implements DataStore {
 
             final boolean success = put(
                     writeTxn,
-                    db,
-                    keyBuffer,
+                    stateDb,
+                    LmdbRowKeyFactoryFactory.DB_STATE_KEY,
                     valueBuffer);
             if (!success) {
                 LOGGER.error("Unable to store event ref");
@@ -709,24 +722,18 @@ public class LmdbDataStore implements DataStore {
             return null;
         }
 
-        final AtomicReference<CurrentDbState> currentDbStateAtomicReference = new AtomicReference<>();
-        final KeyRange<ByteBuffer> keyRange = LmdbRowKeyFactoryFactory.DB_STATE_KEY_RANGE;
-        env.read(readTxn -> db.iterate(readTxn, keyRange, iterator -> {
-            if (iterator.hasNext()) {
-                final KeyVal<ByteBuffer> keyVal = iterator.next();
-                final ByteBuffer key = keyVal.key();
-                if (LmdbRowKeyFactoryFactory.isStateKey(key)) {
-                    final ByteBuffer val = keyVal.val();
-                    final long streamId = Objects.requireNonNull(getLong(val, 0),
-                            "streamId not present in DB state");
-                    final Long eventId = getLong(val, Long.BYTES);
-                    final Long lastEventTime = getLong(val, Long.BYTES + Long.BYTES);
-                    currentDbStateAtomicReference.set(new CurrentDbState(streamId, eventId, lastEventTime));
-                }
+        return env.readResult(readTxn -> {
+            final ByteBuffer val = stateDb.get(readTxn, LmdbRowKeyFactoryFactory.DB_STATE_KEY);
+            if (val == null) {
+                return null;
             }
-        }));
 
-        return currentDbStateAtomicReference.get();
+            final long streamId = Objects.requireNonNull(getLong(val, 0),
+                    "streamId not present in DB state");
+            final Long eventId = getLong(val, Long.BYTES);
+            final Long lastEventTime = getLong(val, Long.BYTES + Long.BYTES);
+            return new CurrentDbState(streamId, eventId, lastEventTime);
+        });
     }
 
     private Long getLong(final ByteBuffer valueBuffer, final int index) {
@@ -768,13 +775,13 @@ public class LmdbDataStore implements DataStore {
     }
 
     @Override
-    public synchronized <R> void fetch(final List<Column> columns,
-                                       final OffsetRange range,
-                                       final OpenGroups openGroups,
-                                       final TimeFilter timeFilter,
-                                       final ItemMapper<R> mapper,
-                                       final Consumer<R> resultConsumer,
-                                       final Consumer<Long> totalRowCountConsumer) {
+    public synchronized void fetch(final List<Column> columns,
+                                   final OffsetRange range,
+                                   final OpenGroups openGroups,
+                                   final TimeFilter timeFilter,
+                                   final ItemMapper mapper,
+                                   final Consumer<Item> resultConsumer,
+                                   final Consumer<Long> totalRowCountConsumer) {
         // Update our sort columns if needed.
         compiledSorters.update(columns);
 
@@ -802,8 +809,11 @@ public class LmdbDataStore implements DataStore {
                             fetchState.reachedRowLimit = fetchState.length >= enforcedRange.getLength();
                             fetchState.keepGoing = fetchState.justCount || !fetchState.reachedRowLimit;
 
-                            final LmdbReadContext readContext =
-                                    new LmdbReadContext(LmdbDataStore.this, db, readTxn, timeFilter);
+                            final LmdbReadContext readContext = new LmdbReadContext(
+                                    LmdbDataStore.this,
+                                    db,
+                                    readTxn,
+                                    timeFilter);
 
                             getChildren(
                                     readContext,
@@ -821,24 +831,25 @@ public class LmdbDataStore implements DataStore {
                             if (totalRowCountConsumer != null) {
                                 totalRowCountConsumer.accept(fetchState.totalRowCount);
                             }
-                        } catch (final Throwable e) {
+                        } catch (final RuntimeException e) {
                             LOGGER.error(e::getMessage, e);
+                            throw e;
                         }
                     }));
         }
     }
 
-    private <R> void getChildren(final LmdbReadContext readContext,
-                                 final Key parentKey,
-                                 final int depth,
-                                 final long limit,
-                                 final boolean trimTop,
-                                 final OpenGroups openGroups,
-                                 final TimeFilter timeFilter,
-                                 final ItemMapper<R> mapper,
-                                 final OffsetRange range,
-                                 final FetchState fetchState,
-                                 final Consumer<R> resultConsumer) {
+    private void getChildren(final LmdbReadContext readContext,
+                             final Key parentKey,
+                             final int depth,
+                             final long limit,
+                             final boolean trimTop,
+                             final OpenGroups openGroups,
+                             final TimeFilter timeFilter,
+                             final ItemMapper mapper,
+                             final OffsetRange range,
+                             final FetchState fetchState,
+                             final Consumer<Item> resultConsumer) {
         try {
             SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_GET_CHILDREN);
 
@@ -881,47 +892,46 @@ public class LmdbDataStore implements DataStore {
     }
 
 
-    private <R> void getUnsortedChildren(final LmdbReadContext readContext,
-                                         final Key parentKey,
-                                         final int depth,
-                                         final long limit,
-                                         final OpenGroups openGroups,
-                                         final TimeFilter timeFilter,
-                                         final ItemMapper<R> mapper,
-                                         final OffsetRange range,
-                                         final FetchState fetchState,
-                                         final Consumer<R> resultConsumer) {
+    private void getUnsortedChildren(final LmdbReadContext readContext,
+                                     final Key parentKey,
+                                     final int depth,
+                                     final long limit,
+                                     final OpenGroups openGroups,
+                                     final TimeFilter timeFilter,
+                                     final ItemMapper mapper,
+                                     final OffsetRange range,
+                                     final FetchState fetchState,
+                                     final Consumer<Item> resultConsumer) {
         // Reduce the number of groups left to go into.
         openGroups.complete(parentKey);
 
         lmdbRowKeyFactory.createChildKeyRange(parentKey, timeFilter, keyRange ->
                 readContext.read(keyRange, iterator -> {
-                    long childCount = 0;
-
+                    final AtomicLong childCount = new AtomicLong();
                     while (fetchState.keepGoing &&
-                           childCount < limit &&
+                           childCount.get() < limit &&
                            iterator.hasNext() &&
                            !Thread.currentThread().isInterrupted()) {
 
-                        final KeyVal<ByteBuffer> keyVal = iterator.next();
-                        // All valid keys are more than a single byte long. Single byte keys are used to store db info.
-                        if (LmdbRowKeyFactoryFactory.isNotStateKey(keyVal.key())) {
-                            final ByteBuffer keyBuffer = keyVal.key();
-                            final ByteBuffer valueBuffer = keyVal.val();
+                        final LmdbEntry keyVal = iterator.next();
+                        final ByteBuffer keyBuffer = keyVal.getKey();
+                        final ByteBuffer valueBuffer = keyVal.getVal();
 
-                            // If we are just counting the total results from this point then we don't need to
-                            // deserialise unless we are hiding rows.
-                            if (fetchState.justCount) {
-                                if (mapper.hidesRows()) {
-                                    final StoredValues storedValues = readValues(valueBuffer);
+                        // If we are just counting the total results from this point then we don't need to
+                        // deserialise unless we are hiding rows.
+                        if (fetchState.justCount) {
+                            if (mapper.hidesRows()) {
+                                final Stream<StoredValues> stream = storedValueMapper
+                                        .create(readValues(valueBuffer));
+                                stream.forEach(storedValues -> {
                                     final Key key = lmdbRowKeyFactory.createKey(parentKey, storedValues, keyBuffer);
-                                    final ItemImpl item = new ItemImpl(
+                                    final LmdbItem item = new LmdbItem(
                                             readContext,
                                             key,
+                                            compiledColumns.getCompiledColumns(),
                                             storedValues);
-                                    final R row = mapper.create(item);
-                                    if (row != null) {
-                                        childCount++;
+                                    mapper.create(item).forEach(row -> {
+                                        childCount.incrementAndGet();
                                         fetchState.totalRowCount++;
 
                                         // Add children if the group is open.
@@ -940,15 +950,18 @@ public class LmdbDataStore implements DataStore {
                                                     fetchState,
                                                     resultConsumer);
                                         }
-                                    }
-                                } else {
-                                    childCount++;
-                                    fetchState.totalRowCount++;
+                                    });
+                                });
+                            } else {
+                                childCount.incrementAndGet();
+                                fetchState.totalRowCount++;
 
-                                    // Only bother to test open groups if we have some left.
-                                    if (openGroups.isNotEmpty()) {
-                                        // Add children if the group is open.
-                                        final StoredValues storedValues = readValues(valueBuffer);
+                                // Only bother to test open groups if we have some left.
+                                if (openGroups.isNotEmpty()) {
+                                    // Add children if the group is open.
+                                    final Stream<StoredValues> stream = storedValueMapper
+                                            .create(readValues(valueBuffer));
+                                    stream.forEach(storedValues -> {
                                         final Key key = lmdbRowKeyFactory.createKey(parentKey, storedValues, keyBuffer);
                                         final int childDepth = depth + 1;
                                         if (openGroups.isOpen(key) &&
@@ -965,20 +978,23 @@ public class LmdbDataStore implements DataStore {
                                                     fetchState,
                                                     resultConsumer);
                                         }
-                                    }
+                                    });
                                 }
+                            }
 
-                            } else {
-                                do {
-                                    final StoredValues storedValues = readValues(valueBuffer);
+                        } else {
+                            do {
+                                final Stream<StoredValues> stream = storedValueMapper
+                                        .create(readValues(valueBuffer));
+                                stream.forEach(storedValues -> {
                                     final Key key = lmdbRowKeyFactory.createKey(parentKey, storedValues, keyBuffer);
-                                    final ItemImpl item = new ItemImpl(
+                                    final LmdbItem item = new LmdbItem(
                                             readContext,
                                             key,
+                                            compiledColumns.getCompiledColumns(),
                                             storedValues);
-                                    final R row = mapper.create(item);
-                                    if (row != null) {
-                                        childCount++;
+                                    mapper.create(item).forEach(row -> {
+                                        childCount.incrementAndGet();
                                         fetchState.totalRowCount++;
 
                                         if (!fetchState.reachedRowLimit) {
@@ -1014,25 +1030,25 @@ public class LmdbDataStore implements DataStore {
                                                     fetchState,
                                                     resultConsumer);
                                         }
-                                    }
-                                } while (fetchState.keepGoing && valueBuffer.hasRemaining());
-                            }
+                                    });
+                                });
+                            } while (fetchState.keepGoing && valueBuffer.hasRemaining());
                         }
                     }
                 }));
     }
 
-    private <R> void getSortedChildren(final LmdbReadContext readContext,
-                                       final Key parentKey,
-                                       final int depth,
-                                       final long limit,
-                                       final boolean trimTop,
-                                       final OpenGroups openGroups,
-                                       final TimeFilter timeFilter,
-                                       final ItemMapper<R> mapper,
-                                       final OffsetRange range,
-                                       final FetchState fetchState,
-                                       final Consumer<R> resultConsumer) {
+    private void getSortedChildren(final LmdbReadContext readContext,
+                                   final Key parentKey,
+                                   final int depth,
+                                   final long limit,
+                                   final boolean trimTop,
+                                   final OpenGroups openGroups,
+                                   final TimeFilter timeFilter,
+                                   final ItemMapper mapper,
+                                   final OffsetRange range,
+                                   final FetchState fetchState,
+                                   final Consumer<Item> resultConsumer) {
         // Remember that we have gone into this group, so we don't keep trying.
         openGroups.complete(parentKey);
 
@@ -1047,41 +1063,38 @@ public class LmdbDataStore implements DataStore {
 
             final SortedItems sortedItems = new SortedItems(10, maxSize, trimmedSize, trimTop, sorter);
             readContext.read(keyRange, iterator -> {
-                long totalRowCount = 0;
+                final AtomicLong totalRowCount = new AtomicLong();
                 while (iterator.hasNext()
                        && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> keyVal = iterator.next();
+                    final LmdbEntry keyVal = iterator.next();
 
-                    // All valid keys are more than a single byte long. Single byte keys are used to store db
-                    // info.
-                    if (LmdbRowKeyFactoryFactory.isNotStateKey(keyVal.key())) {
-                        final ByteBuffer keyBuffer = keyVal.key();
-                        final ByteBuffer valueBuffer = keyVal.val();
-                        boolean isFirstValue = true;
-                        // It is possible to have no actual values, e.g. if you have just one col of
-                        // 'currentUser()' so we still need to create and add an empty storedValues
-                        while (valueBuffer.hasRemaining() || isFirstValue) {
-                            isFirstValue = false;
+                    final ByteBuffer keyBuffer = keyVal.getKey();
+                    final ByteBuffer valueBuffer = keyVal.getVal();
+                    boolean isFirstValue = true;
+                    // It is possible to have no actual values, e.g. if you have just one col of
+                    // 'currentUser()' so we still need to create and add an empty storedValues
+                    while (valueBuffer.hasRemaining() || isFirstValue) {
+                        isFirstValue = false;
 
-                            final StoredValues storedValues = readValues(valueBuffer);
+                        final Stream<StoredValues> stream = storedValueMapper
+                                .create(readValues(valueBuffer));
+                        stream.forEach(storedValues -> {
                             final Key key = lmdbRowKeyFactory.createKey(parentKey, storedValues, keyBuffer);
-                            final ItemImpl item = new ItemImpl(readContext, key, storedValues);
-                            if (mapper.hidesRows()) {
-                                final R row = mapper.create(item);
-                                if (row != null) {
-                                    totalRowCount++;
-                                    sortedItems.add(new ItemImpl(readContext, key, storedValues));
-                                }
-                            } else {
-                                totalRowCount++;
-                                sortedItems.add(new ItemImpl(readContext, key, storedValues));
-                            }
-                        }
+                            final LmdbItem item = new LmdbItem(
+                                    readContext,
+                                    key,
+                                    compiledColumns.getCompiledColumns(),
+                                    storedValues);
+                            mapper.create(item).forEach(row -> {
+                                totalRowCount.incrementAndGet();
+                                sortedItems.add(row);
+                            });
+                        });
                     }
                 }
 
                 // If there is a limit then pretend that the total row count is constrained.
-                fetchState.totalRowCount += Math.min(totalRowCount, limit);
+                fetchState.totalRowCount += Math.min(totalRowCount.get(), limit);
             });
 
             // Finally transfer the sorted items to the result.
@@ -1094,8 +1107,7 @@ public class LmdbDataStore implements DataStore {
 
                 if (!fetchState.reachedRowLimit) {
                     if (range.getOffset() <= fetchState.offset) {
-                        final R row = mapper.create(item);
-                        resultConsumer.accept(row);
+                        resultConsumer.accept(item);
                         fetchState.length++;
                         fetchState.reachedRowLimit = fetchState.length >= range.getLength();
                         if (fetchState.reachedRowLimit) {
@@ -1157,13 +1169,13 @@ public class LmdbDataStore implements DataStore {
             this.timeFilter = timeFilter;
         }
 
-        public <R> R readResult(final KeyRange<ByteBuffer> keyRange,
-                                final Function<Iterator<KeyVal<ByteBuffer>>, R> iteratorConsumer) {
+        public <R> R readResult(final LmdbKeyRange keyRange,
+                                final Function<Iterator<LmdbEntry>, R> iteratorConsumer) {
             return db.iterateResult(readTxn, keyRange, iteratorConsumer);
         }
 
-        public void read(final KeyRange<ByteBuffer> keyRange,
-                         final Consumer<Iterator<KeyVal<ByteBuffer>>> iteratorConsumer) {
+        public void read(final LmdbKeyRange keyRange,
+                         final Consumer<Iterator<LmdbEntry>> iteratorConsumer) {
             db.iterate(readTxn, keyRange, iteratorConsumer);
         }
 
@@ -1258,19 +1270,24 @@ public class LmdbDataStore implements DataStore {
             fetchState.reachedRowLimit = false;
             fetchState.keepGoing = true;
 
+            // Constrain the absolute limit.
+            // In some rare cases we might want to examine more than 1000 rows (see gh-5198).
+            final int absoluteLimit = Math.min(limit, MAX_LIST_SIZE);
+            final OffsetRange offsetRange = new OffsetRange(0, absoluteLimit);
+
             final LmdbDataStore dataStore = readContext.dataStore;
             dataStore.getChildren(
                     readContext,
                     key,
                     key.getChildDepth(),
-                    limit,
+                    absoluteLimit,
                     trimTop,
                     OpenGroups.NONE, // Don't traverse any child rows.
                     readContext.timeFilter,
                     IdentityItemMapper.INSTANCE,
-                    OffsetRange.ZERO_1000, // Max 1000 child items.
+                    offsetRange,
                     fetchState,
-                    item -> result.add(((ItemImpl) item).storedValues));
+                    item -> result.add(((LmdbItem) item).storedValues));
             return result;
         }
 
@@ -1333,35 +1350,6 @@ public class LmdbDataStore implements DataStore {
         boolean keepGoing;
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class SortableItem implements Item {
-
-        private final ItemImpl item;
-        private final Val[] values;
-
-        public SortableItem(final ItemImpl item, final Val[] values) {
-            this.item = item;
-            this.values = values;
-        }
-
-        @Override
-        public Key getKey() {
-            return item.key;
-        }
-
-        @Override
-        public Val getValue(final int index) {
-            return values[index];
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
     private static class SortedItems {
 
         private final int minArraySize;
@@ -1369,7 +1357,7 @@ public class LmdbDataStore implements DataStore {
         private final int trimmedSize;
         private final boolean trimTop;
         private final CompiledSorter<Item> sorter;
-        private ItemImpl[] array;
+        private Item[] array;
         private int size;
         private boolean trimmed = true;
 
@@ -1383,7 +1371,7 @@ public class LmdbDataStore implements DataStore {
             this.trimmedSize = trimmedSize;
             this.trimTop = trimTop;
             this.sorter = sorter;
-            array = new ItemImpl[minArraySize];
+            array = new Item[minArraySize];
         }
 
         private void sortAndTrim() {
@@ -1406,29 +1394,14 @@ public class LmdbDataStore implements DataStore {
                 maxFieldIndex = Math.max(maxFieldIndex, fieldIndex);
             }
 
-            final SortableItem[] sortableItems = new SortableItem[size];
-            // Resolve all values before sorting.
-            for (int i = 0; i < size; i++) {
-                final ItemImpl item = array[i];
-                final Val[] values = new Val[maxFieldIndex + 1];
-                for (final CompiledSort compiledSort : compiledSorts) {
-                    final int fieldIndex = compiledSort.getFieldIndex();
-                    values[fieldIndex] = item.getValue(fieldIndex);
-                }
-                sortableItems[i] = new SortableItem(item, values);
-            }
             // Sort.
-            Arrays.sort(sortableItems, sorter);
-            // Put sorted items back in the array.
-            for (int i = 0; i < size; i++) {
-                array[i] = sortableItems[i].item;
-            }
+            Arrays.sort(array, 0, size, sorter);
         }
 
         private void trim(final int trimmedSize,
                           final boolean trimTop) {
             final int len = Math.max(minArraySize, trimmedSize);
-            final ItemImpl[] newArray = new ItemImpl[len];
+            final Item[] newArray = new Item[len];
             if (trimTop) {
                 System.arraycopy(array, size - trimmedSize, newArray, 0, trimmedSize);
             } else {
@@ -1438,16 +1411,16 @@ public class LmdbDataStore implements DataStore {
             size = trimmedSize;
         }
 
-        void add(final ItemImpl item) {
-            if (array.length <= size) {
-                final ItemImpl[] newArray = new ItemImpl[size * 2];
+        void add(final Item item) {
+            if (size == array.length) {
+                final Item[] newArray = new Item[Math.min(maxArraySize, size * 2)];
                 System.arraycopy(array, 0, newArray, 0, array.length);
                 array = newArray;
             }
             array[size++] = item;
 
             trimmed = false;
-            if (size > maxArraySize) {
+            if (size >= maxArraySize) {
                 sortAndTrim();
             }
         }
@@ -1466,7 +1439,7 @@ public class LmdbDataStore implements DataStore {
                 }
 
                 @Override
-                public ItemImpl next() {
+                public Item next() {
                     return array[pos++];
                 }
             };
@@ -1477,17 +1450,20 @@ public class LmdbDataStore implements DataStore {
     // --------------------------------------------------------------------------------
 
 
-    private static class ItemImpl implements Item {
+    private static class LmdbItem implements Item {
 
         private final LmdbReadContext readContext;
         private final Key key;
+        private final CompiledColumn[] compiledColumn;
         private final StoredValues storedValues;
 
-        public ItemImpl(final LmdbReadContext readContext,
+        public LmdbItem(final LmdbReadContext readContext,
                         final Key key,
+                        final CompiledColumn[] compiledColumn,
                         final StoredValues storedValues) {
             this.readContext = readContext;
             this.key = key;
+            this.compiledColumn = compiledColumn;
             this.storedValues = storedValues;
         }
 
@@ -1499,6 +1475,20 @@ public class LmdbDataStore implements DataStore {
         @Override
         public Val getValue(final int index) {
             return readContext.createValue(key, storedValues, index);
+        }
+
+        @Override
+        public int size() {
+            return compiledColumn.length;
+        }
+
+        @Override
+        public Val[] toArray() {
+            final Val[] vals = new Val[size()];
+            for (int i = 0; i < vals.length; i++) {
+                vals[i] = getValue(i);
+            }
+            return vals;
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,11 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.query.client.presenter;
 
+import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
@@ -43,6 +43,7 @@ public class QueryDocPresenter
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
+    private final QueryDocEditPresenter queryDocEditPresenter;
     private final DocumentEditTabProvider<QueryDoc> queryDocDocumentEditTabProvider;
     private Runnable saveInterceptor;
 
@@ -54,6 +55,7 @@ public class QueryDocPresenter
                              final DocumentUserPermissionsTabProvider<QueryDoc>
                                      documentUserPermissionsTabProvider) {
         super(eventBus, view);
+        this.queryDocEditPresenter = queryDocEditPresenter;
 
         queryDocEditPresenter.setTaskMonitorFactory(this);
         queryDocDocumentEditTabProvider = new DocumentEditTabProvider<>(
@@ -79,6 +81,13 @@ public class QueryDocPresenter
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(QUERY);
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
+                queryDocEditPresenter.onContentTabVisible(e.getTabData() == this)));
     }
 
     @Override

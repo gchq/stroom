@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
     public void endTable() {
         if (workbook != null && sheet != null) {
             // Auto-size tracked columns
-            for (final var columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
+            for (final Integer columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
                 sheet.autoSizeColumn(columnIndex);
             }
         }
@@ -334,7 +334,7 @@ public class ExcelTarget implements SearchResultWriter.Target {
             }
 
             // Auto-size tracked columns
-            for (final var columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
+            for (final Integer columnIndex : sheet.getTrackedColumnsForAutoSizing()) {
                 sheet.autoSizeColumn(columnIndex);
             }
         }

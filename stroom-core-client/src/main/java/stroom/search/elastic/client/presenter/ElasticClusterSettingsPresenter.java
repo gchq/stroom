@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search.elastic.client.presenter;
@@ -35,6 +34,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.UUID;
 
 public class ElasticClusterSettingsPresenter
         extends DocumentEditPresenter<ElasticClusterSettingsView, ElasticClusterDoc>
@@ -67,7 +67,10 @@ public class ElasticClusterSettingsPresenter
 
     @Override
     public void onTestConnection(final TaskMonitorFactory taskMonitorFactory) {
-        final ElasticClusterDoc cluster = onWrite(new ElasticClusterDoc());
+        final ElasticClusterDoc cluster = onWrite(ElasticClusterDoc
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .build());
         restFactory
                 .create(ELASTIC_CLUSTER_RESOURCE)
                 .method(res -> res.testCluster(cluster))
@@ -92,7 +95,8 @@ public class ElasticClusterSettingsPresenter
             getView().setUseAuthentication(connectionConfig.getUseAuthentication());
             getView().setApiKeyId(connectionConfig.getApiKeyId());
             getView().setApiKeySecret(connectionConfig.getApiKeySecret());
-            getView().setSocketTimeoutMillis(connectionConfig.getSocketTimeoutMillis());
+            getView().setConnectionTimeoutMillis(connectionConfig.getConnectionTimeoutMillis());
+            getView().setResponseTimeoutMillis(connectionConfig.getResponseTimeoutMillis());
         }
     }
 
@@ -104,7 +108,8 @@ public class ElasticClusterSettingsPresenter
         connectionConfig.setUseAuthentication(getView().getUseAuthentication());
         connectionConfig.setApiKeyId(getView().getApiKeyId());
         connectionConfig.setApiKeySecret(getView().getApiKeySecret());
-        connectionConfig.setSocketTimeoutMillis(getView().getSocketTimeoutMillis());
+        connectionConfig.setConnectionTimeoutMillis(getView().getConnectionTimeoutMillis());
+        connectionConfig.setResponseTimeoutMillis(getView().getResponseTimeoutMillis());
 
         cluster.setConnection(connectionConfig);
         return cluster;
@@ -133,8 +138,12 @@ public class ElasticClusterSettingsPresenter
 
         void setApiKeySecret(String apiKeySecret);
 
-        int getSocketTimeoutMillis();
+        int getConnectionTimeoutMillis();
 
-        void setSocketTimeoutMillis(int socketTimeoutMillis);
+        void setConnectionTimeoutMillis(int connectionTimeoutMillis);
+
+        int getResponseTimeoutMillis();
+
+        void setResponseTimeoutMillis(int responseTimeoutMillis);
     }
 }

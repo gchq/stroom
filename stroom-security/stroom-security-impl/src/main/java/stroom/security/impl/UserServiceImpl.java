@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,6 +180,20 @@ class UserServiceImpl implements UserService, ContentPackUserService {
 
             fireUserChangeEvent(updatedUser.asRef());
             return updatedUser;
+        });
+    }
+
+    @Override
+    public User copyGroupsAndPermissions(final String fromUserUuid, final String toUserUuid) {
+        final User toUser = userDao.getByUuid(toUserUuid).orElseThrow();
+        AuditUtil.stamp(securityContext, toUser);
+
+        return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () -> {
+            userDao.copyGroupsAndPermissions(fromUserUuid, toUserUuid);
+
+            fireUserChangeEvent(toUser.asRef());
+
+            return toUser;
         });
     }
 

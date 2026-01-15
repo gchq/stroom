@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy;
 
 
@@ -35,7 +51,8 @@ public enum StroomStatusCode {
     INVALID_FORMAT(HttpServletResponse.SC_NOT_ACCEPTABLE, 104, "Data format is invalid",
             "If you provide a data Format header, its value must be valid"),
 
-    FEED_IS_NOT_SET_TO_RECEIVE_DATA(HttpServletResponse.SC_NOT_ACCEPTABLE, 110, "Feed is not set to receive data",
+    FEED_IS_NOT_SET_TO_RECEIVE_DATA(HttpServletResponse.SC_NOT_ACCEPTABLE, 110,
+            "Feed is not set to receive data",
             "The feed you have provided has not been setup to receive data"),
 
     INVALID_FEED_NAME(HttpServletResponse.SC_NOT_ACCEPTABLE, 111,
@@ -46,6 +63,10 @@ public enum StroomStatusCode {
             "Data Feed key and/or accountId is not valid",
             "The Data Feed Key and/or AccountId you have provided do not match " +
             "any known Data Feed Key and AccountIds."),
+
+    REJECTED_BY_POLICY_RULES(HttpServletResponse.SC_NOT_ACCEPTABLE, 113,
+            "Data has been rejected by the receipt policy rules",
+            "The meta data provided with the data has been rejected by the receipt policy rules."),
 
     UNEXPECTED_DATA_TYPE(HttpServletResponse.SC_NOT_ACCEPTABLE, 120, "Unexpected data type",
             "The data type supplied is not expected"),
@@ -113,6 +134,11 @@ public enum StroomStatusCode {
             "Compressed stream invalid",
             "The stream of data sent does not form a valid compressed file.  Maybe it terminated " +
             "unexpectedly or is corrupt."),
+
+    CONTENT_TOO_LARGE(HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE,
+            410,
+            "Content too large",
+            "The stream of data exceeded the configured max number of bytes."),
 
     UNKNOWN_ERROR(
             HttpServletResponse.SC_INTERNAL_SERVER_ERROR,

@@ -4,18 +4,18 @@
 package stroom.index.impl.db.jooq;
 
 
-import stroom.index.impl.db.jooq.tables.IndexField;
-import stroom.index.impl.db.jooq.tables.IndexFieldSource;
-import stroom.index.impl.db.jooq.tables.IndexShard;
-import stroom.index.impl.db.jooq.tables.IndexVolume;
-import stroom.index.impl.db.jooq.tables.IndexVolumeGroup;
+import java.util.Arrays;
+import java.util.List;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.index.impl.db.jooq.tables.IndexField;
+import stroom.index.impl.db.jooq.tables.IndexFieldSource;
+import stroom.index.impl.db.jooq.tables.IndexShard;
+import stroom.index.impl.db.jooq.tables.IndexVolume;
+import stroom.index.impl.db.jooq.tables.IndexVolumeGroup;
 
 
 /**

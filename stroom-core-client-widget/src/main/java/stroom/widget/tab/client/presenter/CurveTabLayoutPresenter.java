@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,11 +80,17 @@ public abstract class CurveTabLayoutPresenter<P extends Proxy<?>> extends MyPres
     }
 
     public void remove(final TabData tabData) {
+        remove(tabData, true);
+    }
+
+    public void remove(final TabData tabData, final boolean resizeTabBar) {
         final Layer layer = tabContentMap.remove(tabData);
         if (layer != null) {
-            getView().getTabBar().removeTab(tabData);
+            getView().getTabBar().removeTab(tabData, resizeTabBar);
             layer.removeLayer();
-            fireSelectedTabChange(getSelectedTab());
+            if (resizeTabBar) {
+                fireSelectedTabChange(getSelectedTab());
+            }
         }
     }
 
@@ -92,6 +98,15 @@ public abstract class CurveTabLayoutPresenter<P extends Proxy<?>> extends MyPres
         final Layer layer = tabContentMap.get(tabData);
         if (layer != null) {
             fireSelectedTabChange(tabData);
+            getView().getTabBar().selectTab(tabData);
+            getView().getLayerContainer().show(layer);
+        }
+    }
+
+    public void moveTab(final TabData tabData, final int tabPos) {
+        final Layer layer = tabContentMap.get(tabData);
+        if (layer != null) {
+            getView().getTabBar().moveTab(tabData, tabPos);
             getView().getTabBar().selectTab(tabData);
             getView().getLayerContainer().show(layer);
         }

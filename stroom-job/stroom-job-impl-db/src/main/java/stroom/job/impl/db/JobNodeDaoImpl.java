@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,8 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static stroom.job.impl.db.jooq.Tables.JOB;
-import static stroom.job.impl.db.jooq.Tables.JOB_NODE;
+import static stroom.job.impl.db.jooq.tables.Job.JOB;
+import static stroom.job.impl.db.jooq.tables.JobNode.JOB_NODE;
 
 public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 

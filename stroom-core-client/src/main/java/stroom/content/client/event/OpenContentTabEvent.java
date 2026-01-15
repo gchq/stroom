@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,20 +22,29 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.gwtplatform.mvp.client.Layer;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
+
+import java.util.function.Consumer;
 
 public class OpenContentTabEvent extends GwtEvent<OpenContentTabEvent.OpenContentTabHandler> {
 
     private static Type<OpenContentTabHandler> TYPE;
     private final TabData tabData;
     private final Layer layer;
+    private final MyPresenterWidget<?> presenter;
+    private final Consumer<MyPresenterWidget<?>> callbackOnOpen;
 
-    private OpenContentTabEvent(final TabData tabData, final Layer layer) {
+    private OpenContentTabEvent(final TabData tabData, final Layer layer, final MyPresenterWidget<?> presenter,
+                                final Consumer<MyPresenterWidget<?>> callbackOnOpen) {
         this.tabData = tabData;
         this.layer = layer;
+        this.presenter = presenter;
+        this.callbackOnOpen = callbackOnOpen;
     }
 
-    public static void fire(final HasHandlers handlers, final TabData tabData, final Layer layer) {
-        handlers.fireEvent(new OpenContentTabEvent(tabData, layer));
+    public static void fire(final HasHandlers handlers, final TabData tabData, final Layer layer,
+            final MyPresenterWidget<?> presenter, final Consumer<MyPresenterWidget<?>> callbackOnOpen) {
+        handlers.fireEvent(new OpenContentTabEvent(tabData, layer, presenter, callbackOnOpen));
     }
 
     public static Type<OpenContentTabHandler> getType() {
@@ -61,6 +70,12 @@ public class OpenContentTabEvent extends GwtEvent<OpenContentTabEvent.OpenConten
 
     public Layer getLayer() {
         return layer;
+    }
+
+    public void runCallbackOnOpen() {
+        if (presenter != null && callbackOnOpen != null) {
+            callbackOnOpen.accept(presenter);
+        }
     }
 
 

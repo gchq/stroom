@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,6 +75,7 @@ public final class ValString implements Val {
                         "null passed to ValString.create, should be using ValNull, stack trace:",
                         LOGGER::debug);
             }
+            throw new NullPointerException("Null value passed to ValString");
         }
         this.value = value;
         // Suppliers are idempotent so do it without locking at the risk of
@@ -85,7 +86,7 @@ public final class ValString implements Val {
     }
 
     public static ValString create(final String value) {
-        if ("".equals(value)) {
+        if (value.isEmpty()) {
             return EMPTY;
         }
         return new ValString(value);

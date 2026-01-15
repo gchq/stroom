@@ -4,6 +4,12 @@
 package stroom.index.impl.db.jooq;
 
 
+import org.jooq.ForeignKey;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
+
 import stroom.index.impl.db.jooq.tables.IndexField;
 import stroom.index.impl.db.jooq.tables.IndexFieldSource;
 import stroom.index.impl.db.jooq.tables.IndexShard;
@@ -14,12 +20,6 @@ import stroom.index.impl.db.jooq.tables.records.IndexFieldSourceRecord;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeGroupRecord;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeRecord;
-
-import org.jooq.ForeignKey;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
 
 
 /**

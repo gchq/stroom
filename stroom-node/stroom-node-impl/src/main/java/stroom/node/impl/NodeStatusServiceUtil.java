@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,6 +195,13 @@ class NodeStatusServiceUtil {
                 .ifPresent(bufferPoolMXBean -> {
                     statAdder.accept("Mapped Buffers Used", bufferPoolMXBean.getMemoryUsed());
                 });
+
+        if (ManagementFactory.getOperatingSystemMXBean() instanceof
+                final com.sun.management.OperatingSystemMXBean operatingSystem) {
+            statAdder.accept("OS Committed Virtual Memory", operatingSystem.getCommittedVirtualMemorySize());
+            statAdder.accept("OS Free Memory Size", operatingSystem.getFreeMemorySize());
+            statAdder.accept("OS Free Swap Space", operatingSystem.getFreeSwapSpaceSize());
+        }
     }
 
     private void buildRefDataStats(final List<InternalStatisticEvent> statisticEventList,

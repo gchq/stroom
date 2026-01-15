@@ -1,10 +1,27 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
-import stroom.proxy.feed.remote.FeedStatus;
+import stroom.receive.common.FeedStatusResourceV2;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
+import stroom.util.shared.ResourcePaths;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -17,24 +34,15 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
 
-    public static final String PROP_NAME_API_KEY = "apiKey";
+    public static final String PROP_NAME_URL = "url";
+    public static final String DEFAULT_URL_PATH = ResourcePaths.buildAuthenticatedApiPath(
+            FeedStatusResourceV2.BASE_RESOURCE_PATH,
+            FeedStatusResourceV2.GET_FEED_STATUS_PATH_PART);
 
-    @JsonProperty
-    @JsonPropertyDescription("Turn feed status checking on/off.")
-    private final Boolean enabled;
-
-    @JsonProperty
-    @JsonPropertyDescription("How should proxy treat incoming data if feed status checking is turned off or we are" +
-                             " unable to fetch the status.")
-    private final FeedStatus defaultStatus;
-
-    @JsonProperty("url")
-    @JsonPropertyDescription("The remote URL to fetch feed status from if enabled.")
+    @JsonProperty(PROP_NAME_URL)
+    @JsonPropertyDescription("The remote URL to fetch feed status from if enabled. If not set the default " +
+                             "path will be combined with the downstreamHost.")
     private final String feedStatusUrl;
-
-    @JsonProperty(PROP_NAME_API_KEY)
-    @JsonPropertyDescription("The api key to use to authenticate with the feed status service.")
-    private final String apiKey;
 
     @RequiresProxyRestart
     @NotNull
@@ -43,28 +51,18 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
     private final CacheConfig feedStatusCache;
 
     public FeedStatusConfig() {
-        enabled = true;
-        defaultStatus = FeedStatus.Receive;
         feedStatusUrl = null;
-        apiKey = null;
         feedStatusCache = buildDefaultCacheConfig();
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public FeedStatusConfig(@JsonProperty("enabled") final Boolean enabled,
-                            @JsonProperty("defaultStatus") final FeedStatus defaultStatus,
-                            @JsonProperty("url") final String feedStatusUrl,
-                            @JsonProperty(PROP_NAME_API_KEY) final String apiKey,
+    public FeedStatusConfig(@JsonProperty(PROP_NAME_URL) final String feedStatusUrl,
                             @JsonProperty("feedStatusCache") final CacheConfig feedStatusCache) {
-        this.enabled = enabled;
-        this.defaultStatus = defaultStatus;
         this.feedStatusUrl = feedStatusUrl;
-        this.apiKey = apiKey;
-
-        this.feedStatusCache = feedStatusCache == null
-                ? buildDefaultCacheConfig()
-                : feedStatusCache;
+        this.feedStatusCache = Objects.requireNonNullElseGet(
+                feedStatusCache,
+                FeedStatusConfig::buildDefaultCacheConfig);
     }
 
     private static CacheConfig buildDefaultCacheConfig() {
@@ -75,20 +73,15 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
                 .build();
     }
 
-    public Boolean getEnabled() {
-        return enabled;
-    }
-
-    public FeedStatus getDefaultStatus() {
-        return defaultStatus;
-    }
-
+    @JsonPropertyDescription(
+            "The full url for the remote stroom/proxy that will perform the feed status checks. " +
+            "If the remote is a proxy, it must also be configured to use feed status checks " +
+            "so that it can obtain them from another stroom/proxy downstream to it. " +
+            "If not set the downstreamHost configuration will be combined with the default API " +
+            "path. Only set this property if you wish to use a non-default path " +
+            "or you want to use a different host/port/scheme to that defined in downstreamHost.")
     public String getFeedStatusUrl() {
         return feedStatusUrl;
-    }
-
-    public String getApiKey() {
-        return apiKey;
     }
 
     public CacheConfig getFeedStatusCache() {
@@ -104,25 +97,22 @@ public class FeedStatusConfig extends AbstractConfig implements IsProxyConfig {
             return false;
         }
         final FeedStatusConfig that = (FeedStatusConfig) o;
-        return Objects.equals(enabled, that.enabled) &&
-               defaultStatus == that.defaultStatus &&
-               Objects.equals(feedStatusUrl, that.feedStatusUrl) &&
-               Objects.equals(apiKey, that.apiKey) &&
-               Objects.equals(feedStatusCache, that.feedStatusCache);
+        return
+                Objects.equals(feedStatusUrl, that.feedStatusUrl) &&
+                Objects.equals(feedStatusCache, that.feedStatusCache);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(enabled, defaultStatus, feedStatusUrl, apiKey, feedStatusCache);
+        return Objects.hash(
+                feedStatusUrl,
+                feedStatusCache);
     }
 
     @Override
     public String toString() {
         return "FeedStatusConfig{" +
-               "enabled=" + enabled +
-               ", defaultStatus=" + defaultStatus +
                ", feedStatusUrl='" + feedStatusUrl + '\'' +
-               ", apiKey='" + apiKey + '\'' +
                ", feedStatusCache=" + feedStatusCache +
                '}';
     }

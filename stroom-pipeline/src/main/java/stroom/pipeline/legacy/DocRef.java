@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package stroom.pipeline.legacy;
 
 import stroom.docref.HasDisplayValue;
-import stroom.docref.HasNameMutable;
 import stroom.docref.HasType;
 import stroom.docref.HasUuid;
 
@@ -194,20 +193,16 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof DocRef)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        //noinspection PatternVariableCanBeUsed // Not in GWT
         final DocRef docRef = (DocRef) o;
-        return Objects.equals(uuid, docRef.uuid);
+        return Objects.equals(type, docRef.type) && Objects.equals(uuid, docRef.uuid);
     }
 
     @Override
     public int hashCode() {
-        return uuid.hashCode();
+        return Objects.hash(type, uuid);
     }
 
     /**

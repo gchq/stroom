@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package stroom.docstore.impl.db.migration.v710.pipeline.legacy.xml;
 
 import stroom.docref.HasDisplayValue;
-import stroom.docref.HasNameMutable;
 import stroom.docref.HasType;
 import stroom.docref.HasUuid;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.view.impl;
@@ -49,7 +48,7 @@ class ViewStoreImpl implements ViewStore {
     ViewStoreImpl(final StoreFactory storeFactory,
                   final ViewSerialiser serialiser,
                   final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, ViewDoc.TYPE, ViewDoc.class);
+        this.store = storeFactory.createStore(serialiser, ViewDoc.TYPE, ViewDoc::builder);
         this.securityContext = securityContext;
     }
 

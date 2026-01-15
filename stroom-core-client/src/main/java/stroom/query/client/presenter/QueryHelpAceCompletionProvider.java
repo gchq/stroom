@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,6 @@ public class QueryHelpAceCompletionProvider
         });
     }
 
-    @SuppressWarnings("PatternVariableCanBeUsed") // cos GWT
     private AceCompletion convertCompletion(final CompletionItem completionItem) {
         if (completionItem == null) {
             return null;
@@ -122,8 +121,7 @@ public class QueryHelpAceCompletionProvider
 
             final AceCompletion aceCompletion;
 
-            if (completionItem instanceof CompletionValue) {
-                final CompletionValue completionValue = (CompletionValue) completionItem;
+            if (completionItem instanceof final CompletionValue completionValue) {
                 aceCompletion = new AceCompletionValue(
                         caption,
                         completionValue.getValue(),
@@ -131,8 +129,7 @@ public class QueryHelpAceCompletionProvider
                         tooltipHtml,
                         score);
 
-            } else if (completionItem instanceof CompletionSnippet) {
-                final CompletionSnippet completionSnippet = (CompletionSnippet) completionItem;
+            } else if (completionItem instanceof final CompletionSnippet completionSnippet) {
                 aceCompletion = new AceCompletionSnippet(
                         caption,
                         completionSnippet.getSnippet(),

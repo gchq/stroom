@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.xml.converter.json;
@@ -36,6 +35,7 @@ import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
 
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -321,7 +321,8 @@ class TestJSONParser extends StroomUnitTest {
 
             if (zipInput) {
                 final StreamLocationFactory locationFactory = new StreamLocationFactory();
-                reader.setErrorHandler(new ErrorHandlerAdaptor("JSONParser", locationFactory, errorReceiver));
+                reader.setErrorHandler(new ErrorHandlerAdaptor(
+                        new ElementId("JSONParser"), locationFactory, errorReceiver));
 
                 try (final ZipArchiveInputStream zipInputStream =
                         new ZipArchiveInputStream(Files.newInputStream(input))) {
@@ -344,7 +345,8 @@ class TestJSONParser extends StroomUnitTest {
 
             } else {
                 final DefaultLocationFactory locationFactory = new DefaultLocationFactory();
-                reader.setErrorHandler(new ErrorHandlerAdaptor("JSONParser", locationFactory, errorReceiver));
+                reader.setErrorHandler(new ErrorHandlerAdaptor(
+                        new ElementId("JSONParser"), locationFactory, errorReceiver));
 
                 reader.parse(new InputSource(Files.newBufferedReader(input)));
             }
@@ -364,7 +366,7 @@ class TestJSONParser extends StroomUnitTest {
         if (!errorReceiver.isAllOk()) {
             final Writer errWriter = Files.newBufferedWriter(errTemp);
 
-            for (final Entry<String, Indicators> entry : errorReceiver.getIndicatorsMap().entrySet()) {
+            for (final Entry<ElementId, Indicators> entry : errorReceiver.getIndicatorsMap().entrySet()) {
                 final Indicators indicators = entry.getValue();
                 errWriter.write(indicators.toString());
             }
@@ -402,7 +404,8 @@ class TestJSONParser extends StroomUnitTest {
         final LocationFactory locationFactory = new DefaultLocationFactory();
 
         final XMLReader reader = factory.getParser();
-        reader.setErrorHandler(new ErrorHandlerAdaptor("JSONParser", locationFactory, errorReceiver));
+        reader.setErrorHandler(new ErrorHandlerAdaptor(
+                new ElementId("JSONParser"), locationFactory, errorReceiver));
         return reader;
     }
 

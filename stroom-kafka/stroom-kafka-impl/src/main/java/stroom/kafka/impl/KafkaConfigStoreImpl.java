@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
                          final Provider<KafkaConfig> kafkaConfigProvider,
                          final KafkaConfigSerialiser serialiser) {
         this.kafkaConfigProvider = kafkaConfigProvider;
-        this.store = storeFactory.createStore(serialiser, KafkaConfigDoc.TYPE, KafkaConfigDoc.class);
+        this.store = storeFactory.createStore(serialiser, KafkaConfigDoc.TYPE, KafkaConfigDoc::builder);
     }
 
     ////////////////////////////////////////////////////////////////////////
@@ -58,12 +58,11 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
         // create the document with some configurable skeleton content
         return store.createDocument(
                 name,
-                (type, uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
+                (uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
 
                     final String skeletonConfigText = kafkaConfigProvider.get().getSkeletonConfigContent();
 
                     return new KafkaConfigDoc(
-                            type,
                             uuid,
                             docName,
                             version,

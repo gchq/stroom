@@ -1,5 +1,23 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
+import stroom.proxy.app.DownstreamHostConfig;
+import stroom.util.io.PathCreator;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
@@ -25,8 +43,10 @@ public final class ForwardFileConfig
     public static final TemplatingMode DEFAULT_TEMPLATING_MODE = TemplatingMode.REPLACE_UNKNOWN_PARAMS;
 
     private static final String DEFAULT_SUB_PATH_TEMPLATE = "${year}${month}${day}/${feed}";
-    private static final boolean DEFAULT_ATOMIC_MOVE_ENABLED = true;
+    private static final boolean DEFAULT_IS_ATOMIC_MOVE_ENABLED = true;
     private static final LivenessCheckMode DEFAULT_LIVENESS_CHECK_MODE = LivenessCheckMode.READ;
+    public static final boolean DEFAULT_IS_ENABLED = true;
+    public static final boolean DEFAULT_IS_INSTANT = false;
 
     private final boolean enabled;
     private final boolean instant;
@@ -39,15 +59,15 @@ public final class ForwardFileConfig
     private final boolean atomicMoveEnabled;
 
     public ForwardFileConfig() {
-        enabled = true;
-        instant = false;
+        enabled = DEFAULT_IS_ENABLED;
+        instant = DEFAULT_IS_INSTANT;
         name = null;
         path = null;
         subPathTemplate = null;
         forwardQueueConfig = new ForwardFileQueueConfig();
         livenessCheckPath = null;
-        livenessCheckMode = LivenessCheckMode.READ;
-        atomicMoveEnabled = DEFAULT_ATOMIC_MOVE_ENABLED;
+        livenessCheckMode = DEFAULT_LIVENESS_CHECK_MODE;
+        atomicMoveEnabled = DEFAULT_IS_ATOMIC_MOVE_ENABLED;
     }
 
     @SuppressWarnings("unused")
@@ -69,7 +89,7 @@ public final class ForwardFileConfig
         this.forwardQueueConfig = Objects.requireNonNullElseGet(forwardQueueConfig, ForwardFileQueueConfig::new);
         this.livenessCheckPath = livenessCheckPath;
         this.livenessCheckMode = Objects.requireNonNullElse(livenessCheckMode, DEFAULT_LIVENESS_CHECK_MODE);
-        this.atomicMoveEnabled = Objects.requireNonNullElse(atomicMoveEnabled, DEFAULT_ATOMIC_MOVE_ENABLED);
+        this.atomicMoveEnabled = Objects.requireNonNullElse(atomicMoveEnabled, DEFAULT_IS_ATOMIC_MOVE_ENABLED);
     }
 
     private ForwardFileConfig(final Builder builder) {
@@ -150,10 +170,12 @@ public final class ForwardFileConfig
 
     @JsonIgnore
     @Override
-    public String getDestinationDescription() {
+    public String getDestinationDescription(final DownstreamHostConfig ignored,
+                                            final PathCreator pathCreator) {
+        final String appPath = pathCreator.toAppPath(path).toString();
         return subPathTemplate.hasPathTemplate()
-                ? path + "/" + subPathTemplate.getPathTemplate()
-                : path;
+                ? appPath + "/" + subPathTemplate.getPathTemplate()
+                : appPath;
     }
 
     @JsonIgnore

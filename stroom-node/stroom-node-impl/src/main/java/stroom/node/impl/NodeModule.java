@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,9 +51,10 @@ public class NodeModule extends AbstractModule {
                 .bindJobTo(JavaHeapHistogramStatistics.class, jobBuilder -> jobBuilder
                         .name("Java Heap Histogram Statistics")
                         .description("Generate Java heap map histogram and record statistic events " +
-                                "for the entries. CAUTION: this will pause the JVM, only enable this if you " +
-                                "understand the consequences!")
+                                     "for the entries. CAUTION: this will pause the JVM, only enable this if you " +
+                                     "understand the consequences!")
                         .cronSchedule(CronExpressions.EVERY_HOUR.getExpression())
+                        .enabledOnBootstrap(false) // Not needed in a test environment
                         .enabled(false))
                 .bindJobTo(NodeStatus.class, jobBuilder -> jobBuilder
                         .name("Node Status")

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
         this.restFactory = restFactory;
         this.delayedUpdate = new DelayedUpdate(this::update);
 
-        final MyDataGrid<CacheIdentity> dataGrid = new MyDataGrid<>();
+        final MyDataGrid<CacheIdentity> dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 

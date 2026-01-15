@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl;
 
 import stroom.cache.api.CacheManager;
@@ -366,7 +382,7 @@ public class StroomUserIdentityFactory
             LOGGER.info(() -> LogUtil.message(
                     "createAuthFlowUserIdentity() - Authenticated user: {} {} ({}), " +
                     "sessionId: {} ({}), user-agent: '{}'",
-                    userIdentity.getSubjectId(),
+                    userIdentity.subjectId(),
                     userIdentity.getDisplayName(),
                     userIdentity.getFullName().orElse("-"),
                     SessionUtil.getSessionId(session),
@@ -476,12 +492,12 @@ public class StroomUserIdentityFactory
                     .orElse(false);
         } else {
             final String requiredIssuer = openIdConfigProvider.get().getIssuer();
-            final boolean isProcessingUser = Objects.equals(subject, serviceUser.getSubjectId())
+            final boolean isProcessingUser = Objects.equals(subject, serviceUser.subjectId())
                                              && Objects.equals(issuer, requiredIssuer);
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Comparing subject: [{}|{}], issuer[{}|{}], result: {}",
                         subject,
-                        serviceUser.getSubjectId(),
+                        serviceUser.subjectId(),
                         issuer,
                         requiredIssuer,
                         isProcessingUser);

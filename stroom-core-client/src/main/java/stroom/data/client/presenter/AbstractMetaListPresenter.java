@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionPopup;
-import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
@@ -44,7 +43,10 @@ import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.UpdateStatusRequest;
+import stroom.pipeline.client.event.ChangeDataEvent;
+import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.CreateProcessorEvent;
+import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.CreateProcessFilterRequest;
@@ -75,6 +77,7 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.Range;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Collections;
@@ -89,7 +92,7 @@ import javax.inject.Provider;
 
 public abstract class AbstractMetaListPresenter
         extends MyPresenterWidget<PagerView>
-        implements HasDataSelectionHandlers<Selection<Long>>, Refreshable {
+        implements HasDataSelectionHandlers<Selection<Long>>, Refreshable, HasChangeDataHandlers<ResultPage<MetaRow>> {
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
@@ -131,7 +134,7 @@ public abstract class AbstractMetaListPresenter
         this.pipelineSelection = pipelineSelection;
         this.expressionValidator = expressionValidator;
 
-        this.dataGrid = new MyDataGrid<>();
+        this.dataGrid = new MyDataGrid<>(this);
         selectionModel = new MultiSelectionModelImpl<>();
         selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
@@ -142,7 +145,7 @@ public abstract class AbstractMetaListPresenter
         addColumns(allowSelectAll);
 
         criteria = new FindMetaCriteria();
-        dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus) {
+        dataProvider = new RestDataProvider<>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<MetaRow>> dataConsumer,
@@ -153,7 +156,10 @@ public abstract class AbstractMetaListPresenter
                     restFactory
                             .create(META_RESOURCE)
                             .method(res -> res.findMetaRow(criteria))
-                            .onSuccess(dataConsumer)
+                            .onSuccess(resultSet -> {
+                                dataConsumer.accept(resultSet);
+                                ChangeDataEvent.fire(AbstractMetaListPresenter.this, resultSet);
+                            })
                             .onFailure(errorHandler)
                             .taskMonitorFactory(view)
                             .exec();
@@ -172,6 +178,11 @@ public abstract class AbstractMetaListPresenter
     @Override
     protected void onBind() {
         registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+    }
+
+    @Override
+    public HandlerRegistration addChangeDataHandler(final ChangeDataHandler<ResultPage<MetaRow>> handler) {
+        return getEventBus().addHandlerToSource(ChangeDataEvent.getType(), this, handler);
     }
 
     protected ResultPage<MetaRow> onProcessData(final ResultPage<MetaRow> data) {
@@ -349,12 +360,11 @@ public abstract class AbstractMetaListPresenter
 
     void addFeedColumn() {
         dataGrid.addResizableColumn(
-                DataGridUtil.docRefColumnBuilder((MetaRow metaRow) ->
+                DataGridUtil.feedRefColumnBuilder((MetaRow metaRow) ->
                                         Optional.ofNullable(metaRow)
                                                 .map(this::getFeed)
                                                 .orElse(null),
-                                getEventBus(),
-                                true)
+                                getEventBus())
                         .withSorting(MetaFields.FEED)
                         .build(),
                 "Feed",
@@ -375,12 +385,9 @@ public abstract class AbstractMetaListPresenter
                 80);
     }
 
-    private DocRef getFeed(final MetaRow metaRow) {
+    private String getFeed(final MetaRow metaRow) {
         if (metaRow.getMeta() != null && metaRow.getMeta().getFeedName() != null) {
-            return new DocRef(
-                    FeedDoc.TYPE,
-                    null,
-                    metaRow.getMeta().getFeedName());
+            return metaRow.getMeta().getFeedName();
         }
         return null;
     }
@@ -389,8 +396,6 @@ public abstract class AbstractMetaListPresenter
         if (metaRow.getMeta().getProcessorUuid() != null) {
             if (metaRow.getPipeline() != null) {
                 return metaRow.getPipeline();
-            } else {
-                return new DocRef(null, null, null);
             }
         }
         return null;
@@ -402,8 +407,7 @@ public abstract class AbstractMetaListPresenter
                                         Optional.ofNullable(metaRow)
                                                 .map(this::getPipeline)
                                                 .orElse(null),
-                                getEventBus(),
-                                false)
+                                getEventBus())
                         .withSorting(MetaFields.PIPELINE_NAME)
                         .build(),
                 "Pipeline",
@@ -419,7 +423,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     private Set<Long> getResultStreamIdSet() {
-        final HashSet<Long> rtn = new HashSet<>();
+        final Set<Long> rtn = new HashSet<>();
         if (resultPage != null) {
             for (final MetaRow e : resultPage.getValues()) {
                 rtn.add(e.getMeta().getId());

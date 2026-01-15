@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 Stroomworks Limited
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.importexport;
@@ -26,7 +25,9 @@ import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.gitrepo.api.GitRepoStore;
 import stroom.gitrepo.shared.GitRepoDoc;
+import stroom.importexport.api.ExportSummary;
 import stroom.importexport.api.ImportExportSerializer;
+import stroom.importexport.api.ImportExportVersion;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
@@ -35,12 +36,12 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.annotation.Nonnull;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -62,7 +63,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestImportExportGitRepo.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestImportExportGitRepo.class);
 
     @SuppressWarnings("unused")
     @Inject
@@ -106,36 +107,42 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
         public GitFileVisitor(final Path root,
                               final Map<Pattern, Boolean> pathsFound,
                               final List<String> pathsNotMatched) {
+            LOGGER.info("Checking root '{}'", root);
             this.root = root;
             this.pathsFound = pathsFound;
             this.pathsNotMatched = pathsNotMatched;
         }
 
         private void checkPath(final Path path) {
+            LOGGER.info("Checking path {}", path);
+
             final String pathName = root.relativize(path).toString();
             boolean foundIt = false;
             for (final Map.Entry<Pattern, Boolean> entry : pathsFound.entrySet()) {
+                LOGGER.info("    Checking {}", entry.getKey());
                 if (entry.getKey().matcher(pathName).matches()) {
+                    LOGGER.info("        MATCHED");
                     entry.setValue(Boolean.TRUE);
                     foundIt = true;
                     break;
                 }
             }
             if (!foundIt) {
+                LOGGER.info("        NOT MATCHED {}", pathName);
                 pathsNotMatched.add(pathName);
             }
         }
 
         @Nonnull
         @Override
-        public FileVisitResult preVisitDirectory(final Path dir, @Nonnull final BasicFileAttributes attrs) {
+        public FileVisitResult preVisitDirectory(@Nonnull final Path dir, @Nonnull final BasicFileAttributes attrs) {
             checkPath(dir);
             return FileVisitResult.CONTINUE;
         }
 
         @Nonnull
         @Override
-        public FileVisitResult visitFile(final Path file, @Nonnull final BasicFileAttributes attrs) {
+        public FileVisitResult visitFile(@Nonnull final Path file, @Nonnull final BasicFileAttributes attrs) {
             checkPath(file);
             return FileVisitResult.CONTINUE;
         }
@@ -147,7 +154,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
             throws IOException {
 
         final Map<Pattern, Boolean> pathsFound = new HashMap<>();
-        for (final var pathPattern : pathPatterns) {
+        for (final String pathPattern : pathPatterns) {
             pathsFound.put(Pattern.compile(pathPattern), Boolean.FALSE);
         }
 
@@ -168,6 +175,7 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
 
     /**
      * Basic test - a few elements exported.
+     *
      * @throws IOException If something goes really wrong
      */
     @Test
@@ -215,6 +223,9 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
         feedDoc.setDescription("Feed Description");
         feedStore.writeDocument(feedDoc);
 
+        System.err.println("Showing structure that will be exported: ");
+        dumpNodeStructure(explorerNodeService.getRoot(), 0);
+
         commonTestControl.createRequiredXMLSchemas();
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportGitRepoTest");
@@ -237,22 +248,35 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
         final Set<String> docTypesToIgnore = Set.of(GitRepoDoc.TYPE);
 
         // Run the export to disk
-        importExportSerializer.write(
+        final ExportSummary exportSummary = importExportSerializer.write(
                 rootNodePath,
                 testDataDir,
                 docRefsToExport,
                 docTypesToIgnore,
-                true);
+                true,
+                ImportExportVersion.V2);
 
+        LOGGER.info("Export summary: {}", exportSummary.toString());
+        assertThat(exportSummary.getSuccessCountsByType().get("Folder"))
+                .as("Folders exported")
+                .isEqualTo(2);
+        assertThat(exportSummary.getSuccessCountsByType().get("Pipeline"))
+                .as("Pipelines exported")
+                .isEqualTo(1);
+        assertThat(exportSummary.getSuccessCountsByType().get("Feed"))
+                .as("Feeds exported")
+                .isEqualTo(1);
         final List<String> pathPatterns = List.of(
                 "",
-                "folder1",
-                "folder1/FEED\\.Feed\\.[-a-f0-9]*.meta",
-                "folder1/FEED\\.Feed\\.[-a-f0-9]*.node",
-                "folder2",
-                "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.meta",
-                "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.node",
-                "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.json");
+                "folder1\\.Folder\\.[-a-f0-9]*$",
+                "folder1\\.Folder\\.[-a-f0-9]*.node",
+                "folder1\\.Folder\\.[-a-f0-9]*/FEED\\.Feed\\.[-a-f0-9]*.meta",
+                "folder1\\.Folder\\.[-a-f0-9]*/FEED\\.Feed\\.[-a-f0-9]*.node",
+                "folder2\\.Folder\\.[-a-f0-9]*$",
+                "folder2\\.Folder\\.[-a-f0-9]*.node",
+                "folder2\\.Folder\\.[-a-f0-9]*/Pipeline\\.Pipeline\\.[-a-f0-9]*.meta",
+                "folder2\\.Folder\\.[-a-f0-9]*/Pipeline\\.Pipeline\\.[-a-f0-9]*.node",
+                "folder2\\.Folder\\.[-a-f0-9]*/Pipeline\\.Pipeline\\.[-a-f0-9]*.json");
 
         this.testGitFilesOnDisk("testExport1",
                 testDataDir,
@@ -260,8 +284,22 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
 
     }
 
+    private void dumpNodeStructure(final ExplorerNode node, final int indent) {
+        if (node != null) {
+            System.err.println("  ".repeat(indent) + ": " + node.getName());
+
+            final List<ExplorerNode> children = explorerNodeService.getChildren(node.getDocRef());
+            if (children != null) {
+                for (final ExplorerNode child : children) {
+                    dumpNodeStructure(child, indent + 1);
+                }
+            }
+        }
+    }
+
     /**
      * Does the same as testExport1 but tries to import again.
+     *
      * @throws IOException If something goes really wrong
      */
     @Test
@@ -310,6 +348,9 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
         feedDoc.setDescription("Feed Description");
         feedStore.writeDocument(feedDoc);
 
+        System.err.println("Structure that is being exported:");
+        dumpNodeStructure(systemNode, 0);
+
         commonTestControl.createRequiredXMLSchemas();
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportGitRepoTest");
@@ -332,22 +373,27 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
         final Set<String> docTypesToIgnore = Set.of(GitRepoDoc.TYPE);
 
         // Run the export to disk
-        importExportSerializer.write(
+        final ExportSummary exportSummary = importExportSerializer.write(
                 rootNodePath,
                 testDataDir,
                 docRefsToExport,
                 docTypesToIgnore,
-                true);
+                true,
+                ImportExportVersion.V2);
+
+        LOGGER.info("Export summary = {}", exportSummary);
 
         final List<String> pathPatterns = List.of(
                 "",
-                "folder1",
-                "folder1/FEED\\.Feed\\.[-a-f0-9]*.meta",
-                "folder1/FEED\\.Feed\\.[-a-f0-9]*.node",
-                "folder2",
-                "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.meta",
-                "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.node",
-                "folder2/Pipeline\\.Pipeline\\.[-a-f0-9]*.json");
+                "folder1\\.Folder\\.[-a-f0-9]*",
+                "folder1\\.Folder\\.[-a-f0-9]*\\.node",
+                "folder1\\.Folder\\.[-a-f0-9]*/FEED\\.Feed\\.[-a-f0-9]*.meta",
+                "folder1\\.Folder\\.[-a-f0-9]*/FEED\\.Feed\\.[-a-f0-9]*.node",
+                "folder2\\.Folder\\.[-a-f0-9]*",
+                "folder2\\.Folder\\.[-a-f0-9]*\\.node",
+                "folder2\\.Folder\\.[-a-f0-9]*/Pipeline\\.Pipeline\\.[-a-f0-9]*.meta",
+                "folder2\\.Folder\\.[-a-f0-9]*/Pipeline\\.Pipeline\\.[-a-f0-9]*.node",
+                "folder2\\.Folder\\.[-a-f0-9]*/Pipeline\\.Pipeline\\.[-a-f0-9]*.json");
 
         this.testGitFilesOnDisk("testExport2",
                 testDataDir,
@@ -373,31 +419,39 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 .useImportNames(true)
                 .rootDocRef(gitRepoNode2.getDocRef())
                 .build();
-        importExportSerializer.read(testDataDir, importStates, importSettings);
+        final Set<DocRef> importedDocRefs = importExportSerializer.read(testDataDir, importStates, importSettings);
+        LOGGER.info("Imported docrefs = {}", importedDocRefs);
+        LOGGER.info("Imported states = {}", importStates);
+        final List<String> importedNames = importedDocRefs.stream().map(DocRef::getName).toList();
+        assertThat(importedNames)
+                .contains("System", "FEED", "Pipeline");
+        assertThat(importStates)
+                .isEmpty();
+        System.err.println("Structure following import: ");
+        dumpNodeStructure(explorerNodeService.getRoot(), 0);
 
-        final var folder12 = this.explorerNodeService.getNodesByName(gitRepoNode2, "folder1");
+        final List<ExplorerNode> folder12 = this.explorerNodeService.getNodesByName(gitRepoNode2, "folder1");
         assertThat(folder12)
                 .as("GitRepo node has folder1 child")
                 .isNotEmpty()
                 .hasSize(1);
-        final var folder12node = folder12.getFirst();
-        final var feedNodeList = this.explorerNodeService.getNodesByName(folder12node, "FEED");
+        final ExplorerNode folder12node = folder12.getFirst();
+        final List<ExplorerNode> feedNodeList = this.explorerNodeService.getNodesByName(folder12node, "FEED");
         assertThat(feedNodeList)
                 .as("folder1 has a FEED child")
                 .isNotEmpty()
                 .hasSize(1);
-        final var folder22 = this.explorerNodeService.getNodesByName(gitRepoNode2, "folder2");
+        final List<ExplorerNode> folder22 = this.explorerNodeService.getNodesByName(gitRepoNode2, "folder2");
         assertThat(folder22)
                 .as("GitRepo node has folder2 child")
                 .isNotEmpty()
                 .hasSize(1);
-        final var folder22node = folder22.getFirst();
-        final var pipelineNodeList = this.explorerNodeService.getNodesByName(folder22node, "Pipeline");
+        final ExplorerNode folder22node = folder22.getFirst();
+        final List<ExplorerNode> pipelineNodeList = this.explorerNodeService.getNodesByName(
+                folder22node, "Pipeline");
         assertThat(pipelineNodeList)
                 .as("folder2 has a pipeline child")
                 .isNotEmpty()
                 .hasSize(1);
-
-
     }
 }

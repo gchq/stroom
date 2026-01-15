@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,11 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.meta.impl;
 
+import stroom.data.retention.api.DataRetentionRulesProvider;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.expression.matcher.ExpressionMatcher;
@@ -48,11 +48,11 @@ class StreamAttributeMapRetentionRuleDecorator {
 
     @Inject
     public StreamAttributeMapRetentionRuleDecorator(final ExpressionMatcherFactory expressionMatcherFactory,
-                                                    final Provider<DataRetentionRules> dataRetentionRulesProvider) {
+                                                    final DataRetentionRulesProvider dataRetentionRulesProvider) {
         expressionMatcher = expressionMatcherFactory.create(MetaFields.getFieldMap());
 
         rules = Optional.ofNullable(dataRetentionRulesProvider)
-                .map(Provider::get)
+                .map(DataRetentionRulesProvider::getOrCreate)
                 .map(DataRetentionRules::getRules)
                 .orElse(Collections.emptyList());
     }

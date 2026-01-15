@@ -1,11 +1,29 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.impl.db.histogram;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
+import stroom.lmdb.stream.LmdbIterable;
 import stroom.lmdb2.KV;
 import stroom.planb.impl.db.AbstractDb;
+import stroom.planb.impl.db.Count;
 import stroom.planb.impl.db.HashClashCommitRunnable;
 import stroom.planb.impl.db.LmdbWriter;
 import stroom.planb.impl.db.PlanBEnv;
@@ -30,12 +48,7 @@ import stroom.planb.impl.serde.time.ZonedDayTimeSerde;
 import stroom.planb.impl.serde.time.ZonedHourTimeSerde;
 import stroom.planb.impl.serde.time.ZonedYearTimeSerde;
 import stroom.planb.impl.serde.valtime.InsertTimeSerde;
-import stroom.planb.shared.AbstractPlanBSettings;
-import stroom.planb.shared.HashLength;
-import stroom.planb.shared.HistogramKeySchema;
 import stroom.planb.shared.HistogramSettings;
-import stroom.planb.shared.HistogramValueSchema;
-import stroom.planb.shared.KeyType;
 import stroom.planb.shared.MaxValueSize;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.TemporalResolution;
@@ -43,25 +56,21 @@ import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.api.Format;
-import stroom.query.api.UserTimeZone;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
-import stroom.query.common.v2.ValArrayFunctionFactory;
+import stroom.query.common.v2.ValuesFunctionFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.UserTimeZoneUtil;
-import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
+import stroom.query.language.functions.Values;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.io.FileUtil;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.NullSafe;
 
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
@@ -69,10 +78,8 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class HistogramDb extends AbstractDb<TemporalKey, Long> {
@@ -111,6 +118,7 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
                                      final ByteBuffers byteBuffers,
                                      final PlanBDoc doc,
                                      final boolean readOnly) {
+        // Ensure all settings are non null.
         final HistogramSettings settings;
         if (doc.getSettings() instanceof final HistogramSettings histogramSettings) {
             settings = histogramSettings;
@@ -119,50 +127,20 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
         }
 
         final HashClashCommitRunnable hashClashCommitRunnable = new HashClashCommitRunnable();
-        final Long mapSize = NullSafe.getOrElse(
-                settings,
-                AbstractPlanBSettings::getMaxStoreSize,
-                AbstractPlanBSettings.DEFAULT_MAX_STORE_SIZE);
         final PlanBEnv env = new PlanBEnv(path,
-                mapSize,
+                settings.getMaxStoreSize(),
                 20,
                 readOnly,
                 hashClashCommitRunnable);
         try {
-            final KeyType keyType = NullSafe.getOrElse(
-                    settings,
-                    HistogramSettings::getKeySchema,
-                    HistogramKeySchema::getKeyType,
-                    HistogramKeySchema.DEFAULT_KEY_TYPE);
-            final HashLength keyHashLength = NullSafe.getOrElse(
-                    settings,
-                    HistogramSettings::getKeySchema,
-                    HistogramKeySchema::getHashLength,
-                    HistogramKeySchema.DEFAULT_HASH_LENGTH);
-            final TemporalResolution temporalResolution = NullSafe.getOrElse(
-                    settings,
-                    HistogramSettings::getKeySchema,
-                    HistogramKeySchema::getTemporalResolution,
-                    HistogramKeySchema.DEFAULT_TEMPORAL_RESOLUTION);
-            final UserTimeZone timeZone = NullSafe.getOrElse(
-                    settings,
-                    HistogramSettings::getKeySchema,
-                    HistogramKeySchema::getTimeZone,
-                    HistogramKeySchema.DEFAULT_TIME_ZONE);
-
-            final MaxValueSize valueType = NullSafe.getOrElse(
-                    settings,
-                    HistogramSettings::getValueSchema,
-                    HistogramValueSchema::getValueType,
-                    HistogramValueSchema.DEFAULT_VALUE_TYPE);
             // Rows will store hour precision.
-            final ZoneId zoneId = UserTimeZoneUtil.getZoneId(timeZone, null);
+            final ZoneId zoneId = UserTimeZoneUtil.getZoneId(settings.getKeySchema().getTimeZone(), null);
 
             // The key time is always a coarse grained time with rows having multiple values.
-            final TimeSerde keyTimeSerde = getKeyTimeSerde(temporalResolution, zoneId);
+            final TimeSerde keyTimeSerde = getKeyTimeSerde(settings.getKeySchema().getTemporalResolution(), zoneId);
             final InsertTimeSerde insertTimeSerde = new InsertTimeSerde();
-            final CountSerde<Long> countSerde = getCountSerde(valueType);
-            final TemporalIndex temporalIndex = getTemporalIndex(temporalResolution);
+            final CountSerde<Long> countSerde = getCountSerde(settings.getValueSchema().getValueType());
+            final TemporalIndex temporalIndex = getTemporalIndex(settings.getKeySchema().getTemporalResolution());
             final CountValuesSerde<Long> valueSerde = new CountValuesSerdeImpl<>(
                     byteBuffers,
                     countSerde,
@@ -171,8 +149,9 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
                     temporalIndex);
 
             final TemporalKeySerde keySerde = TemporalKeySerdeFactory.createKeySerde(
-                    keyType,
-                    keyHashLength,
+                    doc,
+                    settings.getKeySchema().getKeyType(),
+                    settings.getKeySchema().getHashLength(),
                     env,
                     byteBuffers,
                     keyTimeSerde,
@@ -183,7 +162,7 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
                     byteBuffers,
                     doc,
                     settings,
-                    temporalResolution,
+                    settings.getKeySchema().getTemporalResolution(),
                     keySerde,
                     valueSerde,
                     hashClashCommitRunnable);
@@ -248,15 +227,6 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
         writer.tryCommit();
     }
 
-    private void iterate(final Txn<ByteBuffer> txn,
-                         final Consumer<KeyVal<ByteBuffer>> consumer) {
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(txn)) {
-            for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                consumer.accept(keyVal);
-            }
-        }
-    }
-
     @Override
     public void merge(final Path source) {
         env.write(writer -> {
@@ -266,15 +236,15 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
 
                 // Merge.
                 sourceDb.env.read(readTxn -> {
-                    sourceDb.iterate(readTxn, kv -> {
+                    sourceDb.iterate(readTxn, (key, val) -> {
                         final Txn<ByteBuffer> writeTxn = writer.getWriteTxn();
-                        final TemporalKey key = sourceDb.keySerde.read(readTxn, kv.key());
-                        keySerde.write(writeTxn, key, keyByteBuffer -> {
+                        final TemporalKey temporalKey = sourceDb.keySerde.read(readTxn, key);
+                        keySerde.write(writeTxn, temporalKey, keyByteBuffer -> {
                             final ByteBuffer existingValueByteBuffer = dbi.get(writeTxn, keyByteBuffer);
                             if (existingValueByteBuffer == null) {
-                                dbi.put(writeTxn, keyByteBuffer, kv.val());
+                                dbi.put(writeTxn, keyByteBuffer, val);
                             } else {
-                                valuesSerde.merge(kv.val(), existingValueByteBuffer, valueByteBuffer ->
+                                valuesSerde.merge(val, existingValueByteBuffer, valueByteBuffer ->
                                         dbi.put(writeTxn, keyByteBuffer, valueByteBuffer));
                             }
                         });
@@ -311,35 +281,33 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
         fields.forEach(fieldIndex::create);
         env.read(readTxn -> {
 
-            final ValueFunctionFactories<Val[]> valueFunctionFactories = createValueFunctionFactories(fieldIndex);
-            final Optional<Predicate<Val[]>> optionalPredicate = expressionPredicateFactory
+            final ValueFunctionFactories<Values> valueFunctionFactories = createValueFunctionFactories(fieldIndex);
+            final Optional<Predicate<Values>> optionalPredicate = expressionPredicateFactory
                     .createOptional(criteria.getExpression(), valueFunctionFactories, dateTimeSettings);
-            final Predicate<Val[]> predicate = optionalPredicate.orElse(vals -> true);
+            final Predicate<Values> predicate = optionalPredicate.orElse(vals -> true);
             final List<ValConverter<Long>> valConverters = createValuesExtractor(fieldIndex);
 
             // TODO : It would be faster if we limit the iteration to keys based on the criteria.
-            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(readTxn)) {
-                for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-                    final TemporalKey key = keySerde.read(readTxn, keyVal.key());
-                    valuesSerde.getValues(key, keyVal.val(), valConverters, vals -> {
-                        if (predicate.test(vals)) {
-                            consumer.accept(vals);
-                        }
-                    });
-                }
-            }
+            iterate(readTxn, (key, val) -> {
+                final TemporalKey temporalKey = keySerde.read(readTxn, key);
+                valuesSerde.getValues(temporalKey, val, valConverters, vals -> {
+                    if (predicate.test(vals)) {
+                        consumer.accept(vals.toArray());
+                    }
+                });
+            });
 
             return null;
         });
     }
 
-    public static ValueFunctionFactories<Val[]> createValueFunctionFactories(final FieldIndex fieldIndex) {
+    public static ValueFunctionFactories<Values> createValueFunctionFactories(final FieldIndex fieldIndex) {
         return fieldName -> {
             final Integer index = fieldIndex.getPos(fieldName);
             if (index == null) {
                 throw new RuntimeException("Unexpected field: " + fieldName);
             }
-            return new ValArrayFunctionFactory(Column.builder().format(Format.TEXT).build(), index);
+            return new ValuesFunctionFactory(Column.builder().format(Format.TEXT).build(), index);
         };
     }
 
@@ -380,33 +348,28 @@ public class HistogramDb extends AbstractDb<TemporalKey, Long> {
                                final Instant deleteBefore,
                                final boolean useStateTime) {
         return env.read(readTxn -> {
-            long changeCount = 0;
-            try (final CursorIterable<ByteBuffer> cursor = dbi.iterate(readTxn)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursor.iterator();
-                while (iterator.hasNext()
-                       && !Thread.currentThread().isInterrupted()) {
-                    final KeyVal<ByteBuffer> kv = iterator.next();
-                    final TemporalKey key = keySerde.read(readTxn, kv.key().duplicate());
-                    final Instant time;
-                    if (useStateTime) {
-                        time = key.getTime();
-                    } else {
-                        time = valuesSerde.readInsertTime(kv.val());
-                    }
-
-                    if (time.isBefore(deleteBefore)) {
-                        // If this is data we no longer want to retain then delete it.
-                        dbi.delete(writer.getWriteTxn(), kv.key());
-                        changeCount++;
-                    } else {
-                        // Record used lookup keys.
-                        keyRecorder.recordUsed(writer, kv.key());
-                    }
-                    writer.tryCommit();
+            final Count count = new Count();
+            LmdbIterable.iterate(readTxn, dbi, (key, val) -> {
+                final TemporalKey temporalKey = keySerde.read(readTxn, key.duplicate());
+                final Instant time;
+                if (useStateTime) {
+                    time = temporalKey.getTime();
+                } else {
+                    time = valuesSerde.readInsertTime(val);
                 }
-            }
+
+                if (time.isBefore(deleteBefore)) {
+                    // If this is data we no longer want to retain then delete it.
+                    dbi.delete(writer.getWriteTxn(), key);
+                    count.incrementAndGet();
+                } else {
+                    // Record used lookup keys.
+                    keyRecorder.recordUsed(writer, key);
+                }
+                writer.tryCommit();
+            });
             writer.commit();
-            return changeCount;
+            return count.get();
         });
     }
 

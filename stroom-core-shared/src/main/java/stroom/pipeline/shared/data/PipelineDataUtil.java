@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,11 @@ import java.util.Collections;
 
 public class PipelineDataUtil {
 
-    public static PipelineElement createElement(final String id, final String type) {
-        return new PipelineElement(id, type);
+    public static PipelineElement createElement(final String id,
+                                                final String type,
+                                                final String name,
+                                                final String description) {
+        return new PipelineElement(id, type, name, description);
     }
 
 //    public static PipelineProperty createProperty(final String element, final String name, final BaseEntity entity) {

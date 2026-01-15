@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionTracker;
+import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.index.shared.IndexConstants;
@@ -32,24 +33,26 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.Query;
 import stroom.query.api.ResultRequest;
-import stroom.query.api.Row;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.api.TableSettings;
 import stroom.query.common.v2.CompiledColumns;
+import stroom.query.common.v2.ConditionalFormattingMapper;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ErrorConsumerImpl;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory;
-import stroom.query.common.v2.FilteredRowCreator;
+import stroom.query.common.v2.FilteredMapper;
+import stroom.query.common.v2.Item;
 import stroom.query.common.v2.ItemMapper;
-import stroom.query.common.v2.KeyFactory;
 import stroom.query.common.v2.OpenGroups;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
 import stroom.query.common.v2.RowValueFilter;
+import stroom.query.common.v2.SimpleMapper;
 import stroom.query.common.v2.ValFilter;
+import stroom.query.common.v2.format.ColumnFormatter;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
@@ -65,6 +68,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.scheduler.Trigger;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
@@ -73,6 +77,7 @@ import jakarta.inject.Provider;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -94,6 +99,7 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider;
     private final DuplicateCheckDirs duplicateCheckDirs;
+    final WordListProvider wordListProvider;
 
     @Inject
     ScheduledQueryAnalyticExecutor(final AnalyticRuleStore analyticRuleStore,
@@ -113,7 +119,8 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                                    final DuplicateCheckDirs duplicateCheckDirs,
                                    final Provider<DocRefInfoService> docRefInfoServiceProvider,
                                    final ExpressionPredicateFactory expressionPredicateFactory,
-                                   final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider) {
+                                   final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider,
+                                   final WordListProvider wordListProvider) {
         super(executorProvider,
                 analyticErrorWriterProvider,
                 taskContextFactory,
@@ -134,6 +141,7 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.analyticUiDefaultConfigProvider = analyticUiDefaultConfigProvider;
         this.duplicateCheckDirs = duplicateCheckDirs;
+        this.wordListProvider = wordListProvider;
     }
 
     @Override
@@ -152,31 +160,14 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
         ExecutionResult executionResult = new ExecutionResult(null, null);
 
         try {
-            final SearchRequestSource searchRequestSource = SearchRequestSource
-                    .builder()
-                    .sourceType(SourceType.SCHEDULED_QUERY_ANALYTIC)
-                    .componentId(SearchRequestFactory.TABLE_COMPONENT_ID)
-                    .build();
-
-            final String query = analytic.getQuery();
-            final Query sampleQuery = Query
-                    .builder()
-                    .params(analytic.getParameters())
-                    .timeRange(analytic.getTimeRange())
-                    .build();
-            final SearchRequest sampleRequest = new SearchRequest(
-                    searchRequestSource,
-                    null,
-                    sampleQuery,
-                    null,
-                    DateTimeSettings.builder().referenceTime(effectiveExecutionTime.toEpochMilli()).build(),
-                    false);
-            final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
-            final SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
+            final MappedRequestBundle mappedRequestBundle = buildMappedSearchRequest(analytic, effectiveExecutionTime);
+            final ExpressionContext expressionContext = mappedRequestBundle.expressionContext;
+            final SearchRequest mappedRequest = mappedRequestBundle.mappedRequest;
+            final SearchRequest sampleRequest = mappedRequestBundle.sampleRequest;
 
             // Fix table result requests.
             final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
-            if (resultRequests != null && resultRequests.size() == 1) {
+            if (NullSafe.size(resultRequests) == 1) {
                 final ResultRequest resultRequest = resultRequests.getFirst().copy()
                         .openGroups(null)
                         .requestedRange(OffsetRange.UNBOUNDED)
@@ -206,7 +197,7 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                             compiledColumns,
                             modifiedRequest.getDateTimeSettings(),
                             expressionPredicateFactory,
-                            paramMap);
+                            paramMap, wordListProvider);
 
                     final Provider<DetectionConsumer> detectionConsumerProvider =
                             detectionConsumerFactory.create(analytic);
@@ -219,26 +210,29 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                     detectionConsumerProxy.setValFilter(valFilter);
                     detectionConsumerProxy.setDetectionsConsumerProvider(detectionConsumerProvider);
 
+                    final ColumnFormatter fieldFormatter =
+                            new ColumnFormatter(new FormatterFactory(expressionContext.getDateTimeSettings()));
+
                     try (final DuplicateCheck duplicateCheck =
                             duplicateCheckFactory.create(analytic, compiledColumns)) {
                         detectionConsumerProxy.start();
-                        final Consumer<Row> itemConsumer = row -> {
-                            if (duplicateCheck.check(row)) {
+                        final Consumer<Item> itemConsumer = item -> {
+                            if (duplicateCheck.check(item)) {
                                 Long streamId = null;
                                 Long eventId = null;
                                 final List<DetectionValue> values = new ArrayList<>();
                                 for (int i = 0; i < dataStore.getColumns().size(); i++) {
-                                    if (i < row.getValues().size()) {
-                                        final String columnName = dataStore.getColumns().get(i).getName();
-                                        final String value = row.getValues().get(i);
-                                        if (value != null) {
-                                            if (IndexConstants.STREAM_ID.equals(columnName)) {
-                                                streamId = DetectionConsumerProxy.getSafeLong(value);
-                                            } else if (IndexConstants.EVENT_ID.equals(columnName)) {
-                                                eventId = DetectionConsumerProxy.getSafeLong(value);
-                                            }
-                                            values.add(new DetectionValue(columnName, value));
+                                    final Column column = dataStore.getColumns().get(i);
+                                    final String columnName = column.getName();
+                                    final Val val = item.getValue(i);
+                                    if (val != null) {
+                                        if (IndexConstants.STREAM_ID.equals(columnName)) {
+                                            streamId = DetectionConsumerProxy.getSafeLong(val);
+                                        } else if (IndexConstants.EVENT_ID.equals(columnName)) {
+                                            eventId = DetectionConsumerProxy.getSafeLong(val);
                                         }
+                                        final String fieldValStr = fieldFormatter.format(column, val);
+                                        values.add(new DetectionValue(columnName, fieldValStr));
                                     }
                                 }
 
@@ -271,44 +265,48 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
 
                         };
 
-                        final KeyFactory keyFactory = dataStore.getKeyFactory();
-                        final FormatterFactory formatterFactory =
-                                new FormatterFactory(sampleRequest.getDateTimeSettings());
-
                         if (RowValueFilter.matches(columns)) {
-                            // Create the row creator.
-                            final ItemMapper<Row> rowCreator = FilteredRowCreator.create(
-                                    dataStore.getColumns(),
+                            ItemMapper mapper;
+                            mapper = SimpleMapper.create(dataStore.getColumns(), columns);
+                            mapper = FilteredMapper.create(
                                     columns,
-                                    false,
-                                    formatterFactory,
-                                    keyFactory,
+                                    tableSettings.applyValueFilters(),
                                     tableSettings.getAggregateFilter(),
                                     expressionContext.getDateTimeSettings(),
                                     errorConsumer,
-                                    expressionPredicateFactory);
+                                    expressionPredicateFactory,
+                                    mapper);
+
+                            mapper = ConditionalFormattingMapper.create(resultRequest.getSourceComponentId(),
+                                    resultRequest.getSourceComponentName(),
+                                    columns,
+                                    tableSettings.getConditionalFormattingRules(),
+                                    expressionContext.getDateTimeSettings(),
+                                    expressionPredicateFactory,
+                                    errorConsumer,
+                                    mapper);
 
                             dataStore.fetch(
                                     columns,
                                     OffsetRange.UNBOUNDED,
                                     OpenGroups.NONE,
                                     resultRequest.getTimeFilter(),
-                                    rowCreator,
+                                    mapper,
                                     itemConsumer,
                                     countConsumer);
                         }
 
                     } finally {
-                        final List<String> errors = errorConsumer.getErrors();
-                        if (errors != null) {
-                            for (final String error : errors) {
+                        final List<ErrorMessage> errorMessages = errorConsumer.getErrorMessages();
+                        if (errorMessages != null) {
+                            for (final ErrorMessage errorMessage : errorMessages) {
                                 if (executionResult.status() == null) {
-                                    executionResult = new ExecutionResult("Error", error);
+                                    executionResult = new ExecutionResult("Error", errorMessage.getMessage());
                                 }
 
                                 errorReceiverProxyProvider.get()
                                         .getErrorReceiver()
-                                        .log(Severity.ERROR, null, null, error, null);
+                                        .log(errorMessage.getSeverity(), null, null, errorMessage.getMessage(), null);
                             }
                         }
 
@@ -429,5 +427,85 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
             errorFeedName = defaultErrorFeed.getName();
         }
         return errorFeedName;
+    }
+
+    private MappedRequestBundle buildMappedSearchRequest(final AnalyticRuleDoc analytic,
+                                                         final Instant effectiveExecutionTime) {
+        final SearchRequestSource searchRequestSource = SearchRequestSource
+                .builder()
+                .sourceType(SourceType.SCHEDULED_QUERY_ANALYTIC)
+                .componentId(SearchRequestFactory.TABLE_COMPONENT_ID)
+                .build();
+
+        final String query = analytic.getQuery();
+        final Query sampleQuery = Query
+                .builder()
+                .params(analytic.getParameters())
+                .timeRange(analytic.getTimeRange())
+                .build();
+        final SearchRequest sampleRequest = new SearchRequest(
+                searchRequestSource,
+                null,
+                sampleQuery,
+                null,
+                DateTimeSettings.builder()
+                        .referenceTime(effectiveExecutionTime.toEpochMilli())
+                        .build(),
+                false);
+        final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
+        final SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
+
+        return new MappedRequestBundle(
+                mappedRequest,
+                sampleRequest,
+                expressionContext);
+    }
+
+    public List<String> extractColumnNames(final AnalyticRuleDoc analytic) {
+        if (analytic.getDuplicateNotificationConfig() != null) {
+            // Time doesn't matter, so just use now()
+            final MappedRequestBundle mappedRequestBundle = buildMappedSearchRequest(analytic, Instant.now());
+            final SearchRequest mappedRequest = mappedRequestBundle.mappedRequest;
+            final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
+            final TableSettings tableSettings = NullSafe.get(
+                    resultRequests,
+                    List::getFirst,
+                    req -> NullSafe.first(req.getMappings()));
+            if (tableSettings != null) {
+                final List<Column> columns = tableSettings.getColumns();
+                if (NullSafe.hasItems(columns)) {
+                    final Map<String, String> paramMap = ParamUtil
+                            .createParamMap(mappedRequest.getQuery().getParams());
+                    final CompiledColumns compiledColumns = CompiledColumns.create(
+                            mappedRequestBundle.expressionContext,
+                            columns,
+                            paramMap);
+
+                    final List<String> filteredColumnNames = getFilteredColumnNames(analytic, compiledColumns);
+                    LOGGER.debug("extractColumnNames() - analytic: {}, filteredColumnNames: {}",
+                            analytic, filteredColumnNames);
+                    return filteredColumnNames;
+                }
+            }
+        }
+        return Collections.emptyList();
+    }
+
+    private List<String> getFilteredColumnNames(final AnalyticRuleDoc analytic,
+                                                final CompiledColumns compiledColumns) {
+        final DuplicateCheckRowFactory duplicateCheckRowFactory = new DuplicateCheckRowFactory(
+                analytic.getDuplicateNotificationConfig(),
+                compiledColumns);
+        return duplicateCheckRowFactory.getColumnNames();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record MappedRequestBundle(SearchRequest mappedRequest,
+                                       SearchRequest sampleRequest,
+                                       ExpressionContext expressionContext) {
+
     }
 }

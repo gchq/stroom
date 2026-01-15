@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,17 @@ import stroom.annotation.shared.AnnotationCreator;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationFields;
 import stroom.annotation.shared.AnnotationTag;
+import stroom.annotation.shared.ChangeAnnotationEntryRequest;
 import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.CreateAnnotationTagRequest;
+import stroom.annotation.shared.DeleteAnnotationEntryRequest;
 import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.FetchAnnotationEntryRequest;
+import stroom.annotation.shared.FindAnnotationRequest;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.explorer.impl.PermissionChangeService;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.FindFieldCriteria;
@@ -38,6 +41,7 @@ import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ParamKeys;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.DocumentPermissionService;
@@ -45,7 +49,9 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserGroupsService;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.security.shared.SingleDocumentPermissionChangeRequest;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBus;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasUserDependencies;
 import stroom.util.shared.NullSafe;
@@ -69,7 +75,6 @@ import java.util.function.Predicate;
 
 public class AnnotationService implements Searchable, AnnotationCreator, HasUserDependencies {
 
-    private static final DocRef ANNOTATIONS_PSEUDO_DOC_REF = new DocRef("Annotations", "Annotations", "Annotations");
     public static final String ANNOTATION_RETENTION_JOB_NAME = "Annotation Retention";
 
     private final AnnotationDao annotationDao;
@@ -79,8 +84,8 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     private final Provider<DocumentPermissionService> documentPermissionServiceProvider;
     private final Provider<AnnotationConfig> annotationConfigProvider;
     private final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider;
-    private final Provider<PermissionChangeService> permissionChangeServiceProvider;
     private final Provider<UserGroupsService> userGroupsServiceProvider;
+    private final EntityEventBus entityEventBus;
 
     @Inject
     AnnotationService(final AnnotationDao annotationDao,
@@ -90,8 +95,8 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                       final Provider<DocumentPermissionService> documentPermissionServiceProvider,
                       final Provider<AnnotationConfig> annotationConfigProvider,
                       final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider,
-                      final Provider<PermissionChangeService> permissionChangeServiceProvider,
-                      final Provider<UserGroupsService> userGroupsServiceProvider) {
+                      final Provider<UserGroupsService> userGroupsServiceProvider,
+                      final EntityEventBus entityEventBus) {
         this.annotationDao = annotationDao;
         this.annotationTagDao = annotationTagDao;
         this.securityContext = securityContext;
@@ -99,8 +104,22 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         this.documentPermissionServiceProvider = documentPermissionServiceProvider;
         this.annotationConfigProvider = annotationConfigProvider;
         this.expressionPredicateFactoryProvider = expressionPredicateFactoryProvider;
-        this.permissionChangeServiceProvider = permissionChangeServiceProvider;
         this.userGroupsServiceProvider = userGroupsServiceProvider;
+        this.entityEventBus = entityEventBus;
+    }
+
+    public ResultPage<Annotation> findAnnotations(final FindAnnotationRequest request) {
+        checkAppPermission();
+
+        final DocumentPermission permission;
+        if (DocumentPermission.EDIT.equals(request.getRequiredPermission())) {
+            permission = DocumentPermission.EDIT;
+        } else {
+            permission = DocumentPermission.VIEW;
+        }
+
+        return annotationDao.findAnnotations(request, annotation ->
+                securityContext.hasDocumentPermission(annotation.asDocRef(), permission));
     }
 
     public Optional<Annotation> getAnnotationByRef(final DocRef annotationRef) {
@@ -132,13 +151,13 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     @Override
     public String getDataSourceType() {
-        return ANNOTATIONS_PSEUDO_DOC_REF.getType();
+        return AnnotationFields.ANNOTATIONS_PSEUDO_DOC_REF.getType();
     }
 
     @Override
     public List<DocRef> getDataSourceDocRefs() {
         if (securityContext.hasAppPermission(AppPermission.ANNOTATIONS)) {
-            return Collections.singletonList(ANNOTATIONS_PSEUDO_DOC_REF);
+            return Collections.singletonList(AnnotationFields.ANNOTATIONS_PSEUDO_DOC_REF);
         }
         return Collections.emptyList();
     }
@@ -150,7 +169,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
-        if (!ANNOTATIONS_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
+        if (!AnnotationFields.ANNOTATIONS_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
             return ResultPage.empty();
         }
         return fieldInfoResultPageFactory.create(criteria, AnnotationFields.FIELDS);
@@ -165,7 +184,8 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final DateTimeSettings dateTimeSettings,
-                       final ValuesConsumer consumer) {
+                       final ValuesConsumer valuesConsumer,
+                       final ErrorConsumer errorConsumer) {
         checkAppPermission();
 
         final ExpressionFilter expressionFilter = ExpressionFilter.builder()
@@ -179,7 +199,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         criteria.setExpression(expression);
 
         final Predicate<String> viewPermissionPredicate = getViewPermissionPredicate();
-        annotationDao.search(criteria, fieldIndex, consumer, viewPermissionPredicate);
+        annotationDao.search(criteria, fieldIndex, valuesConsumer, viewPermissionPredicate);
     }
 
     private Predicate<String> getViewPermissionPredicate() {
@@ -280,13 +300,16 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 //            }
         });
 
+        fireEntityChangeEvent(annotation.asDocRef());
         return annotation;
     }
 
     public boolean change(final SingleAnnotationChangeRequest request) {
         checkAppPermission();
         checkEditPermission(request.getAnnotationRef());
-        return annotationDao.change(request, getCurrentUser());
+        final boolean result = annotationDao.change(request, getCurrentUser());
+        fireEntityChangeEvent(request.getAnnotationRef());
+        return result;
     }
 
     public Integer batchChange(final MultiAnnotationChangeRequest request) {
@@ -296,6 +319,11 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                     new SingleAnnotationChangeRequest(ref, request.getChange());
             annotationDao.change(singleAnnotationChangeRequest, getCurrentUser());
         }
+
+        if (!refs.isEmpty()) {
+            fireGenericEntityChangeEvent();
+        }
+
         return refs.size();
     }
 
@@ -352,7 +380,9 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         checkDeletePermission(annotationRef);
 
         documentPermissionServiceProvider.get().removeAllDocumentPermissions(annotationRef);
-        return annotationDao.logicalDelete(annotationRef, securityContext.getUserRef());
+        final Boolean result = annotationDao.logicalDelete(annotationRef, securityContext.getUserRef());
+        fireEntityChangeEvent(annotationRef);
+        return result;
     }
 
 //    public List<String> getStatus(final String filter) {
@@ -399,11 +429,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         return filterValues(annotationConfigProvider.get().getStandardComments(), filter);
     }
 
-    public Boolean changeDocumentPermissions(final SingleDocumentPermissionChangeRequest request) {
-        permissionChangeServiceProvider.get().changeDocumentPermissions(request);
-        return Boolean.TRUE;
-    }
-
     public void performDataRetention() {
         // First mark annotations as deleted if they haven't been updated since their data retention time.
         annotationDao.markDeletedByDataRetention();
@@ -412,8 +437,9 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         final StroomDuration physicalDeleteAge = annotationConfigProvider.get().getPhysicalDeleteAge();
         final Instant age = Instant.now().minus(physicalDeleteAge);
         annotationDao.physicallyDelete(age);
-    }
 
+        fireGenericEntityChangeEvent();
+    }
 
     public AnnotationTag createAnnotationTag(final CreateAnnotationTagRequest request) {
         checkAppPermission();
@@ -434,5 +460,47 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         checkAppPermission();
         final Predicate<String> viewPermissionPredicate = getViewPermissionPredicate();
         return annotationTagDao.findAnnotationTags(request, viewPermissionPredicate);
+    }
+
+    public AnnotationEntry fetchAnnotationEntry(final FetchAnnotationEntryRequest request) {
+        checkAppPermission();
+        checkViewPermission(request.getAnnotationRef());
+        return annotationDao.fetchAnnotationEntry(
+                request.getAnnotationRef(),
+                securityContext.getUserRef(),
+                request.getAnnotationEntryId());
+    }
+
+    public Boolean changeAnnotationEntry(final ChangeAnnotationEntryRequest request) {
+        checkAppPermission();
+        checkEditPermission(request.getAnnotationRef());
+        return annotationDao.changeAnnotationEntry(
+                request.getAnnotationRef(),
+                securityContext.getUserRef(),
+                request.getAnnotationEntryId(),
+                request.getData());
+    }
+
+    public Boolean deleteAnnotationEntry(final DeleteAnnotationEntryRequest request) {
+        checkAppPermission();
+        checkDeletePermission(request.getAnnotationRef());
+        return annotationDao.logicalDeleteEntry(
+                request.getAnnotationRef(),
+                securityContext.getUserRef(),
+                request.getAnnotationEntryId());
+    }
+
+    private void fireGenericEntityChangeEvent() {
+        EntityEvent.fire(
+                entityEventBus,
+                DocRef.builder().type(Annotation.TYPE).build(),
+                EntityAction.UPDATE);
+    }
+
+    private void fireEntityChangeEvent(final DocRef annotation) {
+        EntityEvent.fire(
+                entityEventBus,
+                annotation,
+                EntityAction.UPDATE);
     }
 }

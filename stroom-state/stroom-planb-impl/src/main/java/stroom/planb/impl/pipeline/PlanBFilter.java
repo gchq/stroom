@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package stroom.planb.impl.pipeline;
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.impl6.ByteBufferFactory;
 import stroom.bytebuffer.impl6.ByteBufferPoolOutput;
+import stroom.pathways.shared.otel.trace.Span;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -28,6 +29,7 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaHolder;
 import stroom.planb.impl.data.RangeState;
 import stroom.planb.impl.data.Session;
+import stroom.planb.impl.data.SpanKV;
 import stroom.planb.impl.data.State;
 import stroom.planb.impl.data.TemporalRangeState;
 import stroom.planb.impl.data.TemporalState;
@@ -37,6 +39,8 @@ import stroom.planb.impl.db.ShardWriters.ShardWriter;
 import stroom.planb.impl.serde.keyprefix.KeyPrefix;
 import stroom.planb.impl.serde.keyprefix.Tag;
 import stroom.planb.impl.serde.temporalkey.TemporalKey;
+import stroom.planb.impl.serde.trace.SpanKey;
+import stroom.planb.impl.serde.trace.SpanValue;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.StateType;
 import stroom.query.language.functions.Type;
@@ -85,6 +89,7 @@ import java.util.regex.Pattern;
  */
 @ConfigurableElement(
         type = "PlanBFilter",
+        displayValue = "Plan B Filter",
         description = """
                 Takes XML input (conforming to the reference-data:2 schema) and \
                 loads the data into the Plan B State Store.
@@ -191,6 +196,7 @@ public class PlanBFilter extends AbstractXMLFilter {
     private static final String VALUE_ELEMENT = "value";
     private static final String TIME_ELEMENT = "time";
     private static final String TIMEOUT_ELEMENT = "timeout";
+    private static final String TRACE_ELEMENT = "trace";
 
     private final ErrorReceiverProxy errorReceiverProxy;
 
@@ -235,6 +241,10 @@ public class PlanBFilter extends AbstractXMLFilter {
     private String currentName;
     private String currentValue;
     private List<Tag> currentTags;
+
+    private boolean inTrace;
+    private SpanHandler spanHandler;
+    private Span span;
 
 
     @Inject
@@ -355,52 +365,64 @@ public class PlanBFilter extends AbstractXMLFilter {
                              final String qName,
                              final Attributes atts)
             throws SAXException {
+        if (!inTrace && localName.equalsIgnoreCase(TRACE_ELEMENT)) {
+            inTrace = true;
+        }
 
-        depthLevel++;
-        insideElement = true;
-        contentBuffer.clear();
-
-        LOGGER.trace("startElement {} {} {}, level:{}", uri, localName, qName, depthLevel);
-
-        if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
-            insideValueElement = true;
-
-            // Prepare to store new value.
-            stagingValueOutputStream =
-                    new ByteBufferPoolOutput(byteBufferFactory, BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY, -1);
-            currentStringValue = null;
-            saxDocumentSerializer.setOutputStream(stagingValueOutputStream);
-
-        } else if (insideValueElement) {
-            recordHavingSeenXmlContent();
-
-            final String prefix = getPrefix(qName);
-            if (!hasUriBeenApplied(prefix, uri)) {
-                // elm has a uri that we have not done a fastInfoSet startPrefixMapping to
-                // so do it now
-                fastInfosetManuallyAddPrefixMapping(prefix, uri);
+        if (inTrace) {
+            if (spanHandler != null) {
+                spanHandler.startElement(uri, localName, qName, atts);
+            } else if (localName.equalsIgnoreCase("span")) {
+                spanHandler = new SpanHandler();
             }
 
-            for (int i = 0; i < atts.getLength(); i++) {
-                final String attrPrefix = getPrefix(atts.getQName(i));
-                if (!hasUriBeenApplied(attrPrefix)) {
-                    // attr has a uri that we have not done a fastInfoSet startPrefixMapping
+        } else {
+            depthLevel++;
+            insideElement = true;
+            contentBuffer.clear();
+
+            LOGGER.trace("startElement {} {} {}, level:{}", uri, localName, qName, depthLevel);
+
+            if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
+                insideValueElement = true;
+
+                // Prepare to store new value.
+                stagingValueOutputStream =
+                        new ByteBufferPoolOutput(byteBufferFactory, BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY, -1);
+                currentStringValue = null;
+                saxDocumentSerializer.setOutputStream(stagingValueOutputStream);
+
+            } else if (insideValueElement) {
+                recordHavingSeenXmlContent();
+
+                final String prefix = getPrefix(qName);
+                if (!hasUriBeenApplied(prefix, uri)) {
+                    // elm has a uri that we have not done a fastInfoSet startPrefixMapping to
                     // so do it now
-                    final String attrUri = prefixToUriMap.get(attrPrefix);
-                    if (attrUri != null) {
-                        fastInfosetManuallyAddPrefixMapping(attrPrefix, attrUri);
+                    fastInfosetManuallyAddPrefixMapping(prefix, uri);
+                }
+
+                for (int i = 0; i < atts.getLength(); i++) {
+                    final String attrPrefix = getPrefix(atts.getQName(i));
+                    if (!hasUriBeenApplied(attrPrefix)) {
+                        // attr has a uri that we have not done a fastInfoSet startPrefixMapping
+                        // so do it now
+                        final String attrUri = prefixToUriMap.get(attrPrefix);
+                        if (attrUri != null) {
+                            fastInfosetManuallyAddPrefixMapping(attrPrefix, attrUri);
+                        }
                     }
                 }
-            }
 
-            fastInfosetStartElement(localName, uri, qName, atts);
-        } else if ("tags".equalsIgnoreCase(localName)) {
-            currentName = null;
-            currentValue = null;
-            currentTags = new ArrayList<>();
-        } else if ("tag".equalsIgnoreCase(localName)) {
-            currentName = null;
-            currentValue = null;
+                fastInfosetStartElement(localName, uri, qName, atts);
+            } else if ("tags".equalsIgnoreCase(localName)) {
+                currentName = null;
+                currentValue = null;
+                currentTags = new ArrayList<>();
+            } else if ("tag".equalsIgnoreCase(localName)) {
+                currentName = null;
+                currentValue = null;
+            }
         }
 
         super.startElement(uri, localName, qName, atts);
@@ -450,108 +472,127 @@ public class PlanBFilter extends AbstractXMLFilter {
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         LOGGER.trace("endElement {} {} {} level:{} content:{}", uri, localName, qName, depthLevel, contentBuffer);
 
-        insideElement = false;
-        if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
-            handleValueEndElement();
-        }
-
-        if (insideValueElement) {
-            String newUri = uri;
-            String newQName = qName;
-            if (uri.equals(valueXmlDefaultNamespaceUri)) {
-                // This is the default namespace so remove it from the element
-                newQName = localName;
-                newUri = "";
-            }
-            fastInfosetEndElement(localName, newUri, newQName);
-        } else {
+        if (inTrace) {
             if (MAP_ELEMENT.equalsIgnoreCase(localName)) {
                 // capture the name of the map that the subsequent values will belong to. A ref
                 // stream can contain data for multiple maps
                 mapName = contentBuffer.toString().toLowerCase(Locale.ROOT);
-
-            } else if (KEY_ELEMENT.equalsIgnoreCase(localName)) {
-                // the key for the KV pair
-                key = contentBuffer.toString();
-
-            } else if (FROM_ELEMENT.equalsIgnoreCase(localName)) {
-                // the start key for the key range
-                final String string = contentBuffer.toString();
-                try {
-                    rangeFrom = Long.parseLong(string);
-                } catch (final RuntimeException e) {
-                    error("Unable to parse string \"" + string + "\" as long for range from", e);
-                }
-            } else if (TO_ELEMENT.equalsIgnoreCase(localName)) {
-                // the end key for the key range
-                final String string = contentBuffer.toString();
-                try {
-                    rangeTo = Long.parseLong(string);
-                } catch (final RuntimeException e) {
-                    error("Unable to parse string \"" + string + "\" as long for range to", e);
-                }
-            } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName)) {
-                addReference();
-            } else if (HISTOGRAM_ELEMENT.equalsIgnoreCase(localName)) {
-                add(StateType.HISTOGRAM);
-            } else if (METRIC_ELEMENT.equalsIgnoreCase(localName)) {
-                add(StateType.METRIC);
-            } else if (SESSION_ELEMENT.equalsIgnoreCase(localName)) {
-                add(StateType.SESSION);
-            } else if (STATE_ELEMENT.equalsIgnoreCase(localName)) {
-                add(StateType.STATE);
-            } else if (RANGE_STATE_ELEMENT.equalsIgnoreCase(localName)) {
-                add(StateType.RANGED_STATE);
-            } else if (TEMPORAL_STATE_ELEMENT.equalsIgnoreCase(localName)) {
-                add(StateType.TEMPORAL_STATE);
-            } else if (TEMPORAL_RANGE_STATE_ELEMENT.equalsIgnoreCase(localName)) {
-                add(StateType.TEMPORAL_RANGED_STATE);
-            } else if (TIME_ELEMENT.equalsIgnoreCase(localName)) {
-                time = DateUtil.parseNormalDateTimeStringToInstant(contentBuffer.toString());
-            } else if (TIMEOUT_ELEMENT.equalsIgnoreCase(localName)) {
-                timeout = StroomDuration.parse(contentBuffer.toString());
-            } else if ("name".equalsIgnoreCase(localName)) {
-                currentName = contentBuffer.toString();
-            } else if ("value".equalsIgnoreCase(localName)) {
-                currentValue = contentBuffer.toString();
-            } else if ("tag".equalsIgnoreCase(localName)) {
-                if (currentName == null) {
-                    error("Name is null for tag");
-                } else if (currentValue == null) {
-                    error("Value is null for tag");
+            } else if (localName.equalsIgnoreCase(TRACE_ELEMENT)) {
+                add(StateType.TRACE);
+                inTrace = false;
+            } else if (spanHandler != null) {
+                if (localName.equalsIgnoreCase("span")) {
+                    span = spanHandler.build();
+                    spanHandler = null;
                 } else {
-                    currentTags.add(new Tag(currentName, ValString.create(currentValue)));
+                    spanHandler.endElement(uri, localName, qName);
                 }
             }
+
+        } else {
+            insideElement = false;
+            if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
+                handleValueEndElement();
+            }
+
+            if (insideValueElement) {
+                String newUri = uri;
+                String newQName = qName;
+                if (uri.equals(valueXmlDefaultNamespaceUri)) {
+                    // This is the default namespace so remove it from the element
+                    newQName = localName;
+                    newUri = "";
+                }
+                fastInfosetEndElement(localName, newUri, newQName);
+            } else {
+                if (MAP_ELEMENT.equalsIgnoreCase(localName)) {
+                    // capture the name of the map that the subsequent values will belong to. A ref
+                    // stream can contain data for multiple maps
+                    mapName = contentBuffer.toString().toLowerCase(Locale.ROOT);
+
+                } else if (KEY_ELEMENT.equalsIgnoreCase(localName)) {
+                    // the key for the KV pair
+                    key = contentBuffer.toString();
+
+                } else if (FROM_ELEMENT.equalsIgnoreCase(localName)) {
+                    // the start key for the key range
+                    final String string = contentBuffer.toString();
+                    try {
+                        rangeFrom = Long.parseLong(string);
+                    } catch (final RuntimeException e) {
+                        error("Unable to parse string \"" + string + "\" as long for range from", e);
+                    }
+                } else if (TO_ELEMENT.equalsIgnoreCase(localName)) {
+                    // the end key for the key range
+                    final String string = contentBuffer.toString();
+                    try {
+                        rangeTo = Long.parseLong(string);
+                    } catch (final RuntimeException e) {
+                        error("Unable to parse string \"" + string + "\" as long for range to", e);
+                    }
+                } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName)) {
+                    addReference();
+                } else if (HISTOGRAM_ELEMENT.equalsIgnoreCase(localName)) {
+                    add(StateType.HISTOGRAM);
+                } else if (METRIC_ELEMENT.equalsIgnoreCase(localName)) {
+                    add(StateType.METRIC);
+                } else if (SESSION_ELEMENT.equalsIgnoreCase(localName)) {
+                    add(StateType.SESSION);
+                } else if (STATE_ELEMENT.equalsIgnoreCase(localName)) {
+                    add(StateType.STATE);
+                } else if (RANGE_STATE_ELEMENT.equalsIgnoreCase(localName)) {
+                    add(StateType.RANGED_STATE);
+                } else if (TEMPORAL_STATE_ELEMENT.equalsIgnoreCase(localName)) {
+                    add(StateType.TEMPORAL_STATE);
+                } else if (TEMPORAL_RANGE_STATE_ELEMENT.equalsIgnoreCase(localName)) {
+                    add(StateType.TEMPORAL_RANGED_STATE);
+                } else if (TIME_ELEMENT.equalsIgnoreCase(localName)) {
+                    time = DateUtil.parseNormalDateTimeStringToInstant(contentBuffer.toString());
+                } else if (TIMEOUT_ELEMENT.equalsIgnoreCase(localName)) {
+                    timeout = StroomDuration.parse(contentBuffer.toString());
+                } else if ("name".equalsIgnoreCase(localName)) {
+                    currentName = contentBuffer.toString();
+                } else if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
+                    currentValue = contentBuffer.toString();
+                } else if ("tag".equalsIgnoreCase(localName)) {
+                    if (currentName == null) {
+                        error("Name is null for tag");
+                    } else if (currentValue == null) {
+                        error("Value is null for tag");
+                    } else {
+                        currentTags.add(new Tag(currentName, ValString.create(currentValue)));
+                    }
+                }
+            }
+
+            // Manually call endPrefixMapping for those prefixes we added
+            final Set<String> manuallyAddedPrefixes = manuallyAddedLevelToPrefixMap.getOrDefault(
+                    depthLevel,
+                    Collections.emptySet());
+
+            if (!manuallyAddedPrefixes.isEmpty()) {
+                LOGGER.trace(() ->
+                        LogUtil.message("Ending {} manually added prefixes at level {}",
+                                manuallyAddedPrefixes.size(),
+                                depthLevel));
+
+                // Can't use .forEach() due to the SaxException
+                for (final String manuallyAddedPrefix : manuallyAddedPrefixes) {
+                    fastInfosetEndPrefixMapping(manuallyAddedPrefix);
+                }
+
+                // We are leaving this level so can now delete the prefix mappings for this level
+                manuallyAddedLevelToPrefixMap.get(depthLevel)
+                        .clear();
+            }
+
+            super.endElement(uri, localName, qName);
+
+            // Leaving this level so
+            depthLevel--;
         }
 
         contentBuffer.clear();
-
-        // Manually call endPrefixMapping for those prefixes we added
-        final Set<String> manuallyAddedPrefixes = manuallyAddedLevelToPrefixMap.getOrDefault(
-                depthLevel,
-                Collections.emptySet());
-
-        if (!manuallyAddedPrefixes.isEmpty()) {
-            LOGGER.trace(() ->
-                    LogUtil.message("Ending {} manually added prefixes at level {}",
-                            manuallyAddedPrefixes.size(),
-                            depthLevel));
-
-            // Can't use .forEach() due to the SaxException
-            for (final String manuallyAddedPrefix : manuallyAddedPrefixes) {
-                fastInfosetEndPrefixMapping(manuallyAddedPrefix);
-            }
-
-            // We are leaving this level so can now delete the prefix mappings for this level
-            manuallyAddedLevelToPrefixMap.get(depthLevel)
-                    .clear();
-        }
-
-        super.endElement(uri, localName, qName);
-
-        // Leaving this level so
-        depthLevel--;
     }
 
     private void handleValueEndElement() throws SAXException {
@@ -606,6 +647,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                     case SESSION -> addSession(doc);
                     case HISTOGRAM -> addHistogramValue(doc);
                     case METRIC -> addMetricValue(doc);
+                    case TRACE -> addSpanValue(doc);
                     default -> error("Unexpected Plan B store type: " + doc.getStateType());
                 }
             } else {
@@ -858,6 +900,23 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
     }
 
+    private void addSpanValue(final PlanBDoc doc) {
+        if (span == null) {
+            error(LogUtil.message("No span data for {}", mapName));
+        } else {
+            try {
+                final SpanKey spanKey = SpanKey.create(span);
+                final SpanValue spanValue = SpanValue.create(span);
+                LOGGER.trace("Putting span value {} into table {}", span, mapName);
+                catchLmdbError(() -> writer.addSpanValue(doc, new SpanKV(spanKey, spanValue)));
+            } catch (final RuntimeException e) {
+                log(Severity.ERROR, e.getMessage(), e);
+            }
+
+            currentValue = null;
+        }
+    }
+
     private KeyPrefix getKeyPrefix() {
         final KeyPrefix prefix;
 
@@ -896,21 +955,26 @@ public class PlanBFilter extends AbstractXMLFilter {
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
-        if (insideValueElement) {
-            if (haveSeenXmlInValueElement) {
-                // This is an XML FastInfoSet value
-                LOGGER.trace(() -> LogUtil.message(
-                        "characters(\"{}\")", new String(ch, start, length).trim()));
-                if (insideElement || !isAllWhitespace(ch, start, length)) {
-                    // Delegate to the fastInfoset content handler which will write to stagingValueOutputStream
-                    fastInfosetCharacters(ch, start, length);
+        if (spanHandler != null) {
+            spanHandler.characters(ch, start, length);
+
+        } else {
+            if (insideValueElement) {
+                if (haveSeenXmlInValueElement) {
+                    // This is an XML FastInfoSet value
+                    LOGGER.trace(() -> LogUtil.message(
+                            "characters(\"{}\")", new String(ch, start, length).trim()));
+                    if (insideElement || !isAllWhitespace(ch, start, length)) {
+                        // Delegate to the fastInfoset content handler which will write to stagingValueOutputStream
+                        fastInfosetCharacters(ch, start, length);
+                    }
+                } else {
+                    contentBuffer.append(ch, start, length);
                 }
             } else {
+                // outside the value element so capture the chars, so we can get keys, map names, etc.
                 contentBuffer.append(ch, start, length);
             }
-        } else {
-            // outside the value element so capture the chars, so we can get keys, map names, etc.
-            contentBuffer.append(ch, start, length);
         }
 
         super.characters(ch, start, length);

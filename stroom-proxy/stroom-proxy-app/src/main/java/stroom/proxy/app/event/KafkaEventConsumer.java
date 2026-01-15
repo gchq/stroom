@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
@@ -84,9 +100,7 @@ public class KafkaEventConsumer implements EventConsumer {
                 headers.add(header);
             });
 
-            final String feed = attributeMap.get("Feed");
-            final String type = attributeMap.get("type");
-            final FeedKey feedKey = new FeedKey(feed, type);
+            final FeedKey feedKey = FeedKey.from(attributeMap);
 
             final String string = eventSerialiser.serialise(
                     receiptId,
@@ -97,7 +111,7 @@ public class KafkaEventConsumer implements EventConsumer {
             final String topic = config.getTopic();
             final Integer partition = null;
             final Long timestamp = System.currentTimeMillis();
-            final byte[] key = createKey(new FeedKey(attributeMap.get("Feed"), attributeMap.get("Type")));
+            final byte[] key = createKey(FeedKey.from(attributeMap));
             final byte[] value = string.getBytes(StandardCharsets.UTF_8);
 
             final ProducerRecord<byte[], byte[]> record = new ProducerRecord<>(

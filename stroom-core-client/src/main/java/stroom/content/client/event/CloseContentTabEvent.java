@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,19 @@ public class CloseContentTabEvent extends GwtEvent<CloseContentTabEvent.CloseCon
 
     private static Type<CloseContentTabHandler> TYPE;
     private final TabData tabData;
+    private final boolean resizeTabBar;
 
-    private CloseContentTabEvent(final TabData tabData) {
+    private CloseContentTabEvent(final TabData tabData, final boolean resizeTabBar) {
         this.tabData = tabData;
+        this.resizeTabBar = resizeTabBar;
     }
 
     public static void fire(final HasHandlers handlers, final TabData tabData) {
-        handlers.fireEvent(new CloseContentTabEvent(tabData));
+        handlers.fireEvent(new CloseContentTabEvent(tabData, true));
+    }
+
+    public static void fire(final HasHandlers handlers, final TabData tabData, final boolean resizeTabBar) {
+        handlers.fireEvent(new CloseContentTabEvent(tabData, resizeTabBar));
     }
 
     public static Type<CloseContentTabHandler> getType() {
@@ -56,6 +62,9 @@ public class CloseContentTabEvent extends GwtEvent<CloseContentTabEvent.CloseCon
         return tabData;
     }
 
+    public boolean resizeTabBar() {
+        return resizeTabBar;
+    }
 
     // --------------------------------------------------------------------------------
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ public class TreeRenderer2<T> {
     private final CellRenderer2<T> cellRenderer;
     private final ConnectorRenderer<T> connectorRenderer;
     private TreeLayout<T> treeLayout;
+    private Bounds paddedBounds;
 
     public TreeRenderer2(final LayeredCanvas canvas,
                          final CellRenderer2<T> cellRenderer,
@@ -52,7 +53,7 @@ public class TreeRenderer2<T> {
             treeLayout.layout();
 
             final Bounds bounds = treeLayout.getBounds();
-            final Bounds paddedBounds = new Bounds(bounds.getX(), bounds.getY(), bounds.getWidth() + (2 * PADDING),
+            paddedBounds = new Bounds(bounds.getX(), bounds.getY(), bounds.getWidth() + (2 * PADDING),
                     bounds.getHeight() + (2 * PADDING));
             canvas.setSize((int) paddedBounds.getWidth(), (int) paddedBounds.getHeight());
             canvas.clear();
@@ -66,6 +67,10 @@ public class TreeRenderer2<T> {
                 }
             }
         }
+    }
+
+    public Bounds getBounds() {
+        return paddedBounds;
     }
 
     private void drawItem(final TreeLayout<T> treeLayout, final T item) {

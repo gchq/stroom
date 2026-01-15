@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -284,7 +284,7 @@ class TaskManagerImpl implements TaskManager {
         if (userIdentity instanceof final HasUserRef hasUserRef) {
             userRef = hasUserRef.getUserRef();
         } else {
-            userRef = UserRef.builder().subjectId(userIdentity.getSubjectId()).build();
+            userRef = UserRef.builder().subjectId(userIdentity.subjectId()).build();
         }
 
         final TaskProgress taskProgress = new TaskProgress();

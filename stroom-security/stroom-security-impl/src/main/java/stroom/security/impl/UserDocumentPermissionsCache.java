@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,8 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
     boolean hasDocumentPermission(final UserRef userRef,
                                   final DocRef docRef,
                                   final DocumentPermission permission) {
-        return get(userRef).hasDocumentPermission(docRef, permission);
+        return get(userRef)
+                .hasDocumentPermission(docRef, permission);
     }
 
     private UserDocumentPermissions get(final UserRef userRef) {

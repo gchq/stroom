@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,9 +90,6 @@ import java.util.stream.Stream;
 @Singleton
 public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService implements StroomEventLoggingService {
 
-    /**
-     * Logger - should not be used for event logs
-     */
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomEventLoggingServiceImpl.class);
 
     private static final String PROCESSING_USER_ID = "INTERNAL_PROCESSING_USER";
@@ -328,7 +325,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
         try {
             final UserIdentity userIdentity = securityContext.getUserIdentity();
             return User.builder()
-                    .withId(userIdentity.getSubjectId())
+                    .withId(userIdentity.subjectId())
                     .withName(userIdentity.getDisplayName())
                     .build();
         } catch (final RuntimeException e) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,11 @@
 
 package stroom.util.logging;
 
+import stroom.util.shared.NullSafe;
+
 import org.slf4j.Logger;
 
+import java.util.Arrays;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -43,6 +46,60 @@ public interface LambdaLogger extends Logger {
     void error(Supplier<String> message);
 
     void error(Supplier<String> message, Throwable t);
+
+    /**
+     * Logs to ERROR using args but NOT including throwable.
+     * <p>
+     * {@code " (Enable debug for stack trace)"} is appended to the end of message.
+     * </p>
+     * <p>
+     * Also logs to DEBUG using args AND throwable so DEBUG gets the full stack trace.
+     * </p>
+     *
+     * @param message   The message to log. " (Enable debug for stack trace)" will be appended to the
+     *                  end of message for the ERROR log.
+     * @param throwable The exception to log at DEBUG level only.
+     * @param args      The message arguments, not including the throwable.
+     */
+    default void errorAndDebug(final Throwable throwable, final String message, final Object... args) {
+        try {
+            error(() -> LogUtil.message(message + " (Enable debug for stack trace)", args));
+            if (isDebugEnabled()) {
+                if (NullSafe.isEmptyArray(args)) {
+                    debug(message, throwable);
+                } else {
+                    // Add the throwable as another arg on the end
+                    final int newLength = args.length + 1;
+                    final Object[] newArgs = Arrays.copyOf(args, newLength);
+                    newArgs[newLength - 1] = throwable;
+                    debug(message, newArgs);
+                }
+            }
+        } catch (final Exception e) {
+            error("Error calling errorAndDebug: {}", LogUtil.exceptionMessage(e), e);
+        }
+    }
+
+    /**
+     * Logs to ERROR without including throwable. " (Enable debug for stack trace)" is
+     * appended to the end of message. Also logs to DEBUG with throwable so DEBUG gets
+     * the full stack trace.
+     *
+     * @param messageSupplier The message to log. " (Enable debug for stack trace)" will be appended to the
+     *                        end of message for the ERROR log.
+     * @param throwable       The exception to log at DEBUG level only.
+     */
+    default void errorAndDebug(final Throwable throwable,
+                               final Supplier<String> messageSupplier) {
+        try {
+            error(() -> messageSupplier.get() + " (Enable debug for stack trace)");
+            if (isDebugEnabled()) {
+                debug(messageSupplier.get(), throwable);
+            }
+        } catch (final Exception e) {
+            error("Error calling errorAndDebug: {}", LogUtil.exceptionMessage(e), e);
+        }
+    }
 
     void log(LogLevel logLevel, String message);
 
@@ -297,4 +354,5 @@ public interface LambdaLogger extends Logger {
             };
         }
     }
+
 }

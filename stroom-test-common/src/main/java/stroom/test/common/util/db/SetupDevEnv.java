@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.test.common.util.db;
 
 import stroom.config.common.ConnectionConfig;
@@ -74,7 +90,8 @@ public class SetupDevEnv {
             "local.yml", FileType.STROOM,
             "local2.yml", FileType.STROOM,
             "local3.yml", FileType.STROOM,
-            "proxy-local.yml", FileType.PROXY);
+            "proxy-local.yml", FileType.PROXY_LOCAL,
+            "proxy-remote.yml", FileType.PROXY_REMOTE);
 
     // e.g. 'stroom' in 'jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8'
     private static final Pattern DB_NAME_IN_URL_PATTERN = Pattern.compile("(?<=/)[a-zA-Z0-9_-]+(?=\\?|$)");
@@ -82,8 +99,10 @@ public class SetupDevEnv {
     private static final Pattern YES_PATTERN = Pattern.compile("^(y|yes)$", Pattern.CASE_INSENSITIVE);
     private static final String STROOM_HOME_BASE = "~/.stroom/";
     private static final String STROOM_TMP_BASE = "/tmp/stroom/";
-    private static final String PROXY_HOME_BASE = "~/.stroom-proxy/";
-    private static final String PROXY_TMP_BASE = "/tmp/stroom-proxy/";
+    private static final String PROXY_LOCAL_HOME_BASE = "~/.stroom-proxy-local/";
+    private static final String PROXY_LOCAL_TMP_BASE = "/tmp/stroom-proxy-local/";
+    private static final String PROXY_REMOTE_HOME_BASE = "~/.stroom-proxy-remote/";
+    private static final String PROXY_REMOTE_TMP_BASE = "/tmp/stroom-proxy-remote/";
     private static final String YES_NO_OPTION_STR = ConsoleColour.green("(y/n/yes/no)");
 
     public static void main(final String[] args) throws IOException {
@@ -139,20 +158,26 @@ public class SetupDevEnv {
 
         final String stroomHomeEnvBase = STROOM_HOME_BASE + stroomEnvName;
         final String stroomTempEnvBase = STROOM_TMP_BASE + stroomEnvName;
-        final String proxyHomeEnvBase = PROXY_HOME_BASE + proxyEnvName;
-        final String proxyTempEnvBase = PROXY_TMP_BASE + proxyEnvName;
+        final String proxyLocalHomeEnvBase = PROXY_LOCAL_HOME_BASE + proxyEnvName;
+        final String proxyLocalTempEnvBase = PROXY_LOCAL_TMP_BASE + proxyEnvName;
+        final String proxyRemoteHomeEnvBase = PROXY_REMOTE_HOME_BASE + proxyEnvName;
+        final String proxyRemoteTempEnvBase = PROXY_REMOTE_TMP_BASE + proxyEnvName;
 
         final Boolean shouldClearDirs = shouldClearDirs(
                 inputScanner,
                 stroomHomeEnvBase,
                 stroomTempEnvBase,
-                proxyHomeEnvBase,
-                proxyTempEnvBase);
+                proxyLocalHomeEnvBase,
+                proxyLocalTempEnvBase,
+                proxyRemoteHomeEnvBase,
+                proxyRemoteTempEnvBase);
 
         ensureAndClearDir(stroomHomeEnvBase, shouldClearDirs);
         ensureAndClearDir(stroomTempEnvBase, shouldClearDirs);
-        ensureAndClearDir(proxyHomeEnvBase, shouldClearDirs);
-        ensureAndClearDir(proxyTempEnvBase, shouldClearDirs);
+        ensureAndClearDir(proxyLocalHomeEnvBase, shouldClearDirs);
+        ensureAndClearDir(proxyLocalTempEnvBase, shouldClearDirs);
+        ensureAndClearDir(proxyRemoteHomeEnvBase, shouldClearDirs);
+        ensureAndClearDir(proxyRemoteTempEnvBase, shouldClearDirs);
 
         final AtomicInteger count = new AtomicInteger();
         try (final Stream<Path> fileStream = Files.list(REPO_ROOT_PATH)) {
@@ -160,12 +185,16 @@ public class SetupDevEnv {
                             CONFIG_FILE_NAMES.containsKey(file.getFileName().toString()))
                     .forEach(configFile -> {
                         final FileType fileType = getFileType(configFile);
-                        final String homeDirBase = fileType == FileType.STROOM
-                                ? stroomHomeEnvBase
-                                : proxyHomeEnvBase;
-                        final String tempDirBase = fileType == FileType.STROOM
-                                ? stroomTempEnvBase
-                                : proxyTempEnvBase;
+                        final String homeDirBase = switch (fileType) {
+                            case STROOM -> stroomHomeEnvBase;
+                            case PROXY_LOCAL -> proxyLocalHomeEnvBase;
+                            case PROXY_REMOTE -> proxyRemoteHomeEnvBase;
+                        };
+                        final String tempDirBase = switch (fileType) {
+                            case STROOM -> stroomTempEnvBase;
+                            case PROXY_LOCAL -> proxyLocalTempEnvBase;
+                            case PROXY_REMOTE -> proxyRemoteTempEnvBase;
+                        };
                         modifyConfigFile(
                                 configFile, url, username, password, homeDirBase, tempDirBase);
                         count.incrementAndGet();
@@ -287,8 +316,8 @@ public class SetupDevEnv {
                                   final String url,
                                   final String username,
                                   final String password,
-                                  final String stroomHomeDbBase,
-                                  final String stroomTempDbBase) {
+                                  final String homeDirBase,
+                                  final String tempDirBase) {
         logWithColouredArgs("Modifying properties in config file '{}'", configFile.toAbsolutePath());
 
         try {
@@ -300,12 +329,13 @@ public class SetupDevEnv {
             final Map<String, Object> map = objectMapper.readValue(file, new TypeReference<>() {
             });
             final FileType fileType = getFileType(configFile);
-            if (fileType == FileType.STROOM) {
-                yamlStr = modifyStroomConfig(
-                        configFile, url, username, password, stroomHomeDbBase, stroomTempDbBase, map, yamlStr);
-            } else {
-                yamlStr = modifyProxyConfig(
-                        configFile, stroomHomeDbBase, stroomTempDbBase, map, yamlStr);
+            switch (fileType) {
+                case STROOM -> yamlStr = modifyStroomConfig(
+                        configFile, url, username, password, homeDirBase, tempDirBase, map, yamlStr);
+                case PROXY_LOCAL -> yamlStr = modifyProxyConfig(
+                        configFile, homeDirBase, tempDirBase, map, yamlStr);
+                case PROXY_REMOTE -> yamlStr = modifyProxyConfig(
+                        configFile, homeDirBase, tempDirBase, map, yamlStr);
             }
 
             // write YAML file back out
@@ -388,8 +418,8 @@ public class SetupDevEnv {
     }
 
     private String modifyProxyConfig(final Path configFile,
-                                     final String stroomHomeEnvBase,
-                                     final String stroomTempEnvBase,
+                                     final String homeDirBase,
+                                     final String tempDirBase,
                                      final Map<String, Object> map,
                                      String yamlStr) {
         //noinspection unchecked
@@ -405,12 +435,12 @@ public class SetupDevEnv {
                 yamlStr,
                 pathMap,
                 PathConfig.PROP_NAME_HOME,
-                "${STROOM_PROXY_HOME:-" + stroomHomeEnvBase + "}");
+                "${STROOM_PROXY_HOME:-" + homeDirBase + "}");
         yamlStr = replaceProp(
                 yamlStr,
                 pathMap,
                 PathConfig.PROP_NAME_TEMP,
-                "${STROOM_PROXY_TEMP:-" + stroomTempEnvBase + "}");
+                "${STROOM_PROXY_TEMP:-" + tempDirBase + "}");
         return yamlStr;
     }
 
@@ -482,8 +512,19 @@ public class SetupDevEnv {
 
 
     private enum FileType {
-        STROOM,
-        PROXY,
+        STROOM(false),
+        PROXY_LOCAL(true),
+        PROXY_REMOTE(true),
         ;
+
+        private final boolean isProxy;
+
+        FileType(final boolean isProxy) {
+            this.isProxy = isProxy;
+        }
+
+        public boolean isProxy() {
+            return isProxy;
+        }
     }
 }

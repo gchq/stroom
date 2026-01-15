@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.metrics;
 
 import stroom.util.logging.LambdaLogger;
@@ -17,15 +33,19 @@ public interface Metrics {
 
     LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HasMetrics.class);
 
-    String DELTA = "delta";
-    String READ = "read";
-    String WRITE = "write";
-    String POSITION = "position";
-    String SIZE = "size";
-    String COUNT = "count";
     String AGE_MS = "ageMs";
+    String COUNT = "count";
+    String DELTA = "delta";
     String FILE_COUNT = "fileCount";
+    String HANDLE = "handle";
+    String POSITION = "position";
+    String READ = "read";
+    String RECEIVE = "receive";
+    String SEND = "send";
+    String SIZE = "size";
     String SIZE_IN_BYTES = "sizeInBytes";
+    String STREAM = "stream";
+    String WRITE = "write";
 
     /**
      * A builder for registering and in some cases also creating a {@link com.codahale.metrics.Metric}

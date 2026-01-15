@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,7 +79,7 @@ public class FeedStoreImpl implements FeedStore {
                          final SecurityContext securityContext,
                          final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider) {
         this.fsVolumeGroupServiceProvider = fsVolumeGroupServiceProvider;
-        this.store = storeFactory.createStore(serialiser, FeedDoc.TYPE, FeedDoc.class);
+        this.store = storeFactory.createStore(serialiser, FeedDoc.TYPE, FeedDoc::builder);
         this.feedNameValidator = feedNameValidator;
         this.securityContext = securityContext;
         this.serialiser = serialiser;
@@ -100,7 +100,7 @@ public class FeedStoreImpl implements FeedStore {
 
         final DocRef created = store.createDocument(name);
 
-        // Double check the feed wasn't created elsewhere at the same time.
+        // Double-check the feed wasn't created elsewhere at the same time.
         if (checkDuplicateName(name, created)) {
             // Delete the newly created document as the name is duplicated.
 
@@ -108,9 +108,9 @@ public class FeedStoreImpl implements FeedStore {
             // permissions added to them until after they are created in the store.
             securityContext.asProcessingUser(() -> store.deleteDocument(created));
             throw new EntityServiceException("A feed named '" + name + "' already exists");
+        } else {
+            return created;
         }
-
-        return created;
     }
 
     @Override

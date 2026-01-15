@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,6 +141,11 @@ public class AttributeMapUtil {
         addReceiptInfo(attributeMap, receiveTime, receiptId);
 
         return attributeMap;
+    }
+
+    public static void addReceiptInfo(final AttributeMap attributeMap,
+                                      final UniqueId receiptId) {
+        addReceiptInfo(attributeMap, Instant.now(), receiptId);
     }
 
     public static void addReceiptInfo(final AttributeMap attributeMap,
@@ -305,7 +310,7 @@ public class AttributeMapUtil {
             final String attributesStr = Arrays.stream(attributeKeys)
                     .map(key ->
                             getAttributeStr(attributeMap, key))
-                    .filter(Objects::nonNull)
+                    .filter(NullSafe::isNonBlankString)
                     .collect(Collectors.joining(", "));
 
             if (!attributesStr.isBlank()) {

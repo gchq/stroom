@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.impl;
@@ -31,6 +30,7 @@ import stroom.docref.DocRef;
 import stroom.query.api.Column;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.Format;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.Param;
 import stroom.query.api.ParamUtil;
 import stroom.query.api.Query;
@@ -56,6 +56,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 public class SearchRequestMapper {
 
@@ -140,13 +141,19 @@ public class SearchRequestMapper {
         final List<ResultRequest> resultRequests = new ArrayList<>(searchRequest.getComponentResultRequests().size());
         for (final ComponentResultRequest componentResultRequest : searchRequest.getComponentResultRequests()) {
             if (componentResultRequest instanceof final TableResultRequest tableResultRequest) {
+
+                final GroupSelection groupSelection = Optional.ofNullable(tableResultRequest.getGroupSelection())
+                        .orElse(GroupSelection.builder().openGroups(tableResultRequest.getOpenGroups()).build());
+
                 final ResultRequest copy = ResultRequest.builder()
                         .componentId(tableResultRequest.getComponentId())
+                        .searchRequestSource(searchRequest.getSearchRequestSource())
+                        .tableName(tableResultRequest.getTableName())
                         .addMappings(tableResultRequest.getTableSettings())
                         .requestedRange(tableResultRequest.getRequestedRange())
                         .resultStyle(ResultStyle.TABLE)
                         .fetch(tableResultRequest.getFetch())
-                        .openGroups(tableResultRequest.getOpenGroups())
+                        .groupSelection(groupSelection)
                         .build();
                 resultRequests.add(copy);
 

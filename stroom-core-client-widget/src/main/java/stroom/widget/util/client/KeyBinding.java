@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.widget.util.client;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -81,6 +97,7 @@ public class KeyBinding {
 
         // Binds for Going To a single instance screen. Sort these by 2nd key
         addGotoKeySequence(Action.GOTO_APP_PERMS, KeyCodes.KEY_A);
+        addGotoKeySequence(Action.GOTO_ANNOTATIONS, KeyCodes.KEY_B);
         addGotoKeySequence(Action.GOTO_CACHES, KeyCodes.KEY_C);
         addGotoKeySequence(Action.GOTO_DEPENDENCIES, KeyCodes.KEY_D);
         addGotoKeySequence(Action.GOTO_EXPLORER_TREE, KeyCodes.KEY_E);
@@ -517,11 +534,12 @@ public class KeyBinding {
         SETTINGS,
 
         // GOTO key sequences
+        GOTO_ANNOTATIONS,
         GOTO_PROPERTIES,
         GOTO_API_KEYS,
         GOTO_CACHES,
         GOTO_DATA_RETENTION,
-        GOTO_CONTENT_TEMPALTES,
+        GOTO_CONTENT_TEMPLATES,
         GOTO_DEPENDENCIES,
         GOTO_JOBS,
         GOTO_NODES,

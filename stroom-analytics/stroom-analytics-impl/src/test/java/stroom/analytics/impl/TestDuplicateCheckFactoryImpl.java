@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,11 +33,11 @@ import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.Column;
-import stroom.query.api.Row;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Values;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
@@ -65,49 +65,49 @@ class TestDuplicateCheckFactoryImpl {
 
     @Test
     void test() {
-        final Row row = Row.builder().groupKey("test").values(List.of("test")).build();
+        final Values values = Values.of("test");
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         try (final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, "test")) {
-            assertThat(duplicateCheck.check(row)).isTrue();
+            assertThat(duplicateCheck.check(values)).isTrue();
             for (int i = 0; i < 10; i++) {
-                assertThat(duplicateCheck.check(row)).isFalse();
+                assertThat(duplicateCheck.check(values)).isFalse();
             }
         }
     }
 
     @Test
     void testReload() {
-        final Row row = Row.builder().groupKey("test").values(List.of("test")).build();
+        final Values values = Values.of("test");
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         try (final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, "test")) {
-            assertThat(duplicateCheck.check(row)).isTrue();
+            assertThat(duplicateCheck.check(values)).isTrue();
             for (int i = 0; i < 10; i++) {
-                assertThat(duplicateCheck.check(row)).isFalse();
+                assertThat(duplicateCheck.check(values)).isFalse();
             }
         }
 
         try (final DuplicateCheck duplicateCheck2 = createDuplicateCheck(duplicateCheckFactory, "test")) {
             for (int i = 0; i < 10; i++) {
-                assertThat(duplicateCheck2.check(row)).isFalse();
+                assertThat(duplicateCheck2.check(values)).isFalse();
             }
         }
     }
 
     @Test
     void testDifferentAnalytic() {
-        final Row row = Row.builder().groupKey("test").values(List.of("test")).build();
+        final Values values = Values.of("test");
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         try (final DuplicateCheck duplicateCheck1 = createDuplicateCheck(duplicateCheckFactory, "test1")) {
-            assertThat(duplicateCheck1.check(row)).isTrue();
+            assertThat(duplicateCheck1.check(values)).isTrue();
             for (int i = 0; i < 10; i++) {
-                assertThat(duplicateCheck1.check(row)).isFalse();
+                assertThat(duplicateCheck1.check(values)).isFalse();
             }
         }
 
         try (final DuplicateCheck duplicateCheck2 = createDuplicateCheck(duplicateCheckFactory, "test2")) {
-            assertThat(duplicateCheck2.check(row)).isTrue();
+            assertThat(duplicateCheck2.check(values)).isTrue();
             for (int i = 0; i < 10; i++) {
-                assertThat(duplicateCheck2.check(row)).isFalse();
+                assertThat(duplicateCheck2.check(values)).isFalse();
             }
         }
     }
@@ -119,9 +119,9 @@ class TestDuplicateCheckFactoryImpl {
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         try (final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, analyticRuleUuid)) {
             for (int i = 0; i < 223; i++) {
-                final Row row = Row.builder().groupKey("test" + i).values(List.of("test" + i)).build();
-                assertThat(duplicateCheck.check(row)).isTrue();
-                assertThat(duplicateCheck.check(row)).isFalse();
+                final Values values = Values.of("test" + i);
+                assertThat(duplicateCheck.check(values)).isTrue();
+                assertThat(duplicateCheck.check(values)).isFalse();
             }
         }
 
@@ -135,6 +135,24 @@ class TestDuplicateCheckFactoryImpl {
         assertThat(rows.getResultPage().size()).isEqualTo(100);
         assertThat(rows.getResultPage().getPageStart()).isEqualTo(0);
         assertThat(rows.getResultPage().getPageResponse().getTotal()).isEqualTo(223);
+    }
+
+    @Test
+    void testFetchColumnNames() {
+        final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
+        final String analyticRuleUuid = "test";
+        final AnalyticRuleDoc analytic = createAnalytic(analyticRuleUuid);
+        assertThat(duplicateCheckFactory.fetchColumnNames(analytic.getUuid()))
+                .isEmpty();
+
+        try (final DuplicateCheck ignored = createDuplicateCheck(duplicateCheckFactory, "test")) {
+            assertThat(duplicateCheckFactory.fetchColumnNames(analytic.getUuid()).get())
+                    .containsExactly("test");
+        }
+
+        // Now removed from the pool
+        assertThat(duplicateCheckFactory.fetchColumnNames(analytic.getUuid()).get())
+                .containsExactly("test");
     }
 
     private DuplicateCheckFactoryImpl createDuplicateCheckFactory() {
@@ -159,21 +177,7 @@ class TestDuplicateCheckFactoryImpl {
 
     private DuplicateCheck createDuplicateCheck(final DuplicateCheckFactoryImpl duplicateCheckFactory,
                                                 final String ruleUUID) {
-        final DuplicateNotificationConfig duplicateNotificationConfig = new DuplicateNotificationConfig(
-                true,
-                true,
-                false,
-                Collections.emptyList());
-
-        final AnalyticRuleDoc analyticRuleDoc = AnalyticRuleDoc.builder()
-                .uuid(ruleUUID)
-                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
-                .query("test")
-                .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
-                .notifications(createNotificationConfig())
-                .errorFeed(new DocRef("Feed", "error"))
-                .duplicateNotificationConfig(duplicateNotificationConfig)
-                .build();
+        final AnalyticRuleDoc analyticRuleDoc = createAnalytic(ruleUUID);
 
         final Column column = Column
                 .builder()
@@ -186,6 +190,24 @@ class TestDuplicateCheckFactoryImpl {
         final CompiledColumns compiledColumns = CompiledColumns
                 .create(new ExpressionContext(), columns, fieldIndex, Collections.emptyMap());
         return duplicateCheckFactory.create(analyticRuleDoc, compiledColumns);
+    }
+
+    private AnalyticRuleDoc createAnalytic(final String ruleUuid) {
+        final DuplicateNotificationConfig duplicateNotificationConfig = new DuplicateNotificationConfig(
+                true,
+                true,
+                false,
+                Collections.emptyList());
+
+        return AnalyticRuleDoc.builder()
+                .uuid(ruleUuid)
+                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                .query("test")
+                .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
+                .notifications(createNotificationConfig())
+                .errorFeed(new DocRef("Feed", "error"))
+                .duplicateNotificationConfig(duplicateNotificationConfig)
+                .build();
     }
 
     protected List<NotificationConfig> createNotificationConfig() {

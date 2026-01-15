@@ -1,5 +1,22 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.config.global.impl;
 
+import stroom.annotation.impl.AnnotationState;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
@@ -11,6 +28,8 @@ import stroom.explorer.impl.ExplorerConfig;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.query.common.v2.ExpressionPredicateFactory;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.StroomOpenIdConfig;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
@@ -352,7 +371,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                             .findFirst();
                 });
 
-        when(globalConfigService.update(Mockito.any()))
+        when(globalConfigService.update((ConfigProperty) Mockito.any()))
                 .thenAnswer(invocation -> {
                     final ConfigProperty configProperty = invocation.getArgument(0);
                     configProperty.setId(1);
@@ -403,10 +422,12 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 () -> globalConfigService,
                 () -> nodeService,
                 UiConfig::new,
-                null,
                 () -> nodeInfo,
                 StroomOpenIdConfig::new,
                 ExplorerConfig::new,
-                AuthenticationConfig::new);
+                AuthenticationConfig::new,
+                StroomReceiptPolicyConfig::new,
+                ReceiveDataConfig::new,
+                AnnotationState::new);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ import stroom.pipeline.stepping.SteppingFilter;
 import stroom.pipeline.writer.OutputRecorder;
 import stroom.task.api.Terminator;
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.ElementId;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -122,13 +123,17 @@ public class PipelineFactory {
 
             // Set the id on the pipeline element for use in tracing
             // errors, intercepting input/output etc.
-            elementInstance.setElementId(element.getId());
+            elementInstance.setElementId(element.getElementId());
 
             // Set an object to provide quick processing termination if needed.
             elementInstance.setTerminator(terminator);
 
             // Set the properties on this instance.
-            setProperties(pipelineElementRegistry, element.getId(), element.getType(), elementInstance, pipelineData,
+            setProperties(pipelineElementRegistry,
+                    element.getId(),
+                    element.getType(),
+                    elementInstance,
+                    pipelineData,
                     controller);
 
             // Set the pipeline references on this instance.
@@ -159,7 +164,7 @@ public class PipelineFactory {
         int controllerSplitDepth = 1;
         if (controller != null) {
             controllerSplitDepth =
-                    getSplitDepth(elementInstances, elementTypeMap, linkSets, sourceElement.getElementId());
+                    getSplitDepth(elementInstances, elementTypeMap, linkSets, sourceElement.getElementId().getId());
             controllerSplitDepth = Math.max(controllerSplitDepth, 1);
         }
 
@@ -321,16 +326,16 @@ public class PipelineFactory {
                       final Map<String, Set<String>> linkSets,
                       final SteppingController controller,
                       final Element parentElement,
-                      final String parentElementId,
+                      final ElementId parentElementId,
                       final int controllerSplitDepth) {
         // Get the child elements of the supplied 'from' element id that we want
         // to work with.
-        final List<Element> childElements = getChildElements(parentElementId, elementInstances, elementTypeMap,
+        final List<Element> childElements = getChildElements(parentElementId.getId(), elementInstances, elementTypeMap,
                 linkSets, controller);
 
         // Loop over the child elements and link them to the parent.
         for (final Element childElement : childElements) {
-            final String elementId = childElement.getElementId();
+            final ElementId elementId = childElement.getElementId();
             final PipelineElementType elementType = elementTypeMap.get(childElement);
 
             Fragment fragment = new Fragment(childElement);
@@ -407,7 +412,7 @@ public class PipelineFactory {
                 return splitFilter.getSplitDepth();
             }
             final int childSplitDepth =
-                    getSplitDepth(elementInstances, elementTypeMap, linkSets, childElement.getElementId());
+                    getSplitDepth(elementInstances, elementTypeMap, linkSets, childElement.getElementId().getId());
             if (childSplitDepth != -1) {
                 return childSplitDepth;
             }
@@ -484,7 +489,7 @@ public class PipelineFactory {
      * @return A modified pipeline fragment if a recorder was added or the
      * original if it remains unchanged.
      */
-    private Fragment insertRecorder(final String elementId,
+    private Fragment insertRecorder(final ElementId elementId,
                                     final PipelineElementType elementType,
                                     final Fragment fragment,
                                     final boolean input,
@@ -495,7 +500,7 @@ public class PipelineFactory {
         // Get any filter settings that might be applied to XML output.
         SteppingFilterSettings steppingFilterSettings = null;
         if (!input) {
-            steppingFilterSettings = controller.getRequest().getStepFilterSettings(elementId);
+            steppingFilterSettings = controller.getRequest().getStepFilterSettings(elementId.getId());
         }
 
         if (input) {
@@ -618,7 +623,7 @@ public class PipelineFactory {
      *                    include recorders for input and output.
      * @param controller  The stepping controller.
      */
-    private void addMonitor(final String elementId,
+    private void addMonitor(final ElementId elementId,
                             final PipelineElementType elementType,
                             final Element element,
                             final Fragment fragment,

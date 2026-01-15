@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,18 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.FireAlertEventFunction;
+import stroom.core.client.messages.ErrorMessageTemplates;
 import stroom.query.api.ParamValues;
 import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
 import stroom.query.client.view.QueryButtons;
 import stroom.query.client.view.TimeRanges;
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.ErrorMessages;
+import stroom.util.shared.Severity;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -32,6 +37,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class QueryToolbarPresenter
         extends MyPresenterWidget<QueryToolbarView>
@@ -41,34 +47,64 @@ public class QueryToolbarPresenter
         SearchStateListener,
         SearchErrorListener {
 
-    private List<String> currentWarnings;
+    private ErrorMessages currentErrors;
     private TimeRange currentTimeRange = TimeRanges.ALL_TIME;
+
+    private static final ErrorMessageTemplates ERROR_MESSAGE_TEMPLATES = GWT.create(ErrorMessageTemplates.class);
 
     @Inject
     public QueryToolbarPresenter(final EventBus eventBus,
                                  final QueryToolbarView view) {
         super(eventBus, view);
-        getView().setWarningsVisible(false);
+        getView().setErrorsVisible(false);
         view.setUiHandlers(this);
         view.getQueryButtons().setUiHandlers(this);
     }
 
     @Override
-    public void onError(final List<String> errors) {
-        currentWarnings = errors;
-        getView().setWarningsVisible(currentWarnings != null && !currentWarnings.isEmpty());
+    public void onError(final List<ErrorMessage> errors) {
+        currentErrors = new ErrorMessages(errors);
+        getView().setErrorsVisible(!currentErrors.isEmpty());
+        if (!currentErrors.isEmpty()) {
+            getView().setErrorSeverity(currentErrors.getHighestSeverity());
+        }
     }
 
     @Override
-    public void showWarnings() {
-        if (currentWarnings != null && !currentWarnings.isEmpty()) {
-            final String msg = currentWarnings.size() == 1
-                    ? ("The following warning was created while running this search:")
-                    : ("The following " + currentWarnings.size()
-                       + " warnings have been created while running this search:");
-            final String errors = String.join("\n", currentWarnings);
-            AlertEvent.fireWarn(this, msg, errors, null);
+    public void showErrors() {
+        if (!currentErrors.isEmpty()) {
+            if (currentErrors.containsAny(Severity.FATAL_ERROR, Severity.ERROR)) {
+                fireAlertEvent(AlertEvent::fireError);
+            } else if (currentErrors.containsAny(Severity.WARNING)) {
+                fireAlertEvent(AlertEvent::fireWarn);
+            } else if (currentErrors.containsAny(Severity.INFO)) {
+                fireAlertEvent(AlertEvent::fireInfo);
+            }
         }
+    }
+
+    private void fireAlertEvent(final FireAlertEventFunction fireAlertEventFunction) {
+        final List<ErrorMessage> errorMessages = currentErrors.getErrorMessagesOrderedBySeverity();
+        final String msg = getAlertMessage(errorMessages.size());
+        final List<String> messages = errorMessages.stream()
+                .map(this::toDisplayMessage)
+                .collect(Collectors.toList());
+
+        fireAlertEventFunction.apply(this, msg, String.join("\n", messages), null);
+    }
+
+    private String toDisplayMessage(final ErrorMessage errorMessage) {
+        if (errorMessage.getNode() == null) {
+            return ERROR_MESSAGE_TEMPLATES.errorMessage(errorMessage.getSeverity().getDisplayValue(),
+                    errorMessage.getMessage());
+        }
+        return ERROR_MESSAGE_TEMPLATES.errorMessageWithNode(errorMessage.getSeverity().getDisplayValue(),
+                errorMessage.getMessage(), errorMessage.getNode());
+    }
+
+    private String getAlertMessage(final int numberOfMessages) {
+        return numberOfMessages == 1 ? ERROR_MESSAGE_TEMPLATES.errorMessageCreatedSingular() :
+                ERROR_MESSAGE_TEMPLATES.errorMessagesCreatedPlural();
     }
 
     @Override
@@ -123,10 +159,11 @@ public class QueryToolbarPresenter
 
     // --------------------------------------------------------------------------------
 
-
     public interface QueryToolbarView extends View, HasUiHandlers<QueryToolbarUiHandlers> {
 
-        void setWarningsVisible(boolean show);
+        void setErrorsVisible(boolean show);
+
+        void setErrorSeverity(Severity severity);
 
         QueryButtons getQueryButtons();
 

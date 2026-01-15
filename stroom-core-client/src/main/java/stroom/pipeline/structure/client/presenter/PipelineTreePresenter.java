@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.structure.client.presenter;
@@ -21,8 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.pipeline.client.event.ChangeDataEvent;
-import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineLayer;
@@ -41,23 +38,30 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresenter.PipelineTreeView>
-        implements ChangeDataHandler<PipelineModel>, HasDirtyHandlers, PipelineTreeUiHandlers, HasContextMenuHandlers {
+        implements HasDirtyHandlers, PipelineTreeUiHandlers, HasContextMenuHandlers {
 
     private final MySingleSelectionModel<PipelineElement> selectionModel;
     private PipelineModel pipelineModel;
     private PipelineTreeBuilder pipelineTreeBuilder;
+    private List<PipelineElement> disabledElements = new ArrayList<>();
 
     @Inject
     public PipelineTreePresenter(final EventBus eventBus, final PipelineTreeView view) {
         super(eventBus, view);
 
-        selectionModel = new MySingleSelectionModel<>();
+        selectionModel = new MySingleSelectionModel<>() {
+            @Override
+            protected boolean isSelectable(final PipelineElement element) {
+                return !disabledElements.contains(element);
+            }
+        };
         view.setSelectionModel(selectionModel);
         view.setUiHandlers(this);
     }
@@ -74,14 +78,6 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
     public void setModel(final PipelineModel model) {
         this.pipelineModel = model;
         getView().setPipelineModel(pipelineModel);
-        if (model != null) {
-            model.addChangeDataHandler(this);
-        }
-        refresh();
-    }
-
-    @Override
-    public void onChange(final ChangeDataEvent<PipelineModel> event) {
         refresh();
     }
 
@@ -158,10 +154,15 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
         getView().setSeverities(elementIdToSeveritiesMap);
     }
 
+    public void setDisabledElements(final List<PipelineElement> disabledElements) {
+        this.disabledElements = disabledElements;
+        getView().setDisabledElements(disabledElements);
+    }
+
     /**
-     * @return All the element IDs currently in the pipeline
+     * @return All the element names currently in the pipeline
      */
-    public Set<String> getIds() {
+    public Set<String> getNames() {
         final List<PipelineElement> pipelineElements = NullSafe.get(
                 pipelineModel,
                 PipelineModel::getPipelineLayer,
@@ -169,7 +170,7 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
                 PipelineData::getAddedElements);
 
         return NullSafe.stream(pipelineElements)
-                .map(PipelineElement::getId)
+                .map(PipelineElement::getDisplayName)
                 .collect(Collectors.toSet());
     }
 
@@ -192,6 +193,8 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
         void setAllowNullSelection(boolean allowNullSelection);
 
         int getTreeHeight();
+
+        void setDisabledElements(final List<PipelineElement> disabledElements);
 
         void setSeverities(final Map<String, Severity> elementIdToSeveritiesMap);
     }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.index.impl.db;
 
 import stroom.index.impl.IndexVolumeDao;
@@ -8,16 +24,18 @@ import stroom.util.AuditUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import org.assertj.core.api.Assertions;
 import org.jooq.exception.DataAccessException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestIndexVolumeDaoImpl {
 
@@ -40,7 +58,7 @@ class TestIndexVolumeDaoImpl {
         // Given
         final String nodeName = TestData.createNodeName();
         final String path = TestData.createPath();
-        final var indexVolumeGroup = createGroup(TestData.createVolumeGroupName());
+        final IndexVolumeGroup indexVolumeGroup = createGroup(TestData.createVolumeGroupName());
 
         // When
         final IndexVolume created = createVolume(nodeName, path, indexVolumeGroup.getId());
@@ -59,39 +77,38 @@ class TestIndexVolumeDaoImpl {
     @Test
     void testUpdate() {
         // Given
-        final var nodeName = TestData.createNodeName();
-        final var path = TestData.createPath();
-        final var indexVolumeGroup = createGroup(TestData.createVolumeGroupName());
-        final var indexVolume = createVolume(nodeName, path, indexVolumeGroup.getId());
+        final String nodeName = TestData.createNodeName();
+        final String path = TestData.createPath();
+        final IndexVolumeGroup indexVolumeGroup = createGroup(TestData.createVolumeGroupName());
+        final IndexVolume indexVolume = createVolume(nodeName, path, indexVolumeGroup.getId());
 
-        final var newNodeName = TestData.createNodeName();
-        final var newPath = TestData.createPath();
+        final String newNodeName = TestData.createNodeName();
+        final String newPath = TestData.createPath();
 
         indexVolume.setNodeName(newNodeName);
         indexVolume.setPath(newPath);
 
         // When
-        final var updatedIndexVolume = indexVolumeDao.update(indexVolume);
+        final IndexVolume updatedIndexVolume = indexVolumeDao.update(indexVolume);
 
         // Then
         assertThat(updatedIndexVolume.getNodeName()).isEqualTo(newNodeName);
         assertThat(updatedIndexVolume.getPath()).isEqualTo(newPath);
     }
 
-
     @Test
     void testDelete() {
         // Given
-        final var nodeName = TestData.createNodeName();
-        final var path = TestData.createPath();
-        final var indexVolumeGroup = createGroup(TestData.createVolumeGroupName());
-        final var indexVolume = createVolume(nodeName, path, indexVolumeGroup.getId());
+        final String nodeName = TestData.createNodeName();
+        final String path = TestData.createPath();
+        final IndexVolumeGroup indexVolumeGroup = createGroup(TestData.createVolumeGroupName());
+        final IndexVolume indexVolume = createVolume(nodeName, path, indexVolumeGroup.getId());
 
         // When
         indexVolumeDao.delete(indexVolume.getId());
 
         // Then
-        final var deletedVolumeOptional = indexVolumeDao.fetch(indexVolume.getId());
+        final Optional<IndexVolume> deletedVolumeOptional = indexVolumeDao.fetch(indexVolume.getId());
 
         assertThat(deletedVolumeOptional.isPresent()).isFalse();
     }
@@ -99,9 +116,9 @@ class TestIndexVolumeDaoImpl {
     @Test
     void testGetAll() {
         // Given
-        final var indexVolumeGroup01 = createGroup(TestData.createVolumeGroupName());
-        final var indexVolumeGroup02 = createGroup(TestData.createVolumeGroupName());
-        final var indexVolumeGroup03 = createGroup(TestData.createVolumeGroupName());
+        final IndexVolumeGroup indexVolumeGroup01 = createGroup(TestData.createVolumeGroupName());
+        final IndexVolumeGroup indexVolumeGroup02 = createGroup(TestData.createVolumeGroupName());
+        final IndexVolumeGroup indexVolumeGroup03 = createGroup(TestData.createVolumeGroupName());
         createVolume(indexVolumeGroup01.getId());
         createVolume(indexVolumeGroup01.getId());
         createVolume(indexVolumeGroup02.getId());
@@ -111,11 +128,11 @@ class TestIndexVolumeDaoImpl {
         createVolume(indexVolumeGroup03.getId());
 
         // When
-        final var indexVolumes = indexVolumeDao.getAll();
+        final List<IndexVolume> indexVolumes = indexVolumeDao.getAll();
 
         // Then
         final BiConsumer<Integer, Integer> checkTheNewVolumeExists = (id, expectedCount) -> {
-            final var foundIndexVolumesForGroup = indexVolumes.stream()
+            final List<IndexVolume> foundIndexVolumesForGroup = indexVolumes.stream()
                     .filter(indexVolume -> indexVolume.getIndexVolumeGroupId().equals(id)).collect(Collectors.toList());
             assertThat(foundIndexVolumesForGroup.size()).isEqualTo(expectedCount);
         };
@@ -140,17 +157,18 @@ class TestIndexVolumeDaoImpl {
     @Test
     void testMustHaveGroup() {
         // Given
-        final var indexVolumeGroup01 = createGroup(TestData.createVolumeGroupName());
-        final var indexVolume = createVolume(indexVolumeGroup01.getId());
+        final IndexVolumeGroup indexVolumeGroup01 = createGroup(TestData.createVolumeGroupName());
+        final IndexVolume indexVolume = createVolume(indexVolumeGroup01.getId());
 
         // When / then
         indexVolume.setIndexVolumeGroupId(null);
-        assertThrows(DataAccessException.class, () -> indexVolumeDao.update(indexVolume));
+        Assertions.assertThatThrownBy(() -> indexVolumeDao.update(indexVolume))
+                .isInstanceOf(DataAccessException.class);
     }
 
     private IndexVolume createVolume(final int indexVolumeGroupId) {
-        final var nodeName = TestData.createNodeName();
-        final var path = TestData.createPath();
+        final String nodeName = TestData.createNodeName();
+        final String path = TestData.createPath();
         return createVolume(nodeName, path, indexVolumeGroupId);
     }
 

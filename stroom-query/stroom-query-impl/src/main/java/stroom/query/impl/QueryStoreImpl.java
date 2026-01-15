@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.query.impl;
@@ -61,7 +60,7 @@ class QueryStoreImpl implements QueryStore {
                    final SecurityContext securityContext,
                    final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                    final SearchRequestFactory searchRequestFactory) {
-        this.store = storeFactory.createStore(serialiser, QueryDoc.TYPE, QueryDoc.class);
+        this.store = storeFactory.createStore(serialiser, QueryDoc.TYPE, QueryDoc::builder);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.data.store.impl.fs;
@@ -52,7 +51,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -85,7 +83,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                 zipOut.closeArchiveEntry();
             }
 
-            final HashMap<String, String> expectedContent = new HashMap<>();
+            final Map<String, String> expectedContent = new HashMap<>();
             expectedContent.put(null, "File1\nFile1\n");
 
             final List<Map<String, String>> expectedBoundaries = new ArrayList<>();
@@ -95,7 +93,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
             doTest(file,
                     1,
-                    new HashSet<>(Arrays.asList("revt.bgz", "revt.meta.bgz", "revt.mf.dat")),
+                    Set.of("revt.bgz", "revt.meta.bgz", "revt.mf.dat"),
                     expectedContent,
                     expectedBoundaries,
                     Instant.now(),
@@ -116,7 +114,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                 zipOut.closeArchiveEntry();
             }
 
-            final HashMap<String, String> expectedContent = new HashMap<>();
+            final Map<String, String> expectedContent = new HashMap<>();
             expectedContent.put(null, "File1\nFile1\nFile1\nFile1\nFile1\nFile1\n");
 
             final List<Map<String, String>> expectedBoundaries = new ArrayList<>();
@@ -126,12 +124,12 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
             doTest(file,
                     3,
-                    new HashSet<>(Arrays.asList(
+                    Set.of(
                             "revt.bgz",
                             "revt.bdy.dat",
                             "revt.meta.bgz",
                             "revt.meta.bdy.dat",
-                            "revt.mf.dat")),
+                            "revt.mf.dat"),
                     expectedContent,
                     expectedBoundaries,
                     Instant.now(),
@@ -158,7 +156,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                 zipOut.closeArchiveEntry();
             }
 
-            final HashMap<String, String> expectedContent = new HashMap<>();
+            final Map<String, String> expectedContent = new HashMap<>();
             expectedContent.put(null, "File1\nFile1\n");
             expectedContent.put(StreamTypeNames.CONTEXT, "Context1\nContext1\n");
             expectedContent.put(StreamTypeNames.META, "Meta11:1\nMeta12:1\nStreamSize:12\n");
@@ -191,7 +189,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
             doTest(file,
                     1,
-                    new HashSet<>(Arrays.asList("revt.bgz", "revt.ctx.bgz", "revt.meta.bgz", "revt.mf.dat")),
+                    Set.of("revt.bgz", "revt.ctx.bgz", "revt.meta.bgz", "revt.mf.dat"),
                     expectedContent,
                     expectedBoundaries,
                     receivedTime,
@@ -228,7 +226,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                 zipOut.closeArchiveEntry();
             }
 
-            final HashMap<String, String> expectedContent = new HashMap<>();
+            final Map<String, String> expectedContent = new HashMap<>();
             expectedContent.put(null, "File1\nFile1\nFile2\nFile2\n");
             expectedContent.put(StreamTypeNames.CONTEXT, "Context1\nContext1\nContext2\nContext2\n");
             expectedContent.put(StreamTypeNames.META, "Meta1a\nMeta1b\nStreamSize:12\nMeta2a\nMeta2b\nStreamSize:12\n");
@@ -281,8 +279,13 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
             doTest(file,
                     1,
-                    new HashSet<>(Arrays.asList("revt.bgz", "revt.bdy.dat", "revt.ctx.bgz",
-                            "revt.ctx.bdy.dat", "revt.meta.bgz", "revt.meta.bdy.dat", "revt.mf.dat")),
+                    Set.of("revt.bgz",
+                            "revt.bdy.dat",
+                            "revt.ctx.bgz",
+                            "revt.ctx.bdy.dat",
+                            "revt.meta.bgz",
+                            "revt.meta.bdy.dat",
+                            "revt.mf.dat"),
                     expectedContent,
                     expectedBoundaries,
                     receivedTime,
@@ -306,7 +309,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
                 zipOut.closeArchiveEntry();
             }
 
-            final HashMap<String, String> expectedContent = new HashMap<>();
+            final Map<String, String> expectedContent = new HashMap<>();
             expectedContent.put(null, "File1\nFile1\nFile2\nFile2\n");
             final List<Map<String, String>> expectedBoundaries = new ArrayList<>();
             expectedBoundaries.add(Collections.singletonMap(null, "File1\nFile1\n"));
@@ -314,12 +317,12 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
             doTest(file,
                     1,
-                    new HashSet<>(Arrays.asList(
+                    Set.of(
                             "revt.bgz",
                             "revt.bdy.dat",
                             "revt.meta.bgz",
                             "revt.meta.bdy.dat",
-                            "revt.mf.dat")),
+                            "revt.mf.dat"),
                     expectedContent,
                     expectedBoundaries,
                     Instant.now(),
@@ -332,7 +335,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
     private void doTest(final Path file,
                         final int processCount,
                         final Set<String> expectedFiles,
-                        final HashMap<String, String> expectedContent,
+                        final Map<String, String> expectedContent,
                         final List<Map<String, String>> expectedBoundaries,
                         final Instant receivedTime,
                         final UniqueId receiptId) throws IOException {
@@ -356,7 +359,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
 
             for (int i = 0; i < processCount; i++) {
                 try (final InputStream inputStream = Files.newInputStream(file)) {
-                    stroomStreamProcessor.processInputStream(inputStream, String.valueOf(i), receivedTime);
+                    stroomStreamProcessor.processInputStream(inputStream, String.valueOf(i));
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
                 }
@@ -367,7 +370,7 @@ class TestFileSystemZipProcessor extends AbstractCoreIntegrationTest {
         final List<Path> files = fileFinder
                 .findAllStreamFile(streamTargetStreamHandler.getStreamSet().iterator().next());
 
-        final HashSet<String> foundFiles = new HashSet<>();
+        final Set<String> foundFiles = new HashSet<>();
 
         for (final Path rfile : files) {
             if (Files.isRegularFile(rfile)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.feed.shared;
 
+import stroom.docref.DocRef;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -61,4 +62,11 @@ public interface FeedResource extends RestResource, DirectRestService, FetchWith
             summary = "Fetch supported encodings",
             operationId = "fetchSupportedEncodings")
     List<String> fetchSupportedEncodings();
+
+    @GET
+    @Path("getDocRefForName/{name}")
+    @Operation(
+            summary = "Fetch a feed DocRef for a feed name",
+            operationId = "getDocRefForName")
+    DocRef getDocRefForName(@PathParam("name") String name);
 }

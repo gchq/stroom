@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.job.impl;
@@ -27,9 +26,8 @@ import stroom.util.AuditUtil;
 import stroom.util.exception.DataChangedException;
 
 import jakarta.inject.Inject;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestJobNodeDao extends AbstractCoreIntegrationTest {
 
@@ -60,10 +58,10 @@ class TestJobNodeDao extends AbstractCoreIntegrationTest {
 
         // Test optimistic locking
         final Job finalJob = job;
-        assertThrows(DataChangedException.class, () -> {
+        Assertions.assertThatThrownBy(() -> {
             jobDao.update(finalJob);
             jobDao.update(finalJob);
-        });
+        }).isInstanceOf(DataChangedException.class);
 
         // Test that job service can continually update jobs.
         job.setEnabled(false);
@@ -85,10 +83,10 @@ class TestJobNodeDao extends AbstractCoreIntegrationTest {
 
         // Test optimistic locking
         final JobNode finalJobNode = jobNode;
-        assertThrows(DataChangedException.class, () -> {
+        Assertions.assertThatThrownBy(() -> {
             jobNodeDao.update(finalJobNode);
             jobNodeDao.update(finalJobNode);
-        });
+        }).isInstanceOf(DataChangedException.class);
 
         // Test that job node service can continually update jobs.
         jobNode.setEnabled(false);

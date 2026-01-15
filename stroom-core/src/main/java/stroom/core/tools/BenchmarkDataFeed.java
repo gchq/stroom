@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -290,7 +290,7 @@ public class BenchmarkDataFeed {
         long totalTime = 0;
         long maxTime = 0;
 
-        final HashMap<Integer, Integer> responseMap = new HashMap<>();
+        final Map<Integer, Integer> responseMap = new HashMap<>();
 
         final Set<String> messageSet = new HashSet<>();
 

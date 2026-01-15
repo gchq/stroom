@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ public class IndexStoreImpl implements IndexStore {
                    final Provider<IndexFieldService> indexFieldServiceProvider,
                    final Provider<IndexVolumeGroupService> indexVolumeGroupServiceProvider) {
         this.indexVolumeGroupServiceProvider = indexVolumeGroupServiceProvider;
-        this.store = storeFactory.createStore(serialiser, LuceneIndexDoc.TYPE, LuceneIndexDoc.class);
+        this.store = storeFactory.createStore(serialiser, LuceneIndexDoc.TYPE, LuceneIndexDoc::builder);
         this.indexFieldServiceProvider = indexFieldServiceProvider;
         this.serialiser = serialiser;
     }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
@@ -11,11 +27,13 @@ import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
-import stroom.receive.common.PermissiveAttributeMapFilter;
+import stroom.receive.common.ReceiveAllAttributeMapFilter;
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.StroomStreamException;
 import stroom.test.common.DirectorySnapshot;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.exception.ThrowingConsumer;
+import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -41,6 +59,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(MockitoExtension.class)
 public class TestZipReceiver extends StroomUnitTest {
@@ -63,6 +82,8 @@ public class TestZipReceiver extends StroomUnitTest {
     private LogStream mockLogStream;
     @Mock
     private ZipSplitter mockZipSplitter;
+    @Mock
+    private ReceiveDataConfig mockReceiveDataConfig;
 
     @TempDir
     private Path dataDir;
@@ -233,7 +254,7 @@ public class TestZipReceiver extends StroomUnitTest {
         final List<Path> destinationPaths = doReceive(
                 fileGroup.getZip(),
                 attributeMap,
-                PermissiveAttributeMapFilter.INSTANCE);
+                ReceiveAllAttributeMapFilter.INSTANCE);
 
         assertThat(destinationPaths)
                 .hasSize(1);
@@ -389,18 +410,38 @@ public class TestZipReceiver extends StroomUnitTest {
                 .isNull();
     }
 
+    @Test
+    void testReceiveContentTooLarge() throws IOException {
+        final String defaultFeedName = FEED_1;
+        final String defaultTypeName = null;
+
+        final AttributeMap attributeMap = new AttributeMap();
+        AttributeMapUtil.addFeedAndType(attributeMap, defaultFeedName, defaultTypeName);
+
+        final Path testZipFile = TestDataUtil.writeZip(new FeedKey(defaultFeedName, defaultTypeName));
+
+        LOGGER.info("testZipFile {}", testZipFile.toAbsolutePath());
+
+        Mockito.lenient().when(mockReceiveDataConfig.getMaxRequestSize()).thenReturn(ByteSize.ofBytes(10));
+
+        assertThatThrownBy(() -> doReceive(testZipFile, attributeMap, attrMap -> true))
+                .isInstanceOf(StroomStreamException.class)
+                .hasMessageContaining("Maximum request size exceeded");
+    }
+
     private List<Path> doReceive(final Path testZipFile,
                                  final AttributeMap attributeMap,
                                  final AttributeMapFilter attributeMapFilter) throws IOException {
 
-        Mockito.when(mockAttributeMapFilterFactory.create())
+        Mockito.lenient().when(mockAttributeMapFilterFactory.create())
                 .thenReturn(attributeMapFilter);
 
         final ZipReceiver zipReceiver = new ZipReceiver(
                 mockAttributeMapFilterFactory,
                 () -> dataDir,
                 mockLogStream,
-                mockZipSplitter);
+                mockZipSplitter,
+                () -> mockReceiveDataConfig);
 
         final List<Path> consumedPaths = new ArrayList<>();
         final AtomicLong counter = new AtomicLong();

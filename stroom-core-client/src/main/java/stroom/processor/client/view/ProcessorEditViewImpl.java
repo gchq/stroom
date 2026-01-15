@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,24 +12,28 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.processor.client.view;
 
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
+import stroom.processor.client.presenter.ProcessorEditUiHandlers;
+import stroom.widget.button.client.Button;
 import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView {
+public class ProcessorEditViewImpl extends ViewWithUiHandlers<ProcessorEditUiHandlers> implements ProcessorEditView {
 
     private final Widget widget;
 
@@ -40,7 +44,11 @@ public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView
     @UiField
     MyDateBox maxMetaCreateTimeMs;
     @UiField
+    CustomCheckBox export;
+    @UiField
     SimplePanel runAsUser;
+    @UiField
+    Button editFeedDependencies;
 
     @Inject
     public ProcessorEditViewImpl(final ProcessorEditViewImpl.Binder binder,
@@ -81,8 +89,25 @@ public class ProcessorEditViewImpl extends ViewImpl implements ProcessorEditView
     }
 
     @Override
+    public boolean isExport() {
+        return this.export.getValue();
+    }
+
+    @Override
+    public void setExport(final boolean export) {
+        this.export.setValue(export);
+    }
+
+    @Override
     public void setRunAsUserView(final View view) {
         this.runAsUser.setWidget(view.asWidget());
+    }
+
+    @UiHandler("editFeedDependencies")
+    public void onEditFeedDependencies(final ClickEvent e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onEditFeedDependencies();
+        }
     }
 
     public interface Binder extends UiBinder<Widget, ProcessorEditViewImpl> {

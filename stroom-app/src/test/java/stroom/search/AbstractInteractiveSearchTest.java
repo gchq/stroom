@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -386,7 +386,7 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
         test(expression, 5);
     }
 
-    private void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount) {
+    void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount) {
         final List<String> componentIds = Collections.singletonList("table-1");
         test(expressionIn, expectResultCount, componentIds, true);
     }
@@ -542,12 +542,12 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
                 .build();
     }
 
-    private ExpressionOperator.Builder buildExpression(final String userField,
-                                                       final String userTerm,
-                                                       final String from,
-                                                       final String to,
-                                                       final String wordsField,
-                                                       final String wordsTerm) {
+    ExpressionOperator.Builder buildExpression(final String userField,
+                                               final String userTerm,
+                                               final String from,
+                                               final String to,
+                                               final String wordsField,
+                                               final String wordsTerm) {
         final ExpressionOperator.Builder operator = ExpressionOperator.builder();
         operator.addTerm(userField, Condition.EQUALS, userTerm);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);

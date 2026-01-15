@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.io;
 
 import stroom.util.HasHealthCheck;
@@ -336,11 +352,10 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
     @Override
     public HealthCheck.Result getHealth() {
         final HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
-
         // isRunning will only be true if the file is also present and valid
         if (dirToWatch == null) {
             resultBuilder.healthy()
-                    .withMessage("No file provided to monitor");
+                    .withMessage("No dir provided to monitor");
         } else if (isRunning.get()) {
             resultBuilder.healthy();
         } else {
@@ -350,11 +365,11 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
         }
 
         return resultBuilder
-                .withDetail("monitoredFile", dirToWatch != null
+                .withDetail("monitoredDir", dirToWatch != null
                         ? dirToWatch.toAbsolutePath().normalize().toString()
                         : null)
                 .withDetail("isRunning", isRunning)
-                .withDetail("isValidFile", isValidDir)
+                .withDetail("isValidDir", isValidDir)
                 .build();
     }
 

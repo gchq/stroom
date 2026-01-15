@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.core.receive;
 
 import stroom.cluster.lock.api.ClusterLockService;
@@ -33,6 +49,7 @@ import stroom.processor.shared.QueryData;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.datasource.QueryField;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.UnauthenticatedUserIdentity;
 import stroom.receive.content.shared.ContentTemplate;
@@ -62,6 +79,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +99,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
     private static final Pattern PATH_PARAM_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9 _-]");
     private static final Pattern PATH_STATIC_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9 /_-]");
     private static final Pattern GROUP_REPLACE_PATTERN = Pattern.compile("[^a-zA-Z0-9-]");
+    private static final Duration CHECK_INTERVAL = Duration.ofMinutes(1);
     private static final Set<String> COPYABLE_DOC_TYPES = Set.of(
             XsltDoc.TYPE,
             TextConverterDoc.TYPE);
@@ -119,7 +138,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                           final ContentTemplateStore contentTemplateStore,
                                           final ProcessorFilterService processorFilterService,
                                           final PipelineService pipelineService,
-                                          final ExpressionMatcherFactory expressionMatcherFactory) {
+                                          final ExpressionMatcherFactory expressionMatcherFactory,
+                                          final ExpressionPredicateFactory expressionPredicateFactory) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.autoContentCreationConfigProvider = autoContentCreationConfigProvider;
         this.documentPermissionService = documentPermissionService;
@@ -134,32 +154,40 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         this.contentTemplateStore = contentTemplateStore;
         this.processorFilterService = processorFilterService;
         this.pipelineService = pipelineService;
+
+        // TODO change to use ExpressionPredicateFactory
         this.cachedExpressionMatcher = CachedValue.builder()
-                .withMaxCheckIntervalMinutes(1)
+                .withMaxCheckInterval(CHECK_INTERVAL)
                 .withStateSupplier(() ->
                         autoContentCreationConfigProvider.get().getTemplateMatchFields())
                 .withValueFunction(templateMatchFields ->
                         createExpressionMatcher(expressionMatcherFactory, templateMatchFields))
                 .build();
         this.cachedDestinationPathTemplator = CachedValue.builder()
-                .withMaxCheckIntervalMinutes(1)
-                .withStateSupplier(() -> autoContentCreationConfigProvider.get().getDestinationExplorerPathTemplate())
-                .withValueFunction(template -> TemplateUtil.parseTemplate(
-                        template,
-                        str -> PATH_PARAM_REPLACE_PATTERN.matcher(NullSafe.trim(str)).replaceAll("_"),
-                        str -> PATH_STATIC_REPLACE_PATTERN.matcher(NullSafe.trim(str)).replaceAll("_")
-                ))
+                .withMaxCheckInterval(CHECK_INTERVAL)
+                .withStateSupplier(() ->
+                        autoContentCreationConfigProvider.get().getDestinationExplorerPathTemplate())
+                .withValueFunction(template ->
+                        TemplateUtil.parseTemplate(
+                                template,
+                                str -> PATH_PARAM_REPLACE_PATTERN.matcher(NullSafe.trim(str))
+                                        .replaceAll("_"),
+                                str -> PATH_STATIC_REPLACE_PATTERN.matcher(NullSafe.trim(str))
+                                        .replaceAll("_")
+                        ))
                 .build();
         this.cachedGroupTemplator = CachedValue.builder()
-                .withMaxCheckIntervalMinutes(1)
-                .withStateSupplier(() -> autoContentCreationConfigProvider.get().getGroupTemplate())
+                .withMaxCheckInterval(CHECK_INTERVAL)
+                .withStateSupplier(() ->
+                        autoContentCreationConfigProvider.get().getGroupTemplate())
                 .withValueFunction(template -> TemplateUtil.parseTemplate(
                         template,
                         ContentAutoCreationServiceImpl::cleanGroupString))
                 .build();
         this.cachedAdditionalGroupTemplator = CachedValue.builder()
-                .withMaxCheckIntervalMinutes(1)
-                .withStateSupplier(() -> autoContentCreationConfigProvider.get().getAdditionalGroupTemplate())
+                .withMaxCheckInterval(CHECK_INTERVAL)
+                .withStateSupplier(() ->
+                        autoContentCreationConfigProvider.get().getAdditionalGroupTemplate())
                 .withValueFunction(template -> TemplateUtil.parseTemplate(
                         template,
                         ContentAutoCreationServiceImpl::cleanGroupString))
@@ -188,18 +216,34 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         LOGGER.debug("tryCreateFeed - feedName: {}, userRef: {}, attributeMap: {}",
                 feedName, userDesc, attributeMap);
 
-        return getMatchingTemplate(attributeMap)
-                .flatMap(contentTemplate -> {
-                    // Content gets created as the configured user
-                    final UserRef runAsUserRef = getRunAsUser();
+        // If the feed exists we assume that either auto creation has happened or
+        // this feed is not subject to auto creation. Either way we don't bother
+        // trying to match on the templates
+        Optional<FeedDoc> optFeedDoc = Optional.empty();
+        if (NullSafe.isNonBlankString(feedName)) {
+            // Should only ever be one
+            optFeedDoc = NullSafe.stream(feedStore.findByName(feedName))
+                    .findFirst()
+                    .map(feedStore::readDocument);
+            LOGGER.debug("tryCreateFeed - feedName: {}, feedDoc: {}",
+                    feedName, optFeedDoc);
+        }
 
-                    final Optional<FeedDoc> optFeedDoc = securityContext.asUserResult(runAsUserRef, () ->
-                            ensureFeed(feedName, userDesc, attributeMap, contentTemplate));
+        if (optFeedDoc.isEmpty()) {
+            optFeedDoc = getMatchingTemplate(attributeMap)
+                    .flatMap(contentTemplate -> {
+                        // Content gets created as the configured user
+                        final UserRef runAsUserRef = getRunAsUser();
 
-                    LOGGER.debug("feedName: '{}', userDesc: '{}', optFeedDoc: {}",
-                            feedName, userDesc, optFeedDoc);
-                    return optFeedDoc;
-                });
+                        final Optional<FeedDoc> optFeedDoc2 = securityContext.asUserResult(runAsUserRef, () ->
+                                ensureFeed(feedName, userDesc, attributeMap, contentTemplate));
+
+                        LOGGER.debug("feedName: '{}', userDesc: '{}', optFeedDoc: {}",
+                                feedName, userDesc, optFeedDoc2);
+                        return optFeedDoc2;
+                    });
+        }
+        return optFeedDoc;
     }
 
     private UserRef getRunAsUser() {
@@ -276,7 +320,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
         // Get/create the user if possible
         if (userDesc != null) {
-            if (UnauthenticatedUserIdentity.getInstance().getSubjectId().equals(userDesc.getSubjectId())) {
+            if (UnauthenticatedUserIdentity.getInstance().subjectId().equals(userDesc.getSubjectId())) {
                 LOGGER.debug("Unauthenticated user {}", userDesc);
                 userRef = null;
             } else {

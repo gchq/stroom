@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.query.common.v2;
@@ -27,9 +26,12 @@ import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
-import stroom.query.language.functions.Val;
+import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactory;
+import stroom.query.language.functions.Values;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -48,21 +50,31 @@ public class RowValueFilter {
         return optional.isEmpty();
     }
 
-    public static Optional<Predicate<Val[]>> create(final List<Column> columns,
-                                                    final boolean applyValueFilters,
-                                                    final DateTimeSettings dateTimeSettings,
-                                                    final ExpressionPredicateFactory expressionPredicateFactory) {
+    public static Optional<Predicate<Values>> create(final List<Column> columns,
+                                                     final boolean applyValueFilters,
+                                                     final DateTimeSettings dateTimeSettings,
+                                                     final ExpressionPredicateFactory expressionPredicateFactory) {
         // Create column value filter expression.
         final Optional<ExpressionOperator> optionalExpressionOperator =
                 create(columns, applyValueFilters);
         return optionalExpressionOperator.flatMap(expressionOperator -> {
             // Create the field position map for the new columns.
-            final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil.createColumnIdValExtractors(columns);
+            final ValueFunctionFactories<Values> queryFieldIndex = createColumnIdValExtractors(columns);
             return expressionPredicateFactory.createOptional(
                     expressionOperator,
                     queryFieldIndex,
                     dateTimeSettings);
         });
+    }
+
+    private static ValueFunctionFactories<Values> createColumnIdValExtractors(final List<Column> newColumns) {
+        // Create the field position map for the new columns.
+        final Map<String, ValueFunctionFactory<Values>> fieldPositionMap = new HashMap<>();
+        for (int i = 0; i < newColumns.size(); i++) {
+            final Column column = newColumns.get(i);
+            fieldPositionMap.put(column.getId(), new ValuesFunctionFactory(column, i));
+        }
+        return fieldPositionMap::get;
     }
 
     private static Optional<ExpressionOperator> create(final List<Column> columns,

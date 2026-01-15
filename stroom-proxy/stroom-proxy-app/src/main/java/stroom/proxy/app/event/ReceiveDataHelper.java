@@ -1,27 +1,42 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.event;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.proxy.StroomStatusCode;
 import stroom.proxy.repo.CSVFormatter;
 import stroom.proxy.repo.LogStream;
-import stroom.proxy.repo.LogStream.EventType;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
 import stroom.receive.common.ReceiptIdGenerator;
-import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.common.StroomStreamException;
 import stroom.receive.common.StroomStreamStatus;
+import stroom.security.api.CommonSecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.logging.SimpleMetrics;
+import stroom.util.metrics.Metrics;
 
+import com.codahale.metrics.Timer;
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,26 +49,40 @@ public class ReceiveDataHelper {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReceiveDataHelper.class);
 
-    private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     private final RequestAuthenticator requestAuthenticator;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final CertificateExtractor certificateExtractor;
+    private final CommonSecurityContext commonSecurityContext;
     private final LogStream logStream;
     private final ReceiptIdGenerator receiptIdGenerator;
+    private final Timer receiveStreamTimer;
+    private final Timer receiveHandleTimer;
 
     @Inject
-    public ReceiveDataHelper(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
-                             final RequestAuthenticator requestAuthenticator,
+    public ReceiveDataHelper(final RequestAuthenticator requestAuthenticator,
                              final AttributeMapFilterFactory attributeMapFilterFactory,
                              final CertificateExtractor certificateExtractor,
+                             final CommonSecurityContext commonSecurityContext,
                              final LogStream logStream,
-                             final ReceiptIdGenerator receiptIdGenerator) {
-        this.receiveDataConfigProvider = receiveDataConfigProvider;
+                             final ReceiptIdGenerator receiptIdGenerator,
+                             final Metrics metrics) {
         this.requestAuthenticator = requestAuthenticator;
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.certificateExtractor = certificateExtractor;
+        this.commonSecurityContext = commonSecurityContext;
         this.logStream = logStream;
         this.receiptIdGenerator = receiptIdGenerator;
+
+        this.receiveStreamTimer = metrics.registrationBuilder(getClass())
+                .addNamePart(Metrics.RECEIVE)
+                .addNamePart(Metrics.STREAM)
+                .timer()
+                .createAndRegister();
+        this.receiveHandleTimer = metrics.registrationBuilder(getClass())
+                .addNamePart(Metrics.RECEIVE)
+                .addNamePart(Metrics.HANDLE)
+                .timer()
+                .createAndRegister();
     }
 
     public UniqueId process(final HttpServletRequest request,
@@ -70,20 +99,24 @@ public class ReceiveDataHelper {
                 startTime,
                 receiptId);
         try {
-            // TODO convert to DW Metrics in 7.9+
-            SimpleMetrics.measure("ProxyRequestHandler - stream", () -> {
+            receiveStreamTimer.time(() -> {
                 // Authorise request.
-                requestAuthenticator.authenticate(request, attributeMap);
+                final UserIdentity userIdentity = requestAuthenticator.authenticate(request, attributeMap);
+                LOGGER.debug("process() - userIdentity: {}", userIdentity);
 
-                // TODO convert to DW Metrics in 7.9+
-                SimpleMetrics.measure("ProxyRequestHandler - handle1", () -> {
+                receiveHandleTimer.time(() -> {
                     // Test to see if we are going to accept this stream or drop the data.
-                    final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
-                    if (attributeMapFilter.filter(attributeMap)) {
-                        consumeHandler.handle(request, attributeMap, receiptId);
-                    } else {
-                        dropHandler.handle(request, attributeMap, receiptId);
-                    }
+                    // We have authenticated the user to accept the data, but from here on,
+                    // we run as the processing user as the request user won't have perms to do
+                    // things like check feed status.
+                    commonSecurityContext.asProcessingUser(() -> {
+                        final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
+                        if (attributeMapFilter.filter(attributeMap)) {
+                            consumeHandler.handle(request, attributeMap, receiptId);
+                        } else {
+                            dropHandler.handle(request, attributeMap, receiptId);
+                        }
+                    });
                 });
             });
         } catch (final Throwable e) {
@@ -97,26 +130,20 @@ public class ReceiveDataHelper {
                     e, errAttributeMap);
 
             final StroomStreamStatus status = stroomStreamException.getStroomStreamStatus();
+
             LOGGER.debug(() -> LogUtil.message("\"handleException()\",{},\"{}\"",
-                    CSVFormatter.format(status.getAttributeMap(), true),
+                    CSVFormatter.format(stroomStreamException.getAttributeMap(), true),
                     CSVFormatter.escape(stroomStreamException.getMessage())));
 
             final long durationMs = System.currentTimeMillis() - startTime.toEpochMilli();
-            final StroomStatusCode stroomStatusCode = status.getStroomStatusCode();
-            final EventType eventType = StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA.equals(stroomStatusCode)
-                    ? EventType.REJECT
-                    : EventType.ERROR;
 
             logStream.log(
                     RECEIVE_LOG,
-                    status.getAttributeMap(),
-                    eventType,
+                    stroomStreamException,
                     request.getRequestURI(),
-                    stroomStatusCode,
                     receiptId.toString(),
                     -1,
-                    durationMs,
-                    e.getMessage());
+                    durationMs);
 
             throw stroomStreamException;
         }

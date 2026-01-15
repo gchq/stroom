@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.svg.client;
@@ -25,6 +24,7 @@ public final class SvgPresets {
     public static final Preset ADD_ABOVE = enabled(SvgImage.ADD_ABOVE, "Add above");
     public static final Preset ADD_BELOW = enabled(SvgImage.ADD_BELOW, "Add below");
     public static final Preset ADD_MULTIPLE = enabled(SvgImage.ADD_MULTIPLE, "Add Multiple");
+    public static final Preset AI = enabled(SvgImage.AI, "AI");
     public static final Preset ALERT = enabled(SvgImage.ALERT, "Alert");
     public static final Preset ANNOTATE = enabled(SvgImage.EDIT, "Annotate");
     public static final Preset ARROW_RIGHT = enabled(SvgImage.ARROW_RIGHT, "Move Right");
@@ -62,6 +62,7 @@ public final class SvgPresets {
     public static final Preset PROCESS = disabled(SvgImage.PROCESS, "Process");
     public static final Preset PROPERTIES = enabled(SvgImage.PROPERTIES, "Properties");
     public static final Preset REMOVE = disabled(SvgImage.REMOVE, "Remove");
+    public static final Preset RERUN = enabled((SvgImage.RERUN), "Rerun");
     public static final Preset RUN = enabled(SvgImage.PLAY, "Run");
     public static final Preset SAVE = disabled(SvgImage.SAVE, "Save");
     public static final Preset SAVE_AS = disabled(SvgImage.SAVEAS, "Save As");

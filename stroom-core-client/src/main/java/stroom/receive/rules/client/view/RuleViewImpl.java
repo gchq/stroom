@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,14 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.receive.rules.client.view;
 
 import stroom.item.client.SelectionBox;
 import stroom.receive.rules.client.presenter.RulePresenter.RuleView;
-import stroom.receive.rules.shared.RuleAction;
+import stroom.receive.rules.shared.ReceiveAction;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -39,15 +38,15 @@ public class RuleViewImpl extends ViewImpl implements RuleView {
     @UiField
     TextBox name;
     @UiField
-    SelectionBox<RuleAction> action;
+    SelectionBox<ReceiveAction> action;
 
     @Inject
     public RuleViewImpl(final RuleViewImpl.Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        action.addItem(RuleAction.RECEIVE);
-        action.addItem(RuleAction.REJECT);
-        action.addItem(RuleAction.DROP);
+        action.addItem(ReceiveAction.RECEIVE);
+        action.addItem(ReceiveAction.REJECT);
+        action.addItem(ReceiveAction.DROP);
     }
 
     @Override
@@ -71,14 +70,18 @@ public class RuleViewImpl extends ViewImpl implements RuleView {
     }
 
     @Override
-    public RuleAction getAction() {
+    public ReceiveAction getAction() {
         return action.getValue();
     }
 
     @Override
-    public void setAction(final RuleAction action) {
+    public void setAction(final ReceiveAction action) {
         this.action.setValue(action);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, RuleViewImpl> {
 

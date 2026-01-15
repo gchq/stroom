@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.annotation.client;
@@ -45,6 +44,8 @@ public class AnnotationPresenter
 
     private static final TabData ANNOTATION = new TabDataImpl("Annotation");
     private static final TabData EVENTS = new TabDataImpl("Events");
+    private static final TabData LINK_TO = new TabDataImpl("Link To");
+    private static final TabData LINK_FROM = new TabDataImpl("Link From");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
@@ -59,6 +60,8 @@ public class AnnotationPresenter
                                final LinkTabPanelView view,
                                final AnnotationResourceClient annotationResourceClient,
                                final AnnotationEditPresenter annotationEditPresenter,
+                               final AnnotationLinkPresenter linkTo,
+                               final AnnotationLinkPresenter linkFrom,
                                final LinkedEventPresenter linkedEventPresenter,
                                final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                                final DocumentUserPermissionsTabProvider<Annotation> documentUserPermissionsTabProvider) {
@@ -66,6 +69,9 @@ public class AnnotationPresenter
         this.annotationEditPresenter = annotationEditPresenter;
         annotationEditPresenter.setParent(this);
         linkedEventPresenter.setParent(this);
+        linkTo.setParent(this);
+        linkFrom.setParent(this);
+        linkFrom.setFrom(true);
 
         saveButton = SvgButton.create(SvgPresets.SAVE);
         saveButton.setEnabled(false);
@@ -73,14 +79,18 @@ public class AnnotationPresenter
             annotationResourceClient.change(
                     new SingleAnnotationChangeRequest(getDocRef(),
                             new ChangeDescription(markdownEditPresenter.getText())),
-                    annotationDetail -> {
-                        // Ignore.
+                    success -> {
+                        if (success) {
+                            AnnotationChangeEvent.fire(this, getDocRef());
+                        }
                     }, this);
             saveButton.setEnabled(false);
         }));
 
         addTab(ANNOTATION, new DocumentEditTabProvider<>(() -> annotationEditPresenter));
         addTab(EVENTS, new DocumentEditTabProvider<>(() -> linkedEventPresenter));
+        addTab(LINK_TO, new DocumentEditTabProvider<>(() -> linkTo));
+        addTab(LINK_FROM, new DocumentEditTabProvider<>(() -> linkFrom));
         addTab(DOCUMENTATION, new MarkdownTabProvider<Annotation>(eventBus, () -> {
             if (markdownEditPresenter == null) {
                 markdownEditPresenter = markdownEditPresenterProvider.get();
@@ -136,8 +146,8 @@ public class AnnotationPresenter
         return DOCUMENTATION;
     }
 
-    public void read(final Annotation annotation) {
-        read(annotation.asDocRef(), annotation, false);
+    public void read(final Annotation annotation, final boolean readOnly) {
+        read(annotation.asDocRef(), annotation, readOnly);
     }
 
     public void updateHistory() {

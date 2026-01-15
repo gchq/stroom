@@ -7,11 +7,24 @@ proxyConfig:
     maxUncompressedByteSize: "1.0G"
     splitSources: true
   contentDir: "content"
-  contentSync:
+  dirScanner:
+    dirs:
+    - "zip_file_ingest"
+    enabled: true
+    failureDir: "zip_file_ingest_failed"
+    scanFrequency: "PT1M"
+  downstreamHost:
     apiKey: null
-    contentSyncEnabled: false
-    syncFrequency: "PT1M"
-    upstreamUrl: null
+    apiKeyVerificationUrl: null
+    enabled: true
+    hostname: null
+    maxCachedKeyAge: "PT10M"
+    maxPersistedKeyAge: "P30D"
+    noFetchIntervalAfterFailure: "PT30S"
+    pathPrefix: null
+    persistedKeysHashAlgorithm: "SHA2_512"
+    port: null
+    scheme: "https"
   eventStore:
     forwardQueueSize: 1000
     maxAge: "PT1M"
@@ -25,9 +38,6 @@ proxyConfig:
       statisticsMode: "DROPWIZARD_METRICS"
     rollFrequency: "PT10S"
   feedStatus:
-    apiKey: null
-    defaultStatus: "Receive"
-    enabled: true
     feedStatusCache:
       expireAfterAccess: null
       expireAfterWrite: null
@@ -65,8 +75,8 @@ proxyConfig:
     forwardHeadersAdditionalAllowSet: []
     forwardUrl: null
     httpClient:
-      connectionRequestTimeout: "PT1M"
-      connectionTimeout: "PT1M"
+      connectionRequestTimeout: "PT3M"
+      connectionTimeout: "PT3M"
       cookiesEnabled: false
       keepAlive: "PT0S"
       maxConnections: 1024
@@ -74,11 +84,12 @@ proxyConfig:
       proxy: null
       retries: 0
       timeToLive: "PT1H"
-      timeout: "PT1M"
+      timeout: "PT3M"
       tls: null
       userAgent: null
       validateAfterInactivityPeriod: "PT0S"
     instant: false
+    livenessCheckEnabled: true
     livenessCheckUrl: null
     name: null
     queue:
@@ -107,11 +118,15 @@ proxyConfig:
     - "RemoteAddress"
     - "RemoteDN"
     - "RemoteCertExpiry"
+    - "DataReceiptRule"
   path:
     data: "data"
     home: null
     temp: null
   proxyId: null
+  receiptPolicy:
+    receiveDataRulesUrl: null
+    syncFrequency: "PT1M"
   receive:
     allowedCertificateProviders: []
     authenticatedDataFeedKeyCache:
@@ -124,7 +139,9 @@ proxyConfig:
     dataFeedKeyOwnerMetaKey: "AccountId"
     dataFeedKeysDir: "data_feed_keys"
     enabledAuthenticationTypes:
+    - "TOKEN"
     - "CERTIFICATE"
+    fallbackReceiveAction: "RECEIVE"
     feedNameGenerationEnabled: false
     feedNameGenerationMandatoryHeaders:
     - "AccountId"
@@ -132,6 +149,7 @@ proxyConfig:
     - "Format"
     - "Schema"
     feedNameTemplate: "${accountid}-${component}-${format}-${schema}"
+    maxRequestSize: null
     metaTypes:
     - "Context"
     - "Detections"
@@ -144,7 +162,7 @@ proxyConfig:
     - "Reference"
     - "Test Events"
     - "Test Reference"
-    receiptPolicyUuid: null
+    receiptCheckMode: "FEED_STATUS"
     x509CertificateDnFormat: "LDAP"
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
     x509CertificateHeader: "X-SSL-CERT"

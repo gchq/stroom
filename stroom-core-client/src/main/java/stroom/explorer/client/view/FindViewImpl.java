@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -38,13 +39,16 @@ public class FindViewImpl
     private final Widget widget;
 
     @UiField
+    FlowPanel topPanel;
+    @UiField
     QuickFilter nameFilter;
     @UiField
-    SimplePanel resultContainer;
+    SimplePanel bottomPanel;
 
     @Inject
     public FindViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        setDialogMode(true);
     }
 
     @Override
@@ -54,12 +58,21 @@ public class FindViewImpl
 
     @Override
     public void setResultView(final View view) {
-        resultContainer.setWidget(view.asWidget());
+        bottomPanel.setWidget(view.asWidget());
     }
 
     @Override
     public void focus() {
         nameFilter.forceFocus();
+    }
+
+    @Override
+    public void setDialogMode(final boolean dialog) {
+        if (dialog) {
+            widget.addStyleName("FindViewImpl--dialog");
+        } else {
+            widget.removeStyleName("FindViewImpl--dialog");
+        }
     }
 
     @UiHandler("nameFilter")

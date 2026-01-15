@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@
 package stroom.pipeline;
 
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
 @PipelineScoped
 public class ErrorWriterProxy implements ErrorWriter {
+
     private ErrorWriter errorWriter;
 
     public void setErrorWriter(final ErrorWriter errorWriter) {
@@ -29,7 +31,7 @@ public class ErrorWriterProxy implements ErrorWriter {
     }
 
     @Override
-    public void log(final Severity severity, final Location location, final String elementId, final String message) {
+    public void log(final Severity severity, final Location location, final ElementId elementId, final String message) {
         if (errorWriter != null) {
             errorWriter.log(severity, location, elementId, message);
         }

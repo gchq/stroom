@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.analytics.rule.impl;
@@ -65,7 +64,7 @@ class ReportStoreImpl implements ReportStore {
                     final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
                     final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                     final SearchRequestFactory searchRequestFactory) {
-        this.store = storeFactory.createStore(serialiser, ReportDoc.TYPE, ReportDoc.class);
+        this.store = storeFactory.createStore(serialiser, ReportDoc.TYPE, ReportDoc::builder);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
@@ -97,10 +96,9 @@ class ReportStoreImpl implements ReportStore {
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
         final ReportDoc document = store.readDocument(docRef);
         return store.createDocument(newName,
-                (type, uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
+                (uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
                     final Builder builder = document
                             .copy()
-                            .type(type)
                             .uuid(uuid)
                             .name(docName)
                             .version(version)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import stroom.query.api.SearchResponse;
 import stroom.query.api.Sort;
 import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.TableSettings;
+import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
@@ -123,7 +124,9 @@ class TestSearchResultCreation {
                 () -> executorService,
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
                 new ByteBufferFactoryImpl(),
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(),
+                AnnotationMapperFactory.NO_OP,
+                null);
     }
 
     @AfterEach
@@ -924,7 +927,7 @@ class TestSearchResultCreation {
         }
 
         @Override
-        public String getSubjectId() {
+        public String subjectId() {
             return null;
         }
     }

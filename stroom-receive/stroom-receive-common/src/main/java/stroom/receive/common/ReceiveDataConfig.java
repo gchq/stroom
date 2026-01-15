@@ -1,10 +1,29 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.receive.common;
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.receive.rules.shared.ReceiptCheckMode;
+import stroom.receive.rules.shared.ReceiveAction;
 import stroom.util.cache.CacheConfig;
 import stroom.util.cert.DNFormat;
 import stroom.util.collections.CollectionUtil;
+import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -31,6 +50,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 
+/**
+ * This config is common to both stroom and proxy, so should contain only those
+ * properties that are used in both.
+ */
 @JsonPropertyOrder(alphabetic = true)
 public class ReceiveDataConfig
         extends AbstractConfig
@@ -42,8 +65,33 @@ public class ReceiveDataConfig
     public static final String PROP_NAME_ALLOWED_CERTIFICATE_PROVIDERS = "allowedCertificateProviders";
     public static final String DEFAULT_OWNER_META_KEY = StandardHeaderArguments.ACCOUNT_ID;
 
-    @JsonProperty
-    private final String receiptPolicyUuid;
+    public static final boolean DEFAULT_AUTHENTICATION_REQUIRED = true;
+    public static final String DEFAULT_DATA_FEED_KEYS_DIR = "data_feed_keys";
+    public static final boolean DEFAULT_FEED_NAME_GENERATION_ENABLED = false;
+
+    public static final String DEFAULT_FEED_NAME_TEMPLATE = toTemplate(
+            StandardHeaderArguments.ACCOUNT_ID,
+            StandardHeaderArguments.COMPONENT,
+            StandardHeaderArguments.FORMAT,
+            StandardHeaderArguments.SCHEMA);
+
+    public static final Set<String> DEFAULT_FEED_NAME_MANDATORY_HEADERS =
+            CollectionUtil.asUnmodifiabledConsistentOrderSet(List.of(
+                    StandardHeaderArguments.ACCOUNT_ID,
+                    StandardHeaderArguments.COMPONENT,
+                    StandardHeaderArguments.FORMAT,
+                    StandardHeaderArguments.SCHEMA));
+
+    public static final Set<String> DEFAULT_META_TYPES =
+            CollectionUtil.asUnmodifiabledConsistentOrderSet(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
+
+    public static final Set<AuthenticationType> DEFAULT_AUTH_TYPES =
+            EnumSet.of(AuthenticationType.CERTIFICATE, AuthenticationType.TOKEN);
+
+    public static final ReceiptCheckMode DEFAULT_RECEIPT_CHECK_MODE = ReceiptCheckMode.getDefault();
+    // If we can't hit the downstream then we have to let everything in
+    public static final ReceiveAction DEFAULT_FALLBACK_RECEIVE_ACTION = ReceiveAction.RECEIVE;
+
     @JsonProperty
     private final Set<String> metaTypes;
     @JsonProperty
@@ -70,45 +118,39 @@ public class ReceiveDataConfig
     private final String feedNameTemplate;
     @JsonProperty
     private final Set<String> feedNameGenerationMandatoryHeaders;
+    @JsonProperty
+    private final ReceiptCheckMode receiptCheckMode;
+    @JsonProperty
+    private final ReceiveAction fallbackReceiveAction;
+    @JsonProperty
+    private final ByteSize maxRequestSize;
 
     public ReceiveDataConfig() {
-        receiptPolicyUuid = null;
         // Sort them to ensure consistent order on serialisation
-        metaTypes = CollectionUtil.asUnmodifiabledConsistentOrderSet(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
-        enabledAuthenticationTypes = EnumSet.of(AuthenticationType.CERTIFICATE);
-        authenticationRequired = true;
-        dataFeedKeysDir = "data_feed_keys";
+        metaTypes = DEFAULT_META_TYPES;
+        enabledAuthenticationTypes = DEFAULT_AUTH_TYPES;
+        authenticationRequired = DEFAULT_AUTHENTICATION_REQUIRED;
+        dataFeedKeysDir = DEFAULT_DATA_FEED_KEYS_DIR;
         dataFeedKeyOwnerMetaKey = DEFAULT_OWNER_META_KEY;
-        authenticatedDataFeedKeyCache = CacheConfig.builder()
-                .maximumSize(1000L)
-                .expireAfterWrite(StroomDuration.ofMinutes(5))
-                .statisticsMode(CacheConfig.PROXY_DEFAULT_STATISTICS_MODE) // Used by stroom & proxy so need DW metrics
-                .build();
+        authenticatedDataFeedKeyCache = createDefaultDataFeedKeyCacheConfig();
         x509CertificateHeader = DEFAULT_X509_CERT_HEADER;
         x509CertificateDnHeader = DEFAULT_X509_CERT_DN_HEADER;
         x509CertificateDnFormat = DEFAULT_X509_CERT_DN_FORMAT;
         allowedCertificateProviders = Collections.emptySet();
-        feedNameGenerationEnabled = false;
-        feedNameTemplate = toTemplate(
-                StandardHeaderArguments.ACCOUNT_ID,
-                StandardHeaderArguments.COMPONENT,
-                StandardHeaderArguments.FORMAT,
-                StandardHeaderArguments.SCHEMA);
-
-        feedNameGenerationMandatoryHeaders = CollectionUtil.asUnmodifiabledConsistentOrderSet(List.of(
-                StandardHeaderArguments.ACCOUNT_ID,
-                StandardHeaderArguments.COMPONENT,
-                StandardHeaderArguments.FORMAT,
-                StandardHeaderArguments.SCHEMA));
+        feedNameGenerationEnabled = DEFAULT_FEED_NAME_GENERATION_ENABLED;
+        feedNameTemplate = DEFAULT_FEED_NAME_TEMPLATE;
+        feedNameGenerationMandatoryHeaders = DEFAULT_FEED_NAME_MANDATORY_HEADERS;
+        receiptCheckMode = DEFAULT_RECEIPT_CHECK_MODE;
+        fallbackReceiveAction = DEFAULT_FALLBACK_RECEIVE_ACTION;
+        maxRequestSize = null;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public ReceiveDataConfig(
-            @JsonProperty("receiptPolicyUuid") final String receiptPolicyUuid,
             @JsonProperty("metaTypes") final Set<String> metaTypes,
             @JsonProperty("enabledAuthenticationTypes") final Set<AuthenticationType> enabledAuthenticationTypes,
-            @JsonProperty("authenticationRequired") final boolean authenticationRequired,
+            @JsonProperty("authenticationRequired") final Boolean authenticationRequired,
             @JsonProperty("dataFeedKeysDir") final String dataFeedKeysDir,
             @JsonProperty("dataFeedKeyOwnerMetaKey") final String dataFeedKeyOwnerMetaKey,
             @JsonProperty("authenticatedDataFeedKeyCache") final CacheConfig authenticatedDataFeedKeyCache,
@@ -116,29 +158,43 @@ public class ReceiveDataConfig
             @JsonProperty("x509CertificateDnHeader") final String x509CertificateDnHeader,
             @JsonProperty("x509CertificateDnFormat") final DNFormat x509CertificateDnFormat,
             @JsonProperty(PROP_NAME_ALLOWED_CERTIFICATE_PROVIDERS) final Set<String> allowedCertificateProviders,
-            @JsonProperty("feedNameGenerationEnabled") final boolean feedNameGenerationEnabled,
+            @JsonProperty("feedNameGenerationEnabled") final Boolean feedNameGenerationEnabled,
             @JsonProperty("feedNameTemplate") final String feedNameTemplate,
-            @JsonProperty("feedNameGenerationMandatoryHeaders") final Set<String> feedNameGenerationMandatoryHeaders) {
+            @JsonProperty("feedNameGenerationMandatoryHeaders") final Set<String> feedNameGenerationMandatoryHeaders,
+            @JsonProperty("receiptCheckMode") final ReceiptCheckMode receiptCheckMode,
+            @JsonProperty("fallbackReceiveAction") final ReceiveAction fallbackReceiveAction,
+            @JsonProperty("maxRequestSize") final ByteSize maxRequestSize) {
 
-        this.receiptPolicyUuid = receiptPolicyUuid;
-        this.metaTypes = cleanSet(metaTypes);
-        this.enabledAuthenticationTypes = NullSafe.enumSet(AuthenticationType.class, enabledAuthenticationTypes);
-        this.authenticationRequired = authenticationRequired;
-        this.dataFeedKeysDir = dataFeedKeysDir;
-        this.dataFeedKeyOwnerMetaKey = Objects.requireNonNullElse(dataFeedKeyOwnerMetaKey, DEFAULT_OWNER_META_KEY);
-        this.authenticatedDataFeedKeyCache = authenticatedDataFeedKeyCache;
-        this.x509CertificateHeader = x509CertificateHeader;
-        this.x509CertificateDnHeader = x509CertificateDnHeader;
+        this.metaTypes = NullSafe.getOrElse(metaTypes, ReceiveDataConfig::cleanSet, DEFAULT_META_TYPES);
+        this.enabledAuthenticationTypes = NullSafe.getOrElse(
+                enabledAuthenticationTypes,
+                authTypes -> NullSafe.unmodifialbeEnumSet(AuthenticationType.class, authTypes),
+                DEFAULT_AUTH_TYPES);
+        this.authenticationRequired = Objects.requireNonNullElse(
+                authenticationRequired, DEFAULT_AUTHENTICATION_REQUIRED);
+        this.dataFeedKeysDir = NullSafe.nonBlankStringElse(dataFeedKeysDir, DEFAULT_DATA_FEED_KEYS_DIR);
+        this.dataFeedKeyOwnerMetaKey = NullSafe.nonBlankStringElse(dataFeedKeyOwnerMetaKey, DEFAULT_OWNER_META_KEY);
+        this.authenticatedDataFeedKeyCache = Objects.requireNonNullElseGet(
+                authenticatedDataFeedKeyCache, ReceiveDataConfig::createDefaultDataFeedKeyCacheConfig);
+        this.x509CertificateHeader = NullSafe.nonBlankStringElse(x509CertificateHeader, DEFAULT_X509_CERT_HEADER);
+        this.x509CertificateDnHeader = NullSafe.nonBlankStringElse(
+                x509CertificateDnHeader, DEFAULT_X509_CERT_DN_HEADER);
         this.x509CertificateDnFormat = Objects.requireNonNullElse(x509CertificateDnFormat, DEFAULT_X509_CERT_DN_FORMAT);
         this.allowedCertificateProviders = cleanSet(allowedCertificateProviders);
-        this.feedNameGenerationEnabled = feedNameGenerationEnabled;
-        this.feedNameTemplate = feedNameTemplate;
-        this.feedNameGenerationMandatoryHeaders = cleanSet(feedNameGenerationMandatoryHeaders);
+        this.feedNameGenerationEnabled = Objects.requireNonNullElse(
+                feedNameGenerationEnabled, DEFAULT_FEED_NAME_GENERATION_ENABLED);
+        this.feedNameTemplate = Objects.requireNonNullElse(feedNameTemplate, DEFAULT_FEED_NAME_TEMPLATE);
+        this.feedNameGenerationMandatoryHeaders = NullSafe.getOrElse(
+                feedNameGenerationMandatoryHeaders,
+                ReceiveDataConfig::cleanSet,
+                DEFAULT_FEED_NAME_MANDATORY_HEADERS);
+        this.receiptCheckMode = Objects.requireNonNullElse(receiptCheckMode, DEFAULT_RECEIPT_CHECK_MODE);
+        this.fallbackReceiveAction = Objects.requireNonNullElse(fallbackReceiveAction, DEFAULT_FALLBACK_RECEIVE_ACTION);
+        this.maxRequestSize = maxRequestSize;
     }
 
     private ReceiveDataConfig(final Builder builder) {
         this(
-                builder.receiptPolicyUuid,
                 builder.metaTypes,
                 builder.enabledAuthenticationTypes,
                 builder.authenticationRequired,
@@ -151,12 +207,10 @@ public class ReceiveDataConfig
                 builder.allowedCertificateProviders,
                 builder.feedNameGenerationEnabled,
                 builder.feedNameTemplate,
-                builder.feedNameGenerationMandatoryHeaders);
-    }
-
-    @JsonPropertyDescription("The UUID of the data receipt policy to use")
-    public String getReceiptPolicyUuid() {
-        return receiptPolicyUuid;
+                builder.feedNameGenerationMandatoryHeaders,
+                builder.receiptCheckMode,
+                builder.fallbackReceiveAction,
+                builder.maxRequestSize);
     }
 
     @NotNull
@@ -283,6 +337,26 @@ public class ReceiveDataConfig
         return feedNameGenerationMandatoryHeaders;
     }
 
+    @JsonPropertyDescription("Controls how or whether data is checked on receipt. Valid values " +
+                             "(FEED_STATUS|RECEIPT_POLICY|RECEIVE_ALL|REJECT_ALL|DROP_ALL).")
+    public ReceiptCheckMode getReceiptCheckMode() {
+        return receiptCheckMode;
+    }
+
+    @JsonPropertyDescription("If receiptCheckMode is RECEIPT_POLICY or FEED_STATUS and stroom/proxy is " +
+                             "unable to perform the receipt check, then this action will be used as a fallback " +
+                             "until the receipt check can be successfully performed.")
+    public ReceiveAction getFallbackReceiveAction() {
+        return fallbackReceiveAction;
+    }
+
+    @JsonPropertyDescription("If defined then states the maximum size of a request (uncompressed for gzip requests). " +
+                             "Will return a 413 Content Too Long response code for any requests exceeding this " +
+                             "value. If undefined then there is no limit to the size of the request.")
+    public ByteSize getMaxRequestSize() {
+        return maxRequestSize;
+    }
+
     @SuppressWarnings("unused")
     @JsonIgnore
     @ValidationMethod(message = "If authenticationRequired is true, then enabledAuthenticationTypes must " +
@@ -301,10 +375,10 @@ public class ReceiveDataConfig
     @Override
     public String toString() {
         return "ReceiveDataConfig{" +
-               "receiptPolicyUuid='" + receiptPolicyUuid + '\'' +
                ", metaTypes=" + metaTypes +
                ", authenticationRequired=" + authenticationRequired +
                ", dataFeedKeysDir='" + dataFeedKeysDir + '\'' +
+               ", dataFeedKeyOwnerMetaKey='" + dataFeedKeyOwnerMetaKey + '\'' +
                ", authenticatedDataFeedKeyCache=" + authenticatedDataFeedKeyCache +
                ", enabledAuthenticationTypes=" + enabledAuthenticationTypes +
                ", x509CertificateHeader='" + x509CertificateHeader + '\'' +
@@ -313,6 +387,8 @@ public class ReceiveDataConfig
                ", feedNameGenerationEnabled=" + feedNameGenerationEnabled +
                ", feedNameTemplate='" + feedNameTemplate + '\'' +
                ", feedNameGenerationMandatoryHeaders=" + feedNameGenerationMandatoryHeaders +
+               ", receiptCheckMode=" + receiptCheckMode +
+               ", maxRequestSize=" + maxRequestSize +
                '}';
     }
 
@@ -327,24 +403,27 @@ public class ReceiveDataConfig
         final ReceiveDataConfig that = (ReceiveDataConfig) o;
         return authenticationRequired == that.authenticationRequired
                && feedNameGenerationEnabled == that.feedNameGenerationEnabled
-               && Objects.equals(receiptPolicyUuid, that.receiptPolicyUuid)
                && Objects.equals(metaTypes, that.metaTypes)
                && Objects.equals(dataFeedKeysDir, that.dataFeedKeysDir)
+               && Objects.equals(dataFeedKeyOwnerMetaKey, that.dataFeedKeyOwnerMetaKey)
                && Objects.equals(authenticatedDataFeedKeyCache, that.authenticatedDataFeedKeyCache)
                && Objects.equals(enabledAuthenticationTypes, that.enabledAuthenticationTypes)
                && Objects.equals(x509CertificateHeader, that.x509CertificateHeader)
                && Objects.equals(x509CertificateDnHeader, that.x509CertificateDnHeader)
                && Objects.equals(allowedCertificateProviders, that.allowedCertificateProviders)
                && Objects.equals(feedNameTemplate, that.feedNameTemplate)
-               && Objects.equals(feedNameGenerationMandatoryHeaders, that.feedNameGenerationMandatoryHeaders);
+               && Objects.equals(feedNameGenerationMandatoryHeaders, that.feedNameGenerationMandatoryHeaders)
+               && Objects.equals(maxRequestSize, that.maxRequestSize)
+               && receiptCheckMode == that.receiptCheckMode;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(receiptPolicyUuid,
+        return Objects.hash(
                 metaTypes,
                 authenticationRequired,
                 dataFeedKeysDir,
+                dataFeedKeyOwnerMetaKey,
                 authenticatedDataFeedKeyCache,
                 enabledAuthenticationTypes,
                 x509CertificateHeader,
@@ -352,12 +431,13 @@ public class ReceiveDataConfig
                 allowedCertificateProviders,
                 feedNameGenerationEnabled,
                 feedNameTemplate,
-                feedNameGenerationMandatoryHeaders);
+                feedNameGenerationMandatoryHeaders,
+                receiptCheckMode,
+                maxRequestSize);
     }
 
     public static Builder copy(final ReceiveDataConfig receiveDataConfig) {
         final Builder builder = new Builder();
-        builder.receiptPolicyUuid = receiveDataConfig.getReceiptPolicyUuid();
         builder.metaTypes = receiveDataConfig.getMetaTypes();
         builder.enabledAuthenticationTypes = receiveDataConfig.getEnabledAuthenticationTypes();
         builder.authenticationRequired = receiveDataConfig.isAuthenticationRequired();
@@ -370,6 +450,9 @@ public class ReceiveDataConfig
         builder.feedNameGenerationEnabled = receiveDataConfig.isFeedNameGenerationEnabled();
         builder.feedNameTemplate = receiveDataConfig.getFeedNameTemplate();
         builder.feedNameGenerationMandatoryHeaders = receiveDataConfig.getFeedNameGenerationMandatoryHeaders();
+        builder.receiptCheckMode = receiveDataConfig.getReceiptCheckMode();
+        builder.fallbackReceiveAction = receiveDataConfig.fallbackReceiveAction;
+        builder.maxRequestSize = receiveDataConfig.maxRequestSize;
         return builder;
     }
 
@@ -382,13 +465,20 @@ public class ReceiveDataConfig
         return CollectionUtil.cleanItems(set, String::trim);
     }
 
+    private static CacheConfig createDefaultDataFeedKeyCacheConfig() {
+        return CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterWrite(StroomDuration.ofMinutes(5))
+                .statisticsMode(CacheConfig.PROXY_DEFAULT_STATISTICS_MODE) // Used by stroom & proxy so need DW metrics
+                .build();
+    }
+
 
     // --------------------------------------------------------------------------------
 
 
     public static final class Builder {
 
-        private String receiptPolicyUuid;
         private Set<String> metaTypes;
         private Set<AuthenticationType> enabledAuthenticationTypes = EnumSet.noneOf(AuthenticationType.class);
         private boolean authenticationRequired;
@@ -402,13 +492,11 @@ public class ReceiveDataConfig
         private boolean feedNameGenerationEnabled;
         private String feedNameTemplate;
         private Set<String> feedNameGenerationMandatoryHeaders;
+        private ReceiptCheckMode receiptCheckMode;
+        private ReceiveAction fallbackReceiveAction;
+        private ByteSize maxRequestSize;
 
         private Builder() {
-        }
-
-        public Builder withReceiptPolicyUuid(final String val) {
-            receiptPolicyUuid = val;
-            return this;
         }
 
         public Builder withMetaTypes(final Set<String> val) {
@@ -422,19 +510,19 @@ public class ReceiveDataConfig
         }
 
         public Builder withEnabledAuthenticationTypes(final Set<AuthenticationType> val) {
-            enabledAuthenticationTypes = NullSafe.enumSet(AuthenticationType.class, val);
+            enabledAuthenticationTypes = NullSafe.mutableEnumSet(AuthenticationType.class, val);
             return this;
         }
 
         public Builder withEnabledAuthenticationTypes(final AuthenticationType... values) {
-            enabledAuthenticationTypes = NullSafe.enumSetOf(AuthenticationType.class, values);
+            enabledAuthenticationTypes = NullSafe.mutableEnumSetOf(AuthenticationType.class, values);
             return this;
         }
 
         public Builder addEnabledAuthenticationType(final AuthenticationType val) {
             if (val != null) {
                 if (enabledAuthenticationTypes == null) {
-                    enabledAuthenticationTypes = NullSafe.enumSetOf(AuthenticationType.class, val);
+                    enabledAuthenticationTypes = NullSafe.mutableEnumSetOf(AuthenticationType.class, val);
                 } else {
                     enabledAuthenticationTypes.add(val);
                 }
@@ -489,6 +577,21 @@ public class ReceiveDataConfig
 
         public Builder withFeedNameGenerationMandatoryHeaders(final Set<String> feedNameGenerationMandatoryHeaders) {
             this.feedNameGenerationMandatoryHeaders = NullSafe.mutableSet(feedNameGenerationMandatoryHeaders);
+            return this;
+        }
+
+        public Builder withReceiptCheckMode(final ReceiptCheckMode receiptCheckMode) {
+            this.receiptCheckMode = receiptCheckMode;
+            return this;
+        }
+
+        public Builder withFallBackReceiveAction(final ReceiveAction fallBackReceiveAction) {
+            this.fallbackReceiveAction = fallBackReceiveAction;
+            return this;
+        }
+
+        public Builder withMaxRequestSize(final ByteSize maxRequestSize) {
+            this.maxRequestSize = maxRequestSize;
             return this;
         }
 

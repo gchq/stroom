@@ -1,12 +1,25 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.annotation.shared;
 
 import stroom.query.api.datasource.QueryField;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public interface AnnotationDecorationFields {
 
@@ -29,7 +42,7 @@ public interface AnnotationDecorationFields {
     String ANNOTATION_DESCRIPTION = ANNOTATION_FIELD_PREFIX + "Description";
 
     QueryField ANNOTATION_ID_FIELD = QueryField.createId(ANNOTATION_ID);
-    QueryField ANNOTATION_UUID_FIELD = QueryField.createId(ANNOTATION_UUID);
+    QueryField ANNOTATION_UUID_FIELD = QueryField.createText(ANNOTATION_UUID);
     QueryField ANNOTATION_CREATED_ON_FIELD = QueryField.createDate(ANNOTATION_CREATED_ON);
     QueryField ANNOTATION_CREATED_BY_FIELD = QueryField.createText(ANNOTATION_CREATED_BY);
     QueryField ANNOTATION_UPDATED_ON_FIELD = QueryField.createDate(ANNOTATION_UPDATED_ON);
@@ -60,6 +73,4 @@ public interface AnnotationDecorationFields {
             ANNOTATION_COMMENT_FIELD,
             ANNOTATION_HISTORY_FIELD,
             ANNOTATION_DESCRIPTION_FIELD);
-    Map<String, QueryField> DECORATION_FIELD_MAP = DECORATION_FIELDS.stream()
-            .collect(Collectors.toMap(QueryField::getFldName, Function.identity()));
 }

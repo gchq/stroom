@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,14 +27,15 @@ public final class PipelineTestUtil {
     }
 
     public static PipelineDoc createBasicPipeline(final String data) {
-        final PipelineDoc pipelineDoc = new PipelineDoc();
-        pipelineDoc.setName("test");
-        pipelineDoc.setDescription("test");
+        final PipelineDoc.Builder builder = PipelineDoc.builder()
+                .uuid("test")
+                .name("test")
+                .description("test");
         if (data != null) {
             final PipelineData pipelineData = JsonUtil.readValue(data, PipelineData.class);
-            pipelineDoc.setPipelineData(pipelineData);
+            builder.pipelineData(pipelineData);
         }
-        return pipelineDoc;
+        return builder.build();
     }
 
     public static DocRef createTestPipeline(final PipelineStore pipelineStore, final String data) {

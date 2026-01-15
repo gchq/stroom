@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.api;
 
 import stroom.docref.DocRef;
@@ -14,7 +30,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("PatternVariableCanBeUsed") // Cos GWT :-(
 public class ExpressionUtil {
 
     private ExpressionUtil() {
@@ -24,6 +39,12 @@ public class ExpressionUtil {
     public static ExpressionOperator equals(final String field, final String value) {
         return ExpressionOperator.builder()
                 .addTerm(field, Condition.EQUALS, value)
+                .build();
+    }
+
+    public static ExpressionOperator equalsCaseSense(final String field, final String value) {
+        return ExpressionOperator.builder()
+                .addTerm(field, Condition.EQUALS_CASE_SENSITIVE, value)
                 .build();
     }
 
@@ -94,8 +115,7 @@ public class ExpressionUtil {
         if (expressionOperator != null) {
             for (final ExpressionItem child : NullSafe.list(expressionOperator.getChildren())) {
                 if (child != null && child.enabled()) {
-                    if (child instanceof ExpressionOperator) {
-                        final ExpressionOperator childOperator = (ExpressionOperator) child;
+                    if (child instanceof final ExpressionOperator childOperator) {
                         if (hasTerms(childOperator)) {
                             return true;
                         }
@@ -124,8 +144,10 @@ public class ExpressionUtil {
     }
 
     public static List<String> fields(final ExpressionOperator expressionOperator) {
-        return terms(expressionOperator,
-                null).stream().map(ExpressionTerm::getField).collect(Collectors.toList());
+        return terms(expressionOperator, null)
+                .stream()
+                .map(ExpressionTerm::getField)
+                .collect(Collectors.toList());
     }
 
     public static List<String> values(final ExpressionOperator expressionOperator) {
@@ -156,8 +178,7 @@ public class ExpressionUtil {
         if (ExpressionItem.isEnabled(expressionOperator) && expressionOperator.hasChildren()) {
             for (final ExpressionItem item : expressionOperator.getChildren()) {
                 if (item.enabled()) {
-                    if (item instanceof ExpressionTerm) {
-                        final ExpressionTerm expressionTerm = (ExpressionTerm) item;
+                    if (item instanceof final ExpressionTerm expressionTerm) {
                         if (fieldNames == null || fieldNames.stream()
                                 .anyMatch(fieldName ->
                                         fieldName.equals(expressionTerm.getField()) &&
@@ -289,14 +310,13 @@ public class ExpressionUtil {
                 .op(operator.getOp());
         if (operator.getChildren() != null) {
             for (final ExpressionItem child : operator.getChildren()) {
-                if (child instanceof ExpressionOperator) {
-                    final ExpressionOperator childOperator = (ExpressionOperator) child;
+                if (child instanceof final ExpressionOperator childOperator) {
                     builder.addOperator(replaceExpressionParameters(childOperator, paramValues, keepUnmatched));
 
-                } else if (child instanceof ExpressionTerm) {
-                    final ExpressionTerm term = (ExpressionTerm) child;
+                } else if (child instanceof final ExpressionTerm term) {
                     final String value = term.getValue();
-                    final String replaced = ParamUtil.replaceParameters(value, paramValues, keepUnmatched);
+                    final String replaced = ParamUtil
+                            .replaceTermValueParameters(value, paramValues, keepUnmatched);
                     builder.addTerm(ExpressionTerm.builder()
                             .enabled(term.enabled())
                             .field(term.getField())
@@ -333,8 +353,7 @@ public class ExpressionUtil {
                 continueWalking = itemVisitor.visit(expressionItem);
             }
             if (continueWalking) {
-                if (expressionItem instanceof ExpressionOperator) {
-                    final ExpressionOperator expressionOperator = (ExpressionOperator) expressionItem;
+                if (expressionItem instanceof final ExpressionOperator expressionOperator) {
                     final List<ExpressionItem> children = expressionOperator.getChildren();
                     if (children != null && !children.isEmpty()) {
                         for (final ExpressionItem child : children) {
@@ -376,8 +395,7 @@ public class ExpressionUtil {
             return null;
         }
 
-        if (item instanceof ExpressionOperator) {
-            final ExpressionOperator operator = (ExpressionOperator) item;
+        if (item instanceof final ExpressionOperator operator) {
 
             // Remove empty children.
             final List<ExpressionItem> children = operator.getChildren();
@@ -389,8 +407,7 @@ public class ExpressionUtil {
             for (final ExpressionItem child : children) {
                 final ExpressionItem simplifiedChild = simplifyExpressionItem(child);
                 if (simplifiedChild != null) {
-                    if (simplifiedChild instanceof ExpressionOperator) {
-                        final ExpressionOperator childOperator = (ExpressionOperator) simplifiedChild;
+                    if (simplifiedChild instanceof final ExpressionOperator childOperator) {
                         if (childOperator.getChildren() != null && !childOperator.getChildren().isEmpty()) {
                             if (childOperator.getChildren().size() == 1) {
                                 if (!Op.NOT.equals(operator.op()) && !Op.NOT.equals(childOperator.op())) {

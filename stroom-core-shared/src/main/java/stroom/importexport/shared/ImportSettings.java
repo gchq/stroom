@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.importexport.shared;
 
 import stroom.docref.DocRef;
@@ -27,6 +43,8 @@ public class ImportSettings {
     private final boolean useImportFolders;
     @JsonProperty
     private final DocRef rootDocRef;
+    @JsonProperty
+    private final boolean mockEnvironment;
 
     @JsonCreator
     public ImportSettings(@JsonProperty("importMode") final ImportMode importMode,
@@ -34,13 +52,15 @@ public class ImportSettings {
                           @JsonProperty("enableFiltersFromTime") final Long enableFiltersFromTime,
                           @JsonProperty("useImportNames") final boolean useImportNames,
                           @JsonProperty("useImportFolders") final boolean useImportFolders,
-                          @JsonProperty("rootDocRef") final DocRef rootDocRef) {
+                          @JsonProperty("rootDocRef") final DocRef rootDocRef,
+                          @JsonProperty("mockEnvironment") final boolean mockEnvironment) {
         this.importMode = importMode;
         this.enableFilters = enableFilters;
         this.enableFiltersFromTime = enableFiltersFromTime;
         this.useImportNames = useImportNames;
         this.useImportFolders = useImportFolders;
         this.rootDocRef = rootDocRef;
+        this.mockEnvironment = mockEnvironment;
     }
 
     public ImportMode getImportMode() {
@@ -65,6 +85,10 @@ public class ImportSettings {
 
     public DocRef getRootDocRef() {
         return rootDocRef;
+    }
+
+    public boolean isMockEnvironment() {
+        return mockEnvironment;
     }
 
     public static boolean ok(final ImportSettings importSettings,
@@ -111,6 +135,7 @@ public class ImportSettings {
                useImportNames == that.useImportNames &&
                useImportFolders == that.useImportFolders &&
                importMode == that.importMode &&
+               mockEnvironment == that.mockEnvironment &&
                Objects.equals(enableFiltersFromTime, that.enableFiltersFromTime) &&
                Objects.equals(rootDocRef, that.rootDocRef);
     }
@@ -129,6 +154,7 @@ public class ImportSettings {
                ", useImportNames=" + useImportNames +
                ", useImportFolders=" + useImportFolders +
                ", rootDocRef=" + rootDocRef +
+               ", isMockEnvironment=" + mockEnvironment +
                '}';
     }
 
@@ -139,7 +165,8 @@ public class ImportSettings {
                 enableFiltersFromTime,
                 useImportNames,
                 useImportFolders,
-                rootDocRef);
+                rootDocRef,
+                mockEnvironment);
     }
 
 
@@ -164,6 +191,7 @@ public class ImportSettings {
         private boolean useImportNames;
         private boolean useImportFolders;
         private DocRef rootDocRef;
+        private boolean mockEnvironment;
 
         public Builder importMode(final ImportMode importMode) {
             this.importMode = importMode;
@@ -195,6 +223,15 @@ public class ImportSettings {
             return this;
         }
 
+        /**
+         * Used to flag to the Import/Export serializer that the environment is mocked for
+         * test and thus the ExplorerTree is missing.
+         */
+        public Builder isMockEnvironment(final boolean mockEnvironment) {
+            this.mockEnvironment = mockEnvironment;
+            return this;
+        }
+
         public ImportSettings build() {
             return new ImportSettings(
                     importMode,
@@ -202,7 +239,8 @@ public class ImportSettings {
                     enableFiltersFromTime,
                     useImportNames,
                     useImportFolders,
-                    rootDocRef);
+                    rootDocRef,
+                    mockEnvironment);
         }
     }
 }

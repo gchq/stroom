@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search.elastic;
@@ -20,6 +19,7 @@ package stroom.search.elastic;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -34,6 +34,7 @@ import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 @Singleton
 public class ElasticIndexStoreImpl implements ElasticIndexStore {
@@ -46,7 +47,7 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
             final StoreFactory storeFactory,
             final ElasticIndexService elasticIndexService,
             final ElasticIndexSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, ElasticIndexDoc.TYPE, ElasticIndexDoc.class);
+        this.store = storeFactory.createStore(serialiser, ElasticIndexDoc.TYPE, ElasticIndexDoc::builder);
         this.elasticIndexService = elasticIndexService;
     }
 
@@ -120,18 +121,26 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
-        return store.getDependencies(null);
+        return store.getDependencies(createMapper());
     }
 
     @Override
     public Set<DocRef> getDependencies(final DocRef docRef) {
-        return store.getDependencies(docRef, null);
+        return store.getDependencies(docRef, createMapper());
     }
 
     @Override
     public void remapDependencies(final DocRef docRef,
                                   final Map<DocRef, DocRef> remappings) {
-        store.remapDependencies(docRef, remappings, null);
+        store.remapDependencies(docRef, remappings, createMapper());
+    }
+
+    private BiConsumer<ElasticIndexDoc, DependencyRemapper> createMapper() {
+        return (doc, dependencyRemapper) -> {
+            dependencyRemapper.remap(doc.getClusterRef());
+            dependencyRemapper.remap(doc.getVectorGenerationModelRef());
+            dependencyRemapper.remap(doc.getRerankModelRef());
+        };
     }
 
     ////////////////////////////////////////////////////////////////////////

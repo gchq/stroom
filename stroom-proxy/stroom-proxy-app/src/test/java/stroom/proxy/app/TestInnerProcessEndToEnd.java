@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app;
 
 import stroom.data.shared.StreamTypeNames;
@@ -12,6 +28,9 @@ import stroom.proxy.app.handler.MockForwardFileDestinationFactory;
 import stroom.proxy.app.handler.ReceiverFactory;
 import stroom.proxy.app.handler.ZipWriter;
 import stroom.proxy.repo.AggregatorConfig;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.rules.shared.ReceiptCheckMode;
+import stroom.security.api.CommonSecurityContext;
 import stroom.test.common.DirectorySnapshot;
 import stroom.test.common.DirectorySnapshot.Snapshot;
 import stroom.test.common.util.test.FileSystemTestUtil;
@@ -27,6 +46,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.core.setup.Environment;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -50,6 +70,8 @@ class TestInnerProcessEndToEnd {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestInnerProcessEndToEnd.class);
 
+    @Inject
+    private CommonSecurityContext commonSecurityContext;
 
     @Test
     void testSimple() {
@@ -110,7 +132,7 @@ class TestInnerProcessEndToEnd {
                       final Consumer<ReceiverFactory> sender) {
         try {
             final Path root = Files.createTempDirectory("stroom-proxy");
-            LOGGER.info("root: {}", root);
+            LOGGER.debug("root: {}", root);
             ProxyLifecycle proxyLifecycle = null;
             try {
                 FileUtil.deleteContents(root);
@@ -140,6 +162,10 @@ class TestInnerProcessEndToEnd {
                                 null,
                                 null,
                                 null))
+                        .receiveDataConfig(ReceiveDataConfig.builder()
+                                // Stop it trying to call out to a downstream stroom/proxy
+                                .withReceiptCheckMode(ReceiptCheckMode.RECEIVE_ALL)
+                                .build())
                         .build();
 
                 final AbstractModule proxyModule = getModule(proxyConfig);
@@ -182,7 +208,7 @@ class TestInnerProcessEndToEnd {
                 final long maxId = DirUtil.getMaxDirId(storeDir);
 
                 final Snapshot snapshot = DirectorySnapshot.of(storeDir);
-                LOGGER.info("snapshot:\n{}", snapshot);
+                LOGGER.debug("snapshot:\n{}", snapshot);
 
                 // Cope with final rolling output (hence +1).
                 assertThat(maxId).isGreaterThanOrEqualTo(expectedOutputStreamCount);
@@ -206,12 +232,14 @@ class TestInnerProcessEndToEnd {
         attributeMap.put(StandardHeaderArguments.TYPE, StreamTypeNames.RAW_EVENTS);
         final byte[] dataBytes = "test".getBytes(StandardCharsets.UTF_8);
         try (final InputStream inputStream = new ByteArrayInputStream(dataBytes)) {
-            receiverFactory.get(attributeMap).receive(
-                    Instant.now(),
-                    attributeMap,
-                    "test",
-                    () -> inputStream
-            );
+            // asProcessingUser would normally be done in ProxyRequestHandler
+            commonSecurityContext.asProcessingUser(() -> {
+                receiverFactory.get(attributeMap).receive(
+                        Instant.now(),
+                        attributeMap,
+                        "test",
+                        () -> inputStream);
+            });
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -241,12 +269,14 @@ class TestInnerProcessEndToEnd {
         }
 
         try (final InputStream inputStream = new ByteArrayInputStream(dataBytes)) {
-            receiverFactory.get(attributeMap).receive(
-                    Instant.now(),
-                    attributeMap,
-                    "test",
-                    () -> inputStream
-            );
+            // asProcessingUser would normally be done in ProxyRequestHandler
+            commonSecurityContext.asProcessingUser(() -> {
+                receiverFactory.get(attributeMap).receive(
+                        Instant.now(),
+                        attributeMap,
+                        "test",
+                        () -> inputStream);
+            });
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -284,12 +314,14 @@ class TestInnerProcessEndToEnd {
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
         try (final InputStream inputStream = new ByteArrayInputStream(dataBytes)) {
-            receiverFactory.get(attributeMap).receive(
-                    Instant.now(),
-                    attributeMap,
-                    "test",
-                    () -> inputStream
-            );
+            // asProcessingUser would normally be done in ProxyRequestHandler
+            commonSecurityContext.asProcessingUser(() -> {
+                receiverFactory.get(attributeMap).receive(
+                        Instant.now(),
+                        attributeMap,
+                        "test",
+                        () -> inputStream);
+            });
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }

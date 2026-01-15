@@ -50,7 +50,7 @@
 
 .dialog-titleBar {
     flex-grow: 0;
-    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal) 0 var(--dialog__padding--horizontal);
+    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal);
     display: flex;
     gap: 5px;
 }
@@ -90,14 +90,30 @@
 .dialog-content {
     flex-grow: 1;
     overflow: auto;
-    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal);
+    padding: 0 var(--dialog__padding--horizontal);
 }
 
 .dialog-buttons {
     width: 100%;
-    padding: 0 var(--dialog__padding--horizontal) var(--dialog__padding--vertical) var(--dialog__padding--horizontal);
     flex-grow: 0;
+    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal);
     gap: var(--dialog__padding--horizontal);
     display: flex;
+    justify-content: space-between;
+}
+
+.dialog-buttons-left {
+    width: 100%;
+    flex-grow: 0;
+    display: flex;
+    gap: var(--dialog__padding--horizontal);
+    justify-content: flex-start;
+}
+
+.dialog-buttons-right {
+    width: 100%;
+    flex-grow: 0;
+    display: flex;
+    gap: var(--dialog__padding--horizontal);
     justify-content: flex-end;
 }

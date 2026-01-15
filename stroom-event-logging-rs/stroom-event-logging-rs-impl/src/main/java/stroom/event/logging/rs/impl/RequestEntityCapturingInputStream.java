@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package stroom.event.logging.rs.impl;
+
+import stroom.util.logging.LambdaLogger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.PathParam;
@@ -32,9 +34,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static stroom.event.logging.rs.impl.RestResourceAutoLoggerImpl.LOGGER;
-
 class RequestEntityCapturingInputStream extends BufferedInputStream {
+
+    // Not sure why this is using the logger from another class
+    private static final LambdaLogger LOGGER = RestResourceAutoLoggerImpl.LOGGER;
 
     private static final int MAX_ENTITY_SIZE = 64 * 1024 * 1024;
     private Object requestEntity;
@@ -96,9 +99,9 @@ class RequestEntityCapturingInputStream extends BufferedInputStream {
         }
         if (suppliedParams.size() > 1) {
             LOGGER.error(() -> "Multiple parameters to resource method " +
-                    resourceInfo.getResourceMethod().getName() +
-                    " on " +
-                    resourceInfo.getResourceClass().getSimpleName());
+                               resourceInfo.getResourceMethod().getName() +
+                               " on " +
+                               resourceInfo.getResourceClass().getSimpleName());
         }
         return suppliedParams.get(0);
     }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl.db;
 
 import stroom.db.util.JooqUtil;
@@ -28,6 +44,7 @@ import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Record8;
 import org.jooq.Select;
+import org.jooq.SelectLimitPercentAfterOffsetStep;
 import org.jooq.Table;
 import org.jooq.exception.DataAccessException;
 import org.jooq.exception.DataTypeException;
@@ -37,7 +54,7 @@ import org.jooq.types.UByte;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -68,18 +85,21 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
 
     @Override
     public Set<AppPermission> getPermissionsForUser(final String userUuid) {
-        return JooqUtil.contextResult(securityDbConnProvider, context -> context
-                        .select()
-                        .from(PERMISSION_APP)
-                        .where(PERMISSION_APP.USER_UUID.eq(userUuid))
-                        .fetch())
+        final EnumSet<AppPermission> appPermissions = JooqUtil.contextResult(
+                        securityDbConnProvider, context -> context
+                                .select()
+                                .from(PERMISSION_APP)
+                                .where(PERMISSION_APP.USER_UUID.eq(userUuid))
+                                .fetch())
                 .stream()
                 .map(r -> {
                     final int permissionId = r.get(PERMISSION_APP.PERMISSION_ID).intValue();
                     final String permissionName = appPermissionIdDao.get(permissionId);
                     return AppPermission.getPermissionForName(permissionName);
                 })
-                .collect(Collectors.toSet());
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(AppPermission.class)));
+
+        return Collections.unmodifiableSet(appPermissions);
     }
 
     @Override
@@ -226,7 +246,15 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
 
             // Join recursive select to user.
             try {
-                final var sql = context
+                final SelectLimitPercentAfterOffsetStep<Record8<
+                        String,
+                        String,
+                        String,
+                        String,
+                        Boolean,
+                        Boolean,
+                        String,
+                        String>> sql = context
                         .select(STROOM_USER.UUID,
                                 STROOM_USER.NAME,
                                 STROOM_USER.DISPLAY_NAME,
@@ -292,7 +320,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
         // repeated/leading/trailing delimiters. Therefore we remove them now.
         final String[] parts = StringUtil.deDupDelimiters(perms, ',')
                 .split(",");
-        final Set<AppPermission> permissions = new HashSet<>(parts.length);
+        final Set<AppPermission> permissions = EnumSet.noneOf(AppPermission.class);
         for (final String part : parts) {
             final String trimmed = part.trim();
             if (!trimmed.isEmpty()) {
@@ -322,18 +350,20 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
     }
 
     private AppUserPermissions getAppUserPermissions(final UserRef userRef) {
-        final Set<AppPermission> permissions = new HashSet<>(JooqUtil
+        final EnumSet<AppPermission> appPermissions = JooqUtil
                 .contextResult(securityDbConnProvider, context -> context
                         .select(
                                 PERMISSION_APP.PERMISSION_ID)
                         .from(PERMISSION_APP)
                         .where(PERMISSION_APP.USER_UUID.eq(userRef.getUuid()))
                         .fetch())
+                .stream()
                 .map(r2 -> {
                     final int permissionId = r2.get(PERMISSION_APP.PERMISSION_ID).intValue();
                     final String permissionName = appPermissionIdDao.get(permissionId);
                     return AppPermission.getPermissionForName(permissionName);
-                }));
-        return new AppUserPermissions(userRef, permissions);
+                })
+                .collect(Collectors.toCollection(() -> EnumSet.noneOf(AppPermission.class)));
+        return new AppUserPermissions(userRef, appPermissions);
     }
 }

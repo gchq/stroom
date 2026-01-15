@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,20 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.rule.impl.AnalyticRuleStore;
-import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.DeleteDuplicateCheckRequest;
 import stroom.analytics.shared.DuplicateCheckRows;
-import stroom.analytics.shared.ExecutionSchedule;
-import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.FindDuplicateCheckCriteria;
 import stroom.docref.DocRef;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.util.shared.ResultPage;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -50,38 +50,32 @@ class DuplicateCheckService {
         this.duplicateCheckFactory = duplicateCheckFactory;
     }
 
-    public String getNodeName(final String analyticUuid) {
-        String nodeName = null;
-        final DocRef docRef = DocRef
-                .builder()
-                .type(AnalyticRuleDoc.TYPE)
+    public Set<String> getEnabledNodeNames(final DocRef analyticDocRef) {
+        return executionScheduleDao.fetchExecutionNodes(analyticDocRef)
+                .stream()
+                .filter(ExecutionNode::isEnabled)
+                .map(ExecutionNode::nodeName)
+                .collect(Collectors.toSet());
+    }
+
+    public String getEnabledNodeName(final String analyticUuid) {
+        final DocRef docRef = AnalyticRuleDoc.buildDocRef()
                 .uuid(analyticUuid)
                 .build();
-        final AbstractAnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(docRef);
-        if (analyticRuleDoc != null) {
-            // Load schedules for the analytic.
-            final ExecutionScheduleRequest request = ExecutionScheduleRequest
-                    .builder()
-                    .ownerDocRef(docRef)
-                    .build();
+        return getEnabledNodeName(docRef);
+    }
 
-            final ResultPage<ExecutionSchedule> executionSchedules =
-                    executionScheduleDao.fetchExecutionSchedule(request);
-            final Set<String> nodes = executionSchedules
-                    .stream()
-                    .map(ExecutionSchedule::getNodeName)
-                    .collect(Collectors.toSet());
-            if (nodes.size() > 1) {
-                throw new RuntimeException("Duplicate checking is not supported when executors are running " +
-                                           "on multiple nodes");
-            }
-
-            if (nodes.size() == 1) {
-                nodeName = nodes.iterator().next();
-            }
+    public String getEnabledNodeName(final DocRef analyticDocRef) {
+        Objects.requireNonNull(analyticDocRef);
+        final Set<String> nodeNames = getEnabledNodeNames(analyticDocRef);
+        if (NullSafe.isEmptyCollection(nodeNames)) {
+            return null;
+        } else if (nodeNames.size() == 1) {
+            return nodeNames.iterator().next();
+        } else {
+            throw new RuntimeException("Duplicate checking is not supported when executors are running " +
+                                       "on multiple nodes");
         }
-
-        return nodeName;
     }
 
     public DuplicateCheckRows find(final FindDuplicateCheckCriteria criteria) {
@@ -90,5 +84,9 @@ class DuplicateCheckService {
 
     public boolean delete(final DeleteDuplicateCheckRequest request) {
         return duplicateCheckFactory.delete(request);
+    }
+
+    public Optional<List<String>> fetchColumnNames(final String analyticUuid) {
+        return duplicateCheckFactory.fetchColumnNames(analyticUuid);
     }
 }

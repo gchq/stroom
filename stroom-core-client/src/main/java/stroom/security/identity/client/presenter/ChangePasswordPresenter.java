@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.HideRequest;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
@@ -53,7 +54,9 @@ public class ChangePasswordPresenter extends MyPresenterWidget<ChangePasswordVie
         view.setUiHandlers(new HideRequestUiHandlers() {
             @Override
             public void hideRequest(final HideRequest request) {
-                HidePopupRequestEvent.builder(ChangePasswordPresenter.this).ok(request.isOk()).fire();
+                HidePopupRequestEvent.builder(ChangePasswordPresenter.this)
+                        .action(request.getAction())
+                        .fire();
             }
         });
     }

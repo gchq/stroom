@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,12 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.util.shared.NullSafe;
@@ -37,9 +37,6 @@ class AnnotationEventInfoProvider implements ObjectInfoProvider {
             o.setType("Annotation");
             o.setName(annotation.getName());
             o.setState(NullSafe.get(annotation.getStatus(), AnnotationTag::getName));
-
-//            o.getData().add(EventLoggingUtil.createData("Stream id", String.valueOf(annotation.getStreamId())));
-//            o.getData().add(EventLoggingUtil.createData("Event Id", String.valueOf(annotation.getEventId())));
             final UserRef assignedTo = annotation.getAssignedTo();
             o.getData().add(EventLoggingUtil.createData(
                     "Assigned To",
@@ -47,6 +44,15 @@ class AnnotationEventInfoProvider implements ObjectInfoProvider {
                             ? assignedTo.toDisplayString()
                             : null));
 
+            return o;
+        } else if (obj instanceof final AnnotationEntry entry) {
+            final OtherObject o = new OtherObject();
+            o.setId(String.valueOf(entry.getId()));
+            o.setType("Annotation Entry");
+            o.setDescription(entry.getEntryValue().toString());
+            if (entry.isDeleted()) {
+                o.setState("Deleted");
+            }
             return o;
         }
 
@@ -57,6 +63,10 @@ class AnnotationEventInfoProvider implements ObjectInfoProvider {
     public String getObjectType(final Object object) {
         if (object == null) {
             return null;
+        } else if (object instanceof Annotation) {
+            return "Annotation";
+        } else if (object instanceof AnnotationEntry) {
+            return "Annotation Entry";
         }
         return object.getClass().getSimpleName();
     }

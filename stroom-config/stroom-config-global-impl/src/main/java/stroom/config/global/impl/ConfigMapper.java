@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.config.global.impl;
@@ -44,6 +43,7 @@ import stroom.util.shared.BootStrapConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
+import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.StroomDuration;
 import stroom.util.xml.ParserConfig;
 import stroom.util.xml.SAXParserSettings;
@@ -258,7 +258,7 @@ public class ConfigMapper {
                 this::defaultValuePropertyConsumer,
                 false);
 
-        final HashSet<PropertyPath> allPropertyPaths = new HashSet<>(defaultPropertiesMap.keySet());
+        final Set<PropertyPath> allPropertyPaths = new HashSet<>(defaultPropertiesMap.keySet());
 //        throwAwayPropertyMap.clear();
 
         buildObjectInfoMap(
@@ -795,6 +795,7 @@ public class ConfigMapper {
                                     Enum.class.isAssignableFrom(type) ||
                                     Path.class.isAssignableFrom(type) ||
                                     StroomDuration.class.isAssignableFrom(type) ||
+                                    SimpleDuration.class.isAssignableFrom(type) ||
                                     ByteSize.class.isAssignableFrom(type);
 
         LOGGER.trace("isSupportedPropertyType({}), returning: {}", type, isSupported);
@@ -880,7 +881,6 @@ public class ConfigMapper {
                 .orElse(null);
     }
 
-    // pkg private for testing
     static String convertToString(final Object value) {
         final List<String> availableDelimiters = new ArrayList<>(VALID_DELIMITERS_LIST);
         return convertToString(value, availableDelimiters);
@@ -1028,6 +1028,8 @@ public class ConfigMapper {
                 return Path.of(value);
             } else if (StroomDuration.class.isAssignableFrom(type)) {
                 return StroomDuration.parse(value);
+            } else if (SimpleDuration.class.isAssignableFrom(type)) {
+                return SimpleDuration.parse(value);
             } else if (ByteSize.class.isAssignableFrom(type)) {
                 return ByteSize.parse(value);
             }
@@ -1528,5 +1530,9 @@ public class ConfigMapper {
         VALIDATE,
         // default the value if null, eg. a null int becomes 0
         DEFAULT
+    }
+
+    public Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> getObjectInfoMap() {
+        return objectInfoMap;
     }
 }

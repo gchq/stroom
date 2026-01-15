@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
@@ -321,7 +321,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         }
     }
 
-    private <T extends Doc> T first(final DocumentStore<T> store) {
+    private <T extends AbstractDoc> T first(final DocumentStore<T> store) {
         final Set<DocRef> set = store.listDocuments();
         if (set != null && !set.isEmpty()) {
             return store.readDocument(set.iterator().next());

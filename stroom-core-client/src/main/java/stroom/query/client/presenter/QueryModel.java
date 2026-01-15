@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Param;
 import stroom.query.api.QueryKey;
@@ -35,7 +36,9 @@ import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.Severity;
 import stroom.util.shared.TokenError;
 
 import com.google.gwt.core.client.GWT;
@@ -146,7 +149,9 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
     /**
      * Begin executing a new search using the supplied query expression.
      */
-    public void startNewSearch(final String query,
+    public void startNewSearch(final String componentId,
+                               final String componentName,
+                               final String query,
                                final List<Param> params,
                                final TimeRange timeRange,
                                final boolean incremental,
@@ -172,6 +177,8 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                 .searchRequestSource(
                         SearchRequestSource
                                 .builder()
+                                .componentId(componentId)
+                                .componentName(componentName)
                                 .sourceType(sourceType)
                                 .ownerDocRef(queryDocRef)
                                 .build())
@@ -201,61 +208,81 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
         }
     }
 
+    public void forceNewSearch(final String componentId,
+                               final Consumer<Result> resultConsumer) {
+        if (currentSearch != null) {
+            final boolean exec = exec(componentId, resultConsumer, null);
+            // If no exec happened then let the caller know.
+            if (!exec) {
+                resultConsumer.accept(null);
+            }
+        }
+    }
+
     /**
      * Refresh the search data for the specified component.
      */
     public void refresh(final String componentId, final Consumer<Result> resultConsumer) {
         boolean exec = false;
-        final QueryKey queryKey = currentQueryKey;
-        final ResultComponent resultComponent = resultComponents.get(componentId);
-        if (resultComponent != null && queryKey != null) {
-            final QuerySearchRequest request = currentSearch
-                    .copy()
-                    .queryKey(queryKey)
-                    .storeHistory(false)
-                    .openGroups(resultComponent.getOpenGroups())
-                    .requestedRange(resultComponent.getRequestedRange())
-                    .queryTablePreferences(queryTablePreferencesSupplier.get())
-                    .build();
-
-            exec = true;
-            restFactory
-                    .create(QUERY_RESOURCE)
-                    .method(res -> res.search(currentNode, request))
-                    .onSuccess(response -> {
-                        Result result = null;
-                        try {
-                            if (response != null && response.getResults() != null) {
-                                currentHighlights = response.getHighlights();
-                                for (final Result componentResult : response.getResults()) {
-                                    if (componentId.equals(componentResult.getComponentId())) {
-                                        result = componentResult;
-                                    }
-                                }
-                            }
-                        } catch (final RuntimeException e) {
-                            GWT.log(e.getMessage());
-                        }
-                        resultConsumer.accept(result);
-                    })
-                    .onFailure(throwable -> {
-                        try {
-                            if (queryKey.equals(currentQueryKey)) {
-                                setErrors(Collections.singletonList(throwable.toString()));
-                            }
-                        } catch (final RuntimeException e) {
-                            GWT.log(e.getMessage());
-                        }
-                        resultConsumer.accept(null);
-                    })
-                    .taskMonitorFactory(taskMonitorFactory)
-                    .exec();
+        if (currentQueryKey != null) {
+            exec = exec(componentId, resultConsumer, currentQueryKey);
         }
 
         // If no exec happened then let the caller know.
         if (!exec) {
             resultConsumer.accept(null);
         }
+    }
+
+    private boolean exec(final String componentId,
+                         final Consumer<Result> resultConsumer,
+                         final QueryKey queryKey) {
+        final ResultComponent resultComponent = resultComponents.get(componentId);
+        if (resultComponent == null) {
+            return false;
+        }
+
+        final QuerySearchRequest request = currentSearch
+                .copy()
+                .queryKey(queryKey)
+                .storeHistory(false)
+                .groupSelection(resultComponent.getGroupSelection())
+                .requestedRange(resultComponent.getRequestedRange())
+                .queryTablePreferences(queryTablePreferencesSupplier.get())
+                .build();
+        restFactory
+                .create(QUERY_RESOURCE)
+                .method(res -> res.search(currentNode, request))
+                .onSuccess(response -> {
+                    Result result = null;
+                    try {
+                        if (response != null && response.getResults() != null) {
+                            currentHighlights = response.getHighlights();
+                            for (final Result componentResult : response.getResults()) {
+                                if (componentId.equals(componentResult.getComponentId())) {
+                                    result = componentResult;
+                                }
+                            }
+                        }
+                    } catch (final RuntimeException e) {
+                        GWT.log(e.getMessage());
+                    }
+                    resultConsumer.accept(result);
+                })
+                .onFailure(throwable -> {
+                    try {
+                        if (queryKey.equals(currentQueryKey)) {
+                            setErrors(Collections.singletonList(
+                                    new ErrorMessage(Severity.ERROR, throwable.toString())));
+                        }
+                    } catch (final RuntimeException e) {
+                        GWT.log(e.getMessage());
+                    }
+                    resultConsumer.accept(null);
+                })
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+        return true;
     }
 
     private void deleteStore(final String node, final QueryKey queryKey, final DestroyReason destroyReason) {
@@ -277,8 +304,8 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
         final QuerySearchRequest search = currentSearch;
         if (search != null && polling) {
             final ResultComponent tablePresenter = resultComponents.get(TABLE_COMPONENT_ID);
-            final Set<String> openGroups = NullSafe
-                    .getOrElse(tablePresenter, ResultComponent::getOpenGroups, Collections.emptySet());
+            final GroupSelection groupSelection = NullSafe
+                    .getOrElse(tablePresenter, ResultComponent::getGroupSelection, new GroupSelection());
             final OffsetRange requestedRange = NullSafe
                     .getOrElse(tablePresenter, ResultComponent::getRequestedRange, OffsetRange.UNBOUNDED);
 
@@ -286,7 +313,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                     .copy()
                     .queryKey(queryKey)
                     .storeHistory(storeHistory)
-                    .openGroups(openGroups)
+                    .groupSelection(groupSelection)
                     .requestedRange(requestedRange)
                     .queryTablePreferences(queryTablePreferencesSupplier.get())
                     .build();
@@ -332,7 +359,8 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
 
                         try {
                             if (search == currentSearch) {
-                                setErrors(Collections.singletonList(throwable.toString()));
+                                setErrors(Collections.singletonList(
+                                        new ErrorMessage(Severity.ERROR, throwable.toString())));
                                 polling = false;
                             }
                         } catch (final RuntimeException e) {
@@ -373,7 +401,8 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
             resultComponents.values().forEach(ResultComponent::endSearch);
         }
 
-        setErrors(response.getErrors());
+        setErrors(response.getErrorMessages());
+
         if (response.getTokenError() != null) {
             setTokenErrors(response.getTokenError());
         }
@@ -387,7 +416,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
         }
     }
 
-    private void setErrors(final List<String> errors) {
+    private void setErrors(final List<ErrorMessage> errors) {
         errorListeners.forEach(listener -> listener.onError(errors));
     }
 

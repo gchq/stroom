@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ import stroom.data.grid.client.PagerViewWithHeadingImpl;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
 import stroom.event.client.StaticEventBus;
-import stroom.explorer.client.presenter.AbstractFindPresenter;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter.EntityCheckTreeView;
 import stroom.explorer.client.presenter.EntityTreePresenter;
@@ -67,7 +66,6 @@ import stroom.explorer.client.view.EntityTreeViewImpl;
 import stroom.explorer.client.view.ExplorerNodeEditTagsViewImpl;
 import stroom.explorer.client.view.ExplorerNodeRemoveTagsViewImpl;
 import stroom.explorer.client.view.FindInContentViewImpl;
-import stroom.explorer.client.view.FindViewImpl;
 import stroom.explorer.client.view.NavigationViewImpl;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
@@ -170,9 +168,6 @@ public class AppModule extends AbstractPresenterModule {
                 FindInContentView.class,
                 FindInContentViewImpl.class,
                 FindInContentProxy.class);
-        bindSharedView(
-                AbstractFindPresenter.FindView.class,
-                FindViewImpl.class);
         bindPresenter(
                 FindPresenter.class,
                 FindProxy.class);

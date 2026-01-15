@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.util.shared.ResultPage;
 
@@ -80,12 +81,13 @@ public class SearchableDual implements Searchable {
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final DateTimeSettings dateTimeSettings,
-                       final ValuesConsumer consumer) {
+                       final ValuesConsumer valuesConsumer,
+                       final ErrorConsumer errorConsumer) {
         final String[] fields = fieldIndex.getFields();
         final Val[] valArr = new Val[fields.length];
         for (int i = 0; i < fields.length; i++) {
             valArr[i] = ValString.create("X");
         }
-        consumer.accept(Val.of(valArr));
+        valuesConsumer.accept(Val.of(valArr));
     }
 }

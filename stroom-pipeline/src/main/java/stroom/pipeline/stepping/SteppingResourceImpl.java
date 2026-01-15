@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ class SteppingResourceImpl implements SteppingResource {
                             stepLocation.getEventId(),
                             null,
                             request.getChildStreamType(),
-                            request.getPipeline(),
+                            request.getPipelineDoc().asDocRef(),
                             null);
                 }
             }
@@ -92,7 +92,7 @@ class SteppingResourceImpl implements SteppingResource {
                         stepLocation.getEventId(),
                         null,
                         request.getChildStreamType(),
-                        request.getPipeline(),
+                        request.getPipelineDoc().asDocRef(),
                         e);
             }
             throw e;

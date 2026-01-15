@@ -1,0 +1,308 @@
+{
+  "parameters" : "userId=user2",
+  "components" : [ {
+    "type" : "query",
+    "id" : "query-MRGPM",
+    "name" : "Query",
+    "settings" : {
+      "type" : "query",
+      "dataSource" : {
+        "type" : "Index",
+        "uuid" : "57a35b9a-083c-4a93-a813-fc3ddfe1ff44",
+        "name" : "Example index"
+      },
+      "expression" : {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "EventTime",
+          "condition" : "BETWEEN",
+          "value" : "2010-01-01T00:00:00.000Z,2010-01-01T00:10:00.000Z",
+          "enabled" : false
+        }, {
+          "type" : "term",
+          "field" : "EventTime",
+          "condition" : "GREATER_THAN",
+          "value" : "2000-02-14T00:00:00.000Z"
+        } ]
+      },
+      "automate" : {
+        "open" : false,
+        "refresh" : false,
+        "refreshInterval" : "10s"
+      },
+      "selectionHandlers" : [ ]
+    }
+  }, {
+    "type" : "table",
+    "id" : "table-BKJT6",
+    "name" : "Table",
+    "settings" : {
+      "type" : "table",
+      "queryId" : "query-MRGPM",
+      "fields" : [ {
+        "id" : "table-BKJT6|NPU80",
+        "name" : "UserId",
+        "expression" : "${UserId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0,
+        "width" : 106,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-BKJT6|ON0QW",
+        "name" : "Count",
+        "expression" : "count()",
+        "sort" : {
+          "order" : 0,
+          "direction" : "DESCENDING"
+        },
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      } ],
+      "extractionPipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
+        "name" : "Example extraction"
+      },
+      "maxResults" : [ 1000000 ],
+      "modelVersion" : "6.1.26"
+    }
+  }, {
+    "type" : "vis",
+    "id" : "vis-QYG7H",
+    "name" : "Doughnut",
+    "settings" : {
+      "type" : "vis",
+      "tableId" : "table-BKJT6",
+      "visualisation" : {
+        "type" : "Visualisation",
+        "uuid" : "ce55cb67-22ef-4146-b866-f8ba955b9ba6",
+        "name" : "Doughnut"
+      },
+      "json" : "{\"names\":\"UserId\", \"values\":\"Count\", \"maxValues\":\"20\", \"sort\":\"true\", \"synchNames\":\"True\", \"nameDateFormat\":\"\", \"sortGridSeries\":\"Ascending\", \"maxGridSeries\":\"20\", \"gridSeriesDateFormat\":\"\", \"showLabels\":\"False\"}"
+    }
+  }, {
+    "type" : "table",
+    "id" : "table-78LF4",
+    "name" : "Table",
+    "settings" : {
+      "type" : "table",
+      "queryId" : "query-IZGIX",
+      "fields" : [ {
+        "id" : "table-78LF4|UA32R",
+        "name" : "EventTime",
+        "expression" : "roundMinute(${EventTime})",
+        "format" : {
+          "type" : "DATE_TIME"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-78LF4|K660P",
+        "name" : "UserId",
+        "expression" : "${UserId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      } ],
+      "extractionPipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
+        "name" : "Example extraction"
+      },
+      "maxResults" : [ 1000000 ],
+      "showDetail" : false,
+      "conditionalFormattingRules" : [ ],
+      "modelVersion" : "6.1.26"
+    }
+  }, {
+    "type" : "text",
+    "id" : "text-AI0RO",
+    "name" : "Text",
+    "settings" : {
+      "type" : "text",
+      "streamIdField" : {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__"
+      },
+      "recordNoField" : {
+        "id" : "__event_id__",
+        "name" : "__event_id__"
+      },
+      "showAsHtml" : false,
+      "showStepping" : false,
+      "modelVersion" : "6.1.26"
+    }
+  }, {
+    "type" : "query",
+    "id" : "query-IZGIX",
+    "name" : "Query",
+    "settings" : {
+      "type" : "query",
+      "dataSource" : {
+        "type" : "Index",
+        "uuid" : "57a35b9a-083c-4a93-a813-fc3ddfe1ff44",
+        "name" : "Example index"
+      },
+      "expression" : {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "EventTime",
+          "condition" : "GREATER_THAN",
+          "value" : "2008-11-03T00:00:00.000Z"
+        } ]
+      },
+      "automate" : {
+        "open" : false,
+        "refresh" : false,
+        "refreshInterval" : "10s"
+      },
+      "selectionHandlers" : [ {
+        "id" : "IYCR5",
+        "componentId" : "vis-QYG7H",
+        "expression" : {
+          "type" : "operator",
+          "children" : [ {
+            "type" : "term",
+            "field" : "UserId",
+            "condition" : "EQUALS",
+            "value" : "${name}"
+          } ]
+        },
+        "enabled" : true
+      } ]
+    }
+  } ],
+  "layout" : {
+    "type" : "splitLayout",
+    "preferredSize" : {
+      "width" : 0,
+      "height" : 0
+    },
+    "dimension" : 1,
+    "children" : [ {
+      "type" : "splitLayout",
+      "preferredSize" : {
+        "width" : 0,
+        "height" : 766
+      },
+      "dimension" : 0,
+      "children" : [ {
+        "type" : "splitLayout",
+        "preferredSize" : {
+          "width" : 572,
+          "height" : 0
+        },
+        "dimension" : 1,
+        "children" : [ {
+          "type" : "splitLayout",
+          "preferredSize" : {
+            "width" : 0,
+            "height" : 310
+          },
+          "dimension" : 0,
+          "children" : [ {
+            "type" : "splitLayout",
+            "preferredSize" : {
+              "width" : 0,
+              "height" : 0
+            },
+            "dimension" : 1,
+            "children" : [ {
+              "type" : "tabLayout",
+              "preferredSize" : {
+                "width" : 0,
+                "height" : 78
+              },
+              "tabs" : [ {
+                "id" : "query-MRGPM",
+                "visible" : true
+              } ],
+              "selected" : 0
+            }, {
+              "type" : "tabLayout",
+              "preferredSize" : {
+                "width" : 234,
+                "height" : 448
+              },
+              "tabs" : [ {
+                "id" : "vis-QYG7H",
+                "visible" : true
+              }, {
+                "id" : "table-BKJT6",
+                "visible" : true
+              } ],
+              "selected" : 0
+            }, {
+              "type" : "tabLayout",
+              "preferredSize" : {
+                "width" : 0,
+                "height" : 526
+              },
+              "tabs" : [ {
+                "id" : "table-78LF4",
+                "visible" : true
+              }, {
+                "id" : "query-IZGIX",
+                "visible" : true
+              } ],
+              "selected" : 0
+            } ]
+          } ]
+        } ]
+      } ]
+    }, {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 0,
+        "height" : 433
+      },
+      "tabs" : [ {
+        "id" : "text-AI0RO",
+        "visible" : true
+      } ],
+      "selected" : 0
+    } ]
+  }
+}

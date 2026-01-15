@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,12 +45,13 @@ public class DuplicateNotificationConfig {
         columnNames = new ArrayList<>();
     }
 
-    @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
-    public DuplicateNotificationConfig(@JsonProperty("rememberNotifications") final boolean rememberNotifications,
-                                       @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
-                                       @JsonProperty("chooseColumns") final boolean chooseColumns,
-                                       @JsonProperty("columnNames") final List<String> columnNames) {
+    public DuplicateNotificationConfig(
+            @JsonProperty("rememberNotifications") final boolean rememberNotifications,
+            @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
+            @JsonProperty("chooseColumns") final boolean chooseColumns,
+            @JsonProperty("columnNames") final List<String> columnNames) {
+
         this.rememberNotifications = rememberNotifications;
         this.suppressDuplicateNotifications = suppressDuplicateNotifications;
         this.chooseColumns = chooseColumns;

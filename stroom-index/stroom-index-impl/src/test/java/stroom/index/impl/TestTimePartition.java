@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,11 +70,12 @@ class TestTimePartition {
     }
 
     private String getPartition(final PartitionBy partitionBy, final int partitionSize, final long millis) {
-        final LuceneIndexDoc index = new LuceneIndexDoc();
-        index.setUuid(UUID.randomUUID().toString());
-        index.setShardsPerPartition(5);
-        index.setPartitionBy(partitionBy);
-        index.setPartitionSize(partitionSize);
+        final LuceneIndexDoc index = LuceneIndexDoc.builder()
+                .uuid(UUID.randomUUID().toString())
+                .shardsPerPartition(5)
+                .partitionBy(partitionBy)
+                .partitionSize(partitionSize)
+                .build();
         return new TimePartitionFactory().create(index, millis).getLabel();
     }
 }

@@ -1,0 +1,67 @@
+version: 2
+updates:
+  # Enable version updates for gradle
+  - package-ecosystem: "gradle"
+    directory: "/"
+    # Check the npm registry for updates every day (weekdays)
+    schedule:
+      interval: "weekly"
+    # Stops noise in CI
+    rebase-strategy: "disabled"
+    open-pull-requests-limit: 5
+
+  # Enable version updates for stroom Docker
+  - package-ecosystem: "docker"
+    # Look for a `Dockerfile` in the `root` directory
+    directory: "/stroom-app/docker/"
+    # Check for updates once a week
+    schedule:
+      interval: "weekly"
+    rebase-strategy: "disabled"
+    open-pull-requests-limit: 5
+    update-types:
+      - "version-update:semver-patch"
+      - "version-update:semver-minor"
+
+  # Enable version updates for stroom-proxy Docker
+  - package-ecosystem: "docker"
+    # Look for a `Dockerfile` in the `root` directory
+    directory: "/stroom-proxy/stroom-proxy-app/docker/"
+    # Check for updates once a week
+    schedule:
+      interval: "weekly"
+    rebase-strategy: "disabled"
+    open-pull-requests-limit: 5
+    update-types:
+      - "version-update:semver-patch"
+      - "version-update:semver-minor"
+
+  # Enable version updates for java container build
+  - package-ecosystem: "docker"
+    # Look for a `Dockerfile` in the `root` directory
+    directory: "/container_build/docker_java/"
+    # Check for updates once a week
+    schedule:
+      interval: "monthly"
+    rebase-strategy: "disabled"
+    open-pull-requests-limit: 1
+
+  # Enable version updates for node container build
+  - package-ecosystem: "docker"
+    # Look for a `Dockerfile` in the `root` directory
+    directory: "/container_build/docker_node/"
+    # Check for updates once a week
+    schedule:
+      interval: "monthly"
+    rebase-strategy: "disabled"
+    open-pull-requests-limit: 1
+
+  # Enable version updates for node container build
+  - package-ecosystem: "docker"
+    # Look for a `Dockerfile` in the `root` directory
+    directory: "/container_build/docker_puml_erd/"
+    # Check for updates once a week
+    schedule:
+      interval: "monthly"
+    rebase-strategy: "disabled"
+    open-pull-requests-limit: 1

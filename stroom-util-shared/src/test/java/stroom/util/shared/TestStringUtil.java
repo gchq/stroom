@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.shared;
 
 import stroom.docref.DocRef;
@@ -16,8 +32,6 @@ import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.util.shared.StringUtil.plural;
-import static stroom.util.shared.StringUtil.pluralSuffix;
 
 class TestStringUtil {
 
@@ -149,7 +163,7 @@ class TestStringUtil {
         return TestUtil.buildDynamicTestStream()
                 .withInputAndOutputType(String.class)
                 .withTestFunction(testCase -> {
-                    final var quotedInput = StringUtil.addWhitespaceQuoting(testCase.getInput());
+                    final String quotedInput = StringUtil.addWhitespaceQuoting(testCase.getInput());
                     LOGGER.debug("quotedInput: '{}'", quotedInput);
                     return StringUtil.removeWhitespaceQuoting(quotedInput);
                 })
@@ -194,25 +208,25 @@ class TestStringUtil {
 
     @Test
     void testPlural_1() {
-        assertThat(plural("has", "have", 1))
+        assertThat(StringUtil.plural("has", "have", 1))
                 .isEqualTo("has");
-        assertThat(plural("has", "have", 2))
+        assertThat(StringUtil.plural("has", "have", 2))
                 .isEqualTo("have");
     }
 
     @Test
     void testPlural_2() {
-        assertThat(plural("has", "have", 1L))
+        assertThat(StringUtil.plural("has", "have", 1L))
                 .isEqualTo("has");
-        assertThat(plural("has", "have", 2L))
+        assertThat(StringUtil.plural("has", "have", 2L))
                 .isEqualTo("have");
     }
 
     @Test
     void testPlural_3() {
-        assertThat(plural("has", "have", List.of(1)))
+        assertThat(StringUtil.plural("has", "have", List.of(1)))
                 .isEqualTo("has");
-        assertThat(plural("has", "have", List.of(1, 2)))
+        assertThat(StringUtil.plural("has", "have", List.of(1, 2)))
                 .isEqualTo("have");
     }
 
@@ -242,25 +256,37 @@ class TestStringUtil {
 
     @Test
     void testPluralSuffix_1b() {
-        assertThat(pluralSuffix(1))
+        assertThat(StringUtil.pluralSuffix(1))
                 .isEqualTo("");
-        assertThat(pluralSuffix(2))
+        assertThat(StringUtil.pluralSuffix(2))
                 .isEqualTo("s");
     }
 
     @Test
     void testPluralSuffix_2b() {
-        assertThat(pluralSuffix(1L))
+        assertThat(StringUtil.pluralSuffix(1L))
                 .isEqualTo("");
-        assertThat(pluralSuffix(2L))
+        assertThat(StringUtil.pluralSuffix(2L))
                 .isEqualTo("s");
     }
 
     @Test
     void testPluralSuffix_3b() {
-        assertThat(pluralSuffix(List.of(1)))
+        assertThat(StringUtil.pluralSuffix(List.of(1)))
                 .isEqualTo("");
-        assertThat(pluralSuffix(List.of(1, 2)))
+        assertThat(StringUtil.pluralSuffix(List.of(1, 2)))
                 .isEqualTo("s");
+    }
+
+    @Test
+    void testFormatDouble() {
+        assertThat(StringUtil.formatDouble(0.00034))
+                .isEqualTo("0");
+        assertThat(StringUtil.formatDouble(123.00034))
+                .isEqualTo("123");
+        assertThat(StringUtil.formatDouble(123.12034))
+                .isEqualTo("123.12");
+        assertThat(StringUtil.formatDouble(123.10034))
+                .isEqualTo("123.1");
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,10 @@
 package stroom.util;
 
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+
 import com.google.common.base.Strings;
 
 import java.beans.BeanInfo;
@@ -29,12 +33,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Base class for command line tools that handles setting a load of args on the
  * program as name value pairs.
  */
 public abstract class AbstractCommandLineTool {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractCommandLineTool.class);
 
     private Map<String, String> map;
     private List<String> validArguments;
@@ -51,13 +58,22 @@ public abstract class AbstractCommandLineTool {
     }
 
     protected void failArg(final String arg, final String msg) {
-        throw new RuntimeException(arg + " - " + msg);
+        throw new RuntimeException(LogUtil.message("Argument '{}' - {}", arg, msg));
+    }
+
+    protected void failMissingMandatoryArg(final String arg) {
+        throw new RuntimeException(LogUtil.message("Argument '{}' must be supplied", arg));
     }
 
     public void init(final String[] args) {
         try {
             map = ArgsUtil.parse(args);
             validArguments = new ArrayList<>();
+
+            LOGGER.debug("Arguments:\n{}", map.entrySet()
+                    .stream()
+                    .map(entry -> entry.getKey() + " = " + entry.getValue())
+                    .collect(Collectors.joining("\n")));
 
             final BeanInfo beanInfo = Introspector.getBeanInfo(this.getClass());
 

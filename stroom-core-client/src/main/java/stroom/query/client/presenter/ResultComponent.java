@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 
 package stroom.query.client.presenter;
 
+import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.Result;
-
-import java.util.Set;
 
 public interface ResultComponent {
 
     OffsetRange getRequestedRange();
 
-    Set<String> getOpenGroups();
+    GroupSelection getGroupSelection();
 
     void reset();
 

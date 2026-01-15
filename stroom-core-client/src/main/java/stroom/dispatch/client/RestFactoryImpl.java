@@ -1,5 +1,22 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.dispatch.client;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
@@ -222,8 +239,12 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                     resultConsumer.accept(response);
                 }
             } catch (final Throwable t) {
-                Console.error("RestFactoryImpl - onSuccess() - " + t.getMessage(), t);
-                new DefaultErrorHandler(hasHandlers, null).onError(new RestError(method, t));
+                Console.debug(t.toString());
+                if (method != null && method.getRequest() != null) {
+                    Console.debug(method.getRequest().toString());
+                }
+                Console.error("Error processing successful response: " + response);
+                AlertEvent.fireErrorFromException(hasHandlers, t, null);
             } finally {
                 taskMonitor.onEnd(task);
             }
@@ -234,7 +255,6 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
             try {
                 errorHandler.onError(new RestError(method, throwable));
             } catch (final Throwable t) {
-                Console.error("RestFactoryImpl - onFailure() - " + t.getMessage(), t);
                 new DefaultErrorHandler(hasHandlers, null).onError(new RestError(method, t));
             } finally {
                 taskMonitor.onEnd(task);

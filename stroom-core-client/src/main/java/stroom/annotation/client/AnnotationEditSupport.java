@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,13 @@
 
 package stroom.annotation.client;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.core.client.ContentManager;
+import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
 import stroom.task.client.DefaultTaskMonitorFactory;
 
 import com.google.gwt.event.shared.GwtEvent;
@@ -32,14 +36,17 @@ public class AnnotationEditSupport implements HasHandlers {
 
     private final EventBus eventBus;
     private final ContentManager contentManager;
+    private final ClientSecurityContext securityContext;
 
     @Inject
     public AnnotationEditSupport(final EventBus eventBus,
                                  final Provider<AnnotationPresenter> presenterProvider,
                                  final ContentManager contentManager,
-                                 final AnnotationResourceClient annotationResourceClient) {
+                                 final AnnotationResourceClient annotationResourceClient,
+                                 final ClientSecurityContext securityContext) {
         this.eventBus = eventBus;
         this.contentManager = contentManager;
+        this.securityContext = securityContext;
 
         eventBus.addHandler(CreateAnnotationEvent.getType(), e -> {
             final AnnotationPresenter presenter = presenterProvider.get();
@@ -50,9 +57,13 @@ public class AnnotationEditSupport implements HasHandlers {
                     e.getStatus(),
                     e.getAssignTo(),
                     e.getComment(),
-                    e.getLinkedEvents());
-            annotationResourceClient.createAnnotation(request, annotation ->
-                    show(presenter, annotation), new DefaultTaskMonitorFactory(this));
+                    e.getTable(),
+                    e.getLinkedEvents(),
+                    e.getLinkedAnnotations());
+            annotationResourceClient.createAnnotation(request, annotation -> {
+                show(presenter, annotation);
+                AnnotationChangeEvent.fireDeferred(this, annotation.asDocRef());
+            }, new DefaultTaskMonitorFactory(this));
         });
 
         eventBus.addHandler(EditAnnotationEvent.getType(), e -> {
@@ -64,8 +75,18 @@ public class AnnotationEditSupport implements HasHandlers {
 
     private void show(final AnnotationPresenter presenter,
                       final Annotation annotation) {
-        presenter.read(annotation);
-        contentManager.open(e2 -> e2.getCallback().closeTab(true), presenter, presenter);
+        if (securityContext.hasAppPermission(AppPermission.ANNOTATIONS)) {
+            // Check document permissions and read.
+            securityContext.hasDocumentPermission(
+                    annotation.asDocRef(),
+                    DocumentPermission.EDIT,
+                    allowUpdate -> {
+                        presenter.read(annotation, !allowUpdate);
+                        contentManager.open(e2 -> e2.getCallback().closeTab(true), presenter, presenter);
+                    },
+                    throwable -> AlertEvent.fireErrorFromException(this, throwable, null),
+                    new DefaultTaskMonitorFactory(this));
+        }
     }
 
     @Override

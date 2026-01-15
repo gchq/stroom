@@ -1,7 +1,24 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.app;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.hash.Hashing;
@@ -22,8 +39,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.List;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 public class BrowserRouterAssetServlet extends HttpServlet {
 
@@ -139,7 +154,7 @@ public class BrowserRouterAssetServlet extends HttpServlet {
                     usingRanges = true;
 
                     resp.addHeader(HttpHeaders.CONTENT_RANGE, "bytes "
-                            + Joiner.on(",").join(ranges) + "/" + resourceLength);
+                                                              + Joiner.on(",").join(ranges) + "/" + resourceLength);
                 }
             }
 
@@ -162,7 +177,7 @@ public class BrowserRouterAssetServlet extends HttpServlet {
             }
 
             if (mediaType.is(MediaType.ANY_VIDEO_TYPE)
-                    || mediaType.is(MediaType.ANY_AUDIO_TYPE) || usingRanges) {
+                || mediaType.is(MediaType.ANY_AUDIO_TYPE) || usingRanges) {
                 resp.addHeader(HttpHeaders.ACCEPT_RANGES, "bytes");
             }
 
@@ -189,7 +204,7 @@ public class BrowserRouterAssetServlet extends HttpServlet {
 
     @Nullable
     private CachedAsset loadAsset(final String key) throws URISyntaxException, IOException {
-        checkArgument(key.startsWith(uriPath));
+        Preconditions.checkArgument(key.startsWith(uriPath));
         final String requestedResourcePath = SLASHES.trimFrom(key.substring(uriPath.length()));
         final String absoluteRequestedResourcePath = SLASHES.trimFrom(this.resourcePath + requestedResourcePath);
 
@@ -224,7 +239,7 @@ public class BrowserRouterAssetServlet extends HttpServlet {
 
     private boolean isCachedClientSide(final HttpServletRequest req, final CachedAsset cachedAsset) {
         return cachedAsset.getETag().equals(req.getHeader(HttpHeaders.IF_NONE_MATCH)) ||
-                (req.getDateHeader(HttpHeaders.IF_MODIFIED_SINCE) >= cachedAsset.getLastModifiedTime());
+               (req.getDateHeader(HttpHeaders.IF_MODIFIED_SINCE) >= cachedAsset.getLastModifiedTime());
     }
 
     /**

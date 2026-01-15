@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Severity;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -63,7 +64,7 @@ public class MapDataStore implements DataStore {
     private final ValueReferenceIndex valueReferenceIndex;
     private final CompiledColumns compiledColumns;
     private final CompiledColumn[] compiledColumnsArray;
-    private final CompiledSorters<ItemImpl> compiledSorters;
+    private final CompiledSorters<MapItem> compiledSorters;
     private final CompiledDepths compiledDepths;
     private final Sizes maxResults;
     private final AtomicLong totalResultCount = new AtomicLong();
@@ -209,7 +210,7 @@ public class MapDataStore implements DataStore {
         totalResultCount.getAndIncrement();
 
         final GroupingFunction groupingFunction = groupingFunctions[depth];
-        final Function<Stream<ItemImpl>, Stream<ItemImpl>> sortingFunction = compiledSorters.get(depth);
+        final Function<Stream<MapItem>, Stream<MapItem>> sortingFunction = compiledSorters.get(depth);
 
         childMap.compute(parentKey, (k, v) -> {
             ItemsImpl result = v;
@@ -264,13 +265,13 @@ public class MapDataStore implements DataStore {
     }
 
     @Override
-    public <R> void fetch(final List<Column> columns,
-                          final OffsetRange range,
-                          final OpenGroups openGroups,
-                          final TimeFilter timeFilter,
-                          final ItemMapper<R> mapper,
-                          final Consumer<R> resultConsumer,
-                          final Consumer<Long> totalRowCountConsumer) {
+    public void fetch(final List<Column> columns,
+                      final OffsetRange range,
+                      final OpenGroups openGroups,
+                      final TimeFilter timeFilter,
+                      final ItemMapper mapper,
+                      final Consumer<Item> resultConsumer,
+                      final Consumer<Long> totalRowCountConsumer) {
         // Update our sort columns if needed.
         compiledSorters.update(columns);
 
@@ -296,36 +297,39 @@ public class MapDataStore implements DataStore {
         }
     }
 
-    private <R> void getChildren(final Key parentKey,
-                                 final OpenGroups openGroups,
-                                 final ItemMapper<R> mapper,
-                                 final OffsetRange range,
-                                 final FetchState fetchState,
-                                 final Consumer<R> resultConsumer) {
+    private void getChildren(final Key parentKey,
+                             final OpenGroups openGroups,
+                             final ItemMapper mapper,
+                             final OffsetRange range,
+                             final FetchState fetchState,
+                             final Consumer<Item> resultConsumer) {
         final ItemsImpl items = childMap.get(parentKey);
         if (items == null) {
             return;
         }
-        final List<ItemImpl> list = items.copy();
+        final List<MapItem> list = items.copy();
 
         // Transfer the sorted items to the result.
         for (final Item item : list) {
-            fetchState.totalRowCount++;
-            if (!fetchState.reachedRowLimit) {
-                if (range.getOffset() <= fetchState.offset) {
-                    final R row = mapper.create(item);
-                    resultConsumer.accept(row);
-                    fetchState.length++;
-                    fetchState.reachedRowLimit = fetchState.length >= range.getLength();
-                    if (fetchState.reachedRowLimit) {
-                        if (fetchState.countRows) {
-                            fetchState.justCount = true;
-                        } else {
-                            fetchState.keepGoing = false;
+            if (!fetchState.reachedRowLimit && range.getOffset() <= fetchState.offset) {
+                mapper.create(item).forEach(row -> {
+                    fetchState.totalRowCount++;
+                    if (!fetchState.reachedRowLimit) {
+                        resultConsumer.accept(row);
+                        fetchState.length++;
+                        fetchState.reachedRowLimit = fetchState.length >= range.getLength();
+                        if (fetchState.reachedRowLimit) {
+                            if (fetchState.countRows) {
+                                fetchState.justCount = true;
+                            } else {
+                                fetchState.keepGoing = false;
+                            }
                         }
+                        fetchState.offset++;
                     }
-                    fetchState.offset++;
-                }
+                });
+            } else {
+                fetchState.totalRowCount++;
             }
 
             // Add children if the group is open.
@@ -345,7 +349,7 @@ public class MapDataStore implements DataStore {
         if (items == null) {
             return 0;
         }
-        final List<ItemImpl> list = items.copy();
+        final List<MapItem> list = items.copy();
         // FIXME : NOTE THIS COUNT IS NOT FILTERED BY THE MAPPER.
         return list.size();
     }
@@ -517,19 +521,19 @@ public class MapDataStore implements DataStore {
         private final int trimmedSize;
         private final int maxSize;
         private final MapDataStore dataStore;
-        private final Function<Stream<ItemImpl>, Stream<ItemImpl>> groupingFunction;
-        private final Function<Stream<ItemImpl>, Stream<ItemImpl>> sortingFunction;
+        private final Function<Stream<MapItem>, Stream<MapItem>> groupingFunction;
+        private final Function<Stream<MapItem>, Stream<MapItem>> sortingFunction;
         private final Consumer<Key> removeHandler;
 
-        private volatile List<ItemImpl> list;
+        private volatile List<MapItem> list;
 
         private volatile boolean trimmed = true;
 
         ItemsImpl(final int depth,
                   final long limit,
                   final MapDataStore dataStore,
-                  final Function<Stream<ItemImpl>, Stream<ItemImpl>> groupingFunction,
-                  final Function<Stream<ItemImpl>, Stream<ItemImpl>> sortingFunction,
+                  final Function<Stream<MapItem>, Stream<MapItem>> groupingFunction,
+                  final Function<Stream<MapItem>, Stream<MapItem>> sortingFunction,
                   final Consumer<Key> removeHandler,
                   final ResultStoreMapConfig resultStoreMapConfig) {
             this.depth = depth;
@@ -544,13 +548,13 @@ public class MapDataStore implements DataStore {
 
         synchronized void add(final Key groupKey, final StoredValues storedValues) {
             if (groupingFunction != null || sortingFunction != null) {
-                list.add(new ItemImpl(dataStore, groupKey, storedValues));
+                list.add(new MapItem(dataStore, groupKey, dataStore.compiledColumnsArray, storedValues));
                 trimmed = false;
                 if (list.size() > maxSize) {
                     sortAndTrim();
                 }
             } else if (list.size() < trimmedSize) {
-                list.add(new ItemImpl(dataStore, groupKey, storedValues));
+                list.add(new MapItem(dataStore, groupKey, dataStore.compiledColumnsArray, storedValues));
             } else {
                 logTruncation();
                 removeHandler.accept(groupKey);
@@ -562,7 +566,7 @@ public class MapDataStore implements DataStore {
                 // We won't group, sort or trim lists with only a single item obviously.
                 if (list.size() > 1) {
                     if (groupingFunction != null || sortingFunction != null) {
-                        Stream<ItemImpl> stream = list
+                        Stream<MapItem> stream = list
                                 .parallelStream();
 
                         // Group items.
@@ -582,7 +586,7 @@ public class MapDataStore implements DataStore {
                     if (list.size() > trimmedSize) {
                         logTruncation();
                         while (list.size() > trimmedSize) {
-                            final ItemImpl lastItem = list.removeLast();
+                            final MapItem lastItem = list.removeLast();
 
                             // Tell the remove handler that we have removed an item.
                             removeHandler.accept(lastItem.getKey());
@@ -594,32 +598,35 @@ public class MapDataStore implements DataStore {
         }
 
         private void logTruncation() {
-            dataStore.errorConsumer.add(() ->
+            dataStore.errorConsumer.add(Severity.WARNING, () ->
                     "Truncating data for vis '" +
-                            dataStore.componentId +
-                            "' to " +
-                            trimmedSize +
-                            " data points at depth " +
-                            depth);
+                    dataStore.componentId +
+                    "' to " +
+                    trimmedSize +
+                    " data points at depth " +
+                    depth);
         }
 
-        private synchronized List<ItemImpl> copy() {
+        private synchronized List<MapItem> copy() {
             sortAndTrim();
             return new ArrayList<>(list);
         }
     }
 
-    public static class ItemImpl implements Item {
+    public static class MapItem implements Item {
 
         private final MapDataStore dataStore;
         private final Key key;
+        private final CompiledColumn[] compiledColumns;
         private final StoredValues storedValues;
 
-        public ItemImpl(final MapDataStore dataStore,
-                        final Key key,
-                        final StoredValues storedValues) {
+        public MapItem(final MapDataStore dataStore,
+                       final Key key,
+                       final CompiledColumn[] compiledColumns,
+                       final StoredValues storedValues) {
             this.dataStore = dataStore;
             this.key = key;
+            this.compiledColumns = compiledColumns;
             this.storedValues = storedValues;
         }
 
@@ -631,6 +638,20 @@ public class MapDataStore implements DataStore {
         @Override
         public Val getValue(final int index) {
             return createValue(dataStore, key, storedValues, index);
+        }
+
+        @Override
+        public int size() {
+            return compiledColumns.length;
+        }
+
+        @Override
+        public Val[] toArray() {
+            final Val[] vals = new Val[size()];
+            for (int i = 0; i < vals.length; i++) {
+                vals[i] = getValue(i);
+            }
+            return vals;
         }
 
         private static Val createValue(final MapDataStore dataStore,
@@ -694,7 +715,7 @@ public class MapDataStore implements DataStore {
                                 IdentityItemMapper.INSTANCE,
                                 OffsetRange.ZERO_1000, // Max 1000 child items.
                                 fetchState,
-                                item -> result.add(((ItemImpl) item).storedValues));
+                                item -> result.add(((MapItem) item).storedValues));
                         if (result.size() > limit) {
                             if (trimTop) {
                                 return result.subList(result.size() - limit, result.size());
@@ -714,7 +735,7 @@ public class MapDataStore implements DataStore {
         }
     }
 
-    private class GroupingFunction implements Function<Stream<ItemImpl>, Stream<ItemImpl>> {
+    private class GroupingFunction implements Function<Stream<MapItem>, Stream<MapItem>> {
 
         private final CompiledColumn[] compiledColumns;
 
@@ -723,7 +744,7 @@ public class MapDataStore implements DataStore {
         }
 
         @Override
-        public Stream<ItemImpl> apply(final Stream<ItemImpl> stream) {
+        public Stream<MapItem> apply(final Stream<MapItem> stream) {
             final Map<Key, StoredValues> groupingMap = new ConcurrentHashMap<>();
             stream.forEach(item -> {
                 final Key rawKey = item.getKey();
@@ -749,7 +770,7 @@ public class MapDataStore implements DataStore {
             return groupingMap
                     .entrySet()
                     .parallelStream()
-                    .map(e -> new ItemImpl(MapDataStore.this, e.getKey(), e.getValue()));
+                    .map(e -> new MapItem(MapDataStore.this, e.getKey(), compiledColumns, e.getValue()));
         }
     }
 }

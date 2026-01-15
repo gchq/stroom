@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class ExpressionCriteria extends BaseCriteria {
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder extends AbstractBuilder<ExpressionCriteria, Builder> {
+    public static class Builder extends ExpressionCriteriaBuilder<ExpressionCriteria, Builder> {
 
         public Builder() {
 
@@ -120,16 +120,17 @@ public class ExpressionCriteria extends BaseCriteria {
     // --------------------------------------------------------------------------------
 
 
-    public abstract static class AbstractBuilder<T extends ExpressionCriteria, B extends AbstractBuilder<T, B>>
-            extends BaseCriteria.AbstractBuilder<T, B> {
+    public abstract static class ExpressionCriteriaBuilder
+            <T extends ExpressionCriteria, B extends ExpressionCriteriaBuilder<T, B>>
+            extends BaseCriteriaBuilder<T, B> {
 
         protected ExpressionOperator expression;
 
-        protected AbstractBuilder() {
+        protected ExpressionCriteriaBuilder() {
 
         }
 
-        protected AbstractBuilder(final T expressionCriteria) {
+        protected ExpressionCriteriaBuilder(final T expressionCriteria) {
             super(expressionCriteria);
             if (expressionCriteria.getExpression() != null) {
                 expression = ExpressionUtil.copyOperator(expressionCriteria.getExpression());

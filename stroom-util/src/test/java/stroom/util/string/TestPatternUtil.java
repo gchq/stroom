@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.string;
 
 import stroom.test.common.TestUtil;
@@ -5,6 +21,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import com.google.inject.TypeLiteral;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
@@ -14,6 +31,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -26,19 +46,35 @@ class TestPatternUtil {
     Stream<DynamicTest> createPatternFromWildCardFilter() {
         final List<String> months = Arrays.stream(Month.values())
                 .map(month -> month.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
-                .collect(Collectors.toList());
+                .toList();
 
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
-                .withWrappedOutputType(new TypeLiteral<List<String>>() {})
+                .withWrappedOutputType(new TypeLiteral<List<String>>() {
+                })
                 .withTestFunction(testCase -> {
                     final String filter = testCase.getInput();
                     // Case sensitive
                     final Pattern pattern = PatternUtil.createPatternFromWildCardFilter(filter, true);
 
-                    return months.stream()
+                    final List<String> results1 = months.stream()
                             .filter(pattern.asPredicate())
-                            .collect(Collectors.toList());
+                            .toList();
+
+                    final Predicate<String> predicate = PatternUtil.createPredicate(
+                            List.of(filter),
+                            Function.identity(),
+                            true,
+                            true,
+                            true);
+
+                    final List<String> results2 = months.stream()
+                            .filter(predicate)
+                            .toList();
+
+                    Assertions.assertThat(results2)
+                            .containsExactlyInAnyOrderElementsOf(results1);
+                    return results1;
                 })
                 .withSimpleEqualityAssertion()
                 .addThrowsCase(null, NullPointerException.class)
@@ -57,19 +93,34 @@ class TestPatternUtil {
     Stream<DynamicTest> createPatternFromWildCardFilter_caseInsensitive() {
         final List<String> months = Arrays.stream(Month.values())
                 .map(month -> month.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
-                .collect(Collectors.toList());
+                .toList();
 
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
-                .withWrappedOutputType(new TypeLiteral<List<String>>() {})
+                .withWrappedOutputType(new TypeLiteral<List<String>>() {
+                })
                 .withTestFunction(testCase -> {
                     final String filter = testCase.getInput();
                     final Pattern pattern = PatternUtil.createPatternFromWildCardFilter(
-                            filter, true,  false);
+                            filter, true, false);
 
-                    return months.stream()
+                    final List<String> results1 = months.stream()
                             .filter(pattern.asPredicate())
-                            .collect(Collectors.toList());
+                            .toList();
+
+                    final Predicate<String> predicate = PatternUtil.createPredicate(
+                            List.of(filter),
+                            Function.identity(),
+                            true,
+                            true,
+                            false);
+
+                    final List<String> results2 = months.stream()
+                            .filter(predicate)
+                            .toList();
+                    Assertions.assertThat(results2)
+                            .containsExactlyInAnyOrderElementsOf(results1);
+                    return results1;
                 })
                 .withSimpleEqualityAssertion()
                 .addThrowsCase(null, NullPointerException.class)
@@ -97,7 +148,8 @@ class TestPatternUtil {
 
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
-                .withWrappedOutputType(new TypeLiteral<List<String>>() {})
+                .withWrappedOutputType(new TypeLiteral<List<String>>() {
+                })
                 .withTestFunction(testCase -> {
                     final String filter = testCase.getInput();
                     final Pattern pattern = PatternUtil.createPatternFromWildCardFilter(filter, true);
@@ -138,5 +190,70 @@ class TestPatternUtil {
                 .addCase("%_%_", "\\%\\_\\%\\_")
                 .addCase("_", "\\_")
                 .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> createPredicate() {
+        // Wrap in an AtomicReference to test the toStringFunc arg of createPredicate
+        final List<AtomicReference<String>> months = Arrays.stream(Month.values())
+                .map(month -> month.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
+                .map(AtomicReference::new)
+                .toList();
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(Args.class)
+                .withWrappedOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withTestFunction(testCase -> {
+                    final Args args = testCase.getInput();
+                    final Predicate<AtomicReference<String>> predicate = PatternUtil.createPredicate(
+                            args.filters,
+                            AtomicReference::get,
+                            args.allowWildCards,
+                            args.isCompleteMatch,
+                            args.isCaseSensitive);
+
+                    return months.stream()
+                            .filter(predicate)
+                            .map(AtomicReference::get)
+                            .toList();
+                })
+                .withSimpleEqualityAssertion()
+                .addThrowsCase(null, NullPointerException.class)
+                .addCase(new Args(List.of(""), true, true, true),
+                        Collections.emptyList())
+                .addCase(new Args(List.of("May", "JUNE"), true, true, true),
+                        List.of("May"))
+                .addCase(new Args(List.of("May", "JUNE"), true, true, false),
+                        List.of("May", "June"))
+                .addCase(new Args(List.of("Ma", "JUN"), true, false, false),
+                        List.of("March", "May", "June"))
+                .addCase(new Args(List.of("Jan*"), true, true, true),
+                        List.of("January"))
+                .addCase(new Args(List.of("Ma*"), true, true, true),
+                        List.of("March", "May"))
+                .addCase(new Args(List.of("*ry"), true, true, true),
+                        List.of("January", "February"))
+                .addCase(new Args(List.of("*e*emb*"), true, true, true),
+                        List.of("September", "December"))
+                .addCase(new Args(List.of("*ay", "*e*emb*"), true, true, true),
+                        List.of("May", "September", "December"))
+                .addCase(new Args(List.of("*a*"), true, true, true),
+                        List.of("January", "February", "March", "May"))
+                .addCase(new Args(List.of("a"), true, true, true),
+                        List.of())
+                .build();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record Args(
+            List<String> filters,
+            boolean allowWildCards,
+            boolean isCompleteMatch,
+            boolean isCaseSensitive) {
+
     }
 }

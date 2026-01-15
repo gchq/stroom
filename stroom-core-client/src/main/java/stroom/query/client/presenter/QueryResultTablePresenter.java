@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,33 @@
 
 package stroom.query.client.presenter;
 
+import stroom.ai.shared.QueryTableContext;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.annotation.client.AnnotationChangeEvent;
+import stroom.annotation.shared.AnnotationDecorationFields;
+import stroom.annotation.shared.AnnotationFields;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
+import stroom.dashboard.client.input.FilterableTable;
 import stroom.dashboard.client.main.DashboardContext;
-import stroom.dashboard.client.table.AnnotationManager;
 import stroom.dashboard.client.table.ColumnFilterPresenter;
 import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ColumnValuesFilterPresenter;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.DownloadPresenter;
+import stroom.dashboard.client.table.FilterCellManager;
 import stroom.dashboard.client.table.FormatPresenter;
 import stroom.dashboard.client.table.HasComponentSelection;
+import stroom.dashboard.client.table.TableCollapseButton;
+import stroom.dashboard.client.table.TableExpandButton;
 import stroom.dashboard.client.table.TableRowStyles;
+import stroom.dashboard.client.table.TableUpdateEvent;
 import stroom.dashboard.client.table.cf.RulesPresenter;
-import stroom.dashboard.shared.ColumnValues;
-import stroom.data.grid.client.DataGridSelectionEventManager;
+import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.grid.client.MessagePanel;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.ExportFileCompleteUtil;
-import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
@@ -46,7 +52,9 @@ import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnRef;
+import stroom.query.api.ConditionalFormattingRule;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.OffsetRange;
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
@@ -55,7 +63,6 @@ import stroom.query.api.TableResult;
 import stroom.query.client.presenter.QueryResultTablePresenter.QueryResultTableView;
 import stroom.query.client.presenter.TableRow.Cell;
 import stroom.query.shared.DownloadQueryResultsRequest;
-import stroom.query.shared.QueryColumnValuesRequest;
 import stroom.query.shared.QueryResource;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.query.shared.QueryTablePreferences;
@@ -65,23 +72,21 @@ import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.PageRequest;
-import stroom.util.shared.PageResponse;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
-import stroom.widget.util.client.SafeHtmlUtil;
 
-import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safecss.shared.SafeStyles;
 import com.google.gwt.safecss.shared.SafeStylesBuilder;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -93,7 +98,6 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -104,7 +108,7 @@ import java.util.stream.Collectors;
 
 public class QueryResultTablePresenter
         extends MyPresenterWidget<QueryResultTableView>
-        implements ResultComponent, HasComponentSelection, HasDirtyHandlers {
+        implements ResultComponent, HasComponentSelection, HasDirtyHandlers, HasHandlers, FilterableTable {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -122,13 +126,18 @@ public class QueryResultTablePresenter
     private boolean pause;
 
     private OffsetRange requestedRange = OffsetRange.ZERO_100;
-    private Set<String> openGroups = null;
+    private GroupSelection groupSelection = new GroupSelection();
+
+    private final TableExpandButton expandButton;
+    private final TableCollapseButton collapseButton;
 
     private final ButtonView downloadButton;
     private final DownloadPresenter downloadPresenter;
     private final AnnotationManager annotationManager;
     private final InlineSvgToggleButton valueFilterButton;
     private final ButtonView annotateButton;
+    private final EventBus eventBus;
+    private final ButtonView askAiButton;
 
     private Supplier<QueryTablePreferences> queryTablePreferencesSupplier;
     private Consumer<QueryTablePreferences> queryTablePreferencesConsumer;
@@ -137,9 +146,13 @@ public class QueryResultTablePresenter
     private List<Column> currentColumns = Collections.emptyList();
     private QueryResultVisPresenter queryResultVisPresenter;
     private ExpressionOperator currentSelectionFilter;
-    private final TableRowStyles tableRowStyles;
+    private final TableRowStyles rowStyles;
     private DashboardContext dashboardContext;
     private DocRef currentDataSource;
+    private int maxDepth;
+
+    private boolean tableIsVisible = true;
+    private boolean annotationChanged;
 
     @Inject
     public QueryResultTablePresenter(final EventBus eventBus,
@@ -156,25 +169,24 @@ public class QueryResultTablePresenter
                                      final ColumnValuesFilterPresenter columnValuesFilterPresenter,
                                      final UserPreferencesManager userPreferencesManager) {
         super(eventBus, tableView);
+        this.eventBus = eventBus;
         this.restFactory = restFactory;
         this.locationManager = locationManager;
         this.downloadPresenter = downloadPresenter;
         this.annotationManager = annotationManager;
-        tableRowStyles = new TableRowStyles(userPreferencesManager);
+        rowStyles = new TableRowStyles(userPreferencesManager);
+        annotationManager.setTaskMonitorFactory(this);
 
         this.pagerView = pagerView;
-        this.dataGrid = new MyDataGrid<>();
+        this.dataGrid = new MyDataGrid<>(this);
         dataGrid.addStyleName("TablePresenter");
-        dataGrid.setRowStyles(tableRowStyles);
-        selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridSelectionEventManager<TableRow> selectionEventManager = new DataGridSelectionEventManager<>(
-                dataGrid,
-                selectionModel,
-                false);
-        dataGrid.setSelectionModel(selectionModel, selectionEventManager);
+        dataGrid.setRowStyles(rowStyles);
+        selectionModel = dataGrid.addDefaultSelectionModel(true);
+        pagerView.setDataWidget(dataGrid);
 
+        tableView.setTableView(pagerView);
 
-        columnsManager = new QueryTableColumnsManager(
+        columnsManager = new QueryTableColumnsManager(eventBus,
                 this,
                 formatPresenter,
                 rulesPresenterProvider,
@@ -182,10 +194,6 @@ public class QueryResultTablePresenter
                 columnValuesFilterPresenter);
         dataGrid.setHeadingListener(columnsManager);
         columnsManager.setColumnsStartIndex(1);
-
-
-        pagerView.setDataWidget(dataGrid);
-        tableView.setTableView(pagerView);
 
         // Expander column.
         expanderColumn = new com.google.gwt.user.cellview.client.Column<TableRow, Expander>(new ExpanderCell()) {
@@ -197,12 +205,18 @@ public class QueryResultTablePresenter
                 return row.getExpander();
             }
         };
-        expanderColumn.setFieldUpdater((index, result, value) -> {
-            toggleOpenGroup(result.getGroupKey());
+        expanderColumn.setFieldUpdater((index, row, value) -> {
+            toggle(row);
             refresh();
         });
 
         pagerView.getRefreshButton().setAllowPause(true);
+
+        expandButton = TableExpandButton.create();
+        pagerView.addButton(expandButton);
+
+        collapseButton = TableCollapseButton.create();
+        pagerView.addButton(collapseButton);
 
         // Download
         downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
@@ -216,10 +230,13 @@ public class QueryResultTablePresenter
 
         // Annotate
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
-        annotateButton.setVisible(securityContext
-                .hasAppPermission(AppPermission.ANNOTATIONS));
+        annotateButton.setVisible(annotationManager.isEnabled());
 
-        annotationManager.setDataSourceSupplier(() -> currentDataSource);
+        // Ask AI
+        askAiButton = pagerView.addButton(SvgPresets.AI);
+        askAiButton.setTitle("Ask Stroom AI");
+        pagerView.addButton(askAiButton);
+
         annotationManager.setColumnSupplier(() -> currentColumns);
     }
 
@@ -231,24 +248,12 @@ public class QueryResultTablePresenter
         this.dashboardContext = dashboardContext;
     }
 
-    private void toggleOpenGroup(final String group) {
-        openGroup(group, !isGroupOpen(group));
-    }
-
-    private void openGroup(final String group, final boolean open) {
-        if (openGroups == null) {
-            openGroups = new HashSet<>();
-        }
-
-        if (open) {
-            openGroups.add(group);
+    private void toggle(final TableRow row) {
+        if (groupSelection.isGroupOpen(row.getGroupKey(), row.getDepth())) {
+            groupSelection.close(row.getGroupKey());
         } else {
-            openGroups.remove(group);
+            groupSelection.open(row.getGroupKey());
         }
-    }
-
-    private boolean isGroupOpen(final String group) {
-        return openGroups != null && openGroups.contains(group);
     }
 
 //    public void setRequestedRange(final OffsetRange requestedRange) {
@@ -256,8 +261,8 @@ public class QueryResultTablePresenter
 //    }
 
     @Override
-    public Set<String> getOpenGroups() {
-        return openGroups;
+    public GroupSelection getGroupSelection() {
+        return groupSelection;
     }
 
     @Override
@@ -287,6 +292,16 @@ public class QueryResultTablePresenter
 
         registerHandler(pagerView.getRefreshButton().addClickHandler(event -> setPause(!pause, true)));
 
+        registerHandler(expandButton.addClickHandler(event -> {
+            groupSelection = expandButton.expand(groupSelection, maxDepth);
+            refresh();
+        }));
+
+        registerHandler(collapseButton.addClickHandler(event -> {
+            groupSelection = collapseButton.collapse(groupSelection);
+            refresh();
+        }));
+
         registerHandler(downloadButton.addClickHandler(event -> {
             if (currentSearchModel != null) {
                 if (currentSearchModel.isSearching()) {
@@ -313,15 +328,59 @@ public class QueryResultTablePresenter
             }
         }));
 
-        registerHandler(selectionModel.addSelectionHandler(event -> {
-            if (event.getSelectionType().isDoubleSelect()) {
-                final List<Long> annotationIdList = annotationManager.getAnnotationIdList(
-                        selectionModel.getSelectedItems());
-                if (annotationIdList.size() == 1) {
-                    annotationManager.editAnnotation(annotationIdList.get(0));
+        registerHandler(askAiButton.addClickHandler(event -> {
+            if (currentSearchModel != null) {
+                if (currentSearchModel.isSearching()) {
+                    ConfirmEvent.fire(QueryResultTablePresenter.this,
+                            "Search still in progress. AI response may be based on incomplete data. " +
+                            "Do you wish to continue? ",
+                            ok -> {
+                                if (ok) {
+                                    askStroomAi();
+                                }
+                            });
+                } else {
+                    askStroomAi();
                 }
             }
         }));
+
+        registerHandler(selectionModel.addSelectionHandler(event -> {
+            if (event.getSelectionType().isDoubleSelect()) {
+                final Set<Long> annotationIdList = annotationManager.getAnnotationIds(
+                        selectionModel.getSelectedItems());
+                if (annotationIdList.size() == 1) {
+                    annotationManager.editAnnotation(annotationIdList.iterator().next());
+                }
+            }
+        }));
+
+        registerHandler(getEventBus().addHandler(AnnotationChangeEvent.getType(), e ->
+                onAnnotationChange()));
+    }
+
+    private void onAnnotationChange() {
+        try {
+            annotationChanged = true;
+            if (tableIsVisible) {
+                annotationChanged = false;
+                final DocRef dataSource = currentDataSource;
+                if (dataSource != null &&
+                    AnnotationFields.ANNOTATIONS_PSEUDO_DOC_REF.getType().equals(dataSource.getType())) {
+                    // If this is an annotations data source then force a new search.
+                    forceNewSearch();
+                } else if (getCurrentColumns()
+                        .stream()
+                        .anyMatch(col ->
+                                NullSafe.getOrElse(col, Column::getExpression, "")
+                                        .contains(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX))) {
+                    // If the table contains annotations fields then just refresh to redecorate.
+                    refresh();
+                }
+            }
+        } catch (final RuntimeException e) {
+            GWT.log(e.getMessage());
+        }
     }
 
     public void toggleApplyValueFilters() {
@@ -347,7 +406,7 @@ public class QueryResultTablePresenter
         updatePageSize(queryTablePreferences);
 
         // Update styles and re-render
-        tableRowStyles.setConditionalFormattingRules(queryTablePreferences.getConditionalFormattingRules());
+        rowStyles.setConditionalFormattingRules(queryTablePreferences.getConditionalFormattingRules());
     }
 
     private void updatePageSize(final QueryTablePreferences queryTablePreferences) {
@@ -369,6 +428,25 @@ public class QueryResultTablePresenter
 
     public void setFocused(final boolean focused) {
         dataGrid.setFocused(focused);
+    }
+
+    public void forceNewSearch() {
+        if (currentSearchModel != null) {
+            pagerView.getRefreshButton().setRefreshing(true);
+            currentSearchModel.forceNewSearch(QueryModel.TABLE_COMPONENT_ID, result -> {
+                try {
+                    if (result != null) {
+                        setDataInternal(result);
+                    }
+                } catch (final Exception e) {
+                    GWT.log(e.getMessage());
+                } finally {
+                    pagerView.getRefreshButton().setRefreshing(currentSearchModel.isSearching());
+                }
+            });
+        } else {
+            RefreshRequestEvent.fire(this);
+        }
     }
 
     public void refresh() {
@@ -514,16 +592,14 @@ public class QueryResultTablePresenter
 
         final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
         ignoreRangeChange = true;
-
         try {
             if (componentResult != null) {
                 // Don't refresh the table unless the results have changed.
                 final TableResult tableResult = (TableResult) componentResult;
 
                 // Get result columns.
-                List<Column> columns = tableResult.getColumns();
-
-                if (columns != null && queryTablePreferences != null && queryTablePreferences.getColumns() != null) {
+                List<Column> columns = NullSafe.list(tableResult.getColumns());
+                if (queryTablePreferences != null && queryTablePreferences.getColumns() != null) {
 
                     // Create a map of the result columns by id and remember the order that the result has them in.
                     final Map<String, ColAndPosition> mapped = new HashMap<>();
@@ -591,13 +667,13 @@ public class QueryResultTablePresenter
 
                 updateColumns(columns);
 
-                final List<TableRow> values = processData(tableResult.getColumns(), tableResult.getRows());
+                final List<TableRow> values = processData(columns, tableResult.getRows());
                 final OffsetRange valuesRange = tableResult.getResultRange();
 
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || !values.isEmpty()) {
-                    tableRowStyles.setConditionalFormattingRules(getQueryTablePreferences()
+                    rowStyles.setConditionalFormattingRules(getQueryTablePreferences()
                             .getConditionalFormattingRules());
                     dataGrid.setRowData((int) valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults().intValue(), true);
@@ -607,7 +683,9 @@ public class QueryResultTablePresenter
                 downloadButton.setEnabled(true);
 
                 // Show errors if there are any.
-                messagePanel.showMessage(tableResult.getErrors());
+                messagePanel.showMessage(tableResult.getErrorMessages());
+
+                fireColumnAndDataUpdate();
 
             } else {
                 // Disable download of current results.
@@ -651,6 +729,8 @@ public class QueryResultTablePresenter
 
 //                dataGrid.redrawHeaders();
             dataGrid.resizeTableToFitColumns();
+
+            fireColumnAndDataUpdate();
         }
     }
 
@@ -660,18 +740,9 @@ public class QueryResultTablePresenter
     }
 
     private void addColumn(final Column column) {
-        final com.google.gwt.user.cellview.client.Column<TableRow, SafeHtml> col =
-                new com.google.gwt.user.cellview.client.Column<TableRow, SafeHtml>(new SafeHtmlCell()) {
-                    @Override
-                    public SafeHtml getValue(final TableRow row) {
-                        if (row == null) {
-                            return SafeHtmlUtil.NBSP;
-                        }
-
-                        return row.getValue(column.getId());
-                    }
-                };
-
+        final com.google.gwt.user.cellview.client.Column<TableRow, TableRow> col =
+                new com.google.gwt.user.cellview.client.IdentityColumn<TableRow>(
+                        new TableRowCell(annotationManager, column));
         final ColumnHeader columnHeader = new ColumnHeader(column, columnsManager);
         dataGrid.addResizableColumn(col, columnHeader, column.getWidth());
         existingColumns.add(col);
@@ -680,22 +751,7 @@ public class QueryResultTablePresenter
     private List<TableRow> processData(final List<Column> columns, final List<Row> values) {
         // See if any fields have more than 1 level. If they do then we will add
         // an expander column.
-        int maxGroup = -1;
-        final boolean showDetail = false; //getTableSettings().showDetail();
-        for (final Column column : columns) {
-            if (column.getGroup() != null) {
-                maxGroup = Math.max(maxGroup, column.getGroup());
-            }
-        }
-
-        int maxDepth = -1;
-        if (maxGroup > 0 && showDetail) {
-            maxDepth = maxGroup + 1;
-        } else if (maxGroup > 0) {
-            maxDepth = maxGroup;
-        } else if (maxGroup == 0 && showDetail) {
-            maxDepth = 1;
-        }
+        maxDepth = getMaxDepth(columns);
 
         final List<TableRow> processed = new ArrayList<>(values.size());
         for (final Row row : values) {
@@ -729,7 +785,7 @@ public class QueryResultTablePresenter
             // Create an expander for the row.
             Expander expander = null;
             if (row.getDepth() < maxDepth) {
-                final boolean open = isGroupOpen(row.getGroupKey());
+                final boolean open = groupSelection.isGroupOpen(row.getGroupKey(), row.getDepth());
                 expander = new Expander(row.getDepth(), open, false);
             } else if (row.getDepth() > 0) {
                 expander = new Expander(row.getDepth(), false, true);
@@ -738,15 +794,35 @@ public class QueryResultTablePresenter
             processed.add(new TableRow(
                     expander,
                     row.getGroupKey(),
+                    row.getAnnotationId(),
                     cellsMap,
-                    row.getMatchingRule()));
+                    row.getMatchingRule(),
+                    row.getDepth()));
         }
 
         // Set the expander column width.
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
 
+        expandButton.update(groupSelection, maxDepth);
+        collapseButton.update(groupSelection, maxDepth);
+
         return processed;
+    }
+
+    private int getMaxDepth(final List<Column> columns) {
+        int maxGroup = -1;
+        for (final Column column : columns) {
+            if (column.getGroup() != null) {
+                maxGroup = Math.max(maxGroup, column.getGroup());
+            }
+        }
+
+        int maxDepth = -1;
+        if (maxGroup > 0) {
+            maxDepth = maxGroup;
+        }
+        return maxDepth;
     }
 
     public HandlerRegistration addRefreshRequestHandler(final RefreshRequestEvent.Handler handler) {
@@ -806,7 +882,7 @@ public class QueryResultTablePresenter
     }
 
     @Override
-    public List<ColumnRef> getColumns() {
+    public List<ColumnRef> getColumnRefs() {
         return NullSafe.list(currentColumns)
                 .stream()
                 .map(col -> new ColumnRef(col.getId(), col.getName()))
@@ -821,6 +897,8 @@ public class QueryResultTablePresenter
         setQueryTablePreferences(getQueryTablePreferences().copy().columns(columns).build());
         currentColumns = columns;
         setDirty(true);
+
+        fireColumnAndDataUpdate();
     }
 
     QueryTablePreferences getQueryTablePreferences() {
@@ -833,7 +911,7 @@ public class QueryResultTablePresenter
 
     @Override
     public List<ComponentSelection> getSelection() {
-        final List<ColumnRef> columns = NullSafe.list(getColumns());
+        final List<ColumnRef> columns = NullSafe.list(getColumnRefs());
         return stroom.query.client.presenter.TableComponentSelection.create(columns, selectionModel.getSelectedItems());
     }
 
@@ -895,10 +973,13 @@ public class QueryResultTablePresenter
         }
     }
 
-    public ColumnValuesDataSupplier getDataSupplier(final Column column) {
+    @Override
+    public ColumnValuesDataSupplier getDataSupplier(final Column column,
+                                                    final List<ConditionalFormattingRule> conditionalFormattingRules) {
         return new QueryTableColumnValuesDataSupplier(restFactory,
                 currentSearchModel,
-                column);
+                column,
+                conditionalFormattingRules);
     }
 
     public void setQuery(final String query) {
@@ -910,59 +991,61 @@ public class QueryResultTablePresenter
                 .exec();
     }
 
-    public static class QueryTableColumnValuesDataSupplier extends ColumnValuesDataSupplier {
+    public void onContentTabVisible(final boolean visible) {
+        tableIsVisible = visible;
+        if (visible) {
+            if (annotationChanged) {
+                onAnnotationChange();
+            }
+        }
+    }
 
-        private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
+    @Override
+    public Element getFilterButton(final Column column) {
+        final int index = columnsManager.getColumnIndex(column);
+        if (index >= 0) {
+            final Element thead = dataGrid.getTableHeadElement().cast();
+            final Element tr = thead.getChild(0).cast();
+            final Element th = tr.getChild(index).cast();
+            return ElementUtil.findChild(th, "column-valueFilterIcon");
+        }
 
-        private final RestFactory restFactory;
-        private final QueryModel searchModel;
-        private final QuerySearchRequest searchRequest;
+        return null;
+    }
 
+    @Override
+    public List<Column> getColumns() {
+        return getCurrentColumns();
+    }
 
-        public QueryTableColumnValuesDataSupplier(
-                final RestFactory restFactory,
-                final QueryModel searchModel,
-                final stroom.query.api.Column column) {
-            super(column.copy().build());
-            this.restFactory = restFactory;
-            this.searchModel = searchModel;
+    @Override
+    public FilterCellManager getFilterCellManager() {
+        return columnsManager;
+    }
 
-            QuerySearchRequest querySearchRequest = null;
-            final QueryKey queryKey = searchModel.getCurrentQueryKey();
-            final QuerySearchRequest currentSearch = searchModel.getCurrentSearch();
+    private void fireColumnAndDataUpdate() {
+        TableUpdateEvent.fire(this);
+    }
+
+    @Override
+    public HandlerRegistration addUpdateHandler(final TableUpdateEvent.Handler handler) {
+        return eventBus.addHandler(TableUpdateEvent.getType(), handler);
+    }
+
+    private void askStroomAi() {
+        if (currentSearchModel != null) {
+            final QueryKey queryKey = currentSearchModel.getCurrentQueryKey();
+            final QuerySearchRequest currentSearch = currentSearchModel.getCurrentSearch();
             if (queryKey != null && currentSearch != null) {
-                querySearchRequest = currentSearch
+                final QuerySearchRequest request = currentSearch
                         .copy()
                         .queryKey(queryKey)
                         .storeHistory(false)
                         .requestedRange(OffsetRange.UNBOUNDED)
                         .build();
-            }
-            searchRequest = querySearchRequest;
-        }
-
-        @Override
-        protected void exec(final Range range,
-                            final Consumer<ColumnValues> dataConsumer,
-                            final RestErrorHandler errorHandler) {
-            if (searchRequest == null) {
-                dataConsumer.accept(new ColumnValues(Collections.emptyList(), PageResponse.empty()));
-
-            } else {
-                final PageRequest pageRequest = new PageRequest(range.getStart(), range.getLength());
-                final QueryColumnValuesRequest columnValuesRequest = new QueryColumnValuesRequest(
-                        searchRequest,
-                        getColumn(),
-                        getNameFilter(),
-                        pageRequest);
-
-                restFactory
-                        .create(QUERY_RESOURCE)
-                        .method(res -> res.getColumnValues(searchModel.getCurrentNode(),
-                                columnValuesRequest))
-                        .onSuccess(dataConsumer)
-                        .taskMonitorFactory(getTaskMonitorFactory())
-                        .exec();
+                AskStroomAiEvent.fire(this,
+                        currentSearchModel.getCurrentNode(),
+                        new QueryTableContext(queryKey.toString(), request));
             }
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,21 +27,31 @@ public class RequestCloseTabEvent extends GwtEvent<RequestCloseTabEvent.Handler>
     private static Type<Handler> TYPE;
     private final TabData tabData;
     private final boolean force;
+    private final Runnable runOnClose;
+    private final boolean resizeTabBar;
 
-    private RequestCloseTabEvent(final TabData tabData, final boolean force) {
+    private RequestCloseTabEvent(final TabData tabData, final boolean force, final Runnable runOnClose,
+                                 final boolean resizeTabBar) {
         this.tabData = tabData;
         this.force = force;
+        this.runOnClose = runOnClose;
+        this.resizeTabBar = resizeTabBar;
     }
 
     public static void fire(final HasHandlers handlers, final TabData tabData) {
-        handlers.fireEvent(new RequestCloseTabEvent(tabData, false));
+        handlers.fireEvent(new RequestCloseTabEvent(tabData, false, () -> {}, true));
     }
 
     /**
      * @param force If true the tab will be closed even if dirty.
      */
     public static void fire(final HasHandlers handlers, final TabData tabData, final boolean force) {
-        handlers.fireEvent(new RequestCloseTabEvent(tabData, force));
+        handlers.fireEvent(new RequestCloseTabEvent(tabData, force, () -> {}, true));
+    }
+
+    public static void fire(final HasHandlers handlers, final TabData tabData, final Runnable runOnClose,
+                            final boolean resizeTabBar) {
+        handlers.fireEvent(new RequestCloseTabEvent(tabData, false, runOnClose, resizeTabBar));
     }
 
     public static Type<Handler> getType() {
@@ -69,6 +79,13 @@ public class RequestCloseTabEvent extends GwtEvent<RequestCloseTabEvent.Handler>
         handler.onCloseTab(this);
     }
 
+    public Runnable runOnClose() {
+        return runOnClose;
+    }
+
+    public boolean resizeTabBar() {
+        return resizeTabBar;
+    }
 
     // --------------------------------------------------------------------------------
 

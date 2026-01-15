@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,12 +156,13 @@ class SecurityFilter implements Filter {
             optUserIdentity = optUserIdentity.map(userIdentity -> {
                 if (userIdentity instanceof final HasExpiry hasExpiry) {
                     if (hasExpiry.hasExpired()) {
-                        LOGGER.info("UserIdentity {} has expired, expiry: {}",
+                        LOGGER.info("UserIdentity {} obtained from session has expired, expiry: {}. " +
+                                    "Will attempt to re-authenticate using headers or will initiate code-flow.",
                                 userIdentityToString(userIdentity), hasExpiry.getExpireTime());
                         // Clear the identity, so we have to re-acquire it from headers or code flow
                         return null;
                     } else {
-                        LOGGER.debug(() -> LogUtil.message("UserIdentity {} expires in {}",
+                        LOGGER.debug(() -> LogUtil.message("UserIdentity {} obtained from session expires in {}",
                                 userIdentityToString(userIdentity), hasExpiry.getTimeTilExpired()));
                     }
                 }
@@ -284,8 +285,8 @@ class SecurityFilter implements Filter {
             return "";
         } else {
             final String id = userIdentity.getDisplayName() != null
-                    ? userIdentity.getSubjectId() + " (" + userIdentity.getDisplayName() + ")"
-                    : userIdentity.getSubjectId();
+                    ? userIdentity.subjectId() + " (" + userIdentity.getDisplayName() + ")"
+                    : userIdentity.subjectId();
             return LogUtil.message("'{}' {}",
                     id,
                     userIdentity.getClass().getSimpleName());

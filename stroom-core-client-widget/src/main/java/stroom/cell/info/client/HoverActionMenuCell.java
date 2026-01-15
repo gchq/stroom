@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.cell.info.client;
 
 import stroom.data.grid.client.EventCell;
@@ -10,15 +26,14 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
+import stroom.widget.util.client.Templates;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -41,16 +56,9 @@ public class HoverActionMenuCell<T> extends AbstractCell<T> implements EventCell
     private static final String HOVER_ACTION_MENU_CLASS_NAME = "hoverMenuAction";
     private static final SvgImage ICON_IMAGE = SvgImage.ELLIPSES_HORIZONTAL;
 
-    private static Template template;
-
     private final Function<T, String> cellTextExtractor;
     private final Function<T, List<Item>> menuCreator;
     private final HasHandlers hasHandlers;
-
-
-    static {
-        template = GWT.create(Template.class);
-    }
 
     /**
      * @param cellTextExtractor Function to supply the text value of the cell
@@ -64,10 +72,6 @@ public class HoverActionMenuCell<T> extends AbstractCell<T> implements EventCell
                                final Function<T, List<Item>> menuCreator,
                                final HasHandlers hasHandlers) {
         super(BrowserEvents.MOUSEDOWN);
-
-        if (template == null) {
-            template = GWT.create(Template.class);
-        }
 
         this.menuCreator = menuCreator;
         this.cellTextExtractor = cellTextExtractor;
@@ -148,7 +152,7 @@ public class HoverActionMenuCell<T> extends AbstractCell<T> implements EventCell
 
             final List<Item> menuItems = NullSafe.get(menuCreator, mc -> mc.apply(value));
             if (NullSafe.hasItems(menuItems)) {
-                final SafeHtml textSafeHtml = template
+                final SafeHtml textSafeHtml = Templates
                         .div("commandLinkText", SafeHtmlUtils.fromString(cellText));
 
                 sb.appendHtmlConstant("<div class=\"commandLinkContainer\">");
@@ -164,10 +168,10 @@ public class HoverActionMenuCell<T> extends AbstractCell<T> implements EventCell
                     menuItem.getCommand() != null) {
                     // Single item with a command so no menu popup needed
                     final SafeHtml tooltip = NullSafe.getOrElse(menuItem, MenuItem::getTooltip, menuItem.getText());
-                    sb.append(template.divWithTitle(tooltip.asString(), icon));
+                    sb.append(Templates.divWithTitle(tooltip.asString(), icon));
                 } else {
                     // Build the menu popup
-                    sb.append(template.divWithTitle("Actions...", icon));
+                    sb.append(Templates.divWithTitle("Actions...", icon));
                 }
 
                 sb.appendHtmlConstant("</div>");
@@ -180,18 +184,5 @@ public class HoverActionMenuCell<T> extends AbstractCell<T> implements EventCell
                 }
             }
         }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    interface Template extends SafeHtmlTemplates {
-
-        @Template("<div class=\"{0}\">{1}</div>")
-        SafeHtml div(String className, SafeHtml content);
-
-        @Template("<div title=\"{0}\">{1}</div>")
-        SafeHtml divWithTitle(String title, SafeHtml content);
     }
 }

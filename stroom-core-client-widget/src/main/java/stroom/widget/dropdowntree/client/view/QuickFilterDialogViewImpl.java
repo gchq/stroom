@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,11 @@ public class QuickFilterDialogViewImpl extends ViewWithUiHandlers<QuickFilterUiH
     @Override
     public void setDataView(final View view) {
         data.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setText(final String text, final boolean fireEvents) {
+        quickFilter.setText(text, fireEvents);
     }
 
     @UiHandler("quickFilter")

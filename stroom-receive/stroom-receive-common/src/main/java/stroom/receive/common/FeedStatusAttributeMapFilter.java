@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.receive.common;
 
 import stroom.meta.api.AttributeMap;
@@ -6,46 +22,50 @@ import stroom.proxy.StroomStatusCode;
 import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequestV2;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
-import stroom.util.metrics.Metrics;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserDesc;
 
-import com.codahale.metrics.Meter;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.EnumMap;
-
-@Singleton
+/**
+ * Gets the feed status from the {@link stroom.feed.shared.FeedDoc}.
+ * <ul>
+ *     <li>Receive -> return true</li>
+ *     <li>Reject -> throw {@link StroomStreamException}</li>
+ *     <li>Drop -> return false</li>
+ * </ul>
+ * <p>
+ * If the {@link stroom.feed.shared.FeedDoc} does not exist then the filter will throw
+ * a {@link StroomStreamException}.
+ * </p>
+ * <p>
+ * If auto content creation is enabled on stroom, then when the check is performed,
+ * the feed will be auto-created (if various conditions for that are met) and this
+ * filter will then return true.
+ * </p>
+ */
 public class FeedStatusAttributeMapFilter implements AttributeMapFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FeedStatusAttributeMapFilter.class);
 
     private final Provider<FeedStatusService> feedStatusServiceProvider;
-    private final EnumMap<FeedStatus, Meter> feedStatusMeters;
-
+    private final ReceiveActionMetricsRecorder receiveActionMetricsRecorder;
 
     @Inject
     public FeedStatusAttributeMapFilter(final Provider<FeedStatusService> feedStatusServiceProvider,
-                                        final Metrics metrics) {
+                                        final ReceiveActionMetricsRecorder receiveActionMetricsRecorder) {
         this.feedStatusServiceProvider = feedStatusServiceProvider;
-        feedStatusMeters = new EnumMap<>(FeedStatus.class);
-        for (final FeedStatus feedStatus : FeedStatus.values()) {
-            final Meter meter = metrics.registrationBuilder(getClass())
-                    .addNamePart("feedStatus")
-                    .addNamePart(feedStatus.name())
-                    .meter()
-                    .createAndRegister();
-            feedStatusMeters.put(feedStatus, meter);
-        }
+        this.receiveActionMetricsRecorder = receiveActionMetricsRecorder;
     }
 
     @Override
     public boolean filter(final AttributeMap attributeMap) {
-        final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
+        final String feedName = NullSafe.get(
+                attributeMap.get(StandardHeaderArguments.FEED),
+                String::trim);
         final UserDesc userDesc;
         // These two have been added by RequestAuthenticatorImpl
         final String uploadUserId = NullSafe.get(
@@ -73,7 +93,7 @@ public class FeedStatusAttributeMapFilter implements AttributeMapFilter {
             case Receive -> true;
             case Drop -> false;
             case Reject -> {
-                NullSafe.consume(feedStatusMeters.get(feedStatus), Meter::mark);
+                receiveActionMetricsRecorder.record(feedStatus);
                 throw new StroomStreamException(
                         StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA, attributeMap);
             }
@@ -84,13 +104,14 @@ public class FeedStatusAttributeMapFilter implements AttributeMapFilter {
                 yield true;
             }
         };
-        NullSafe.consume(feedStatusMeters.get(feedStatus), Meter::mark);
+        receiveActionMetricsRecorder.record(feedStatus);
 
         LOGGER.debug("Returning {} for feed '{}', feedStatus: {}", result, feedName, feedStatus);
         return result;
     }
 
     private GetFeedStatusResponse getFeedStatus(final GetFeedStatusRequestV2 request) {
+        // Proxy and stroom each have a different FeedStatusService impl bound.
         final GetFeedStatusResponse response = feedStatusServiceProvider.get()
                 .getFeedStatus(request);
         LOGGER.debug("getFeedStatus() " + request + " -> " + response);

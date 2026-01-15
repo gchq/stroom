@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -194,7 +194,7 @@ public class CommonTranslationTestHelper {
                 final DocRef feedDocRef = storeCreationTool.getOrCreateFeedDoc(feedName);
                 // Create the event pipeline.
                 storeCreationTool.createEventPipelineAndProcessors(
-                        feedName,
+                        feedDocRef,
                         TextConverterType.DATA_SPLITTER,
                         CSV_WITH_HEADING,
                         XSLT_NETWORK_MONITORING,

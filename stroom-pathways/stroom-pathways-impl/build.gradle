@@ -1,0 +1,51 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+ext.moduleName = 'stroom.pathways.impl'
+
+dependencies {
+//implementation project(':stroom-cluster:stroom-cluster-lock-api')
+    implementation project(':stroom-bytebuffer')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-data:stroom-data-store-api')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-lmdb')
+    implementation project(':stroom-meta:stroom-meta-api')
+    implementation project(':stroom-node:stroom-node-api')
+    implementation project(':stroom-pipeline')
+    implementation project(':stroom-state:stroom-planb-impl')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.guice
+    implementation libs.jakarta.inject
+    implementation libs.jakarta.validation.api
+    implementation libs.kryo
+    implementation libs.lmdbjava
+    implementation libs.restygwt
+    implementation libs.saxon.he
+    implementation libs.slf4j.api
+    implementation libs.ws.rs.api
+
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
+}

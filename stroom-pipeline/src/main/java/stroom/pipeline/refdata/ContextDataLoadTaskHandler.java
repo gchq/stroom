@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata;
@@ -43,6 +42,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.StreamCloser;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -107,7 +107,8 @@ class ContextDataLoadTaskHandler {
             // permission on can be read.
             securityContext.useAsRead(() -> {
                 final StoredErrorReceiver storedErrorReceiver = new StoredErrorReceiver();
-                errorReceiver = new ErrorReceiverIdDecorator(getClass().getSimpleName(), storedErrorReceiver);
+                errorReceiver = new ErrorReceiverIdDecorator(
+                        new ElementId(getClass().getSimpleName()), storedErrorReceiver);
                 errorReceiverProxy.setErrorReceiver(errorReceiver);
 
                 if (inputStream != null) {
@@ -193,7 +194,7 @@ class ContextDataLoadTaskHandler {
                         if (LOGGER.isDebugEnabled()) {
                             LOGGER.debug("Finished loading context data " + contextIdentifier);
                         }
-                    } catch (final  IOException | RuntimeException e) {
+                    } catch (final IOException | RuntimeException e) {
                         log(Severity.FATAL_ERROR, "Error loading context data: " + e.getMessage(), e);
                     } finally {
                         try {
@@ -218,7 +219,7 @@ class ContextDataLoadTaskHandler {
             if (msg == null) {
                 msg = e.toString();
             }
-            errorReceiver.log(severity, null, getClass().getSimpleName(), msg, e);
+            errorReceiver.log(severity, null, new ElementId(getClass().getSimpleName()), msg, e);
         }
     }
 }

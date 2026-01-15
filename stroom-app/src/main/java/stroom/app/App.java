@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
+import stroom.node.impl.NodeConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
@@ -150,7 +151,8 @@ public class App extends Application<Config> {
     public void initialize(final Bootstrap<Config> bootstrap) {
 
         // Dropwizard 2.x no longer fails on unknown properties by default but we want it to.
-        bootstrap.getObjectMapper().enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        bootstrap.getObjectMapper()
+                .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
         // This allows us to use env var templating and relative (to stroom home) paths in the YAML configuration.
         bootstrap.setConfigurationSourceProvider(StroomYamlUtil.createConfigurationSourceProvider(
@@ -163,10 +165,13 @@ public class App extends Application<Config> {
                 "index.html",
                 ResourcePaths.UI_SERVLET_NAME));
 
+        // Admin servlet for Prometheus to scrape (pull) metrics
+//        bootstrap.addBundle(new PrometheusBundle());
+
         addCliCommands(bootstrap);
 
         // If we want to use jakarta.validation on our rest resources with our own custom validation annotations
-        // then we need to set the ValidatorFactory. As our main Guice Injector is not available yet we need to
+        // then we need to set the ValidatorFactory. As our main Guice Injector is not available, yet we need to
         // create one just for the REST validation
         bootstrap.setValidatorFactory(validationOnlyInjector.getInstance(ValidatorFactory.class));
     }
@@ -249,22 +254,16 @@ public class App extends Application<Config> {
 
         // Add health checks
         healthChecks.register();
-
         // Add filters
         filters.register();
-
         // Add servlets
         servlets.register();
-
         // Add admin port/path servlets. Needs to be called after healthChecks.register()
         adminServlets.register();
-
         // Add session listeners.
         sessionListeners.register();
-
         // Add all injectable rest resources.
         restResources.register();
-
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
 
@@ -274,12 +273,15 @@ public class App extends Application<Config> {
     }
 
     private void showNodeInfo(final Config configuration) {
-        LOGGER.info(""
-                    + "\n********************************************************************************"
-                    + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()
-                    + "\n  Stroom temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
-                    + "\n  Node name:     " + getNodeName(configuration.getYamlAppConfig())
-                    + "\n********************************************************************************");
+        LOGGER.info("""
+                        ********************************************************************************
+                          Stroom home:   {}
+                          Stroom temp:   {}
+                          Node name:     {}
+                        ********************************************************************************""",
+                homeDirProvider.get().toAbsolutePath().normalize(),
+                tempDirProvider.get().toAbsolutePath().normalize(),
+                getNodeName(configuration.getYamlAppConfig()));
     }
 
     private void warnAboutDefaultOpenIdCreds(final Config configuration, final Injector injector) {
@@ -316,11 +318,7 @@ public class App extends Application<Config> {
     }
 
     private String getNodeName(final AppConfig appConfig) {
-        return appConfig != null
-                ? (appConfig.getNodeConfig() != null
-                ? appConfig.getNodeConfig().getNodeName()
-                : null)
-                : null;
+        return NullSafe.get(appConfig, AppConfig::getNodeConfig, NodeConfig::getNodeName);
     }
 
     private void validateAppConfig(final Config config, final Path configFile) {

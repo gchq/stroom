@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,6 @@ import stroom.query.api.OffsetRange;
 import stroom.query.api.Result;
 import stroom.query.api.ResultRequest;
 import stroom.query.api.ResultRequest.Fetch;
-import stroom.query.api.Row;
 import stroom.query.api.TableResult;
 import stroom.query.api.TableResultBuilder;
 import stroom.query.api.TableSettings;
@@ -33,7 +32,6 @@ import stroom.util.shared.NullSafe;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class TableResultCreator implements ResultCreator {
@@ -46,6 +44,12 @@ public class TableResultCreator implements ResultCreator {
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
     private final boolean cacheLastResult;
     private TableResult lastResult;
+
+    public TableResultCreator() {
+        this(new FormatterFactory(null),
+                new ExpressionPredicateFactory(),
+                false);
+    }
 
     public TableResultCreator(final FormatterFactory formatterFactory,
                               final ExpressionPredicateFactory expressionPredicateFactory) {
@@ -88,28 +92,39 @@ public class TableResultCreator implements ResultCreator {
             resultBuilder.columns(columns);
 
             if (RowValueFilter.matches(columns)) {
-                // Create the row creator.
-                final ItemMapper<Row> rowCreator = ConditionalFormattingRowCreator.create(
-                        dataStore.getColumns(),
+                ItemMapper mapper;
+                mapper = SimpleMapper.create(dataStore.getColumns(), columns);
+                mapper = FilteredMapper.create(
                         columns,
                         tableSettings.applyValueFilters(),
-                        formatterFactory,
-                        keyFactory,
                         tableSettings.getAggregateFilter(),
+                        dataStore.getDateTimeSettings(),
+                        errorConsumer,
+                        expressionPredicateFactory,
+                        mapper);
+
+                mapper = ConditionalFormattingMapper.create(resultRequest.getSourceComponentId(),
+                        resultRequest.getSourceComponentName(),
+                        columns,
                         tableSettings.getConditionalFormattingRules(),
                         dataStore.getDateTimeSettings(),
                         expressionPredicateFactory,
-                        errorConsumer);
+                        errorConsumer,
+                        mapper);
 
-                final Set<Key> openGroups = keyFactory.decodeSet(resultRequest.getOpenGroups());
+                final RowCreator rowCreator = SimpleRowCreator
+                        .create(columns, formatterFactory, keyFactory, errorConsumer);
+                final OpenGroups openGroups = OpenGroupsImpl.fromGroupSelection(
+                        resultRequest.getGroupSelection(), keyFactory);
+
                 dataStore.fetch(
                         columns,
                         range,
-                        new OpenGroupsImpl(openGroups),
+                        openGroups,
                         resultRequest.getTimeFilter(),
-                        rowCreator,
-                        row -> {
-                            resultBuilder.addRow(row);
+                        mapper,
+                        item -> {
+                            resultBuilder.addRow(rowCreator.create(item));
                             pageLength.incrementAndGet();
                         },
                         resultBuilder::totalResults);
@@ -125,7 +140,7 @@ public class TableResultCreator implements ResultCreator {
         }
 
         resultBuilder.componentId(resultRequest.getComponentId());
-        resultBuilder.errors(errorConsumer.getErrors());
+        resultBuilder.errorMessages(errorConsumer.getErrorMessages());
         resultBuilder.resultRange(new OffsetRange(offset, pageLength.get()));
         TableResult result = resultBuilder.build();
 

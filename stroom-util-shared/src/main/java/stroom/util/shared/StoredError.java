@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public final class StoredError implements Marker, Comparable<StoredError> {
     @JsonProperty
     private final Location location;
     @JsonProperty
-    private final String elementId;
+    private final ElementId elementId;
     @JsonProperty
     private final String message;
     @JsonProperty
@@ -47,7 +47,7 @@ public final class StoredError implements Marker, Comparable<StoredError> {
 
     public StoredError(final Severity severity,
                        final Location location,
-                       final String elementId,
+                       final ElementId elementId,
                        final String message) {
         this(severity, location, elementId, message, null);
 
@@ -56,7 +56,7 @@ public final class StoredError implements Marker, Comparable<StoredError> {
     @JsonCreator
     public StoredError(@JsonProperty("severity") final Severity severity,
                        @JsonProperty("location") final Location location,
-                       @JsonProperty("elementId") final String elementId,
+                       @JsonProperty("elementId") final ElementId elementId,
                        @JsonProperty("message") final String message,
                        @JsonProperty("errorType") final ErrorType errorType) {
         this.severity = severity;
@@ -75,7 +75,7 @@ public final class StoredError implements Marker, Comparable<StoredError> {
         return location;
     }
 
-    public String getElementId() {
+    public ElementId getElementId() {
         return elementId;
     }
 
@@ -100,8 +100,8 @@ public final class StoredError implements Marker, Comparable<StoredError> {
         }
         final StoredError that = (StoredError) o;
         return Objects.equals(location, that.location) &&
-                Objects.equals(message, that.message) &&
-                Objects.equals(errorType, that.errorType);
+               Objects.equals(message, that.message) &&
+               Objects.equals(errorType, that.errorType);
     }
 
     @Override
