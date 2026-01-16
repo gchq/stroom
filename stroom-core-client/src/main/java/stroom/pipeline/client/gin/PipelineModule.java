@@ -73,11 +73,17 @@ import stroom.processor.client.presenter.ProcessorEditPresenter;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
+import stroom.processor.client.presenter.ProcessorProfileEditPresenter;
+import stroom.processor.client.presenter.ProcessorProfileEditPresenter.ProcessorProfileEditView;
+import stroom.processor.client.presenter.ProfilePeriodEditPresenter;
+import stroom.processor.client.presenter.ProfilePeriodEditPresenter.ProfilePeriodEditView;
 import stroom.processor.client.view.BatchProcessorFilterEditViewImpl;
 import stroom.processor.client.view.EditFeedDependencyViewImpl;
 import stroom.processor.client.view.FeedDependencyViewImpl;
 import stroom.processor.client.view.ProcessorEditViewImpl;
+import stroom.processor.client.view.ProcessorProfileEditViewImpl;
 import stroom.processor.client.view.ProcessorViewImpl;
+import stroom.processor.client.view.ProfilePeriodEditViewImpl;
 import stroom.processor.task.client.ProcessorTaskPlugin;
 import stroom.processor.task.client.presenter.ProcessorTaskPresenter;
 import stroom.processor.task.client.presenter.ProcessorTaskPresenter.ProcessorTaskView;
@@ -137,6 +143,14 @@ public class PipelineModule extends PluginModule {
                 EditFeedDependencyPresenter.class,
                 EditFeedDependencyView.class,
                 EditFeedDependencyViewImpl.class);
+        bindPresenterWidget(
+                ProcessorProfileEditPresenter.class,
+                ProcessorProfileEditView.class,
+                ProcessorProfileEditViewImpl.class);
+        bindPresenterWidget(
+                ProfilePeriodEditPresenter.class,
+                ProfilePeriodEditView.class,
+                ProfilePeriodEditViewImpl.class);
 
         bindPlugin(ProcessorTaskPlugin.class);
         bindPresenterWidget(ProcessorTaskPresenter.class, ProcessorTaskView.class,

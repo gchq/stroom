@@ -37,7 +37,7 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.LuceneIndexDoc;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
@@ -75,7 +75,7 @@ public class IndexShardPresenter
     private final MyDataGrid<IndexShard> dataGrid;
     private final TooltipPresenter tooltipPresenter;
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
     private final ClientSecurityContext securityContext;
     private final DateTimeFormatter dateTimeFormatter;
     private RestDataProvider<IndexShard, ResultPage<IndexShard>> dataProvider;
@@ -95,7 +95,7 @@ public class IndexShardPresenter
                                final PagerView view,
                                final TooltipPresenter tooltipPresenter,
                                final RestFactory restFactory,
-                               final NodeManager nodeManager,
+                               final NodeClient nodeClient,
                                final ClientSecurityContext securityContext,
                                final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
@@ -105,7 +105,7 @@ public class IndexShardPresenter
 
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
         this.securityContext = securityContext;
         this.dateTimeFormatter = dateTimeFormatter;
 
@@ -541,7 +541,7 @@ public class IndexShardPresenter
 
     private void doFlush() {
         delayedUpdate.reset();
-        nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
+        nodeClient.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
             restFactory
                     .create(INDEX_RESOURCE)
                     .method(res -> res.flushIndexShards(nodeName, selectionCriteria))
@@ -558,7 +558,7 @@ public class IndexShardPresenter
 
     private void doDelete() {
         delayedUpdate.reset();
-        nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
+        nodeClient.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
             restFactory
                     .create(INDEX_RESOURCE)
                     .method(res -> res.deleteIndexShards(nodeName, selectionCriteria))

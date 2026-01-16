@@ -25,7 +25,7 @@ import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.item.client.SelectionBox;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -49,7 +49,7 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
     private static final IndexVolumeResource INDEX_VOLUME_RESOURCE = GWT.create(IndexVolumeResource.class);
 
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
 
     private IndexVolume volume;
 
@@ -57,17 +57,17 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
     public IndexVolumeEditPresenter(final EventBus eventBus,
                                     final IndexVolumeEditView view,
                                     final RestFactory restFactory,
-                                    final NodeManager nodeManager) {
+                                    final NodeClient nodeClient) {
         super(eventBus, view);
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
     }
 
     void show(final IndexVolume volume,
               final String caption,
               final Consumer<IndexVolume> consumer,
               final TaskMonitorFactory taskMonitorFactory) {
-        nodeManager.listAllNodes(
+        nodeClient.listAllNodes(
                 nodeNames -> {
                     read(nodeNames, volume);
 

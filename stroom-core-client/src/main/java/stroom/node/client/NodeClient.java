@@ -32,14 +32,14 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class NodeManager {
+public class NodeClient {
 
     private static final NodeResource NODE_RESOURCE = GWT.create(NodeResource.class);
 
     private final RestFactory restFactory;
 
     @Inject
-    NodeManager(final RestFactory restFactory) {
+    NodeClient(final RestFactory restFactory) {
         this.restFactory = restFactory;
     }
 

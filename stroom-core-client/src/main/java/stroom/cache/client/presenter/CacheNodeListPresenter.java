@@ -25,7 +25,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
@@ -76,7 +76,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
     private final MyDataGrid<CacheInfo> dataGrid;
 
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
 
     private final Map<String, List<CacheInfo>> responseMap = new HashMap<>();
 
@@ -94,14 +94,14 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
     public CacheNodeListPresenter(final EventBus eventBus,
                                   final PagerView view,
                                   final RestFactory restFactory,
-                                  final NodeManager nodeManager) {
+                                  final NodeClient nodeClient) {
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
         view.setDataWidget(dataGrid);
 
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
         this.delayedUpdate = new DelayedUpdate(this::update);
     }
 
@@ -300,7 +300,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                         CacheNodeListPresenter.this.range = range;
                         CacheNodeListPresenter.this.dataConsumer = dataConsumer;
                         delayedUpdate.reset();
-                        nodeManager.listAllNodes(nodeNames ->
+                        nodeClient.listAllNodes(nodeNames ->
                                 fetchTasksForNodes(dataConsumer, errorHandler, nodeNames), errorHandler, getView());
                     }
                 };

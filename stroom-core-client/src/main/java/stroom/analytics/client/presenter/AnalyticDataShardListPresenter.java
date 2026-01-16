@@ -28,7 +28,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DelayedUpdate;
@@ -61,7 +61,7 @@ public class AnalyticDataShardListPresenter
     private final MyDataGrid<AnalyticDataShard> dataGrid;
     private final MultiSelectionModelImpl<AnalyticDataShard> selectionModel;
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
     private final DateTimeFormatter dateTimeFormatter;
     //    private final ButtonView newButton;
 //    private final ButtonView openButton;
@@ -80,11 +80,11 @@ public class AnalyticDataShardListPresenter
     public AnalyticDataShardListPresenter(final EventBus eventBus,
                                           final PagerView view,
                                           final RestFactory restFactory,
-                                          final NodeManager nodeManager,
+                                          final NodeClient nodeClient,
                                           final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
         this.dateTimeFormatter = dateTimeFormatter;
 
         dataGrid = new MyDataGrid<>(this);
@@ -162,7 +162,7 @@ public class AnalyticDataShardListPresenter
                            final Consumer<ResultPage<AnalyticDataShard>> dataConsumer,
                            final RestErrorHandler errorHandler,
                            final TaskMonitorFactory taskMonitorFactory) {
-        nodeManager.listAllNodes(
+        nodeClient.listAllNodes(
                 nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames, taskMonitorFactory),
                 errorHandler, taskMonitorFactory);
     }

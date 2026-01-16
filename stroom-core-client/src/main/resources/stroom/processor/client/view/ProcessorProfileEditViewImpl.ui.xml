@@ -1,0 +1,18 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:i="urn:import:stroom.item.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="profileName" label="Profile Name">
+            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="nodeGroup" label="Node Group">
+            <i:SelectionBox ui:field="nodeGroup" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="nodeList" label="Nodes" addStyleNames="dock-max">
+            <g:SimplePanel ui:field="list" styleName="dock-max form-control-border form-control-background"/>
+        </form:FormGroup>
+        <g:SimplePanel ui:field="timeZone" addStyleNames="form-group"/>
+    </g:FlowPanel>
+</ui:UiBinder> 

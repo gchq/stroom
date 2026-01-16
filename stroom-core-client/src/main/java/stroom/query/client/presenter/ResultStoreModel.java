@@ -19,7 +19,7 @@ package stroom.query.client.presenter;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.FindResultStoreCriteria;
 import stroom.query.api.QueryKey;
@@ -47,7 +47,7 @@ public class ResultStoreModel {
     private final FindResultStoreCriteria criteria = new FindResultStoreCriteria();
 
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
     // nodeName => List<ResultStoreInfo>
     private final Map<String, List<ResultStoreInfo>> responseMap = new HashMap<>();
     private final DelayedUpdate delayedUpdate;
@@ -56,9 +56,9 @@ public class ResultStoreModel {
 
     @Inject
     public ResultStoreModel(final RestFactory restFactory,
-                            final NodeManager nodeManager) {
+                            final NodeClient nodeClient) {
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
         delayedUpdate = new DelayedUpdate(this::update);
     }
 
@@ -76,7 +76,7 @@ public class ResultStoreModel {
                             final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
                             final RestErrorHandler errorHandler,
                             final TaskMonitorFactory taskMonitorFactory) {
-        nodeManager.listAllNodes(
+        nodeClient.listAllNodes(
                 nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames, taskMonitorFactory),
                 errorHandler, taskMonitorFactory);
     }

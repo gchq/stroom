@@ -21,6 +21,7 @@ import stroom.job.api.ScheduledJobsBinder;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.Node;
+import stroom.node.shared.NodeGroupResource;
 import stroom.node.shared.NodeResource;
 import stroom.pipeline.writer.ExtendedPathCreator;
 import stroom.util.RunnableWrapper;
@@ -38,10 +39,13 @@ public class NodeModule extends AbstractModule {
         bind(NodeInfo.class).to(NodeInfoImpl.class);
         bind(NodeService.class).to(NodeServiceImpl.class);
         bind(NodeResource.class).to(NodeResourceImpl.class);
+        bind(NodeGroupService.class).to(NodeGroupServiceImpl.class);
+        bind(NodeGroupResource.class).to(NodeGroupResourceImpl.class);
         bind(PathCreator.class).to(ExtendedPathCreator.class);
 
         RestResourcesBinder.create(binder())
-                .bind(NodeResourceImpl.class);
+                .bind(NodeResourceImpl.class)
+                .bind(NodeGroupResourceImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

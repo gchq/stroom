@@ -37,9 +37,6 @@ import java.util.Objects;
  */
 public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RangeStoreKeySerde.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RangeStoreKeySerde.class);
-
     public static final int UID_OFFSET = 0;
     public static final int RANGE_FROM_OFFSET = UID_OFFSET + UID.UID_ARRAY_LENGTH;
     public static final int RANGE_TO_OFFSET = RANGE_FROM_OFFSET + Long.BYTES;

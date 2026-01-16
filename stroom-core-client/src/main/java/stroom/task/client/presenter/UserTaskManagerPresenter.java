@@ -18,7 +18,7 @@ package stroom.task.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.task.client.event.OpenUserTaskManagerEvent;
 import stroom.task.client.event.OpenUserTaskManagerHandler;
 import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerProxy;
@@ -61,7 +61,7 @@ public class UserTaskManagerPresenter
 
     private final Provider<UserTaskPresenter> taskPresenterProvider;
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
     private final Map<TaskProgress, UserTaskPresenter> taskPresenterMap = new HashMap<>();
     private final Map<TaskId, TaskProgress> idMap = new HashMap<>();
     private final Timer refreshTimer;
@@ -81,11 +81,11 @@ public class UserTaskManagerPresenter
                                     final UserTaskManagerProxy proxy,
                                     final Provider<UserTaskPresenter> taskPresenterProvider,
                                     final RestFactory restFactory,
-                                    final NodeManager nodeManager) {
+                                    final NodeClient nodeClient) {
         super(eventBus, view, proxy);
         this.taskPresenterProvider = taskPresenterProvider;
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
 
         refreshTimer = new Timer() {
             @Override
@@ -122,7 +122,7 @@ public class UserTaskManagerPresenter
     private void refreshTaskStatus() {
         delayedUpdate.reset();
         // Stop this refreshing more than once before the call returns.
-        nodeManager.listAllNodes(
+        nodeClient.listAllNodes(
                 this::refresh,
                 throwable -> {
                 },

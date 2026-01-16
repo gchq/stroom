@@ -36,8 +36,6 @@ import org.lmdbjava.GetOp;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.PutFlags;
 import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
@@ -97,8 +95,7 @@ import java.util.stream.StreamSupport;
 public abstract class AbstractLmdbDb<K, V>
         implements LmdbDb {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLmdbDb.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(AbstractLmdbDb.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractLmdbDb.class);
     private static final PutFlags[] NO_OVERWRITE = new PutFlags[]{PutFlags.MDB_NOOVERWRITE};
     private static final PutFlags[] NO_OVERWRITE_AND_APPEND = new PutFlags[]{
             PutFlags.MDB_NOOVERWRITE,
@@ -139,9 +136,9 @@ public abstract class AbstractLmdbDb<K, V>
         final int keySerdeCapacity = keySerde.getBufferCapacity();
         final int envMaxKeySize = lmdbEnvironment.getMaxKeySize();
         if (keySerdeCapacity > envMaxKeySize) {
-            LAMBDA_LOGGER.debug(() -> LogUtil.message("Key serde {} capacity {} is greater than the maximum " +
-                                                      "key size for the environment {}. " +
-                                                      "The max environment key size {} will be used instead.",
+            LOGGER.debug(() -> LogUtil.message("Key serde {} capacity {} is greater than the maximum " +
+                                               "key size for the environment {}. " +
+                                               "The max environment key size {} will be used instead.",
                     keySerde.getClass().getName(), keySerdeCapacity, envMaxKeySize, envMaxKeySize));
         }
         this.keyBufferCapacity = Math.min(envMaxKeySize, keySerdeCapacity);

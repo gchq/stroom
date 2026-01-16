@@ -23,7 +23,7 @@ import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.OverrideValue;
 import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
@@ -72,7 +72,7 @@ public final class ManageGlobalPropertyEditPresenter
     private static final String UNKNOWN_MSG = "[Unknown]";
 
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
     private final Set<String> unreachableNodes = new HashSet<>();
     private final ClientSecurityContext securityContext;
     private final UiConfigCache clientPropertyCache;
@@ -102,14 +102,14 @@ public final class ManageGlobalPropertyEditPresenter
             final EventBus eventBus,
             final GlobalPropertyEditView view,
             final RestFactory restFactory,
-            final NodeManager nodeManager,
+            final NodeClient nodeClient,
             final ClientSecurityContext securityContext,
             final UiConfigCache clientPropertyCache,
             final Provider<ConfigPropertyClusterValuesPresenter> clusterValuesPresenterProvider) {
 
         super(eventBus, view);
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
         this.securityContext = securityContext;
         this.clientPropertyCache = clientPropertyCache;
         this.clusterValuesPresenterProvider = clusterValuesPresenterProvider;
@@ -264,7 +264,7 @@ public final class ManageGlobalPropertyEditPresenter
     private void refreshYamlOverrideForAllNodes() {
         // For each node fire off a request to get the yaml override for that node
         unreachableNodes.clear();
-        nodeManager.listEnabledNodes(
+        nodeClient.listEnabledNodes(
                 nodeNames -> nodeNames.forEach(this::refreshYamlOverrideForNode),
                 throwable -> showError(throwable, "Error getting list of all nodes", null),
                 this);

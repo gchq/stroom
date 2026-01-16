@@ -70,7 +70,6 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             ProcessorFilterFields.FIELD_ID, PROCESSOR_FILTER.ID);
@@ -126,7 +125,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
+        LOGGER.debug(() -> LogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
 
         return JooqUtil.transactionResult(
                 processorDbConnProvider,
@@ -436,7 +435,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                                 rec.get(PROCESSOR_FILTER.UUID),
                                 rec.get(PROCESSOR_FILTER_TRACKER.ID))));
 
-        LAMBDA_LOGGER.debug(() ->
+        LOGGER.debug(() ->
                 LogUtil.message("Found {} logically deleted filters with an update time older than {}",
                         result.size(), deleteThreshold));
 
@@ -470,15 +469,15 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 }
             } catch (final DataAccessException e) {
                 if (e.getCause() instanceof final SQLIntegrityConstraintViolationException sqlEx) {
-                    LAMBDA_LOGGER.debug(() -> LogUtil.message("Expected constraint violation, dbKeys: {} - {}",
+                    LOGGER.debug(() -> LogUtil.message("Expected constraint violation, dbKeys: {} - {}",
                             dbKeys, LogUtil.exceptionMessage(e)), e);
                 } else {
                     throw e;
                 }
             }
         });
-        LAMBDA_LOGGER.debug(() -> "physicalDeleteOldProcessorFilters returning: "
-                                  + processorFilterUuids.size() + " UUIDs");
+        LOGGER.debug(() -> "physicalDeleteOldProcessorFilters returning: "
+                           + processorFilterUuids.size() + " UUIDs");
         return processorFilterUuids;
     }
 

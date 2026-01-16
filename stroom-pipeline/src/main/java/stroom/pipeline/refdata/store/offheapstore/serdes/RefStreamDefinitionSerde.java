@@ -31,12 +31,9 @@ import org.slf4j.LoggerFactory;
 
 public class RefStreamDefinitionSerde extends AbstractKryoSerde<RefStreamDefinition> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RefStreamDefinitionSerde.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefStreamDefinitionSerde.class);
-
     private static final int BUFFER_CAPACITY = (VariableLengthUUIDKryoSerializer.BUFFER_CAPACITY * 2) +
-            (AbstractKryoSerde.VARIABLE_LENGTH_LONG_BYTES * 2) +
-            AbstractKryoSerde.BOOLEAN_BYTES;
+                                               (AbstractKryoSerde.VARIABLE_LENGTH_LONG_BYTES * 2) +
+                                               AbstractKryoSerde.BOOLEAN_BYTES;
 
     private final VariableLengthUUIDKryoSerializer variableLengthUUIDKryoSerializer;
 

@@ -253,7 +253,7 @@ public class ByteBufferUtils {
                     : right.get(iRight) - leftBytes[i];
         }
 //        final int cmp2 = cmp;
-//        LAMBDA_LOGGER.info(() -> LogUtil.message("Comparing {}, {}, {}, {} - {}",
+//        LOGGER.info(() -> LogUtil.message("Comparing {}, {}, {}, {} - {}",
 //                byteBufferInfo(left), leftPos,
 //                byteBufferInfo(right), rightPos,
 //                cmp2));
@@ -350,7 +350,7 @@ public class ByteBufferUtils {
                     : right.get(iRight) - left.get(iLeft);
         }
 //        final int cmp2 = cmp;
-//        LAMBDA_LOGGER.info(() -> LogUtil.message("Comparing {}, {}, {}, {} - {}",
+//        LOGGER.info(() -> LogUtil.message("Comparing {}, {}, {}, {} - {}",
 //                byteBufferInfo(left), leftPos,
 //                byteBufferInfo(right), rightPos,
 //                cmp2));

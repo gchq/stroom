@@ -26,7 +26,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.node.client.event.NodeChangeEvent;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
@@ -70,7 +70,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class NodeListPresenter extends MyPresenterWidget<PagerView> implements Refreshable {
+public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implements Refreshable {
 
     private static final NumberFormat THOUSANDS_FORMATTER = NumberFormat.getFormat("#,###");
     private static final String CLASS_BASE = "nodePingBar";
@@ -85,7 +85,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
     private static final String AUTO_REFRESH_OFF_TITLE = "Turn Auto Refresh On";
 
     private final MyDataGrid<NodeStatusResult> dataGrid;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
     private final TooltipPresenter tooltipPresenter;
     private final DateTimeFormatter dateTimeFormatter;
     private final RestDataProvider<NodeStatusResult, FetchNodeStatusResponse> dataProvider;
@@ -101,19 +101,19 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
     private boolean autoRefresh = true;
 
     @Inject
-    public NodeListPresenter(final EventBus eventBus,
-                             final PagerView view,
-                             final NodeManager nodeManager,
-                             final TooltipPresenter tooltipPresenter,
-                             final DateTimeFormatter dateTimeFormatter,
-                             final UiConfigCache uiConfigCache) {
+    public NodeStatusListPresenter(final EventBus eventBus,
+                                   final PagerView view,
+                                   final NodeClient nodeClient,
+                                   final TooltipPresenter tooltipPresenter,
+                                   final DateTimeFormatter dateTimeFormatter,
+                                   final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
         view.setDataWidget(dataGrid);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
 
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
         this.tooltipPresenter = tooltipPresenter;
         this.dateTimeFormatter = dateTimeFormatter;
         this.redrawDelayedUpdate = new DelayedUpdate(dataGrid::redraw);
@@ -131,8 +131,8 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
                                 final Consumer<FetchNodeStatusResponse> dataConsumer,
                                 final RestErrorHandler errorHandler) {
                 CriteriaUtil.setSortList(findNodeStatusCriteria, dataGrid.getColumnSortList());
-                nodeManager.fetchNodeStatus(dataConsumer, errorHandler, findNodeStatusCriteria,
-                        NodeListPresenter.this);
+                nodeClient.fetchNodeStatus(dataConsumer, errorHandler, findNodeStatusCriteria,
+                        NodeStatusListPresenter.this);
             }
 
             @Override
@@ -157,7 +157,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
                         // Ping each node.
                         data.getValues().forEach(row -> {
                             final String nodeName = row.getNode().getName();
-                            nodeManager.ping(nodeName,
+                            nodeClient.ping(nodeName,
                                     pingMs -> {
                                         latestPing.put(nodeName, PingResult.success(pingMs, nodeMonitoringConfig));
                                         scheduleDataGridRedraw();
@@ -167,7 +167,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
                                                 throwable.getMessage(), nodeMonitoringConfig));
                                         scheduleDataGridRedraw();
                                     },
-                                    NodeListPresenter.this);
+                                    NodeStatusListPresenter.this);
                         });
                     }
                 }, getView());
@@ -234,11 +234,11 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
         final InfoColumn<NodeStatusResult> infoColumn = new InfoColumn<NodeStatusResult>() {
             @Override
             protected void showInfo(final NodeStatusResult row, final PopupPosition popupPosition) {
-                nodeManager.info(
+                nodeClient.info(
                         row.getNode().getName(),
                         result -> showNodeInfoResult(row.getNode(), result, popupPosition),
                         error -> showNodeInfoError(error.getException(), popupPosition),
-                        NodeListPresenter.this);
+                        NodeStatusListPresenter.this);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
@@ -246,7 +246,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
         // Name.
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(NodeStatusResult::getNode, Node::getName))
-                        .enabledWhen(NodeListPresenter::isNodeEnabled)
+                        .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_NAME)
                         .build(),
                 DataGridUtil.headingBuilder("Name")
@@ -260,7 +260,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
                                 result,
                                 NodeStatusResult::getNode,
                                 Node::getUrl))
-                        .enabledWhen(NodeListPresenter::isNodeEnabled)
+                        .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_URL)
                         .build(),
                 DataGridUtil.headingBuilder("Cluster Base Endpoint")
@@ -274,7 +274,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
                                 result,
                                 NodeStatusResult::getNode,
                                 Node::getBuildVersion))
-                        .enabledWhen(NodeListPresenter::isNodeEnabled)
+                        .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_BUILD_VERSION)
                         .build(),
                 DataGridUtil.headingBuilder("Build Version")
@@ -287,7 +287,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
                 DataGridUtil.columnBuilder(
                                 this::getPingBarSafeHtml,
                                 SafeHtmlCell::new)
-                        .enabledWhen(NodeListPresenter::isNodeEnabled)
+                        .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
                         .build(),
                 DataGridUtil.headingBuilder("Ping (ms)")
                         .withToolTip("The time in milliseconds to get a response back from the node.")
@@ -297,7 +297,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
         // Last Boot Time
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder(this::extractLastBootTimeAsStr)
-                        .enabledWhen(NodeListPresenter::isNodeEnabled)
+                        .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_LAST_BOOT_MS)
                         .build(),
                 DataGridUtil.headingBuilder("Up Date")
@@ -311,7 +311,7 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
                                 (NodeStatusResult result) -> NullSafe.get(
                                         result,
                                         NodeStatusResult::isMaster)))
-                        .enabledWhen(NodeListPresenter::isNodeEnabled)
+                        .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
                         .centerAligned()
                         .build(),
                 DataGridUtil.headingBuilder("Master")
@@ -322,13 +322,13 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
 
         // Priority.
         dataGrid.addColumn(
-                DataGridUtil.valueSpinnerColumnBuilder(NodeListPresenter::extractNodePriority,
+                DataGridUtil.valueSpinnerColumnBuilder(NodeStatusListPresenter::extractNodePriority,
                                 1L,
                                 100L)
-                        .enabledWhen(NodeListPresenter::isNodeEnabled)
+                        .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_PRIORITY)
                         .withFieldUpdater((rowIndex, nodeStatusResult, value) ->
-                                nodeManager.setPriority(
+                                nodeClient.setPriority(
                                         nodeStatusResult.getNode().getName(),
                                         value.intValue(),
                                         result -> internalRefresh(),
@@ -348,17 +348,17 @@ public class NodeListPresenter extends MyPresenterWidget<PagerView> implements R
                                         result,
                                         NodeStatusResult::getNode,
                                         Node::isEnabled)))
-                        .enabledWhen(NodeListPresenter::isNodeEnabled)
+                        .enabledWhen(NodeStatusListPresenter::isNodeEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_ENABLED)
                         .withFieldUpdater((index, row, value) -> {
                             if (row != null) {
                                 final String nodeName = row.getNode().getName();
-                                nodeManager.setEnabled(
+                                nodeClient.setEnabled(
                                         nodeName,
                                         value.toBoolean(),
                                         result -> {
                                             internalRefresh();
-                                            NodeChangeEvent.fire(NodeListPresenter.this, nodeName);
+                                            NodeChangeEvent.fire(NodeStatusListPresenter.this, nodeName);
                                         },
                                         this);
                             }

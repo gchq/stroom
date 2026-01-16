@@ -64,7 +64,7 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodePresenter> {
         if (getSecurityContext().hasAppPermission(getRequiredAppPermission())) {
             event.getMenuItems().addMenuItem(MenuKeys.MONITORING_MENU,
                     new IconMenuItem.Builder()
-                            .priority(10)
+                            .priority(11)
                             .icon(SvgImage.NODES)
                             .iconColour(IconColour.GREY)
                             .text("Nodes")

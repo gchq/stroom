@@ -1,0 +1,52 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:datepicker="urn:import:stroom.widget.datepicker.client"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
+             xmlns:days="urn:import:stroom.processor.client.view">
+    <g:FlowPanel styleName="credentials-details-dialog">
+        <form:FormGroup identity="days"
+                        label="Active Days"
+                        helpText="Which days of the week is this period active.">
+            <days:DaysWidget ui:field="days"/>
+        </form:FormGroup>
+        <form:FormGroup identity="startTime"
+                        label="Start Time"
+                        helpText="Start of the period">
+            <datepicker:TimeBox ui:field="startTime"
+                                addStyleNames="wide-control"/>
+        </form:FormGroup>
+        <form:FormGroup identity="endTime"
+                        label="End Time"
+                        helpText="End of the period">
+            <datepicker:TimeBox ui:field="endTime"
+                                addStyleNames="wide-control"/>
+        </form:FormGroup>
+        <form:FormGroup identity="limitNodeThreads"
+                        label="Limit Single Node Threads"
+                        helpText="Select if you want to limit the number of threads to be used on each node.">
+            <tickbox:CustomCheckBox ui:field="limitNodeThreads"/>
+        </form:FormGroup>
+        <form:FormGroup identity="maxNodeThreads"
+                        label="Max Node Threads"
+                        helpText="Set the node thread limit for this period">
+            <valuespinner:ValueSpinner ui:field="maxNodeThreads"
+                                       addStyleNames="dock-max"
+                                       wrapValues="true"/>
+        </form:FormGroup>
+        <form:FormGroup identity="limitClusterThreads"
+                        label="Limit Total Cluster Threads"
+                        helpText="Select if you want to limit the total number of threads to be used across the cluster during this period.">
+            <tickbox:CustomCheckBox ui:field="limitClusterThreads"/>
+        </form:FormGroup>
+        <form:FormGroup identity="maxClusterThreads"
+                        label="Max Cluster Threads"
+                        helpText="Set the total cluster thread limit for this period">
+            <valuespinner:ValueSpinner ui:field="maxClusterThreads"
+                                       addStyleNames="dock-max"
+                                       wrapValues="true"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

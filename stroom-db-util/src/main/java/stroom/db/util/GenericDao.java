@@ -36,7 +36,7 @@ import javax.sql.DataSource;
 public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TYPE, T_ID_TYPE>
         implements HasCrud<T_OBJ_TYPE, T_ID_TYPE> {
 
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(GenericDao.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GenericDao.class);
 
     private final DataSource connectionProvider;
     final Table<T_REC_TYPE> table;
@@ -172,7 +172,7 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
                                                                final TableField<T_REC_TYPE, T_FIELD2> keyField2,
                                                                final TableField<T_REC_TYPE, T_FIELD3> keyField3,
                                                                final Consumer<T_OBJ_TYPE> onCreateAction) {
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
+        LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
         final T_REC_TYPE record = objectToRecord(object);
 
         final Consumer<T_REC_TYPE> onCreateRecAction;
@@ -197,7 +197,7 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
 
     @Override
     public T_OBJ_TYPE create(final T_OBJ_TYPE object) {
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
+        LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
         final T_REC_TYPE record = objectToRecord(object);
         final T_REC_TYPE persistedRecord = JooqUtil.contextResult(connectionProvider, context ->
                 createRecord(context, record));
@@ -205,7 +205,7 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
     }
 
     public T_OBJ_TYPE create(final DSLContext context, final T_OBJ_TYPE object) {
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
+        LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
         final T_REC_TYPE record = objectToRecord(object);
         final T_REC_TYPE persistedRecord = createRecord(context, record);
         return recordToObjectMapper.apply(persistedRecord);
@@ -213,7 +213,7 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
 
     @Override
     public Optional<T_OBJ_TYPE> fetch(final T_ID_TYPE id) {
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Fetching {} with id {}", table.getName(), id));
+        LOGGER.debug(() -> LogUtil.message("Fetching {} with id {}", table.getName(), id));
         final Optional<T_REC_TYPE> optional = JooqUtil.contextResult(connectionProvider, context -> context
                 .selectFrom(table)
                 .where(idField.eq(id))
@@ -224,7 +224,7 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
     public <T_KEY_TYPE> Optional<T_OBJ_TYPE> fetchBy(final TableField<T_REC_TYPE, T_KEY_TYPE> keyField,
                                                      final T_KEY_TYPE key) {
 
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Fetching {} with {} {}",
+        LOGGER.debug(() -> LogUtil.message("Fetching {} with {} {}",
                 table.getName(), keyField.getName(), key));
 
         final Optional<T_REC_TYPE> optional = JooqUtil.contextResult(connectionProvider, context -> context
@@ -236,7 +236,7 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
 
     public T_OBJ_TYPE update(final DSLContext context, final T_OBJ_TYPE object) {
         final T_REC_TYPE record = objectToRecord(object);
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
+        LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
                 table.getName(),
                 record.get(idField)));
         final T_REC_TYPE persistedRecord = updateRecord(context, record);
@@ -246,7 +246,7 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
     @Override
     public T_OBJ_TYPE update(final T_OBJ_TYPE object) {
         final T_REC_TYPE record = objectToRecord(object);
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
+        LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
                 table.getName(),
                 record.get(idField)));
         final T_REC_TYPE persistedRecord = JooqUtil.contextResultWithOptimisticLocking(connectionProvider, context ->
@@ -261,7 +261,7 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
      */
     public T_OBJ_TYPE updateWithoutOptimisticLocking(final T_OBJ_TYPE object) {
         final T_REC_TYPE record = objectToRecordMapper.apply(object, table.newRecord());
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
+        LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
                 table.getName(),
                 record.get(idField)));
         final T_REC_TYPE persistedRecord = JooqUtil.contextResult(connectionProvider, context ->
@@ -271,13 +271,13 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
 
     @Override
     public boolean delete(final T_ID_TYPE id) {
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Deleting a {} with id {}", table.getName(), id));
+        LOGGER.debug(() -> LogUtil.message("Deleting a {} with id {}", table.getName(), id));
         return JooqUtil.contextResult(connectionProvider, context ->
                 delete(context, id));
     }
 
     public boolean delete(final DSLContext context, final T_ID_TYPE id) {
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Deleting a {} with id {}", table.getName(), id));
+        LOGGER.debug(() -> LogUtil.message("Deleting a {} with id {}", table.getName(), id));
         return context
                 .deleteFrom(table)
                 .where(idField.eq(id))

@@ -27,7 +27,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.util.client.HtmlBuilder;
@@ -55,7 +55,7 @@ public class TableBuilderProcessingPresenter
 
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
 
     private DocRef ruleDocRef;
 
@@ -64,16 +64,16 @@ public class TableBuilderProcessingPresenter
                                            final TableBuilderProcessingView view,
                                            final DateTimeFormatter dateTimeFormatter,
                                            final RestFactory restFactory,
-                                           final NodeManager nodeManager) {
+                                           final NodeClient nodeClient) {
         super(eventBus, view);
         this.dateTimeFormatter = dateTimeFormatter;
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
     }
 
     public void read(final DocRef ruleDocRef,
                      final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
-        nodeManager.listAllNodes(
+        nodeClient.listAllNodes(
                 list -> {
                     if (list != null && list.size() > 0) {
                         getView().setNodes(list);

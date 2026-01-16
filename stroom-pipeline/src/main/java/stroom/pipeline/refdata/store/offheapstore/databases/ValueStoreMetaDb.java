@@ -62,7 +62,7 @@ import java.util.OptionalInt;
  */
 public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMeta> {
 
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ValueStoreMetaDb.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ValueStoreMetaDb.class);
 
     private static final String DB_NAME = "ValueStoreMeta";
 
@@ -148,7 +148,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
     public boolean deReferenceOrDeleteValue(final Txn<ByteBuffer> writeTxn,
                                             final ByteBuffer keyBuffer,
                                             final KeyConsumer onDeleteAction) {
-        LAMBDA_LOGGER.trace(() -> LogUtil.message("deReferenceValue({}, {})",
+        LOGGER.trace(() -> LogUtil.message("deReferenceValue({}, {})",
                 writeTxn, ByteBufferUtils.byteBufferInfo(keyBuffer)));
 
         try (final Cursor<ByteBuffer> cursor = getLmdbDbi().openCursor(writeTxn)) {
@@ -165,7 +165,7 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
 
                 if (isLastReference) {
                     // we have the last ref to this value, so we can delete it
-                    LAMBDA_LOGGER.trace(() -> LogUtil.message(
+                    LOGGER.trace(() -> LogUtil.message(
                             "Ref count is zero, deleting entry for key {}",
                             ByteBufferUtils.byteBufferInfo(keyBuffer)));
                     cursor.delete();
@@ -182,10 +182,10 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
                                 valueBuffer,
                                 newValueBuf);
 
-                        if (LAMBDA_LOGGER.isTraceEnabled()) {
+                        if (LOGGER.isTraceEnabled()) {
                             final int oldRefCount = valueSerde.extractReferenceCount(keyBuffer);
                             final int newRefCount = valueSerde.extractReferenceCount(newValueBuf);
-                            LAMBDA_LOGGER.trace(() -> LogUtil.message(
+                            LOGGER.trace(() -> LogUtil.message(
                                     "Updating entry ref count from {} to {} for key {}",
                                     oldRefCount,
                                     newRefCount,
@@ -200,8 +200,8 @@ public class ValueStoreMetaDb extends AbstractLmdbDb<ValueStoreKey, ValueStoreMe
                 // if its reference count drops to zero which should not be the case here as our KV entry
                 // holds a ref to it. It indicates we have a problem somewhere.
 
-                LAMBDA_LOGGER.warn(() -> "Expected to find a valueStoreMetaDb entry found with key: "
-                        + ByteBufferUtils.byteBufferInfo(keyBuffer));
+                LOGGER.warn(() -> "Expected to find a valueStoreMetaDb entry found with key: "
+                                  + ByteBufferUtils.byteBufferInfo(keyBuffer));
                 // It is not there, which is what we want, so we have effectively deleted it, however
                 // I think we have to assume if it is not there then the corresponding valueStoreDb entry is also
                 // not there so don't call the onDeleteAction.

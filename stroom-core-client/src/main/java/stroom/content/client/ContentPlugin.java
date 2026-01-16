@@ -84,8 +84,7 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
         contentManager.open(closeHandler, tabData, presenter);
 
         // If the presenter is refreshable then refresh it.
-        if (presenter instanceof Refreshable) {
-            final Refreshable refreshable = (Refreshable) presenter;
+        if (presenter instanceof final Refreshable refreshable) {
             refreshable.refresh();
         }
         consumer.accept(presenter);

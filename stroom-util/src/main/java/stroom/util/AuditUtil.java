@@ -16,7 +16,9 @@
 
 package stroom.util;
 
+import stroom.util.shared.AbstractHasAuditInfoBuilder;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasAuditableUserIdentity;
 
 public final class AuditUtil {
@@ -42,5 +44,24 @@ public final class AuditUtil {
         }
         hasAuditInfo.setUpdateTimeMs(now);
         hasAuditInfo.setUpdateUser(userIdentityForAudit);
+    }
+
+    /**
+     * Stamp {@code hasAuditInfo} with the create/update user/time, with the user identity
+     * provided by {@code hasAuditableUserIdentity}.
+     */
+    public static <T extends HasAuditInfoGetters> void stamp(final HasAuditableUserIdentity hasAuditableUserIdentity,
+                                                             final AbstractHasAuditInfoBuilder<T, ?> builder) {
+        final long now = System.currentTimeMillis();
+        final String userIdentityForAudit = hasAuditableUserIdentity.getUserIdentityForAudit();
+        final T t = builder.build();
+        if (t.getCreateTimeMs() == null) {
+            builder.createTimeMs(now);
+        }
+        if (t.getCreateUser() == null) {
+            builder.createUser(userIdentityForAudit);
+        }
+        builder.updateTimeMs(now);
+        builder.updateUser(userIdentityForAudit);
     }
 }

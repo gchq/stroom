@@ -35,7 +35,7 @@ import stroom.job.shared.JobNodeAndInfo;
 import stroom.job.shared.JobNodeAndInfoListResponse;
 import stroom.job.shared.JobNodeResource;
 import stroom.node.client.JobNodeListHelper;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.node.client.event.NodeChangeEvent;
 import stroom.node.client.event.OpenNodeEvent;
 import stroom.preferences.client.DateTimeFormatter;
@@ -83,7 +83,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
     private final InlineSvgToggleButton showEnabledToggleBtn;
 
     private final DelayedUpdate redrawDelayedUpdate;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
     private final InlineSvgToggleButton autoRefreshButton;
 
     private boolean autoRefresh;
@@ -95,10 +95,10 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
                                 final SchedulePopup schedulePresenter,
                                 final MenuPresenter menuPresenter,
                                 final DateTimeFormatter dateTimeFormatter,
-                                final NodeManager nodeManager) {
+                                final NodeClient nodeClient) {
         super(eventBus, view);
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
 
         this.dataGrid = new MyDataGrid<>(this);
         this.dataGrid.addDefaultSelectionModel(true);
@@ -134,7 +134,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
     }
 
     private void refreshNodeStates() {
-        nodeManager.listEnabledNodes(enabledNodeNames -> {
+        nodeClient.listEnabledNodes(enabledNodeNames -> {
             jobNodeListHelper.setEnabledNodeNames(enabledNodeNames);
             // Redraw the grid in case any node states have changed which impacts enabled state of rows.
             // Don't need to refresh as the grid doesn't use the node table

@@ -26,7 +26,7 @@ import stroom.index.shared.IndexVolumeFields;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.index.shared.IndexVolumeResource;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
 import stroom.svg.client.SvgPresets;
@@ -59,7 +59,7 @@ public class IndexVolumeGroupEditPresenter
     private final IndexVolumeStatusListPresenter volumeStatusListPresenter;
     private final Provider<IndexVolumeEditPresenter> editProvider;
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
 
     private final ButtonView newButton;
     private final ButtonView openButton;
@@ -78,12 +78,12 @@ public class IndexVolumeGroupEditPresenter
                                          final IndexVolumeStatusListPresenter volumeStatusListPresenter,
                                          final Provider<IndexVolumeEditPresenter> editProvider,
                                          final RestFactory restFactory,
-                                         final NodeManager nodeManager) {
+                                         final NodeClient nodeClient) {
         super(eventBus, view);
         this.volumeStatusListPresenter = volumeStatusListPresenter;
         this.editProvider = editProvider;
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
 
         newButton = volumeStatusListPresenter.getView().addButton(SvgPresets.NEW_ITEM);
         openButton = volumeStatusListPresenter.getView().addButton(SvgPresets.EDIT);
@@ -108,7 +108,7 @@ public class IndexVolumeGroupEditPresenter
         registerHandler(deleteButton.addClickHandler(event -> delete()));
         registerHandler(rescanButton.addClickHandler(event -> {
             delayedUpdate.reset();
-            nodeManager.listAllNodes(nodeNames ->
+            nodeClient.listAllNodes(nodeNames ->
                             nodeNames.forEach(nodeName ->
                                     restFactory
                                             .create(INDEX_VOLUME_RESOURCE)

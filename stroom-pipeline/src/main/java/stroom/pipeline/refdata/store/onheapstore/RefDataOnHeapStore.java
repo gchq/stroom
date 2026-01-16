@@ -34,9 +34,6 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.Range;
 import stroom.util.time.StroomDuration;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -60,8 +57,7 @@ import java.util.stream.Collectors;
  */
 public class RefDataOnHeapStore extends AbstractRefDataStore {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOnHeapStore.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefDataOnHeapStore.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RefDataOnHeapStore.class);
 
     private final Map<RefStreamDefinition, RefDataProcessingInfo> processingInfoMap;
     private final Set<MapDefinition> mapDefinitions;
@@ -152,7 +148,7 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
             }
         }
         final Optional<RefDataValue> result2 = result;
-        LAMBDA_LOGGER.trace(() -> LogUtil.message("getValue({}, {}) returning {}", mapDefinition, key, result2));
+        LOGGER.trace(() -> LogUtil.message("getValue({}, {}) returning {}", mapDefinition, key, result2));
         return result;
     }
 

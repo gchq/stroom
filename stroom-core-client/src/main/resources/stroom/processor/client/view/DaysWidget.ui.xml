@@ -1,0 +1,13 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <g:FlowPanel styleName="days">
+        <g:Label ui:field="mon">Mon</g:Label>
+        <g:Label ui:field="tue">Tue</g:Label>
+        <g:Label ui:field="wed">Wed</g:Label>
+        <g:Label ui:field="thu">Thu</g:Label>
+        <g:Label ui:field="fri">Fri</g:Label>
+        <g:Label ui:field="sat">Sat</g:Label>
+        <g:Label ui:field="sun">Sun</g:Label>
+    </g:FlowPanel>
+</ui:UiBinder>

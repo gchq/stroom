@@ -42,6 +42,7 @@ public class NodeDaoImpl implements NodeDao {
             FindNodeCriteria.FIELD_LAST_BOOT_MS, NODE.LAST_BOOT_MS,
             FindNodeCriteria.FIELD_BUILD_VERSION, NODE.BUILD_VERSION,
             FindNodeCriteria.FIELD_NAME, NODE.NAME);
+    private static final RecordToNodeMapper RECORD_TO_NODE_MAPPER = new RecordToNodeMapper();
 
     private final GenericDao<NodeRecord, Node, Integer> genericDao;
     private final NodeDbConnProvider nodeDbConnProvider;
@@ -73,12 +74,24 @@ public class NodeDaoImpl implements NodeDao {
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
         final List<Node> list = JooqUtil.contextResult(nodeDbConnProvider, context ->
                         context
-                                .selectFrom(NODE)
+                                .select(NODE.ID,
+                                        NODE.VERSION,
+                                        NODE.CREATE_TIME_MS,
+                                        NODE.CREATE_USER,
+                                        NODE.UPDATE_TIME_MS,
+                                        NODE.UPDATE_USER,
+                                        NODE.NAME,
+                                        NODE.URL,
+                                        NODE.PRIORITY,
+                                        NODE.ENABLED,
+                                        NODE.BUILD_VERSION,
+                                        NODE.LAST_BOOT_MS)
+                                .from(NODE)
                                 .where(conditions)
                                 .orderBy(orderFields)
                                 .limit(offset, limit)
                                 .fetch())
-                .map(r -> r.into(Node.class));
+                .map(RECORD_TO_NODE_MAPPER::apply);
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
