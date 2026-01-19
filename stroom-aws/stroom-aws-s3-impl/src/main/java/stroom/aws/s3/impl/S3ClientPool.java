@@ -22,6 +22,9 @@ import stroom.aws.s3.shared.S3ClientConfig;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
 import software.amazon.awssdk.services.s3.S3Client;
 
+import java.util.Objects;
+import java.util.function.Function;
+
 public interface S3ClientPool {
 
     /**
@@ -41,6 +44,25 @@ public interface S3ClientPool {
      * </p>
      */
     PooledClient<S3AsyncClient> getPooledS3AsyncClient(final S3ClientConfig config);
+
+
+    default <T> T getWithS3Client(final S3ClientConfig config,
+                                  final Function<S3Client, T> work) {
+        Objects.requireNonNull(config);
+        Objects.requireNonNull(work);
+        try (final PooledClient<S3Client> pooledClient = getPooledS3Client(config)) {
+            return work.apply(pooledClient.getClient());
+        }
+    }
+
+    default <T> T getWithAsyncS3Client(final S3ClientConfig config,
+                                       final Function<S3AsyncClient, T> work) {
+        Objects.requireNonNull(config);
+        Objects.requireNonNull(work);
+        try (final PooledClient<S3AsyncClient> pooledClient = getPooledS3AsyncClient(config)) {
+            return work.apply(pooledClient.getClient());
+        }
+    }
 
 
     // --------------------------------------------------------------------------------

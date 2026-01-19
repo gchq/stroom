@@ -404,7 +404,6 @@ public class S3ClientPoolImpl implements S3ClientPool {
         private final AtomicBoolean evicted = new AtomicBoolean(false);
         private final AtomicBoolean closed = new AtomicBoolean(false);
 
-
         private PooledClientImpl(final T client, final S3ClientConfig s3ClientConfig) {
             this.client = client;
             this.s3ClientConfig = s3ClientConfig;
@@ -414,10 +413,6 @@ public class S3ClientPoolImpl implements S3ClientPool {
         public T getClient() {
             return client;
         }
-
-//        public int getRefCount() {
-//            return refCounter.get();
-//        }
 
         private void borrow() {
             LOGGER.debug("borrow() - evicted: {}, closed: {}, refCounter: {}, s3ClientConfig: {}",
@@ -448,8 +443,10 @@ public class S3ClientPoolImpl implements S3ClientPool {
         public void close() {
             LOGGER.debug("close() - evicted: {}, closed: {}, refCounter: {}, s3ClientConfig: {}",
                     evicted, closed, refCounter, s3ClientConfig);
-            final int refCount = refCounter.decrementAndGet();
-            if (refCount == 0 && evicted.get()) {
+            final int newRefCount = refCounter.updateAndGet(count -> count > 0
+                    ? count - 1
+                    : 0);
+            if (newRefCount == 0 && evicted.get()) {
                 // This object has been evicted from the cache, and we are the last one to
                 // hold a ref to it, so close it.
                 closeClient();
@@ -459,9 +456,8 @@ public class S3ClientPoolImpl implements S3ClientPool {
         private void closeClient() {
             LOGGER.debug("closeClient() - evicted: {}, closed: {}, refCounter: {}, s3ClientConfig: {}",
                     evicted, closed, refCounter, s3ClientConfig);
-            if (!closed.get()) {
+            if (closed.compareAndSet(false, true)) {
                 try {
-                    closed.set(true);
                     client.close();
                 } catch (final Exception e) {
                     // Swallow the ex as it is not really the caller's problem
@@ -469,6 +465,17 @@ public class S3ClientPoolImpl implements S3ClientPool {
                             s3ClientConfig, LogUtil.exceptionMessage(e)), e);
                 }
             }
+        }
+
+        @Override
+        public String toString() {
+            return "PooledClientImpl{" +
+                   "client=" + client +
+                   ", s3ClientConfig=" + s3ClientConfig +
+                   ", refCounter=" + refCounter +
+                   ", evicted=" + evicted +
+                   ", closed=" + closed +
+                   '}';
         }
     }
 

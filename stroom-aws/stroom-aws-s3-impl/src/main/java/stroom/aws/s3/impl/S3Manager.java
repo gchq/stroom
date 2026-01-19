@@ -527,8 +527,7 @@ public class S3Manager {
 
         final PutObjectResponse response;
         if (s3ClientConfig.isAsync()) {
-            try (final PooledClient<S3AsyncClient> pooledClient = getAsyncClient()) {
-                final S3AsyncClient s3AsyncClient = pooledClient.getClient();
+            response = s3ClientPool.getWithAsyncS3Client(s3ClientConfig, s3AsyncClient -> {
                 if (s3ClientConfig.isMultipart()) {
                     try (final S3TransferManager transferManager =
                             S3TransferManager.builder()
@@ -549,17 +548,16 @@ public class S3Manager {
                                            getDebugIdentity(bucketName, key) +
                                            ", result=" +
                                            uploadResult);
-                        response = uploadResult.response();
+                        return uploadResult.response();
                     }
 
                 } else {
-                    response = s3AsyncClient.putObject(request, source).join();
+                    return s3AsyncClient.putObject(request, source).join();
                 }
-            }
+            });
         } else {
-            try (final PooledClient<S3Client> pooledClient = getSyncClient()) {
-                response = pooledClient.getClient().putObject(request, source);
-            }
+            response = s3ClientPool.getWithS3Client(s3ClientConfig, s3Client ->
+                    s3Client.putObject(request, source));
         }
 
         logResponse("Uploaded: ", bucketName, key, response);
@@ -968,7 +966,6 @@ public class S3Manager {
             throw e;
         }
     }
-
 
     public DeleteObjectResponse delete(final Meta meta) {
         final String bucketName = createBucketName(getBucketNamePattern(), meta);
