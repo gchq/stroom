@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -810,6 +810,18 @@ public class NullSafe {
     public static <L extends List<T>, T> List<T> unmodifiableList(final L list) {
         return list != null
                 ? Collections.unmodifiableList(list)
+                : Collections.emptyList();
+    }
+
+    /**
+     * Returns an unmodifiable view of a new {@link ArrayList} instance that has been populated with the
+     * contents of list in a null-safe way.
+     * Allows null list elements.
+     */
+    public static <L extends List<T>, T> List<T> copyOf(final L list) {
+        //noinspection Java9CollectionFactory // List.copyOf will NPE for null elements
+        return NullSafe.hasItems(list)
+                ? Collections.unmodifiableList(new ArrayList<>(list))
                 : Collections.emptyList();
     }
 

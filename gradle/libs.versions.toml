@@ -76,6 +76,7 @@ dropwizard-validation = { module = "io.dropwizard:dropwizard-validation" } # ver
 eclipse-transformer-cli = { module = "org.eclipse.transformer:org.eclipse.transformer.cli", version = "1.0.0" }
 elasticsearch-java = { module = "co.elastic.clients:elasticsearch-java", version.ref = "elasticsearch" }
 fast-infoset = { module = "com.sun.xml.fastinfoset:FastInfoset", version = "2.1.1" }
+fastutil-core = { module = "it.unimi.dsi:fastutil-core", version = "8.5.18" }
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
 flyway-mysql = { module = "org.flywaydb:flyway-mysql", version.ref = "flyway" }
 gin = { module = "com.google.gwt.inject:gin", version = "2.1.2" }
@@ -95,6 +96,7 @@ hessian = { module = "com.caucho:hessian", version = "4.0.65" }
 hikari = { module = "com.zaxxer:HikariCP", version = "7.0.2" }
 http-client = { module = "org.apache.httpcomponents.client5:httpclient5" } # version controlled by dropwizard-dependencies
 jBCrypt = { module = "de.svenkubiak:jBCrypt", version = "0.4.3" }
+jspecify = { module = "org.jspecify:jspecify", version = "1.0.0" }
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations" } # version controlled by dropwizard-dependencies
 #jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version = "2.9.10" } # version controlled by dropwizard-dependencies
 jackson-core = { module = "com.fasterxml.jackson.core:jackson-core" } # version controlled by dropwizard-dependencies

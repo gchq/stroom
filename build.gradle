@@ -515,7 +515,12 @@ subprojects {
     checkstyle {
         ignoreFailures = false
         showViolations = true
+
+        // TODO Uplifting this to 13.0.0 caused a lot of checkstyle violations.
+        //   A lot were switch statement lambda indent violations which do not agree with our auto formatter
+        //   Also, 10.4 can't cope with statements 
         toolVersion = "10.4"
+        //toolVersion = "13.0.0"
     }
 
     // These work in tandem with the suppression.xml
