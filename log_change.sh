@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-#
-# Copyright 2016-2025 Crown Copyright
+# **********************************************************************
+# Copyright 2021-2026 Crown Copyright
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+# **********************************************************************
 
 ##########################################################################
-# Version: v0.5.1
-# Date: 2026-01-16T17:19:34+00:00
+# Version: v0.5.3
+# Date: 2026-01-21T13:42:59+00:00
 #
 # Script to record changelog entries in individual files to get around
 # the issue of merge conflicts on the CHANGELOG file when doing PRs.
@@ -207,13 +207,16 @@ get_git_issue_from_branch() {
   # Examples of branches that will give us an issue number:
   # 1234
   # gh-1234
+  # gh-1234-some-text
   # gh-1234_some-text
   # foo_1234_bar
+  # xxx/1234
+  # xxx/1234/yyy
   git_issue="$( \
     grep \
       --only-matching \
       --perl-regexp \
-      '(^[1-9][0-9]*$|((?<=[_-])|^)[1-9][0-9]*((?=[-_])|$))' \
+      '(^[1-9][0-9]*$|(((?<=[\/_\-])|^)[1-9][0-9]*((?=[\/_\-])|$)))' \
       <<< "${current_branch}" \
       || true \
   )"
@@ -256,9 +259,9 @@ fetch_git_issue_info() {
 
   debug_value "Calling GH using github_issue_api_url" "${github_issue_api_url}"
 
-    local curl_return_code=0
-    # Turn off exit on error so we can get the curl return code in the subshell
-    set +e
+  local curl_return_code=0
+  # Turn off exit on error so we can get the curl return code in the subshell
+  set +e
 
   local response_json
   response_json="$( \
@@ -268,6 +271,7 @@ fetch_git_issue_info() {
       "${github_issue_api_url}" \
   )"
   curl_return_code=$?
+  set -e
 
   if [[ "${has_jq}" = true ]]; then
     # jq is available so use it
@@ -301,7 +305,6 @@ fetch_git_issue_info() {
         <<< "${response_json}"
     )"
   fi
-  set -e
 
   debug_value "curl_return_code" "${curl_return_code}"
   debug_value "issue_title" "${issue_title}"

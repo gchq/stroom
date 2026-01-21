@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-#
-# Copyright 2016-2025 Crown Copyright
+# **********************************************************************
+# Copyright 2021-2026 Crown Copyright
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+# **********************************************************************
 
-# Version: v0.5.1
-# Date: 2026-01-16T17:19:34+00:00
+# Version: v0.5.3
+# Date: 2026-01-21T13:42:59+00:00
 
 # This script is for tagging a git repository for the purpose of driving a
 # separate release process from that tagged commit. It also updates the
@@ -169,7 +169,7 @@ debug() {
 debug_value() {
   local name="$1"; shift
   local value="$*"; shift
-  
+
   if [ "${IS_DEBUG_ENABLED:-false}" = true ]; then
     echo -e "${DGREY}DEBUG ${name}: [${value}]${NC}"
   fi
