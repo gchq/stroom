@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,11 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBatch;
 import stroom.util.jersey.WebTargetFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;
@@ -31,11 +35,14 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.client.Entity;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Objects;
 
 @AutoLogged(OperationType.UNLOGGED)
 class EntityEventResourceImpl implements EntityEventResource {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EntityEventResourceImpl.class);
 
     private final Provider<NodeService> nodeServiceProvider;
     private final Provider<NodeInfo> nodeInfoProvider;
@@ -57,15 +64,16 @@ class EntityEventResourceImpl implements EntityEventResource {
     public Boolean fireEvent(final String nodeName, final EntityEvent entityEvent) {
         // If this is the node that was contacted then just return the latency we have incurred within this method.
         if (NodeCallUtil.shouldExecuteLocally(nodeInfoProvider.get(), nodeName)) {
+            LOGGER.debug("fireEvent() - Local - nodeName: {}, entityEvent {}", nodeName, entityEvent);
             entityEventHandlerProvider.get().fireLocally(entityEvent);
             return true;
         } else {
-            final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfoProvider.get(),
-                    nodeServiceProvider.get(),
-                    nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(
+            final String url = getBaseUrl(nodeName) + ResourcePaths.buildAuthenticatedApiPath(
                     EntityEventResource.BASE_PATH,
+                    EntityEventResource.SINGLE_SUB_PATH,
                     nodeName);
+
+            LOGGER.debug("fireEvent() - Remote - nodeName: {}, url: {}, entityEvent {}", nodeName, url, entityEvent);
 
             try {
                 final Boolean success;
@@ -85,5 +93,56 @@ class EntityEventResourceImpl implements EntityEventResource {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
+    }
+
+    @Override
+    public Boolean fireEvents(final String nodeName, final EntityEventBatch entityEventBatch) {
+        if (entityEventBatch != null) {
+            // If this is the node that was contacted then just return the latency we have incurred within this method.
+            if (NodeCallUtil.shouldExecuteLocally(nodeInfoProvider.get(), nodeName)) {
+                NullSafe.consume(entityEventBatch, EntityEventBatch::getEntityEvents, entityEvents -> {
+                    LOGGER.debug("fireEvents() - Local - nodeName: {}, entityEventBatch {}",
+                            nodeName,
+                            entityEventBatch);
+                    for (final EntityEvent entityEvent : entityEvents) {
+                        entityEventHandlerProvider.get().fireLocally(entityEvent);
+                    }
+                });
+                return true;
+            } else {
+                final String url = getBaseUrl(nodeName) + ResourcePaths.buildAuthenticatedApiPath(
+                        EntityEventResource.BASE_PATH,
+                        EntityEventResource.BATCH_SUB_PATH,
+                        nodeName);
+
+                LOGGER.debug("fireEvents() - Remote - nodeName: {}, url: {}, entityEventBatch {}",
+                        nodeName, url, entityEventBatch);
+
+                try {
+                    final Boolean success;
+                    try (final Response response = webTargetFactoryProvider
+                            .get()
+                            .create(url)
+                            .request(MediaType.APPLICATION_JSON)
+                            .put(Entity.json(entityEventBatch))) {
+                        if (response.getStatus() != 200) {
+                            throw new WebApplicationException(response);
+                        }
+                        success = response.readEntity(Boolean.class);
+                    }
+                    Objects.requireNonNull(success, "Null success");
+                    return success;
+                } catch (final Throwable e) {
+                    throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                }
+            }
+        } else {
+            return false;
+        }
+    }
+
+    private @NonNull String getBaseUrl(final String nodeName) {
+        return NodeCallUtil.getBaseEndpointUrl(
+                nodeInfoProvider.get(), nodeServiceProvider.get(), nodeName);
     }
 }

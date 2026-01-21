@@ -30,6 +30,7 @@ dependencies {
 
     implementation libs.dropwizard.metrics.healthchecks
     implementation libs.dropwizard.metrics.core
+    implementation libs.fastutil.core
     implementation libs.flyway.core
     implementation libs.flyway.mysql
     implementation libs.guava
