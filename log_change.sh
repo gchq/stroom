@@ -1,15 +1,31 @@
 #!/usr/bin/env bash
 
+# **********************************************************************
+# Copyright 2021-2026 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# **********************************************************************
+
 ##########################################################################
-# Version: v0.5.1
-# Date: 2026-01-16T17:19:34+00:00
+# Version: v0.5.3
+# Date: 2026-01-21T13:42:59+00:00
 #
 # Script to record changelog entries in individual files to get around
 # the issue of merge conflicts on the CHANGELOG file when doing PRs.
 #
-# Credit for this idea goes to 
+# Credit for this idea goes to
 # https://about.gitlab.com/blog/2018/07/03/solving-gitlabs-changelog-conflict-crisis/
-# 
+#
 # Change log entries are stored in files in <repo_root>/unreleased_changes
 # This script is used in conjunction with tag_release.sh which adds the
 # change entries to the CHANGELOG at release time.
@@ -34,8 +50,8 @@ TAG_RELEASE_SCRIPT_FILENAME='tag_release.sh'
 ISSUE_HASH_PREFIX="#"
 
 # e.g.
-# * Issue **#1234** : 
-# * Issue **gchq/stroom-resources#104** : 
+# * Issue **#1234** :
+# * Issue **gchq/stroom-resources#104** :
 # https://regex101.com/r/VcvbFV/1
 ISSUE_LINE_REGEX_NUMBER_PART="\*\*([a-zA-Z0-9_\-.]+\/[a-zA-Z0-9_\-.]+\#[0-9]+|#[0-9]+)\*\*"
 
@@ -89,7 +105,7 @@ setup_echo_colours() {
     BLUE2=''
     DGREY=''
     NC='' # No Colour
-  else 
+  else
     RED='\033[1;31m'
     GREEN='\033[1;32m'
     YELLOW='\033[1;33m'
@@ -121,7 +137,7 @@ error_exit() {
 debug_value() {
   local name="$1"; shift
   local value="$*"; shift
-  
+
   if [ "${IS_DEBUG:-false}" = true ]; then
     echo -e "${DGREY}DEBUG ${name}: [${value}]${NC}"
   fi
@@ -191,13 +207,16 @@ get_git_issue_from_branch() {
   # Examples of branches that will give us an issue number:
   # 1234
   # gh-1234
+  # gh-1234-some-text
   # gh-1234_some-text
   # foo_1234_bar
+  # xxx/1234
+  # xxx/1234/yyy
   git_issue="$( \
     grep \
       --only-matching \
       --perl-regexp \
-      '(^[1-9][0-9]*$|((?<=[_-])|^)[1-9][0-9]*((?=[-_])|$))' \
+      '(^[1-9][0-9]*$|(((?<=[\/_\-])|^)[1-9][0-9]*((?=[\/_\-])|$)))' \
       <<< "${current_branch}" \
       || true \
   )"
@@ -242,7 +261,7 @@ fetch_git_issue_info() {
 
   local curl_return_code=0
   # Turn off exit on error so we can get the curl return code in the subshell
-  set +e 
+  set +e
 
   local response_json
   response_json="$( \
@@ -252,6 +271,7 @@ fetch_git_issue_info() {
       "${github_issue_api_url}" \
   )"
   curl_return_code=$?
+  set -e
 
   if [[ "${has_jq}" = true ]]; then
     # jq is available so use it
@@ -285,7 +305,6 @@ fetch_git_issue_info() {
         <<< "${response_json}"
     )"
   fi
-  set -e
 
   debug_value "curl_return_code" "${curl_return_code}"
   debug_value "issue_title" "${issue_title}"
@@ -500,7 +519,7 @@ read_git_issue_from_change_file() {
         || true
     )"
     debug_value "git_issue" "${git_issue}"
-    
+
     # In case this is an old change file without the '# Issue number:' line
     # attempt to get it from the change entry line
     if [[ -z "${git_issue}" ]]; then
@@ -553,7 +572,7 @@ edit_change_file_if_present() {
   if [[ "${existing_file_count}" -eq 0 ]]; then
     debug "File does not exist"
     return 1
-  else 
+  else
     info "Change file(s) already exist for this issue:"
     echo
     select_file_from_list "${existing_files[@]}"
@@ -579,7 +598,7 @@ edit_all_files() {
 
   if [[ "${existing_file_count}" -eq 0 ]]; then
     info "There are no change files to edit."
-  else 
+  else
     select_file_from_list "${existing_files[@]}"
   fi
 }
@@ -610,7 +629,7 @@ write_change_entry() {
 
   local git_issue_str
   git_issue_str="$(format_git_issue_for_filename "${git_issue}")"
-  
+
   # Use two underscores to help distinguish the date from the issue part
   # which may itself contain underscores.
   local filename="${date_str}__${git_issue_str}.md"
@@ -643,7 +662,7 @@ write_change_entry() {
     # * Issue **#1234** : My change text
     issue_part="${issue_prefix}#${git_issue}${issue_suffix} : "
   else
-    # * Issue **gchq/stroom#1234** : 
+    # * Issue **gchq/stroom#1234** :
     issue_part="${issue_prefix}${git_issue}${issue_suffix} : "
   fi
 
@@ -654,7 +673,7 @@ write_change_entry() {
   # Craft the content of the file
   # shellcheck disable=SC2016
   {
-    echo "${change_entry_line}" 
+    echo "${change_entry_line}"
     echo
     echo
     echo '```sh'
@@ -712,7 +731,7 @@ write_change_entry() {
 open_file_in_editor() {
   local file_to_open="$1"; shift
   local git_issue="$1"; shift
-  
+
   local editor
   editor="${VISUAL:-${EDITOR:-vi}}"
   debug_value "editor" "${editor}"
