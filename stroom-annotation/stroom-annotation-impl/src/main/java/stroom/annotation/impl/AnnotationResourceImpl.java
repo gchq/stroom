@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ class AnnotationResourceImpl implements AnnotationResource {
 
     @Override
     public ResultPage<Annotation> findAnnotations(final FindAnnotationRequest request) {
-        LOGGER.info(() -> "Finding annotations " + request);
+        LOGGER.debug("Finding annotations {}", request);
         final ResultPage<Annotation> result;
         try {
             result = annotationServiceProvider.get().findAnnotations(request);
@@ -87,7 +87,7 @@ class AnnotationResourceImpl implements AnnotationResource {
 
     @Override
     public Annotation getAnnotationById(final Long annotationId) {
-        LOGGER.info(() -> "Getting annotation " + annotationId);
+        LOGGER.debug("Getting annotation {}", annotationId);
         final Annotation annotation;
         try {
             annotation = annotationServiceProvider.get().getAnnotationById(annotationId).orElse(null);
@@ -125,7 +125,7 @@ class AnnotationResourceImpl implements AnnotationResource {
     @Override
     public Annotation createAnnotation(final CreateAnnotationRequest request) {
         final Annotation annotation;
-        LOGGER.info(() -> "Creating annotation " + request);
+        LOGGER.debug("Creating annotation {}", request);
         try {
             annotation = annotationServiceProvider.get().createAnnotation(request);
             documentEventLog.get().create(annotation, null);
@@ -143,16 +143,19 @@ class AnnotationResourceImpl implements AnnotationResource {
         final boolean success;
 
         final AnnotationService annotationService = annotationServiceProvider.get();
-        LOGGER.info(() -> "Changing annotation " + request.getAnnotationRef());
+        final DocRef annotationRef = request.getAnnotationRef();
+        LOGGER.debug("Changing annotation (single) {}", annotationRef);
         try {
-            before = annotationService.getAnnotationByRef(request.getAnnotationRef()).orElse(null);
+            before = annotationService.getAnnotationByRef(annotationRef)
+                    .orElse(null);
             if (before == null) {
                 throw new RuntimeException("Unable to find annotation");
             }
 
             success = annotationService.change(request);
             if (success) {
-                after = annotationService.getAnnotationByRef(request.getAnnotationRef()).orElse(null);
+                after = annotationService.getAnnotationByRef(annotationRef)
+                        .orElse(null);
             }
             documentEventLog.get().update(before, after, null);
         } catch (final RuntimeException e) {
@@ -172,7 +175,7 @@ class AnnotationResourceImpl implements AnnotationResource {
         for (final long id : request.getAnnotationIdList()) {
             Annotation before = null;
             Annotation after = null;
-            LOGGER.info(() -> "Changing annotation " + id);
+            LOGGER.debug("Changing annotation (batch) {}", id);
             try {
                 before = annotationService.getAnnotationById(id).orElse(null);
                 if (before == null) {
@@ -224,7 +227,7 @@ class AnnotationResourceImpl implements AnnotationResource {
     public Boolean deleteAnnotation(final DocRef annotationRef) {
         final AnnotationService annotationService = annotationServiceProvider.get();
         final Boolean success;
-        LOGGER.info(() -> "Deleting annotation " + annotationRef);
+        LOGGER.debug("Deleting annotation {}", annotationRef);
         try {
             success = annotationService.deleteAnnotation(annotationRef);
             documentEventLog.get().delete(annotationRef, null);
@@ -273,7 +276,7 @@ class AnnotationResourceImpl implements AnnotationResource {
                 .id(request.getAnnotationEntryId())
                 .build();
         AnnotationEntry after = null;
-        LOGGER.info(() -> "Changing annotation entry " + request);
+        LOGGER.debug("Changing annotation entry {}", request);
         try {
             before = annotationService.fetchAnnotationEntry(new FetchAnnotationEntryRequest(
                     request.getAnnotationRef(),
@@ -296,7 +299,7 @@ class AnnotationResourceImpl implements AnnotationResource {
         AnnotationEntry before = AnnotationEntry.builder()
                 .id(request.getAnnotationEntryId())
                 .build();
-        LOGGER.info(() -> "Deleting annotation entry " + request);
+        LOGGER.debug("Deleting annotation entry {}", request);
         try {
             before = annotationService.fetchAnnotationEntry(new FetchAnnotationEntryRequest(
                     request.getAnnotationRef(),

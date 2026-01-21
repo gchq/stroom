@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ dependencies {
     implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-cluster:stroom-cluster-lock-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
@@ -41,9 +42,15 @@ dependencies {
     implementation libs.commons.csv
     implementation libs.dropwizard.metrics.healthchecks
     implementation libs.eventLogging
+    implementation libs.fastutil.core
     implementation libs.guice
     implementation libs.jackson.annotations
     implementation libs.jakarta.inject
     implementation libs.restygwt
     implementation libs.slf4j.api
+
+    testImplementation project(':stroom-cluster:stroom-cluster-lock-mock')
+
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }

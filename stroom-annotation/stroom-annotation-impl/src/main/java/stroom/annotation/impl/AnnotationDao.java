@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,10 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
+import it.unimi.dsi.fastutil.longs.LongList;
+
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -38,7 +41,7 @@ public interface AnnotationDao {
 
     ResultPage<Annotation> findAnnotations(FindAnnotationRequest request, Predicate<Annotation> vierwPredicate);
 
-    List<DocRef> idListToDocRefs(List<Long> idList);
+    List<DocRef> idListToDocRefs(Collection<Long> idList);
 
     Optional<Annotation> getAnnotationById(long id);
 
@@ -67,15 +70,18 @@ public interface AnnotationDao {
 
     /**
      * Mark annotations deleted if they have not been updated within their specified retention time.
+     *
+     * @return
      */
-    void markDeletedByDataRetention();
+    LongList markDeletedByDataRetention();
 
     /**
      * Physically delete annotations that have been marked as deleted since before the provided age.
      *
      * @param age Anything older than this age will be deleted.
+     * @return
      */
-    void physicallyDelete(Instant age);
+    LongList physicallyDelete(Instant age);
 
     AnnotationEntry fetchAnnotationEntry(DocRef annotationRef, UserRef currentUser, long entryId);
 

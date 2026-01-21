@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import stroom.annotation.shared.AnnotationTagFields;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.annotation.shared.CreateAnnotationTagRequest;
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingStroomCache;
+import stroom.cache.api.StroomCache;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
@@ -42,6 +42,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
+import org.jooq.DSLContext;
 import org.jooq.Record;
 
 import java.util.ArrayList;
@@ -61,12 +62,11 @@ import static stroom.annotation.impl.db.jooq.tables.AnnotationTagLink.ANNOTATION
 class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationTagDaoImpl.class);
-
     private static final String CACHE_NAME = "Annotation Tag Cache";
 
     private final AnnotationDbConnProvider connectionProvider;
     private final ExpressionMapper expressionMapper;
-    private final LoadingStroomCache<Integer, Optional<AnnotationTag>> cache;
+    private final StroomCache<Integer, Optional<AnnotationTag>> cache;
 
     @Inject
     AnnotationTagDaoImpl(final AnnotationDbConnProvider connectionProvider,
@@ -75,26 +75,28 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                          final Provider<AnnotationConfig> annotationConfigProvider) {
         this.connectionProvider = connectionProvider;
         this.expressionMapper = createExpressionMapper(expressionMapperFactory);
-        cache = cacheManager.createLoadingCache(
+        // Can't use a loading cache cos the caller of get needs to provide the load function
+        // with their DSLContext
+        cache = cacheManager.create(
                 CACHE_NAME,
-                () -> annotationConfigProvider.get().getAnnotationTagCache(),
-                this::load);
+                () -> annotationConfigProvider.get().getAnnotationTagCache());
     }
 
-    private Optional<AnnotationTag> load(final int id) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
-                .select(ANNOTATION_TAG.ID,
+    private Optional<AnnotationTag> load(final DSLContext context, final int id) {
+        return context.select(ANNOTATION_TAG.ID,
                         ANNOTATION_TAG.UUID,
                         ANNOTATION_TAG.TYPE_ID,
                         ANNOTATION_TAG.NAME,
                         ANNOTATION_TAG.STYLE_ID)
                 .from(ANNOTATION_TAG)
                 .where(ANNOTATION_TAG.ID.eq(id))
-                .fetchOptional(this::mapToAnnotationTag));
+                .fetchOptional(this::mapToAnnotationTag);
     }
 
-    public AnnotationTag get(final int id) {
-        return cache.get(id).orElse(null);
+    public AnnotationTag get(final DSLContext context, final int id) {
+        return cache.get(id, anId ->
+                        load(context, anId))
+                .orElse(null);
     }
 
     private ExpressionMapper createExpressionMapper(final ExpressionMapperFactory expressionMapperFactory) {
@@ -132,7 +134,12 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                         request.getName())
                 .returning(ANNOTATION_TAG.ID)
                 .fetchOne(ANNOTATION_TAG.ID));
-        return AnnotationTag.builder().id(id).uuid(uuid).type(request.getType()).name(request.getName()).build();
+        return AnnotationTag.builder()
+                .id(id)
+                .uuid(uuid)
+                .type(request.getType())
+                .name(request.getName())
+                .build();
     }
 
     @Override
