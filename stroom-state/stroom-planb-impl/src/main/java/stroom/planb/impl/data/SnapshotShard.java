@@ -97,8 +97,8 @@ class SnapshotShard implements Shard {
                             // If the new shapshot had problems fetching then keep using the current one and extend
                             // its expiry time so we don't keep fetching.
                             if (newInstance.hasFetchException()) {
-                                // Extend the expiry time of the current instance so we don't just keep infinitely retrying
-                                // to update this snapshot.
+                                // Extend the expiry time of the current instance so we don't just
+                                // keep infinitely retrying to update this snapshot.
                                 currentInstance.extendExpiry(
                                         configProvider.get().getSnapshotRetryFetchInterval().getDuration());
                             } else {
