@@ -1,6 +1,7 @@
 package stroom.planb.impl.data;
 
 import stroom.bytebuffer.impl6.ByteBuffers;
+import stroom.docref.DocRef;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.PlanBDb;
@@ -8,17 +9,23 @@ import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDoc;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Provider;
+import org.jspecify.annotations.NonNull;
 import org.lmdbjava.LmdbException;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
@@ -26,16 +33,17 @@ import java.util.function.Function;
 class SnapshotShard implements Shard {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SnapshotShard.class);
+    private static final long LAST_ACCESS_TIME_TOUCH_INTERVAL_MS = 10_000;
 
     private final ByteBuffers byteBuffers;
     private final Provider<PlanBConfig> configProvider;
     private final StatePaths statePaths;
     private final FileTransferClient fileTransferClient;
     private final PlanBDoc doc;
-
-    private final ReentrantLock lock = new ReentrantLock();
+    private final DocRef docRef;
 
     private volatile SnapshotInstance snapshotInstance;
+    private final ReentrantLock snapshotUpdateLock = new ReentrantLock();
 
     public SnapshotShard(final ByteBuffers byteBuffers,
                          final Provider<PlanBConfig> configProvider,
@@ -46,7 +54,8 @@ class SnapshotShard implements Shard {
         this.configProvider = configProvider;
         this.statePaths = statePaths;
         this.fileTransferClient = fileTransferClient;
-        this.doc = doc;
+        this.doc = Objects.requireNonNull(doc);
+        this.docRef = doc.asDocRef();
 
         snapshotInstance = new SnapshotInstance(
                 byteBuffers,
@@ -62,43 +71,52 @@ class SnapshotShard implements Shard {
         final SnapshotInstance instance = snapshotInstance;
 
         // If the current instance has expired then asynchronously try to get a new shapshot.
-        if (instance.getExpiryTime().isBefore(Instant.now())) {
+        if (instance.hasExpired()) {
+            // Need to spawn the thread before the re-test so that the spawned thread can hold the lock
             CompletableFuture.runAsync(() -> {
-                lock.lock();
-                try {
-                    // Check again if the current instance has expired then asynchronously try to get a new
-                    // shapshot.
-                    final SnapshotInstance currentInstance = snapshotInstance;
-                    if (currentInstance.getExpiryTime().isBefore(Instant.now())) {
-                        final SnapshotInstance newInstance = new SnapshotInstance(
-                                byteBuffers,
-                                configProvider,
-                                statePaths,
-                                fileTransferClient,
-                                doc,
-                                Instant.now(),
-                                currentInstance.getCurrentSnapshotTime());
+                // Complete this thread ASAP if another thread is doing it, we can use the existing instance
+                // in the meantime. Else, lots of threads would all block waiting for one to finish the
+                // update, when they could be using the existing instance
+                if (snapshotUpdateLock.tryLock()) {
+                    try {
+                        final SnapshotInstance currentInstance = snapshotInstance;
+                        // Check again if the current instance has expired then asynchronously try to get a new
+                        // shapshot.
+                        // TODO why was this testing instance rather than currentInstance?
+                        //  Another thread may have updated snapshotInstance before we got the lock
+                        if (currentInstance.hasExpired()) {
+                            final SnapshotInstance newInstance = new SnapshotInstance(
+                                    byteBuffers,
+                                    configProvider,
+                                    statePaths,
+                                    fileTransferClient,
+                                    doc,
+                                    Instant.now(),
+                                    currentInstance.getCurrentSnapshotTime());
 
-                        // If the new shapshot had problems fetching then keep using the current one and extend
-                        // its expiry time so we don't keep fetching.
-                        if (newInstance.hasFetchException()) {
-                            // Extend the expiry time of the current instance so we don't just keep infinitely retrying
-                            // to update this snapshot.
-                            currentInstance.extendExpiry(
-                                    configProvider.get().getSnapshotRetryFetchInterval().getDuration());
-
-                        } else {
-                            // Switch the instance and destroy the previous instance.
-                            snapshotInstance = newInstance;
-                            currentInstance.destroy();
+                            // If the new shapshot had problems fetching then keep using the current one and extend
+                            // its expiry time so we don't keep fetching.
+                            if (newInstance.hasFetchException()) {
+                                // Extend the expiry time of the current instance so we don't just keep infinitely retrying
+                                // to update this snapshot.
+                                currentInstance.extendExpiry(
+                                        configProvider.get().getSnapshotRetryFetchInterval().getDuration());
+                            } else {
+                                // Switch the instance and destroy the previous instance.
+                                snapshotInstance = newInstance;
+                                // Other threads may still be reading from it, so we need to wait till it is idle
+                                // before destroying
+                                currentInstance.waitThenDestroy();
+                            }
                         }
+                    } finally {
+                        snapshotUpdateLock.unlock();
                     }
-                } finally {
-                    lock.unlock();
+                } else {
+                    LOGGER.debug("getDBInstance() - tryLock failed, docRef: {}", docRef);
                 }
             });
         }
-
         return instance;
     }
 
@@ -162,11 +180,16 @@ class SnapshotShard implements Shard {
         return true;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class SnapshotInstance {
 
         private final ByteBuffers byteBuffers;
         private final Provider<PlanBConfig> configProvider;
         private final PlanBDoc doc;
+        private final DocRef docRef;
         private final Path dbDir;
         private final RuntimeException fetchException;
         private final ReentrantLock lock = new ReentrantLock();
@@ -174,7 +197,7 @@ class SnapshotShard implements Shard {
 
         private volatile Db<?, ?> db;
         private volatile boolean open;
-        private volatile Instant lastAccessTime;
+        private volatile long lastAccessTimeEpochMs;
         private volatile Instant expiryTime;
         private volatile boolean destroy;
 
@@ -189,12 +212,13 @@ class SnapshotShard implements Shard {
             Instant expiryTime = null;
             Path dbDir = null;
             RuntimeException fetchException = null;
+            this.docRef = doc.asDocRef();
 
             try {
                 // Get the snapshot dir.
                 dbDir = statePaths
                         .getSnapshotDir()
-                        .resolve(doc.getUuid())
+                        .resolve(docRef.getUuid())
                         .resolve(DateUtil.createFileDateTimeString(createTime));
 
                 // Create dir.
@@ -203,11 +227,11 @@ class SnapshotShard implements Shard {
                 // Go and get a snapshot.
                 boolean fetchComplete = false;
                 final SnapshotRequest request = new SnapshotRequest(
-                        doc.asDocRef(),
+                        docRef,
                         0L,
                         NullSafe.get(previousSnapshotTime, Instant::toEpochMilli));
                 for (final String node : configProvider.get().getNodeList()) {
-                    LOGGER.info(() -> "Fetching shard for '" + doc.asDocRef() + "'");
+                    LOGGER.info("Fetching shard for '{}', node: {}, dbDir: {}", docRef, node, dbDir);
 
                     // Fetch snapshot.
                     currentSnapshotTime = fileTransferClient.fetchSnapshot(node, request, dbDir);
@@ -220,7 +244,7 @@ class SnapshotShard implements Shard {
                 }
 
                 if (!fetchComplete) {
-                    throw new RuntimeException("Unable to get snapshot shard for '" + doc.asDocRef() + "'");
+                    throw new RuntimeException("Unable to get snapshot shard for '" + docRef + "'");
                 }
             } catch (final Exception e) {
                 LOGGER.debug(e::getMessage, e);
@@ -247,11 +271,25 @@ class SnapshotShard implements Shard {
         }
 
         public <R> R get(final Function<Db<?, ?>, R> function) throws TryAgainException {
-            lastAccessTime = Instant.now();
+            touchLastAccessTime();
             final Db<?, ?> db = this.db;
-            if (db != null) {
+            if (db != null && !destroy) {
                 try {
-                    return function.apply(db);
+                    // TODO AT - This timer is a bit of a temporary fix to try to stop the LMDB env from being
+                    //  closed while reads are happening. Ideally we should be using the read/write locks
+                    //  from StampedLock to block destructive methods while reads are happening.
+                    //  hasExpired() is used to determine when destroy() is called and this timer won't
+                    //  help with that. Needs a discussion with 66.
+                    // Periodically touch the lastAccessTime to prevent the db being seen to be idle
+                    // when there is a long-running function.
+                    final Timer timer = createLastAccessTouchPeriodicTimer();
+                    try {
+                        return function.apply(db);
+                    } finally {
+                        // Make sure the lastAccessTime represents when we actually finished
+                        timer.cancel();
+                        touchLastAccessTime();
+                    }
                 } catch (final LmdbException e) {
                     LOGGER.debug(e::getMessage, e);
                 }
@@ -262,7 +300,85 @@ class SnapshotShard implements Shard {
             throw new TryAgainException();
         }
 
+        private @NonNull Timer createLastAccessTouchPeriodicTimer() {
+            final TimerTask timerTask = new TimerTask() {
+                final long startTimeMs = System.currentTimeMillis();
+
+                @Override
+                public void run() {
+                    touchLastAccessTime();
+                }
+
+                @Override
+                public boolean cancel() {
+                    final boolean cancelled = super.cancel();
+                    touchLastAccessTime();
+                    // lastAccessTime is not final, hence if block
+                    if (LOGGER.isTraceEnabled()) {
+                        final long finishTimeMs = lastAccessTimeEpochMs;
+                        LOGGER.trace("TimerTask.cancel() - cancelled = {}, docRef: {}, dbDir: {}, duration: {}",
+                                cancelled, docRef, dbDir, Duration.ofMillis(finishTimeMs - startTimeMs));
+                    }
+                    return cancelled;
+                }
+            };
+
+            final Timer timer = new Timer();
+            timer.scheduleAtFixedRate(
+                    timerTask,
+                    LAST_ACCESS_TIME_TOUCH_INTERVAL_MS,
+                    LAST_ACCESS_TIME_TOUCH_INTERVAL_MS);
+            return timer;
+        }
+
+        /**
+         * Wait for the snapshot to be idle, then destroy it.
+         */
+        public void waitThenDestroy() {
+            LOGGER.debug(() -> LogUtil.message(
+                    "waitThenDestroy(), open: {}, lastAccessTime: {}, docRef: {}, dbDir: {}",
+                    open, Instant.ofEpochMilli(lastAccessTimeEpochMs), docRef, dbDir));
+
+            // Mark as destroyed to stop any other threads using it.
+            destroy = true;
+
+            final DurationTimer durationTimer = DurationTimer.start();
+            // Have to keep checking isIdle as other threads may have touched lastAccessTimeEpochMs
+            while (!isIdle()) {
+                final Duration remainingIdleTime = getRemainingIdleTime();
+                if (remainingIdleTime.isPositive()) {
+                    try {
+                        // TODO replace the sleep loop if we change this class to use a pair of read/write locks
+                        Thread.sleep(remainingIdleTime.toMillis());
+                        LOGGER.debug(() -> LogUtil.message(
+                                "waitThenDestroy(), open: {}, lastAccessTime: {}, durationTimer: {}, " +
+                                "docRef: {}, dbDir: {}",
+                                open,
+                                Instant.ofEpochMilli(lastAccessTimeEpochMs),
+                                durationTimer,
+                                docRef,
+                                dbDir));
+                    } catch (final InterruptedException e) {
+                        LOGGER.debug(e::getMessage, e);
+                        Thread.currentThread().interrupt();
+                        // Just swallow and crack on with the destruction
+                    }
+                }
+            }
+            lock.lock();
+            try {
+                cleanup();
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        /**
+         * Destroy the snapshot immediately.
+         */
         public void destroy() {
+            LOGGER.debug(() -> LogUtil.message("destroy(), open: {}, lastAccessTime: {}, docRef: {}, dbDir: {}",
+                    open, Instant.ofEpochMilli(lastAccessTimeEpochMs), docRef, dbDir));
             destroy = true;
             lock.lock();
             try {
@@ -276,6 +392,9 @@ class SnapshotShard implements Shard {
             lock.lock();
             try {
                 if (open && (destroy || isIdle())) {
+                    LOGGER.debug(() -> LogUtil.message(
+                            "cleanup(), Closing db, destroy: {}, lastAccessTime: {}, docRef: {}, dbDir: {}",
+                            destroy, Instant.ofEpochMilli(lastAccessTimeEpochMs), docRef, dbDir));
                     db.close();
                     db = null;
                     open = false;
@@ -284,7 +403,7 @@ class SnapshotShard implements Shard {
                 if (!open && destroy) {
                     // Delete if this is an old snapshot.
                     try {
-                        LOGGER.info(() -> "Deleting snapshot for '" + doc.asDocRef() + "'");
+                        LOGGER.info("cleanup() - Deleting snapshot for docRef: {}, dbDir: {}", docRef, dbDir);
                         FileUtil.deleteDir(dbDir);
                     } catch (final Exception e) {
                         LOGGER.error(e::getMessage, e);
@@ -296,12 +415,32 @@ class SnapshotShard implements Shard {
         }
 
         private boolean isIdle() {
-            return lastAccessTime.isBefore(Instant.now().minus(
-                    configProvider.get().getMinTimeToKeepEnvOpen().getDuration()));
+            final Duration minIdleDuration = configProvider.get().getMinTimeToKeepEnvOpen().getDuration();
+            return Instant.now()
+                    .isAfter(Instant.ofEpochMilli(lastAccessTimeEpochMs).plus(minIdleDuration));
+        }
+
+        /**
+         * @return The {@link Duration} between now and the time at which the minimum idle
+         * time has been reached. May be negative.
+         */
+        private Duration getRemainingIdleTime() {
+            final Duration minIdleDuration = configProvider.get().getMinTimeToKeepEnvOpen().getDuration();
+            final Instant minIdleEndTime = Instant.ofEpochMilli(lastAccessTimeEpochMs).plus(minIdleDuration);
+            final Instant now = Instant.now();
+            return Duration.between(now, minIdleEndTime);
+        }
+
+        private void touchLastAccessTime() {
+            lastAccessTimeEpochMs = System.currentTimeMillis();
         }
 
         public Instant getExpiryTime() {
             return expiryTime;
+        }
+
+        public boolean hasExpired() {
+            return expiryTime.isBefore(Instant.now());
         }
 
         public void extendExpiry(final Duration amount) {
@@ -313,11 +452,8 @@ class SnapshotShard implements Shard {
                 if (fetchException != null) {
                     throw fetchException;
                 }
-
-                final String mapName = doc.getName();
-
                 // If we already fetched the snapshot then reopen.
-                LOGGER.debug(() -> "Opening local snapshot for '" + mapName + "'");
+                LOGGER.debug("open() - Opening local snapshot for docRef: {}, dbDir: {}", docRef, dbDir);
                 db = PlanBDb.open(doc, dbDir, byteBuffers, true);
                 open = true;
             }
@@ -374,7 +510,12 @@ class SnapshotShard implements Shard {
         return result;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class TryAgainException extends Exception {
 
     }
+
 }
