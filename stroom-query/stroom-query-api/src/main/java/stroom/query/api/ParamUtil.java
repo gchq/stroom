@@ -122,6 +122,16 @@ public final class ParamUtil {
         return replaceParameters(value, paramValues, false);
     }
 
+    /**
+     * Replace parameters in expressions but not in query term values.
+     * Query term values should use the <code>replaceExpressionValueParameters</code> method instead as it doesn't add
+     * quotes to expression parameters.
+     *
+     * @param value         The string value to replace parameters in.
+     * @param paramValues   The parameter values to use as replacements.
+     * @param keepUnmatched If we don't find a parameter should we still keep the parameter placeholder?
+     * @return The supplied string with parameters replaced.
+     */
     public static String replaceParameters(final String value,
                                            final ParamValues paramValues,
                                            final boolean keepUnmatched) {
@@ -222,6 +232,58 @@ public final class ParamUtil {
 //                    }
 //            }
 //        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Replace parameters in query term values only.
+     * This method will replace parameters but will not add additional quotes.
+     *
+     * @param value         The term value to replace parameters in.
+     * @param paramValues   The parameter values to use as replacements.
+     * @param keepUnmatched If we don't find a parameter should we still keep the parameter placeholder?
+     * @return The supplied value with parameters replaced.
+     */
+    public static String replaceTermValueParameters(final String value,
+                                                    final ParamValues paramValues,
+                                                    final boolean keepUnmatched) {
+        if (NullSafe.isBlankString(value)) {
+            return value;
+        }
+
+        final StringBuilder sb = new StringBuilder();
+        final List<Token> tokens = BasicTokeniser.parse(value);
+        for (final Token token : tokens) {
+            if (TokenType.PARAM.equals(token.getTokenType())) {
+                String key = token.getUnescapedText();
+                String defaultValue = null;
+                final int defaultValueIndex = key.indexOf(DEFAULT_VALUE_SEPARATOR);
+                if (defaultValueIndex != -1) {
+                    defaultValue = key.substring(defaultValueIndex + 2);
+                    key = key.substring(0, defaultValueIndex);
+                }
+
+                final String paramValue = paramValues.getParamValue(key);
+                if (paramValue != null) {
+                    // gh-5100 WE DO NOT WANT TO AUTOMATICALLY QUOTE REPLACED PARAMS, QUOTES SHOULD BE ADDED TO QUERIES
+                    // IF NEEDED
+//                    if (containsWhitespace(paramValue)) {
+//                        sb.append("'");
+//                        sb.append(paramValue);
+//                        sb.append("'");
+//                    } else {
+                    sb.append(paramValue);
+//                    }
+                } else if (defaultValue != null) {
+                    sb.append(defaultValue);
+                } else if (keepUnmatched) {
+                    sb.append(token.getText());
+                }
+            } else {
+                sb.append(token.getUnescapedText());
+            }
+        }
 
         return sb.toString();
     }

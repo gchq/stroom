@@ -27,6 +27,7 @@ import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -92,8 +93,9 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final DateTimeSettings dateTimeSettings,
-                       final ValuesConsumer consumer) {
+                       final ValuesConsumer valuesConsumer,
+                       final ErrorConsumer errorConsumer) {
         securityContext.secure(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION, () ->
-                indexShardDao.search(criteria, fieldIndex, consumer));
+                indexShardDao.search(criteria, fieldIndex, valuesConsumer));
     }
 }

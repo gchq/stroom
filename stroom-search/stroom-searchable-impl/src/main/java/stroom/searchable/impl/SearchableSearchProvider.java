@@ -232,7 +232,8 @@ class SearchableSearchProvider implements SearchProvider {
                             criteria,
                             coprocessors.getFieldIndex(),
                             searchRequest.getDateTimeSettings(),
-                            coprocessors);
+                            coprocessors,
+                            coprocessors.getErrorConsumer());
 
                 } catch (final RuntimeException e) {
                     LOGGER.debug(e::getMessage, e);

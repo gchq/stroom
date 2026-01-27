@@ -17,7 +17,6 @@
 package stroom.pipeline.factory;
 
 import stroom.docref.DocRef;
-import stroom.docstore.shared.DocRefUtil;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 
@@ -53,10 +52,8 @@ class PipelineStackLoaderImpl implements PipelineStackLoader {
      */
     @Override
     public List<PipelineDoc> loadPipelineStack(final PipelineDoc pipelineDoc) {
-        // Load the pipeline.
         final List<PipelineDoc> pipelineList = new ArrayList<>();
-        PipelineDoc parent = pipelineStore.readDocument(DocRefUtil.create(pipelineDoc));
-
+        PipelineDoc parent = pipelineDoc;
         if (parent == null) {
             throw new RuntimeException("Unable to load pipeline: " + pipelineDoc);
         }

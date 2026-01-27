@@ -24,9 +24,12 @@ dependencies {
     implementation project(':stroom-credentials:stroom-credentials-impl-db-jooq')
     implementation project(':stroom-db-util')
     implementation project(':stroom-docref')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-impl')
     implementation project(':stroom-security:stroom-security-mock')
+    implementation project(':stroom-security:stroom-security-user-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
@@ -42,6 +45,10 @@ dependencies {
 
     runtimeOnly libs.mysql.connector.java
 
+    testImplementation project(':stroom-dictionary:stroom-dictionary-mock')
+    testImplementation project(':stroom-explorer:stroom-collection-mock')
+    testImplementation project(':stroom-explorer:stroom-docrefinfo-mock')
+    testImplementation project(':stroom-resource:stroom-resource-impl')
     testImplementation project(':stroom-test-common')
     testImplementation libs.flyway.core
     testImplementation libs.bundles.common.test.implementation

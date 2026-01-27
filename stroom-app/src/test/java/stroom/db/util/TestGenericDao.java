@@ -58,7 +58,7 @@ public class TestGenericDao extends AbstractCoreIntegrationTest {
     @Test
     void testCreateAndFetch() {
 
-        final var genericDao = getGenericDao();
+        final GenericDao<JobRecord, Job, Integer> genericDao = getGenericDao();
 
         assertThat(isJobPresent())
                 .isFalse();
@@ -95,7 +95,7 @@ public class TestGenericDao extends AbstractCoreIntegrationTest {
     @Test
     void testTryCreate() {
 
-        final var genericDao = getGenericDao();
+        final GenericDao<JobRecord, Job, Integer> genericDao = getGenericDao();
 
         assertThat(isJobPresent())
                 .isFalse();
@@ -132,7 +132,7 @@ public class TestGenericDao extends AbstractCoreIntegrationTest {
     @Test
     void testTryCreate_withOnCreateAction() {
 
-        final var genericDao = getGenericDao();
+        final GenericDao<JobRecord, Job, Integer> genericDao = getGenericDao();
 
         assertThat(isJobPresent())
                 .isFalse();
@@ -176,7 +176,7 @@ public class TestGenericDao extends AbstractCoreIntegrationTest {
 
     @Test
     void testUpdate() {
-        final var genericDao = getGenericDao();
+        final GenericDao<JobRecord, Job, Integer> genericDao = getGenericDao();
 
         assertThat(isJobPresent())
                 .isFalse();
@@ -212,7 +212,7 @@ public class TestGenericDao extends AbstractCoreIntegrationTest {
 
     @Test
     void testDelete() {
-        final var genericDao = getGenericDao();
+        final GenericDao<JobRecord, Job, Integer> genericDao = getGenericDao();
 
         assertThat(isJobPresent())
                 .isFalse();

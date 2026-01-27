@@ -76,6 +76,8 @@ import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.Record6;
 import org.jooq.Result;
+import org.jooq.SelectJoinStep;
+import org.jooq.UpdateConditionStep;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
@@ -393,7 +395,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
         try {
             // Create all bind values.
-            final Object[][] allBindValues = new Object[streams.entrySet().size()][];
+            final Object[][] allBindValues = new Object[streams.size()][];
             int rowCount = 0;
             for (final Entry<Meta, InclusiveRanges> entry : streams.entrySet()) {
                 final Meta meta = entry.getKey();
@@ -888,7 +890,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 numberOfRows = pageRequest.getLength();
             }
 
-            var select = context.select(dbFields).from(PROCESSOR_TASK);
+            SelectJoinStep<Record> select = context.select(dbFields).from(PROCESSOR_TASK);
             if (nodeUsed) {
                 select = select.leftOuterJoin(PROCESSOR_NODE)
                         .on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID));
@@ -1190,7 +1192,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     public int logicalDeleteByProcessorId(final int processorId) {
         final int count = JooqUtil.withDeadlockRetries(
                 () -> JooqUtil.contextResult(processorDbConnProvider, context -> {
-                    final var query = context
+                    final UpdateConditionStep<ProcessorTaskRecord> query = context
                             .update(PROCESSOR_TASK)
                             .set(PROCESSOR_TASK.STATUS, TaskStatus.DELETED.getPrimitiveValue())
                             .set(PROCESSOR_TASK.VERSION, PROCESSOR_TASK.VERSION.plus(1))

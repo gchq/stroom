@@ -16,8 +16,6 @@
 
 package stroom.dashboard.impl;
 
-import stroom.dashboard.shared.AskStroomAiRequest;
-import stroom.dashboard.shared.AskStroomAiResponse;
 import stroom.dashboard.shared.ColumnValues;
 import stroom.dashboard.shared.ColumnValuesRequest;
 import stroom.dashboard.shared.DashboardDoc;
@@ -106,32 +104,6 @@ class DashboardResourceImpl implements DashboardResource {
                                     DashboardResource.DOWNLOAD_SEARCH_RESULTS_PATH_PART,
                                     node),
                             () -> dashboardServiceProvider.get().downloadSearchResults(request),
-                            builder -> builder.post(Entity.json(request)));
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e.getMessage(), e);
-            throw e;
-        }
-    }
-
-    @AutoLogged(OperationType.MANUALLY_LOGGED)
-    @Override
-    public AskStroomAiResponse askStroomAi(final String nodeName, final AskStroomAiRequest request) {
-        try {
-            // If the client doesn't specify a node then execute locally.
-            final String node = dashboardServiceProvider.get().getBestNode(nodeName, request.getSearchRequest());
-            if (node == null) {
-                return dashboardServiceProvider.get().askStroomAi(request);
-            }
-
-            return nodeServiceProvider.get()
-                    .remoteRestResult(
-                            node,
-                            AskStroomAiResponse.class,
-                            () -> ResourcePaths.buildAuthenticatedApiPath(
-                                    DashboardResource.BASE_PATH,
-                                    DashboardResource.ASK_STROOM_AI_PATH_PART,
-                                    node),
-                            () -> dashboardServiceProvider.get().askStroomAi(request),
                             builder -> builder.post(Entity.json(request)));
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);

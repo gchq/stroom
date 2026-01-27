@@ -20,7 +20,6 @@ import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
-import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.api.FeedProperties;
 import stroom.meta.api.MetaService;
@@ -35,7 +34,8 @@ import stroom.pipeline.errorhandler.LoggedException;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.Pipeline;
-import stroom.pipeline.factory.PipelineDataCache;
+import stroom.pipeline.factory.PipelineDataHolder;
+import stroom.pipeline.factory.PipelineDataHolderFactory;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
@@ -92,7 +92,7 @@ class SteppingRequestHandler {
     private final PipelineFactory pipelineFactory;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final SteppingResponseCache steppingResponseCache;
-    private final PipelineDataCache pipelineDataCache;
+    private final PipelineDataHolderFactory pipelineDataHolderFactory;
     private final PipelineContext pipelineContext;
     private final SecurityContext securityContext;
 
@@ -131,7 +131,7 @@ class SteppingRequestHandler {
                            final PipelineFactory pipelineFactory,
                            final ErrorReceiverProxy errorReceiverProxy,
                            final SteppingResponseCache steppingResponseCache,
-                           final PipelineDataCache pipelineDataCache,
+                           final PipelineDataHolderFactory pipelineDataHolderFactory,
                            final PipelineContext pipelineContext,
                            final SecurityContext securityContext) {
         this.streamStore = streamStore;
@@ -148,7 +148,7 @@ class SteppingRequestHandler {
         this.pipelineFactory = pipelineFactory;
         this.errorReceiverProxy = errorReceiverProxy;
         this.steppingResponseCache = steppingResponseCache;
-        this.pipelineDataCache = pipelineDataCache;
+        this.pipelineDataHolderFactory = pipelineDataHolderFactory;
         this.pipelineContext = pipelineContext;
         this.securityContext = securityContext;
         this.createTime = Instant.now();
@@ -682,12 +682,10 @@ class SteppingRequestHandler {
         }
     }
 
-    private Pipeline createPipeline(final SteppingController controller, final String feedName) {
+    private void createPipeline(final SteppingController controller, final String feedName) {
         if (pipeline == null) {
-            final DocRef pipelineRef = controller.getRequest().getPipeline();
-
             // Set the pipeline so it can be used by a filter if needed.
-            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+            final PipelineDoc pipelineDoc = controller.getRequest().getPipelineDoc();
 
             feedHolder.setFeedName(feedName);
 
@@ -697,7 +695,9 @@ class SteppingRequestHandler {
             pipelineHolder.setPipeline(DocRefUtil.create(pipelineDoc));
             pipelineContext.setStepping(true);
 
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
+            final PipelineDataHolder pipelineDataHolder = pipelineDataHolderFactory.create(pipelineDoc);
+            final PipelineData pipelineData = pipelineDataHolder.getMergedPipelineData();
+
             pipeline = pipelineFactory.create(pipelineData, taskContext, controller);
 
             // Don't return a pipeline if we cannot step with it.
@@ -709,7 +709,6 @@ class SteppingRequestHandler {
                         "You cannot step with this pipeline as it does not contain required elements.");
             }
         }
-        return pipeline;
     }
 
     private String createStreamInfo(final String feedName, final Meta meta) {

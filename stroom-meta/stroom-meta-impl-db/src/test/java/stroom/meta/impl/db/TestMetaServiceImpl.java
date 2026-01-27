@@ -39,6 +39,7 @@ import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.Status;
+import stroom.processor.shared.FeedDependency;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
@@ -824,6 +825,26 @@ class TestMetaServiceImpl {
                 .containsExactlyInAnyOrder(meta1, meta2);
     }
 
+    @Test
+    void testGetFeedDependencyEffectiveTime() {
+
+        final Meta meta1 = metaService.create(createProperties(FEED_1, Instant.ofEpochMilli(3000L)));
+        final Meta meta2 = metaService.create(createProperties(FEED_1, Instant.ofEpochMilli(4000L)));
+        final Meta meta3 = metaService.create(createProperties(FEED_1, Instant.ofEpochMilli(1000L)));
+
+        final FeedDependency feedDependency = new FeedDependency(
+                UUID.randomUUID().toString(),
+                FEED_1,
+                TEST_STREAM_TYPE);
+
+        Instant time = metaService.getFeedDependencyEffectiveTime(List.of(feedDependency));
+        assertThat(time).isEqualTo(Instant.ofEpochMilli(0L));
+
+        unlockAllLockedStreams();
+        time = metaService.getFeedDependencyEffectiveTime(List.of(feedDependency));
+        assertThat(time).isEqualTo(Instant.ofEpochMilli(meta2.getEffectiveMs()));
+    }
+
     private void assertTotalRowCount(final int expectedRowCount, final Status status) {
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(ExpressionOperator.builder()
@@ -864,7 +885,6 @@ class TestMetaServiceImpl {
     }
 
     private void unlockAllLockedStreams() {
-
         JooqUtil.context(metaDbConnProvider, context -> {
             final byte unlockedId = MetaStatusId.getPrimitiveValue(Status.UNLOCKED);
             final byte lockedId = MetaStatusId.getPrimitiveValue(Status.LOCKED);
@@ -880,6 +900,7 @@ class TestMetaServiceImpl {
     private MetaProperties createProperties(final String feedName, final Instant createTime) {
         return MetaProperties.builder()
                 .createMs(createTime.toEpochMilli())
+                .effectiveMs(createTime.toEpochMilli())
                 .feedName(feedName)
                 .processorUuid("12345")
                 .pipelineUuid("PIPELINE_UUID")

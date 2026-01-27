@@ -814,6 +814,18 @@ public class NullSafe {
     }
 
     /**
+     * Returns an unmodifiable view of a new {@link ArrayList} instance that has been populated with the
+     * contents of list in a null-safe way.
+     * Allows null list elements.
+     */
+    public static <L extends List<T>, T> List<T> copyOf(final L list) {
+        //noinspection Java9CollectionFactory // List.copyOf will NPE for null elements
+        return NullSafe.hasItems(list)
+                ? Collections.unmodifiableList(new ArrayList<>(list))
+                : Collections.emptyList();
+    }
+
+    /**
      * Returns a new {@link ArrayList} instance. If list is not null, the new {@link ArrayList} will
      * contain the contents of list, else it will be empty.
      */

@@ -20,8 +20,6 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.pipeline.client.event.ChangeDataEvent;
-import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineLayer;
@@ -40,23 +38,30 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresenter.PipelineTreeView>
-        implements ChangeDataHandler<PipelineModel>, HasDirtyHandlers, PipelineTreeUiHandlers, HasContextMenuHandlers {
+        implements HasDirtyHandlers, PipelineTreeUiHandlers, HasContextMenuHandlers {
 
     private final MySingleSelectionModel<PipelineElement> selectionModel;
     private PipelineModel pipelineModel;
     private PipelineTreeBuilder pipelineTreeBuilder;
+    private List<PipelineElement> disabledElements = new ArrayList<>();
 
     @Inject
     public PipelineTreePresenter(final EventBus eventBus, final PipelineTreeView view) {
         super(eventBus, view);
 
-        selectionModel = new MySingleSelectionModel<>();
+        selectionModel = new MySingleSelectionModel<>() {
+            @Override
+            protected boolean isSelectable(final PipelineElement element) {
+                return !disabledElements.contains(element);
+            }
+        };
         view.setSelectionModel(selectionModel);
         view.setUiHandlers(this);
     }
@@ -73,14 +78,6 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
     public void setModel(final PipelineModel model) {
         this.pipelineModel = model;
         getView().setPipelineModel(pipelineModel);
-        if (model != null) {
-            model.addChangeDataHandler(this);
-        }
-        refresh();
-    }
-
-    @Override
-    public void onChange(final ChangeDataEvent<PipelineModel> event) {
         refresh();
     }
 
@@ -157,6 +154,11 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
         getView().setSeverities(elementIdToSeveritiesMap);
     }
 
+    public void setDisabledElements(final List<PipelineElement> disabledElements) {
+        this.disabledElements = disabledElements;
+        getView().setDisabledElements(disabledElements);
+    }
+
     /**
      * @return All the element names currently in the pipeline
      */
@@ -191,6 +193,8 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
         void setAllowNullSelection(boolean allowNullSelection);
 
         int getTreeHeight();
+
+        void setDisabledElements(final List<PipelineElement> disabledElements);
 
         void setSeverities(final Map<String, Severity> elementIdToSeveritiesMap);
     }

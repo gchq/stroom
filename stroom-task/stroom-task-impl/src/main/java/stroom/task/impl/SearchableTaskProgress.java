@@ -36,6 +36,7 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -134,7 +135,8 @@ class SearchableTaskProgress implements Searchable {
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final DateTimeSettings dateTimeSettings,
-                       final ValuesConsumer consumer) {
+                       final ValuesConsumer valuesConsumer,
+                       final ErrorConsumer errorConsumer) {
         securityContext.secure(AppPermission.MANAGE_TASKS_PERMISSION, () -> {
             final Map<String, TaskProgressResponse> nodeResponses = searchAllNodes();
 
@@ -184,7 +186,7 @@ class SearchableTaskProgress implements Searchable {
                             }
                             arr[i] = val;
                         }
-                        consumer.accept(Val.of(arr));
+                        valuesConsumer.accept(Val.of(arr));
                     });
         });
     }

@@ -16,29 +16,43 @@
 
 package stroom.credentials.impl.db;
 
+import stroom.ai.shared.KeyStoreType;
+import stroom.credentials.api.StoredSecret;
 import stroom.credentials.impl.CredentialsDao;
-import stroom.credentials.impl.db.jooq.tables.records.CredentialsRecord;
-import stroom.credentials.impl.db.jooq.tables.records.CredentialsSecretRecord;
-import stroom.credentials.shared.Credentials;
-import stroom.credentials.shared.CredentialsSecret;
-import stroom.credentials.shared.CredentialsType;
+import stroom.credentials.shared.Credential;
+import stroom.credentials.shared.CredentialType;
+import stroom.credentials.shared.CredentialWithPerms;
+import stroom.credentials.shared.FindCredentialRequest;
+import stroom.credentials.shared.Secret;
+import stroom.db.util.ExpressionMapper;
+import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.common.v2.DateExpressionParser;
+import stroom.query.common.v2.FieldProviderImpl;
+import stroom.query.common.v2.SimpleStringExpressionParser;
+import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
-import org.jooq.Result;
-import org.jooq.exception.DataAccessException;
+import org.jooq.Condition;
+import org.jooq.JSON;
+import org.jooq.Record;
+import org.jooq.impl.DSL;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
-import static stroom.credentials.impl.db.jooq.tables.Credentials.CREDENTIALS;
-import static stroom.credentials.impl.db.jooq.tables.CredentialsSecret.CREDENTIALS_SECRET;
+import static stroom.credentials.impl.db.jooq.tables.Credential.CREDENTIAL;
 
 /**
  * Implementation of the Credentials DAO.
@@ -47,227 +61,280 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CredentialsDaoImpl.class);
 
-    /** Bootstrap connection to DB */
+    /**
+     * Bootstrap connection to DB
+     */
     private final CredentialsDbConnProvider credentialsDbConnProvider;
+    private final ExpressionMapper expressionMapper;
 
     /**
      * Injected constructor.
      */
     @SuppressWarnings("unused")
     @Inject
-    CredentialsDaoImpl(final CredentialsDbConnProvider credentialsDbConnProvider) {
+    CredentialsDaoImpl(final CredentialsDbConnProvider credentialsDbConnProvider,
+                       final ExpressionMapperFactory expressionMapperFactory) {
         this.credentialsDbConnProvider = credentialsDbConnProvider;
+        this.expressionMapper = createExpressionMapper(expressionMapperFactory);
     }
 
-    /**
-     * Converts the Jooq generated CredentialsRecord into a Credentials object.
-     * @param record The Jooq object to convert
-     * @return Our Credentials object.
-     */
-    private Credentials recordToCredentials(final CredentialsRecord record) {
-        if (record == null) {
+    private ExpressionMapper createExpressionMapper(final ExpressionMapperFactory expressionMapperFactory) {
+        final ExpressionMapper expressionMapper = expressionMapperFactory.create();
+        expressionMapper.map(stroom.credentials.shared.CredentialFields.CREDENTIAL_UUID_FIELD,
+                CREDENTIAL.UUID,
+                value -> value);
+        expressionMapper.map(stroom.credentials.shared.CredentialFields.CREDENTIAL_NAME_FIELD,
+                CREDENTIAL.NAME,
+                value -> value);
+        expressionMapper.map(stroom.credentials.shared.CredentialFields.CREDENTIAL_TYPE_FIELD,
+                CREDENTIAL.CRENDENTIAL_TYPE,
+                value -> value);
+        expressionMapper.map(stroom.credentials.shared.CredentialFields.CREDENTIAL_CREATED_ON_FIELD,
+                CREDENTIAL.CREATE_TIME_MS, value ->
+                        DateExpressionParser.getMs(stroom.credentials.shared.CredentialFields.CREDENTIAL_CREATED_ON,
+                                value));
+        expressionMapper.map(stroom.credentials.shared.CredentialFields.CREDENTIAL_CREATED_BY_FIELD,
+                CREDENTIAL.CREATE_USER,
+                value -> value);
+        expressionMapper.map(stroom.credentials.shared.CredentialFields.CREDENTIAL_UPDATED_ON_FIELD,
+                CREDENTIAL.UPDATE_TIME_MS,
+                value ->
+                        DateExpressionParser.getMs(stroom.credentials.shared.CredentialFields.CREDENTIAL_UPDATED_ON,
+                                value));
+        expressionMapper.map(stroom.credentials.shared.CredentialFields.CREDENTIAL_UPDATED_BY_FIELD,
+                CREDENTIAL.UPDATE_USER,
+                value -> value);
+        return expressionMapper;
+    }
+
+    private List<Condition> createConditions(final FindCredentialRequest request) {
+        final List<Condition> conditions = new ArrayList<>();
+        final FieldProvider fieldProvider = new FieldProviderImpl(
+                List.of(stroom.credentials.shared.CredentialFields.CREDENTIAL_NAME),
+                List.of(stroom.credentials.shared.CredentialFields.CREDENTIAL_NAME,
+                        stroom.credentials.shared.CredentialFields.CREDENTIAL_UUID,
+                        stroom.credentials.shared.CredentialFields.CREDENTIAL_TYPE));
+        final Optional<ExpressionOperator> optionalExpressionOperator = SimpleStringExpressionParser
+                .create(fieldProvider, request.getFilter());
+        optionalExpressionOperator.ifPresent(expressionOperator ->
+                conditions.add(expressionMapper.apply(expressionOperator)));
+
+        if (!NullSafe.isEmptyCollection(request.getCredentialTypes())) {
+            final List<Condition> types = request.getCredentialTypes().stream().map(credentialType ->
+                    CREDENTIAL.CRENDENTIAL_TYPE.eq(credentialType.name())).toList();
+            if (types.size() > 1) {
+                conditions.add(DSL.or(types));
+            } else {
+                conditions.add(types.getFirst());
+            }
+        }
+
+        return conditions;
+    }
+
+    @SuppressWarnings("checkstyle:LineLength")
+    @Override
+    public ResultPage<CredentialWithPerms> findCredentialsWithPermissions(final FindCredentialRequest request,
+                                                                          final Function<Credential, CredentialWithPerms> permissionDecorator) {
+        final List<Condition> conditions = createConditions(request);
+        final List<CredentialWithPerms> list = JooqUtil.contextResult(credentialsDbConnProvider, context ->
+                        context
+                                .select()
+                                .from(CREDENTIAL)
+                                .where(conditions)
+                                .fetch()
+                                .stream()
+                                .map(this::mapToCredential)
+                                .map(permissionDecorator)
+                                .filter(Objects::nonNull))
+                .toList();
+        return ResultPage.createPageLimitedList(list, request.getPageRequest());
+    }
+
+    @Override
+    public ResultPage<Credential> findCredentials(final FindCredentialRequest request,
+                                                  final Predicate<Credential> permissionFilter) {
+        final List<Condition> conditions = createConditions(request);
+        final List<Credential> list = JooqUtil.contextResult(credentialsDbConnProvider, context ->
+                        context
+                                .select()
+                                .from(CREDENTIAL)
+                                .where(conditions)
+                                .fetch()
+                                .stream()
+                                .map(this::mapToCredential)
+                                .filter(permissionFilter))
+                .toList();
+        return ResultPage.createPageLimitedList(list, request.getPageRequest());
+    }
+
+    private Credential mapToCredential(final Record record) {
+        return new Credential(
+                record.get(CREDENTIAL.UUID),
+                record.get(CREDENTIAL.NAME),
+                record.get(CREDENTIAL.CREATE_TIME_MS),
+                record.get(CREDENTIAL.UPDATE_TIME_MS),
+                record.get(CREDENTIAL.CREATE_USER),
+                record.get(CREDENTIAL.UPDATE_USER),
+                getCredentialType(record.get(CREDENTIAL.CRENDENTIAL_TYPE)),
+                getKeyStoreType(record.get(CREDENTIAL.KEY_STORE_TYPE)),
+                record.get(CREDENTIAL.EXPIRY_TIME_MS));
+    }
+
+    private StoredSecret mapToStoredSecret(final Record record) {
+        final Credential credential = new Credential(
+                record.get(CREDENTIAL.UUID),
+                record.get(CREDENTIAL.NAME),
+                record.get(CREDENTIAL.CREATE_TIME_MS),
+                record.get(CREDENTIAL.UPDATE_TIME_MS),
+                record.get(CREDENTIAL.CREATE_USER),
+                record.get(CREDENTIAL.UPDATE_USER),
+                getCredentialType(record.get(CREDENTIAL.CRENDENTIAL_TYPE)),
+                getKeyStoreType(record.get(CREDENTIAL.KEY_STORE_TYPE)),
+                record.get(CREDENTIAL.EXPIRY_TIME_MS));
+
+        final Secret secret = JsonUtil.readValue(record.get(CREDENTIAL.SECRET_JSON).data(), Secret.class);
+        final byte[] keyStore = record.get(CREDENTIAL.KEY_STORE);
+        return new StoredSecret(credential, secret, keyStore);
+    }
+
+    private CredentialType getCredentialType(final String name) {
+        if (NullSafe.isBlankString(name)) {
             return null;
-        } else {
-            return new Credentials(
-                    record.getName(),
-                    record.getUuid(),
-                    CredentialsType.valueOf(record.getType()),
-                    record.getCredsexpire() == 1,
-                    record.getExpires());
         }
+        return CredentialType.valueOf(name);
     }
 
-    /**
-     * Converts the Jooq generated CredentialsSecretRecord into a CredentialsSecret object.
-     * @param record The Jooq object to convert
-     * @return Our CredentialsSecret object.
-     */
-    private CredentialsSecret recordToSecret(final CredentialsSecretRecord record) {
-        if (record == null) {
+    private KeyStoreType getKeyStoreType(final String name) {
+        if (NullSafe.isBlankString(name)) {
             return null;
+        }
+        return KeyStoreType.valueOf(name);
+    }
+
+    @Override
+    public Credential getCredentialByUuid(final String uuid) {
+        return JooqUtil.contextResult(credentialsDbConnProvider, context -> context
+                        .select(CREDENTIAL.UUID,
+                                CREDENTIAL.NAME,
+                                CREDENTIAL.CREATE_TIME_MS,
+                                CREDENTIAL.UPDATE_TIME_MS,
+                                CREDENTIAL.CREATE_USER,
+                                CREDENTIAL.UPDATE_USER,
+                                CREDENTIAL.CRENDENTIAL_TYPE,
+                                CREDENTIAL.KEY_STORE_TYPE,
+                                CREDENTIAL.EXPIRY_TIME_MS)
+                        .from(CREDENTIAL)
+                        .where(CREDENTIAL.UUID.eq(uuid))
+                        .fetchOptional())
+                .map(this::mapToCredential)
+                .orElse(null);
+    }
+
+    @Override
+    public Credential getCredentialByName(final String name) {
+        return JooqUtil.contextResult(credentialsDbConnProvider, context -> context
+                        .select(CREDENTIAL.UUID,
+                                CREDENTIAL.NAME,
+                                CREDENTIAL.CREATE_TIME_MS,
+                                CREDENTIAL.UPDATE_TIME_MS,
+                                CREDENTIAL.CREATE_USER,
+                                CREDENTIAL.UPDATE_USER,
+                                CREDENTIAL.CRENDENTIAL_TYPE,
+                                CREDENTIAL.KEY_STORE_TYPE,
+                                CREDENTIAL.EXPIRY_TIME_MS)
+                        .from(CREDENTIAL)
+                        .where(CREDENTIAL.NAME.eq(name))
+                        .fetchOptional())
+                .map(this::mapToCredential)
+                .orElse(null);
+    }
+
+    @Override
+    public void deleteCredentialsAndSecret(final String uuid) {
+        JooqUtil.context(credentialsDbConnProvider, context -> context
+                .deleteFrom(CREDENTIAL)
+                .where(CREDENTIAL.UUID.eq(uuid))
+                .execute());
+    }
+
+    @Override
+    public StoredSecret getStoredSecretByName(final String name) {
+        return JooqUtil.contextResult(credentialsDbConnProvider, context -> context
+                        .select(CREDENTIAL.UUID,
+                                CREDENTIAL.NAME,
+                                CREDENTIAL.CREATE_TIME_MS,
+                                CREDENTIAL.UPDATE_TIME_MS,
+                                CREDENTIAL.CREATE_USER,
+                                CREDENTIAL.UPDATE_USER,
+                                CREDENTIAL.CRENDENTIAL_TYPE,
+                                CREDENTIAL.KEY_STORE_TYPE,
+                                CREDENTIAL.EXPIRY_TIME_MS,
+                                CREDENTIAL.SECRET_JSON,
+                                CREDENTIAL.KEY_STORE)
+                        .from(CREDENTIAL)
+                        .where(CREDENTIAL.NAME.eq(name))
+                        .fetchOptional())
+                .map(this::mapToStoredSecret)
+                .orElse(null);
+    }
+
+    @Override
+    public void putStoredSecret(final StoredSecret secret, final boolean update) {
+        // See if it already exists.
+        final Credential credential = secret.credential();
+        final String credentialType = credential.getCredentialType() == null
+                ? null
+                : credential.getCredentialType().name();
+        final String keyStoreType = credential.getKeyStoreType() == null
+                ? null
+                : credential.getKeyStoreType().name();
+
+        final JSON json = JSON.valueOf(JsonUtil.writeValueAsString(secret.secret()));
+        if (update) {
+            JooqUtil.context(credentialsDbConnProvider, context -> context
+                    .update(CREDENTIAL)
+                    .set(CREDENTIAL.NAME, credential.getName())
+                    .set(CREDENTIAL.CREATE_TIME_MS, credential.getCreateTimeMs())
+                    .set(CREDENTIAL.UPDATE_TIME_MS, credential.getUpdateTimeMs())
+                    .set(CREDENTIAL.CREATE_USER, credential.getCreateUser())
+                    .set(CREDENTIAL.UPDATE_USER, credential.getUpdateUser())
+                    .set(CREDENTIAL.CRENDENTIAL_TYPE, credentialType)
+                    .set(CREDENTIAL.KEY_STORE_TYPE, keyStoreType)
+                    .set(CREDENTIAL.EXPIRY_TIME_MS, credential.getExpiryTimeMs())
+                    .set(CREDENTIAL.SECRET_JSON, json)
+                    .set(CREDENTIAL.KEY_STORE, secret.keyStore())
+                    .where(CREDENTIAL.UUID.eq(credential.getUuid()))
+                    .execute());
+
         } else {
-            return JsonUtil.readValue(record.getSecret(), CredentialsSecret.class);
-
-        }
-    }
-
-    @Override
-    public List<Credentials> listCredentials() throws IOException {
-        try {
-            final Result<CredentialsRecord> result =
-                    JooqUtil.contextResult(credentialsDbConnProvider, context -> context
-                            .fetch(CREDENTIALS)
-                            .sortAsc(CREDENTIALS.NAME));
-
-            final List<Credentials> list = new ArrayList<>(result.size());
-            for (final CredentialsRecord record : result) {
-                list.add(recordToCredentials(record));
-            }
-
-            return list;
-
-        } catch (final DataAccessException e) {
-            LOGGER.error("Error listing credentials: {}", e.getMessage(), e);
-            throw new IOException("Error listing credentials: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public List<Credentials> listCredentials(final CredentialsType type)
-        throws IOException {
-
-        final List<Credentials> retval;
-
-        if (type == null) {
-            retval = this.listCredentials();
-        } else {
-            try {
-                final Result<CredentialsRecord> result =
-                        JooqUtil.contextResult(credentialsDbConnProvider, context -> context
-                                .fetch(CREDENTIALS, CREDENTIALS.TYPE.eq(type.name()))
-                                .sortAsc(CREDENTIALS.NAME));
-
-                retval = new ArrayList<>(result.size());
-                for (final CredentialsRecord record : result) {
-                    retval.add(recordToCredentials(record));
-                }
-
-            } catch (final DataAccessException e) {
-                LOGGER.error("Error listing credentials of type '{}': {}", type, e.getMessage(), e);
-                throw new IOException("Error listing credentials of type '"
-                                      + type + "': " + e.getMessage(), e);
-            }
-        }
-
-        return retval;
-    }
-
-    @Override
-    public Credentials createCredentials(final Credentials clientCredentials) throws IOException {
-        // New UUID for credentials
-        final String dbUuid = UUID.randomUUID().toString();
-        final Credentials dbCredentials = clientCredentials.copyWithUuid(dbUuid);
-
-        LOGGER.info("Creating credentials: {}", dbCredentials);
-        try {
             JooqUtil.context(credentialsDbConnProvider, context -> context
-                    .insertInto(CREDENTIALS)
-                    .columns(CREDENTIALS.UUID,
-                            CREDENTIALS.NAME,
-                            CREDENTIALS.TYPE,
-                            CREDENTIALS.CREDSEXPIRE,
-                            CREDENTIALS.EXPIRES)
-                    .values(dbCredentials.getUuid(),
-                            dbCredentials.getName(),
-                            dbCredentials.getType().name(),
-                            (byte) (dbCredentials.isCredsExpire()
-                                    ? 1
-                                    : 0),
-                            dbCredentials.getExpires())
-                    .execute());
-        } catch (final DataAccessException e) {
-            LOGGER.error("Error creating credentials: {}", e.getMessage(), e);
-            throw new IOException("Error creating credentials: '" + e.getMessage() + "'", e);
-        }
-
-        return dbCredentials;
-    }
-
-    @Override
-    public Credentials getCredentials(final String uuid) throws IOException {
-        try {
-            final CredentialsRecord credRecord =
-                    JooqUtil.contextResult(credentialsDbConnProvider, context -> context
-                            .fetchOne(CREDENTIALS, CREDENTIALS.UUID.eq(uuid)));
-
-            return recordToCredentials(credRecord);
-
-        } catch (final DataAccessException e) {
-            LOGGER.error("Error gettings credentials: {}", e.getMessage(), e);
-            throw new IOException("Error getting credentials for '" + uuid + "': " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void storeCredentials(final Credentials credentials) throws IOException {
-        try {
-            JooqUtil.context(credentialsDbConnProvider, context -> context
-                    .update(CREDENTIALS)
-                    .set(CREDENTIALS.NAME, credentials.getName())
-                    .set(CREDENTIALS.TYPE, credentials.getType().name())
-                    .set(CREDENTIALS.CREDSEXPIRE, (byte) (credentials.isCredsExpire() ? 1 : 0))
-                    .set(CREDENTIALS.EXPIRES, credentials.getExpires())
-                    .where(CREDENTIALS.UUID.eq(credentials.getUuid()))
-                    .execute());
-        } catch (final DataAccessException e) {
-            LOGGER.error("Error storing credentials: {}", e.getMessage(), e);
-            throw new IOException("Error storing credentials: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void deleteCredentialsAndSecret(final String uuid) throws IOException {
-        DataAccessException exception = null;
-        try {
-            JooqUtil.context(credentialsDbConnProvider, context -> context
-                    .deleteFrom(CREDENTIALS)
-                    .where(CREDENTIALS.UUID.eq(uuid))
-                    .execute());
-        } catch (final DataAccessException e) {
-            // Store the exception for later so we can try to delete the secrets
-            exception = e;
-        }
-
-        try {
-            JooqUtil.context(credentialsDbConnProvider, context -> context
-                    .deleteFrom(CREDENTIALS_SECRET)
-                    .where(CREDENTIALS_SECRET.UUID.eq(uuid))
-                    .execute());
-
-            // Throw any exception from deleting the credentials
-            if (exception != null) {
-                throw exception;
-            }
-
-        } catch (final DataAccessException e) {
-            LOGGER.error("Error deleting credentials: {}", e.getMessage(), e);
-            throw new IOException("Error deleting credentials: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void storeSecret(final CredentialsSecret secret) throws IOException {
-        try {
-            JooqUtil.context(credentialsDbConnProvider, context -> context
-                    .insertInto(CREDENTIALS_SECRET)
-                    .columns(CREDENTIALS_SECRET.UUID,
-                            CREDENTIALS_SECRET.SECRET)
-                    .values(secret.getUuid(),
-                            JsonUtil.writeValueAsString(secret))
+                    .insertInto(CREDENTIAL)
+                    .columns(CREDENTIAL.UUID,
+                            CREDENTIAL.NAME,
+                            CREDENTIAL.CREATE_TIME_MS,
+                            CREDENTIAL.UPDATE_TIME_MS,
+                            CREDENTIAL.CREATE_USER,
+                            CREDENTIAL.UPDATE_USER,
+                            CREDENTIAL.CRENDENTIAL_TYPE,
+                            CREDENTIAL.KEY_STORE_TYPE,
+                            CREDENTIAL.EXPIRY_TIME_MS,
+                            CREDENTIAL.SECRET_JSON,
+                            CREDENTIAL.KEY_STORE)
+                    .values(credential.getUuid(),
+                            credential.getName(),
+                            credential.getCreateTimeMs(),
+                            credential.getUpdateTimeMs(),
+                            credential.getCreateUser(),
+                            credential.getUpdateUser(),
+                            credentialType,
+                            keyStoreType,
+                            credential.getExpiryTimeMs(),
+                            json,
+                            secret.keyStore())
                     .onDuplicateKeyUpdate()
-                    .set(CREDENTIALS_SECRET.UUID, secret.getUuid())
-                    .set(CREDENTIALS_SECRET.SECRET, JsonUtil.writeValueAsString(secret))
+                    .set(CREDENTIAL.UUID, credential.getUuid())
                     .execute());
-        } catch (final DataAccessException e) {
-            // TODO Ensure nothing secret is logged
-            LOGGER.error("Error storing credential's secrets: {}", e.getMessage(), e);
-            throw new IOException("Error storing credential's secrets");
-        }
-    }
-
-    @Override
-    public CredentialsSecret getSecret(final String uuid) throws IOException {
-        try {
-            final CredentialsSecretRecord secretRecord =
-                    JooqUtil.contextResult(credentialsDbConnProvider, context -> context
-                            .fetchOne(CREDENTIALS_SECRET,
-                                    CREDENTIALS_SECRET.UUID.eq(uuid)));
-
-            return recordToSecret(secretRecord);
-
-        } catch (final DataAccessException e) {
-            LOGGER.error("Error getting credentials: {}", e.getMessage(), e);
-            throw new IOException("Error getting credentials for '" + uuid + "': " + e.getMessage(), e);
         }
     }
 
@@ -277,9 +344,6 @@ public class CredentialsDaoImpl implements CredentialsDao, Clearable {
     @Override
     public void clear() {
         JooqUtil.context(credentialsDbConnProvider,
-                context -> context.deleteFrom(CREDENTIALS).execute());
-        JooqUtil.context(credentialsDbConnProvider,
-                context -> context.deleteFrom(CREDENTIALS_SECRET).execute());
+                context -> context.deleteFrom(CREDENTIAL).execute());
     }
-
 }

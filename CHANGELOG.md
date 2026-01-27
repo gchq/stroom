@@ -13,6 +13,74 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.19] - 2026-01-14
+
+* Issue **#5355** : Fix HttpClient being closed by cache while in use.
+
+
+## [v7.11-beta.18] - 2026-01-13
+
+* Issue **#5303** : Add debug to index dense vector retrieval.
+
+* Issue **#5344** : Fix credential manager UI.
+
+* Issue **#5342** : Fix issue querying Plan B shards where some stores have been deleted.
+
+* Issue **#5351** : Make SSH key and known host configuration clearer.
+
+* Issue **#5353** : Fix keystore config issue.
+
+
+## [v7.11-beta.17] - 2026-01-08
+
+* Issue **#5282** : Processor task creation now supports feed dependencies to delay processing until reference data is available.
+
+* Issue **#5339** : Fix NPE thrown when adding vises to dashboards.
+
+* Issue **#5337** : Fix analytic doc serialisation.
+
+
+## [v7.11-beta.16] - 2026-01-08
+
+* Issue **#5100** : Fix selection filters auto quoting parameter replacements.
+
+
+## [v7.11-beta.15] - 2026-01-07
+
+* Issue **#4124** : Fix NodeResultSerialiser and add node name to errors.
+
+* Issue **#5256** : Add option to omit documentation from rule detection.
+
+* Issue **#5309** : Add long support to pathway values.
+
+* Remove static imports except in test classes.
+
+* Uplift base docker images to eclipse-temurin:25.0.1_8-jdk-alpine-3.23.
+
+* Uplift dependency com.hubspot.jinjava:jinjava from 2.7.2 to 2.8.2.
+
+* Uplift dependency swagger-* from 2.2.38 to 2.2.41.
+
+* Uplift com.sun.xml.bind:jaxb-impl from 4.0.5 to 4.0.6.
+
+* Uplift lanchain4j dependencies from 1.8.0-beta15 to 1.10.0-beta18 and 1.8.0 to 1.10.0.
+
+* Issue **#5303** : Make AI HTTP connection configurable.
+
+* Issue **#5303** : Make AI HTTP SSL certificate stores configurable.
+
+* Issue **#5303** : Add KNN dense vector support to Lucene indexes.
+
+* Issue **#5303** : Pass only visible columns to the Ask Stroom AI service.
+
+* Issue **#5317** : Pathways now load current state to not endlessly output mutations.
+
+* Issue **#4123** : New pipeline stepping mode.
+
+* Issue **#5100** : Fix selection filters auto quoting parameter replacements.
+
+* Issue **#5318** : Fix Plan B session condensation.
+
 * Issue **#5288** : Fix config defaults for `ForwardHttpPostConfig` and `HttpClientConfiguration`.
 
 * Issue **#5281** : Fix behaviour of query expression IN condition.
@@ -1882,7 +1950,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.19...HEAD
+[v7.11-beta.19]: https://github.com/gchq/stroom/compare/v7.11-beta.18...v7.11-beta.19
+[v7.11-beta.18]: https://github.com/gchq/stroom/compare/v7.11-beta.17...v7.11-beta.18
+[v7.11-beta.17]: https://github.com/gchq/stroom/compare/v7.11-beta.16...v7.11-beta.17
+[v7.11-beta.16]: https://github.com/gchq/stroom/compare/v7.11-beta.15...v7.11-beta.16
+[v7.11-beta.15]: https://github.com/gchq/stroom/compare/v7.11-beta.14...v7.11-beta.15
 [v7.11-beta.14]: https://github.com/gchq/stroom/compare/v7.11-beta.13...v7.11-beta.14
 [v7.11-beta.13]: https://github.com/gchq/stroom/compare/v7.11-beta.12...v7.11-beta.13
 [v7.11-beta.12]: https://github.com/gchq/stroom/compare/v7.11-beta.11...v7.11-beta.12

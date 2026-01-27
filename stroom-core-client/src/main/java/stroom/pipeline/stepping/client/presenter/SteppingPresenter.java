@@ -17,22 +17,28 @@
 package stroom.pipeline.stepping.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.ClassificationUiHandlers;
+import stroom.data.client.presenter.ExpressionPresenter;
+import stroom.data.client.presenter.ExpressionValidator;
 import stroom.data.client.presenter.SourcePresenter;
+import stroom.data.client.presenter.SteppingMetaListPresenter;
 import stroom.dispatch.client.RestFactory;
-import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaExpressionUtil;
+import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.MetaRow;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
-import stroom.pipeline.shared.PipelineResource;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.SourceLocation;
+import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SharedStepData;
@@ -41,9 +47,11 @@ import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.shared.stepping.SteppingResult;
+import stroom.pipeline.structure.client.presenter.DefaultPipelineTreeBuilder;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
+import stroom.query.api.ExpressionOperator;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
@@ -53,6 +61,7 @@ import stroom.util.shared.DataRange;
 import stroom.util.shared.ElementId;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.widget.button.client.ButtonPanel;
@@ -62,7 +71,12 @@ import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.SelectionType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -89,13 +103,13 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class SteppingPresenter
         extends MyPresenterWidget<SteppingPresenter.SteppingView>
         implements HasDirtyHandlers, ClassificationUiHandlers {
 
-    private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
     private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
 
     private final PipelineStepRequest.Builder requestBuilder = PipelineStepRequest.builder();
@@ -108,22 +122,29 @@ public class SteppingPresenter
     private final SteppingFilterPresenter steppingFilterPresenter;
     private final PipelineElementTypesFactory pipelineElementTypesFactory;
     private final RestFactory restFactory;
+    private final SteppingMetaListPresenter steppingMetaListPresenter;
+    private final Provider<ExpressionPresenter> streamListFilterPresenterProvider;
+    private final ExpressionValidator expressionValidator;
     // elementId => ElementPresenter
     private final Map<ElementId, ElementPresenter> elementPresenterMap = new HashMap<>();
     private PipelineModel pipelineModel;
-    private final ButtonView saveButton;
     private final InlineSvgButton terminateButton;
     private final InlineSvgToggleButton toggleLogPaneButton;
     private boolean foundRecord;
-    private boolean showingData;
     private boolean busyTranslating;
     private SteppingResult lastFoundResult;
     private SteppingResult currentResult;
     private final ButtonPanel leftButtons;
 
+    final ButtonView streamListFilter;
+
     private Meta meta;
+    private String childStreamType;
+    private PipelineDoc pipelineDoc;
     private String classification;
     private ElementPresenter currentElementPresenter = null;
+
+    private final List<Consumer<PipelineModel>> pipelineChangeHandlers = new ArrayList<>();
 
     @Inject
     public SteppingPresenter(final EventBus eventBus,
@@ -135,7 +156,10 @@ public class SteppingPresenter
                              final StepLocationLinkPresenter stepLocationLinkPresenter,
                              final StepControlPresenter stepControlPresenter,
                              final SteppingFilterPresenter steppingFilterPresenter,
-                             final PipelineElementTypesFactory pipelineElementTypesFactory) {
+                             final PipelineElementTypesFactory pipelineElementTypesFactory,
+                             final Provider<SteppingMetaListPresenter> metaListPresenterProvider,
+                             final Provider<ExpressionPresenter> streamListFilterPresenterProvider,
+                             final ExpressionValidator expressionValidator) {
         super(eventBus, view);
         this.restFactory = restFactory;
 
@@ -146,6 +170,9 @@ public class SteppingPresenter
         this.stepControlPresenter = stepControlPresenter;
         this.steppingFilterPresenter = steppingFilterPresenter;
         this.pipelineElementTypesFactory = pipelineElementTypesFactory;
+        this.steppingMetaListPresenter = metaListPresenterProvider.get();
+        this.streamListFilterPresenterProvider = streamListFilterPresenterProvider;
+        this.expressionValidator = expressionValidator;
 
         terminateButton = new InlineSvgButton();
         terminateButton.setEnabled(false);
@@ -164,20 +191,12 @@ public class SteppingPresenter
         sourcePresenter.getWidget().addStyleName("dashboard-panel overflow-hidden");
         sourcePresenter.setSteppingSource(true);
 
-        pipelineTreePresenter.setPipelineTreeBuilder(new SteppingPipelineTreeBuilder());
+        pipelineTreePresenter.setPipelineTreeBuilder(new DefaultPipelineTreeBuilder());
         pipelineTreePresenter.setAllowNullSelection(false);
 
-        stepControlPresenter.setEnabledButtons(
-                false,
-                requestBuilder.build().getStepType(),
-                showingData,
-                foundRecord,
-                false,
-                false,
-                null);
+        stepControlPresenter.initButtons();
 
         leftButtons = new ButtonPanel();
-        saveButton = leftButtons.addButton(SvgPresets.SAVE);
 
         // Create but don't add yet
         toggleLogPaneButton = new InlineSvgToggleButton();
@@ -195,6 +214,10 @@ public class SteppingPresenter
         stepToolbar.add(leftButtons);
         stepToolbar.add(stepMessage);
         getView().addWidgetLeft(stepToolbar);
+
+        streamListFilter = steppingMetaListPresenter.add(SvgPresets.FILTER);
+
+        sourcePresenter.getView().setMetaListContainerView(steppingMetaListPresenter.getWidget());
     }
 
     @Override
@@ -212,19 +235,39 @@ public class SteppingPresenter
                     final PipelineElement selectedElement = getSelectedPipeElement();
                     onSelect(selectedElement);
                 }));
-        registerHandler(stepLocationLinkPresenter.addStepControlHandler(event ->
-                step(event.getStepType(), event.getStepLocation())));
+        registerHandler(stepLocationLinkPresenter.addStepControlHandler(event -> {
+            step(event.getStepType(), event.getStepLocation());
+            final StepLocation stepLocation = event.getStepLocation();
+            final Meta meta = Meta.builder().id(stepLocation.getMetaId()).build();
+            steppingMetaListPresenter.getSelectionModel().setSelected(new MetaRow(meta, null, null));
+        }));
         registerHandler(stepControlPresenter.addStepControlHandler(event ->
                 step(event.getStepType(), event.getStepLocation())));
         registerHandler(stepControlPresenter.addChangeFilterHandler(event ->
                 showChangeFiltersDialog()));
-        registerHandler(saveButton.addClickHandler(event -> save()));
         registerHandler(terminateButton.addClickHandler(event -> terminate()));
         registerHandler(toggleLogPaneButton.addClickHandler(event -> {
             final ElementPresenter elementPresenter = getCurrentElementPresenter();
             if (elementPresenter != null) {
                 elementPresenter.setDesiredLogPanVisibility(toggleLogPaneButton.isOn());
                 elementPresenter.setLogPaneVisibility(toggleLogPaneButton.isOn());
+            }
+        }));
+
+        registerHandler(steppingMetaListPresenter.getSelectionModel().addSelectionHandler(event -> {
+            final MetaRow selectedRow = steppingMetaListPresenter.getSelected();
+            if (selectedRow != null) {
+                final Meta selectedMeta = steppingMetaListPresenter.getSelected().getMeta();
+                beginStepping(StepType.REFRESH, new StepLocation(selectedMeta.getId(), 0, 0),
+                        selectedMeta, null);
+            }
+        }));
+
+        registerHandler(steppingMetaListPresenter.addChangeDataHandler(event -> {
+            if (event.getData().size() == 1) {
+                final MetaRow metaRow = event.getData().getFirst();
+                steppingMetaListPresenter.getSelectionModel().setSelected(metaRow, new SelectionType(), false);
+                stepLocationLinkPresenter.setStepLocation(new StepLocation(metaRow.getMeta().getId(), 0, 0));
             }
         }));
 
@@ -237,6 +280,86 @@ public class SteppingPresenter
                 }
             }
         }));
+
+        registerHandler(streamListFilter.addClickHandler(event -> {
+            final ExpressionPresenter presenter = streamListFilterPresenterProvider.get();
+
+            final HidePopupRequestEvent.Handler HidePopupRequestEventHandler = e -> {
+                if (e.isOk()) {
+                    final ExpressionOperator expression = presenter.write();
+
+                    expressionValidator.validateExpression(
+                            SteppingPresenter.this,
+                            MetaFields.getAllFields(),
+                            expression, expression2 -> {
+                                if (!expression2.equals(getCriteria().getExpression())) {
+                                    if (MetaExpressionUtil.hasAdvancedCriteria(expression2)) {
+                                        ConfirmEvent.fire(SteppingPresenter.this,
+                                                "You are setting advanced filters!  It is recommended you constrain " +
+                                                "your filter (e.g. by 'Created') to avoid an expensive query.  "
+                                                + "Are you sure you want to apply this advanced filter?",
+                                                confirm -> {
+                                                    if (confirm) {
+                                                        setExpression(expression2);
+                                                        e.hide();
+                                                    } else {
+                                                        // Don't hide
+                                                        e.reset();
+                                                    }
+                                                });
+                                    } else {
+                                        setExpression(expression2);
+                                        e.hide();
+                                    }
+                                } else {
+                                    // Nothing changed!
+                                    e.hide();
+                                }
+                            }, this);
+                } else {
+                    e.hide();
+                }
+            };
+
+            presenter.read(getCriteria().getExpression(),
+                    MetaFields.STREAM_STORE_DOC_REF,
+                    MetaFields.getAllFields());
+
+            presenter.getWidget().getElement().addClassName("default-min-sizes");
+            final PopupSize popupSize = PopupSize.resizable(1_000, 600);
+            ShowPopupEvent.builder(presenter)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption("Filter Streams")
+                    .onShow(e -> presenter.focus())
+                    .onHideRequest(HidePopupRequestEventHandler)
+                    .fire();
+        }));
+
+//        steppingMetaListPresenter.setExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION, () -> {});
+    }
+
+    public void setExpression(final ExpressionOperator expression) {
+        // Copy new filter settings back.
+        getCriteria().setExpression(expression);
+        // Reset the page offset.
+        getCriteria().obtainPageRequest().setOffset(0);
+
+        // Clear the current selection and get a new list of streams.
+        steppingMetaListPresenter.getSelectionModel().clear();
+        refreshMetaList();
+    }
+
+    public void setMetaListExpression(final ExpressionOperator expressionOperator) {
+        steppingMetaListPresenter.setExpression(expressionOperator, this::refreshMetaList);
+    }
+
+    public ResultPage<MetaRow> getMetaList() {
+        return steppingMetaListPresenter.getResultPage();
+    }
+
+    private FindMetaCriteria getCriteria() {
+        return steppingMetaListPresenter.getCriteria();
     }
 
     private ElementPresenter getCurrentElementPresenter() {
@@ -366,7 +489,7 @@ public class SteppingPresenter
             if (elementPresenter == null) {
                 final DirtyHandler dirtyEditorHandler = event -> {
                     DirtyEvent.fire(SteppingPresenter.this, true);
-                    saveButton.setEnabled(true);
+                    handlePipelineChange();
                 };
 
                 final List<PipelineProperty> properties = pipelineModel.getProperties(element);
@@ -376,8 +499,8 @@ public class SteppingPresenter
                 presenter.setTaskMonitorFactory(this);
                 presenter.setElement(element);
                 presenter.setProperties(properties);
-                presenter.setFeedName(meta.getFeedName());
-                presenter.setPipelineName(requestBuilder.build().getPipeline().getName());
+                presenter.setFeedName(meta == null ? "" : meta.getFeedName());
+                presenter.setPipelineName(pipelineDoc.getName());
                 presenter.setClassification(classification);
                 elementPresenterMap.put(elementId, presenter);
                 presenter.addDirtyHandler(dirtyEditorHandler);
@@ -515,75 +638,154 @@ public class SteppingPresenter
                 elementData.isFormatOutput());
     }
 
-    public void read(final DocRef pipeline,
-                     final StepType stepType,
+    public void setPipelineDoc(final PipelineDoc pipelineDoc) {
+        this.pipelineDoc = pipelineDoc;
+    }
+
+    public void refreshMetaList() {
+        steppingMetaListPresenter.refresh();
+    }
+
+    public void beginStepping() {
+        if (this.meta == null) {
+            if (steppingMetaListPresenter.getSelected() == null) {
+                sourcePresenter.clear();
+
+                if (steppingMetaListPresenter.getResultPage() == null) {
+                    refreshMetaList();
+                }
+
+                return;
+            }
+            this.meta = steppingMetaListPresenter.getSelected().getMeta();
+        }
+
+        beginStepping(StepType.REFRESH,
+                NullSafe.requireNonNullElse(requestBuilder.build().getStepLocation(),
+                        new StepLocation(meta.getId(), 0, 0)),
+                meta, childStreamType);
+    }
+
+    public void beginStepping(final StepType stepType,
                      final StepLocation stepLocation,
                      final Meta meta,
                      final String childStreamType) {
-        pipelineElementTypesFactory.get(this, elementTypes -> {
-            this.meta = meta;
+        Objects.requireNonNull(meta);
+        Objects.requireNonNull(stepLocation);
 
-            // Load the stream.
-            // When we start stepping we are not on a record so want to see
-            // from the start of the stream for non-segmented with no highlight and
-            // nothing for segmented. DataFetcher will interpret the -1 rec no to return
-            // the right data.
-            final SourceLocation sourceLocation = SourceLocation.builder(meta.getId())
-                    .withChildStreamType(childStreamType)
-                    .withPartIndex(stepLocation.getPartIndex())
-                    .withRecordIndex(Math.max(stepLocation.getRecordIndex(), 0))
-                    .build();
-            sourcePresenter.setSourceLocation(sourceLocation);
+        this.meta = meta;
+        this.childStreamType = childStreamType;
 
-            // Set the pipeline on the stepping action.
-            requestBuilder.pipeline(pipeline);
+        // Load the stream.
+        final SourceLocation sourceLocation = SourceLocation.builder(this.meta.getId())
+                .withChildStreamType(childStreamType)
+                .withPartIndex(stepLocation.getPartIndex())
+                .withRecordIndex(Math.max(stepLocation.getRecordIndex(), 0))
+                .build();
+        sourcePresenter.setSourceLocation(sourceLocation);
 
-            // Set the stream id on the stepping action.
-            final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromMeta(meta);
-            requestBuilder.criteria(findMetaCriteria);
-            requestBuilder.childStreamType(childStreamType);
+        // Set the pipeline on the stepping action.
+        requestBuilder.pipelineDoc(pipelineDoc);
 
-            // Load the pipeline.
-            restFactory
-                    .create(PIPELINE_RESOURCE)
-                    .method(res -> res.fetchPipelineLayers(pipeline))
-                    .onSuccess(result -> {
-                        final PipelineLayer pipelineLayer = result.get(result.size() - 1);
-                        final List<PipelineLayer> baseStack = new ArrayList<>(result.size() - 1);
+        // Set the stream id on the stepping action.
+        final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromMeta(this.meta);
+        requestBuilder.criteria(findMetaCriteria);
 
-                        // If there is a stack of pipeline data then we need
-                        // to make sure changes are reflected appropriately.
-                        for (int i = 0; i < result.size() - 1; i++) {
-                            baseStack.add(result.get(i));
+        requestBuilder.childStreamType(childStreamType);
+
+        if (stepType != null) {
+            step(stepType, new StepLocation(
+                    meta.getId(),
+                    stepLocation.getPartIndex(),
+                    stepLocation.getRecordIndex()));
+        }
+    }
+
+    public void setPipelineModel(final PipelineModel model) {
+        try {
+            final PipelineElement selectedElement = pipelineTreePresenter.getSelectionModel().getSelectedObject();
+
+            pipelineModel = model;
+            pipelineTreePresenter.setModel(pipelineModel);
+
+            // Remove elements from the elementPresenterMap if they no longer exist or the doc ref has changed
+            // stops dirty elements being used in stepping when they are out of date
+            final List<ElementId> elementsToRemove = elementPresenterMap.entrySet()
+                    .stream()
+                    .filter(entry -> {
+                        final ElementPresenter elementPresenter = entry.getValue();
+                        if (!pipelineModel.hasElement(elementPresenter.getElement())) {
+                            return true;
                         }
 
-                        try {
-                            if (pipelineModel == null) {
-                                pipelineModel = new PipelineModel(elementTypes);
-                                pipelineTreePresenter.setModel(pipelineModel);
-                            }
-                            pipelineModel.setPipelineLayer(pipelineLayer);
-                            pipelineModel.setBaseStack(baseStack);
-                            pipelineModel.build();
-                            pipelineTreePresenter.getSelectionModel()
-                                    .setSelected(PipelineModel.SOURCE_ELEMENT, true);
+                        final List<PipelineProperty> newProperties = pipelineModel
+                                .getProperties(elementPresenter.getElement())
+                                .stream()
+                                .filter(p -> p.getValue().getEntity() != null)
+                                .collect(Collectors.toList());
 
-                            Scheduler.get().scheduleDeferred(() ->
-                                    getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 13));
-                        } catch (final PipelineModelException e) {
-                            AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
-                        }
+                        final List<PipelineProperty> currentProperties = elementPresenter.getProperties()
+                                .stream()
+                                .filter(p -> p.getValue().getEntity() != null)
+                                .collect(Collectors.toList());
 
-                        if (stepType != null) {
-                            step(stepType, new StepLocation(
-                                    meta.getId(),
-                                    stepLocation.getPartIndex(),
-                                    stepLocation.getRecordIndex()));
-                        }
+                        return !compareProperties(currentProperties, newProperties);
                     })
-                    .taskMonitorFactory(this)
-                    .exec();
-        });
+                    .map(Entry::getKey)
+                    .collect(Collectors.toList());
+
+            elementsToRemove.forEach(elementPresenterMap::remove);
+
+            if (selectedElement == null || !pipelineModel.hasElement(selectedElement)) {
+                pipelineTreePresenter.getSelectionModel().setSelected(PipelineModel.SOURCE_ELEMENT, true);
+            } else {
+                pipelineTreePresenter.getSelectionModel().setSelected(selectedElement, true);
+            }
+
+            final List<PipelineElement> disabledElements = pipelineModel.getPipelineElements(e ->
+                    !PipelineModel.SOURCE_ELEMENT.equals(e) &&
+                    !pipelineModel.hasRole(e, PipelineElementType.VISABILITY_STEPPING));
+            pipelineTreePresenter.setDisabledElements(disabledElements);
+
+        } catch (final PipelineModelException e) {
+            AlertEvent.fireError(SteppingPresenter.this, e.getMessage(), null);
+        }
+    }
+
+    private boolean compareProperties(final List<PipelineProperty> properties,
+                                     final List<PipelineProperty> otherProperties) {
+        final ArrayList<PipelineProperty> someProperties = new ArrayList<>(properties);
+        for (final PipelineProperty otherProperty : otherProperties) {
+
+            final Optional<PipelineProperty> someProperty = getProperty(someProperties, otherProperty.getName());
+            if (someProperty.isPresent()) {
+
+                if (!otherProperty.getValue().equals(someProperty.get().getValue())) {
+                    return false;
+                }
+                someProperties.remove(otherProperty);
+            } else {
+                return false;
+            }
+        }
+        return someProperties.isEmpty();
+    }
+
+    public Optional<PipelineProperty> getProperty(final List<PipelineProperty> properties, final String propertyName) {
+        return properties.stream().filter(p -> p.getName().equals(propertyName)).findAny();
+    }
+
+    public void resize() {
+        Scheduler.get().scheduleDeferred(() ->
+                getView().setTreeHeight(pipelineTreePresenter.getTreeHeight() + 30));
+    }
+
+    public void addPipelineChangeHandler(final Consumer<PipelineModel> handler) {
+        pipelineChangeHandlers.add(handler);
+    }
+
+    private void handlePipelineChange() {
+        pipelineChangeHandlers.forEach(handler -> handler.accept(pipelineModel));
     }
 
     public void save() {
@@ -591,13 +793,13 @@ public class SteppingPresenter
         for (final Entry<ElementId, ElementPresenter> entry : elementPresenterMap.entrySet()) {
             entry.getValue().save();
         }
-        DirtyEvent.fire(this, false);
-        saveButton.setEnabled(false);
     }
 
     private void step(final StepType stepType,
                       final StepLocation stepLocation) {
         if (!busyTranslating) {
+            Objects.requireNonNull(pipelineModel);
+
             busyTranslating = true;
             stepMessage.getElement().setInnerHTML("Stepping...");
             stepMessage.setVisible(true);
@@ -605,6 +807,10 @@ public class SteppingPresenter
 
             // Set a null session UUID as this is a new stepping session.
             requestBuilder.sessionUuid(null);
+
+            final PipelineData pipelineData = pipelineModel.diff();
+            pipelineDoc.setPipelineData(pipelineData);
+            requestBuilder.pipelineDoc(pipelineDoc);
 
             // If we are stepping to the first or last record then clear all
             // current state from the action.
@@ -760,7 +966,6 @@ public class SteppingPresenter
             currentResult = result;
             foundRecord = result.isFoundRecord();
             if (foundRecord) {
-                showingData = true;
                 lastFoundResult = result;
             }
 
@@ -798,7 +1003,9 @@ public class SteppingPresenter
                 } else {
                     sourcePresenter.setSourceLocationUsingHighlight(result.getStepData().getSourceLocation());
                 }
+            }
 
+            if (result.getFoundLocation() != null) {
                 // We found a record so update the display to indicate the
                 // record that was found and update the request with the new
                 // position ready for the next step.
@@ -821,14 +1028,14 @@ public class SteppingPresenter
                 });
             }
         } finally {
-            stepControlPresenter.setEnabledButtons(
-                    true,
-                    requestBuilder.build().getStepType(),
-                    showingData,
-                    foundRecord,
-                    fatalErrors.isPresent(),
-                    result.hasActiveFilter(),
-                    result.getFoundLocation());
+            if (pipelineModel.getCombinedData().getElements().size() > 1) {
+                stepControlPresenter.setEnabledButtons(
+                        requestBuilder.build().getStepType(),
+                        foundRecord,
+                        result.hasActiveFilter(),
+                        result.getFoundLocation());
+            }
+
             busyTranslating = false;
         }
     }

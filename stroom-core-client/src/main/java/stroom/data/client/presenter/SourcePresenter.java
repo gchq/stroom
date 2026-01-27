@@ -48,6 +48,7 @@ import stroom.widget.progress.client.presenter.ProgressPresenter;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -717,7 +718,6 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
 
     @Override
     public void clear() {
-
         // TODO @AT Not sure if I need to implement this
     }
 
@@ -904,5 +904,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
                                final long id,
                                final long segmentNo,
                                final String type);
+
+        void setMetaListContainerView(final Widget widget);
     }
 }

@@ -22,6 +22,9 @@ stroom-util-build.properties
 
 stroom-core/src/test/resources/transientContentPacks/
 
+# Cached content store GIT repos
+content-cache/
+
 local.yml*
 local2.yml*
 local3.yml*

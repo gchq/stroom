@@ -20,13 +20,10 @@ import stroom.core.client.gin.PluginModule;
 import stroom.gitrepo.client.GitRepoPlugin;
 import stroom.gitrepo.client.presenter.GitRepoCommitDialogPresenter;
 import stroom.gitrepo.client.presenter.GitRepoCommitDialogPresenter.GitRepoCommitDialogView;
-import stroom.gitrepo.client.presenter.GitRepoCredentialsDialogPresenter;
-import stroom.gitrepo.client.presenter.GitRepoCredentialsDialogPresenter.GitRepoCredentialsDialogView;
 import stroom.gitrepo.client.presenter.GitRepoPresenter;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsView;
 import stroom.gitrepo.client.view.GitRepoCommitDialogViewImpl;
-import stroom.gitrepo.client.view.GitRepoCredentialsDialogViewImpl;
 import stroom.gitrepo.client.view.GitRepoSettingsViewImpl;
 
 public class GitRepoModule extends PluginModule {
@@ -41,10 +38,5 @@ public class GitRepoModule extends PluginModule {
         bindPresenterWidget(GitRepoCommitDialogPresenter.class,
                 GitRepoCommitDialogView.class,
                 GitRepoCommitDialogViewImpl.class);
-
-        // Tie up the credentials dialog
-        bindPresenterWidget(GitRepoCredentialsDialogPresenter.class,
-                GitRepoCredentialsDialogView.class,
-                GitRepoCredentialsDialogViewImpl.class);
     }
 }

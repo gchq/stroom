@@ -73,7 +73,6 @@ public class ToolModule extends AbstractModule {
 
     @Provides
     EntityEventBus entityEventBus() {
-        return event -> {
-        };
+        return EntityEventBus.NO_OP_EVENT_BUS;
     }
 }

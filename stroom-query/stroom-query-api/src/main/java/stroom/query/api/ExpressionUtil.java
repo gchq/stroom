@@ -315,7 +315,8 @@ public class ExpressionUtil {
 
                 } else if (child instanceof final ExpressionTerm term) {
                     final String value = term.getValue();
-                    final String replaced = ParamUtil.replaceParameters(value, paramValues, keepUnmatched);
+                    final String replaced = ParamUtil
+                            .replaceTermValueParameters(value, paramValues, keepUnmatched);
                     builder.addTerm(ExpressionTerm.builder()
                             .enabled(term.enabled())
                             .field(term.getField())

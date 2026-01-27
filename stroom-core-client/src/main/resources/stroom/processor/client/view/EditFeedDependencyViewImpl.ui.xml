@@ -1,0 +1,19 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder
+        xmlns:ui="urn:ui:com.google.gwt.uibinder"
+        xmlns:g="urn:import:com.google.gwt.user.client.ui"
+        xmlns:form="urn:import:stroom.widget.form.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="feedDependencyFeed"
+                        label="Feed"
+                        helpText="Choose the feed for the data this processing depends on.">
+            <g:SimplePanel ui:field="feed" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="feedDependencyType"
+                        label="Type"
+                        helpText="Choose the stream type for the data this processing depends on.">
+            <g:SimplePanel ui:field="type" addStyleNames="w-100"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>
+ 

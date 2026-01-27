@@ -371,7 +371,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                             .findFirst();
                 });
 
-        when(globalConfigService.update(Mockito.any()))
+        when(globalConfigService.update((ConfigProperty) Mockito.any()))
                 .thenAnswer(invocation -> {
                     final ConfigProperty configProperty = invocation.getArgument(0);
                     configProperty.setId(1);

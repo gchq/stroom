@@ -35,6 +35,10 @@ public class HideRequest {
         return action == DialogAction.AUTO_CLOSE;
     }
 
+    public DialogAction getAction() {
+        return action;
+    }
+
     public Runnable getCancelHandler() {
         return cancelHandler;
     }

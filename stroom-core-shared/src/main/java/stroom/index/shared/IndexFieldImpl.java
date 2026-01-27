@@ -17,6 +17,7 @@
 package stroom.index.shared;
 
 import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.Field;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.IndexField;
@@ -46,6 +47,8 @@ public class IndexFieldImpl implements IndexField {
     private final boolean termPositions;
     @JsonProperty
     private final boolean caseSensitive;
+    @JsonProperty
+    private final DenseVectorFieldConfig denseVectorFieldConfig;
 
     @JsonCreator
     public IndexFieldImpl(@JsonProperty("fldName") final String fldName,
@@ -54,7 +57,8 @@ public class IndexFieldImpl implements IndexField {
                           @JsonProperty("indexed") final boolean indexed,
                           @JsonProperty("stored") final boolean stored,
                           @JsonProperty("termPositions") final boolean termPositions,
-                          @JsonProperty("caseSensitive") final boolean caseSensitive) {
+                          @JsonProperty("caseSensitive") final boolean caseSensitive,
+                          @JsonProperty("denseVectorFieldConfig") final DenseVectorFieldConfig denseVectorFieldConfig) {
         this.fldName = fldName;
         this.fldType = fldType;
         this.analyzerType = analyzerType;
@@ -62,6 +66,7 @@ public class IndexFieldImpl implements IndexField {
         this.indexed = indexed;
         this.termPositions = termPositions;
         this.caseSensitive = caseSensitive;
+        this.denseVectorFieldConfig = denseVectorFieldConfig;
     }
 
     @Override
@@ -102,6 +107,10 @@ public class IndexFieldImpl implements IndexField {
         return termPositions;
     }
 
+    public DenseVectorFieldConfig getDenseVectorFieldConfig() {
+        return denseVectorFieldConfig;
+    }
+
     @JsonIgnore
     @Override
     public String getDisplayValue() {
@@ -123,12 +132,20 @@ public class IndexFieldImpl implements IndexField {
                caseSensitive == that.caseSensitive &&
                Objects.equals(fldName, that.fldName) &&
                fldType == that.fldType &&
-               analyzerType == that.analyzerType;
+               analyzerType == that.analyzerType &&
+               Objects.equals(denseVectorFieldConfig, that.denseVectorFieldConfig);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(fldName, fldType, analyzerType, indexed, stored, termPositions, caseSensitive);
+        return Objects.hash(
+                fldName,
+                fldType,
+                analyzerType,
+                indexed, stored,
+                termPositions,
+                caseSensitive,
+                denseVectorFieldConfig);
     }
 
     @Override
@@ -162,6 +179,7 @@ public class IndexFieldImpl implements IndexField {
         private boolean stored;
         private boolean termPositions;
         private boolean caseSensitive;
+        private DenseVectorFieldConfig denseVectorFieldConfig;
 
         private Builder() {
         }
@@ -174,6 +192,7 @@ public class IndexFieldImpl implements IndexField {
             this.stored = indexField.isStored();
             this.termPositions = indexField.isTermPositions();
             this.caseSensitive = indexField.isCaseSensitive();
+            this.denseVectorFieldConfig = indexField.getDenseVectorFieldConfig();
         }
 
         public Builder fldName(final String fldName) {
@@ -211,6 +230,11 @@ public class IndexFieldImpl implements IndexField {
             return this;
         }
 
+        public Builder denseVectorFieldConfig(final DenseVectorFieldConfig denseVectorFieldConfig) {
+            this.denseVectorFieldConfig = denseVectorFieldConfig;
+            return this;
+        }
+
         public IndexFieldImpl build() {
             return new IndexFieldImpl(
                     fldName,
@@ -219,7 +243,8 @@ public class IndexFieldImpl implements IndexField {
                     indexed,
                     stored,
                     termPositions,
-                    caseSensitive);
+                    caseSensitive,
+                    denseVectorFieldConfig);
         }
     }
 }

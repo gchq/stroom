@@ -72,11 +72,15 @@ public class StepLocationLinkPresenter
     }
 
     private void updateLabel(final StepLocation stepLocation) {
-        getView().getLabel().getElement().setInnerHTML("[" +
-                stepLocation.getMetaId() + ":" +
-                (stepLocation.getPartIndex() + 1) + ":" +
-                (stepLocation.getRecordIndex() + 1) +
-                "]");
+        if (stepLocation.getMetaId() == 0 && stepLocation.getPartIndex() == 0 && stepLocation.getRecordIndex() == 0) {
+            getView().getLabel().getElement().setInnerHTML("[??:??:??]");
+        } else {
+            getView().getLabel().getElement().setInnerHTML("[" +
+                                                           stepLocation.getMetaId() + ":" +
+                                                           (stepLocation.getPartIndex() + 1) + ":" +
+                                                           (stepLocation.getRecordIndex() + 1) +
+                                                           "]");
+        }
     }
 
     public HandlerRegistration addStepControlHandler(final StepControlHandler handler) {

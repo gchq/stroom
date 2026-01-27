@@ -25,6 +25,7 @@ import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
 import stroom.docref.DocRef;
 import stroom.index.VolumeTestConfigModule;
+import stroom.langchain.impl.MockOpenAIModule;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
@@ -55,6 +56,7 @@ import java.util.UUID;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
+@IncludeModule(MockOpenAIModule.class)
 class TestStreamingAnalytics extends AbstractAnalyticsTest {
 
     @Inject
@@ -118,9 +120,11 @@ class TestStreamingAnalytics extends AbstractAnalyticsTest {
         final DocRef analyticRuleDocRef = writeRule(analyticRuleDoc);
         final ExpressionOperator expressionOperator = analyticRuleProcessors
                 .getDefaultProcessingFilterExpression(query);
-        final QueryData queryData = new QueryData();
-        queryData.setDataSource(MetaFields.STREAM_STORE_DOC_REF);
-        queryData.setExpression(expressionOperator);
+        final QueryData queryData = QueryData
+                .builder()
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                .expression(expressionOperator)
+                .build();
 
         // Now create the processor filter using the find stream criteria.
         final CreateProcessFilterRequest request = CreateProcessFilterRequest
