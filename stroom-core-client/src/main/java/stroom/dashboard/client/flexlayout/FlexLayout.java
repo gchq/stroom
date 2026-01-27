@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.data.grid.client.Glass;
+import stroom.util.shared.NullSafe;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.tab.client.view.LinkTab;
@@ -195,7 +196,7 @@ public class FlexLayout extends Composite {
                     if (!maximised && !draggingTab) {
                         // See if the use wants to start dragging this tab.
                         if ((Math.abs(startPos[0] - event.getClientX()) > DRAG_ZONE)
-                                || (Math.abs(startPos[1] - event.getClientY()) > DRAG_ZONE)) {
+                            || (Math.abs(startPos[1] - event.getClientY()) > DRAG_ZONE)) {
                             // The user has exceeded the drag zone so start
                             // dragging.
                             draggingTab = true;
@@ -334,7 +335,7 @@ public class FlexLayout extends Composite {
                     final TabLayoutConfig currentParent = selection.currentParent;
                     if (currentParent != null && currentParent.getVisibleTabCount() == 1) {
                         for (final TabConfig tabConfig : currentParent.getTabs()) {
-                            if (!tabConfig.visible()) {
+                            if (!tabConfig.isVisible()) {
                                 tabGroup.add(tabConfig);
                             }
                         }
@@ -376,7 +377,7 @@ public class FlexLayout extends Composite {
                         final TabLayout tabLayout = mouseTarget.tabLayout;
                         final int index = tabLayout.getTabBar().getTabs().indexOf(tab);
                         if (tabLayout.getTabLayoutConfig().getSelected() == null
-                                || !tabLayout.getTabLayoutConfig().getSelected().equals(index)) {
+                            || !tabLayout.getTabLayoutConfig().getSelected().equals(index)) {
                             tabLayout.selectTab(index);
                             tabLayout.getTabLayoutConfig().setSelected(index);
 
@@ -507,7 +508,7 @@ public class FlexLayout extends Composite {
                 moved = true;
 
             } else if (!currentParent.equals(targetTabLayoutConfig) ||
-                    currentParent.getVisibleTabCount() > 1) {
+                       currentParent.getVisibleTabCount() > 1) {
                 // If dropping a tab onto the same container that
                 // only has this one tab then do nothing.
 
@@ -601,7 +602,7 @@ public class FlexLayout extends Composite {
                 newTabLayout.add(tabConfig);
 
             } else if (!currentParent.equals(targetTabLayoutConfig) ||
-                    currentParent.getVisibleTabCount() > 1) {
+                       currentParent.getVisibleTabCount() > 1) {
                 // If dropping a tab onto the same container that
                 // only has this one tab then do nothing.
 
@@ -938,7 +939,7 @@ public class FlexLayout extends Composite {
                 min = getMinRequired(layoutConfig, dim);
                 max = designSurfaceSize.get(dim);
                 final double val = constrain(preferredSize.get(dim) +
-                        initialChange, min, max);
+                                             initialChange, min, max);
                 preferredSize.set(dim, (int) val);
                 refresh();
 
@@ -1203,16 +1204,16 @@ public class FlexLayout extends Composite {
             if (tabLayout != null && tabLayout.getTabBar().getTabs() != null) {
                 final LinkTabBar tabBar = tabLayout.getTabBar();
                 if (x >= ElementUtil.getClientLeft(tabBar.getElement()) &&
-                        x <= ElementUtil.getClientLeft(tabBar.getElement()) +
-                                ElementUtil.getSubPixelOffsetWidth(tabBar.getElement()) &&
-                        y >= ElementUtil.getClientTop(tabBar.getElement()) &&
-                        y <= ElementUtil.getClientTop(tabBar.getElement()) + tabBar.getOffsetHeight()) {
+                    x <= ElementUtil.getClientLeft(tabBar.getElement()) +
+                         ElementUtil.getSubPixelOffsetWidth(tabBar.getElement()) &&
+                    y >= ElementUtil.getClientTop(tabBar.getElement()) &&
+                    y <= ElementUtil.getClientTop(tabBar.getElement()) + tabBar.getOffsetHeight()) {
 
                     final List<TabConfig> tabConfigList = layoutConfig.getTabs();
                     int visibleTabIndex = 0;
                     for (int i = 0; i < tabConfigList.size(); i++) {
                         final TabConfig tabConfig = tabConfigList.get(i);
-                        if (tabConfig.visible()) {
+                        if (tabConfig.isVisible()) {
                             final TabData tabData = tabBar.getTabs().get(visibleTabIndex);
 
                             // This is somewhat confusing but there is a difference between tabs that have been hidden
@@ -1223,7 +1224,7 @@ public class FlexLayout extends Composite {
 
                                 if (selecting) {
                                     if (x >= ElementUtil.getClientLeft(tabElement) &&
-                                            x <= ElementUtil.getClientRight(tabElement)) {
+                                        x <= ElementUtil.getClientRight(tabElement)) {
                                         // If the mouse position is left or equal to the right-hand side of the tab
                                         // then this tab might be the one to select.
                                         mouseTarget = new MouseTarget(layoutConfig,
@@ -1304,8 +1305,8 @@ public class FlexLayout extends Composite {
                     break;
                 case AFTER_TAB:
                     showMarker(ElementUtil.getClientLeft(tabElement) +
-                                    ElementUtil.getSubPixelOffsetWidth(tabElement) +
-                                    4,
+                               ElementUtil.getSubPixelOffsetWidth(tabElement) +
+                               4,
                             ElementUtil.getClientTop(tabElement),
                             5,
                             tabElement.getOffsetHeight());
@@ -1510,12 +1511,12 @@ public class FlexLayout extends Composite {
             }
 
             if (clear ||
-                    outerSize == null ||
-                    outerSize.getWidth() != width ||
-                    outerSize.getHeight() != height ||
-                    designSurfaceSize == null ||
-                    designSurfaceSize.getWidth() != designWidth ||
-                    designSurfaceSize.getHeight() != designHeight) {
+                outerSize == null ||
+                outerSize.getWidth() != width ||
+                outerSize.getHeight() != height ||
+                designSurfaceSize == null ||
+                designSurfaceSize.getWidth() != designWidth ||
+                designSurfaceSize.getHeight() != designHeight) {
                 outerSize = new Size(width, height);
 
                 if (designMode) {
@@ -1766,14 +1767,14 @@ public class FlexLayout extends Composite {
     private void layout() {
         for (final Entry<Object, PositionAndSize> entry : positionAndSizeMap.entrySet()) {
             final Object key = entry.getKey();
-            if (key instanceof TabLayoutConfig) {
-                final TabLayoutConfig tabLayoutConfig = (TabLayoutConfig) key;
+            if (key instanceof final TabLayoutConfig tabLayoutConfig) {
+//                final TabLayoutConfig tabLayoutConfig = (TabLayoutConfig) key;
                 TabLayout tabLayout = layoutToWidgetMap.get(tabLayoutConfig);
                 if (tabLayout == null) {
                     tabLayout = new TabLayout(eventBus, this, tabManager, tabLayoutConfig, changeHandler);
                     if (tabLayoutConfig.getAllTabCount() > 0) {
                         for (final TabConfig tabConfig : tabLayoutConfig.getTabs()) {
-                            if (tabConfig.visible()) {
+                            if (tabConfig.isVisible()) {
                                 final Component component = components.get(tabConfig.getId());
                                 if (component != null) {
                                     tabLayout.addTab(tabConfig, component);
@@ -1783,11 +1784,10 @@ public class FlexLayout extends Composite {
 
                         // Ensure the tab layout data has a valid tab selection.
                         Integer selectedTab = tabLayoutConfig.getSelected();
-                        if (tabLayout.getTabBar().getTabs() == null ||
-                                tabLayout.getTabBar().getTabs().size() == 0) {
+                        if (NullSafe.isEmptyCollection(tabLayout.getTabBar().getTabs())) {
                             selectedTab = null;
                         } else if (selectedTab == null || selectedTab < 0
-                                || selectedTab >= tabLayout.getTabBar().getTabs().size()) {
+                                   || selectedTab >= tabLayout.getTabBar().getTabs().size()) {
                             selectedTab = 0;
                         }
 
@@ -1803,8 +1803,7 @@ public class FlexLayout extends Composite {
                 setPositionAndSize(tabLayout.getElement(), entry.getValue());
                 tabLayout.onResize();
 
-            } else if (key instanceof SplitInfo) {
-                final SplitInfo splitInfo = (SplitInfo) key;
+            } else if (key instanceof final SplitInfo splitInfo) {
                 final Splitter splitter = splitToWidgetMap.computeIfAbsent(splitInfo, Splitter::new);
                 setPositionAndSize(splitter.getElement(), entry.getValue());
             }
@@ -1843,14 +1842,23 @@ public class FlexLayout extends Composite {
             maximised = true;
 
             final TabLayoutConfig tabLayoutConfig = new TabLayoutConfig();
-            components.getComponents().stream()
+            components.getComponents()
+                    .stream()
                     .sorted(Comparator.comparing((Component c) -> c.getComponentConfig().getName())
                             .thenComparing(c -> c.getComponentConfig().getId()))
-                    .map(Component::getTabConfig)
-                    .filter(TabConfig::visible)
+                    .map(component -> {
+                        final TabConfig tabConfig = component.getTabConfig();
+                        Objects.requireNonNull(tabConfig, () ->
+                                "null tabConfig for component, id: " + component.getId()
+                                + ", label: " + component.getId());
+                        return tabConfig;
+                    })
+                    .filter(TabConfig::isVisible)
                     .forEach(tabLayoutConfig::add);
 
-            final int selected = selectedTab == null ? 0 : tabLayoutConfig.getTabs().indexOf(selectedTab);
+            final int selected = selectedTab == null
+                    ? 0
+                    : tabLayoutConfig.getTabs().indexOf(selectedTab);
             tabLayoutConfig.setSelected(selected);
 
             layoutConfigContainer.set(tabLayoutConfig);
@@ -1893,6 +1901,10 @@ public class FlexLayout extends Composite {
         this.changeHandler = changeHandler;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private enum Pos {
         TAB,
         AFTER_TAB,
@@ -1902,6 +1914,10 @@ public class FlexLayout extends Composite {
         BOTTOM,
         CENTER
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class LayoutConfigContainer {
 
@@ -1923,6 +1939,10 @@ public class FlexLayout extends Composite {
             }
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class MouseTarget {
 

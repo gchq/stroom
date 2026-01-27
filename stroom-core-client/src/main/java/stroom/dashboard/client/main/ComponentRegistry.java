@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,9 @@ public class ComponentRegistry {
     public Component getComponent(final ComponentType componentType) {
         final Provider<?> provider = providers.get(componentType);
         if (provider != null) {
-            final Object component = provider.get();
-            if (component != null && component instanceof Component) {
-                return (Component) component;
+            final Object obj = provider.get();
+            if (obj instanceof final Component component) {
+                return component;
             }
         }
         return null;
@@ -57,17 +57,26 @@ public class ComponentRegistry {
     public Component getComponent(final String type) {
         final Provider<?> provider = providersByTypeString.get(type);
         if (provider != null) {
-            final Object component = provider.get();
-            if (component != null && component instanceof Component) {
-                return (Component) component;
+            final Object obj = provider.get();
+            if (obj instanceof final Component component) {
+                return component;
             }
         }
         return null;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public enum ComponentUse {
-        PANEL, INPUT
+        PANEL,
+        INPUT
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class ComponentType {
 
@@ -102,9 +111,14 @@ public class ComponentRegistry {
 
         @Override
         public boolean equals(final Object obj) {
-            return id.equals(((ComponentType) obj).id);
+            return obj instanceof final ComponentType other
+                   && id.equals(other.id);
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class ComponentTypeComparator implements Comparator<ComponentType> {
 

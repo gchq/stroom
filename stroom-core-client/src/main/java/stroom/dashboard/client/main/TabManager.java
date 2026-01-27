@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,8 @@ public class TabManager {
                         .items(menuItems)
                         .addAutoHidePartner(target)
                         .popupPosition(popupPosition)
-                        .onHide(e -> currentTabConfig = null)
+                        .onHide(ignored ->
+                                currentTabConfig = null)
                         .fire(dashboardPresenter);
 //                    }
 //                }.schedule(0);
@@ -262,7 +263,7 @@ public class TabManager {
 
         int i = 0;
         for (final TabConfig tc : tabLayoutConfig.getTabs()) {
-            if (!tc.visible()) {
+            if (!tc.isVisible()) {
                 final Component component = components.get(tc.getId());
                 if (component != null) {
                     final Item item2 = new IconMenuItem.Builder()
@@ -276,7 +277,7 @@ public class TabManager {
             }
         }
 
-        if (menuItems.size() == 0) {
+        if (menuItems.isEmpty()) {
             return null;
         }
 

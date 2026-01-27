@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public final class TabLayoutConfig extends LayoutConfig {
         if (tabs == null) {
             return Collections.emptyList();
         }
-        return tabs.stream().filter(TabConfig::visible).collect(Collectors.toList());
+        return tabs.stream().filter(TabConfig::isVisible).collect(Collectors.toList());
     }
 
     public TabConfig get(final int index) {
@@ -167,6 +167,10 @@ public final class TabLayoutConfig extends LayoutConfig {
     public static Builder builder() {
         return new Builder();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder extends AbstractBuilder<TabLayoutConfig, Builder> {
 

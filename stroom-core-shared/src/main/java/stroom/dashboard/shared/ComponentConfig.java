@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,9 +74,9 @@ public class ComponentConfig {
         }
         final ComponentConfig that = (ComponentConfig) o;
         return Objects.equals(type, that.type) &&
-                Objects.equals(id, that.id) &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(settings, that.settings);
+               Objects.equals(id, that.id) &&
+               Objects.equals(name, that.name) &&
+               Objects.equals(settings, that.settings);
     }
 
     @Override
@@ -87,11 +87,11 @@ public class ComponentConfig {
     @Override
     public String toString() {
         return "ComponentConfig{" +
-                "type='" + type + '\'' +
-                ", id='" + id + '\'' +
-                ", name='" + name + '\'' +
-                ", settings=" + settings +
-                '}';
+               "type='" + type + '\'' +
+               ", id='" + id + '\'' +
+               ", name='" + name + '\'' +
+               ", settings=" + settings +
+               '}';
     }
 
     public static Builder builder() {
@@ -101,6 +101,10 @@ public class ComponentConfig {
     public Builder copy() {
         return new Builder(this);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static final class Builder {
 
