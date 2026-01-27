@@ -110,35 +110,33 @@ class TestSnapshotShard {
         // When: Multiple threads read concurrently
         final int threadCount = 50;
         final int readsPerThread = 100;
-        final ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-        final CountDownLatch startLatch = new CountDownLatch(1);
-        final AtomicInteger successCount = new AtomicInteger(0);
-        final List<CompletableFuture<Void>> futures = new ArrayList<>();
+        try (final ExecutorService executor = Executors.newFixedThreadPool(threadCount)) {
+            final CountDownLatch startLatch = new CountDownLatch(1);
+            final AtomicInteger successCount = new AtomicInteger(0);
+            final List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-        for (int i = 0; i < threadCount; i++) {
-            futures.add(CompletableFuture.runAsync(() -> {
-                try {
-                    startLatch.await();
-                    for (int j = 0; j < readsPerThread; j++) {
-                        final String info = shard.getInfo();
-                        if (info != null) {
-                            successCount.incrementAndGet();
+            for (int i = 0; i < threadCount; i++) {
+                futures.add(CompletableFuture.runAsync(() -> {
+                    try {
+                        startLatch.await();
+                        for (int j = 0; j < readsPerThread; j++) {
+                            final String info = shard.getInfo();
+                            if (info != null) {
+                                successCount.incrementAndGet();
+                            }
                         }
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e);
                     }
-                } catch (final Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }, executor));
+                }, executor));
+            }
+
+            startLatch.countDown();
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(30, TimeUnit.SECONDS);
+
+            // Then: All reads should succeed
+            assertThat(successCount.get()).isEqualTo(threadCount * readsPerThread);
         }
-
-        startLatch.countDown();
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(30, TimeUnit.SECONDS);
-
-        // Then: All reads should succeed
-        assertThat(successCount.get()).isEqualTo(threadCount * readsPerThread);
-
-        executor.shutdown();
-        assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
     }
 
     @Test
@@ -208,26 +206,25 @@ class TestSnapshotShard {
         // When: We expire the snapshot and trigger multiple reads
         Thread.sleep(150);
 
-        final ExecutorService executor = Executors.newFixedThreadPool(10);
-        for (int i = 0; i < 10; i++) {
-            executor.submit(() -> {
-                try {
-                    shard.getInfo();
-                } catch (final Exception e) {
-                    // Ignore
-                }
-            });
+        try (final ExecutorService executor = Executors.newFixedThreadPool(10)) {
+            for (int i = 0; i < 10; i++) {
+                executor.submit(() -> {
+                    try {
+                        shard.getInfo();
+                    } catch (final Exception e) {
+                        // Ignore
+                    }
+                });
+            }
+
+            // Wait for rotation to start
+            assertThat(fetchStarted.await(2, TimeUnit.SECONDS)).isTrue();
+
+            // Then: Only one rotation should be in progress
+            assertThat(fetchCount.get()).isEqualTo(2); // Initial + one rotation
+
+            proceedFetch.countDown();
         }
-
-        // Wait for rotation to start
-        assertThat(fetchStarted.await(2, TimeUnit.SECONDS)).isTrue();
-
-        // Then: Only one rotation should be in progress
-        assertThat(fetchCount.get()).isEqualTo(2); // Initial + one rotation
-
-        proceedFetch.countDown();
-        executor.shutdown();
-        assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
     }
 
     @Test
@@ -300,39 +297,37 @@ class TestSnapshotShard {
 
         final int threadCount = 20;
         final CyclicBarrier barrier = new CyclicBarrier(threadCount);
-        final ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-        final CountDownLatch completeLatch = new CountDownLatch(threadCount);
+        try (final ExecutorService executor = Executors.newFixedThreadPool(threadCount)) {
+            final CountDownLatch completeLatch = new CountDownLatch(threadCount);
 
-        // When: Multiple threads acquire and hold the guard
-        for (int i = 0; i < threadCount; i++) {
-            executor.submit(() -> {
-                try {
-                    barrier.await(); // Synchronise start
-                    guard.acquire(() -> {
-                        final int concurrent = currentConcurrent.incrementAndGet();
-                        maxConcurrent.updateAndGet(max -> Math.max(max, concurrent));
-                        ThreadUtil.sleep(50); // Hold for a bit
-                        currentConcurrent.decrementAndGet();
-                        return null;
-                    });
-                } catch (final Exception e) {
-                    throw new RuntimeException(e);
-                } finally {
-                    completeLatch.countDown();
-                }
-            });
+            // When: Multiple threads acquire and hold the guard
+            for (int i = 0; i < threadCount; i++) {
+                executor.submit(() -> {
+                    try {
+                        barrier.await(); // Synchronise start
+                        guard.acquire(() -> {
+                            final int concurrent = currentConcurrent.incrementAndGet();
+                            maxConcurrent.updateAndGet(max -> Math.max(max, concurrent));
+                            ThreadUtil.sleep(50); // Hold for a bit
+                            currentConcurrent.decrementAndGet();
+                            return null;
+                        });
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e);
+                    } finally {
+                        completeLatch.countDown();
+                    }
+                });
+            }
+
+            // Wait for all acquisitions to complete
+            assertThat(completeLatch.await(5, TimeUnit.SECONDS)).isTrue();
+
+            // Then: Destroy should work
+            guard.destroy();
+            assertThat(destroyCount.get()).isEqualTo(1);
+            assertThat(maxConcurrent.get()).isGreaterThan(1); // Verify concurrency happened
         }
-
-        // Wait for all acquisitions to complete
-        assertThat(completeLatch.await(5, TimeUnit.SECONDS)).isTrue();
-
-        // Then: Destroy should work
-        guard.destroy();
-        assertThat(destroyCount.get()).isEqualTo(1);
-        assertThat(maxConcurrent.get()).isGreaterThan(1); // Verify concurrency happened
-
-        executor.shutdown();
-        assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
     }
 
     @Test
@@ -493,25 +488,23 @@ class TestSnapshotShard {
                 doc,
                 DB_FACTORY);
 
-        // When: We hammer it with reads while rotation is happening
-        final ExecutorService executor = Executors.newFixedThreadPool(10);
         final AtomicInteger successCount = new AtomicInteger(0);
         final AtomicReference<Throwable> firstError = new AtomicReference<>();
 
-        for (int i = 0; i < 100; i++) {
-            executor.submit(() -> {
-                try {
-                    shard.getInfo();
-                    successCount.incrementAndGet();
-                } catch (final Throwable t) {
-                    firstError.compareAndSet(null, t);
-                }
-            });
-            Thread.sleep(10);
+        // When: We hammer it with reads while rotation is happening
+        try (final ExecutorService executor = Executors.newFixedThreadPool(10)) {
+            for (int i = 0; i < 100; i++) {
+                executor.submit(() -> {
+                    try {
+                        shard.getInfo();
+                        successCount.incrementAndGet();
+                    } catch (final Throwable t) {
+                        firstError.compareAndSet(null, t);
+                    }
+                });
+                Thread.sleep(10);
+            }
         }
-
-        executor.shutdown();
-        assertThat(executor.awaitTermination(30, TimeUnit.SECONDS)).isTrue();
 
         // Then: All reads should succeed despite rotation
         assertThat(firstError.get()).isNull();
@@ -523,40 +516,38 @@ class TestSnapshotShard {
         // Given: A guard being destroyed while threads try to acquire
         final AtomicInteger destroyCount = new AtomicInteger(0);
         final SnapshotShard.Guard guard = new SnapshotShard.Guard(destroyCount::incrementAndGet);
-
-        final int threadCount = 50;
-        final ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         final CountDownLatch startLatch = new CountDownLatch(1);
         final AtomicInteger tryAgainCount = new AtomicInteger(0);
         final AtomicInteger successCount = new AtomicInteger(0);
 
-        // When: Some threads destroy while others try to acquire
-        for (int i = 0; i < threadCount; i++) {
-            final int index = i;
-            executor.submit(() -> {
-                try {
-                    startLatch.await();
-                    if (index == 0) {
-                        guard.destroy();
-                    } else {
-                        try {
-                            guard.acquire(() -> {
-                                successCount.incrementAndGet();
-                                return null;
-                            });
-                        } catch (final SnapshotShard.TryAgainException e) {
-                            tryAgainCount.incrementAndGet();
+        final int threadCount = 50;
+        try (final ExecutorService executor = Executors.newFixedThreadPool(threadCount)) {
+            // When: Some threads destroy while others try to acquire
+            for (int i = 0; i < threadCount; i++) {
+                final int index = i;
+                executor.submit(() -> {
+                    try {
+                        startLatch.await();
+                        if (index == 0) {
+                            guard.destroy();
+                        } else {
+                            try {
+                                guard.acquire(() -> {
+                                    successCount.incrementAndGet();
+                                    return null;
+                                });
+                            } catch (final SnapshotShard.TryAgainException e) {
+                                tryAgainCount.incrementAndGet();
+                            }
                         }
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e);
                     }
-                } catch (final Exception e) {
-                    throw new RuntimeException(e);
-                }
-            });
-        }
+                });
+            }
 
-        startLatch.countDown();
-        executor.shutdown();
-        assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
+            startLatch.countDown();
+        }
 
         // Then: Destroy should be called exactly once
         assertThat(destroyCount.get()).isEqualTo(1);

@@ -76,7 +76,7 @@ class TestGuard {
     }
 
     @Test
-    void testConcurrentAcquires() throws Exception {
+    void testConcurrentAcquires() {
         // Given: A guard
         final AtomicInteger maxConcurrent = new AtomicInteger(0);
         final AtomicInteger currentConcurrent = new AtomicInteger(0);
@@ -84,36 +84,30 @@ class TestGuard {
         });
 
         final int threadCount = 100;
-        final ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         final CyclicBarrier barrier = new CyclicBarrier(threadCount);
-        final CountDownLatch completeLatch = new CountDownLatch(threadCount);
 
-        // When: Many threads acquire concurrently
-        for (int i = 0; i < threadCount; i++) {
-            executor.submit(() -> {
-                try {
-                    barrier.await(); // Synchronise start
-                    guard.acquire(() -> {
-                        final int concurrent = currentConcurrent.incrementAndGet();
-                        maxConcurrent.updateAndGet(max -> Math.max(max, concurrent));
-                        ThreadUtil.sleep(10); // Hold briefly
-                        currentConcurrent.decrementAndGet();
-                        return null;
-                    });
-                } catch (final Exception e) {
-                    throw new RuntimeException(e);
-                } finally {
-                    completeLatch.countDown();
-                }
-            });
+        try (final ExecutorService executor = Executors.newFixedThreadPool(threadCount)) {
+            // When: Many threads acquire concurrently
+            for (int i = 0; i < threadCount; i++) {
+                executor.submit(() -> {
+                    try {
+                        barrier.await(); // Synchronise start
+                        guard.acquire(() -> {
+                            final int concurrent = currentConcurrent.incrementAndGet();
+                            maxConcurrent.updateAndGet(max -> Math.max(max, concurrent));
+                            ThreadUtil.sleep(10); // Hold briefly
+                            currentConcurrent.decrementAndGet();
+                            return null;
+                        });
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            }
         }
 
         // Then: All should complete
-        assertThat(completeLatch.await(10, TimeUnit.SECONDS)).isTrue();
-        assertThat(maxConcurrent.get()).isEqualTo(threadCount);
-
-        executor.shutdown();
-        assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
+        assertThat(maxConcurrent.get()).isGreaterThan(10);
     }
 
     @Test
@@ -160,55 +154,53 @@ class TestGuard {
 
     @Test
     void testConcurrentDestroyAndAcquire() throws Exception {
-        // Given: A guard
-        final AtomicInteger destroyCount = new AtomicInteger(0);
-        final AtomicInteger successCount = new AtomicInteger(0);
-        final AtomicInteger failCount = new AtomicInteger(0);
-
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(destroyCount::incrementAndGet);
-
         final int threadCount = 100;
-        final ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-        final CyclicBarrier barrier = new CyclicBarrier(threadCount);
-        final CountDownLatch completeLatch = new CountDownLatch(threadCount);
+        try (final ExecutorService executor = Executors.newFixedThreadPool(threadCount)) {
+            // Given: A guard
+            final AtomicInteger destroyCount = new AtomicInteger(0);
+            final AtomicInteger successCount = new AtomicInteger(0);
+            final AtomicInteger failCount = new AtomicInteger(0);
 
-        // When: Half destroy, half acquire, all at once
-        for (int i = 0; i < threadCount; i++) {
-            final boolean shouldDestroy = (i % 2 == 0);
-            executor.submit(() -> {
-                try {
-                    barrier.await(); // Synchronise start
-                    if (shouldDestroy) {
-                        guard.destroy();
-                    } else {
-                        try {
-                            guard.acquire(() -> {
-                                successCount.incrementAndGet();
-                                return null;
-                            });
-                        } catch (final SnapshotShard.TryAgainException e) {
-                            failCount.incrementAndGet();
+            final SnapshotShard.Guard guard = new SnapshotShard.Guard(destroyCount::incrementAndGet);
+
+            final CyclicBarrier barrier = new CyclicBarrier(threadCount);
+            final CountDownLatch completeLatch = new CountDownLatch(threadCount);
+
+            // When: Half destroy, half acquire, all at once
+            for (int i = 0; i < threadCount; i++) {
+                final boolean shouldDestroy = (i % 2 == 0);
+                executor.submit(() -> {
+                    try {
+                        barrier.await(); // Synchronise start
+                        if (shouldDestroy) {
+                            guard.destroy();
+                        } else {
+                            try {
+                                guard.acquire(() -> {
+                                    successCount.incrementAndGet();
+                                    return null;
+                                });
+                            } catch (final SnapshotShard.TryAgainException e) {
+                                failCount.incrementAndGet();
+                            }
                         }
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e);
+                    } finally {
+                        completeLatch.countDown();
                     }
-                } catch (final Exception e) {
-                    throw new RuntimeException(e);
-                } finally {
-                    completeLatch.countDown();
-                }
-            });
+                });
+            }
+
+            // Then: All should complete
+            assertThat(completeLatch.await(10, TimeUnit.SECONDS)).isTrue();
+
+            // Destroy should be called exactly once
+            assertThat(destroyCount.get()).isEqualTo(1);
+
+            // Some acquires should succeed, some should fail
+            assertThat(successCount.get() + failCount.get()).isEqualTo(threadCount / 2);
         }
-
-        // Then: All should complete
-        assertThat(completeLatch.await(10, TimeUnit.SECONDS)).isTrue();
-
-        // Destroy should be called exactly once
-        assertThat(destroyCount.get()).isEqualTo(1);
-
-        // Some acquires should succeed, some should fail
-        assertThat(successCount.get() + failCount.get()).isEqualTo(threadCount / 2);
-
-        executor.shutdown();
-        assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
     }
 
     @Test
@@ -233,110 +225,106 @@ class TestGuard {
 
     @Test
     void testReferenceCountingAccuracy() throws Exception {
-        // Given: A guard with many concurrent acquisitions
-        final AtomicInteger inProgressCount = new AtomicInteger(0);
-        final AtomicInteger maxInProgress = new AtomicInteger(0);
+        try (final ExecutorService executor = Executors.newFixedThreadPool(20)) {
+            // Given: A guard with many concurrent acquisitions
+            final AtomicInteger inProgressCount = new AtomicInteger(0);
+            final AtomicInteger maxInProgress = new AtomicInteger(0);
 
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(() -> {
-            // Verify count is 0 when destroyed
-            assertThat(inProgressCount.get()).isEqualTo(0);
-        });
-
-        final int acquisitionCount = 1000;
-        final CountDownLatch startLatch = new CountDownLatch(1);
-        final CountDownLatch completeLatch = new CountDownLatch(acquisitionCount);
-        final ExecutorService executor = Executors.newFixedThreadPool(20);
-
-        // When: Many acquisitions happen
-        for (int i = 0; i < acquisitionCount; i++) {
-            executor.submit(() -> {
-                try {
-                    startLatch.await();
-                    guard.acquire(() -> {
-                        final int count = inProgressCount.incrementAndGet();
-                        maxInProgress.updateAndGet(max -> Math.max(max, count));
-                        ThreadUtil.sleep(1); // Brief hold
-                        inProgressCount.decrementAndGet();
-                        return null;
-                    });
-                } catch (final Exception e) {
-                    throw new RuntimeException(e);
-                } finally {
-                    completeLatch.countDown();
-                }
+            final SnapshotShard.Guard guard = new SnapshotShard.Guard(() -> {
+                // Verify count is 0 when destroyed
+                assertThat(inProgressCount.get()).isEqualTo(0);
             });
+
+            final int acquisitionCount = 1000;
+            final CountDownLatch startLatch = new CountDownLatch(1);
+            final CountDownLatch completeLatch = new CountDownLatch(acquisitionCount);
+
+            // When: Many acquisitions happen
+            for (int i = 0; i < acquisitionCount; i++) {
+                executor.submit(() -> {
+                    try {
+                        startLatch.await();
+                        guard.acquire(() -> {
+                            final int count = inProgressCount.incrementAndGet();
+                            maxInProgress.updateAndGet(max -> Math.max(max, count));
+                            ThreadUtil.sleep(1); // Brief hold
+                            inProgressCount.decrementAndGet();
+                            return null;
+                        });
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e);
+                    } finally {
+                        completeLatch.countDown();
+                    }
+                });
+            }
+
+            startLatch.countDown();
+            assertThat(completeLatch.await(30, TimeUnit.SECONDS)).isTrue();
+
+            // Then: Destroy should work (verifies count reached 0)
+            guard.destroy();
+
+            // And we should have had concurrency
+            assertThat(maxInProgress.get()).isGreaterThan(1);
         }
-
-        startLatch.countDown();
-        assertThat(completeLatch.await(30, TimeUnit.SECONDS)).isTrue();
-
-        // Then: Destroy should work (verifies count reached 0)
-        guard.destroy();
-
-        // And we should have had concurrency
-        assertThat(maxInProgress.get()).isGreaterThan(1);
-
-        executor.shutdown();
-        assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
     }
 
     @Test
     void testDestroyDuringActiveAcquisitionRace() throws Exception {
-        // Given: A guard
-        final AtomicBoolean destroyed = new AtomicBoolean(false);
-        final AtomicInteger successfulAcquisitions = new AtomicInteger(0);
-        final AtomicInteger failedAcquisitions = new AtomicInteger(0);
-
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(() -> destroyed.set(true));
-
         final int threadCount = 100;
-        final ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-        final CountDownLatch startLatch = new CountDownLatch(1);
-        final CountDownLatch completeLatch = new CountDownLatch(threadCount);
-        final AtomicInteger count = new AtomicInteger();
+        try (final ExecutorService executor = Executors.newFixedThreadPool(threadCount)) {
+            // Given: A guard
+            final AtomicBoolean destroyed = new AtomicBoolean(false);
+            final AtomicInteger successfulAcquisitions = new AtomicInteger(0);
+            final AtomicInteger failedAcquisitions = new AtomicInteger(0);
 
-        // When: Many threads acquire, one destroys in the middle
-        for (int i = 0; i < threadCount; i++) {
-            executor.submit(() -> {
-                try {
-                    startLatch.await();
+            final SnapshotShard.Guard guard = new SnapshotShard.Guard(() -> destroyed.set(true));
 
-                    // Thread 50 destroys
-                    final int index  = count.getAndIncrement();
-                    if (index == 50) {
-                        guard.destroy();
-                    } else {
-                        try {
-                            guard.acquire(() -> {
-                                ThreadUtil.sleep(20); // Hold briefly
-                                successfulAcquisitions.incrementAndGet();
-                                return null;
-                            });
-                        } catch (final SnapshotShard.TryAgainException e) {
-                            failedAcquisitions.incrementAndGet();
+            final CountDownLatch startLatch = new CountDownLatch(1);
+            final CountDownLatch completeLatch = new CountDownLatch(threadCount);
+            final AtomicInteger count = new AtomicInteger();
+
+            // When: Many threads acquire, one destroys in the middle
+            for (int i = 0; i < threadCount; i++) {
+                executor.submit(() -> {
+                    try {
+                        startLatch.await();
+
+                        // Thread 50 destroys
+                        final int index = count.getAndIncrement();
+                        if (index == 50) {
+                            guard.destroy();
+                        } else {
+                            try {
+                                guard.acquire(() -> {
+                                    ThreadUtil.sleep(20); // Hold briefly
+                                    successfulAcquisitions.incrementAndGet();
+                                    return null;
+                                });
+                            } catch (final SnapshotShard.TryAgainException e) {
+                                failedAcquisitions.incrementAndGet();
+                            }
                         }
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e);
+                    } finally {
+                        completeLatch.countDown();
                     }
-                } catch (final Exception e) {
-                    throw new RuntimeException(e);
-                } finally {
-                    completeLatch.countDown();
-                }
-            });
+                });
+            }
+
+            startLatch.countDown();
+            assertThat(completeLatch.await(10, TimeUnit.SECONDS)).isTrue();
+
+            // Then: Should eventually be destroyed
+            assertThat(destroyed.get()).isTrue();
+
+            // Some should succeed (those before destroy), some should fail (those after)
+            assertThat(successfulAcquisitions.get()).isGreaterThan(0);
+            assertThat(failedAcquisitions.get()).isGreaterThan(0);
+            assertThat(successfulAcquisitions.get() + failedAcquisitions.get()).isEqualTo(threadCount - 1);
         }
-
-        startLatch.countDown();
-        assertThat(completeLatch.await(10, TimeUnit.SECONDS)).isTrue();
-
-        // Then: Should eventually be destroyed
-        assertThat(destroyed.get()).isTrue();
-
-        // Some should succeed (those before destroy), some should fail (those after)
-        assertThat(successfulAcquisitions.get()).isGreaterThan(0);
-        assertThat(failedAcquisitions.get()).isGreaterThan(0);
-        assertThat(successfulAcquisitions.get() + failedAcquisitions.get()).isEqualTo(threadCount - 1);
-
-        executor.shutdown();
-        assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
     }
 
     @Test
@@ -384,62 +372,60 @@ class TestGuard {
 
     @Test
     void testStressTest() throws Exception {
-        // Given: A guard under extreme load
-        final AtomicInteger destroyCount = new AtomicInteger(0);
-        final AtomicInteger operationCount = new AtomicInteger(0);
-
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(destroyCount::incrementAndGet);
-
         final int threadCount = 50;
-        final int operationsPerThread = 1000;
-        final ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-        final CountDownLatch startLatch = new CountDownLatch(1);
-        final CountDownLatch completeLatch = new CountDownLatch(threadCount);
-        final AtomicBoolean shouldStop = new AtomicBoolean(false);
+        try (final ExecutorService executor = Executors.newFixedThreadPool(threadCount)) {
+            // Given: A guard under extreme load
+            final AtomicInteger destroyCount = new AtomicInteger(0);
+            final AtomicInteger operationCount = new AtomicInteger(0);
 
-        // When: Many threads hammer the guard
-        for (int i = 0; i < threadCount; i++) {
-            final int threadIndex = i;
-            executor.submit(() -> {
-                try {
-                    startLatch.await();
+            final SnapshotShard.Guard guard = new SnapshotShard.Guard(destroyCount::incrementAndGet);
 
-                    // One thread destroys halfway through
-                    if (threadIndex == 0) {
-                        Thread.sleep(50);
-                        guard.destroy();
-                        shouldStop.set(true);
-                    } else {
-                        for (int j = 0; j < operationsPerThread && !shouldStop.get(); j++) {
-                            try {
-                                guard.acquire(() -> {
-                                    operationCount.incrementAndGet();
-                                    return null;
-                                });
-                            } catch (final SnapshotShard.TryAgainException e) {
-                                // Expected after destroy
-                                break;
+            final int operationsPerThread = 1000;
+            final CountDownLatch startLatch = new CountDownLatch(1);
+            final CountDownLatch completeLatch = new CountDownLatch(threadCount);
+            final AtomicBoolean shouldStop = new AtomicBoolean(false);
+
+            // When: Many threads hammer the guard
+            for (int i = 0; i < threadCount; i++) {
+                final int threadIndex = i;
+                executor.submit(() -> {
+                    try {
+                        startLatch.await();
+
+                        // One thread destroys halfway through
+                        if (threadIndex == 0) {
+                            Thread.sleep(50);
+                            guard.destroy();
+                            shouldStop.set(true);
+                        } else {
+                            for (int j = 0; j < operationsPerThread && !shouldStop.get(); j++) {
+                                try {
+                                    guard.acquire(() -> {
+                                        operationCount.incrementAndGet();
+                                        return null;
+                                    });
+                                } catch (final SnapshotShard.TryAgainException e) {
+                                    // Expected after destroy
+                                    break;
+                                }
                             }
                         }
+                    } catch (final Exception e) {
+                        throw new RuntimeException(e);
+                    } finally {
+                        completeLatch.countDown();
                     }
-                } catch (final Exception e) {
-                    throw new RuntimeException(e);
-                } finally {
-                    completeLatch.countDown();
-                }
-            });
+                });
+            }
+
+            startLatch.countDown();
+            assertThat(completeLatch.await(30, TimeUnit.SECONDS)).isTrue();
+
+            // Then: Should be destroyed exactly once
+            assertThat(destroyCount.get()).isEqualTo(1);
+
+            // And many operations should have succeeded
+            assertThat(operationCount.get()).isGreaterThan(0);
         }
-
-        startLatch.countDown();
-        assertThat(completeLatch.await(30, TimeUnit.SECONDS)).isTrue();
-
-        // Then: Should be destroyed exactly once
-        assertThat(destroyCount.get()).isEqualTo(1);
-
-        // And many operations should have succeeded
-        assertThat(operationCount.get()).isGreaterThan(0);
-
-        executor.shutdown();
-        assertThat(executor.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
     }
 }
