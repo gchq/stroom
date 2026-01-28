@@ -65,6 +65,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
     private final EventBus eventBus;
     private final boolean showIcon;
+    private final boolean hasOpenAndCopy;
     private final Function<T_ROW, SafeHtml> cellTextFunction;
     private final Function<T_ROW, DocRef> docRefFunction;
     private final Function<T_ROW, String> cssClassFunction;
@@ -77,12 +78,14 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
      */
     private DocRefCell(final EventBus eventBus,
                        final boolean showIcon,
+                       final boolean hasOpenAndCopy,
                        final Function<T_ROW, SafeHtml> cellTextFunction,
                        final Function<T_ROW, DocRef> docRefFunction,
                        final Function<T_ROW, String> cssClassFunction) {
         super(BrowserEvents.MOUSEDOWN);
         this.eventBus = eventBus;
         this.showIcon = showIcon;
+        this.hasOpenAndCopy = hasOpenAndCopy;
         this.cellTextFunction = cellTextFunction;
         this.docRefFunction = docRefFunction;
         this.cssClassFunction = cssClassFunction;
@@ -206,7 +209,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
             sb.append(textDiv);
 
             // Add copy and open links.
-            if (docRef != null) {
+            if (hasOpenAndCopy && docRef != null) {
                 // This DocRefCell gets used for pipeline props which sometimes are a docRef
                 // and other times just a simple string
                 final SafeHtml copy = SvgImageUtil.toSafeHtml(
@@ -298,6 +301,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
         private EventBus eventBus;
         private boolean showIcon = false;
+        private boolean hasOpenAndCopy = false;
         private DocRef.DisplayType displayType = DisplayType.NAME;
         private Function<T, SafeHtml> cellTextFunction;
         private Function<T, DocRef> docRefFunction;
@@ -310,6 +314,11 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
         public Builder<T> showIcon(final boolean showIcon) {
             this.showIcon = showIcon;
+            return this;
+        }
+
+        public Builder<T> hasOpenAndCopy(final boolean hasOpenAndCopy) {
+            this.hasOpenAndCopy = hasOpenAndCopy;
             return this;
         }
 
@@ -383,6 +392,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
             return new DocRefCell<>(
                     eventBus,
                     showIcon,
+                    hasOpenAndCopy,
                     cellTextFunction,
                     docRefFunction,
                     cssClassFunction);

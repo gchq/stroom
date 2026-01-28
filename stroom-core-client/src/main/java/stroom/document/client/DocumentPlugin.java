@@ -289,15 +289,17 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
             if (presenter.isDirty()) {
                 D document = presenter.getEntity();
                 document = presenter.write(document);
-                final D finalDocument = document;
+                if (document != null) {
+                    final D finalDocument = document;
 
-                save(getDocRef(document), document,
-                        doc -> presenter.read(getDocRef(doc), doc, presenter.isReadOnly()),
-                        throwable -> AlertEvent.fireError(
-                                this,
-                                "Unable to save document " + finalDocument,
-                                throwable.getMessage(), null),
-                        presenter);
+                    save(getDocRef(document), document,
+                            doc -> presenter.read(getDocRef(doc), doc, presenter.isReadOnly()),
+                            throwable -> AlertEvent.fireError(
+                                    this,
+                                    "Unable to save document " + finalDocument,
+                                    throwable.getMessage(), null),
+                            presenter);
+                }
             }
         }
     }
