@@ -13,6 +13,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Bug **#5364** : Change PlanB snapshots to prevent closure when in use.
+
+
 ## [v7.11-beta.19] - 2026-01-14
 
 * Issue **#5355** : Fix HttpClient being closed by cache while in use.
