@@ -1,1 +1,1 @@
-v7.11-beta.19-gwt-sourcemaps
+v7.11-beta.20
