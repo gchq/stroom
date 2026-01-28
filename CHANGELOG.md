@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.19] - 2026-01-28
+
+* Bug **#5311** : Fix documentation markdown edit bug.
+
+
 ## [v7.10.18] - 2026-01-28
 
 * Bug **#5364** : Change PlanB snapshots to prevent closure when in use.
@@ -1815,7 +1820,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.18...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.19...HEAD
+[v7.10.19]: https://github.com/gchq/stroom/compare/v7.10.18...v7.10.19
 [v7.10.18]: https://github.com/gchq/stroom/compare/v7.10.17...v7.10.18
 [v7.10.17]: https://github.com/gchq/stroom/compare/v7.10.16...v7.10.17
 [v7.10.16]: https://github.com/gchq/stroom/compare/v7.10.15...v7.11-beta.16
