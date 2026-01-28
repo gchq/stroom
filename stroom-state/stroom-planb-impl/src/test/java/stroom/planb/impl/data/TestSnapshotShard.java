@@ -14,7 +14,10 @@ import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.util.concurrent.Guard;
+import stroom.util.concurrent.StripedGuard;
 import stroom.util.concurrent.ThreadUtil;
+import stroom.util.concurrent.TryAgainException;
 import stroom.util.io.FileUtil;
 import stroom.util.time.StroomDuration;
 
@@ -281,14 +284,14 @@ class TestSnapshotShard {
     void testGuardPreventsUseAfterDestroy() {
         // Given: A guard with a destroy callback
         final AtomicBoolean destroyed = new AtomicBoolean(false);
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(() -> destroyed.set(true));
+        final Guard guard = new StripedGuard(() -> destroyed.set(true), 64);
 
         // When: We destroy the guard
         guard.destroy();
 
         // Then: Subsequent acquires should throw TryAgainException
         assertThatThrownBy(() -> guard.acquire(() -> "test"))
-                .isInstanceOf(SnapshotShard.TryAgainException.class);
+                .isInstanceOf(TryAgainException.class);
 
         // And the callback should have been called
         assertThat(destroyed.get()).isTrue();
@@ -301,7 +304,7 @@ class TestSnapshotShard {
         final AtomicInteger maxConcurrent = new AtomicInteger(0);
         final AtomicInteger currentConcurrent = new AtomicInteger(0);
 
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(destroyCount::incrementAndGet);
+        final Guard guard = new StripedGuard(destroyCount::incrementAndGet, 64);
 
         final int threadCount = 20;
         final CyclicBarrier barrier = new CyclicBarrier(threadCount);
@@ -342,7 +345,7 @@ class TestSnapshotShard {
     void testGuardDoubleDestroyIsIdempotent() {
         // Given: A guard
         final AtomicInteger destroyCount = new AtomicInteger(0);
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(destroyCount::incrementAndGet);
+        final Guard guard = new StripedGuard(destroyCount::incrementAndGet, 64);
 
         // When: We destroy it twice
         guard.destroy();
@@ -529,7 +532,7 @@ class TestSnapshotShard {
     void testRaceConditionBetweenDestroyAndAcquire() throws Exception {
         // Given: A guard being destroyed while threads try to acquire
         final AtomicInteger destroyCount = new AtomicInteger(0);
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(destroyCount::incrementAndGet);
+        final Guard guard = new StripedGuard(destroyCount::incrementAndGet, 64);
         final CountDownLatch startLatch = new CountDownLatch(1);
         final AtomicInteger tryAgainCount = new AtomicInteger(0);
         final AtomicInteger successCount = new AtomicInteger(0);
@@ -550,7 +553,7 @@ class TestSnapshotShard {
                                     successCount.incrementAndGet();
                                     return null;
                                 });
-                            } catch (final SnapshotShard.TryAgainException e) {
+                            } catch (final TryAgainException e) {
                                 tryAgainCount.incrementAndGet();
                             }
                         }
