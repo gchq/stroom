@@ -18,6 +18,7 @@ package stroom.analytics.client.presenter;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.QueryLanguageVersion;
+import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.ui.config.client.UiConfigCache;
 
@@ -42,6 +43,13 @@ public class AnalyticNotificationPresenter
                 notificationListPresenter,
                 uiConfigCache);
         this.notificationListPresenter = notificationListPresenter;
+        getView().setIncludeRuleDocumentationVisible(true);
+    }
+
+    @Override
+    protected void onRead(final DocRef docRef, final AnalyticRuleDoc analyticRuleDoc, final boolean readOnly) {
+        super.onRead(docRef, analyticRuleDoc, readOnly);
+        getView().setIncludeRuleDocumentation(analyticRuleDoc.isIncludeRuleDocumentation());
     }
 
     @Override
