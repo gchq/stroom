@@ -87,6 +87,11 @@ public final class JooqUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JooqUtil.class);
     private static final ThreadLocal<DataSource> DATA_SOURCE_THREAD_LOCAL = new ThreadLocal<>();
+    /**
+     * Used to hold the current stack trace when checking if a data source is already in use.
+     * Only used if DEBUG in set.
+     */
+    private static final ThreadLocal<StackTraceElement[]> DEBUG_STACK_TRACE_THREAD_LOCAL = new ThreadLocal<>();
 
     private static final String DEFAULT_ID_FIELD_NAME = "id";
     private static final Boolean RENDER_SCHEMA = false;
@@ -1108,13 +1113,43 @@ public final class JooqUtil {
     private static void checkDataSource(final DataSource dataSource) {
         final DataSource currentDataSource = DATA_SOURCE_THREAD_LOCAL.get();
         if (currentDataSource != null && currentDataSource.equals(dataSource)) {
+            LOGGER.debug(() -> LogUtil.message(
+                    """
+                            Data source already in use, stack trace for the first to acquire it:
+                            {}
+                            Current stack trace:
+                            {}""",
+                    stackTraceToString(DEBUG_STACK_TRACE_THREAD_LOCAL.get()),
+                    stackTraceToString(Thread.currentThread().getStackTrace())));
             try {
-                throw new RuntimeException("Data source already in use");
+                // If you see this then it likely means you are doing something like this:
+                // JooqUtil.contextResult(dataSource, context1 -> {
+                //     // do Stuff with context1
+                //     JooqUtil.contextResult(dataSource, context2 -> {
+                //         // do Stuff with context2
+                //     });
+                // });
+                // Don't, as it risks a thread blocking itself because has two db connections in play.
+                // Instead, pass the context around withing the outer lambda to re-use it for multiple
+                // SQL statements.
+                throw new RuntimeException(LogUtil.message(
+                        "Data source {} already in use. This error will be swallowed but it indicates a problem " +
+                        "in the code as this should not happen.", currentDataSource.getClass().getSimpleName()));
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             }
         }
+
         DATA_SOURCE_THREAD_LOCAL.set(dataSource);
+        if (LOGGER.isDebugEnabled()) {
+            DEBUG_STACK_TRACE_THREAD_LOCAL.set(Thread.currentThread().getStackTrace());
+        }
+    }
+
+    private static String stackTraceToString(final StackTraceElement[] stackTraceElements) {
+        return NullSafe.stream(stackTraceElements)
+                .map(StackTraceElement::toString)
+                .collect(Collectors.joining("\n"));
     }
 
     private static void releaseDataSource() {

@@ -22932,9 +22932,6 @@
           "errorFeed" : {
             "$ref" : "#/components/schemas/DocRef"
           },
-          "includeRuleDocumentation" : {
-            "type" : "boolean"
-          },
           "languageVersion" : {
             "type" : "string",
             "enum" : [ "STROOM_QL_VERSION_0_1", "SIGMA" ]
