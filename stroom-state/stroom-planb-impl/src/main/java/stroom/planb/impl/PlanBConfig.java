@@ -134,4 +134,85 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
                 minTimeToKeepEnvOpen,
                 snapshotRetryFetchInterval);
     }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static class Builder {
+
+        private CacheConfig stateDocCache;
+        private List<String> nodeList;
+        private String path;
+        private StroomDuration minTimeToKeepSnapshots;
+        private StroomDuration minTimeToKeepEnvOpen;
+        private StroomDuration snapshotRetryFetchInterval;
+
+        public Builder() {
+            // Set defaults
+            this.stateDocCache = CacheConfig
+                    .builder()
+                    .maximumSize(1000L)
+                    .expireAfterWrite(StroomDuration.ofMinutes(10))
+                    .build();
+            this.nodeList = Collections.emptyList();
+            this.path = "${stroom.home}/planb";
+            this.minTimeToKeepSnapshots = StroomDuration.ofMinutes(10);
+            this.minTimeToKeepEnvOpen = StroomDuration.ofMinutes(1);
+            this.snapshotRetryFetchInterval = StroomDuration.ofMinutes(1);
+        }
+
+        public Builder(final PlanBConfig config) {
+            this.stateDocCache = config.stateDocCache;
+            this.nodeList = config.nodeList;
+            this.path = config.path;
+            this.minTimeToKeepSnapshots = config.minTimeToKeepSnapshots;
+            this.minTimeToKeepEnvOpen = config.minTimeToKeepEnvOpen;
+            this.snapshotRetryFetchInterval = config.snapshotRetryFetchInterval;
+        }
+
+        public Builder stateDocCache(final CacheConfig stateDocCache) {
+            this.stateDocCache = stateDocCache;
+            return this;
+        }
+
+        public Builder nodeList(final List<String> nodeList) {
+            this.nodeList = nodeList;
+            return this;
+        }
+
+        public Builder path(final String path) {
+            this.path = path;
+            return this;
+        }
+
+        public Builder minTimeToKeepSnapshots(final StroomDuration minTimeToKeepSnapshots) {
+            this.minTimeToKeepSnapshots = minTimeToKeepSnapshots;
+            return this;
+        }
+
+        public Builder minTimeToKeepEnvOpen(final StroomDuration minTimeToKeepEnvOpen) {
+            this.minTimeToKeepEnvOpen = minTimeToKeepEnvOpen;
+            return this;
+        }
+
+        public Builder snapshotRetryFetchInterval(final StroomDuration snapshotRetryFetchInterval) {
+            this.snapshotRetryFetchInterval = snapshotRetryFetchInterval;
+            return this;
+        }
+
+        public PlanBConfig build() {
+            return new PlanBConfig(
+                    stateDocCache,
+                    nodeList,
+                    path,
+                    minTimeToKeepSnapshots,
+                    minTimeToKeepEnvOpen,
+                    snapshotRetryFetchInterval);
+        }
+    }
 }
