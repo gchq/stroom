@@ -60,16 +60,6 @@ plugins {
     alias libs.plugins.jooq apply false
 
     alias libs.plugins.flyway apply false
-
-//    alias libs.plugins.jdeps
-
-//    id 'org.javamodularity.moduleplugin' apply false
-
-//    id 'ca.cutterslade.analyze'
-
-//    id 'nebula.lint'
-
-//    id 'com.vanniktech.dependency.graph.generator'
 }
 
 apply plugin: 'de.undercouch.download'
