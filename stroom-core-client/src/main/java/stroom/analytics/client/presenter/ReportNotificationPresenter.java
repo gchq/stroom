@@ -16,7 +16,6 @@
 
 package stroom.analytics.client.presenter;
 
-import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.analytics.shared.ReportDoc;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
@@ -43,6 +42,7 @@ public class ReportNotificationPresenter
                 notificationListPresenter,
                 uiConfigCache);
         this.notificationListPresenter = notificationListPresenter;
+        getView().setIncludeRuleDocumentationVisible(false);
     }
 
     @Override
@@ -52,7 +52,6 @@ public class ReportNotificationPresenter
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .errorFeed(errorFeedPresenter.getSelectedEntityReference())
-                .includeRuleDocumentation(getView().isIncludeRuleDocumentation())
                 .build();
     }
 }

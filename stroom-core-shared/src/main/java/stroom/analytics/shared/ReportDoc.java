@@ -55,7 +55,6 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                      @JsonProperty("createUser") final String createUser,
                      @JsonProperty("updateUser") final String updateUser,
                      @JsonProperty("description") final String description,
-                     @JsonProperty("includeRuleDocumentation") final Boolean includeRuleDocumentation,
                      @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
                      @JsonProperty("parameters") final List<Param> parameters,
                      @JsonProperty("timeRange") final TimeRange timeRange,
@@ -77,7 +76,6 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                 createUser,
                 updateUser,
                 description,
-                includeRuleDocumentation,
                 languageVersion,
                 parameters,
                 timeRange,
@@ -106,9 +104,6 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
@@ -172,7 +167,6 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                     createUser,
                     updateUser,
                     description,
-                    includeRuleDocumentation,
                     languageVersion,
                     parameters,
                     timeRange,
