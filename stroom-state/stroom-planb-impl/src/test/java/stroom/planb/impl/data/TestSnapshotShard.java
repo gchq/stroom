@@ -15,9 +15,9 @@ import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.concurrent.Guard;
+import stroom.util.concurrent.Guard.TryAgainException;
 import stroom.util.concurrent.StripedGuard;
 import stroom.util.concurrent.ThreadUtil;
-import stroom.util.concurrent.TryAgainException;
 import stroom.util.io.FileUtil;
 import stroom.util.time.StroomDuration;
 

@@ -1,5 +1,7 @@
 package stroom.util.concurrent;
 
+import stroom.util.concurrent.Guard.TryAgainException;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CompletableFuture;
