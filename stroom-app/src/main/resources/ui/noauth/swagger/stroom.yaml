@@ -16956,8 +16956,6 @@ components:
           $ref: "#/components/schemas/DuplicateNotificationConfig"
         errorFeed:
           $ref: "#/components/schemas/DocRef"
-        includeRuleDocumentation:
-          type: boolean
         languageVersion:
           type: string
           enum:

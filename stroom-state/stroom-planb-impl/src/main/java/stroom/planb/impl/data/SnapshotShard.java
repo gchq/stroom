@@ -22,6 +22,9 @@ import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.db.Db;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDoc;
+import stroom.util.concurrent.Guard;
+import stroom.util.concurrent.Guard.TryAgainException;
+import stroom.util.concurrent.StripedGuard;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -36,11 +39,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * Thread-safe snapshot shard that automatically rotates snapshots every 10 minutes (default)
@@ -264,7 +265,7 @@ class SnapshotShard implements Shard {
             RuntimeException fetchException = null;
 
             // Begin life in use.
-            guard = new Guard(this::delete);
+            guard = new StripedGuard(this::delete, 64);
 
             try {
                 // Get the snapshot dir.
@@ -429,7 +430,7 @@ class SnapshotShard implements Shard {
             // If we already fetched the snapshot then reopen.
             LOGGER.debug("Opening local snapshot for '{}'", mapName);
             this.db = dbFactory.open(doc, dbDir, byteBuffers, byteBufferFactory, true);
-            guard = new Guard(this::close);
+            guard = new StripedGuard(this::close, 64);
             lastAccessTime = Instant.now();
         }
 
@@ -461,70 +462,9 @@ class SnapshotShard implements Shard {
         }
     }
 
-    static class Guard {
-
-        private final AtomicInteger inUseCount = new AtomicInteger(1);
-        private final AtomicBoolean destroy = new AtomicBoolean();
-        private final AtomicBoolean destroyed = new AtomicBoolean();
-        private final Runnable destroyRunnable;
-
-        public Guard(final Runnable destroyRunnable) {
-            this.destroyRunnable = destroyRunnable;
-        }
-
-        public <R> R acquire(final Supplier<R> supplier) {
-            // Don't allow new acquisitions if the intent is to destroy.
-            if (destroy.get()) {
-                throw new TryAgainException();
-            }
-
-            // Increment if greater than 0.
-            final int c = inUseCount.updateAndGet(count -> count > 0
-                    ? count + 1
-                    : count);
-            if (c <= 0) {
-                // The destroy flag may not have been set when we entered this method but count == 0 means destruction
-                // has been triggered since then.
-                throw new TryAgainException();
-            }
-
-            try {
-                return supplier.get();
-            } finally {
-                release();
-            }
-        }
-
-        private void release() {
-            // Decrement but don't go lower than 0.
-            if (inUseCount.updateAndGet(count -> count > 0
-                    ? count - 1
-                    : count) == 0) {
-                // Make sure we only ever try to run the destroy hook once.
-                if (destroyed.compareAndSet(false, true)) {
-                    destroyRunnable.run();
-                }
-            }
-        }
-
-        public void destroy() {
-            if (destroy.compareAndSet(false, true)) {
-                // Perform final decrement. Close is either performed now if the guard is not acquired or will be
-                // performed by the final thread that releases the acquisition.
-                release();
-            } else {
-                LOGGER.debug("Guard already destroyed");
-            }
-        }
-    }
-
     @Override
     public PlanBDoc getDoc() {
         return doc;
-    }
-
-    static class TryAgainException extends RuntimeException {
-
     }
 
     public interface DbFactory {

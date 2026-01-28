@@ -1,6 +1,6 @@
-package stroom.planb.impl.data;
+package stroom.util.concurrent;
 
-import stroom.util.concurrent.ThreadUtil;
+import stroom.util.concurrent.Guard.TryAgainException;
 
 import org.junit.jupiter.api.Test;
 
@@ -19,13 +19,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Focused tests for the Guard class CAS-based reference counting mechanism.
  */
-class TestGuard {
+class TestStripedGuard {
 
     @Test
     void testBasicAcquireAndRelease() {
         // Given: A guard with a destroy callback
         final AtomicBoolean destroyed = new AtomicBoolean(false);
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(() -> destroyed.set(true));
+        final StripedGuard guard = new StripedGuard(() -> destroyed.set(true), 64);
 
         // When: We acquire and use it
         final String result = guard.acquire(() -> "success");
@@ -39,7 +39,7 @@ class TestGuard {
     void testDestroyCallsCallback() {
         // Given: A guard
         final AtomicBoolean destroyed = new AtomicBoolean(false);
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(() -> destroyed.set(true));
+        final StripedGuard guard = new StripedGuard(() -> destroyed.set(true), 64);
 
         // When: We destroy it
         guard.destroy();
@@ -51,20 +51,20 @@ class TestGuard {
     @Test
     void testAcquireAfterDestroyThrows() {
         // Given: A destroyed guard
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(() -> {
-        });
+        final StripedGuard guard = new StripedGuard(() -> {
+        }, 64);
         guard.destroy();
 
         // When/Then: Acquire should throw TryAgainException
         assertThatThrownBy(() -> guard.acquire(() -> "test"))
-                .isInstanceOf(SnapshotShard.TryAgainException.class);
+                .isInstanceOf(TryAgainException.class);
     }
 
     @Test
     void testDestroyIsIdempotent() {
         // Given: A guard
         final AtomicInteger destroyCount = new AtomicInteger(0);
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(destroyCount::incrementAndGet);
+        final StripedGuard guard = new StripedGuard(destroyCount::incrementAndGet, 64);
 
         // When: We destroy multiple times
         guard.destroy();
@@ -80,8 +80,8 @@ class TestGuard {
         // Given: A guard
         final AtomicInteger maxConcurrent = new AtomicInteger(0);
         final AtomicInteger currentConcurrent = new AtomicInteger(0);
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(() -> {
-        });
+        final StripedGuard guard = new StripedGuard(() -> {
+        }, 64);
 
         final int threadCount = 100;
         final CyclicBarrier barrier = new CyclicBarrier(threadCount);
@@ -117,7 +117,7 @@ class TestGuard {
         final CountDownLatch proceedAcquire = new CountDownLatch(1);
         final AtomicBoolean destroyed = new AtomicBoolean(false);
 
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(() -> destroyed.set(true));
+        final StripedGuard guard = new StripedGuard(() -> destroyed.set(true), 64);
 
         // Start an acquisition that holds the guard
         final CompletableFuture<Void> acquisition = CompletableFuture.runAsync(() ->
@@ -161,7 +161,7 @@ class TestGuard {
             final AtomicInteger successCount = new AtomicInteger(0);
             final AtomicInteger failCount = new AtomicInteger(0);
 
-            final SnapshotShard.Guard guard = new SnapshotShard.Guard(destroyCount::incrementAndGet);
+            final StripedGuard guard = new StripedGuard(destroyCount::incrementAndGet, 64);
 
             final CyclicBarrier barrier = new CyclicBarrier(threadCount);
             final CountDownLatch completeLatch = new CountDownLatch(threadCount);
@@ -180,7 +180,7 @@ class TestGuard {
                                     successCount.incrementAndGet();
                                     return null;
                                 });
-                            } catch (final SnapshotShard.TryAgainException e) {
+                            } catch (final TryAgainException e) {
                                 failCount.incrementAndGet();
                             }
                         }
@@ -207,7 +207,7 @@ class TestGuard {
     void testExceptionInSupplierStillReleases() {
         // Given: A guard
         final AtomicBoolean destroyed = new AtomicBoolean(false);
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(() -> destroyed.set(true));
+        final StripedGuard guard = new StripedGuard(() -> destroyed.set(true), 64);
 
         // Track releases by destroying after each acquire
         // (destroy will only complete when count reaches 0)
@@ -230,10 +230,10 @@ class TestGuard {
             final AtomicInteger inProgressCount = new AtomicInteger(0);
             final AtomicInteger maxInProgress = new AtomicInteger(0);
 
-            final SnapshotShard.Guard guard = new SnapshotShard.Guard(() -> {
+            final StripedGuard guard = new StripedGuard(() -> {
                 // Verify count is 0 when destroyed
                 assertThat(inProgressCount.get()).isEqualTo(0);
-            });
+            }, 64);
 
             final int acquisitionCount = 1000;
             final CountDownLatch startLatch = new CountDownLatch(1);
@@ -279,7 +279,7 @@ class TestGuard {
             final AtomicInteger successfulAcquisitions = new AtomicInteger(0);
             final AtomicInteger failedAcquisitions = new AtomicInteger(0);
 
-            final SnapshotShard.Guard guard = new SnapshotShard.Guard(() -> destroyed.set(true));
+            final StripedGuard guard = new StripedGuard(() -> destroyed.set(true), 64);
 
             final CountDownLatch startLatch = new CountDownLatch(1);
             final CountDownLatch completeLatch = new CountDownLatch(threadCount);
@@ -302,7 +302,7 @@ class TestGuard {
                                     successfulAcquisitions.incrementAndGet();
                                     return null;
                                 });
-                            } catch (final SnapshotShard.TryAgainException e) {
+                            } catch (final TryAgainException e) {
                                 failedAcquisitions.incrementAndGet();
                             }
                         }
@@ -331,7 +331,7 @@ class TestGuard {
     void testMultipleSequentialDestroysDoNothing() {
         // Given: A guard
         final AtomicInteger destroyCount = new AtomicInteger(0);
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(destroyCount::incrementAndGet);
+        final StripedGuard guard = new StripedGuard(destroyCount::incrementAndGet, 64);
 
         // When: We destroy it many times sequentially
         for (int i = 0; i < 10; i++) {
@@ -346,12 +346,12 @@ class TestGuard {
     void testDestroyBeforeAnyAcquire() {
         // Given: A guard that is destroyed immediately
         final AtomicBoolean destroyed = new AtomicBoolean(false);
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(() -> destroyed.set(true));
+        final StripedGuard guard = new StripedGuard(() -> destroyed.set(true), 64);
         guard.destroy();
 
         // When/Then: Any acquire should fail
         assertThatThrownBy(() -> guard.acquire(() -> "test"))
-                .isInstanceOf(SnapshotShard.TryAgainException.class);
+                .isInstanceOf(TryAgainException.class);
 
         assertThat(destroyed.get()).isTrue();
     }
@@ -359,8 +359,8 @@ class TestGuard {
     @Test
     void testNestedAcquiresNotSupported() {
         // Given: A guard
-        final SnapshotShard.Guard guard = new SnapshotShard.Guard(() -> {
-        });
+        final StripedGuard guard = new StripedGuard(() -> {
+        }, 64);
 
         // When/Then: Nested acquires should work (they increment count)
         final String result = guard.acquire(() ->
@@ -378,7 +378,7 @@ class TestGuard {
             final AtomicInteger destroyCount = new AtomicInteger(0);
             final AtomicInteger operationCount = new AtomicInteger(0);
 
-            final SnapshotShard.Guard guard = new SnapshotShard.Guard(destroyCount::incrementAndGet);
+            final StripedGuard guard = new StripedGuard(destroyCount::incrementAndGet, 64);
 
             final int operationsPerThread = 1000;
             final CountDownLatch startLatch = new CountDownLatch(1);
@@ -404,7 +404,7 @@ class TestGuard {
                                         operationCount.incrementAndGet();
                                         return null;
                                     });
-                                } catch (final SnapshotShard.TryAgainException e) {
+                                } catch (final TryAgainException e) {
                                     // Expected after destroy
                                     break;
                                 }
