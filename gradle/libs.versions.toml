@@ -1,9 +1,7 @@
 [versions]
 # ------Stroom-repos---------------
-# stroomProxyRepo: "v5.1-beta.8"
 eventLogging = "5.0-beta.31_schema-v4.0-beta.3"
 stroomStats = "1.0-alpha.6"
-stroomTestData = "0.2.3"
 
 # ------------3rd-party------------
 aws = "2.31.68"
@@ -13,7 +11,6 @@ elasticsearch = "9.2.1"
 flyway = "11.20.0"
 guice = "7.0.0"
 gwt = "2.12.2"
-jackson-swagger = "2.11.1" # Specific version of jackson for use with the swagger plugin
 jgit = "7.3.0.202506031305-r"
 jmh = "1.37"
 jooq = "3.20.10"
