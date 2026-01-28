@@ -47,21 +47,21 @@ buildscript {
 }
 
 plugins {
-    alias(libs.plugins.java.library)
+    alias libs.plugins.java.library
 
     // Plugin for downloading content from the 'net
-    alias(libs.plugins.download) apply false
+    alias libs.plugins.download apply false
 
     // Plugin for producing a tree of task dependencies, run task 'taskTree'
-    alias(libs.plugins.task.tree) apply true
+    alias libs.plugins.task.tree apply true
 
-    alias(libs.plugins.shadow) apply false
+    alias libs.plugins.shadow apply false
 
-    alias(libs.plugins.jooq) apply false
+    alias libs.plugins.jooq apply false
 
-    alias(libs.plugins.flyway) apply false
+    alias libs.plugins.flyway apply false
 
-//    alias(libs.plugins.jdeps)
+//    alias libs.plugins.jdeps
 
 //    id 'org.javamodularity.moduleplugin' apply false
 
