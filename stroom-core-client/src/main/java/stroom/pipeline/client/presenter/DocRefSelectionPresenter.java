@@ -66,13 +66,9 @@ public class DocRefSelectionPresenter extends MyPresenterWidget<DocRefSelectionV
 
     void addSelectedColumn() {
         // Select Column
-        final Column<DocRef, TickBoxState> column = new Column<>(
-                TickBoxCell.create(false, false)) {
-            @Override
-            public TickBoxState getValue(final DocRef object) {
-                return TickBoxState.fromBoolean(selection.isMatch(object));
-            }
-        };
+        final Column<DocRef, TickBoxState> column = DataGridUtil.updatableTickBoxColumnBuilder(
+                        (DocRef docRef) -> TickBoxState.fromBoolean(selection.isMatch(docRef)))
+                .build();
 
         final Header<TickBoxState> header = new Header<>(
                 TickBoxCell.create(false, false)) {
@@ -130,7 +126,9 @@ public class DocRefSelectionPresenter extends MyPresenterWidget<DocRefSelectionV
     }
 
     public List<DocRef> getSelectedItems() {
-        return selection.isMatchAll() ? docRefs : new ArrayList<>(selection.getSet());
+        return selection.isMatchAll()
+                ? docRefs
+                : new ArrayList<>(selection.getSet());
     }
 
     public interface DocRefSelectionView extends View {
