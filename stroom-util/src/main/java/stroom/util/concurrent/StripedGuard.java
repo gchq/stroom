@@ -164,9 +164,9 @@ public class StripedGuard implements Guard {
      * @return stripe index in range [0, stripeCount), guaranteed non-negative
      */
     private int getStripeIdx() {
-        final long tid = Thread.currentThread().threadId();
+        final long threadId = Thread.currentThread().threadId();
         // XOR-fold upper and lower 32 bits for better distribution
-        return (int) ((tid ^ (tid >>> 32)) & stripeMask);
+        return (int) ((threadId ^ (threadId >>> 32)) & stripeMask);
     }
 
     /**
