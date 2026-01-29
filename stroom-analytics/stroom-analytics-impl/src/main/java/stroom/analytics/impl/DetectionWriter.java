@@ -85,6 +85,8 @@ public class DetectionWriter implements DetectionConsumer {
     private static final String STROOM = "stroom";
     private static final String STREAM_ID = "streamId";
     private static final String EVENT_ID = "eventId";
+    private static final String LEVEL = "level";
+    private static final String STATUS = "status";
 
 
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -154,6 +156,8 @@ public class DetectionWriter implements DetectionConsumer {
             writeOptionalDataElement(EFFECTIVE_EXECUTION_TIME, detection.getEffectiveExecutionTime());
             writeValues(detection.getValues());
             writeLinkedEvents(detection.getLinkedEvents());
+            writeOptionalDataElement(LEVEL, detection.getLevel());
+            writeOptionalDataElement(STATUS, detection.getStatus());
             writeEndElement(DETECTION);
 
         } catch (final SAXException e) {

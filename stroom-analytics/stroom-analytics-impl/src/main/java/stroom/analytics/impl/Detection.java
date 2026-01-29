@@ -48,7 +48,9 @@ import java.util.UUID;
         "executionTime",
         "effectiveExecutionTime",
         "values",
-        "linkedEvents"
+        "linkedEvents",
+        "level",
+        "status"
 })
 @JsonInclude(Include.NON_NULL)
 public class Detection {
@@ -90,6 +92,23 @@ public class Detection {
     @JsonProperty
     private final List<DetectionLinkedEvent> linkedEvents;
 
+    /**
+     * A rule's level denotes its severity.
+     * A high level rule detection should be prioritised over a low level rule detection.
+     **/
+    @JsonProperty
+    private final String level;
+
+    /**
+     * A rule's status denotes how reliable it is. There are several stages:
+     *  - Experimental: An early-stage rule that may be incomplete. Expect more false positives.
+     *  - Testing: More mature than experimental rules. Actively being validated in rela environments. Expect some false positives.
+     *  - Stable: Considered production-ready. Has been thoroughly tested across multiple environments. Expect a reasonable false positive rate.
+     *  - Deprecated: An outdated or superseded rule that may rely on old techniques or assumptions. Generally avoid using these in production.
+     **/
+    @JsonProperty
+    private final String status;
+
     @JsonCreator
     public Detection(@JsonProperty("detectTime") final String detectTime,
                      @JsonProperty("detectorName") final String detectorName,
@@ -106,7 +125,9 @@ public class Detection {
                      @JsonProperty("executionTime") final String executionTime,
                      @JsonProperty("effectiveExecutionTime") final String effectiveExecutionTime,
                      @JsonProperty("values") final List<DetectionValue> values,
-                     @JsonProperty("linkedEvents") final List<DetectionLinkedEvent> linkedEvents) {
+                     @JsonProperty("linkedEvents") final List<DetectionLinkedEvent> linkedEvents,
+                     @JsonProperty("level") final String level,
+                     @JsonProperty("status") final String status) {
         this.detectTime = detectTime;
         this.detectorName = detectorName;
         this.detectorUuid = detectorUuid;
@@ -123,6 +144,8 @@ public class Detection {
         this.effectiveExecutionTime = effectiveExecutionTime;
         this.values = values;
         this.linkedEvents = linkedEvents;
+        this.level = level;
+        this.status = status;
     }
 
     private Detection(final Builder builder) {
@@ -142,6 +165,8 @@ public class Detection {
         effectiveExecutionTime = builder.effectiveExecutionTime;
         values = builder.values;
         linkedEvents = builder.linkedEvents;
+        level = builder.level;
+        status = builder.status;
     }
 
     public static Builder builder(final Detection copy) {
@@ -159,6 +184,8 @@ public class Detection {
         builder.defunct = copy.getDefunct();
         builder.values = copy.getValues();
         builder.linkedEvents = copy.getLinkedEvents();
+        builder.level = copy.getLevel();
+        builder.status = copy.getStatus();
         return builder;
     }
 
@@ -226,31 +253,34 @@ public class Detection {
         return linkedEvents;
     }
 
+    public String getLevel() { return level; }
+
+    public String getStatus() { return status; }
+
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
         final Detection detection = (Detection) o;
-        return Objects.equals(detectTime, detection.detectTime) &&
-               Objects.equals(detectorName, detection.detectorName) &&
-               Objects.equals(detectorUuid, detection.detectorUuid) &&
-               Objects.equals(detectorVersion, detection.detectorVersion) &&
-               Objects.equals(detectorEnvironment, detection.detectorEnvironment) &&
-               Objects.equals(headline, detection.headline) &&
-               Objects.equals(detailedDescription, detection.detailedDescription) &&
-               Objects.equals(fullDescription, detection.fullDescription) &&
-               Objects.equals(detectionUniqueId, detection.detectionUniqueId) &&
-               Objects.equals(detectionRevision, detection.detectionRevision) &&
-               Objects.equals(defunct, detection.defunct) &&
-               Objects.equals(executionSchedule, detection.executionSchedule) &&
-               Objects.equals(executionTime, detection.executionTime) &&
-               Objects.equals(effectiveExecutionTime, detection.effectiveExecutionTime) &&
-               Objects.equals(values, detection.values) &&
-               Objects.equals(linkedEvents, detection.linkedEvents);
+        return Objects.equals(detectTime, detection.detectTime) && Objects.equals(detectorName,
+                detection.detectorName) && Objects.equals(detectorUuid,
+                detection.detectorUuid) && Objects.equals(detectorVersion,
+                detection.detectorVersion) && Objects.equals(detectorEnvironment,
+                detection.detectorEnvironment) && Objects.equals(headline,
+                detection.headline) && Objects.equals(detailedDescription,
+                detection.detailedDescription) && Objects.equals(fullDescription,
+                detection.fullDescription) && Objects.equals(detectionUniqueId,
+                detection.detectionUniqueId) && Objects.equals(detectionRevision,
+                detection.detectionRevision) && Objects.equals(defunct,
+                detection.defunct) && Objects.equals(executionSchedule,
+                detection.executionSchedule) && Objects.equals(executionTime,
+                detection.executionTime) && Objects.equals(effectiveExecutionTime,
+                detection.effectiveExecutionTime) && Objects.equals(values,
+                detection.values) && Objects.equals(linkedEvents,
+                detection.linkedEvents) && Objects.equals(level, detection.level) && Objects.equals(
+                status,
+                detection.status);
     }
 
     @Override
@@ -270,7 +300,9 @@ public class Detection {
                 executionTime,
                 effectiveExecutionTime,
                 values,
-                linkedEvents);
+                linkedEvents,
+                level,
+                status);
     }
 
     @Override
@@ -288,10 +320,12 @@ public class Detection {
                ", detectionRevision=" + detectionRevision +
                ", defunct=" + defunct +
                ", executionSchedule='" + executionSchedule + '\'' +
-               ", executionTime=" + executionTime +
-               ", effectiveExecutionTime=" + effectiveExecutionTime +
+               ", executionTime='" + executionTime + '\'' +
+               ", effectiveExecutionTime='" + effectiveExecutionTime + '\'' +
                ", values=" + values +
                ", linkedEvents=" + linkedEvents +
+               ", level='" + level + '\'' +
+               ", status='" + status + '\'' +
                '}';
     }
 
@@ -325,6 +359,8 @@ public class Detection {
         private String effectiveExecutionTime;
         private List<DetectionValue> values;
         private List<DetectionLinkedEvent> linkedEvents;
+        private String level;
+        private String status;
 
         private Builder() {
         }
@@ -346,6 +382,8 @@ public class Detection {
             this.effectiveExecutionTime = detection.effectiveExecutionTime;
             this.values = detection.values;
             this.linkedEvents = detection.linkedEvents;
+            this.level = detection.level;
+            this.status = detection.status;
         }
 
         public Builder withDetectTime(final String detectTime) {
@@ -485,6 +523,16 @@ public class Detection {
                 linkedEvents = new ArrayList<>();
             }
             linkedEvents.add(linkedEvent);
+            return this;
+        }
+
+        public Builder withLevel(final String level) {
+            this.level = level;
+            return this;
+        }
+
+        public Builder withStatus(final String status) {
+            this.status = status;
             return this;
         }
 

@@ -246,6 +246,8 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
                 .notDefunct()
                 .withValues(values)
                 .withLinkedEvents(linkedEvents)
+                .withLevel(analyticRuleDoc.getLevel())
+                .withStatus(analyticRuleDoc.getStatus())
                 .build();
 
         final DetectionConsumer detectionConsumer = getDetectionConsumer();

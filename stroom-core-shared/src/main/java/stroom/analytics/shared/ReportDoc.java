@@ -47,30 +47,31 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
     private final ReportSettings reportSettings;
 
     @JsonCreator
-    public ReportDoc(
-            @JsonProperty("uuid") final String uuid,
-            @JsonProperty("name") final String name,
-            @JsonProperty("version") final String version,
-            @JsonProperty("createTimeMs") final Long createTimeMs,
-            @JsonProperty("updateTimeMs") final Long updateTimeMs,
-            @JsonProperty("createUser") final String createUser,
-            @JsonProperty("updateUser") final String updateUser,
-            @JsonProperty("description") final String description,
-            @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
-            @JsonProperty("parameters") final List<Param> parameters,
-            @JsonProperty("timeRange") final TimeRange timeRange,
-            @JsonProperty("query") final String query,
-            @JsonProperty("analyticProcessType") final AnalyticProcessType analyticProcessType,
-            @JsonProperty("analyticProcessConfig") final AnalyticProcessConfig analyticProcessConfig,
-            @Deprecated @JsonProperty("analyticNotificationConfig") final NotificationConfig analyticNotificationConfig,
-            @JsonProperty("notifications") final List<NotificationConfig> notifications,
-            @JsonProperty("errorFeed") final DocRef errorFeed,
-            @JsonProperty("rememberNotifications") final boolean rememberNotifications,
-            @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
-            @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
-            @JsonProperty("reportSettings") final ReportSettings reportSettings) {
-        super(TYPE,
-                uuid,
+    public ReportDoc(@JsonProperty("uuid") final String uuid,
+                     @JsonProperty("name") final String name,
+                     @JsonProperty("version") final String version,
+                     @JsonProperty("createTimeMs") final Long createTimeMs,
+                     @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                     @JsonProperty("createUser") final String createUser,
+                     @JsonProperty("updateUser") final String updateUser,
+                     @JsonProperty("description") final String description,
+                     @JsonProperty("includeRuleDocumentation") final Boolean includeRuleDocumentation,
+                     @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
+                     @JsonProperty("parameters") final List<Param> parameters,
+                     @JsonProperty("timeRange") final TimeRange timeRange,
+                     @JsonProperty("query") final String query,
+                     @JsonProperty("analyticProcessType") final AnalyticProcessType analyticProcessType,
+                     @JsonProperty("analyticProcessConfig") final AnalyticProcessConfig analyticProcessConfig,
+                     @Deprecated @JsonProperty("analyticNotificationConfig") final NotificationConfig analyticNotificationConfig,
+                     @JsonProperty("notifications") final List<NotificationConfig> notifications,
+                     @JsonProperty("errorFeed") final DocRef errorFeed,
+                     @JsonProperty("rememberNotifications") final boolean rememberNotifications,
+                     @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
+                     @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
+                     @JsonProperty("reportSettings") final ReportSettings reportSettings,
+                     @JsonProperty("level") final String level,
+                     @JsonProperty("status") final String status) {
+        super(TYPE, uuid,
                 name,
                 version,
                 createTimeMs,
@@ -78,6 +79,7 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                 createUser,
                 updateUser,
                 description,
+                includeRuleDocumentation,
                 languageVersion,
                 parameters,
                 timeRange,
@@ -89,7 +91,9 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                 errorFeed,
                 rememberNotifications,
                 suppressDuplicateNotifications,
-                duplicateNotificationConfig);
+                duplicateNotificationConfig,
+                level,
+                status);
 
         this.reportSettings = NullSafe.requireNonNullElseGet(
                 reportSettings,
@@ -176,6 +180,7 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                     createUser,
                     updateUser,
                     description,
+                    includeRuleDocumentation,
                     languageVersion,
                     parameters,
                     timeRange,
@@ -188,7 +193,9 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                     false,
                     false,
                     duplicateNotificationConfig,
-                    reportSettings);
+                    reportSettings,
+                    level,
+                    status);
         }
     }
 }
