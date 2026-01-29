@@ -20,7 +20,6 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docref.HasFindDocsByName;
 import stroom.docstore.shared.AbstractDoc;
-import stroom.docstore.shared.AbstractDoc.AbstractBuilder;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
@@ -35,7 +34,8 @@ public interface Store<D extends AbstractDoc>
         extends DocumentActionHandler<D>, HasFindDocsByName, ContentIndexable {
     ////////////////////////////////////////////////////////////////////////
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     DocRef createDocument(String name);
 
@@ -56,7 +56,8 @@ public interface Store<D extends AbstractDoc>
 
     ////////////////////////////////////////////////////////////////////////
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+
+    /// /////////////////////////////////////////////////////////////////////
 
     Map<DocRef, Set<DocRef>> getDependencies(BiConsumer<D, DependencyRemapper> mapper);
 
@@ -91,6 +92,8 @@ public interface Store<D extends AbstractDoc>
      * List all documents of this stores type
      */
     List<DocRef> list();
+
+    List<DocRef> findDocRefsEmbeddedIn(DocRef parent);
 
     interface DocumentCreator<D extends AbstractDoc> {
 

@@ -16,18 +16,24 @@
 
 package stroom.pipeline.structure.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.DocRefCell.Builder;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.DisplayType;
 import stroom.docref.HasDisplayValue;
+import stroom.document.client.DocumentPlugin;
+import stroom.document.client.DocumentPluginRegistry;
+import stroom.document.client.event.CreateDocumentEvent;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
@@ -38,6 +44,7 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.Embeddable;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -66,6 +73,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -85,6 +93,7 @@ public class PropertyListPresenter
     private final ButtonView editButton;
     private final Provider<NewPropertyPresenter> newPropertyPresenter;
     private final RestFactory restFactory;
+    private final DocumentPluginRegistry documentPluginRegistry;
 
     private PipelineModel pipelineModel;
     private List<PipelineProperty> defaultProperties;
@@ -96,7 +105,8 @@ public class PropertyListPresenter
     public PropertyListPresenter(final EventBus eventBus,
                                  final PagerView view,
                                  final Provider<NewPropertyPresenter> newPropertyPresenter,
-                                 final RestFactory restFactory) {
+                                 final RestFactory restFactory,
+                                 final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, view);
 
         dataGrid = new MyDataGrid<>(this);
@@ -106,6 +116,7 @@ public class PropertyListPresenter
 
         this.newPropertyPresenter = newPropertyPresenter;
         this.restFactory = restFactory;
+        this.documentPluginRegistry = documentPluginRegistry;
 
         editButton = view.addButton(SvgPresets.EDIT);
 
@@ -152,13 +163,15 @@ public class PropertyListPresenter
         final DocRefCell.Builder<PipelineProperty> cellBuilder = new Builder<PipelineProperty>()
                 .eventBus(getEventBus())
                 .showIcon(true)
+                .canOpenFunction(property -> property.getValue() != null &&
+                                    !property.getValue().isEmbedded())
                 .cssClassFunction(property1 -> getStateCssClass(property1, true))
                 .cellTextFunction(property -> {
-                    if (property == null) {
+                    if (property == null || property.getValue() == null || property.getValue().getEntity() == null) {
                         return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     } else {
                         final PipelinePropertyValue value = property.getValue();
-                        if (value.getEntity() != null) {
+                        if (value != null && value.getEntity() != null) {
                             return SafeHtmlUtils.fromString(value.getEntity()
                                     .getDisplayValue(NullSafe.requireNonNullElse(
                                             DisplayType.AUTO,
@@ -184,8 +197,12 @@ public class PropertyListPresenter
         Source source = null;
         final PipelineProperty added = getActualProperty(pipelineModel.getPipelineData().getAddedProperties(),
                 property);
-        if (added != null) {
-            source = Source.LOCAL;
+        if (added != null && added.getValue() != null) {
+            if (added.getValue().isEmbedded()) {
+                source = Source.EMBEDDED;
+            } else {
+                source = Source.LOCAL;
+            }
         }
 
         if (source == null) {
@@ -362,7 +379,7 @@ public class PropertyListPresenter
                 localProperty = inheritedProperty;
             }
 
-            final PipelineProperty editing = new PipelineProperty.Builder(localProperty).build();
+            final PipelineProperty editing = PipelineProperty.builder(localProperty).build();
             final Source source = getSource(editing);
 
             final NewPropertyPresenter editor = newPropertyPresenter.get();
@@ -389,7 +406,7 @@ public class PropertyListPresenter
 
                         // Write new property.
                         final PipelinePropertyValue value = editor.writeValue();
-                        final PipelineProperty newProperty = new PipelineProperty.Builder(editing)
+                        final PipelineProperty newProperty = PipelineProperty.builder(editing)
                                 .value(value)
                                 .build();
                         switch (editor.getSource()) {
@@ -400,6 +417,32 @@ public class PropertyListPresenter
                             case DEFAULT:
                                 builder.getProperties().getRemoveList().add(newProperty);
                                 break;
+
+                            case EMBEDDED:
+                                createEmbeddedDocument(e, pipelinePropertyType.getDocRefTypes()[0],
+                                        node -> {
+                                            final DocRef docRef = node.getDocRef();
+                                            final DocRef parentDocRef = pipelineModel.getPipelineLayer()
+                                                    .getSourcePipeline();
+                                            final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(
+                                                    docRef.getType());
+                                            saveEmbeddedIn(documentPlugin, docRef, parentDocRef);
+
+                                            final PipelineProperty embeddedProperty = PipelineProperty.builder(editing)
+                                                    .value(new PipelinePropertyValue(node.getDocRef(), true))
+                                                    .build();
+                                            builder.getProperties().getAddList().add(embeddedProperty);
+
+                                            final PipelineData pipelineData = builder.build();
+                                            pipelineModel.setPipelineLayer(new PipelineLayer(pipelineModel
+                                                    .getPipelineLayer().getSourcePipeline(), pipelineData));
+
+                                            setDirty(true);
+
+                                            refresh();
+                                            e.hide();
+                                        });
+                                return;
 
                             case INHERIT:
                                 // Do nothing as we have already removed it.
@@ -434,6 +477,30 @@ public class PropertyListPresenter
                     .modal(true)
                     .fire();
         }
+    }
+
+    private void createEmbeddedDocument(final HidePopupRequestEvent e,
+                                        final String docRefType,
+                                        final Consumer<ExplorerNode> callback) {
+        final String embeddedPropertyName = "EMBEDDED " + docRefType + " (" + currentElement.getId() + ")";
+        CreateDocumentEvent.fire(this, e, docRefType,
+                embeddedPropertyName, null, null, true, callback);
+    }
+
+    private <D> void saveEmbeddedIn(final DocumentPlugin<D> documentPlugin, final DocRef docRef,
+                                      final DocRef parentDocRef) {
+        final RestErrorHandler errorHandler = throwable -> AlertEvent.fireError(
+                this,
+                "Unable to set parent to embedded document",
+                throwable.getMessage(), null);
+
+        documentPlugin.load(docRef, d -> {
+            if (d instanceof final Embeddable embeddable) {
+                embeddable.setEmbeddedIn(parentDocRef);
+                documentPlugin.save(docRef, d, r -> {
+                }, errorHandler, this);
+            }
+        }, errorHandler, this);
     }
 
     private void refresh() {
@@ -482,7 +549,7 @@ public class PropertyListPresenter
 
                         final List<PipelineProperty> newList = new ArrayList<>(propertyList.size());
                         for (final PipelineProperty property : propertyList) {
-                            final PipelineProperty.Builder builder = new PipelineProperty.Builder(property);
+                            final PipelineProperty.Builder builder = PipelineProperty.builder(property);
                             final DocRef docRef = property.getValue().getEntity();
                             if (docRef != null) {
                                 final DocRef fetchedDocRef = fetchedDocRefs.get(docRef);
@@ -584,6 +651,7 @@ public class PropertyListPresenter
     public enum Source implements HasDisplayValue {
         LOCAL("Local"),
         INHERIT("Inherit"),
+        EMBEDDED("Embedded"),
         DEFAULT("Default");
 
         private final String displayValue;

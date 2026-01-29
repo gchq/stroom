@@ -60,6 +60,15 @@ class MockExplorerService implements ExplorerService {
     }
 
     @Override
+    public ExplorerNode create(final String docType,
+                               final String docName,
+                               final ExplorerNode destinationFolder,
+                               final PermissionInheritance permissionInheritance,
+                               final boolean embedded) {
+        return null;
+    }
+
+    @Override
     public ExplorerNode ensureFolderPath(final DocPath docPath, final PermissionInheritance permissionInheritance) {
         return ExplorerConstants.SYSTEM_NODE;
     }

@@ -51,6 +51,12 @@ public interface ExplorerService extends Clearable {
                         ExplorerNode destinationFolder,
                         PermissionInheritance permissionInheritance);
 
+    ExplorerNode create(String docType,
+                        String docName,
+                        ExplorerNode destinationFolder,
+                        PermissionInheritance permissionInheritance,
+                        boolean embedded);
+
     /**
      * @param docPath The path to ensure. Must be relative if baseNode is not the root node.
      * @return The leaf node in path.
@@ -59,7 +65,7 @@ public interface ExplorerService extends Clearable {
                                   PermissionInheritance permissionInheritance);
 
     /**
-     * @param docPath The path to ensure. Must be relative if baseNode is not the root node.
+     * @param docPath  The path to ensure. Must be relative if baseNode is not the root node.
      * @param baseNode The node to append path onto.
      * @return The leaf node in path.
      */

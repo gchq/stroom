@@ -148,6 +148,7 @@ public class CreateDocumentPresenter
                             docName,
                             destinationFolder,
                             getView().getPermissionInheritance(),
+                            false,
                             newDocConsumer);
                 }
             }

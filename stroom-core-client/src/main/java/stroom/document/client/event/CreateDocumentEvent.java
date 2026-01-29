@@ -36,12 +36,14 @@ public class CreateDocumentEvent extends GwtEvent<CreateDocumentEvent.Handler> {
     private final ExplorerNode destinationFolder;
     private final PermissionInheritance permissionInheritance;
     private final Consumer<ExplorerNode> newDocConsumer;
+    private final boolean embedded;
 
     private CreateDocumentEvent(final HidePopupRequestEvent hidePopupRequestEvent,
                                 final String docType,
                                 final String docName,
                                 final ExplorerNode destinationFolder,
                                 final PermissionInheritance permissionInheritance,
+                                final boolean embedded,
                                 final Consumer<ExplorerNode> newDocConsumer) {
         this.hidePopupRequestEvent = hidePopupRequestEvent;
         this.docType = docType;
@@ -49,6 +51,7 @@ public class CreateDocumentEvent extends GwtEvent<CreateDocumentEvent.Handler> {
         this.destinationFolder = destinationFolder;
         this.permissionInheritance = permissionInheritance;
         this.newDocConsumer = newDocConsumer;
+        this.embedded = embedded;
     }
 
     public static void fire(final HasHandlers handlers,
@@ -57,12 +60,14 @@ public class CreateDocumentEvent extends GwtEvent<CreateDocumentEvent.Handler> {
                             final String docName,
                             final ExplorerNode destinationFolder,
                             final PermissionInheritance permissionInheritance,
+                            final boolean embedded,
                             final Consumer<ExplorerNode> newDocConsumer) {
         handlers.fireEvent(new CreateDocumentEvent(hidePopupRequestEvent,
                 docType,
                 docName,
                 destinationFolder,
                 permissionInheritance,
+                embedded,
                 newDocConsumer));
     }
 
@@ -93,6 +98,10 @@ public class CreateDocumentEvent extends GwtEvent<CreateDocumentEvent.Handler> {
 
     public String getDocName() {
         return docName;
+    }
+
+    public boolean isEmbedded() {
+        return embedded;
     }
 
     public ExplorerNode getDestinationFolder() {

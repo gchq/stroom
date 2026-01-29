@@ -77,6 +77,11 @@ public class MemoryPersistence implements Persistence, Clearable {
     }
 
     @Override
+    public List<DocRef> findDocRefsEmbeddedIn(final DocRef parent) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    @Override
     public void clear() {
         map.clear();
     }

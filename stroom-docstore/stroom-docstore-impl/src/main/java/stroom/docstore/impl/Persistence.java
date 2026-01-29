@@ -44,6 +44,8 @@ public interface Persistence {
 
     RWLockFactory getLockFactory();
 
+    List<DocRef> findDocRefsEmbeddedIn(final DocRef parent);
+
     /**
      * Find docRefs by name and type. Name can be optionally wild carded using '*' to match 0-many chars.
      */

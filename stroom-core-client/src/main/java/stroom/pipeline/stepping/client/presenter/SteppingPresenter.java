@@ -104,6 +104,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class SteppingPresenter
@@ -499,7 +500,9 @@ public class SteppingPresenter
                 presenter.setTaskMonitorFactory(this);
                 presenter.setElement(element);
                 presenter.setProperties(properties);
-                presenter.setFeedName(meta == null ? "" : meta.getFeedName());
+                presenter.setFeedName(meta == null
+                        ? ""
+                        : meta.getFeedName());
                 presenter.setPipelineName(pipelineDoc.getName());
                 presenter.setClassification(classification);
                 elementPresenterMap.put(elementId, presenter);
@@ -667,9 +670,9 @@ public class SteppingPresenter
     }
 
     public void beginStepping(final StepType stepType,
-                     final StepLocation stepLocation,
-                     final Meta meta,
-                     final String childStreamType) {
+                              final StepLocation stepLocation,
+                              final Meta meta,
+                              final String childStreamType) {
         Objects.requireNonNull(meta);
         Objects.requireNonNull(stepLocation);
 
@@ -753,7 +756,7 @@ public class SteppingPresenter
     }
 
     private boolean compareProperties(final List<PipelineProperty> properties,
-                                     final List<PipelineProperty> otherProperties) {
+                                      final List<PipelineProperty> otherProperties) {
         final ArrayList<PipelineProperty> someProperties = new ArrayList<>(properties);
         for (final PipelineProperty otherProperty : otherProperties) {
 
@@ -842,6 +845,12 @@ public class SteppingPresenter
             requestBuilder.code(codeMap);
             requestBuilder.stepType(stepType);
             requestBuilder.stepFilterMap(pipelineModel.getStepFilterMap());
+
+            if (StepType.REFRESH.equals(stepType)) {
+                elementPresenterMap.values().stream()
+                        .filter(Predicate.not(ElementPresenter::isDirty))
+                        .forEach(e -> e.setLoaded(false));
+            }
 
             poll();
         }
