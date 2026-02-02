@@ -18,7 +18,9 @@ package stroom.annotation.impl.db;
 
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.annotation.impl.AnnotationDao;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationDataLinkRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
+import stroom.annotation.impl.db.jooq.tables.records.AnnotationLinkRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 import stroom.annotation.shared.AbstractAnnotationChange;
 import stroom.annotation.shared.AddAnnotationTable;
@@ -99,10 +101,12 @@ import org.jooq.Condition;
 import org.jooq.Cursor;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.InsertValuesStep2;
+import org.jooq.InsertValuesStep4;
+import org.jooq.InsertValuesStep7;
 import org.jooq.Record;
 import org.jooq.Result;
 import org.jooq.SelectJoinStep;
-import org.jooq.exception.IntegrityConstraintViolationException;
 import org.jooq.impl.DSL;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
@@ -151,7 +155,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationDaoImpl.class);
 
-    private static final int DATA_RETENTION_BATCH_SIZE = 1000;
+    private static final int BATCH_SIZE = 1000;
+
     private static final stroom.annotation.impl.db.jooq.tables.AnnotationTag STATUS =
             ANNOTATION_TAG.as("status");
     private static final stroom.annotation.impl.db.jooq.tables.AnnotationTag LABEL =
@@ -721,8 +726,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             }
 
             if (!NullSafe.isEmptyCollection(request.getLinkedEvents())) {
-                request.getLinkedEvents().forEach(eventID ->
-                        createEventLink(context, userUuid, now, annotationId, eventID));
+                createEventLinks(context, userUuid, now, annotationId, request.getLinkedEvents());
             }
 
             if (request.getTable() != null) {
@@ -765,77 +769,29 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             final AbstractAnnotationChange change = request.getChange();
 
             switch (change) {
-                case final ChangeTitle changeTitle -> {
-                    changeAnnotationTitle(changeTitle, currentUser, annotationId, now);
-                }
-                case final ChangeSubject changeSubject -> {
-                    changeAnnotationSubject(changeSubject, currentUser, annotationId, now);
-                }
-                case final AddTag addTag -> {
-                    addTag(addTag, currentUser, annotationId, now);
-                }
-                case final RemoveTag removeTag -> {
-                    removeTag(removeTag, currentUser, annotationId, now);
-                }
-                case final SetTag setTag -> {
-                    setTag(setTag, currentUser, annotationId, now);
-                }
-                case final ChangeAssignedTo changeAssignedTo -> {
-                    changeAssignedTo(changeAssignedTo, currentUser, annotationId, now);
-                }
-                case final ChangeComment changeComment -> {
-                    changeComment(changeComment, currentUser, annotationId, now);
-                }
-                case final ChangeDescription changeDescription -> {
-                    changeDescription(changeDescription, currentUser, annotationId, now);
-                }
-                case final ChangeRetentionPeriod changeRetentionPeriod -> {
-                    changeRetentionPeriod(changeRetentionPeriod, currentUser, annotationId, now);
-                }
-                case final LinkEvents linkEvents -> {
-                    // TODO : This could be done as a batch operation.
-                    for (final EventId eventId : linkEvents.getEvents()) {
-                        JooqUtil.context(connectionProvider, context -> {
-                            createEventLink(context, userUuid, now, annotationId, eventId);
-                        });
-                    }
-                }
-                case final UnlinkEvents unlinkEvents -> {
-                    // TODO : This could be done as a batch operation.
-                    for (final EventId eventId : unlinkEvents.getEvents()) {
-                        JooqUtil.context(connectionProvider, context -> {
-                            removeEventLink(context, userUuid, now, annotationId, eventId);
-                        });
-                    }
-                }
-                case final LinkAnnotations linkAnnotations -> {
-                    // TODO : This could be done as a batch operation, but unlike removing it is possible that an
-                    // individual insert could fail a DB constraint referencing an existing annotation. Failure of
-                    // just one link would result in the entire batch change failing so it may be safer to add
-                    // individually and ignore constraint errors if they happen.
-                    for (final Long dstId : linkAnnotations.getAnnotations()) {
-                        JooqUtil.context(connectionProvider, context -> {
-                            createAnnotationLink(context, userUuid, now, annotationId, dstId);
-                        });
-                    }
-                }
-                case final UnlinkAnnotations unlinkAnnotations -> {
-                    // TODO : This could be done as a batch operation.
-                    for (final Long dstId : unlinkAnnotations.getAnnotations()) {
-                        JooqUtil.context(connectionProvider, context -> {
-                            removeAnnotationLink(context, userUuid, now, annotationId, dstId);
-                        });
-                    }
-                }
-                case final AddAnnotationTable addAnnotationTable -> {
-                    JooqUtil.context(connectionProvider, context -> createEntry(
-                            context,
-                            annotationId,
-                            userUuid,
-                            now,
-                            AnnotationEntryType.ADD_TABLE_DATA,
-                            JsonUtil.writeValueAsString(addAnnotationTable.getTable())));
-                }
+                case final ChangeTitle changeTitle ->
+                        changeAnnotationTitle(changeTitle, currentUser, annotationId, now);
+                case final ChangeSubject changeSubject ->
+                        changeAnnotationSubject(changeSubject, currentUser, annotationId, now);
+                case final AddTag addTag -> addTag(addTag, currentUser, annotationId, now);
+                case final RemoveTag removeTag -> removeTag(removeTag, currentUser, annotationId, now);
+                case final SetTag setTag -> setTag(setTag, currentUser, annotationId, now);
+                case final ChangeAssignedTo changeAssignedTo ->
+                        changeAssignedTo(changeAssignedTo, currentUser, annotationId, now);
+                case final ChangeComment changeComment -> changeComment(changeComment, currentUser, annotationId, now);
+                case final ChangeDescription changeDescription ->
+                        changeDescription(changeDescription, currentUser, annotationId, now);
+                case final ChangeRetentionPeriod changeRetentionPeriod ->
+                        changeRetentionPeriod(changeRetentionPeriod, currentUser, annotationId, now);
+                case final LinkEvents linkEvents -> linkEvents(userUuid, now, annotationId, linkEvents.getEvents());
+                case final UnlinkEvents unlinkEvents ->
+                        unlinkEvents(userUuid, now, annotationId, unlinkEvents.getEvents());
+                case final LinkAnnotations linkAnnotations ->
+                        linkAnnotations(userUuid, now, annotationId, linkAnnotations.getAnnotations());
+                case final UnlinkAnnotations unlinkAnnotations ->
+                        unlinkAnnotations(userUuid, now, annotationId, unlinkAnnotations.getAnnotations());
+                case final AddAnnotationTable addAnnotationTable ->
+                        addAnnotationTable(userUuid, now, annotationId, addAnnotationTable);
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
@@ -1117,8 +1073,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                         tag.getId())
                 .onDuplicateKeyUpdate()
                 // Set to same values to avoid exception while returning 0 on duplicate
-                .set(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID, annotationId)
-                .set(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID, tag.getId())
+                .set(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID, ANNOTATION_TAG_LINK.FK_ANNOTATION_ID)
+                .set(ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID, ANNOTATION_TAG_LINK.FK_ANNOTATION_TAG_ID)
                 .execute();
     }
 
@@ -1158,6 +1114,38 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                         type.getPrimitiveValue(),
                         entryData)
                 .execute();
+    }
+
+    private int createEntries(final DSLContext context,
+                              final List<Entry> entries) {
+        // Exit immediately if there are no entries to insert.
+        if (NullSafe.isEmptyCollection(entries)) {
+            return 0;
+        }
+
+        // Build batch insert
+        InsertValuesStep7<AnnotationEntryRecord, Long, String, Long, String, Long, Byte, String> insertStep =
+                context.insertInto(ANNOTATION_ENTRY,
+                        ANNOTATION_ENTRY.ENTRY_TIME_MS,
+                        ANNOTATION_ENTRY.ENTRY_USER_UUID,
+                        ANNOTATION_ENTRY.UPDATE_TIME_MS,
+                        ANNOTATION_ENTRY.UPDATE_USER_UUID,
+                        ANNOTATION_ENTRY.FK_ANNOTATION_ID,
+                        ANNOTATION_ENTRY.TYPE_ID,
+                        ANNOTATION_ENTRY.DATA);
+
+        for (final Entry entry : entries) {
+            insertStep = insertStep.values(
+                    entry.entryTime.toEpochMilli(),
+                    entry.entryUserUuid,
+                    entry.updateTime.toEpochMilli(),
+                    entry.updateUserUuid,
+                    entry.annotationId,
+                    entry.type.getPrimitiveValue(),
+                    entry.entryData);
+        }
+
+        return insertStep.execute();
     }
 
     private Annotation create(final DSLContext context, final Annotation annotation) {
@@ -1208,56 +1196,173 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 .orElse(null);
     }
 
-    private void createEventLink(final DSLContext context,
-                                 final String userUuid,
-                                 final Instant now,
-                                 final long annotationId,
-                                 final EventId eventId) {
-        final String feedName = streamFeedProvider.getFeedName(eventId.getStreamId());
-        final Integer feedId = annotationFeedNameToIdCache.getOrCreateId(feedName);
-
-        // Create event link.
-        final int count = context
-                .insertInto(ANNOTATION_DATA_LINK,
-                        ANNOTATION_DATA_LINK.FK_ANNOTATION_ID,
-                        ANNOTATION_DATA_LINK.FEED_ID,
-                        ANNOTATION_DATA_LINK.STREAM_ID,
-                        ANNOTATION_DATA_LINK.EVENT_ID)
-                .values(annotationId,
-                        feedId,
-                        eventId.getStreamId(),
-                        eventId.getEventId())
-                .onDuplicateKeyUpdate()
-                // Set to same values to avoid exception while returning 0 on duplicate
-                .set(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID, annotationId)
-                .set(ANNOTATION_DATA_LINK.FEED_ID, feedId)
-                .set(ANNOTATION_DATA_LINK.STREAM_ID, eventId.getStreamId())
-                .set(ANNOTATION_DATA_LINK.EVENT_ID, eventId.getEventId())
-                .execute();
-
-        if (count > 0) {
-            // Record this link.
-            createEntry(context, annotationId, userUuid, now, AnnotationEntryType.LINK_EVENT, eventId.toString());
-        }
+    private void linkEvents(final String userUuid,
+                            final Instant now,
+                            final long annotationId,
+                            final List<EventId> eventIds) {
+        JooqUtil.transaction(connectionProvider, context ->
+                createEventLinks(context, userUuid, now, annotationId, eventIds));
     }
 
-    private void removeEventLink(final DSLContext context,
-                                 final String userUuid,
-                                 final Instant now,
-                                 final long annotationId,
-                                 final EventId eventId) {
-        // Remove event link.
-        final int count = context
-                .deleteFrom(ANNOTATION_DATA_LINK)
-                .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationId))
-                .and(ANNOTATION_DATA_LINK.STREAM_ID.eq(eventId.getStreamId()))
-                .and(ANNOTATION_DATA_LINK.EVENT_ID.eq(eventId.getEventId()))
-                .execute();
-
-        if (count > 0) {
-            // Record this unlink.
-            createEntry(context, annotationId, userUuid, now, AnnotationEntryType.UNLINK_EVENT, eventId.toString());
+    private void createEventLinks(final DSLContext context,
+                                  final String userUuid,
+                                  final Instant now,
+                                  final long annotationId,
+                                  final List<EventId> eventIds) {
+        // If we have been given an empty list then exit.
+        if (NullSafe.isEmptyCollection(eventIds)) {
+            return;
         }
+
+        // Batch lookup feed names and IDs
+        final Map<Long, String> streamToFeed = new HashMap<>();
+        final Map<String, Integer> feedNameToId = new HashMap<>();
+
+        // Resolve all feed named and IDs.
+        for (final EventId eventId : eventIds) {
+            final String feedName = streamToFeed
+                    .computeIfAbsent(eventId.getStreamId(), streamFeedProvider::getFeedName);
+            if (feedName != null) {
+                feedNameToId.computeIfAbsent(feedName, annotationFeedNameToIdCache::getOrCreateId);
+            }
+        }
+
+        // Filter to only valid event IDs (those with resolved feed IDs)
+        final List<EventId> validEventIds = eventIds
+                .stream()
+                .filter(eventId -> {
+                    final String feedName = streamToFeed.get(eventId.getStreamId());
+                    return feedName != null && feedNameToId.get(feedName) != null;
+                })
+                .toList();
+
+        // If we cannot resolve feeds for any of our events then exit.
+        if (validEventIds.isEmpty()) {
+            return;
+        }
+
+        processBatches(validEventIds, BATCH_SIZE, batch -> {
+            // Filter out any existing links
+            final Set<EventId> existingLinks = context
+                    .select(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
+                    .from(ANNOTATION_DATA_LINK)
+                    .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationId))
+                    .and(DSL.row(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
+                            .in(batch.stream()
+                                    .map(e -> DSL.row(e.getStreamId(), e.getEventId()))
+                                    .collect(Collectors.toList())))
+                    .fetchSet(record -> new EventId(
+                            record.get(ANNOTATION_DATA_LINK.STREAM_ID),
+                            record.get(ANNOTATION_DATA_LINK.EVENT_ID)
+                    ));
+
+            // Filter to only new links
+            final List<EventId> newEventIds = batch.stream()
+                    .filter(eventId -> !existingLinks.contains(eventId))
+                    .toList();
+
+            if (!newEventIds.isEmpty()) {
+                // Build batch insert
+                InsertValuesStep4<AnnotationDataLinkRecord, Long, Integer, Long, Long> insertStep =
+                        context.insertInto(ANNOTATION_DATA_LINK,
+                                ANNOTATION_DATA_LINK.FK_ANNOTATION_ID,
+                                ANNOTATION_DATA_LINK.FEED_ID,
+                                ANNOTATION_DATA_LINK.STREAM_ID,
+                                ANNOTATION_DATA_LINK.EVENT_ID);
+
+                final List<Entry> entries = new ArrayList<>(newEventIds.size());
+                for (final EventId eventId : newEventIds) {
+                    final String feedName = streamToFeed.get(eventId.getStreamId());
+                    final Integer feedId = feedNameToId.get(feedName);
+                    insertStep = insertStep.values(
+                            annotationId,
+                            feedId,
+                            eventId.getStreamId(),
+                            eventId.getEventId()
+                    );
+
+                    // Remember the entry to add.
+                    entries.add(new Entry(now, userUuid, now, userUuid, annotationId, AnnotationEntryType.LINK_EVENT,
+                            eventId.toString()));
+                }
+
+                // Execute with onDuplicateKeyUpdate
+                final int result = insertStep
+                        .onDuplicateKeyUpdate()
+                        .set(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID, ANNOTATION_DATA_LINK.FK_ANNOTATION_ID)
+                        .set(ANNOTATION_DATA_LINK.FEED_ID, ANNOTATION_DATA_LINK.FEED_ID)
+                        .set(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.STREAM_ID)
+                        .set(ANNOTATION_DATA_LINK.EVENT_ID, ANNOTATION_DATA_LINK.EVENT_ID)
+                        .execute();
+
+                if (result > 0) {
+                    // Create history entries for successful inserts
+                    createEntries(context, entries);
+                }
+            }
+        });
+    }
+
+
+    private void unlinkEvents(final String userUuid,
+                              final Instant now,
+                              final long annotationId,
+                              final List<EventId> eventIds) {
+        JooqUtil.transaction(connectionProvider, context ->
+                removeEventLinks(context, userUuid, now, annotationId, eventIds));
+    }
+
+    private void removeEventLinks(final DSLContext context,
+                                  final String userUuid,
+                                  final Instant now,
+                                  final long annotationId,
+                                  final List<EventId> eventIds) {
+        // If we have been given an empty list then exit.
+        if (NullSafe.isEmptyCollection(eventIds)) {
+            return;
+        }
+
+        processBatches(eventIds, BATCH_SIZE, batch -> {
+            // Only remove existing links.
+            final Set<EventId> existingLinks = context
+                    .select(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
+                    .from(ANNOTATION_DATA_LINK)
+                    .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationId))
+                    .and(DSL.row(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
+                            .in(batch.stream()
+                                    .map(e -> DSL.row(e.getStreamId(), e.getEventId()))
+                                    .collect(Collectors.toList())))
+                    .fetchSet(record -> new EventId(
+                            record.get(ANNOTATION_DATA_LINK.STREAM_ID),
+                            record.get(ANNOTATION_DATA_LINK.EVENT_ID)
+                    ));
+
+            // Filter to only existing links
+            final List<EventId> existingIds = batch
+                    .stream()
+                    .filter(existingLinks::contains)
+                    .toList();
+
+            if (!existingIds.isEmpty()) {
+                // Remove links.
+                final int result = context
+                        .deleteFrom(ANNOTATION_DATA_LINK)
+                        .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationId))
+                        .and(DSL.row(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
+                                .in(existingIds.stream()
+                                        .map(e -> DSL.row(e.getStreamId(), e.getEventId()))
+                                        .collect(Collectors.toList())))
+                        .execute();
+
+                if (result > 0) {
+                    // Create history entries for successful deletes
+                    final List<Entry> entries = existingIds.stream().map(eventId ->
+                            new Entry(now, userUuid, now, userUuid, annotationId, AnnotationEntryType.UNLINK_EVENT,
+                                    eventId.toString())).toList();
+                    createEntries(context, entries);
+                }
+            }
+        });
     }
 
     @Override
@@ -1279,55 +1384,169 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                         record.get(ANNOTATION_DATA_LINK.EVENT_ID)));
     }
 
-
-    private void createAnnotationLink(final DSLContext context,
-                                      final String userUuid,
-                                      final Instant now,
-                                      final long srcId,
-                                      final long dstId) {
-        // Create annotation link.
-        // Don't allow self reference.
-        if (srcId != dstId) {
-            try {
-                final int count = context
-                        .insertInto(ANNOTATION_LINK,
-                                ANNOTATION_LINK.FK_ANNOTATION_SRC_ID,
-                                ANNOTATION_LINK.FK_ANNOTATION_DST_ID)
-                        .values(srcId, dstId)
-                        .onDuplicateKeyUpdate()
-                        // Set to same values to avoid exception while returning 0 on duplicate
-                        .set(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID, srcId)
-                        .set(ANNOTATION_LINK.FK_ANNOTATION_DST_ID, dstId)
-                        .execute();
-
-                if (count > 0) {
-                    // Record link addition.
-                    createEntry(context, srcId, userUuid, now, AnnotationEntryType.LINK_ANNOTATION,
-                            String.valueOf(dstId));
-                }
-            } catch (final IntegrityConstraintViolationException e) {
-                // Ignore some failed constraints as the UI sometimes tries to link non annotations
-                LOGGER.debug(e::getMessage, e);
-            }
-        }
+    private void linkAnnotations(final String userUuid,
+                                 final Instant now,
+                                 final long annotationId,
+                                 final List<Long> annotationIds) {
+        JooqUtil.transaction(connectionProvider, context ->
+                createAnnotationLinks(context, userUuid, now, annotationId, annotationIds));
     }
 
-    private void removeAnnotationLink(final DSLContext context,
-                                      final String userUuid,
-                                      final Instant now,
-                                      final long srcId,
-                                      final long dstId) {
-        // Remove event link.
-        final int count = context
-                .deleteFrom(ANNOTATION_LINK)
-                .where(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.eq(srcId))
-                .and(ANNOTATION_LINK.FK_ANNOTATION_DST_ID.eq(dstId))
-                .execute();
-
-        if (count > 0) {
-            // Record link removal.
-            createEntry(context, srcId, userUuid, now, AnnotationEntryType.UNLINK_ANNOTATION, String.valueOf(dstId));
+    private void createAnnotationLinks(final DSLContext context,
+                                       final String userUuid,
+                                       final Instant now,
+                                       final long annotationId,
+                                       final List<Long> annotationIds) {
+        if (NullSafe.isEmptyCollection(annotationIds)) {
+            return;
         }
+
+        // Remove self-references
+        final List<Long> candidateIds = annotationIds.stream()
+                .filter(dstId -> dstId != annotationId)
+                .distinct()
+                .toList();
+
+        if (candidateIds.isEmpty()) {
+            return;
+        }
+
+        // Validate all destination annotations exist (prevents FK constraint violations)
+        final Set<Long> existingAnnotations = context
+                .select(ANNOTATION.ID)
+                .from(ANNOTATION)
+                .where(ANNOTATION.ID.in(candidateIds))
+                .and(ANNOTATION.DELETED.isFalse())
+                .fetchSet(ANNOTATION.ID);
+
+        // Filter to only valid destination annotations
+        final List<Long> validIds = candidateIds.stream()
+                .filter(existingAnnotations::contains)
+                .toList();
+
+        if (validIds.isEmpty()) {
+            LOGGER.debug(() -> LogUtil.message(
+                    "No valid destination annotations found for linking from annotation {}",
+                    annotationId));
+            return;
+        }
+
+        // Log if some annotations were invalid
+        if (validIds.size() < candidateIds.size() && LOGGER.isDebugEnabled()) {
+            final List<Long> invalidIds = candidateIds.stream()
+                    .filter(id -> !existingAnnotations.contains(id))
+                    .toList();
+            LOGGER.debug(() -> LogUtil.message(
+                    "Skipping {} non-existent destination annotations when linking from {}: {}",
+                    invalidIds.size(), annotationId, invalidIds));
+        }
+
+        processBatches(validIds, BATCH_SIZE, batch -> {
+            // Check which links already exist
+            final Set<Long> existingLinks = context
+                    .select(ANNOTATION_LINK.FK_ANNOTATION_DST_ID)
+                    .from(ANNOTATION_LINK)
+                    .where(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.eq(annotationId))
+                    .and(ANNOTATION_LINK.FK_ANNOTATION_DST_ID.in(batch))
+                    .fetchSet(ANNOTATION_LINK.FK_ANNOTATION_DST_ID);
+
+            // Filter to only new links
+            final List<Long> newLinks = batch.stream()
+                    .filter(dstId -> !existingLinks.contains(dstId))
+                    .toList();
+
+            if (!newLinks.isEmpty()) {
+                // Build batch insert
+                InsertValuesStep2<AnnotationLinkRecord, Long, Long> insertStep =
+                        context.insertInto(ANNOTATION_LINK,
+                                ANNOTATION_LINK.FK_ANNOTATION_SRC_ID,
+                                ANNOTATION_LINK.FK_ANNOTATION_DST_ID);
+
+                final List<Entry> entries = new ArrayList<>(newLinks.size());
+                for (final Long dstId : newLinks) {
+                    insertStep = insertStep.values(annotationId, dstId);
+                    entries.add(new Entry(now, userUuid, now, userUuid, annotationId,
+                            AnnotationEntryType.LINK_ANNOTATION, String.valueOf(dstId)));
+                }
+
+                // Execute with onDuplicateKeyUpdate as race condition safety net
+                final int result = insertStep
+                        .onDuplicateKeyUpdate()
+                        .set(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID, ANNOTATION_LINK.FK_ANNOTATION_SRC_ID)
+                        .set(ANNOTATION_LINK.FK_ANNOTATION_DST_ID, ANNOTATION_LINK.FK_ANNOTATION_DST_ID)
+                        .execute();
+
+                if (result > 0) {
+                    // Create history entries for successful inserts
+                    createEntries(context, entries);
+                }
+            }
+        });
+    }
+
+    private void unlinkAnnotations(final String userUuid,
+                                   final Instant now,
+                                   final long annotationId,
+                                   final List<Long> annotationIds) {
+        JooqUtil.transaction(connectionProvider, context ->
+                removeAnnotationLinks(context, userUuid, now, annotationId, annotationIds));
+    }
+
+    private void removeAnnotationLinks(final DSLContext context,
+                                       final String userUuid,
+                                       final Instant now,
+                                       final long annotationId,
+                                       final List<Long> annotationIds) {
+        // If we have been given an empty list then exit.
+        if (NullSafe.isEmptyCollection(annotationIds)) {
+            return;
+        }
+
+        processBatches(annotationIds, BATCH_SIZE, batch -> {
+            // Only remove existing links.
+            final Set<Long> existingLinks = context
+                    .select(ANNOTATION_LINK.FK_ANNOTATION_DST_ID)
+                    .from(ANNOTATION_LINK)
+                    .where(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.eq(annotationId))
+                    .and(ANNOTATION_LINK.FK_ANNOTATION_DST_ID.in(batch))
+                    .fetchSet(record -> record.get(ANNOTATION_LINK.FK_ANNOTATION_DST_ID));
+
+            // Filter to only existing links
+            final List<Long> existingIds = batch
+                    .stream()
+                    .filter(existingLinks::contains)
+                    .toList();
+
+            if (!existingIds.isEmpty()) {
+                // Remove links.
+                final int result = context
+                        .deleteFrom(ANNOTATION_LINK)
+                        .where(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.eq(annotationId))
+                        .and(ANNOTATION_LINK.FK_ANNOTATION_DST_ID.in(existingIds))
+                        .execute();
+
+                if (result > 0) {
+                    // Create history entries for successful deletes
+                    final List<Entry> entries = existingIds.stream().map(dstId ->
+                            new Entry(now, userUuid, now, userUuid, annotationId, AnnotationEntryType.UNLINK_ANNOTATION,
+                                    String.valueOf(dstId))).toList();
+                    createEntries(context, entries);
+                }
+            }
+        });
+    }
+
+    private void addAnnotationTable(final String userUuid,
+                                    final Instant now,
+                                    final long annotationId,
+                                    final AddAnnotationTable addAnnotationTable) {
+        JooqUtil.context(connectionProvider, context -> createEntry(
+                context,
+                annotationId,
+                userUuid,
+                now,
+                AnnotationEntryType.ADD_TABLE_DATA,
+                JsonUtil.writeValueAsString(addAnnotationTable.getTable())));
     }
 
     @Override
@@ -1520,7 +1739,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
 
     @Override
     public LongList markDeletedByDataRetention() {
-        return markDeletedByDataRetention(DATA_RETENTION_BATCH_SIZE);
+        return markDeletedByDataRetention(BATCH_SIZE);
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -1606,7 +1825,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
 
     @Override
     public LongList physicallyDelete(final Instant age) {
-        return physicallyDelete(age, DATA_RETENTION_BATCH_SIZE);
+        return physicallyDelete(age, BATCH_SIZE);
     }
 
     LongList physicallyDelete(final Instant age, final int batchSize) {
@@ -1764,5 +1983,37 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                            .and(ANNOTATION_ENTRY.ID.eq(entryId))
                            .execute() != 0;
         });
+    }
+
+    /**
+     * Process items in batches of the specified size.
+     * <p>
+     * The batch processor receives a view of the list via {@link List#subList(int, int)},
+     * which is efficient but should not be modified.
+     *
+     * @param items          The items to process (must not be modified during processing)
+     * @param batchSize      The maximum size of each batch
+     * @param batchProcessor Consumer that processes each batch
+     * @param <T>            The type of items being processed
+     */
+    private <T> void processBatches(final List<T> items,
+                                    final int batchSize,
+                                    final Consumer<List<T>> batchProcessor) {
+        for (int offset = 0; offset < items.size(); offset += batchSize) {
+            final int end = Math.min(offset + batchSize, items.size());
+            final List<T> batch = items.subList(offset, end);
+            batchProcessor.accept(batch);
+        }
+    }
+
+    private record Entry(
+            Instant entryTime,
+            String entryUserUuid,
+            Instant updateTime,
+            String updateUserUuid,
+            long annotationId,
+            AnnotationEntryType type,
+            @Nullable String entryData) {
+
     }
 }
