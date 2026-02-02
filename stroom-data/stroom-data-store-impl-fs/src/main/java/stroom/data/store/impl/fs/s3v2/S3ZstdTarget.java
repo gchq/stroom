@@ -47,6 +47,7 @@ import java.io.UncheckedIOException;
 import java.nio.channels.ClosedByInterruptException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -180,6 +181,15 @@ public final class S3ZstdTarget implements Target {
         }
     }
 
+    private void updateAttribute(final S3ZstdTarget target, final QueryField key, final Collection<String> values) {
+        final String keyFldName = key.getFldName();
+        final AttributeMap targetAttributes = target.getAttributes();
+        if (!targetAttributes.containsKey(keyFldName)) {
+            LOGGER.debug("updateAttribute() - keyFldName: {}, values: {}", keyFldName, values);
+            targetAttributes.putCollection(keyFldName, values);
+        }
+    }
+
     private void closeStreams() throws IOException {
         LOGGER.debug(() -> LogUtil.message("closeStreams() - fileKey: {}, parentFileKey: {}",
                 fileKey, NullSafe.get(parentTarget, S3ZstdTarget::getFileKey)));
@@ -259,7 +269,12 @@ public final class S3ZstdTarget implements Target {
                     // These only get set on the parent
                     updateAttribute(this, MetaFields.RAW_SIZE, String.valueOf(rawSize));
                     updateAttribute(this, MetaFields.FILE_SIZE, String.valueOf(fileSize));
+                    // Record the child types to save us having to do an S3 list call.
+                    // Sort them for consistency
+                    updateAttribute(this, MetaFields.CHILD_TYPES, NullSafe.sort(childMap.keySet()));
+
                 }
+                // Record whether we are dealing with parts or segments so the reader knows how to treat it
                 updateAttribute(this, MetaFields.SEGMENTATION_TYPE, getZstdSegmentationType().toString());
 
                 NullSafe.consume(zstdSegmentOutputStream.getZstdDictionary(), zstdDictionary -> {
@@ -448,7 +463,9 @@ public final class S3ZstdTarget implements Target {
     }
 
     private ZstdSegmentationType getZstdSegmentationType() {
+        // This is the last pertNo we have dealt with, i.e. the part count
         if (partNo <= 1) {
+            // This may be a single part non-segmented stream, but we have no way of knowing
             return ZstdSegmentationType.SEGMENTS;
         } else {
             return ZstdSegmentationType.PARTS;
@@ -527,22 +544,24 @@ public final class S3ZstdTarget implements Target {
         private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3OutputStreamProvider.class);
 
         private final long partNo;
+        private final boolean allowSegmentsInPart;
         private final S3ZstdTarget s3ZstdTarget;
         // childStreamType => segmentOutputStream
-        private final Map<String, SegmentOutputStream> childStreamTypeToStreamMap = new HashMap<>();
+        private final Map<String, SegmentOutputStream> childStreamTypeToStreamMap = new HashMap<>(10);
 
         private SegmentOutputStream dataStream;
 
         public S3OutputStreamProvider(final S3ZstdTarget s3ZstdTarget, final long partNo) {
             this.partNo = partNo;
+            this.allowSegmentsInPart = partNo == 0;
             this.s3ZstdTarget = s3ZstdTarget;
-            LOGGER.debug(() -> LogUtil.message("ctor() - partNo: {}", partNo));
+            LOGGER.debug("ctor() - partNo: {}", partNo);
         }
 
         @Override
         public SegmentOutputStream get() {
             if (dataStream != null) {
-                throw new RuntimeException("Unexpected get");
+                throw new RuntimeException("Unexpected get(). Should only be called once partNo " + partNo);
             }
             LOGGER.debug("get()");
             dataStream = create(null);
@@ -555,9 +574,8 @@ public final class S3ZstdTarget implements Target {
             if (childStreamType == null) {
                 return get();
             } else {
-                final SegmentOutputStream childOutputStream = childStreamTypeToStreamMap.get(childStreamType);
                 if (childStreamTypeToStreamMap.containsKey(childStreamType)) {
-                    throw new RuntimeException("Unexpected get");
+                    throw new RuntimeException("Unexpected get(). Should only be called once partNo " + partNo);
                 }
                 final SegmentOutputStream segmentOutputStream = create(childStreamType);
                 childStreamTypeToStreamMap.put(childStreamType, segmentOutputStream);
@@ -573,7 +591,6 @@ public final class S3ZstdTarget implements Target {
             // We do not support multipart and multi-segment at the same time.
             // Thus by wrapping it, we will make it error if the caller tries to add
             // any segments to this part.
-            final boolean allowSegmentsInPart = partNo <= 1;
             return new WrappedSegmentOutputStream(partNo, internalOutputStream, allowSegmentsInPart);
         }
 
@@ -624,14 +641,18 @@ public final class S3ZstdTarget implements Target {
 
         @Override
         public void addSegment() throws IOException {
-            if (!allowSegments) {
+            if (allowSegments) {
+                delegate.addSegment();
+            } else {
                 throw new UnsupportedOperationException("Multiple segments are not supported");
             }
         }
 
         @Override
         public void addSegment(final long position) throws IOException {
-            if (!allowSegments) {
+            if (allowSegments) {
+                delegate.addSegment(position);
+            } else {
                 throw new UnsupportedOperationException("Multiple segments are not supported");
             }
         }

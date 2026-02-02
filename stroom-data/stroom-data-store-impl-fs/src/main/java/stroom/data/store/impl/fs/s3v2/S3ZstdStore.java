@@ -22,6 +22,7 @@ import stroom.data.store.api.Source;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
+import stroom.task.api.ExecutorProvider;
 import stroom.util.io.FileUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
@@ -67,6 +68,7 @@ public class S3ZstdStore {
     private final HeapBufferPool heapBufferPool;
     private final S3ManagerFactory s3ManagerFactory;
     private final ZstdDictionaryService zstdDictionaryService;
+    private final ExecutorProvider executorProvider;
     private final Path tempDir;
 
     @Inject
@@ -80,7 +82,8 @@ public class S3ZstdStore {
             final ZstdSeekTableCache zstdSeekTableCache,
             final HeapBufferPool heapBufferPool,
             final S3ManagerFactory s3ManagerFactory,
-            final ZstdDictionaryService zstdDictionaryService) {
+            final ZstdDictionaryService zstdDictionaryService,
+            final ExecutorProvider executorProvider) {
 //        this.templateCache = templateCache;
         this.metaService = metaService;
 //        this.s3MetaFieldsMapper = s3MetaFieldsMapper;
@@ -90,6 +93,7 @@ public class S3ZstdStore {
         this.heapBufferPool = heapBufferPool;
         this.s3ManagerFactory = s3ManagerFactory;
         this.zstdDictionaryService = zstdDictionaryService;
+        this.executorProvider = executorProvider;
 
         try {
             tempDir = tempDirProvider.get().resolve("s3v2_cache");
@@ -109,27 +113,6 @@ public class S3ZstdStore {
                 (ignored, aTrackedSource) -> {
                     if (aTrackedSource == null) {
                         final Path tempPath = createTempDir(meta.getId());
-//                try {
-//                    // Create zip.
-//                    Path zipFile = null;
-//                    try {
-//                        zipFile = tempPath.resolve(S3FileExtensions.ZIP_FILE_NAME);
-//                        // Download the zip from S3.
-//                        s3Manager.download(meta, zipFile);
-//
-//                        ZipUtil.unzip(zipFile, tempPath);
-//                    } catch (final IOException e) {
-//                        LOGGER.error(e::getMessage, e);
-//                        throw new UncheckedIOException(e);
-//                    } finally {
-//                        deleteFile("Deleting source zip: ", zipFile);
-//                    }
-//                } catch (final RuntimeException e) {
-//                    LOGGER.debug(e::getMessage, e);
-//                    deleteDir("Deleting source dir: ", tempPath);
-//
-//                    throw e;
-//                }
 
                         final TrackedSource trackedSource2 = new TrackedSource(
                                 meta.getId(),
@@ -153,7 +136,9 @@ public class S3ZstdStore {
                 getS3KeyPrefix(dataVolume, meta),
                 s3Manager,
                 meta,
-                dataVolume);
+                dataVolume,
+                s3StreamTypeExtensions,
+                executorProvider);
     }
 
     public S3ZstdTarget getTarget(final DataVolume dataVolume, final Meta meta) {
@@ -297,6 +282,10 @@ public class S3ZstdStore {
 
     ZstdSeekTableCache getZstdSeekTableCache() {
         return zstdSeekTableCache;
+    }
+
+    HeapBufferPool getHeapBufferPool() {
+        return heapBufferPool;
     }
 
     //    Optional<ZstdDictionary> getZstdDictionary(final ZstdDictionaryKey zstdDictionaryKey,

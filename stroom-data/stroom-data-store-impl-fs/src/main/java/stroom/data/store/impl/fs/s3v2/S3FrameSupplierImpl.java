@@ -74,12 +74,11 @@ public class S3FrameSupplierImpl extends AbstractZstdFrameSupplier {
     private FileChannel sparseFileChannel = null;
     private boolean downloadAll = false;
 
-
     // Source frameLocation => translated frameLocation
 //    Map<FrameLocation, FrameLocation> frameLocationTranslationMap = null;
-    List<FrameRange> frameRanges = null;
-    Arena arena;
-    Map<FrameRange, CompletableFuture<Void>> rangeFutures;
+    private List<FrameRange> frameRanges = null;
+    private Arena arena;
+    private Map<FrameRange, CompletableFuture<Void>> rangeFutures;
 
     S3FrameSupplierImpl(final ExecutorProvider executorProvider,
                         final S3Manager s3Manager,
@@ -307,12 +306,12 @@ public class S3FrameSupplierImpl extends AbstractZstdFrameSupplier {
         return tempFile;
     }
 
-    private Map<FrameLocation, FrameLocation> buildMappedFrameLocations() {
-//        frameLocationTranslationMap = new HashMap<>(includedFrameIndexes.size());
-        frameRanges = zstdSeekTable.getContiguousRanges(includedFrameIndexes);
-        // TODO
-        return null;
-    }
+//    private Map<FrameLocation, FrameLocation> buildMappedFrameLocations() {
+////        frameLocationTranslationMap = new HashMap<>(includedFrameIndexes.size());
+//        frameRanges = zstdSeekTable.getContiguousRanges(includedFrameIndexes);
+//        // TODO
+//        return null;
+//    }
 
 //    private List<IntSortedSet> buildContiguousRanges(final IntSortedSet includedFrameIndexes) {
 //        if (NullSafe.hasItems(includedFrameIndexes)) {

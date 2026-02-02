@@ -29,6 +29,7 @@ import com.github.luben.zstd.ZstdInputStream;
 import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
 import it.unimi.dsi.fastutil.ints.IntSortedSet;
 import it.unimi.dsi.fastutil.ints.IntSortedSets;
+import org.jspecify.annotations.NonNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +51,7 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZstdSegmentInputStream.class);
 
-    private final byte[] singleByte = new byte[1];
+    private final byte[] singleByteArr = new byte[1];
     private final ZstdSeekTable zstdSeekTable;
     private final ZstdFrameSupplier zstdFrameSupplier;
     private final ZstdDictionary zstdDictionary;
@@ -122,22 +123,22 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
 
     @Override
     public int read() throws IOException {
-        final int len = read(singleByte);
+        final int len = read(singleByteArr);
         if (len == -1) {
             return -1; // end of stream
         }
         // result of read must be 0-255 (unsigned) so we need to convert our
         // signed byte to unsigned.
-        return singleByte[0] & 0xff;
+        return singleByteArr[0] & 0xff;
     }
 
     @Override
-    public int read(final byte[] b) throws IOException {
+    public int read(final byte @NonNull [] b) throws IOException {
         return read(b, 0, b.length);
     }
 
     @Override
-    public int read(final byte[] bytes, final int off, final int len) throws IOException {
+    public int read(final byte @NonNull [] bytes, final int off, final int len) throws IOException {
         LOGGER.trace(() -> LogUtil.message("read() - bytes.length: {}, off: {}, len: {}", bytes.length, off, len));
         if (startedReading.compareAndSet(false, true)) {
             final boolean success = initialiseForReading();

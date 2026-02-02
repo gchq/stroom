@@ -87,6 +87,7 @@ public class MetaFields {
     public static final QueryField FILE_SIZE = QueryField.createLong("File Size");
     public static final QueryField RAW_SIZE = QueryField.createLong("Raw Size");
     public static final QueryField SEGMENTATION_TYPE = QueryField.createText("Segmentation Type");
+    public static final QueryField CHILD_TYPES = QueryField.createText("Child Types");
     public static final QueryField ZSTD_DICTIONARY_UUID = QueryField.createText("Zstd Dictionary UUID");
 
     // Parent fields.

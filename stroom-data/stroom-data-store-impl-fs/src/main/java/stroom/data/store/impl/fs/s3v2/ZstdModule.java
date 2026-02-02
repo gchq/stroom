@@ -25,5 +25,7 @@ public class ZstdModule extends AbstractModule {
     protected void configure() {
 
         bind(ZstdDictionaryService.class).to(ZstdDictionaryServiceImpl.class);
+        bind(ZstdDictionaryStore.class).to(S3ZstdDictionaryStoreImpl.class);
+        bind(ZstdSeekTableCache.class).to(ZstdSeekTableCacheImpl.class);
     }
 }

@@ -45,6 +45,8 @@ public class ZstdDictionaryServiceImpl implements ZstdDictionaryService {
     private final ZstdDictionaryTaskDao zstdDictionaryTaskDao;
     private final ZstdDictionaryStore zstdDictionaryStore;
 
+    // TODO we may want the dictionaries to be written to disk as they could
+    //  be quite big
     private final StroomCache<String, ZstdDictionary> uuidToDictCache;
     private final LoadingStroomCache<ZstdDictionaryKey, String> keyToUuidCache;
 

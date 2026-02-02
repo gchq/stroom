@@ -51,11 +51,17 @@ public class FileFrameSupplierImpl extends AbstractZstdFrameSupplier {
         this.arena = Arena.ofConfined();
         this.closeResources = true;
         // Memory map the whole file so we can have random access to any frames in it
-        this.fileMemorySegment = fileChannel.map(
-                MapMode.READ_ONLY,
-                0,
-                zstdSeekTable.getTotalCompressedDataSize(),
-                arena);
+        fileMemorySegment = createMemorySegment(file);
+    }
+
+    private MemorySegment createMemorySegment(final Path file) throws IOException {
+        final long compressedSize;
+        if (zstdSeekTable != null) {
+            compressedSize = zstdSeekTable.getTotalCompressedDataSize();
+        } else {
+            compressedSize = Files.size(file);
+        }
+        return fileChannel.map(MapMode.READ_ONLY, 0, compressedSize, arena);
     }
 
     /**

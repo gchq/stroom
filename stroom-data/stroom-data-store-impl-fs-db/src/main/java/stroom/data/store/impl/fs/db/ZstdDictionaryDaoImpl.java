@@ -27,6 +27,7 @@ import stroom.db.util.JooqUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import jakarta.inject.Inject;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
@@ -42,6 +43,7 @@ public class ZstdDictionaryDaoImpl implements ZstdDictionaryDao {
     private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
     private final GenericDao<ZstdDictionaryRecord, LinkedZstdDictionary, Integer> genericDao;
 
+    @Inject
     ZstdDictionaryDaoImpl(final FsDataStoreDbConnProvider fsDataStoreDbConnProvider) {
         this.fsDataStoreDbConnProvider = fsDataStoreDbConnProvider;
         this.genericDao = new GenericDao<>(

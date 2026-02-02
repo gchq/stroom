@@ -25,6 +25,7 @@ import stroom.data.store.impl.fs.FsVolumeDao;
 import stroom.data.store.impl.fs.FsVolumeGroupDao;
 import stroom.data.store.impl.fs.FsVolumeStateDao;
 import stroom.data.store.impl.fs.s3v2.ZstdDictionaryDao;
+import stroom.data.store.impl.fs.s3v2.ZstdDictionaryTaskDao;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
@@ -44,6 +45,7 @@ public class FsDataStoreDaoModule extends AbstractModule {
         bind(FsVolumeStateDao.class).to(FsVolumeStateDaoImpl.class);
         bind(FsOrphanedMetaDao.class).to(FsOrphanedMetaDaoImpl.class);
         bind(ZstdDictionaryDao.class).to(ZstdDictionaryDaoImpl.class);
+        bind(ZstdDictionaryTaskDao.class).to(ZstdDictionaryTaskDaoImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(FsVolumeCache.class);

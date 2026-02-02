@@ -35,6 +35,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -63,7 +64,7 @@ public class NullSafe {
         if (val1 == null) {
             return false;
         } else {
-            final T2 val2 = getter.apply(val1);
+            final T2 val2 = Objects.requireNonNull(getter).apply(val1);
             return Objects.equals(val2, other);
         }
     }
@@ -81,11 +82,11 @@ public class NullSafe {
         if (val1 == null) {
             return false;
         } else {
-            final T2 val2 = getter1.apply(val1);
+            final T2 val2 = Objects.requireNonNull(getter1).apply(val1);
             if (val2 == null) {
                 return false;
             } else {
-                final T3 val3 = getter2.apply(val2);
+                final T3 val3 = Objects.requireNonNull(getter2).apply(val2);
                 return Objects.equals(val3, other);
             }
         }
@@ -712,8 +713,7 @@ public class NullSafe {
     }
 
     /**
-     * Returns a {@link Stream<Entry<K,V>>} of entries is non-null
-     * else returns an empty {@link Stream<Entry<K,V>>}
+     * Returns a {@link Stream} of entries is non-null else returns an empty {@link Stream}
      */
     public static <K, V> Stream<Entry<K, V>> streamEntries(final Map<K, V> map) {
         if (map == null || map.isEmpty()) {
@@ -810,6 +810,18 @@ public class NullSafe {
     public static <L extends List<T>, T> List<T> unmodifiableList(final L list) {
         return list != null
                 ? Collections.unmodifiableList(list)
+                : Collections.emptyList();
+    }
+
+    /**
+     * Sorts the passed collection using natural order and returns the sorted collection
+     * as a list.
+     */
+    public static <C extends Collection<T>, T> List<T> sort(final C collection) {
+        return collection != null
+                ? collection.stream()
+                .sorted()
+                .collect(Collectors.toList())
                 : Collections.emptyList();
     }
 
