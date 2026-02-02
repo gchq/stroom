@@ -124,7 +124,8 @@ class AnnotationFeedNameToIdCache implements Clearable {
      */
     private int loadOrCreate(final String name) {
         // Try and get the existing id from the DB or else create one.
-        return AnnotationFeedDao.async(() -> annotationFeedDao.fetchByName(name).orElse(annotationFeedDao.create(name)));
+        return AnnotationFeedDao.async(() ->
+                annotationFeedDao.fetchByName(name).orElse(annotationFeedDao.create(name)));
     }
 
     @Override

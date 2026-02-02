@@ -150,6 +150,7 @@ import static stroom.annotation.impl.db.jooq.tables.AnnotationTagLink.ANNOTATION
  * Best for large result sets with filtering.
  */
 // Make this a singleton so we don't keep recreating the mappers.
+@SuppressWarnings("checkstyle:FileLength")
 @Singleton
 class AnnotationDaoImpl implements AnnotationDao, Clearable {
 
