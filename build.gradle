@@ -47,29 +47,19 @@ buildscript {
 }
 
 plugins {
-    alias(libs.plugins.java.library)
+    alias libs.plugins.java.library
 
     // Plugin for downloading content from the 'net
-    alias(libs.plugins.download) apply false
+    alias libs.plugins.download apply false
 
     // Plugin for producing a tree of task dependencies, run task 'taskTree'
-    alias(libs.plugins.task.tree) apply true
+    alias libs.plugins.task.tree apply true
 
-    alias(libs.plugins.shadow) apply false
+    alias libs.plugins.shadow apply false
 
-    alias(libs.plugins.jooq) apply false
+    alias libs.plugins.jooq apply false
 
-    alias(libs.plugins.flyway) apply false
-
-//    alias(libs.plugins.jdeps)
-
-//    id 'org.javamodularity.moduleplugin' apply false
-
-//    id 'ca.cutterslade.analyze'
-
-//    id 'nebula.lint'
-
-//    id 'com.vanniktech.dependency.graph.generator'
+    alias libs.plugins.flyway apply false
 }
 
 apply plugin: 'de.undercouch.download'
@@ -518,7 +508,7 @@ subprojects {
 
         // TODO Uplifting this to 13.0.0 caused a lot of checkstyle violations.
         //   A lot were switch statement lambda indent violations which do not agree with our auto formatter
-        //   Also, 10.4 can't cope with statements 
+        //   Also, 10.4 can't cope with statements
         toolVersion = "10.4"
         //toolVersion = "13.0.0"
     }
@@ -753,14 +743,6 @@ tasks.register('dependenciesPng') {
 //task clean() {
 ////dependsOn clearContentPackImportDir
 //dependsOn clearContentPackDownloadDir
-//}
-
-//// Accept the T&Cs for publishing build scans
-//if (hasProperty('buildScan')) {
-//    buildScan {
-//        termsOfServiceUrl = 'https://gradle.com/terms-of-service'
-//        termsOfServiceAgree = 'yes'
-//    }
 //}
 
 //import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorPlugin

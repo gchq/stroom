@@ -1,22 +1,19 @@
 [versions]
 # ------Stroom-repos---------------
-# stroomProxyRepo: "v5.1-beta.8"
 eventLogging = "5.0-beta.31_schema-v4.0-beta.3"
 stroomStats = "1.0-alpha.6"
-stroomTestData = "0.2.3"
 
 # ------------3rd-party------------
 aws = "2.40.5"
 commons-io = "2.21.0"
 dropwizard = "4.0.14" # used to set the dropwizard-bom version, that controls lots of dependency versions
 elasticsearch = "9.2.1"
-flyway = "11.14.0"
+flyway = "11.20.0"
 guice = "7.0.0"
 gwt = "2.12.2"
-jackson-swagger = "2.11.1" # Specific version of jackson for use with the swagger plugin
 jgit = "7.3.0.202506031305-r"
 jmh = "1.37"
-jooq = "3.20.8"
+jooq = "3.20.10"
 junit-jupiter = "5.13.1"
 langchain4j = "1.10.0"
 langchain4j-cohere = "1.10.0-beta18"
@@ -52,7 +49,7 @@ commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 commons-lang = { module = "org.apache.commons:commons-lang3" } # version controlled by dropwizard-dependencies
 commons-pool2 = { module = "org.apache.commons:commons-pool2", version = "2.12.1" }
 commons-text = { module = "org.apache.commons:commons-text" } # version controlled by dropwizard-dependencies
-classgraph = { module = "io.github.classgraph:classgraph", version = "4.8.181" }
+classgraph = { module = "io.github.classgraph:classgraph", version = "4.8.184" }
 data-faker = { module = "net.datafaker:datafaker", version = "2.4.2" }
 dropwizard-assets = { module = "io.dropwizard:dropwizard-assets" } # version controlled by dropwizard-dependencies
 dropwizard-auth = { module = "io.dropwizard:dropwizard-auth" } # version controlled by dropwizard-dependencies

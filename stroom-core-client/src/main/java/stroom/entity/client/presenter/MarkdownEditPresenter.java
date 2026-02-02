@@ -69,6 +69,9 @@ public class MarkdownEditPresenter
     private boolean editMode = false;
     private List<ButtonView> insertedButtons;
 
+    private String lastRawMarkdown = null;
+    private SafeHtml lastRenderedMarkdown = null;
+
     @Inject
     public MarkdownEditPresenter(final EventBus eventBus,
                                  final MarkdownEditView view,
@@ -168,30 +171,17 @@ public class MarkdownEditPresenter
         return markdownPreviewPresenter.getText();
     }
 
-    public void setText(String rawMarkdown) {
-        if (rawMarkdown == null) {
-            rawMarkdown = "";
-        }
-
+    public void setText(final String rawMarkdown) {
         reading = true;
 
-        if (!Objects.equals(markdownPreviewPresenter.getText(), rawMarkdown)) {
-            markdownPreviewPresenter.setText(rawMarkdown);
+        final String raw = NullSafe.string(rawMarkdown);
+        if (!Objects.equals(markdownPreviewPresenter.getText(), raw)) {
+            markdownPreviewPresenter.setText(raw);
         }
 
         updateEditState();
-
-//        // No content do default to edit mode
-//        if (NullSafe.isBlankString(rawMarkdown)) {
-//            GWT.log("setText, editMode: true");
-//            setEditMode(true);
-////            editModeButton.setState(true);
-//        } else {
-//            GWT.log("setText, editMode: false");
-//            setEditMode(false);
-////            editModeButton.setState(false);
-//        }
         reading = false;
+
         updateMarkdownOnIFramePresenter();
     }
 
@@ -226,9 +216,16 @@ public class MarkdownEditPresenter
     }
 
     private void updateMarkdownOnIFramePresenter() {
-        final SafeHtml iFrameHtmlContent = markdownConverter.convertMarkdownToHtmlInFrame(
-                markdownPreviewPresenter.getText());
-        iFramePresenter.setSrcDoc(iFrameHtmlContent.asString());
+        final String rawMarkdown = markdownPreviewPresenter.getText();
+        if (!Objects.equals(rawMarkdown, lastRawMarkdown)) {
+            lastRawMarkdown = rawMarkdown;
+            final SafeHtml iFrameHtmlContent = markdownConverter.convertMarkdownToHtmlInFrame(rawMarkdown);
+            if (!Objects.equals(iFrameHtmlContent, lastRenderedMarkdown)) {
+                lastRenderedMarkdown = iFrameHtmlContent;
+                iFramePresenter.setSrcDoc(iFrameHtmlContent.asString());
+//                iFramePresenter.getWidget().getElement().setScrollTop(50);
+            }
+        }
     }
 
     public void setReadOnly(final boolean readOnly) {
@@ -237,9 +234,6 @@ public class MarkdownEditPresenter
 //        setEditMode(this.editMode);
         updateEditState();
     }
-
-    // --------------------------------------------------------------------------------
-
 
     public interface MarkdownEditView extends View {
 
