@@ -238,10 +238,13 @@ public class ContentStoreTestSetup {
                 // Generate the file: URL of the content-store YAML file
                 final String contentStoreFileUrl = "file://" +
                                                    localContentRepo.resolve("source/content-store.yml");
+                final String sampleContentStoreFileUrl = "file://" +
+                                                   localContentRepo.resolve("sample-source/content-store.yml");
 
                 // Hack to force the content store config to use our content store config file
                 contentStoreResource = contentStoreResourceProvider.get();
                 contentStoreResource.addTestUriContentStoreUrl(contentStoreFileUrl);
+                contentStoreResource.addTestUriContentStoreUrl(sampleContentStoreFileUrl);
 
                 // Tell the content store to get from our local GIT repo instead of the https version
                 contentStoreResource.remapGitUrl("https://github.com/gchq/stroom-content.git",
