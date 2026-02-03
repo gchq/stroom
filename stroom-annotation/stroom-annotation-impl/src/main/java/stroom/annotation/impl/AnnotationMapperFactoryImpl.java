@@ -146,7 +146,8 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
         if (annotationIdIndex != -1) {
             final Function<Annotation, Val> function = annotation -> ValLong.create(annotation.getId());
             allMutators = new ArrayList<>(mutators);
-            allMutators.add((storedValues, annotation) -> storedValues.set(annotationIdIndex, function.apply(annotation)));
+            allMutators.add((storedValues, annotation) ->
+                    storedValues.set(annotationIdIndex, function.apply(annotation)));
         } else {
             allMutators = mutators;
         }
