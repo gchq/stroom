@@ -141,11 +141,12 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
         final List<Mutator> allMutators;
 
         // Add annotation id if needed.
-        final int idIndex = getFieldValIndex(valueReferenceIndex, SpecialColumns.RESERVED_ID, "Id");
-        if (idIndex != -1) {
+        final int annotationIdIndex = getFieldValIndex(valueReferenceIndex, SpecialColumns.RESERVED_ANNOTATION_ID,
+                AnnotationDecorationFields.ANNOTATION_ID);
+        if (annotationIdIndex != -1) {
             final Function<Annotation, Val> function = annotation -> ValLong.create(annotation.getId());
             allMutators = new ArrayList<>(mutators);
-            allMutators.add((storedValues, annotation) -> storedValues.set(idIndex, function.apply(annotation)));
+            allMutators.add((storedValues, annotation) -> storedValues.set(annotationIdIndex, function.apply(annotation)));
         } else {
             allMutators = mutators;
         }
