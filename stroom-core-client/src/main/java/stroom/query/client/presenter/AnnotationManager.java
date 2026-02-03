@@ -221,11 +221,6 @@ public class AnnotationManager implements HasHandlers {
                 if (annotationId != null && !annotationIdList.contains(annotationId)) {
                     annotationIdList.add(annotationId);
                 }
-
-                // Add annotation id from row data.
-                if (row.getAnnotationId() != null && !annotationIdList.contains(row.getAnnotationId())) {
-                    annotationIdList.add(row.getAnnotationId());
-                }
             }
 
             return new AnnotationTable(columnNames, values);
