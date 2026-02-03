@@ -168,4 +168,22 @@ public class SimpleDurationUtil {
                     0);
         };
     }
+
+    public static StroomDuration convertToStroomDuration(final SimpleDuration duration) {
+        if (duration == null || duration.getTimeUnit() == null) {
+            return null;
+        }
+
+        return switch (duration.getTimeUnit()) {
+            case NANOSECONDS -> StroomDuration.ofNanos(duration.getTime());
+            case MILLISECONDS -> StroomDuration.ofMillis(duration.getTime());
+            case SECONDS -> StroomDuration.ofSeconds(duration.getTime());
+            case MINUTES -> StroomDuration.ofMinutes(duration.getTime());
+            case HOURS -> StroomDuration.ofHours(duration.getTime());
+            case DAYS -> StroomDuration.ofDays(duration.getTime());
+            case WEEKS -> StroomDuration.ofDays(duration.getTime() * 7);
+            case MONTHS -> StroomDuration.ofDays(duration.getTime() * 31);
+            case YEARS -> StroomDuration.ofDays(duration.getTime() * 365);
+        };
+    }
 }
