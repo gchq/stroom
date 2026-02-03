@@ -1673,7 +1673,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                     .fetchLazy()) {
 
                 while (cursor.hasNext()) {
-                    final Result<?> result = cursor.fetchNext(1000);
+                    final Result<?> result = cursor.fetchNext(BATCH_SIZE);
                     result.forEach(r -> {
                         final String uuid = r.get(ANNOTATION.UUID);
                         if (uuidPredicate.test(uuid)) {
