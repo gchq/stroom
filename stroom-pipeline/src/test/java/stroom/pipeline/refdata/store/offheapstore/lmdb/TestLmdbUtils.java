@@ -27,7 +27,7 @@ class TestLmdbUtils {
                 1234567890L,
                 345678901L,
                 56789012L,
-                ProcessingState.COMPLETE);
+                ProcessingState.COMPLETE, structureVersion, refStreamFeatures, mapInfoList);
 
         final RefDataProcessingInfoSerde serde = new RefDataProcessingInfoSerde();
 

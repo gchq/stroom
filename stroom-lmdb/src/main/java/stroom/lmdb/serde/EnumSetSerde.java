@@ -1,5 +1,6 @@
 package stroom.lmdb.serde;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.serde.EnumSetSerde.HasBitPosition;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -22,7 +23,7 @@ import java.util.Set;
  * @param <T>
  */
 public class EnumSetSerde<T extends Enum<T> & HasBitPosition>
-        implements Serde<EnumSet<T>> {
+        implements Serde<Set<T>> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EnumSetSerde.class);
 
@@ -43,16 +44,30 @@ public class EnumSetSerde<T extends Enum<T> & HasBitPosition>
     private final T[] sparseArr;
 
     /**
-     * Create a {@link Serde} for (de)serialising an {@link EnumSet} of T.
+     * Create a {@link Serde} for (de)serialising an {@link Set} of T.
      * The {@link Enum} must implement {@link HasBitPosition}.
      *
      * @param type The type of the {@link Enum}.
      */
     public EnumSetSerde(final Class<T> type) {
+        this(type, type.getEnumConstants().length);
+    }
+
+    /**
+     * Create a {@link Serde} for (de)serialising an {@link Set} of T.
+     * The {@link Enum} must implement {@link HasBitPosition}.
+     *
+     * @param type     The type of the {@link Enum}.
+     * @param maxItems The maximum number of enum constants to support, i.e. to allow
+     *                 for future additions to the enum. Value should be a factor of eight.
+     *                 If the value is lower than the number of items currently in the
+     *                 enum, then it will be ignored.
+     */
+    public EnumSetSerde(final Class<T> type, final int maxItems) {
         Objects.requireNonNull(type);
         this.type = type;
         final T[] enumConstants = type.getEnumConstants();
-        this.bitCount = enumConstants.length;
+        this.bitCount = Math.max(enumConstants.length, maxItems);
         final int byteCount = bitCount / 8;
         this.sizeInBytes = bitCount % 8 == 0
                 ? byteCount
@@ -85,18 +100,31 @@ public class EnumSetSerde<T extends Enum<T> & HasBitPosition>
     }
 
     /**
-     * Create a {@link Serde} for (de)serialising an {@link EnumSet} of T.
+     * Create a {@link Serde} for (de)serialising an {@link Set} of T.
      * The {@link Enum} must implement {@link HasBitPosition}.
      *
      * @param type The type of the {@link Enum}.
      */
-    public EnumSetSerde<T> forClass(final Class<T> type) {
+    public static <T extends Enum<T> & HasBitPosition> EnumSetSerde<T> forClass(final Class<T> type) {
         return new EnumSetSerde<>(type);
     }
 
     @Override
-    public EnumSet<T> deserialize(final ByteBuffer byteBuffer) {
-        final EnumSet<T> enumSet = EnumSet.noneOf(type);
+    public Set<T> deserialize(final ByteBuffer byteBuffer) {
+        return deserialize(byteBuffer, true);
+    }
+
+    /**
+     * Read the set from byteBuffer, advancing the buffer but NOT flipping it.
+     *
+     * @return The de-serialised object
+     */
+    public Set<T> get(final ByteBuffer byteBuffer) {
+        return deserialize(byteBuffer, false);
+    }
+
+    private Set<T> deserialize(final ByteBuffer byteBuffer, final boolean flip) {
+        final Set<T> enumSet = EnumSet.noneOf(type);
 
         int bitIdx = 0;
         for (int byteIdx = 0; byteIdx < sizeInBytes && bitIdx < bitCount; byteIdx++) {
@@ -121,7 +149,9 @@ public class EnumSetSerde<T extends Enum<T> & HasBitPosition>
                 bitIdx += 8;
             }
         }
-        byteBuffer.flip();
+        if (flip) {
+            byteBuffer.flip();
+        }
         return enumSet;
     }
 
@@ -157,7 +187,19 @@ public class EnumSetSerde<T extends Enum<T> & HasBitPosition>
 //    }
 
     @Override
-    public void serialize(final ByteBuffer byteBuffer, final EnumSet<T> enumSet) {
+    public void serialize(final ByteBuffer byteBuffer, final Set<T> enumSet) {
+        serialize(byteBuffer, enumSet, true);
+    }
+
+    /**
+     * Serialize the set into the passed {@link ByteBuffer}. Assumes there is sufficient capacity.
+     * This method will advance the buffer but NOT flip it.
+     */
+    public void put(final ByteBuffer byteBuffer, final Set<T> enumSet) {
+        serialize(byteBuffer, enumSet, false);
+    }
+
+    private void serialize(final ByteBuffer byteBuffer, final Set<T> enumSet, final boolean flip) {
         Objects.requireNonNull(enumSet);
         // Clear all bytes and advance the byteBuffer position to the end of our enumSet bytes
         for (int i = 0; i < sizeInBytes; i++) {
@@ -173,8 +215,11 @@ public class EnumSetSerde<T extends Enum<T> & HasBitPosition>
             final int aByte = byteBuffer.get(byteIdx) | (1 << bitIdxInByte);
             byteBuffer.put(byteIdx, (byte) aByte);
         }
-        byteBuffer.flip();
+        if (flip) {
+            byteBuffer.flip();
+        }
     }
+
 
     @Override
     public int getBufferCapacity() {
@@ -185,6 +230,20 @@ public class EnumSetSerde<T extends Enum<T> & HasBitPosition>
         return type;
     }
 
+    /**
+     * Create a slice starting at the current position of byteBuffer and having length equal
+     * to sizeInBytes.
+     * It will also advance the source byteBuffer past the slice.
+     * This is useful if you need to take a slice to de-serialise part of a buffer but still need to
+     * advance past it to deserialise the other parts.
+     *
+     * @param byteBuffer The source buffer.
+     * @return The new slice.
+     */
+    public ByteBuffer sliceAndAdvance(final ByteBuffer byteBuffer) {
+        return ByteBufferUtils.sliceAndAdvance(byteBuffer, sizeInBytes);
+    }
+
 
     // --------------------------------------------------------------------------------
 
@@ -193,6 +252,7 @@ public class EnumSetSerde<T extends Enum<T> & HasBitPosition>
 
         /**
          * @return The unique bit position (>= 0) for this object, e.g. 0, 1, 2, 3, etc.
+         * Gaps are allowed, but large gaps will mean more bytes used in serialisation.
          */
         int getBitPosition();
     }

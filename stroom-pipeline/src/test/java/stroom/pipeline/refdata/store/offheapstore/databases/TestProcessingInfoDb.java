@@ -22,6 +22,7 @@ import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
+import stroom.pipeline.refdata.store.RefDataProcessingInfo.RefStreamFeature;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefStreamDefinitionSerde;
@@ -31,6 +32,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -63,13 +66,21 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
                 1234567890L,
                 345678901L,
                 56789012L,
-                ProcessingState.COMPLETE);
+                ProcessingState.COMPLETE,
+                RefDataProcessingInfo.STRUCTURE_VERSION_2,
+                EnumSet.of(RefStreamFeature.SUPPORTS_DIRECT_VALUES),
+                List.of(
+                        M
+                ));
 
         final RefDataProcessingInfo refDataProcessingInfoB = new RefDataProcessingInfo(
                 34567890L,
                 5678901L,
                 789012L,
-                ProcessingState.LOAD_IN_PROGRESS);
+                ProcessingState.LOAD_IN_PROGRESS,
+                structureVersion,
+                refStreamFeatures,
+                mapInfoList);
 
         PutOutcome putOutcome;
         putOutcome = processingInfoDb.put(refStreamDefinitionA, refDataProcessingInfoA, false);
@@ -91,7 +102,8 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
 
         final RefDataProcessingInfo refDataProcessingInfoA2 = processingInfoDb.get(refStreamDefinitionA).get();
 
-        assertThat(refDataProcessingInfoA).isEqualTo(refDataProcessingInfoA2);
+        assertThat(refDataProcessingInfoA)
+                .isEqualTo(refDataProcessingInfoA2);
     }
 
     @Test
@@ -104,7 +116,7 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
                 234L,
                 123L,
                 345L,
-                ProcessingState.LOAD_IN_PROGRESS);
+                ProcessingState.LOAD_IN_PROGRESS, structureVersion, refStreamFeatures, mapInfoList);
 
         PutOutcome putOutcome;
 
@@ -165,7 +177,7 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
                 234L,
                 123L,
                 345L,
-                ProcessingState.LOAD_IN_PROGRESS);
+                ProcessingState.LOAD_IN_PROGRESS, structureVersion, refStreamFeatures, mapInfoList);
 
         final PutOutcome putOutcome;
 
@@ -195,7 +207,7 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
                 234L,
                 123L,
                 345L,
-                ProcessingState.LOAD_IN_PROGRESS);
+                ProcessingState.LOAD_IN_PROGRESS, structureVersion, refStreamFeatures, mapInfoList);
 
         PutOutcome putOutcome;
 

@@ -21,6 +21,14 @@ import java.nio.ByteBuffer;
 
 public interface Deserializer<T> {
 
+    /**
+     * Read object T from byteBuffer, advancing the buffer and flipping it once the object has been read.
+     *
+     * @return The de-serialised object
+     */
     T deserialize(final ByteBuffer byteBuffer);
 
+    // TODO we could do with a get(byteBuffer) method that reads from the buffer, advancing it,
+    //  but not flipping it, e.g. when you are de-serialising part of the buffer. However, that means
+    //  adding it to lots of impls.
 }

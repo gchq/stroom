@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * A generic wrapper round a key to make duplicate keys/entries unique. This is to enable storing of
+ * A generic wrapper round a key to make duplicate keys/entries unique. This is to enable storing of duplicate
  * entries in strict insert order. Any duplicate keys or whole entries will be stored and not overwritten.
  * A unique ID value (of configurable byte length) is appended to the end of the key to provide the uniqueness.
  * Care needs to be taken to ensure you will not blow the limit of the ID value.

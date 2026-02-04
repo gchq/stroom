@@ -111,9 +111,7 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
     }
 
     public void serializeWithoutRangePart(final ByteBuffer byteBuffer, final RangeStoreKey key) {
-
         serialize(byteBuffer, key);
-
         // set the limit to just after the UID part
         byteBuffer.limit(UID.UID_ARRAY_LENGTH);
     }

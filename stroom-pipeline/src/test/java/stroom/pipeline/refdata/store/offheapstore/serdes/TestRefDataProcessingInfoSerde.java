@@ -44,7 +44,7 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
                 1234567890L,
                 345678901L,
                 56789012L,
-                ProcessingState.COMPLETE);
+                ProcessingState.COMPLETE, structureVersion, refStreamFeatures, mapInfoList);
 
         doSerialisationDeserialisationTest(refDataProcessingInfo);
     }
@@ -55,13 +55,13 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
                 1,
                 1,
                 1,
-                ProcessingState.LOAD_IN_PROGRESS);
+                ProcessingState.LOAD_IN_PROGRESS, structureVersion, refStreamFeatures, mapInfoList);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
                 1,
                 1,
                 1,
-                ProcessingState.COMPLETE);
+                ProcessingState.COMPLETE, structureVersion, refStreamFeatures, mapInfoList);
 
         doByteBufferModificationTest(
                 input,
@@ -77,13 +77,13 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
                 1,
                 1,
                 1,
-                ProcessingState.LOAD_IN_PROGRESS);
+                ProcessingState.LOAD_IN_PROGRESS, structureVersion, refStreamFeatures, mapInfoList);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
                 1,
                 123,
                 1,
-                ProcessingState.LOAD_IN_PROGRESS);
+                ProcessingState.LOAD_IN_PROGRESS, structureVersion, refStreamFeatures, mapInfoList);
 
         doByteBufferModificationTest(
                 input,
@@ -98,13 +98,13 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
                 1,
                 1,
                 1,
-                ProcessingState.LOAD_IN_PROGRESS);
+                ProcessingState.LOAD_IN_PROGRESS, structureVersion, refStreamFeatures, mapInfoList);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
                 1,
                 123,
                 1,
-                ProcessingState.COMPLETE);
+                ProcessingState.COMPLETE, structureVersion, refStreamFeatures, mapInfoList);
 
         doByteBufferModificationTest(
                 input,
@@ -122,7 +122,7 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
                 0L,
                 1000L,
                 100L,
-                ProcessingState.COMPLETE);
+                ProcessingState.COMPLETE, structureVersion, refStreamFeatures, mapInfoList);
 
         ByteBuffer valueBuffer = serialize(refDataProcessingInfo);
 
@@ -147,7 +147,7 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
                     0L,
                     1000L,
                     100L,
-                    processingState);
+                    processingState, structureVersion, refStreamFeatures, mapInfoList);
 
             ByteBuffer valueBuffer = serialize(refDataProcessingInfo);
 
@@ -158,26 +158,25 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
     }
 
 
-
     @Test
     void testCreateProcessingStatePredicate() {
         RefDataProcessingInfo refDataProcessingInfo1 = new RefDataProcessingInfo(
                 0L,
                 1000L,
                 100L,
-                ProcessingState.COMPLETE);
+                ProcessingState.COMPLETE, structureVersion, refStreamFeatures, mapInfoList);
 
         RefDataProcessingInfo refDataProcessingInfo2 = new RefDataProcessingInfo(
                 0L,
                 1000L,
                 100L,
-                ProcessingState.FAILED);
+                ProcessingState.FAILED, structureVersion, refStreamFeatures, mapInfoList);
 
         RefDataProcessingInfo refDataProcessingInfo3 = new RefDataProcessingInfo(
                 0L,
                 1000L,
                 100L,
-                ProcessingState.TERMINATED);
+                ProcessingState.TERMINATED, structureVersion, refStreamFeatures, mapInfoList);
 
         final Predicate<ByteBuffer> processingStatePredicate =
                 RefDataProcessingInfoSerde.createProcessingStatePredicate(
@@ -193,6 +192,7 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
 
     @Override
     TypeLiteral<RefDataProcessingInfoSerde> getSerdeType() {
-        return new TypeLiteral<RefDataProcessingInfoSerde>(){};
+        return new TypeLiteral<RefDataProcessingInfoSerde>() {
+        };
     }
 }

@@ -436,6 +436,30 @@ public class ByteBufferUtils {
         return result;
     }
 
+    /**
+     * Advance the position of byteBuffer by count
+     */
+    public static void advance(final ByteBuffer byteBuffer, final int count) {
+        byteBuffer.position(byteBuffer.position() + count);
+    }
+
+    /**
+     * Create a slice starting at the current position of byteBuffer and having length {@code length}.
+     * It will also advance the source byteBuffer past the slice.
+     * This is useful if you need to take a slice to de-serialise part of a buffer but still need to
+     * advance past it to deserialise the other parts.
+     *
+     * @param byteBuffer The source buffer.
+     * @param length     The length of the slice and the amount to advance the source buffer by.
+     * @return The new slice.
+     */
+    public static ByteBuffer sliceAndAdvance(final ByteBuffer byteBuffer, final int length) {
+        final ByteBuffer slice = byteBuffer.slice(byteBuffer.position(), length);
+        // Advance the source buffer past the slice
+        byteBuffer.position(byteBuffer.position() + length);
+        return slice;
+    }
+
 //    public static void debug(final ByteBuffer byteBuffer) {
 //        System.out.println(Arrays.toString(toBytes(byteBuffer.slice())));
 //    }

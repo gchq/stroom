@@ -7,6 +7,7 @@ import stroom.pipeline.refdata.store.NullValue;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
+import stroom.pipeline.refdata.store.RefDataProcessingInfo.RefStreamFeature;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
@@ -26,7 +27,9 @@ import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.NavigableMap;
@@ -102,7 +105,10 @@ class OnHeapRefDataLoader implements RefDataLoader {
                 System.currentTimeMillis(),
                 System.currentTimeMillis(),
                 effectiveTimeMs,
-                ProcessingState.LOAD_IN_PROGRESS);
+                ProcessingState.LOAD_IN_PROGRESS,
+                RefDataProcessingInfo.STRUCTURE_VERSION_2,
+                EnumSet.noneOf(RefStreamFeature.class),
+                Collections.emptyList());
 
         PutOutcome putOutcome = putProcessingInfo(refStreamDefinition, refDataProcessingInfo);
 

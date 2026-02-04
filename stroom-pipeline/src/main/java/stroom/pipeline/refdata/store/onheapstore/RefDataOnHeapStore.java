@@ -307,11 +307,7 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
 
         processingInfoMap.compute(refStreamDefinition, (refStreamDef, refDataProcessingInfo) -> {
             if (refDataProcessingInfo != null) {
-                return new RefDataProcessingInfo(
-                        refDataProcessingInfo.getCreateTimeEpochMs(),
-                        timeMs,
-                        refDataProcessingInfo.getEffectiveTimeEpochMs(),
-                        refDataProcessingInfo.getProcessingState());
+                return refDataProcessingInfo.cloneWithNewAccessTime(timeMs);
             } else {
                 throw new RuntimeException(LogUtil.message(
                         "No processing info entry found for {}", refStreamDefinition));

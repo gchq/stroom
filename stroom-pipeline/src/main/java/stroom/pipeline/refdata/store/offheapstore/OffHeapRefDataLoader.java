@@ -23,8 +23,10 @@ import stroom.lmdb.PutOutcome;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
+import stroom.pipeline.refdata.store.RefDataEntryType;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
+import stroom.pipeline.refdata.store.RefDataProcessingInfo.RefStreamFeature;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StagingValue;
 import stroom.pipeline.refdata.store.offheapstore.databases.EntryStoreDb;
@@ -59,6 +61,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -214,7 +218,10 @@ public class OffHeapRefDataLoader implements RefDataLoader {
                 System.currentTimeMillis(),
                 System.currentTimeMillis(),
                 effectiveTimeMs,
-                ProcessingState.LOAD_IN_PROGRESS);
+                ProcessingState.LOAD_IN_PROGRESS,
+                RefDataProcessingInfo.STRUCTURE_VERSION_2,
+                EnumSet.of(RefStreamFeature.SUPPORTS_DIRECT_VALUES),
+                Collections.emptyList());
 
         // Create this in the main store before we stage any data so any map definitions created
         // during staging can get purged later if the load is unsuccessful
@@ -250,7 +257,12 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         // Update the meta data in the store
         updateProcessingState(ProcessingState.STAGED);
         // Move all the entries loaded into the staging store into the main ref store
-        transferStagedEntries();
+
+        offHeapStagingStore.getLoadedRefDataEntryType().ifPresentOrElse(
+                this::transferStagedEntries,
+                () -> {
+                    LOGGER.debug("No entries staged");
+                });
     }
 
     @Override
@@ -447,17 +459,21 @@ public class OffHeapRefDataLoader implements RefDataLoader {
         this.rangePutOutcomeHandler = rangePutOutcomeHandler;
     }
 
-    private void transferStagedEntries() {
+    private void transferStagedEntries(final RefDataEntryType refDataEntryType) {
         checkCurrentState(LoaderState.STAGED);
 
         transferStagedEntriesTimer = DurationTimer.start();
         try (final BatchingWriteTxn destBatchingWriteTxn = refStoreLmdbEnv.openBatchingWriteTxn(maxPutsBeforeCommit)) {
             // We now hold the single write lock for the main ref store
-
             updateTaskContextInfoSupplier("Loading staged entries");
-            transferStagedKeyValueEntries(destBatchingWriteTxn);
-            transferStagedRangeValueEntries(destBatchingWriteTxn);
 
+            if (refDataEntryType.hasKeyValueEntries()) {
+                transferStagedKeyValueEntries(destBatchingWriteTxn);
+            }
+
+            if (refDataEntryType.hasRangeValueEntries()) {
+                transferStagedRangeValueEntries(destBatchingWriteTxn);
+            }
             // Final commit
             destBatchingWriteTxn.commit();
         }

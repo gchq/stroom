@@ -2,13 +2,17 @@ package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.bytebuffer.PooledByteBuffer;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.StroomCache;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidForwardDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
+import stroom.util.cache.CacheConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.time.StroomDuration;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.assistedinject.Assisted;
@@ -19,6 +23,7 @@ import org.lmdbjava.Txn;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -35,14 +40,23 @@ import java.util.stream.Stream;
  * It manages the creation and retrieval of {@link MapDefinition} <==> to UID mappings. These
  * mappings are used to reduce the storage space required for all the entries in the keyvalue
  * and rangevalue stores by just having a 4 byte UID in the key instead of a many byte {@link MapDefinition}
+ * <p>
+ * One {@link MapDefinitionUIDStore} per feed.
  */
 public class MapDefinitionUIDStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MapDefinitionUIDStore.class);
+    private static final String CACHE_NAME_BASE_FORWARD = "Ref Data Forward Map Cache - ";
+    private static final String CACHE_NAME_BASE_REVERSE = "Ref Data Reverse Map Cache - ";
 
     private final MapUidForwardDb mapUidForwardDb;
     private final MapUidReverseDb mapUidReverseDb;
     private final RefDataLmdbEnv lmdbEnv;
+    // We can't use UID in the cache as it backs a direct buffer that
+    // the caller must be in control of. Instead convert the UID into
+    // its numeric form
+    private final StroomCache<MapDefinition, Long> mapToUidCache;
+    private final StroomCache<Long, MapDefinition> uidToMapCache;
 
     // TODO may want some way of reusing UIDs after they have been purged. Simplest solution would be to
     //  have a new table to hold a pool of UIDs for reuse.  This would be populated during the purge of the
@@ -60,10 +74,24 @@ public class MapDefinitionUIDStore {
     @Inject
     MapDefinitionUIDStore(@Assisted final RefDataLmdbEnv lmdbEnv,
                           final MapUidForwardDb mapUidForwardDb,
-                          final MapUidReverseDb mapUidReverseDb) {
+                          final MapUidReverseDb mapUidReverseDb,
+                          final CacheManager cacheManager) {
         this.lmdbEnv = lmdbEnv;
         this.mapUidForwardDb = mapUidForwardDb;
         this.mapUidReverseDb = mapUidReverseDb;
+        final Supplier<CacheConfig> configProvider = () -> CacheConfig.builder()
+                .maximumSize(100)
+                .expireAfterWrite(StroomDuration.ofMinutes(5))
+                .build();
+
+        // Can't use loading caches as we need to create the entries inside
+        // a caller provided txn
+        mapToUidCache = cacheManager.create(
+                CACHE_NAME_BASE_FORWARD + lmdbEnv.getFeedName(),
+                configProvider);
+        uidToMapCache = cacheManager.create(
+                CACHE_NAME_BASE_REVERSE + lmdbEnv.getFeedName(),
+                configProvider);
     }
 
     Optional<UID> getUid(final MapDefinition mapDefinition, final ByteBuffer uidByteBuffer) {
@@ -155,6 +183,8 @@ public class MapDefinitionUIDStore {
     }
 
     Optional<UID> get(final Txn<ByteBuffer> txn, final MapDefinition mapDefinition) {
+//        mapToUidCache.getIfPresent(mapDefinition)
+//                .map();
         return mapUidForwardDb.get(txn, mapDefinition);
     }
 
@@ -278,5 +308,46 @@ public class MapDefinitionUIDStore {
     public interface Factory {
 
         MapDefinitionUIDStore create(final RefDataLmdbEnv lmdbEnvironment);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * Hold the UID and the PooledByteBuffer so we can release it back to the pool when
+     * finished with.
+     */
+    private static class PooledUID {
+
+        private final UID uid;
+        private final PooledByteBuffer pooledByteBuffer;
+        private final int hashCode;
+
+        public PooledUID(final UID uid, final PooledByteBuffer pooledByteBuffer) {
+            if (uid.getBackingBuffer() != pooledByteBuffer.getByteBuffer()) {
+                throw new IllegalArgumentException("uid and pooledByteBuffer must share the same backing buffer");
+            }
+            this.uid = uid;
+            this.pooledByteBuffer = pooledByteBuffer;
+            this.hashCode = Objects.hash(uid);
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final PooledUID pooledUID = (PooledUID) o;
+            return Objects.equals(uid, pooledUID.uid);
+        }
+
+        @Override
+        public int hashCode() {
+            return hashCode;
+        }
     }
 }

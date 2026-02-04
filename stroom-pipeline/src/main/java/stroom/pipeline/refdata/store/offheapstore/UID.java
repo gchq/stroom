@@ -42,7 +42,6 @@ public class UID implements Comparable<UID> {
     // Changing this value would require any data stored using UIDs to be
     // migrated to the new byte array length
     public static final int UID_ARRAY_LENGTH = 4;
-
     public static final UnsignedBytes UNSIGNED_BYTES = UnsignedBytesInstances.ofLength(UID_ARRAY_LENGTH);
 
     private final ByteBuffer byteBuffer;

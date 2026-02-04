@@ -9,6 +9,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import com.google.common.base.Strings;
 import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.nio.ByteBuffer;
@@ -18,9 +19,12 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestEnumSetSerde {
 
@@ -32,9 +36,9 @@ class TestEnumSetSerde {
         final ByteBuffer byteBuffer = ByteBuffer.allocate(3);
         final EnumSetSerde<Feature> serde = new EnumSetSerde<>(Feature.class);
         return TestUtil.buildDynamicTestStream()
-                .withWrappedInputType(new TypeLiteral<EnumSet<Feature>>() {
+                .withWrappedInputType(new TypeLiteral<Set<Feature>>() {
                 })
-                .withWrappedOutputType(new TypeLiteral<EnumSet<Feature>>() {
+                .withWrappedOutputType(new TypeLiteral<Set<Feature>>() {
                 })
                 .withTestFunction(testCase -> {
                     byteBuffer.clear();
@@ -71,6 +75,71 @@ class TestEnumSetSerde {
                 .build();
     }
 
+    @TestFactory
+    Stream<DynamicTest> testSerDeser_withHeadRoom() {
+        // We only need 3 bytes, but use a buffer of 5 for a better test
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(5);
+        // Force it to serialise to 3 bytes to allow for more enums in future.
+        final EnumSetSerde<Feature> serde = new EnumSetSerde<>(Feature.class, 3);
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<Set<Feature>>() {
+                })
+                .withWrappedOutputType(new TypeLiteral<Set<Feature>>() {
+                })
+                .withTestFunction(testCase -> {
+                    byteBuffer.clear();
+                    serde.serialize(byteBuffer, testCase.getInput());
+
+                    final byte[] arr = byteBuffer.array();
+                    final List<String> parts = new ArrayList<>();
+                    for (final byte aByte : arr) {
+                        final String part = Strings.padStart(Integer.toBinaryString(aByte), 8, '0');
+                        parts.add(part);
+                    }
+
+                    LOGGER.info("len: {}, arr: {}, bits: [{}]",
+                            arr.length, ByteArrayUtils.byteArrayToHex(arr), String.join("|", parts));
+
+                    return serde.deserialize(byteBuffer);
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(EnumSet.noneOf(Feature.class),
+                        EnumSet.noneOf(Feature.class))
+                .addCase(EnumSet.allOf(Feature.class),
+                        EnumSet.allOf(Feature.class))
+                .addCase(EnumSet.of(Feature.AIR_CON),
+                        EnumSet.of(Feature.AIR_CON))
+                .addCase(EnumSet.of(Feature.DIFF_LOCK),
+                        EnumSet.of(Feature.DIFF_LOCK))
+                .addCase(EnumSet.of(Feature.DASH_CAM),
+                        EnumSet.of(Feature.DASH_CAM))
+                .addCase(EnumSet.of(Feature.SAT_NAV, Feature.DIFF_LOCK),
+                        EnumSet.of(Feature.SAT_NAV, Feature.DIFF_LOCK))
+                .addCase(EnumSet.of(Feature.ISO_FIX, Feature.FOUR_WHEEL_DRIVE, Feature.LOW_RANGE, Feature.DASH_CAM),
+                        EnumSet.of(Feature.ISO_FIX, Feature.FOUR_WHEEL_DRIVE, Feature.LOW_RANGE, Feature.DASH_CAM))
+                .build();
+    }
+
+    @Test
+    void testGetBufferCapacity1() {
+        final EnumSetSerde<Feature> serde1 = new EnumSetSerde<>(Feature.class);
+        assertThat(serde1.getBufferCapacity())
+                .isEqualTo(2);
+    }
+
+    @Test
+    void testGetBufferCapacity2() {
+        final EnumSetSerde<Feature> serde2 = new EnumSetSerde<>(Feature.class, 32);
+        assertThat(serde2.getBufferCapacity())
+                .isEqualTo(4);
+    }
+
+    @Test
+    void testGetBufferCapacity3() {
+        final EnumSetSerde<Feature> serde3 = new EnumSetSerde<>(Feature.class, 8);
+        assertThat(serde3.getBufferCapacity())
+                .isEqualTo(2);
+    }
 
     // --------------------------------------------------------------------------------
 

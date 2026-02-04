@@ -361,6 +361,37 @@ class TestByteBufferUtils {
                 .isInstanceOf(IndexOutOfBoundsException.class);
     }
 
+    @Test
+    void testSliceAndAdvance() {
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(30);
+        final int val1 = 234098234;
+        final int val2 = 121330457;
+        final int val3 = 40689324;
+        byteBuffer.putInt(val1);
+        byteBuffer.putInt(val2);
+        byteBuffer.putInt(val3);
+        byteBuffer.flip();
+
+        assertThat(byteBuffer.remaining())
+                .isEqualTo(Integer.BYTES * 3);
+        assertThat(byteBuffer.getInt())
+                .isEqualTo(val1);
+        assertThat(byteBuffer.remaining())
+                .isEqualTo(Integer.BYTES * 2);
+        final ByteBuffer slice = ByteBufferUtils.sliceAndAdvance(byteBuffer, Integer.BYTES);
+
+        // We have gone past the slice so can read them out of order
+        assertThat(byteBuffer.remaining())
+                .isEqualTo(Integer.BYTES);
+        assertThat(byteBuffer.getInt())
+                .isEqualTo(val3);
+
+        assertThat(slice.remaining())
+                .isEqualTo(Integer.BYTES);
+        assertThat(slice.getInt())
+                .isEqualTo(val2);
+    }
+
     @Disabled // manual perf testing only
     @Test
     void testHashPerformance() throws IOException {

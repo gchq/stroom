@@ -19,10 +19,17 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.serde.Deserializer;
+import stroom.lmdb.serde.EnumSetSerde;
 import stroom.lmdb.serde.Serde;
 import stroom.lmdb.serde.Serializer;
+import stroom.lmdb.serde.UnsignedBytes;
+import stroom.lmdb.serde.UnsignedBytesInstances;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
+import stroom.pipeline.refdata.store.RefDataProcessingInfo.RefMapFeature;
+import stroom.pipeline.refdata.store.RefDataProcessingInfo.RefMapInfo;
+import stroom.pipeline.refdata.store.RefDataProcessingInfo.RefStreamFeature;
+import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -32,9 +39,18 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 
+/**
+ * <pre>
+ * < createMs >< lastAccessMs >< effMs   >< structureVer >< strm features >< < mapUid  >< mapFeatures > >[repeated]
+ * < 8 bytes  >< 8 bytes      >< 8 bytes >< 1 byte       >< 2 bytes       >< < 4 bytes >< 2 bytes     > >[repeated]
+ * </pre>
+ */
 public class RefDataProcessingInfoSerde implements
         Serde<RefDataProcessingInfo>,
         Serializer<RefDataProcessingInfo>,
@@ -47,7 +63,18 @@ public class RefDataProcessingInfoSerde implements
     public static final int LAST_ACCESSED_TIME_OFFSET = CREATE_TIME_OFFSET + Long.BYTES;
     public static final int EFFECTIVE_TIME_OFFSET = LAST_ACCESSED_TIME_OFFSET + Long.BYTES;
     public static final int PROCESSING_STATE_OFFSET = EFFECTIVE_TIME_OFFSET + Long.BYTES;
-    private static final int BUFFER_CAPACITY = (Long.BYTES * 3) + 1;
+    private static final UnsignedBytes STRUCTURE_VERSION_UNSIGNED_BYTES = UnsignedBytesInstances.ONE;
+
+    private final EnumSetSerde<RefStreamFeature> refStreamFeaturesSerde;
+    private final EnumSetSerde<RefMapFeature> refMapFeaturesSerde;
+    private final UIDSerde uidSerde;
+
+    public RefDataProcessingInfoSerde() {
+        // Future-proof both with 2 bytes to give us up to 16 features each
+        refStreamFeaturesSerde = new EnumSetSerde<>(RefStreamFeature.class, 2);
+        refMapFeaturesSerde = new EnumSetSerde<>(RefMapFeature.class, 2);
+        uidSerde = new UIDSerde();
+    }
 
     @Override
     public RefDataProcessingInfo deserialize(final ByteBuffer byteBuffer) {
@@ -56,15 +83,42 @@ public class RefDataProcessingInfoSerde implements
         final long lastAccessedTimeEpochMs = byteBuffer.getLong();
         final long effectiveTimeEpochMs = byteBuffer.getLong();
         final byte processingStateId = byteBuffer.get();
+
+        Integer structureVersion = null;
+        Set<RefStreamFeature> refStreamFeatures = null;
+        List<RefMapInfo> mapInfoList = new ArrayList<>();
+        // The following parts were added 20250414, so may not be there in older streams.
+        if (byteBuffer.hasRemaining()) {
+            structureVersion = (int) STRUCTURE_VERSION_UNSIGNED_BYTES.get(byteBuffer);
+            refStreamFeatures = refStreamFeaturesSerde.get(byteBuffer);
+
+            // There may be 0-many RefMapInfo instances
+            while (byteBuffer.hasRemaining()) {
+                ByteBufferUtils.sliceAndAdvance(byteBuffer, uidSerde.getBufferCapacity());
+                final UID uid = uidSerde.deserialize(ByteBufferUtils.sliceAndAdvance(byteBuffer,
+                        uidSerde.getBufferCapacity()));
+                final Set<RefMapFeature> refMapFeatures = refMapFeaturesSerde.get(byteBuffer);
+                mapInfoList.add(new RefMapInfo(uid, refMapFeatures));
+            }
+        }
+
         byteBuffer.flip();
         final ProcessingState processingState = ProcessingState.fromByte(processingStateId);
 
+        // Ctor will default null values as needed
         return new RefDataProcessingInfo(
-                createTimeEpochMs, lastAccessedTimeEpochMs, effectiveTimeEpochMs, processingState);
+                createTimeEpochMs,
+                lastAccessedTimeEpochMs,
+                effectiveTimeEpochMs,
+                processingState,
+                structureVersion,
+                refStreamFeatures,
+                mapInfoList);
     }
 
     @Override
-    public void serialize(final ByteBuffer byteBuffer, final RefDataProcessingInfo refDataProcessingInfo) {
+    public void serialize(final ByteBuffer byteBuffer,
+                          final RefDataProcessingInfo refDataProcessingInfo) {
         Objects.requireNonNull(refDataProcessingInfo);
         Objects.requireNonNull(byteBuffer);
         // Fixed widths allow us to (de-)serialise only the bit of the object we are interested in,
@@ -73,6 +127,12 @@ public class RefDataProcessingInfoSerde implements
         byteBuffer.putLong(refDataProcessingInfo.getLastAccessedTimeEpochMs());
         byteBuffer.putLong(refDataProcessingInfo.getEffectiveTimeEpochMs());
         byteBuffer.put(refDataProcessingInfo.getProcessingState().getId());
+        STRUCTURE_VERSION_UNSIGNED_BYTES.put(byteBuffer, refDataProcessingInfo.getStructureVersion());
+        refStreamFeaturesSerde.put(byteBuffer, refDataProcessingInfo.getRefStreamFeatures());
+        for (final RefMapInfo refMapInfo : refDataProcessingInfo.getMapInfoList()) {
+            uidSerde.serialize(byteBuffer, refMapInfo.getMapUid());
+            refMapFeaturesSerde.put(byteBuffer, refMapInfo.getMapFeatures());
+        }
         byteBuffer.flip();
     }
 
@@ -165,6 +225,8 @@ public class RefDataProcessingInfoSerde implements
 
     @Override
     public int getBufferCapacity() {
-        return BUFFER_CAPACITY;
+        // We have a variable number of RefMapInfo blocks, so we can't know how many bytes it
+        // will take up. 1000 gives us room for 162 maps.
+        return 1000;
     }
 }
