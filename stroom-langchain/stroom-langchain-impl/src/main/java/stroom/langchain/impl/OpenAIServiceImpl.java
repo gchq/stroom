@@ -29,14 +29,14 @@ import stroom.util.http.HttpAuthConfiguration;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.http.HttpProxyConfiguration;
 import stroom.util.http.HttpTlsConfiguration;
-import stroom.util.jersey.HttpClientCache;
+import stroom.util.jersey.HttpClientProvider;
+import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.http.HttpAuthConfig;
 import stroom.util.shared.http.HttpClientConfig;
 import stroom.util.shared.http.HttpProxyConfig;
 import stroom.util.shared.http.HttpTlsConfig;
-import stroom.util.shared.time.SimpleDuration;
-import stroom.util.time.StroomDuration;
+import stroom.util.time.SimpleDurationUtil;
 
 import dev.langchain4j.http.client.HttpClientBuilder;
 import dev.langchain4j.model.chat.ChatModel;
@@ -53,7 +53,6 @@ import dev.langchain4j.model.scoring.ScoringModel;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 
 import java.io.IOException;
@@ -67,13 +66,13 @@ public class OpenAIServiceImpl implements OpenAIService {
     private final Provider<OpenAIModelStore> openAIModelStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
     private final Provider<StoredSecrets> storedSecretsProvider;
-    private final Provider<HttpClientCache> httpClientCacheProvider;
+    private final Provider<HttpClientProviderCache> httpClientCacheProvider;
 
     @Inject
     OpenAIServiceImpl(final Provider<OpenAIModelStore> openAIModelStoreProvider,
                       final Provider<DocumentResourceHelper> documentResourceHelperProvider,
                       final Provider<StoredSecrets> storedSecretsProvider,
-                      final Provider<HttpClientCache> httpClientCacheProvider) {
+                      final Provider<HttpClientProviderCache> httpClientCacheProvider) {
         this.openAIModelStoreProvider = openAIModelStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.storedSecretsProvider = storedSecretsProvider;
@@ -87,21 +86,19 @@ public class OpenAIServiceImpl implements OpenAIService {
             //   -H "Authorization: Bearer $OPENAI_API_KEY"
 
 
-            final HttpClientCache httpClientCache = httpClientCacheProvider.get();
+            final HttpClientProviderCache httpClientProviderCache = httpClientCacheProvider.get();
             final HttpClientConfiguration httpClientConfiguration = new HttpClientConfiguration();
-            final HttpClient httpClient = httpClientCache.get(httpClientConfiguration);
+            try (final HttpClientProvider httpClientProvider = httpClientProviderCache.get(httpClientConfiguration)) {
+                final String url = getUrl(modelDoc, "models");
+                final String apiKey = getApiKey(modelDoc);
 
+                final HttpGet httpGet = new HttpGet(url);
+                httpGet.addHeader("Content-Type", "application/audit");
+                if (NullSafe.isNonBlankString(apiKey)) {
+                    httpGet.addHeader("Authorization", "Bearer " + apiKey);
+                }
 
-            final String url = getUrl(modelDoc, "models");
-            final String apiKey = getApiKey(modelDoc);
-
-            final HttpGet httpGet = new HttpGet(url);
-            httpGet.addHeader("Content-Type", "application/audit");
-            if (NullSafe.isNonBlankString(apiKey)) {
-                httpGet.addHeader("Authorization", "Bearer " + apiKey);
-            }
-
-            return httpClient.execute(httpGet, response -> {
+                return httpClientProvider.get().execute(httpGet, response -> {
 //                        final StringBuilder sb = new StringBuilder()
 //                    .append("Model ID: ")
 //                    .append(model.id())
@@ -112,13 +109,14 @@ public class OpenAIServiceImpl implements OpenAIService {
 //                    .append("\nValid: ")
 //                    .append(model.isValid());
 
-                if (response.getCode() != 200) {
-                    return response.toString();
-                }
+                    if (response.getCode() != 200) {
+                        return response.toString();
+                    }
 
-                final byte[] bytes = response.getEntity().getContent().readAllBytes();
-                return new String(bytes, StandardCharsets.UTF_8);
-            });
+                    final byte[] bytes = response.getEntity().getContent().readAllBytes();
+                    return new String(bytes, StandardCharsets.UTF_8);
+                });
+            }
 
 //        final OpenAIOkHttpClient.Builder clientBuilder = OpenAIOkHttpClient.builder()
 //                .fromEnv();
@@ -242,9 +240,7 @@ public class OpenAIServiceImpl implements OpenAIService {
                 modelDoc,
                 OpenAIModelDoc::getHttpClientConfiguration,
                 HttpClientConfig.builder().build()));
-        final HttpClientCache httpClientCache = httpClientCacheProvider.get();
-        final HttpClient httpClient = httpClientCache.get(httpClientConfiguration);
-        return new ApacheHttpClientBuilder(httpClient, httpClientConfiguration);
+        return new ApacheHttpClientBuilder(httpClientCacheProvider.get(), httpClientConfiguration);
     }
 
     @Override
@@ -291,18 +287,20 @@ public class OpenAIServiceImpl implements OpenAIService {
 
         return HttpClientConfiguration
                 .builder()
-                .timeout(convert(config.getTimeout()))
-                .connectionTimeout(convert(config.getConnectionTimeout()))
-                .connectionRequestTimeout(convert(config.getConnectionRequestTimeout()))
-                .timeToLive(convert(config.getTimeToLive()))
+                .timeout(SimpleDurationUtil.convertToStroomDuration(config.getTimeout()))
+                .connectionTimeout(SimpleDurationUtil.convertToStroomDuration(config.getConnectionTimeout()))
+                .connectionRequestTimeout(
+                        SimpleDurationUtil.convertToStroomDuration(config.getConnectionRequestTimeout()))
+                .timeToLive(SimpleDurationUtil.convertToStroomDuration(config.getTimeToLive()))
                 .cookiesEnabled(config.isCookiesEnabled())
                 .maxConnections(config.getMaxConnections())
                 .maxConnectionsPerRoute(config.getMaxConnectionsPerRoute())
-                .keepAlive(convert(config.getKeepAlive()))
+                .keepAlive(SimpleDurationUtil.convertToStroomDuration(config.getKeepAlive()))
                 .retries(config.getRetries())
                 .userAgent(config.getUserAgent())
                 .proxyConfiguration(convert(config.getProxy()))
-                .validateAfterInactivityPeriod(convert(config.getValidateAfterInactivityPeriod()))
+                .validateAfterInactivityPeriod(
+                        SimpleDurationUtil.convertToStroomDuration(config.getValidateAfterInactivityPeriod()))
                 .tlsConfiguration(convert(config.getTls()))
                 .build();
     }
@@ -364,6 +362,7 @@ public class OpenAIServiceImpl implements OpenAIService {
         }
 
         return builder
+                .protocol(config.getProtocol())
                 .provider(config.getProvider())
                 .trustSelfSignedCertificates(config.isTrustSelfSignedCertificates())
                 .verifyHostname(config.isVerifyHostname())
@@ -371,23 +370,5 @@ public class OpenAIServiceImpl implements OpenAIService {
                 .supportedCiphers(config.getSupportedCiphers())
                 .certAlias(config.getCertAlias())
                 .build();
-    }
-
-    private StroomDuration convert(final SimpleDuration duration) {
-        if (duration == null || duration.getTimeUnit() == null) {
-            return null;
-        }
-
-        return switch (duration.getTimeUnit()) {
-            case NANOSECONDS -> StroomDuration.ofNanos(duration.getTime());
-            case MILLISECONDS -> StroomDuration.ofMillis(duration.getTime());
-            case SECONDS -> StroomDuration.ofSeconds(duration.getTime());
-            case MINUTES -> StroomDuration.ofMinutes(duration.getTime());
-            case HOURS -> StroomDuration.ofHours(duration.getTime());
-            case DAYS -> StroomDuration.ofDays(duration.getTime());
-            case WEEKS -> StroomDuration.ofDays(duration.getTime() * 7);
-            case MONTHS -> StroomDuration.ofDays(duration.getTime() * 31);
-            case YEARS -> StroomDuration.ofDays(duration.getTime() * 365);
-        };
     }
 }

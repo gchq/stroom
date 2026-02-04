@@ -55,7 +55,7 @@ public class SimpleRowCreator implements RowCreator {
                                     final KeyFactory keyFactory,
                                     final ErrorConsumer errorConsumer) {
         final Formatter[] formatters = RowUtil.createFormatters(newColumns, formatterFactory);
-        final int annotationIdIndex = getColumnIndexById(newColumns, SpecialColumns.RESERVED_ID);
+        final int annotationIdIndex = getColumnIndexById(newColumns, SpecialColumns.RESERVED_ANNOTATION_ID);
         return new SimpleRowCreator(
                 formatters,
                 keyFactory,

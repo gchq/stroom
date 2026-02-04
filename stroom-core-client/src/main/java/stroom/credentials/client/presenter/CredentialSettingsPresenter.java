@@ -28,7 +28,7 @@ public class CredentialSettingsPresenter
         implements CredentialSettingsUiHandlers {
 
     private final AccessTokenSecretPresenter accessTokenSecretPresenter;
-    private final KeyPairSecretPresenter keyPairSecretPresenter;
+    private final SshKeySecretPresenter sshKeySecretPresenter;
     private final KeyStoreSecretPresenter keyStoreSecretPresenter;
     private final UsernamePasswordSecretPresenter usernamePasswordSecretPresenter;
 
@@ -38,7 +38,7 @@ public class CredentialSettingsPresenter
     public CredentialSettingsPresenter(final EventBus eventBus,
                                        final CredentialSettingsView view,
                                        final AccessTokenSecretPresenter accessTokenSecretPresenter,
-                                       final KeyPairSecretPresenter keyPairSecretPresenter,
+                                       final SshKeySecretPresenter sshKeySecretPresenter,
                                        final KeyStoreSecretPresenter keyStoreSecretPresenter,
                                        final UsernamePasswordSecretPresenter usernamePasswordSecretPresenter,
                                        final Provider<DateTimePopup> dateTimePopupProvider) {
@@ -47,7 +47,7 @@ public class CredentialSettingsPresenter
         view.getExpiryTime().setPopupProvider(dateTimePopupProvider);
 
         this.accessTokenSecretPresenter = accessTokenSecretPresenter;
-        this.keyPairSecretPresenter = keyPairSecretPresenter;
+        this.sshKeySecretPresenter = sshKeySecretPresenter;
         this.keyStoreSecretPresenter = keyStoreSecretPresenter;
         this.usernamePasswordSecretPresenter = usernamePasswordSecretPresenter;
     }
@@ -56,8 +56,8 @@ public class CredentialSettingsPresenter
     public void onTypeChange(final CredentialType type) {
         switch (type) {
             case ACCESS_TOKEN -> getView().setSecretView(accessTokenSecretPresenter.getView());
-            case KEY_PAIR -> getView().setSecretView(keyPairSecretPresenter.getView());
             case KEY_STORE -> getView().setSecretView(keyStoreSecretPresenter.getView());
+            case SSH_KEY -> getView().setSecretView(sshKeySecretPresenter.getView());
             case USERNAME_PASSWORD -> getView().setSecretView(usernamePasswordSecretPresenter.getView());
         }
     }
@@ -74,19 +74,22 @@ public class CredentialSettingsPresenter
         this.docRef = docRef;
         if (cwp == null) {
             getView().setName("");
-            getView().setCredentialType(CredentialType.USERNAME_PASSWORD);
             getView().setCredExpire(false);
             getView().getExpiryTime().setValue(System.currentTimeMillis());
+            getView().setCredentialType(CredentialType.USERNAME_PASSWORD);
+            keyStoreSecretPresenter.setType(KeyStoreType.PKCS12);
         } else {
             final Credential credential = cwp.getCredential();
             getView().setName(credential.getName());
-            getView().setCredentialType(credential.getCredentialType());
             getView().setCredExpire(credential.getExpiryTimeMs() != null);
             if (credential.getExpiryTimeMs() != null) {
                 getView().getExpiryTime().setValue(credential.getExpiryTimeMs());
             } else {
                 getView().getExpiryTime().setValue(System.currentTimeMillis());
             }
+            getView().setCredentialType(credential.getCredentialType());
+            keyStoreSecretPresenter.setType(NullSafe
+                    .getOrElse(credential, Credential::getKeyStoreType, KeyStoreType.PKCS12));
         }
 
         onTypeChange(getView().getCredentialType());
@@ -94,10 +97,10 @@ public class CredentialSettingsPresenter
 
     private Secret getSecret() {
         return switch (getView().getCredentialType()) {
-            case USERNAME_PASSWORD -> usernamePasswordSecretPresenter.getSecret();
             case ACCESS_TOKEN -> accessTokenSecretPresenter.getSecret();
-            case KEY_PAIR -> keyPairSecretPresenter.getSecret();
             case KEY_STORE -> keyStoreSecretPresenter.getSecret();
+            case SSH_KEY -> sshKeySecretPresenter.getSecret();
+            case USERNAME_PASSWORD -> usernamePasswordSecretPresenter.getSecret();
         };
     }
 
@@ -107,10 +110,10 @@ public class CredentialSettingsPresenter
             AlertEvent.fireError(this, message, () -> consumer.accept(false));
         } else {
             switch (getView().getCredentialType()) {
-                case USERNAME_PASSWORD -> usernamePasswordSecretPresenter.onOk(consumer);
                 case ACCESS_TOKEN -> accessTokenSecretPresenter.onOk(consumer);
-                case KEY_PAIR -> keyPairSecretPresenter.onOk(consumer);
                 case KEY_STORE -> keyStoreSecretPresenter.onOk(consumer);
+                case SSH_KEY -> sshKeySecretPresenter.onOk(consumer);
+                case USERNAME_PASSWORD -> usernamePasswordSecretPresenter.onOk(consumer);
             }
         }
     }
@@ -147,8 +150,8 @@ public class CredentialSettingsPresenter
                 getView().getCredentialType(),
                 keyStoreType,
                 getView().isCredExpire()
-                        ? null
-                        : getView().getExpiryTime().getValue());
+                        ? getView().getExpiryTime().getValue()
+                        : null);
 
         return new PutCredentialRequest(credential, secret);
     }

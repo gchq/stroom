@@ -21,15 +21,14 @@ import stroom.util.config.OkHttpClientConfig;
 import stroom.util.http.HttpClientConfiguration;
 import stroom.util.http.HttpClientUtil;
 import stroom.util.http.HttpTlsConfiguration;
-import stroom.util.jersey.HttpClientCache;
+import stroom.util.jersey.HttpClientProvider;
+import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.time.StroomDuration;
-
-import org.apache.hc.client5.http.classic.HttpClient;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,14 +38,14 @@ public class CommonHttpClient {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CommonHttpClient.class);
 
-    private final HttpClientCache httpClientCache;
+    private final HttpClientProviderCache httpClientProviderCache;
     private final Map<String, HttpClientConfiguration> configCache = new HashMap<>();
 
-    CommonHttpClient(final HttpClientCache httpClientCache) {
-        this.httpClientCache = httpClientCache;
+    CommonHttpClient(final HttpClientProviderCache httpClientProviderCache) {
+        this.httpClientProviderCache = httpClientProviderCache;
     }
 
-    public HttpClient createClient(final String clientConfigStr) {
+    public HttpClientProvider createClientProvider(final String clientConfigStr) {
         final HttpClientConfiguration configuration = configCache.computeIfAbsent(clientConfigStr, k -> {
             RuntimeException exception = null;
             HttpClientConfiguration httpClientConfiguration = null;
@@ -79,7 +78,7 @@ public class CommonHttpClient {
         });
 
         LOGGER.debug(() -> "Creating client");
-        return httpClientCache.get(configuration);
+        return httpClientProviderCache.get(configuration);
     }
 
     @Deprecated // Moving to Apache HttpClientConfiguration

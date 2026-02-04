@@ -1,9 +1,9 @@
 package stroom.credentials.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.credentials.client.presenter.KeyPairSecretPresenter.KeyPairSecretView;
-import stroom.credentials.shared.KeyPairSecret;
+import stroom.credentials.client.presenter.SshKeySecretPresenter.SshKeySecretView;
 import stroom.credentials.shared.Secret;
+import stroom.credentials.shared.SshKeySecret;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.web.bindery.event.shared.EventBus;
@@ -13,12 +13,12 @@ import com.gwtplatform.mvp.client.View;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
-public class KeyPairSecretPresenter
-        extends MyPresenterWidget<KeyPairSecretView> {
+public class SshKeySecretPresenter
+        extends MyPresenterWidget<SshKeySecretView> {
 
     @Inject
-    public KeyPairSecretPresenter(final EventBus eventBus,
-                                  final KeyPairSecretView view) {
+    public SshKeySecretPresenter(final EventBus eventBus,
+                                 final SshKeySecretView view) {
         super(eventBus, view);
     }
 
@@ -28,10 +28,11 @@ public class KeyPairSecretPresenter
      * @return A new secrets object updated with any changes.
      */
     public Secret getSecret() {
-        return new KeyPairSecret(
+        return new SshKeySecret(
                 getView().getPassPhrase(),
                 getView().getPrivateKey(),
-                getView().getPublicKey());
+                getView().isVerifyHosts(),
+                getView().getKnownHosts());
     }
 
     public void onOk(final Consumer<Boolean> consumer) {
@@ -47,13 +48,10 @@ public class KeyPairSecretPresenter
         if (getView().getPrivateKey().isBlank()) {
             return "Private key must not be empty";
         }
-        if (getView().getPublicKey().isBlank()) {
-            return "Public key must not be empty";
-        }
         return null;
     }
 
-    public interface KeyPairSecretView extends View, Focus {
+    public interface SshKeySecretView extends View, Focus {
 
         String getPassPhrase();
 
@@ -63,8 +61,12 @@ public class KeyPairSecretPresenter
 
         void setPrivateKey(String privateKey);
 
-        String getPublicKey();
+        boolean isVerifyHosts();
 
-        void setPublicKey(String publicKey);
+        void setVerifyHosts(boolean verifyHosts);
+
+        String getKnownHosts();
+
+        void setKnownHosts(String knownHosts);
     }
 }

@@ -17,6 +17,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.UUID;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
@@ -54,13 +55,21 @@ public class KeyStoreSecretPresenter
         registerHandler(getView().getFileUpload().addSubmitCompleteHandler(submitCompleteHandler));
     }
 
+    public void setType(final KeyStoreType type) {
+        getView().setType(type);
+    }
+
     /**
      * Returns the secrets object held by this object.
      *
      * @return A new secrets object updated with any changes.
      */
     public Secret getSecret() {
-        return new KeyStoreSecret(getView().getType(), getView().getPassword(), resourceKey);
+        return new KeyStoreSecret(
+                UUID.randomUUID().toString(),
+                getView().getType(),
+                getView().getPassword(),
+                resourceKey);
     }
 
     public void onOk(final Consumer<Boolean> consumer) {

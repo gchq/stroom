@@ -31,6 +31,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class HttpClientConfigPresenter
@@ -53,10 +54,8 @@ public class HttpClientConfigPresenter
     public void show(final HttpClientConfig httpClientConfig,
                      final Consumer<HttpClientConfig> consumer) {
         read(httpClientConfig);
-//        final PopupSize popupSize = PopupSize.resizable(430, 480);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
-//                .popupSize(PopupSize.)
                 .caption("Edit HTTP Client Configuration")
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
@@ -72,37 +71,32 @@ public class HttpClientConfigPresenter
 
     @Override
     public void onDirty() {
-
     }
 
     @Override
     public void onSetHttpTlsConfig() {
         final HttpTlsConfigPresenter httpTlsConfigPresenter = httpTlsConfigPresenterProvider.get();
-        httpTlsConfigPresenter.show(httpTlsConfig, updated ->
-                httpTlsConfig = updated);
+        httpTlsConfigPresenter.show(httpTlsConfig, updated -> {
+            if (!Objects.equals(httpTlsConfig, updated)) {
+                httpTlsConfig = updated;
+            }
+        });
     }
 
     public void read(final HttpClientConfig config) {
-        getView().setTimeout(config.getTimeout());
-        getView().setConnectionTimeout(config.getConnectionTimeout());
-        getView().setConnectionRequestTimeout(config.getConnectionRequestTimeout());
-        getView().setTimeToLive(config.getTimeToLive());
-        getView().setCookiesEnabled(config.isCookiesEnabled());
-        getView().setMaxConnections(config.getMaxConnections());
-        getView().setMaxConnectionsPerRoute(config.getMaxConnectionsPerRoute());
-        getView().setKeepAlive(config.getKeepAlive());
-        getView().setRetries(config.getRetries());
-
-
-//    // Changed this to be a string rather than an optional to avoid serialisation issues when
-//    // we merge our config.yml node tree with a default node tree and then serialise for drop wiz to
-//    // read.
-//    private final String userAgent;
-
-//    private final HttpProxyConfiguration proxyConfiguration;
-
-        getView().setValidateAfterInactivityPeriod(config.getValidateAfterInactivityPeriod());
-        httpTlsConfig = config.getTls();
+        if (config != null) {
+            getView().setTimeout(config.getTimeout());
+            getView().setConnectionTimeout(config.getConnectionTimeout());
+            getView().setConnectionRequestTimeout(config.getConnectionRequestTimeout());
+            getView().setTimeToLive(config.getTimeToLive());
+            getView().setCookiesEnabled(config.isCookiesEnabled());
+            getView().setMaxConnections(config.getMaxConnections());
+            getView().setMaxConnectionsPerRoute(config.getMaxConnectionsPerRoute());
+            getView().setKeepAlive(config.getKeepAlive());
+            getView().setRetries(config.getRetries());
+            getView().setValidateAfterInactivityPeriod(config.getValidateAfterInactivityPeriod());
+            httpTlsConfig = config.getTls();
+        }
     }
 
     public HttpClientConfig write() {

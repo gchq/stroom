@@ -33,6 +33,7 @@ dependencies {
     implementation libs.dropwizard.validation
     implementation libs.guava
     implementation libs.guice
+    implementation libs.jspecify
     implementation libs.jackson.annotations
     implementation libs.jackson.core
     implementation libs.jackson.databind

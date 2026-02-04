@@ -8,15 +8,15 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         property = "type"
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = UsernamePasswordSecret.class, name = "usernamePassword"),
         @JsonSubTypes.Type(value = AccessTokenSecret.class, name = "accessToken"),
-        @JsonSubTypes.Type(value = KeyPairSecret.class, name = "keyPair"),
-        @JsonSubTypes.Type(value = KeyStoreSecret.class, name = "keyStore")
+        @JsonSubTypes.Type(value = KeyStoreSecret.class, name = "keyStore"),
+        @JsonSubTypes.Type(value = SshKeySecret.class, name = "sshKey"),
+        @JsonSubTypes.Type(value = UsernamePasswordSecret.class, name = "usernamePassword")
 })
 public sealed interface Secret permits
-        UsernamePasswordSecret,
         AccessTokenSecret,
-        KeyPairSecret,
-        KeyStoreSecret {
+        KeyStoreSecret,
+        SshKeySecret,
+        UsernamePasswordSecret {
 
 }

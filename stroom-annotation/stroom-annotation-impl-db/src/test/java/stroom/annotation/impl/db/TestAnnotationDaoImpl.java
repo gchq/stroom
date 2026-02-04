@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,11 @@ import stroom.annotation.shared.ChangeTitle;
 import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.CreateAnnotationTagRequest;
 import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.FindAnnotationRequest;
 import stroom.annotation.shared.LinkEvents;
 import stroom.annotation.shared.SetTag;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
+import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.ExpressionOperator;
@@ -44,25 +46,33 @@ import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValString;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 
 import com.google.inject.Guice;
+import it.unimi.dsi.fastutil.longs.LongList;
 import jakarta.inject.Inject;
+import org.jspecify.annotations.NullMarked;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static stroom.annotation.impl.db.jooq.tables.Annotation.ANNOTATION;
 
 @ExtendWith(MockitoExtension.class)
 class TestAnnotationDaoImpl {
@@ -73,6 +83,8 @@ class TestAnnotationDaoImpl {
     private AnnotationDaoImpl annotationDao;
     @Inject
     private AnnotationTagDaoImpl annotationTagDao;
+    @Inject
+    private AnnotationDbConnProvider annotationDbConnProvider;
 
     @BeforeEach
     void setup() {
@@ -388,6 +400,253 @@ class TestAnnotationDaoImpl {
                         .isEqualTo(expectedVal);
             }
         }
+    }
+
+    @Test
+    void testAnnotationLogicalDeletion() {
+        final UserRef currentUser = new UserRef(
+                "1234",
+                "test",
+                "test",
+                "test",
+                false,
+                true);
+
+        final CreateAnnotationRequest createAnnotationRequest = CreateAnnotationRequest
+                .builder()
+                .title("Test Title")
+                .subject("Test Subject")
+                .status("Assigned")
+                .build();
+        final Annotation annotation = annotationDao.createAnnotation(createAnnotationRequest, currentUser);
+
+        SingleAnnotationChangeRequest changeRequest = new SingleAnnotationChangeRequest(
+                annotation.asDocRef(), new ChangeRetentionPeriod(SimpleDuration.builder()
+                .time(1)
+                .timeUnit(TimeUnit.YEARS)
+                .build()));
+
+        boolean didChange = annotationDao.change(changeRequest, currentUser);
+        assertThat(didChange)
+                .isTrue();
+
+        annotationDao.markDeletedByDataRetention();
+
+        Optional<Annotation> optAnnotation = annotationDao.getAnnotationByDocRef(annotation.asDocRef());
+        assertThat(optAnnotation)
+                .isPresent();
+        assertThat(isDeleted(optAnnotation.get().asDocRef()))
+                .isFalse();
+
+        changeRequest = new SingleAnnotationChangeRequest(
+                annotation.asDocRef(), new ChangeRetentionPeriod(SimpleDuration.builder()
+                .time(1)
+                .timeUnit(TimeUnit.MILLISECONDS)
+                .build()));
+
+        didChange = annotationDao.change(changeRequest, currentUser);
+        assertThat(didChange)
+                .isTrue();
+
+        annotationDao.markDeletedByDataRetention();
+
+        optAnnotation = annotationDao.getAnnotationByDocRef(annotation.asDocRef());
+        assertThat(optAnnotation)
+                .isPresent();
+        assertThat(isDeleted(optAnnotation.get().asDocRef()))
+                .isTrue();
+    }
+
+    @Test
+    void testAnnotationLogicalDeletionBatches() {
+        final UserRef currentUser = new UserRef(
+                "1234",
+                "test",
+                "test",
+                "test",
+                false,
+                true);
+
+        final List<Annotation> annotations = new ArrayList<>();
+        final int count = 26;
+        final int batchSize = 5;
+        for (int i = 0; i < count; i++) {
+            final SimpleDuration retentionPeriod;
+            // Odd: short retention, even long retention
+            if (i % 2 == 0) {
+                retentionPeriod = SimpleDuration.builder()
+                        .time(1)
+                        .timeUnit(TimeUnit.YEARS)
+                        .build();
+            } else {
+                retentionPeriod = SimpleDuration.builder()
+                        .time(1)
+                        .timeUnit(TimeUnit.MILLISECONDS)
+                        .build();
+            }
+            final CreateAnnotationRequest createAnnotationRequest = CreateAnnotationRequest
+                    .builder()
+                    .title("Test Title")
+                    .subject("Test Subject")
+                    .status("Assigned")
+                    .build();
+            final Annotation annotation = annotationDao.createAnnotation(createAnnotationRequest, currentUser);
+            annotations.add(annotation);
+            final SingleAnnotationChangeRequest changeRequest = new SingleAnnotationChangeRequest(
+                    annotation.asDocRef(), new ChangeRetentionPeriod(retentionPeriod));
+            final boolean didChange = annotationDao.change(changeRequest, currentUser);
+            assertThat(didChange)
+                    .isTrue();
+
+            final Optional<Annotation> optAnnotation = annotationDao.getAnnotationByDocRef(annotation.asDocRef());
+            assertThat(optAnnotation)
+                    .isPresent();
+            final Annotation annotation2 = optAnnotation.get();
+            assertThat(isDeleted(annotation2.asDocRef()))
+                    .isFalse();
+            assertThat(annotation2.getRetentionPeriod())
+                    .isEqualTo(retentionPeriod);
+            LOGGER.debug("i: {}, retainUntil: {}", i, Instant.ofEpochMilli(annotation2.getRetainUntilTimeMs()));
+        }
+
+        List<Annotation> allAnnotations = getAllAnnotations();
+        assertThat(allAnnotations)
+                .hasSize(count);
+
+        // Sleep a wee bit to ensure the annotations have aged off
+        ThreadUtil.sleepIgnoringInterrupts(100);
+
+        annotationDao.markDeletedByDataRetention(batchSize);
+
+        allAnnotations = getAllAnnotations();
+        assertThat(allAnnotations)
+                .hasSize(13);
+
+        for (int i = 0; i < count; i++) {
+            final boolean expectedDeletedState = !(i % 2 == 0);
+            final Annotation annotation = annotations.get(i);
+            assertThat(isDeleted(annotation.asDocRef()))
+                    .isEqualTo(expectedDeletedState);
+        }
+    }
+
+    @Test
+    void physicallyDelete() {
+        final UserRef currentUser = new UserRef(
+                "1234",
+                "test",
+                "test",
+                "test",
+                false,
+                true);
+
+        final AnnotationTag label1 = createLabel("Label1");
+        final AnnotationTag label2 = createLabel("Label2");
+        final AnnotationTag label3 = createLabel("Label3");
+
+        final List<Annotation> annotations = new ArrayList<>();
+        final int count = 26;
+        final int batchSize = 5;
+        for (int i = 0; i < count; i++) {
+            final SimpleDuration retentionPeriod;
+            // Odd: short retention, even long retention
+            if (i % 2 == 0) {
+                retentionPeriod = SimpleDuration.builder()
+                        .time(1)
+                        .timeUnit(TimeUnit.YEARS)
+                        .build();
+            } else {
+                retentionPeriod = SimpleDuration.builder()
+                        .time(1)
+                        .timeUnit(TimeUnit.MILLISECONDS)
+                        .build();
+            }
+            final CreateAnnotationRequest createAnnotationRequest = CreateAnnotationRequest
+                    .builder()
+                    .title("Test Title")
+                    .subject("Test Subject")
+                    .status("Assigned")
+                    .build();
+            final Annotation annotation = annotationDao.createAnnotation(createAnnotationRequest, currentUser);
+
+            addTag(currentUser, annotation, label1);
+            addTag(currentUser, annotation, label2);
+            addTag(currentUser, annotation, label3);
+
+            annotations.add(annotation);
+            final SingleAnnotationChangeRequest changeRequest = new SingleAnnotationChangeRequest(
+                    annotation.asDocRef(), new ChangeRetentionPeriod(retentionPeriod));
+            final boolean didChange = annotationDao.change(changeRequest, currentUser);
+            assertThat(didChange)
+                    .isTrue();
+
+            final Optional<Annotation> optAnnotation = annotationDao.getAnnotationByDocRef(annotation.asDocRef());
+            assertThat(optAnnotation)
+                    .isPresent();
+            final Annotation annotation2 = optAnnotation.get();
+            assertThat(isDeleted(annotation2.asDocRef()))
+                    .isFalse();
+            assertThat(annotation2.getRetentionPeriod())
+                    .isEqualTo(retentionPeriod);
+            LOGGER.debug("i: {}, retainUntil: {}", i, Instant.ofEpochMilli(annotation2.getRetainUntilTimeMs()));
+        }
+
+        List<Annotation> allAnnotations = getAllAnnotations();
+        assertThat(allAnnotations)
+                .hasSize(count);
+
+        // Sleep a wee bit to ensure the annotations have aged off
+        ThreadUtil.sleepIgnoringInterrupts(100);
+
+        annotationDao.markDeletedByDataRetention(batchSize);
+
+        allAnnotations = getAllAnnotations();
+        assertThat(allAnnotations)
+                .hasSize(count / 2);
+
+        for (int i = 0; i < count; i++) {
+            final boolean expectedDeletedState = !(i % 2 == 0);
+            final Annotation annotation = annotations.get(i);
+            assertThat(isDeleted(annotation.asDocRef()))
+                    .isEqualTo(expectedDeletedState);
+        }
+
+        final LongList deletedIds = annotationDao.physicallyDelete(Instant.now(), batchSize);
+        assertThat(deletedIds.size())
+                .isEqualTo(count / 2);
+
+        final int tableCount = JooqUtil.contextResult(annotationDbConnProvider, context ->
+                context.selectCount()
+                        .from(ANNOTATION)
+                        .fetchOptional(0, int.class)
+                        .orElseThrow());
+        assertThat(tableCount)
+                .isEqualTo(count / 2);
+        ;
+    }
+
+    @NullMarked
+    private boolean isDeleted(final DocRef docRef) {
+        return JooqUtil.contextResult(annotationDbConnProvider, context -> {
+            final Boolean isDeleted = context.select(ANNOTATION.DELETED)
+                    .from(ANNOTATION)
+                    .where(ANNOTATION.UUID.eq(docRef.getUuid()))
+                    .fetchOne(ANNOTATION.DELETED);
+            Objects.requireNonNull(isDeleted);
+            return isDeleted;
+        });
+    }
+
+    private List<Annotation> getAllAnnotations() {
+        final ResultPage<Annotation> resultPage = annotationDao.findAnnotations(new FindAnnotationRequest(
+                        new PageRequest(0, 1000),
+                        null,
+                        null,
+                        null,
+                        null,
+                        null),
+                annotation -> true);
+        return resultPage.getValues();
     }
 
     private AnnotationTag createStatus(final String name) {

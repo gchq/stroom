@@ -13,6 +13,52 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.21] - 2026-02-04
+
+* Bug **#5384** : Improvements to annotations database code.
+
+
+## [v7.11-beta.20] - 2026-01-28
+
+* Bug **#5360** : Fix NPE when annotation data retention fires change events.
+
+* Bug **#5361** : Fix invalid SQL error when annotation data retention runs.
+
+* Bug : Fix 'Data source already in use' errors when using annotations.
+
+* Bug : Add missing cluster lock protection for annotation data retention job.
+
+* Bug **#5359** : Fix 'Data source already in use' errors in the _Data Delete_ job.
+
+* Bug **#5185** : Fix dashboard maximise NPE.
+
+* Bug **#5370** : Hide rule notification doc checkbox on reports as it is not applicable.
+
+* Bug **#5311** : Fix documentation markdown edit bug.
+
+* Bug **#5234** : Fix spaces in `createAnnotation()` function link text.
+
+* Bug **#5364** : Change PlanB snapshots to prevent closure when in use.
+
+
+## [v7.11-beta.19] - 2026-01-14
+
+* Issue **#5355** : Fix HttpClient being closed by cache while in use.
+
+
+## [v7.11-beta.18] - 2026-01-13
+
+* Issue **#5303** : Add debug to index dense vector retrieval.
+
+* Issue **#5344** : Fix credential manager UI.
+
+* Issue **#5342** : Fix issue querying Plan B shards where some stores have been deleted.
+
+* Issue **#5351** : Make SSH key and known host configuration clearer.
+
+* Issue **#5353** : Fix keystore config issue.
+
+
 ## [v7.11-beta.17] - 2026-01-08
 
 * Issue **#5282** : Processor task creation now supports feed dependencies to delay processing until reference data is available.
@@ -1932,7 +1978,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.17...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.21...HEAD
+[v7.11-beta.21]: https://github.com/gchq/stroom/compare/v7.11-beta.20...v7.11-beta.21
+[v7.11-beta.20]: https://github.com/gchq/stroom/compare/v7.11-beta.19...v7.11-beta.20
+[v7.11-beta.19]: https://github.com/gchq/stroom/compare/v7.11-beta.18...v7.11-beta.19
+[v7.11-beta.18]: https://github.com/gchq/stroom/compare/v7.11-beta.17...v7.11-beta.18
 [v7.11-beta.17]: https://github.com/gchq/stroom/compare/v7.11-beta.16...v7.11-beta.17
 [v7.11-beta.16]: https://github.com/gchq/stroom/compare/v7.11-beta.15...v7.11-beta.16
 [v7.11-beta.15]: https://github.com/gchq/stroom/compare/v7.11-beta.14...v7.11-beta.15

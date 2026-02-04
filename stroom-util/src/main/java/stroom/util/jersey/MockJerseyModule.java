@@ -25,7 +25,7 @@ public class MockJerseyModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(JerseyClientFactory.class).to(MockJerseyClientFactory.class);
-        bind(HttpClientCache.class).to(MockHttpClientCache.class);
+        bind(HttpClientProviderCache.class).to(MockHttpClientProviderCache.class);
     }
 
     @Provides

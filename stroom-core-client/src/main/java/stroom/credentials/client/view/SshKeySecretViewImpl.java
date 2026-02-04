@@ -1,9 +1,10 @@
 package stroom.credentials.client.view;
 
-import stroom.credentials.client.presenter.KeyPairSecretPresenter.KeyPairSecretView;
+import stroom.credentials.client.presenter.SshKeySecretPresenter.SshKeySecretView;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -16,9 +17,9 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 import javax.inject.Inject;
 
-public class KeyPairSecretViewImpl
+public class SshKeySecretViewImpl
         extends ViewWithUiHandlers<DirtyUiHandlers>
-        implements KeyPairSecretView {
+        implements SshKeySecretView {
 
     private final Widget widget;
 
@@ -29,17 +30,32 @@ public class KeyPairSecretViewImpl
     @UiField
     TextArea privateKey;
     @UiField
-    TextArea publicKey;
+    CustomCheckBox verifyHosts;
+    @UiField
+    TextArea knownHosts;
 
     @Inject
-    @SuppressWarnings("unused")
-    public KeyPairSecretViewImpl(final Binder binder) {
+    @SuppressWarnings({"unused", "checkstyle:linelength"})
+    public SshKeySecretViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
         showPassPhrase.setSvg(SvgImage.EYE);
         showPassPhrase.setTitle("Show Pass Phrase");
         showPassPhrase.setEnabled(true);
         passPhrase.getElement().setAttribute("placeholder", "Enter Pass Phrase");
+        privateKey.getElement().setAttribute("placeholder", """
+                Example:
+                -----BEGIN OPENSSH PRIVATE KEY-----
+                XXX
+                -----END OPENSSH PRIVATE KEY-----
+                """);
+        verifyHosts.setValue(true);
+        knownHosts.getElement().setAttribute("placeholder", """
+                Example:
+                github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+                github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=
+                github.com ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCj7ndNxQowgcQnjshcLrqPEiiphnt+VTTvDP6mHBL9j1aNUkY4Ue1gvwnGLVlOhGeYrnZaMgRK6+PKCUXaDbC7qtbW8gIkhL7aGCsOr/C56SJMy/BCZfxd1nWzAOxSDPgVsmerOBYfNqltV9/hWCqBywINIR+5dIg6JTJ72pcEpEjcYgXkE2YEFXV1JHnsKgbLWNlhScqb2UmyRkQyytRLtL+38TGxkxCflmO+5Z8CSSNY7GidjMIZ7Q4zMjA2n1nGrlTDkzwDCsw+wqFPGQA179cnfGWOWRVruj16z6XyvxvjJwbz0wQZ75XK5tKSb7FNyeIEs4TT4jk+S4dhPeAUC5y+bDYirYgM4GC7uEnztnZyaVWQ7B381AK4Qdrwt51ZqExKbQpTUNn+EjqoTwvqNj4kqx5QUCI0ThS/YkOxJCXmPUWZbhjpCg56i+2aB6CmK2JGhn57K5mj0MNdBXA4/WnwH6XoPWJzK5Nyu2zB3nAZp+S5hpQs+p1vN1/wsjk=
+                """);
     }
 
     @Override
@@ -68,13 +84,23 @@ public class KeyPairSecretViewImpl
     }
 
     @Override
-    public String getPublicKey() {
-        return publicKey.getValue();
+    public boolean isVerifyHosts() {
+        return verifyHosts.getValue();
     }
 
     @Override
-    public void setPublicKey(final String publicKey) {
-        this.publicKey.setValue(publicKey);
+    public void setVerifyHosts(final boolean verifyHosts) {
+        this.verifyHosts.setValue(verifyHosts);
+    }
+
+    @Override
+    public String getKnownHosts() {
+        return knownHosts.getValue();
+    }
+
+    @Override
+    public void setKnownHosts(final String knownHosts) {
+        this.knownHosts.setValue(knownHosts);
     }
 
     @Override
@@ -96,7 +122,7 @@ public class KeyPairSecretViewImpl
         }
     }
 
-    public interface Binder extends UiBinder<Widget, KeyPairSecretViewImpl> {
+    public interface Binder extends UiBinder<Widget, SshKeySecretViewImpl> {
 
     }
 }

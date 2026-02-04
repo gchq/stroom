@@ -40,6 +40,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -106,8 +107,16 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
         }
         getView().setModelId(model.getModelId());
         getView().setMaxContextWindowTokens(model.getMaxContextWindowTokens());
-        httpClientConfiguration = NullSafe
-                .requireNonNullElse(model.getHttpClientConfiguration(), HttpClientConfig.builder().build());
+
+        httpClientConfiguration = model.getHttpClientConfiguration();
+        if (httpClientConfiguration == null) {
+            restFactory
+                    .create(OPEN_AI_MODEL_RESOURCE)
+                    .method(OpenAIModelResource::getDefaultHttpClientConfig)
+                    .onSuccess(result -> httpClientConfiguration = result)
+                    .taskMonitorFactory(this)
+                    .exec();
+        }
     }
 
     @Override
@@ -126,8 +135,12 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
 
     @Override
     public void onSetHttpClientConfiguration() {
-        httpClientSettingsPresenterProvider.get().show(httpClientConfiguration, updated ->
-                httpClientConfiguration = updated);
+        httpClientSettingsPresenterProvider.get().show(httpClientConfiguration, updated -> {
+            if (!Objects.equals(httpClientConfiguration, updated)) {
+                setDirty(true);
+                httpClientConfiguration = updated;
+            }
+        });
     }
 
     public interface OpenAIModelSettingsView

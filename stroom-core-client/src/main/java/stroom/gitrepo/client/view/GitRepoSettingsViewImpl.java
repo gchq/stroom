@@ -47,12 +47,6 @@ public class GitRepoSettingsViewImpl
      */
     private final Widget widget;
 
-    /**
-     * Checks App Permissions
-     */
-    //private ClientSecurityContext securityContext = null;
-    private boolean hasCredentialsAppPermission = false;
-
     @UiField
     FormGroup fgContentStore;
     @UiField
@@ -69,8 +63,6 @@ public class GitRepoSettingsViewImpl
     TextBox txtGitPath;
     @UiField
     SelectionBox<Credential> credentialSelectionBox;
-//    @UiField
-//    Button btnSetCredentials;
     @UiField
     TextBox txtGitCommitToPull;
     @UiField
@@ -166,7 +158,6 @@ public class GitRepoSettingsViewImpl
      */
     @Override
     public void setState() {
-
         if (!lblContentStore.getText().isEmpty()) {
             // We've got a Content Pack so everything (except credentials and buttons) is readonly
             fgContentStore.setVisible(true);
@@ -178,9 +169,6 @@ public class GitRepoSettingsViewImpl
             txtGitPath.setVisible(true);
             txtGitPath.setEnabled(false);
             credentialSelectionBox.setVisible(true);
-            credentialSelectionBox.setEnabled(hasCredentialsAppPermission);
-//            btnSetCredentials.setVisible(true);
-//            btnSetCredentials.setEnabled(hasCredentialsAppPermission);
             txtGitCommitToPull.setVisible(true);
             txtGitCommitToPull.setEnabled(false);
             fgGitAutoPush.setVisible(false);
@@ -197,9 +185,6 @@ public class GitRepoSettingsViewImpl
             txtGitPath.setVisible(true);
             txtGitPath.setEnabled(true);
             credentialSelectionBox.setVisible(true);
-            credentialSelectionBox.setEnabled(hasCredentialsAppPermission);
-//            btnSetCredentials.setVisible(true);
-//            btnSetCredentials.setEnabled(hasCredentialsAppPermission);
             txtGitCommitToPull.setVisible(true);
             txtGitCommitToPull.setEnabled(true);
 
@@ -231,61 +216,7 @@ public class GitRepoSettingsViewImpl
             btnGitRepoPull.setEnabled(false);
             btnCheckForUpdates.setEnabled(false);
         }
-
     }
-
-    /**
-     * Called from Presenter to set whether the user has App Permissions.
-     */
-    @Override
-    public void setHasCredentialsAppPermission(final boolean hasCredentialsAppPermission) {
-        this.hasCredentialsAppPermission = hasCredentialsAppPermission;
-    }
-
-//    /**
-//     * Sets the list of credentials in the list that is displayed.
-//     * Due to permissions, the credentialsList might not contain the selected credentials as that
-//     * user might not have permission to see those credentials. However, we still need to return
-//     * that credentials ID when saving these creds without changing it.
-//     *
-//     * @param credentialList        The list of credentials to display in the list.
-//     * @param selectedCredentialName The ID of the selected credentials. Can
-//     *                              be null if nothing is selected.
-//     */
-//    @Override
-//    public void setCredentialsList(final List<Credential> credentialList,
-//                                   final String selectedCredentialName) {
-//        credentialSelectionBox.clear();
-//        credentialSelectionBox.setNonSelectString("None");
-//        credentialSelectionBox.setModel();addItems(credentialList);
-//
-//        // Find the selected credentials
-//        if (selectedCredentialName != null && !selectedCredentialName.isBlank()) {
-//            for (final Credential credential : credentialList) {
-//                if (credential.getName().equals(selectedCredentialName)) {
-//                    this.credentialSelectionBox.setValue(credential);
-//                    break;
-//                }
-//            }
-//        }
-//    }
-//
-//    /**
-//     * @return The currently selected credentials, or null if nothing is selected.
-//     */
-//    @Override
-//    public String getCredentialName() {
-//        final String selectedCredentialName;
-//        final Credential selectedCredential = credentialSelectionBox.getValue();
-//        if (selectedCredential != null) {
-//            selectedCredentialName = selectedCredential.getName();
-//        } else {
-//            selectedCredentialName = null;
-//        }
-//
-//        return selectedCredentialName;
-//    }
-
 
     @Override
     public SelectionBox<Credential> getCredentialSelectionBox() {
@@ -336,20 +267,6 @@ public class GitRepoSettingsViewImpl
         }
         this.setState();
     }
-
-//    /**
-//     * Handles 'Set Credentials' button clicks.
-//     * Passes the button to display the wait icon.
-//     *
-//     * @param event The button push event.
-//     */
-//    @SuppressWarnings("unused")
-//    @UiHandler("btnSetCredentials")
-//    public void onBtnSetCredentialsClick(@SuppressWarnings("unused") final ClickEvent event) {
-//        if (getUiHandlers() != null) {
-//            getUiHandlers().onShowCredentialsDialog(btnSetCredentials);
-//        }
-//    }
 
     /**
      * Handles 'Push to Git' button clicks.

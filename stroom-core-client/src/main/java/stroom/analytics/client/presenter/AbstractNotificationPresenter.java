@@ -31,7 +31,6 @@ import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 
-import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -42,15 +41,14 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
         implements DirtyUiHandlers, HasChangeDataHandlers<AnalyticProcessType> {
 
     final DocSelectionBoxPresenter errorFeedPresenter;
-    private final AbstractNotificationListPresenter notificationList;
+    private final AbstractNotificationListPresenter<D> notificationList;
     private final UiConfigCache uiConfigCache;
 
-    @Inject
-    public AbstractNotificationPresenter(final EventBus eventBus,
-                                         final AnalyticNotificationView view,
-                                         final DocSelectionBoxPresenter errorFeedPresenter,
-                                         final AbstractNotificationListPresenter notificationList,
-                                         final UiConfigCache uiConfigCache) {
+    AbstractNotificationPresenter(final EventBus eventBus,
+                                  final AnalyticNotificationView view,
+                                  final DocSelectionBoxPresenter errorFeedPresenter,
+                                  final AbstractNotificationListPresenter<D> notificationList,
+                                  final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.uiConfigCache = uiConfigCache;
         this.errorFeedPresenter = errorFeedPresenter;
@@ -92,7 +90,6 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
                     errorFeedPresenter.setSelectedEntityReference(selectedDocRef, true);
                 }
                 notificationList.read(docRef, analyticRuleDoc, readOnly);
-                getView().setIncludeRuleDocumentation(analyticRuleDoc.isIncludeRuleDocumentation());
             }
         }, this);
     }
@@ -116,9 +113,11 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
 
         void setErrorFeedView(View view);
 
-        void setIncludeRuleDocumentation(Boolean includeRuleDocumentation);
+        void setIncludeRuleDocumentationVisible(boolean visible);
 
-        Boolean isIncludeRuleDocumentation();
+        void setIncludeRuleDocumentation(boolean includeRuleDocumentation);
+
+        boolean isIncludeRuleDocumentation();
 
         void setTable(View view);
     }

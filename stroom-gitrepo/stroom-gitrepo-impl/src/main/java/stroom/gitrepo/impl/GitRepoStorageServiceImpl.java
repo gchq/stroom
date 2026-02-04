@@ -20,7 +20,7 @@ import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.shared.AccessTokenSecret;
 import stroom.credentials.shared.Credential;
-import stroom.credentials.shared.KeyPairSecret;
+import stroom.credentials.shared.SshKeySecret;
 import stroom.credentials.shared.UsernamePasswordSecret;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
@@ -631,17 +631,13 @@ public class GitRepoStorageServiceImpl implements GitRepoStorageService {
                                     new UsernamePasswordCredentialsProvider(GIT_USERNAME, accessToken));
                         }
                     }
-                    case KEY_PAIR -> {
-                        if (storedSecret.secret() instanceof final KeyPairSecret keyPairSecret) {
+                    case SSH_KEY -> {
+                        if (storedSecret.secret() instanceof final SshKeySecret sshKeySecret) {
                             transportCommand.setTransportConfigCallback(
-                                    new CredentialsJgitSshTransportCallback(storedSecrets,
-                                            tempDir,
-                                            credentialsId));
+                                    new CredentialsJgitSshTransportCallback(storedSecret, sshKeySecret, tempDir));
                         }
                     }
-                    default -> {
-                        throw new IOException("Unknown type of credentials: " + credential.getCredentialType());
-                    }
+                    default -> throw new IOException("Unknown type of credentials: " + credential.getCredentialType());
                 }
             } catch (final IOException e) {
                 throw new IOException("Error getting Git credentials: " + e.getMessage(), e);

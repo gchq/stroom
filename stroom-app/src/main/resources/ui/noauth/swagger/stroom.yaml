@@ -2800,7 +2800,7 @@ paths:
       summary: Update an Elasticsearch index doc
       tags:
       - Elastic Indices
-  /entityEvent/v1/{nodeName}:
+  /entityEvent/v1/fireEvent/{nodeName}:
     put:
       operationId: fireEntityEvent
       parameters:
@@ -2824,6 +2824,32 @@ paths:
                 type: boolean
           description: default response
       summary: Sends an entity event
+      tags:
+      - Entity Events
+  /entityEvent/v1/fireEvents/{nodeName}:
+    put:
+      operationId: fireEntityEventBatch
+      parameters:
+      - in: path
+        name: nodeName
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EntityEventBatch"
+        description: entityevents
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Sends a batch of entity events
       tags:
       - Entity Events
   /executionSchedule/v1/createExecutionSchedule:
@@ -5117,6 +5143,19 @@ paths:
       summary: Get a token from an access code or refresh token
       tags:
       - Authentication
+  /openAIModel/v1/getDefaultHttpClientConfig:
+    post:
+      operationId: getDefaultHttpClientConfig
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HttpClientConfig"
+          description: default response
+      summary: Get default HTTP client configuration
+      tags:
+      - OpenAI Model
   /openAIModel/v1/validate:
     post:
       operationId: validateOpenAIModel
@@ -10848,7 +10887,7 @@ components:
           enum:
           - USERNAME_PASSWORD
           - ACCESS_TOKEN
-          - KEY_PAIR
+          - SSH_KEY
           - KEY_STORE
         expiryTimeMs:
           type: integer
@@ -10858,8 +10897,6 @@ components:
           enum:
           - JCEKS
           - JKS
-          - DKS
-          - PKCS11
           - PKCS12
         name:
           type: string
@@ -12121,6 +12158,15 @@ components:
           $ref: "#/components/schemas/DocRef"
         oldDocRef:
           $ref: "#/components/schemas/DocRef"
+    EntityEventBatch:
+      type: object
+      properties:
+        entityEvents:
+          type: array
+          items:
+            $ref: "#/components/schemas/EntityEvent"
+        homogeneousBatch:
+          type: boolean
     Entry:
       type: object
       properties:
@@ -12620,6 +12666,17 @@ components:
           - REJECT_ALL
         uiConfig:
           $ref: "#/components/schemas/UiConfig"
+    FeedDependencies:
+      type: object
+      properties:
+        feedDependencies:
+          type: array
+          items:
+            $ref: "#/components/schemas/FeedDependency"
+        maxProcessingDelay:
+          $ref: "#/components/schemas/SimpleDuration"
+        minProcessingDelay:
+          $ref: "#/components/schemas/SimpleDuration"
     FeedDependency:
       type: object
       properties:
@@ -13002,7 +13059,7 @@ components:
             enum:
             - USERNAME_PASSWORD
             - ACCESS_TOKEN
-            - KEY_PAIR
+            - SSH_KEY
             - KEY_STORE
           uniqueItems: true
         filter:
@@ -14435,18 +14492,6 @@ components:
         time:
           type: string
           format: date-time
-    KeyPairSecret:
-      type: object
-      allOf:
-      - $ref: "#/components/schemas/Secret"
-      - type: object
-        properties:
-          passphrase:
-            type: string
-          privateKey:
-            type: string
-          publicKey:
-            type: string
     KeyPrefix:
       type: object
       properties:
@@ -14469,11 +14514,11 @@ components:
             enum:
             - JCEKS
             - JKS
-            - DKS
-            - PKCS11
             - PKCS12
           resourceKey:
             $ref: "#/components/schemas/ResourceKey"
+          uuid:
+            type: string
     KeyValue:
       type: object
       properties:
@@ -16316,9 +16361,7 @@ components:
         expression:
           $ref: "#/components/schemas/ExpressionOperator"
         feedDependencies:
-          type: array
-          items:
-            $ref: "#/components/schemas/FeedDependency"
+          $ref: "#/components/schemas/FeedDependencies"
         limits:
           $ref: "#/components/schemas/Limits"
         params:
@@ -16913,8 +16956,6 @@ components:
           $ref: "#/components/schemas/DuplicateNotificationConfig"
         errorFeed:
           $ref: "#/components/schemas/DocRef"
-        includeRuleDocumentation:
-          type: boolean
         languageVersion:
           type: string
           enum:
@@ -18681,6 +18722,20 @@ components:
           dimension:
             type: integer
             format: int32
+    SshKeySecret:
+      type: object
+      allOf:
+      - $ref: "#/components/schemas/Secret"
+      - type: object
+        properties:
+          knownHosts:
+            type: string
+          passphrase:
+            type: string
+          privateKey:
+            type: string
+          verifyHosts:
+            type: boolean
     State:
       type: object
       allOf:

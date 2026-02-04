@@ -16,7 +16,8 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import stroom.util.jersey.HttpClientCache;
+import stroom.util.jersey.HttpClientProvider;
+import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
@@ -43,8 +44,8 @@ class FetchJson extends StroomExtensionFunctionCall {
     private final CommonHttpClient commonHttpClient;
 
     @Inject
-    FetchJson(final HttpClientCache httpClientCache) {
-        commonHttpClient = new CommonHttpClient(httpClientCache);
+    FetchJson(final HttpClientProviderCache httpClientProviderCache) {
+        commonHttpClient = new CommonHttpClient(httpClientProviderCache);
     }
 
     @Override
@@ -59,8 +60,8 @@ class FetchJson extends StroomExtensionFunctionCall {
             log(context, Severity.WARNING, "No URL specified for HTTP call", null);
 
         } else {
-            try {
-                final HttpClient httpClient = commonHttpClient.createClient(clientConfigStr);
+            try (final HttpClientProvider httpClientProvider = commonHttpClient.createClientProvider(clientConfigStr)) {
+                final HttpClient httpClient = httpClientProvider.get();
                 final HttpGet httpGet = new HttpGet(url);
                 sequence = httpClient.execute(httpGet, response -> {
                     try {

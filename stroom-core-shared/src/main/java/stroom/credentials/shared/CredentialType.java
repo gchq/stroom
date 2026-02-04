@@ -8,7 +8,7 @@ import stroom.docref.HasDisplayValue;
 public enum CredentialType implements HasDisplayValue {
     USERNAME_PASSWORD("Username / Password"),
     ACCESS_TOKEN("Access Token"),
-    KEY_PAIR("Key Pair"),
+    SSH_KEY("SSH Key"),
     KEY_STORE("Key Store");
 
     private final String displayValue;

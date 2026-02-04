@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import stroom.annotation.shared.FetchAnnotationEntryRequest;
 import stroom.annotation.shared.FindAnnotationRequest;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.DateTimeSettings;
@@ -41,6 +42,7 @@ import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ParamKeys;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.DocumentPermissionService;
@@ -50,7 +52,10 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBatch;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasUserDependencies;
 import stroom.util.shared.NullSafe;
@@ -60,6 +65,7 @@ import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserRef;
 import stroom.util.time.StroomDuration;
 
+import it.unimi.dsi.fastutil.longs.LongList;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -74,7 +80,11 @@ import java.util.function.Predicate;
 
 public class AnnotationService implements Searchable, AnnotationCreator, HasUserDependencies {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationService.class);
+
     public static final String ANNOTATION_RETENTION_JOB_NAME = "Annotation Retention";
+    private static final String LOCK_NAME = "ANNOTATION_RETENTION";
+    public static final int RETENTION_EVENTS_BATCH_SIZE = 5_000;
 
     private final AnnotationDao annotationDao;
     private final AnnotationTagDao annotationTagDao;
@@ -85,6 +95,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     private final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider;
     private final Provider<UserGroupsService> userGroupsServiceProvider;
     private final EntityEventBus entityEventBus;
+    private final ClusterLockService clusterLockService;
 
     @Inject
     AnnotationService(final AnnotationDao annotationDao,
@@ -95,7 +106,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                       final Provider<AnnotationConfig> annotationConfigProvider,
                       final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider,
                       final Provider<UserGroupsService> userGroupsServiceProvider,
-                      final EntityEventBus entityEventBus) {
+                      final EntityEventBus entityEventBus, final ClusterLockService clusterLockService) {
         this.annotationDao = annotationDao;
         this.annotationTagDao = annotationTagDao;
         this.securityContext = securityContext;
@@ -105,6 +116,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         this.expressionPredicateFactoryProvider = expressionPredicateFactoryProvider;
         this.userGroupsServiceProvider = userGroupsServiceProvider;
         this.entityEventBus = entityEventBus;
+        this.clusterLockService = clusterLockService;
     }
 
     public ResultPage<Annotation> findAnnotations(final FindAnnotationRequest request) {
@@ -183,7 +195,8 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final DateTimeSettings dateTimeSettings,
-                       final ValuesConsumer consumer) {
+                       final ValuesConsumer valuesConsumer,
+                       final ErrorConsumer errorConsumer) {
         checkAppPermission();
 
         final ExpressionFilter expressionFilter = ExpressionFilter.builder()
@@ -197,7 +210,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         criteria.setExpression(expression);
 
         final Predicate<String> viewPermissionPredicate = getViewPermissionPredicate();
-        annotationDao.search(criteria, fieldIndex, consumer, viewPermissionPredicate);
+        annotationDao.search(criteria, fieldIndex, valuesConsumer, viewPermissionPredicate);
     }
 
     private Predicate<String> getViewPermissionPredicate() {
@@ -319,7 +332,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         }
 
         if (!refs.isEmpty()) {
-            fireGenericEntityChangeEvent();
+            fireEntityChangeEvents(refs);
         }
 
         return refs.size();
@@ -428,15 +441,53 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     }
 
     public void performDataRetention() {
-        // First mark annotations as deleted if they haven't been updated since their data retention time.
-        annotationDao.markDeletedByDataRetention();
+        performDataRetention(RETENTION_EVENTS_BATCH_SIZE);
+    }
 
-        // Now delete items that have been deleted longer than the max deletion age.
-        final StroomDuration physicalDeleteAge = annotationConfigProvider.get().getPhysicalDeleteAge();
-        final Instant age = Instant.now().minus(physicalDeleteAge);
-        annotationDao.physicallyDelete(age);
+    void performDataRetention(final int batchSize) {
+        LOGGER.debug("performDataRetention() - batchSize = {}", batchSize);
 
-        fireGenericEntityChangeEvent();
+        clusterLockService.tryLock(LOCK_NAME, () -> {
+            // First mark annotations as deleted if they haven't been updated since their data retention time.
+            final LongList logicallyDeletedIds = annotationDao.markDeletedByDataRetention();
+
+            if (NullSafe.hasItems(logicallyDeletedIds)) {
+                fireEntityChangeEvents(logicallyDeletedIds, batchSize);
+            }
+
+            // Now delete items that have been deleted longer than the max deletion age.
+            final StroomDuration physicalDeleteAge = annotationConfigProvider.get().getPhysicalDeleteAge();
+            final Instant age = Instant.now().minus(physicalDeleteAge);
+            final LongList physicallyDeletedIds = annotationDao.physicallyDelete(age);
+            if (NullSafe.hasItems(physicallyDeletedIds)) {
+                fireEntityChangeEvents(physicallyDeletedIds, batchSize);
+            }
+            LOGGER.info(() -> LogUtil.message(
+                    "Annotation data retention - logically deleted count: {}, physically deleted count: {}",
+                    logicallyDeletedIds.size(), physicallyDeletedIds.size()));
+        });
+    }
+
+    private void fireEntityChangeEvents(final LongList ids, final int batchSize) {
+        // Limit the size of the event batches so we are not sending massive requests
+        final int count = ids.size();
+        int fromIdxInc = 0;
+        while (true) {
+            final int remaining = count - fromIdxInc;
+            if (remaining == 0 || fromIdxInc > count) {
+                break;
+            }
+            final int thisBatchSize = Math.min(batchSize, remaining);
+            final int toIdxExc = fromIdxInc + thisBatchSize;
+            final LongList batchIds = ids.subList(fromIdxInc, toIdxExc);
+            final List<DocRef> docRefs = annotationDao.idListToDocRefs(batchIds);
+            final int finalFromIdxInc = fromIdxInc;
+            LOGGER.debug(() -> LogUtil.message(
+                    "fireEntityChangeEvents() - fromIdxInc: {}, toIdxExc: {}, ids: {}, batchIds: {}, docRefs: {}",
+                    finalFromIdxInc, toIdxExc, ids.size(), batchIds.size(), docRefs.size()));
+            fireEntityChangeEvents(docRefs);
+            fromIdxInc += batchSize;
+        }
     }
 
     public AnnotationTag createAnnotationTag(final CreateAnnotationTagRequest request) {
@@ -488,11 +539,18 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                 request.getAnnotationEntryId());
     }
 
-    private void fireGenericEntityChangeEvent() {
-        EntityEvent.fire(
-                entityEventBus,
-                DocRef.builder().type(Annotation.TYPE).build(),
-                EntityAction.UPDATE);
+    private void fireEntityChangeEvents(final List<DocRef> annotationRefs) {
+        final List<EntityEvent> events = NullSafe.stream(annotationRefs)
+                .filter(Objects::nonNull)
+                .peek(docRef -> {
+                    if (!Annotation.TYPE.equals(docRef.getType())) {
+                        throw new RuntimeException("Unexpected document type: " + docRef.getType());
+                    }
+                })
+                .map(docRef -> new EntityEvent(docRef, EntityAction.UPDATE))
+                .toList();
+        final EntityEventBatch entityEventBatch = new EntityEventBatch(events, true);
+        entityEventBus.fire(entityEventBatch);
     }
 
     private void fireEntityChangeEvent(final DocRef annotation) {
