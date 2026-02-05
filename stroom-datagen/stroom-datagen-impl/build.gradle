@@ -1,0 +1,43 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+ext.moduleName = 'stroom.datagen.impl'
+
+dependencies {
+    implementation project(':stroom-analytics:stroom-analytics-api')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-processor:stroom-processor-api')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-common')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+    implementation project(':stroom-view:stroom-view-api')
+
+    implementation libs.eventLogging
+    implementation libs.guice
+    implementation libs.restygwt
+    implementation libs.slf4j.api
+
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
+}

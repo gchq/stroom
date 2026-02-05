@@ -117,6 +117,9 @@ include 'stroom-data:stroom-data-store-mock'
 include 'stroom-data:stroom-data-store-util'
 include 'stroom-data:stroom-data-zip'
 
+// DataGen
+include 'stroom-datagen:stroom-datagen-impl'
+
 // DB Utilities
 include 'stroom-db-util'
 

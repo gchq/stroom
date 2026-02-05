@@ -598,6 +598,16 @@ public enum SvgImage {
             "l-171 463 396-98q8-2 12-2 19 0 34 15z\"/></svg>\n" +
             ""),
 
+    DOCUMENT_DATA_GEN("document/DataGen.svg", "svg-image__document-data-gen", "" +
+          "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 640 640\">" +
+          "<!--!Font Awesome Free v7.1.0 by @fontawesome - https://fontawesome.com License - " +
+          "https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path style=\"" +
+          "fill:var(--icon-colour__orange)\" d=\"M96 96C78.3 96 64 110.3 64 128L64 496C64 522.5 " +
+          "85.5 544 112 544L528 544C554.5 544 576 522.5 576 496L576 216.2C576 198 556.6 186.5 540.6 " +
+          "195.1L384 279.4L384 216.2C384 198 364.6 186.5 348.6 195.1L192 279.4L192 128C192 110.3 " +
+          "177.7 96 160 96L96 96z\"/></svg>\n" +
+          ""),
+
     DOCUMENT_ANNOTATIONS_INDEX("document/AnnotationsIndex.svg", "svg-image__document-annotations-index", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 20" +
             "0 200\"><!-- Paper Lines --><line x1=\"80\" y1=\"30\" x2=\"200\" y2=\"30\" style=\"stroke:" +

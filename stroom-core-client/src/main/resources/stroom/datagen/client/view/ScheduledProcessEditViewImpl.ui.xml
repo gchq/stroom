@@ -1,0 +1,32 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:schedule="urn:import:stroom.schedule.client"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="name" label="Name">
+            <g:TextBox ui:field="name" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup label="Enabled">
+            <tickbox:CustomCheckBox ui:field="enabled"/>
+        </form:FormGroup>
+        <form:FormGroup identity="analyticProcessingNode" label="Processing Node">
+            <l:SelectionBox ui:field="node" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="schedule" label="Schedule">
+            <schedule:ScheduleBox ui:field="schedule" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="startTime" label="Start Time">
+            <datetimebox:DateTimeBox ui:field="startTime" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="endTime" label="End Time (Optional)">
+            <datetimebox:DateTimeBox ui:field="endTime" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="runAsUser" label="Run As User">
+            <g:SimplePanel ui:field="runAsUser" addStyleNames="w-100"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder> 
