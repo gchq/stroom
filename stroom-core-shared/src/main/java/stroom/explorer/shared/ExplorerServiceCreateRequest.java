@@ -32,8 +32,6 @@ public class ExplorerServiceCreateRequest {
     private ExplorerNode destinationFolder;
     @JsonProperty
     private PermissionInheritance permissionInheritance;
-    @JsonProperty
-    private boolean embedded;
 
     public ExplorerServiceCreateRequest() {
     }
@@ -43,13 +41,11 @@ public class ExplorerServiceCreateRequest {
             @JsonProperty("docType") final String docType,
             @JsonProperty("docName") final String docName,
             @JsonProperty("destinationFolder") final ExplorerNode destinationFolder,
-            @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance,
-            @JsonProperty("embedded") final boolean embedded) {
+            @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance) {
         this.docType = docType;
         this.docName = docName;
         this.destinationFolder = destinationFolder;
         this.permissionInheritance = permissionInheritance;
-        this.embedded = embedded;
     }
 
     public String getDocType() {
@@ -82,13 +78,5 @@ public class ExplorerServiceCreateRequest {
 
     public void setPermissionInheritance(final PermissionInheritance permissionInheritance) {
         this.permissionInheritance = permissionInheritance;
-    }
-
-    public void setEmbedded(final boolean embedded) {
-        this.embedded = embedded;
-    }
-
-    public boolean getEmbedded() {
-        return embedded;
     }
 }

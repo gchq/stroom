@@ -325,7 +325,6 @@ public class DocumentPluginEventManager extends Plugin {
                         event.getDocName(),
                         event.getDestinationFolder(),
                         event.getPermissionInheritance(),
-                        event.isEmbedded(),
                         explorerNode -> {
                             // Hide the create document presenter.
                             event.getHidePopupRequestEvent().hide();
@@ -659,7 +658,6 @@ public class DocumentPluginEventManager extends Plugin {
                        final String docName,
                        final ExplorerNode destinationFolder,
                        final PermissionInheritance permissionInheritance,
-                       final boolean embedded,
                        final Consumer<ExplorerNode> consumer,
                        final TaskMonitorFactory taskMonitorFactory,
                        final HidePopupRequestEvent hidePopupRequestEvent) {
@@ -669,8 +667,7 @@ public class DocumentPluginEventManager extends Plugin {
                         docType,
                         docName,
                         destinationFolder,
-                        permissionInheritance,
-                        embedded)))
+                        permissionInheritance)))
                 .onSuccess(consumer)
                 .onFailure(new DefaultErrorHandler(this, hidePopupRequestEvent::reset))
                 .taskMonitorFactory(taskMonitorFactory)

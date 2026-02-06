@@ -29,11 +29,9 @@ import stroom.docref.DocRef.DisplayType;
 import stroom.docref.HasDisplayValue;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginRegistry;
-import stroom.document.client.event.CreateDocumentEvent;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
@@ -44,6 +42,7 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.Document;
 import stroom.util.shared.Embeddable;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
@@ -419,17 +418,18 @@ public class PropertyListPresenter
                                 break;
 
                             case EMBEDDED:
-                                createEmbeddedDocument(e, pipelinePropertyType.getDocRefTypes()[0],
-                                        node -> {
-                                            final DocRef docRef = node.getDocRef();
-                                            final DocRef parentDocRef = pipelineModel.getPipelineLayer()
-                                                    .getSourcePipeline();
-                                            final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(
-                                                    docRef.getType());
-                                            saveEmbeddedIn(documentPlugin, docRef, parentDocRef);
+                                final String docType = pipelinePropertyType.getDocRefTypes()[0];
+                                final DocRef parentDocRef = pipelineModel.getPipelineLayer().getSourcePipeline();
+                                final String embeddedPropertyName = "EMBEDDED " + docType + " (" +
+                                                                    currentElement.getId() + ")";
 
+                                final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docType);
+
+                                createEmbeddedDocument(documentPlugin, embeddedPropertyName, parentDocRef,
+                                        d -> {
+                                            final Document document = (Document) d;
                                             final PipelineProperty embeddedProperty = PipelineProperty.builder(editing)
-                                                    .value(new PipelinePropertyValue(node.getDocRef(), true))
+                                                    .value(new PipelinePropertyValue(document.asDocRef(), true))
                                                     .build();
                                             builder.getProperties().getAddList().add(embeddedProperty);
 
@@ -479,26 +479,19 @@ public class PropertyListPresenter
         }
     }
 
-    private void createEmbeddedDocument(final HidePopupRequestEvent e,
-                                        final String docRefType,
-                                        final Consumer<ExplorerNode> callback) {
-        final String embeddedPropertyName = "EMBEDDED " + docRefType + " (" + currentElement.getId() + ")";
-        CreateDocumentEvent.fire(this, e, docRefType,
-                embeddedPropertyName, null, null, true, callback);
-    }
-
-    private <D> void saveEmbeddedIn(final DocumentPlugin<D> documentPlugin, final DocRef docRef,
-                                      final DocRef parentDocRef) {
+    private <D> void createEmbeddedDocument(final DocumentPlugin<D> documentPlugin,
+                                            final String documentName,
+                                            final DocRef parentDocRef,
+                                            final Consumer<D> callback) {
         final RestErrorHandler errorHandler = throwable -> AlertEvent.fireError(
                 this,
-                "Unable to set parent to embedded document",
+                "Unable to create embedded document",
                 throwable.getMessage(), null);
 
-        documentPlugin.load(docRef, d -> {
-            if (d instanceof final Embeddable embeddable) {
+        documentPlugin.create(documentName, document -> {
+            if (document instanceof Document && document instanceof final Embeddable embeddable) {
                 embeddable.setEmbeddedIn(parentDocRef);
-                documentPlugin.save(docRef, d, r -> {
-                }, errorHandler, this);
+                documentPlugin.save(((Document) document).asDocRef(), document, callback, errorHandler, this);
             }
         }, errorHandler, this);
     }

@@ -924,15 +924,6 @@ class ExplorerServiceImpl
                                final String name,
                                final ExplorerNode destinationFolder,
                                final PermissionInheritance permissionInheritance) {
-        return create(type, name, destinationFolder, permissionInheritance, false);
-    }
-
-    @Override
-    public ExplorerNode create(final String type,
-                               final String name,
-                               final ExplorerNode destinationFolder,
-                               final PermissionInheritance permissionInheritance,
-                               final boolean embedded) {
 
         final DocRef folderRef = getDestinationFolderRef(destinationFolder);
         final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
@@ -942,9 +933,7 @@ class ExplorerServiceImpl
         // Create the document.
         try {
             // Check that the user is allowed to create an item of this type in the destination folder.
-            if (!embedded) {
-                checkCreatePermission(folderRef, type);
-            }
+            checkCreatePermission(folderRef, type);
             // Create an item of the specified type in the destination folder.
             // This should fire a CREATE entity event
             result = handler.createDocument(name);
@@ -954,10 +943,8 @@ class ExplorerServiceImpl
             throw e;
         }
 
-        // Create the explorer node if its not an embedded doc.
-        if (!embedded) {
-            explorerNodeService.createNode(result, folderRef, permissionInheritance);
-        }
+        // Create the explorer node
+        explorerNodeService.createNode(result, folderRef, permissionInheritance);
 
         // Make sure the tree model is rebuilt.
         rebuildTree();

@@ -113,8 +113,7 @@ class ExplorerResourceImpl implements ExplorerResource {
                 request.getDocType(),
                 request.getDocName(),
                 request.getDestinationFolder(),
-                request.getPermissionInheritance(),
-                request.getEmbedded());
+                request.getPermissionInheritance());
     }
 
     @Override
