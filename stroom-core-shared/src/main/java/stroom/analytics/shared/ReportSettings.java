@@ -18,6 +18,7 @@ package stroom.analytics.shared;
 
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,12 +32,14 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class ReportSettings {
 
+    public static final DownloadSearchResultFileType DEFAULT_FILE_TYPE = DownloadSearchResultFileType.EXCEL;
+
     @JsonProperty
     private final DownloadSearchResultFileType fileType;
 
     @JsonCreator
     public ReportSettings(@JsonProperty("fileType") final DownloadSearchResultFileType fileType) {
-        this.fileType = fileType;
+        this.fileType = NullSafe.requireNonNullElse(fileType, DEFAULT_FILE_TYPE);
     }
 
     public DownloadSearchResultFileType getFileType() {
@@ -76,6 +79,10 @@ public class ReportSettings {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder extends AbstractBuilder<ReportSettings, Builder> {
 
         private DownloadSearchResultFileType fileType;
@@ -88,7 +95,7 @@ public class ReportSettings {
         }
 
         public Builder fileType(final DownloadSearchResultFileType fileType) {
-            this.fileType = fileType;
+            this.fileType = Objects.requireNonNull(fileType);
             return self();
         }
 

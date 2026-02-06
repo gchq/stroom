@@ -23,16 +23,12 @@ public enum DownloadSearchResultFileType implements HasDisplayValue {
     CSV("CSV", "csv"),
     TSV("TSV", "tsv");
 
-    private final String name;
+    private final String displayValue;
     private final String extension;
 
-    DownloadSearchResultFileType(final String name, final String extension) {
-        this.name = name;
+    DownloadSearchResultFileType(final String displayValue, final String extension) {
+        this.displayValue = displayValue;
         this.extension = extension;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public String getExtension() {
@@ -41,6 +37,6 @@ public enum DownloadSearchResultFileType implements HasDisplayValue {
 
     @Override
     public String getDisplayValue() {
-        return name;
+        return displayValue;
     }
 }

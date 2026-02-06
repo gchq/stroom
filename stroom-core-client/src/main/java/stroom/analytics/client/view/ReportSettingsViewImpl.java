@@ -17,6 +17,7 @@
 package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.ReportSettingsPresenter.ReportSettingsView;
+import stroom.analytics.shared.ReportSettings;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.item.client.SelectionBox;
@@ -53,11 +54,11 @@ public class ReportSettingsViewImpl extends ViewWithUiHandlers<DirtyUiHandlers> 
 //        percent.setValue(100);
 //        percent.setEnabled(false);
 
-        fileType.addItem(DownloadSearchResultFileType.EXCEL);
-        fileType.addItem(DownloadSearchResultFileType.CSV);
-        fileType.addItem(DownloadSearchResultFileType.TSV);
+        for (final DownloadSearchResultFileType fileTypeVal : DownloadSearchResultFileType.values()) {
+            fileType.addItem(fileTypeVal);
+        }
 
-        fileType.setValue(DownloadSearchResultFileType.EXCEL);
+        fileType.setValue(ReportSettings.DEFAULT_FILE_TYPE);
 
 //        downloadAllTables.setEnabled(isExcelFileTypeSelected());
 //        fileType.addValueChangeHandler(event -> {

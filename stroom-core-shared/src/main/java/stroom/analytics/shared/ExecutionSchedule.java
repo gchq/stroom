@@ -138,15 +138,15 @@ public class ExecutionSchedule {
     @Override
     public String toString() {
         return "ExecutionSchedule{" +
-                "id=" + id +
-                ", name=" + name +
-                ", enabled=" + enabled +
-                ", nodeName='" + nodeName + '\'' +
-                ", schedule=" + schedule +
-                ", contiguous=" + contiguous +
-                ", scheduleBounds=" + scheduleBounds +
-                ", owningDoc=" + owningDoc +
-                '}';
+               "id=" + id +
+               ", name=" + name +
+               ", enabled=" + enabled +
+               ", nodeName='" + nodeName + '\'' +
+               ", schedule=" + schedule +
+               ", contiguous=" + contiguous +
+               ", scheduleBounds=" + scheduleBounds +
+               ", owningDoc=" + owningDoc +
+               '}';
     }
 
     public Builder copy() {
@@ -156,6 +156,10 @@ public class ExecutionSchedule {
     public static Builder builder() {
         return new Builder();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 

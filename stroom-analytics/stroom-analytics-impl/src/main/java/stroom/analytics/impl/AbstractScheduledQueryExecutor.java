@@ -230,10 +230,10 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
     private boolean execute(final T doc,
                             final ExecutionSchedule executionSchedule,
                             final TaskContext taskContext) {
-        final ExecutionTracker currentTracker = executionScheduleDao.getTracker(executionSchedule).orElse(null);
+        final ExecutionTracker currentTracker = executionScheduleDao.getTracker(executionSchedule)
+                .orElse(null);
         final Schedule schedule = executionSchedule.getSchedule();
         final ScheduleBounds scheduleBounds = executionSchedule.getScheduleBounds();
-
         // See if it is time to execute this query.
         final Instant executionTime = Instant.now();
         final Trigger trigger = TriggerFactory.create(schedule);
@@ -242,7 +242,7 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
         if (currentTracker != null) {
             effectiveExecutionTime = Instant.ofEpochMilli(currentTracker.getNextEffectiveExecutionTimeMs());
         } else {
-            if (scheduleBounds != null && scheduleBounds.getStartTimeMs() != null) {
+            if (NullSafe.nonNull(scheduleBounds, ScheduleBounds::getStartTimeMs)) {
                 effectiveExecutionTime = Instant.ofEpochMilli(scheduleBounds.getStartTimeMs());
             } else {
                 effectiveExecutionTime = trigger.getNextExecutionTimeAfter(executionTime);
@@ -251,11 +251,19 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
 
         // Calculate end bounds.
         Instant endTime = Instant.MAX;
-        if (scheduleBounds != null && scheduleBounds.getEndTimeMs() != null) {
+        if (NullSafe.nonNull(scheduleBounds, ScheduleBounds::getEndTimeMs)) {
             endTime = Instant.ofEpochMilli(scheduleBounds.getEndTimeMs());
         }
 
-        if (!effectiveExecutionTime.isAfter(executionTime) && !effectiveExecutionTime.isAfter(endTime)) {
+        // bounds (effectiveExecutionTime => endTime) are inclusive
+        if (effectiveExecutionTime != null
+            && !effectiveExecutionTime.isAfter(executionTime)
+            && !effectiveExecutionTime.isAfter(endTime)) {
+
+            LOGGER.debug("execute() - Executing - endTime: {}, executionTime: {}, " +
+                         "effectiveExecutionTime: {}, schedule: {}",
+                    endTime, executionTime, effectiveExecutionTime, schedule);
+
             taskContext.info(() -> "Executing schedule '" +
                                    executionSchedule.getName() +
                                    "' with effective time: " +
@@ -273,6 +281,10 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
                             effectiveExecutionTime,
                             executionSchedule,
                             currentTracker));
+        } else {
+            LOGGER.debug("execute() - Skipping execution - endTime: {}, executionTime: {}, " +
+                         "effectiveExecutionTime: {}, schedule: {}",
+                    endTime, executionTime, effectiveExecutionTime, schedule);
         }
         return false;
     }

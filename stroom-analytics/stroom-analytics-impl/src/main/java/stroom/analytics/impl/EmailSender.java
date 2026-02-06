@@ -30,6 +30,7 @@ import jakarta.activation.FileDataSource;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.mail.Message.RecipientType;
+import org.jspecify.annotations.NonNull;
 import org.simplejavamail.api.email.AttachmentResource;
 import org.simplejavamail.api.email.Email;
 import org.simplejavamail.api.email.EmailPopulatingBuilder;
@@ -39,6 +40,7 @@ import org.simplejavamail.email.EmailBuilder;
 import org.simplejavamail.mailer.MailerBuilder;
 import org.simplejavamail.mailer.internal.MailerRegularBuilderImpl;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -81,21 +83,60 @@ public class EmailSender {
 
     public void sendReport(final ReportDoc reportDoc,
                            final NotificationEmailDestination emailDestination,
-                           final Path file,
+                           final ReportFile reportFile,
                            final Instant executionTime,
                            final Instant effectiveExecutionTime) {
+        Objects.requireNonNull(reportDoc);
+        Objects.requireNonNull(emailDestination);
+        Objects.requireNonNull(reportFile);
+        final Path file = reportFile.file();
+        if (!Files.isRegularFile(file)) {
+            throw new IllegalArgumentException(LogUtil.message("file '{}' does not exist or is not a regular file",
+                    file.toAbsolutePath().normalize()));
+        }
+
+        // Set the context map for the templates to use
+        final Map<String, Object> context = createTemplateContext(
+                reportDoc,
+                reportFile,
+                executionTime,
+                effectiveExecutionTime);
+
+        final EmailContent renderedEmail = ruleEmailTemplatingService.renderEmail(emailDestination, context);
+        final List<AttachmentResource> attachmentResources = List.of(new AttachmentResource(
+                file.getFileName().toString(),
+                new FileDataSource(file.toFile())));
+        if (LOGGER.isTraceEnabled()) {
+            logContentsOfFile(file);
+        }
+        send(emailDestination, renderedEmail, reportDoc.getName(), attachmentResources);
+    }
+
+    private static void logContentsOfFile(final Path file) {
+        try {
+            final String contents = Files.readString(file);
+            LOGGER.trace("sendReport() - file: {}, contents:\n{}", file, contents);
+        } catch (final Exception e) {
+            // Swallow
+            LOGGER.trace("Error logging file contents, file: {} - {}", file, LogUtil.exceptionMessage(e), e);
+        }
+    }
+
+    private static @NonNull Map<String, Object> createTemplateContext(final ReportDoc reportDoc,
+                                                                      final ReportFile reportFile,
+                                                                      final Instant executionTime,
+                                                                      final Instant effectiveExecutionTime) {
+        // Can't use Map.of() cos of null values
         final Map<String, Object> context = new HashMap<>();
         context.put("reportName", reportDoc.getName());
         context.put("description", reportDoc.getDescription());
         context.put("executionTime", DateUtil.createNormalDateTimeString(executionTime));
         context.put("effectiveExecutionTime", DateUtil.createNormalDateTimeString(effectiveExecutionTime));
-
-        ruleEmailTemplatingService.renderEmail(emailDestination, context);
-        final EmailContent renderedEmail = ruleEmailTemplatingService.renderEmail(emailDestination, context);
-        final List<AttachmentResource> attachmentResources = new ArrayList<>();
-        attachmentResources.add(new AttachmentResource(file.getFileName().toString(),
-                new FileDataSource(file.toFile())));
-        send(emailDestination, renderedEmail, reportDoc.getName(), attachmentResources);
+        context.put("rowCount", reportFile.rowCount());
+        context.put("fileType", reportFile.fileType().name());
+        context.put("fileName", reportFile.file().getFileName().toString());
+        LOGGER.debug("createTemplateContext() - {}", context);
+        return Collections.unmodifiableMap(context);
     }
 
     private void send(final NotificationEmailDestination emailDestination,

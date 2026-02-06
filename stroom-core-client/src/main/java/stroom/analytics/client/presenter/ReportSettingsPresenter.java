@@ -57,7 +57,9 @@ public class ReportSettingsPresenter
                 .builder()
                 .fileType(getView().getFileType())
                 .build();
-        return document.copy().reportSettings(reportSettings).build();
+        return document.copy()
+                .reportSettings(reportSettings)
+                .build();
     }
 
     //
@@ -82,6 +84,10 @@ public class ReportSettingsPresenter
     public void onDirty() {
         setDirty(true);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface ReportSettingsView extends View, Focus, HasUiHandlers<DirtyUiHandlers> {
 
