@@ -326,7 +326,6 @@ public class ResultPage<T> implements Serializable {
         return values.isEmpty();
     }
 
-    @JsonIgnore
     public boolean hasItems() {
         return !values.isEmpty();
     }
