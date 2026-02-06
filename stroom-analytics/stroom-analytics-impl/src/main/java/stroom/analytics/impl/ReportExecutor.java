@@ -25,6 +25,7 @@ import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.analytics.shared.ReportDoc;
+import stroom.analytics.shared.ReportSettings;
 import stroom.dashboard.impl.SampleGenerator;
 import stroom.dashboard.impl.download.DelimitedTarget;
 import stroom.dashboard.impl.download.ExcelTarget;
@@ -211,6 +212,13 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                     // Wait for search to complete.
                     dataStore.getCompletionState().awaitCompletion();
 
+                    // Determine if we are going to send empty reports.
+                    final boolean sendEmptyReports = NullSafe.getOrElse(
+                            reportDoc,
+                            ReportDoc::getReportSettings,
+                            ReportSettings::isSendEmptyReports,
+                            false);
+
                     ReportFile reportFile = null;
                     try {
                         // Create the output file.
@@ -222,15 +230,18 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                                 dataStore,
                                 resultRequest);
 
-                        for (final NotificationConfig notificationConfig : reportDoc.getNotifications()) {
-                            try {
-                                sendFile(reportDoc,
-                                        notificationConfig,
-                                        reportFile,
-                                        executionTime,
-                                        effectiveExecutionTime);
-                            } catch (final IOException e) {
-                                errorConsumer.add(e);
+                        // Send the report if not empty or if we are happy to send empty reports anyway.
+                        if (sendEmptyReports || reportFile.rowCount() > 0) {
+                            for (final NotificationConfig notificationConfig : reportDoc.getNotifications()) {
+                                try {
+                                    sendFile(reportDoc,
+                                            notificationConfig,
+                                            reportFile,
+                                            executionTime,
+                                            effectiveExecutionTime);
+                                } catch (final IOException e) {
+                                    errorConsumer.add(e);
+                                }
                             }
                         }
 

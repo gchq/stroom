@@ -56,9 +56,7 @@ public class DownloadViewImpl extends ViewImpl implements DownloadView {
         percent.setValue(100);
         percent.setEnabled(false);
 
-        for (final DownloadSearchResultFileType fileTypeVal : DownloadSearchResultFileType.values()) {
-            fileType.addItem(fileTypeVal);
-        }
+        fileType.addItems(DownloadSearchResultFileType.asSortedList());
         fileType.setValue(ReportSettings.DEFAULT_FILE_TYPE);
 
         downloadAllTables.setEnabled(isExcelFileTypeSelected());

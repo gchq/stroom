@@ -18,6 +18,11 @@ package stroom.dashboard.shared;
 
 import stroom.docref.HasDisplayValue;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+
 public enum DownloadSearchResultFileType implements HasDisplayValue {
     EXCEL("Excel", "xlsx"),
     CSV("CSV", "csv"),
@@ -27,8 +32,8 @@ public enum DownloadSearchResultFileType implements HasDisplayValue {
     private final String extension;
 
     DownloadSearchResultFileType(final String displayValue, final String extension) {
-        this.displayValue = displayValue;
-        this.extension = extension;
+        this.displayValue = Objects.requireNonNull(displayValue);
+        this.extension = Objects.requireNonNull(extension);
     }
 
     public String getExtension() {
@@ -38,5 +43,15 @@ public enum DownloadSearchResultFileType implements HasDisplayValue {
     @Override
     public String getDisplayValue() {
         return displayValue;
+    }
+
+    /**
+     * @return A list of the {@link DownloadSearchResultFileType} values sorted
+     * in natural order by their displayValue.
+     */
+    public static List<DownloadSearchResultFileType> asSortedList() {
+        return Arrays.stream(DownloadSearchResultFileType.values())
+                .sorted(Comparator.comparing(DownloadSearchResultFileType::getDisplayValue))
+                .toList();
     }
 }
