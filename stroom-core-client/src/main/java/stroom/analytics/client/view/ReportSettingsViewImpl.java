@@ -20,6 +20,7 @@ import stroom.analytics.client.presenter.ReportSettingsPresenter.ReportSettingsV
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.item.client.SelectionBox;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -35,41 +36,16 @@ public class ReportSettingsViewImpl extends ViewWithUiHandlers<DirtyUiHandlers> 
 
     @UiField
     SelectionBox<DownloadSearchResultFileType> fileType;
-//    @UiField
-//    FormGroup downloadAll;
-//    @UiField
-//    CustomCheckBox downloadAllTables;
-//    @UiField
-//    CustomCheckBox sample;
-//    @UiField
-//    ValueSpinner percent;
+    @UiField
+    CustomCheckBox sendEmptyReports;
 
     @Inject
     public ReportSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-
-//        percent.setMax(100);
-//        percent.setMin(1);
-//        percent.setValue(100);
-//        percent.setEnabled(false);
-
         fileType.addItem(DownloadSearchResultFileType.EXCEL);
         fileType.addItem(DownloadSearchResultFileType.CSV);
         fileType.addItem(DownloadSearchResultFileType.TSV);
-
         fileType.setValue(DownloadSearchResultFileType.EXCEL);
-
-//        downloadAllTables.setEnabled(isExcelFileTypeSelected());
-//        fileType.addValueChangeHandler(event -> {
-//            downloadAllTables.setEnabled(isExcelFileTypeSelected());
-//            if (!isExcelFileTypeSelected()) {
-//                downloadAllTables.setValue(false);
-//            }
-//        });
-    }
-
-    private boolean isExcelFileTypeSelected() {
-        return DownloadSearchResultFileType.EXCEL.equals(fileType.getValue());
     }
 
     @Override
@@ -92,33 +68,23 @@ public class ReportSettingsViewImpl extends ViewWithUiHandlers<DirtyUiHandlers> 
         this.fileType.setValue(fileType);
     }
 
-    //    @Override
-//    public boolean downloadAllTables() {
-//        return downloadAllTables.getValue();
-//    }
-//
-//    @Override
-//    public void setShowDownloadAll(final boolean show) {
-//        downloadAll.setVisible(show);
-//    }
-//
-//    @Override
-//    public boolean isSample() {
-//        return sample.getValue();
-//    }
-//
-//    @Override
-//    public int getPercent() {
-//        return percent.getIntValue();
-//    }
-//
-//    @UiHandler("sample")
-//    public void onChange(final ValueChangeEvent<Boolean> event) {
-//        percent.setEnabled(sample.getValue());
-//    }
+    @Override
+    public boolean isSendEmptyReports() {
+        return sendEmptyReports.getValue();
+    }
+
+    @Override
+    public void setSendEmptyReports(final boolean sendEmptyReports) {
+        this.sendEmptyReports.setValue(sendEmptyReports);
+    }
 
     @UiHandler("fileType")
     public void onFileTypeChange(final ValueChangeEvent<DownloadSearchResultFileType> event) {
+        getUiHandlers().onDirty();
+    }
+
+    @UiHandler("sendEmptyReports")
+    public void onSendEmptyReports(final ValueChangeEvent<Boolean> event) {
         getUiHandlers().onDirty();
     }
 

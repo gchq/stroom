@@ -25,6 +25,7 @@ import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.analytics.shared.ReportDoc;
+import stroom.analytics.shared.ReportSettings;
 import stroom.dashboard.impl.SampleGenerator;
 import stroom.dashboard.impl.download.DelimitedTarget;
 import stroom.dashboard.impl.download.ExcelTarget;
@@ -73,6 +74,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.scheduler.Trigger;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -210,10 +212,17 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                     // Wait for search to complete.
                     dataStore.getCompletionState().awaitCompletion();
 
-                    Path file = null;
+                    // Determine if we are going to send empty reports.
+                    final boolean sendEmptyReports = NullSafe.getOrElse(
+                            reportDoc,
+                            ReportDoc::getReportSettings,
+                            ReportSettings::isSendEmptyReports,
+                            false);
+
+                    ReportFile reportFile = null;
                     try {
                         // Create the output file.
-                        file = createFile(
+                        reportFile = createFile(
                                 reportDoc,
                                 executionTime,
                                 effectiveExecutionTime,
@@ -221,11 +230,18 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                                 dataStore,
                                 resultRequest);
 
-                        for (final NotificationConfig notificationConfig : reportDoc.getNotifications()) {
-                            try {
-                                sendFile(reportDoc, notificationConfig, file, executionTime, effectiveExecutionTime);
-                            } catch (final IOException e) {
-                                errorConsumer.add(e);
+                        // Send the report if not empty or if we are happy to send empty reports anyway.
+                        if (sendEmptyReports || reportFile.totalRowCount > 0) {
+                            for (final NotificationConfig notificationConfig : reportDoc.getNotifications()) {
+                                try {
+                                    sendFile(reportDoc,
+                                            notificationConfig,
+                                            reportFile.file,
+                                            executionTime,
+                                            effectiveExecutionTime);
+                                } catch (final IOException e) {
+                                    errorConsumer.add(e);
+                                }
                             }
                         }
 
@@ -233,8 +249,8 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                         errorConsumer.add(e);
                     } finally {
                         // Delete the file after we complete.
-                        if (file != null) {
-                            Files.deleteIfExists(file);
+                        if (reportFile != null && reportFile.file != null) {
+                            Files.deleteIfExists(reportFile.file);
                         }
                     }
 
@@ -305,12 +321,12 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
         // Nothing to do
     }
 
-    private Path createFile(final ReportDoc reportDoc,
-                            final Instant executionTime,
-                            final Instant effectiveExecutionTime,
-                            final DateTimeSettings dateTimeSettings,
-                            final DataStore dataStore,
-                            final ResultRequest resultRequest) throws IOException {
+    private ReportFile createFile(final ReportDoc reportDoc,
+                                  final Instant executionTime,
+                                  final Instant effectiveExecutionTime,
+                                  final DateTimeSettings dateTimeSettings,
+                                  final DataStore dataStore,
+                                  final ResultRequest resultRequest) throws IOException {
         long totalRowCount = 0;
         final DownloadSearchResultFileType fileType = reportDoc.getReportSettings().getFileType();
         final String dateTime = DateUtil.createFileDateTimeString(effectiveExecutionTime);
@@ -392,7 +408,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
             }
         }
 
-        return file;
+        return new ReportFile(file, totalRowCount);
     }
 
     private String getFileName(final String baseName,
@@ -519,5 +535,9 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
             errorFeedName = defaultErrorFeed.getName();
         }
         return errorFeedName;
+    }
+
+    private record ReportFile(Path file, long totalRowCount) {
+
     }
 }
