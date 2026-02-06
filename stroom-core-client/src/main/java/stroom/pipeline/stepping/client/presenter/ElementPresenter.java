@@ -502,10 +502,6 @@ public class ElementPresenter
         return docRef;
     }
 
-    public boolean isDirtyCode() {
-        return dirtyCode;
-    }
-
     public void clearAllIndicators() {
         this.indicators = null;
         for (final IndicatorType indicatorType : IndicatorType.values()) {

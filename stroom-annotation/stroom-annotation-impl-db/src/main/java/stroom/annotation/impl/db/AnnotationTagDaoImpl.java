@@ -16,14 +16,11 @@
 
 package stroom.annotation.impl.db;
 
-import stroom.annotation.impl.AnnotationConfig;
 import stroom.annotation.impl.AnnotationTagDao;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagFields;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.annotation.shared.CreateAnnotationTagRequest;
-import stroom.cache.api.CacheManager;
-import stroom.cache.api.StroomCache;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
@@ -39,10 +36,8 @@ import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
-import org.jooq.DSLContext;
 import org.jooq.Record;
 
 import java.util.ArrayList;
@@ -62,41 +57,27 @@ import static stroom.annotation.impl.db.jooq.tables.AnnotationTagLink.ANNOTATION
 class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationTagDaoImpl.class);
-    private static final String CACHE_NAME = "Annotation Tag Cache";
 
     private final AnnotationDbConnProvider connectionProvider;
     private final ExpressionMapper expressionMapper;
-    private final StroomCache<Integer, Optional<AnnotationTag>> cache;
 
     @Inject
     AnnotationTagDaoImpl(final AnnotationDbConnProvider connectionProvider,
-                         final ExpressionMapperFactory expressionMapperFactory,
-                         final CacheManager cacheManager,
-                         final Provider<AnnotationConfig> annotationConfigProvider) {
+                         final ExpressionMapperFactory expressionMapperFactory) {
         this.connectionProvider = connectionProvider;
         this.expressionMapper = createExpressionMapper(expressionMapperFactory);
-        // Can't use a loading cache cos the caller of get needs to provide the load function
-        // with their DSLContext
-        cache = cacheManager.create(
-                CACHE_NAME,
-                () -> annotationConfigProvider.get().getAnnotationTagCache());
     }
 
-    private Optional<AnnotationTag> load(final DSLContext context, final int id) {
-        return context.select(ANNOTATION_TAG.ID,
+    public Optional<AnnotationTag> load(final int id) {
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select(ANNOTATION_TAG.ID,
                         ANNOTATION_TAG.UUID,
                         ANNOTATION_TAG.TYPE_ID,
                         ANNOTATION_TAG.NAME,
                         ANNOTATION_TAG.STYLE_ID)
                 .from(ANNOTATION_TAG)
                 .where(ANNOTATION_TAG.ID.eq(id))
-                .fetchOptional(this::mapToAnnotationTag);
-    }
-
-    public AnnotationTag get(final DSLContext context, final int id) {
-        return cache.get(id, anId ->
-                        load(context, anId))
-                .orElse(null);
+                .fetchOptional(this::mapToAnnotationTag));
     }
 
     private ExpressionMapper createExpressionMapper(final ExpressionMapperFactory expressionMapperFactory) {
@@ -233,7 +214,7 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                 .map(this::mapToAnnotationTag);
     }
 
-    private AnnotationTag mapToAnnotationTag(final Record record) {
+    AnnotationTag mapToAnnotationTag(final Record record) {
         return AnnotationTag
                 .builder()
                 .id(record.get(ANNOTATION_TAG.ID))
@@ -250,9 +231,7 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
     public void clear() {
         JooqUtil.context(connectionProvider, context -> context.deleteFrom(ANNOTATION_TAG_LINK).execute());
         JooqUtil.context(connectionProvider, context -> context.deleteFrom(ANNOTATION_TAG).execute());
-        cache.clear();
     }
-
 
     public List<Integer> getIds(final AnnotationTagType annotationTagType,
                                 final List<String> wildCardedTypeNames) {

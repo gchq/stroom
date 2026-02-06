@@ -77,13 +77,6 @@ select StreamId, EventId, EventTime, Status
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -94,6 +87,13 @@ select StreamId, EventId, EventTime, Status
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
@@ -195,13 +195,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -212,6 +205,13 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
@@ -321,13 +321,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -338,6 +331,13 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
@@ -438,13 +438,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -455,6 +448,13 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
@@ -555,13 +555,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -572,6 +565,13 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
@@ -658,13 +658,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -675,6 +668,13 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
@@ -732,13 +732,6 @@ select StreamId
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -749,6 +742,13 @@ select StreamId
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
@@ -835,13 +835,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -852,6 +845,13 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
@@ -938,13 +938,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -955,6 +948,13 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
@@ -1041,13 +1041,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -1058,6 +1051,13 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
@@ -1203,13 +1203,6 @@ select comp
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -1220,6 +1213,13 @@ select comp
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
@@ -1529,13 +1529,6 @@ select StreamId
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -1546,6 +1539,13 @@ select StreamId
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
@@ -1603,13 +1603,6 @@ select StreamId
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -1620,6 +1613,13 @@ select StreamId
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
@@ -1736,13 +1736,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -1753,6 +1746,13 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
@@ -1862,13 +1862,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -1879,6 +1872,13 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
@@ -1989,13 +1989,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -2006,6 +1999,13 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
@@ -2112,13 +2112,6 @@ select StreamId, EventId, EventTime, Status
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -2129,6 +2122,13 @@ select StreamId, EventId, EventTime, Status
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
@@ -2244,13 +2244,6 @@ select StreamId, EventId, EventTime, Status
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -2261,6 +2254,13 @@ select StreamId, EventId, EventTime, Status
         "id" : "__event_id__",
         "name" : "__event_id__",
         "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
         "width" : 200,
         "visible" : false,
         "special" : true
