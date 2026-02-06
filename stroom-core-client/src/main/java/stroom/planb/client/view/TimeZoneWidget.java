@@ -97,11 +97,13 @@ public final class TimeZoneWidget
     }
 
     public void setUserTimeZone(final UserTimeZone userTimeZone) {
-        timeZoneUse.setValue(userTimeZone.getUse());
-        timeZoneId.setValue(userTimeZone.getId());
-        timeZoneOffsetHours.setValue(userTimeZone.getOffsetHours());
-        timeZoneOffsetMinutes.setValue(userTimeZone.getOffsetMinutes());
-        changeVisible();
+        if (userTimeZone != null) {
+            timeZoneUse.setValue(userTimeZone.getUse());
+            timeZoneId.setValue(userTimeZone.getId());
+            timeZoneOffsetHours.setValue(userTimeZone.getOffsetHours());
+            timeZoneOffsetMinutes.setValue(userTimeZone.getOffsetMinutes());
+            changeVisible();
+        }
     }
 
     @Override

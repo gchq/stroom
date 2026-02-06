@@ -1,13 +1,14 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="days">
-        <g:Label ui:field="mon">Mon</g:Label>
-        <g:Label ui:field="tue">Tue</g:Label>
-        <g:Label ui:field="wed">Wed</g:Label>
-        <g:Label ui:field="thu">Thu</g:Label>
-        <g:Label ui:field="fri">Fri</g:Label>
-        <g:Label ui:field="sat">Sat</g:Label>
-        <g:Label ui:field="sun">Sun</g:Label>
+        <tickbox:CustomCheckBox ui:field="mon" label="Monday"/>
+        <tickbox:CustomCheckBox ui:field="tue" label="Tuesday"/>
+        <tickbox:CustomCheckBox ui:field="wed" label="Wednesday"/>
+        <tickbox:CustomCheckBox ui:field="thu" label="Thursday"/>
+        <tickbox:CustomCheckBox ui:field="fri" label="Friday"/>
+        <tickbox:CustomCheckBox ui:field="sat" label="Saturday"/>
+        <tickbox:CustomCheckBox ui:field="sun" label="Sunday"/>
     </g:FlowPanel>
 </ui:UiBinder>

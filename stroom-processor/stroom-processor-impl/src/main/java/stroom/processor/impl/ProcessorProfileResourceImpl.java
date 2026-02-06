@@ -41,23 +41,23 @@ class ProcessorProfileResourceImpl implements ProcessorProfileResource {
     }
 
     @Override
-    public ProcessorProfile create(final String name) {
-        return processorProfileServiceProvider.get().getOrCreate(name);
+    public ProcessorProfile create(final ProcessorProfile processorProfile) {
+        return processorProfileServiceProvider.get().create(processorProfile);
     }
 
     @Override
-    public ProcessorProfile fetch(final Integer id) {
-        return processorProfileServiceProvider.get().get(id);
+    public ProcessorProfile fetchById(final Integer id) {
+        return processorProfileServiceProvider.get().fetchById(id);
     }
 
     @Override
     public ProcessorProfile fetchByName(final String name) {
-        return processorProfileServiceProvider.get().get(name);
+        return processorProfileServiceProvider.get().fetchByName(name);
     }
 
     @Override
-    public ProcessorProfile update(final Integer id, final ProcessorProfile indexVolumeGroup) {
-        return processorProfileServiceProvider.get().update(indexVolumeGroup);
+    public ProcessorProfile update(final Integer id, final ProcessorProfile processorProfile) {
+        return processorProfileServiceProvider.get().update(processorProfile);
     }
 
     @Override

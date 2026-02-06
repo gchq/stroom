@@ -31,7 +31,7 @@ public interface FsVolumeGroupService {
 
     List<FsVolumeGroup> getAll();
 
-    FsVolumeGroup create();
+    FsVolumeGroup create(String name);
 
     FsVolumeGroup getOrCreate(String name);
 

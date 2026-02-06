@@ -17,6 +17,7 @@
 package stroom.processor.impl;
 
 import stroom.docstore.api.DocumentActionHandlerBinder;
+import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.ScheduledJobsBinder;
@@ -25,6 +26,7 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorFilterDoc;
+import stroom.processor.shared.ProcessorProfile;
 import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.query.api.datasource.DataSourceProvider;
@@ -59,6 +61,9 @@ public class ProcessorModule extends AbstractModule {
                 .bind(ProcessorFilterResourceImpl.class)
                 .bind(ProcessorTaskResourceImpl.class)
                 .bind(ProcessorProfileResourceImpl.class);
+
+        ObjectInfoProviderBinder.create(binder())
+                .bind(ProcessorProfile.class, ProcessorProfileObjectInfoProvider.class);
 
         GuiceUtil.buildMultiBinder(binder(), DistributedTaskFactory.class)
                 .addBinding(DataProcessorTaskFactory.class);

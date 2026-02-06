@@ -16,7 +16,6 @@
 
 package stroom.node.shared;
 
-import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -39,8 +38,7 @@ import org.fusesource.restygwt.client.DirectRestService;
 @Path("/node/nodeGroup" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface NodeGroupResource extends RestResource, DirectRestService,
-        FetchWithIntegerId<NodeGroup> {
+public interface NodeGroupResource extends RestResource, DirectRestService {
 
     @POST
     @Path("find")
@@ -52,16 +50,16 @@ public interface NodeGroupResource extends RestResource, DirectRestService,
 
     @POST
     @Operation(
-            summary = "Creates an node group",
-            operationId = "getOrCreateNodeGroup")
-    NodeGroup getOrCreate(@Parameter(description = "name", required = true) String name);
+            summary = "Creates a node group",
+            operationId = "createNodeGroup")
+    NodeGroup create(@Parameter(description = "name", required = true) String name);
 
     @GET
-    @Path("/{id}")
+    @Path("/fetchById/{id}")
     @Operation(
-            summary = "Gets an node group",
-            operationId = "fetchNodeGroup")
-    NodeGroup fetch(@PathParam("id") Integer id);
+            summary = "Gets an node group by id",
+            operationId = "fetchNodeGroupById")
+    NodeGroup fetchById(@PathParam("id") Integer id);
 
     @GET
     @Path("/fetchByName/{name}")

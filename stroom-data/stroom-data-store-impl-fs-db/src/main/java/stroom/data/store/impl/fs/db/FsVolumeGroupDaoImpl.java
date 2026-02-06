@@ -28,7 +28,7 @@ import org.jooq.exception.DataAccessException;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -77,30 +77,48 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
     }
 
     @Override
-    public FsVolumeGroup getOrCreate(final FsVolumeGroup fsVolumeGroup) {
-        final Optional<Integer> optional = JooqUtil.onDuplicateKeyIgnore(() ->
-                JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
-                        .insertInto(FS_VOLUME_GROUP,
-                                FS_VOLUME_GROUP.VERSION,
-                                FS_VOLUME_GROUP.CREATE_USER,
-                                FS_VOLUME_GROUP.CREATE_TIME_MS,
-                                FS_VOLUME_GROUP.UPDATE_USER,
-                                FS_VOLUME_GROUP.UPDATE_TIME_MS,
-                                FS_VOLUME_GROUP.NAME)
-                        .values(1,
-                                fsVolumeGroup.getCreateUser(),
-                                fsVolumeGroup.getCreateTimeMs(),
-                                fsVolumeGroup.getUpdateUser(),
-                                fsVolumeGroup.getUpdateTimeMs(),
-                                fsVolumeGroup.getName())
-                        .returning(FS_VOLUME_GROUP.ID)
-                        .fetchOptional(FS_VOLUME_GROUP.ID)));
+    public FsVolumeGroup create(final FsVolumeGroup fsVolumeGroup) {
+        final Integer id = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+                .insertInto(FS_VOLUME_GROUP,
+                        FS_VOLUME_GROUP.VERSION,
+                        FS_VOLUME_GROUP.CREATE_USER,
+                        FS_VOLUME_GROUP.CREATE_TIME_MS,
+                        FS_VOLUME_GROUP.UPDATE_USER,
+                        FS_VOLUME_GROUP.UPDATE_TIME_MS,
+                        FS_VOLUME_GROUP.NAME)
+                .values(1,
+                        fsVolumeGroup.getCreateUser(),
+                        fsVolumeGroup.getCreateTimeMs(),
+                        fsVolumeGroup.getUpdateUser(),
+                        fsVolumeGroup.getUpdateTimeMs(),
+                        fsVolumeGroup.getName())
+                .returning(FS_VOLUME_GROUP.ID)
+                .fetchOne(FS_VOLUME_GROUP.ID));
+        Objects.requireNonNull(id, "Id is null");
+        fsVolumeGroup.setId(id);
+        fsVolumeGroup.setVersion(1);
+        return fsVolumeGroup;
+    }
 
-        return optional.map(id -> {
-            fsVolumeGroup.setId(id);
-            fsVolumeGroup.setVersion(1);
-            return fsVolumeGroup;
-        }).orElse(get(fsVolumeGroup.getName()));
+    @Override
+    public FsVolumeGroup getOrCreate(final FsVolumeGroup fsVolumeGroup) {
+        // Try fetch first.
+        final FsVolumeGroup fetched = fetchByName(fsVolumeGroup.getName());
+        if (fetched != null) {
+            return fetched;
+        }
+
+        try {
+            // Try create.
+            create(fsVolumeGroup);
+        } catch (final RuntimeException e) {
+            if (!JooqUtil.isDuplicateKeyException(e)) {
+                throw e;
+            }
+        }
+
+        // Try fetch again.
+        return fetchByName(fsVolumeGroup.getName());
     }
 
     @Override
@@ -146,7 +164,7 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
     }
 
     @Override
-    public FsVolumeGroup get(final int id) {
+    public FsVolumeGroup fetchById(final int id) {
         return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                         .select()
                         .from(FS_VOLUME_GROUP)
@@ -157,7 +175,7 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
     }
 
     @Override
-    public FsVolumeGroup get(final String name) {
+    public FsVolumeGroup fetchByName(final String name) {
         return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                         .select()
                         .from(FS_VOLUME_GROUP)
@@ -188,7 +206,7 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
 
     @Override
     public void delete(final String name) {
-        final FsVolumeGroup fsVolumeGroupToDelete = get(name);
+        final FsVolumeGroup fsVolumeGroupToDelete = fetchByName(name);
         genericDao.delete(fsVolumeGroupToDelete.getId());
     }
 

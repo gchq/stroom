@@ -17,7 +17,6 @@
 package stroom.processor.impl.db;
 
 import stroom.db.util.JooqUtil;
-import stroom.node.shared.NodeGroup;
 import stroom.processor.impl.ProcessorProfileDao;
 import stroom.processor.shared.FindProcessorProfileRequest;
 import stroom.processor.shared.ProcessorProfile;
@@ -27,6 +26,7 @@ import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
+import org.jooq.JSON;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +36,7 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorProfile.PROCESSOR_PR
 
 class ProcessorProfileDaoImpl implements ProcessorProfileDao {
 
-    private static final RecordToProcessorProfileMapper RECORD_TO_PROCESSOR_MAPPER =
+    private static final RecordToProcessorProfileMapper RECORD_TO_PROCESSOR_PROFILE_MAPPER =
             new RecordToProcessorProfileMapper();
 
     private final ProcessorDbConnProvider processorDbConnProvider;
@@ -50,63 +50,80 @@ class ProcessorProfileDaoImpl implements ProcessorProfileDao {
     public ResultPage<ProcessorProfile> find(final FindProcessorProfileRequest request) {
         final List<Condition> conditions = new ArrayList<>();
         if (NullSafe.isNonBlankString(request.getFilter())) {
-            conditions.add(NODE_GROUP.NAME.startsWith(request.getFilter()));
+            conditions.add(PROCESSOR_PROFILE.NAME.startsWith(request.getFilter()));
         }
         final int offset = JooqUtil.getOffset(request.getPageRequest());
         final int limit = JooqUtil.getLimit(request.getPageRequest(), true);
 
-        final List<NodeGroup> list = JooqUtil.contextResult(nodeDbConnProvider, context -> context
+        final List<ProcessorProfile> list = JooqUtil.contextResult(processorDbConnProvider, context -> context
                         .select()
-                        .from(NODE_GROUP)
+                        .from(PROCESSOR_PROFILE)
                         .where(conditions)
-                        .orderBy(NODE_GROUP.NAME)
+                        .orderBy(PROCESSOR_PROFILE.NAME)
                         .offset(offset)
                         .limit(limit)
                         .fetch())
-                .map(RECORD_TO_NODE_GROUP_MAPPER::apply);
+                .map(RECORD_TO_PROCESSOR_PROFILE_MAPPER::apply);
         return ResultPage.createCriterialBasedList(list, request);
     }
 
     @Override
-    public ProcessorProfile getOrCreate(final ProcessorProfile processorProfile) {
-        final ProcessorProfileData processorProfileData = new ProcessorProfileData(
+    public List<String> getNames() {
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .select(PROCESSOR_PROFILE.NAME)
+                .from(PROCESSOR_PROFILE)
+                .fetch(PROCESSOR_PROFILE.NAME));
+    }
+
+    @Override
+    public List<ProcessorProfile> getAll() {
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
+                        .select()
+                        .from(PROCESSOR_PROFILE)
+                        .orderBy(PROCESSOR_PROFILE.NAME)
+                        .fetch())
+                .map(RECORD_TO_PROCESSOR_PROFILE_MAPPER::apply);
+    }
+
+    @Override
+    public ProcessorProfile create(final ProcessorProfile processorProfile) {
+        final ProcessorProfilePeriods processorProfilePeriods = new ProcessorProfilePeriods(
                 processorProfile.getProfilePeriods(),
                 processorProfile.getTimeZone());
-        final String json = JsonUtil.writeValueAsString(processorProfileData);
+        final JSON json = JSON.json(JsonUtil.writeValueAsString(processorProfilePeriods));
 
-        final Optional<Integer> optional = JooqUtil.onDuplicateKeyIgnore(() ->
-                JooqUtil.contextResult(processorDbConnProvider, context -> context
-                        .insertInto(PROCESSOR_PROFILE,
-                                PROCESSOR_PROFILE.VERSION,
-                                PROCESSOR_PROFILE.CREATE_USER,
-                                PROCESSOR_PROFILE.CREATE_TIME_MS,
-                                PROCESSOR_PROFILE.UPDATE_USER,
-                                PROCESSOR_PROFILE.UPDATE_TIME_MS,
-                                PROCESSOR_PROFILE.NAME,
-                                PROCESSOR_PROFILE.NODE_GROUP_NAME,
-                                PROCESSOR_PROFILE.DATA)
-                        .values(1,
-                                processorProfile.getCreateUser(),
-                                processorProfile.getCreateTimeMs(),
-                                processorProfile.getUpdateUser(),
-                                processorProfile.getUpdateTimeMs(),
-                                processorProfile.getName(),
-                                processorProfile.getNodeGroupName(),
-                                json)
-                        .returning(PROCESSOR_PROFILE.ID)
-                        .fetchOptional(PROCESSOR_PROFILE.ID)));
+        final Optional<Integer> optional = JooqUtil.contextResult(processorDbConnProvider, context -> context
+                .insertInto(PROCESSOR_PROFILE,
+                        PROCESSOR_PROFILE.VERSION,
+                        PROCESSOR_PROFILE.CREATE_USER,
+                        PROCESSOR_PROFILE.CREATE_TIME_MS,
+                        PROCESSOR_PROFILE.UPDATE_USER,
+                        PROCESSOR_PROFILE.UPDATE_TIME_MS,
+                        PROCESSOR_PROFILE.NAME,
+                        PROCESSOR_PROFILE.NODE_GROUP_NAME,
+                        PROCESSOR_PROFILE.PERIODS)
+                .values(1,
+                        processorProfile.getCreateUser(),
+                        processorProfile.getCreateTimeMs(),
+                        processorProfile.getUpdateUser(),
+                        processorProfile.getUpdateTimeMs(),
+                        processorProfile.getName(),
+                        processorProfile.getNodeGroupName(),
+                        json)
+                .returning(PROCESSOR_PROFILE.ID)
+                .fetchOptional(PROCESSOR_PROFILE.ID));
         return optional.map(id ->
                 processorProfile.copy().id(id).version(1).build()).orElse(fetchByName(processorProfile.getName()));
     }
 
     @Override
-    public ProcessorProfile fetch(final int id) {
+    public ProcessorProfile fetchById(final int id) {
         return JooqUtil.contextResult(processorDbConnProvider, context -> context
                         .select()
                         .from(PROCESSOR_PROFILE)
                         .where(PROCESSOR_PROFILE.ID.eq(id))
                         .fetchOptional())
-                .map(RECORD_TO_PROCESSOR_MAPPER)
+                .map(RECORD_TO_PROCESSOR_PROFILE_MAPPER)
                 .orElse(null);
     }
 
@@ -117,16 +134,16 @@ class ProcessorProfileDaoImpl implements ProcessorProfileDao {
                         .from(PROCESSOR_PROFILE)
                         .where(PROCESSOR_PROFILE.NAME.eq(name))
                         .fetchOptional())
-                .map(RECORD_TO_PROCESSOR_MAPPER)
+                .map(RECORD_TO_PROCESSOR_PROFILE_MAPPER)
                 .orElse(null);
     }
 
     @Override
     public ProcessorProfile update(final ProcessorProfile processorProfile) {
-        final ProcessorProfileData processorProfileData = new ProcessorProfileData(
+        final ProcessorProfilePeriods processorProfilePeriods = new ProcessorProfilePeriods(
                 processorProfile.getProfilePeriods(),
                 processorProfile.getTimeZone());
-        final String json = JsonUtil.writeValueAsString(processorProfileData);
+        final JSON json = JSON.json(JsonUtil.writeValueAsString(processorProfilePeriods));
 
         final int result = JooqUtil.contextResult(processorDbConnProvider, context -> context
                 .update(PROCESSOR_PROFILE)
@@ -135,12 +152,12 @@ class ProcessorProfileDaoImpl implements ProcessorProfileDao {
                 .set(PROCESSOR_PROFILE.UPDATE_TIME_MS, processorProfile.getUpdateTimeMs())
                 .set(PROCESSOR_PROFILE.NAME, processorProfile.getName())
                 .set(PROCESSOR_PROFILE.NODE_GROUP_NAME, processorProfile.getNodeGroupName())
-                .set(PROCESSOR_PROFILE.DATA, json)
+                .set(PROCESSOR_PROFILE.PERIODS, json)
                 .where(PROCESSOR_PROFILE.ID.eq(processorProfile.getId()))
                 .and(PROCESSOR_PROFILE.VERSION.eq(processorProfile.getVersion()))
                 .execute());
         if (result > 0) {
-            return fetch(processorProfile.getId());
+            return fetchById(processorProfile.getId());
         }
         throw new RuntimeException("Version incorrect");
     }

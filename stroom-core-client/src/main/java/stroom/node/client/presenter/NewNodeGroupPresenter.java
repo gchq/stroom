@@ -92,13 +92,13 @@ public class NewNodeGroupPresenter
                         + "' is already in use by another group.",
                         e::reset);
             } else {
-                createNodeGroup(name, e);
+                create(name, e);
             }
         }, RestErrorHandler.forPopup(this, e), this);
     }
 
-    private void createNodeGroup(final String name, final HidePopupRequestEvent e) {
-        nodeGroupClient.createNodeGroup(name, nodeGroup -> {
+    private void create(final String name, final HidePopupRequestEvent e) {
+        nodeGroupClient.create(name, nodeGroup -> {
             consumer.accept(nodeGroup);
             e.hide();
         }, RestErrorHandler.forPopup(this, e), this);

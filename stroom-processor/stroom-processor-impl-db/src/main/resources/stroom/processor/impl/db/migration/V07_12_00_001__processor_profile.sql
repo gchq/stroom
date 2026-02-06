@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS processor_profile (
     update_user           varchar(255) NOT NULL,
     name                  varchar(255) NOT NULL,
     node_group_name       varchar(255) NOT NULL,
-    data                  longtext,
+    periods               json,
     PRIMARY KEY           (id),
     UNIQUE KEY            name (name)
 ) ENGINE=InnoDB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;

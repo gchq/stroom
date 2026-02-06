@@ -91,14 +91,14 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
     }
 
     @Override
-    public FsVolumeGroup create() {
+    public FsVolumeGroup create(final String name) {
         ensureDefaultVolumes();
         final FsVolumeGroup indexVolumeGroup = new FsVolumeGroup();
         final String newName = NextNameGenerator.getNextName(volumeGroupDao.getNames(), "New group");
         indexVolumeGroup.setName(newName);
         AuditUtil.stamp(securityContext, indexVolumeGroup);
         final FsVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
-                () -> volumeGroupDao.getOrCreate(indexVolumeGroup));
+                () -> volumeGroupDao.create(indexVolumeGroup));
         fireChange(EntityAction.CREATE);
         return result;
     }
@@ -116,14 +116,14 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
     @Override
     public FsVolumeGroup get(final String name) {
         ensureDefaultVolumes();
-        return securityContext.secureResult(() -> volumeGroupDao.get(name));
+        return securityContext.secureResult(() -> volumeGroupDao.fetchByName(name));
     }
 
     @Override
     public FsVolumeGroup get(final int id) {
         ensureDefaultVolumes();
         return securityContext.secureResult(() ->
-                volumeGroupDao.get(id));
+                volumeGroupDao.fetchById(id));
     }
 
     @Override

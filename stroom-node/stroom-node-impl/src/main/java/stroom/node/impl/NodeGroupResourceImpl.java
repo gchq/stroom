@@ -43,13 +43,13 @@ class NodeGroupResourceImpl implements NodeGroupResource {
     }
 
     @Override
-    public NodeGroup getOrCreate(final String name) {
-        return nodeGroupServiceProvider.get().getOrCreate(name);
+    public NodeGroup create(final String name) {
+        return nodeGroupServiceProvider.get().create(name);
     }
 
     @Override
-    public NodeGroup fetch(final Integer id) {
-        return nodeGroupServiceProvider.get().fetch(id);
+    public NodeGroup fetchById(final Integer id) {
+        return nodeGroupServiceProvider.get().fetchById(id);
     }
 
     @Override

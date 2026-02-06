@@ -35,8 +35,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.List;
-
 @Singleton
 @EntityEventHandler(type = NodeGroupService.ENTITY_TYPE, action = {
         EntityAction.UPDATE,
@@ -59,53 +57,23 @@ public class NodeGroupServiceImpl implements NodeGroupService {
         this.entityEventBusProvider = entityEventBusProvider;
     }
 
-//    @Override
-//    public List<String> getNames() {
-//        return securityContext.secureResult(nodeGroupDao::getNames);
-//    }
-//
-//    @Override
-//    public List<NodeGroup> getAll() {
-//        return securityContext.secureResult(nodeGroupDao::getAll);
-//    }
-
     @Override
     public ResultPage<NodeGroup> find(final FindNodeGroupRequest request) {
         return securityContext.secureResult(() -> nodeGroupDao.find(request));
     }
 
     @Override
-    public NodeGroup getOrCreate(final String name) {
-        final NodeGroup result = securityContext.secureResult(AppPermission.MANAGE_NODES_PERMISSION, () -> {
-            final NodeGroup.Builder builder = NodeGroup.builder();
-            builder.name(name);
-            AuditUtil.stamp(securityContext, builder);
-            return nodeGroupDao.getOrCreate(builder.build());
-        });
+    public NodeGroup create(final String name) {
+        final NodeGroup result = securityContext.secureResult(AppPermission.MANAGE_NODES_PERMISSION, () ->
+                nodeGroupDao.create(AuditUtil.stamp(securityContext, NodeGroup.builder().name(name))));
         fireChange(EntityAction.CREATE);
         return result;
     }
 
-//    @Override
-//    public NodeGroup create() {
-//        final String newName = NextNameGenerator.getNextName(nodeGroupDao.getNames(), "New group");
-//        final NodeGroup result = securityContext.secureResult(AppPermission.MANAGE_NODES_PERMISSION, () -> {
-//            final NodeGroup.Builder builder = NodeGroup.builder();
-//            builder.name(newName);
-//            AuditUtil.stamp(securityContext, builder);
-//            return nodeGroupDao.getOrCreate(builder.build());
-//        });
-//        fireChange(EntityAction.CREATE);
-//        return result;
-//    }
-
     @Override
     public NodeGroup update(final NodeGroup nodeGroup) {
-        final NodeGroup result = securityContext.secureResult(AppPermission.MANAGE_NODES_PERMISSION, () -> {
-            final NodeGroup.Builder builder = nodeGroup.copy();
-            AuditUtil.stamp(securityContext, builder);
-            return nodeGroupDao.update(builder.build());
-        });
+        final NodeGroup result = securityContext.secureResult(AppPermission.MANAGE_NODES_PERMISSION, () ->
+                nodeGroupDao.update(AuditUtil.stamp(securityContext, nodeGroup.copy())));
         fireChange(EntityAction.UPDATE);
         return result;
     }
@@ -116,15 +84,13 @@ public class NodeGroupServiceImpl implements NodeGroupService {
     }
 
     @Override
-    public NodeGroup fetch(final int id) {
-        return securityContext.secureResult(() ->
-                nodeGroupDao.fetch(id));
+    public NodeGroup fetchById(final int id) {
+        return securityContext.secureResult(() -> nodeGroupDao.fetchById(id));
     }
 
     @Override
     public void delete(final int id) {
-        securityContext.secure(AppPermission.MANAGE_NODES_PERMISSION,
-                () -> nodeGroupDao.delete(id));
+        securityContext.secure(AppPermission.MANAGE_NODES_PERMISSION, () -> nodeGroupDao.delete(id));
         fireChange(EntityAction.DELETE);
     }
 

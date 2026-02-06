@@ -37,6 +37,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class ProfilePeriodListPresenter
         extends MyPresenterWidget<PagerView> {
@@ -129,7 +130,7 @@ public class ProfilePeriodListPresenter
                                 NullSafe.get(ctr, ProfilePeriod::getDays, Days::toString), getEventBus())
                         .build(),
                 "Days",
-                300);
+                200);
     }
 
     void addStartTime() {
@@ -138,7 +139,7 @@ public class ProfilePeriodListPresenter
                                 NullSafe.get(ctr, ProfilePeriod::getStartTime, Time::toString), getEventBus())
                         .build(),
                 "Start Time",
-                100);
+                85);
     }
 
     void addEndTime() {
@@ -147,7 +148,7 @@ public class ProfilePeriodListPresenter
                                 NullSafe.get(ctr, ProfilePeriod::getEndTime, Time::toString), getEventBus())
                         .build(),
                 "End Time",
-                100);
+                85);
     }
 
     void addMaxNodeThreads() {
@@ -161,7 +162,7 @@ public class ProfilePeriodListPresenter
                         }, getEventBus())
                         .build(),
                 "Max Node Threads",
-                100);
+                150);
     }
 
     void addMaxClusterThreads() {
@@ -175,7 +176,7 @@ public class ProfilePeriodListPresenter
                         }, getEventBus())
                         .build(),
                 "Max Cluster Threads",
-                100);
+                150);
     }
 
     private void addEndColumn() {
@@ -188,30 +189,27 @@ public class ProfilePeriodListPresenter
     }
 
     private void onAdd(final ClickEvent event) {
-        final ProfilePeriod profilePeriod = ProfilePeriod.builder().build();
-        showEditor(profilePeriod, true);
+        final ProfilePeriod profilePeriod = ProfilePeriod.builder().uuid(UUID.randomUUID().toString()).build();
+        showEditor(profilePeriod);
     }
 
     private void onEdit(final ProfilePeriod profilePeriod) {
         if (profilePeriod != null) {
-            showEditor(profilePeriod, false);
+            showEditor(profilePeriod);
         }
     }
 
-    private void showEditor(final ProfilePeriod profilePeriod,
-                            final boolean isNew) {
+    private void showEditor(final ProfilePeriod profilePeriod) {
         if (profilePeriod != null) {
             final ProfilePeriodEditPresenter editor = newConcurrencyTimeRangePresenter.get();
             editor.show(profilePeriod, updated -> {
-                final int index = profilePeriods.indexOf(updated);
+                final int index = profilePeriods.indexOf(profilePeriod);
                 if (index == -1) {
                     profilePeriods.add(updated);
                 } else {
                     profilePeriods.remove(index);
                     profilePeriods.add(index, updated);
                 }
-
-//                        setDirty(isNew || editor.isDirty());
                 refresh();
             });
         }

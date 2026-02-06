@@ -29,6 +29,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({
+        "uuid",
         "days",
         "startTime",
         "endTime",
@@ -38,6 +39,8 @@ import java.util.Objects;
         "maxClusterThreads"})
 public class ProfilePeriod {
 
+    @JsonProperty
+    private final String uuid;
     @JsonProperty
     private final Days days;
     @JsonProperty
@@ -55,6 +58,7 @@ public class ProfilePeriod {
 
     @JsonCreator
     public ProfilePeriod(
+            @JsonProperty("uuid") final String uuid,
             @JsonProperty("days") final Days days,
             @JsonProperty("startTime") final Time startTime,
             @JsonProperty("endTime") final Time endTime,
@@ -62,6 +66,8 @@ public class ProfilePeriod {
             @JsonProperty("maxNodeThreads") final int maxNodeThreads,
             @JsonProperty("limitClusterThreads") final boolean limitClusterThreads,
             @JsonProperty("maxClusterThreads") final int maxClusterThreads) {
+        Objects.requireNonNull(uuid);
+        this.uuid = uuid;
         this.days = days;
         this.startTime = startTime;
         this.endTime = endTime;
@@ -69,6 +75,10 @@ public class ProfilePeriod {
         this.maxNodeThreads = maxNodeThreads;
         this.limitClusterThreads = limitClusterThreads;
         this.maxClusterThreads = maxClusterThreads;
+    }
+
+    public String getUuid() {
+        return uuid;
     }
 
     public Days getDays() {
@@ -109,6 +119,7 @@ public class ProfilePeriod {
                maxNodeThreads == that.maxNodeThreads &&
                limitClusterThreads == that.limitClusterThreads &&
                maxClusterThreads == that.maxClusterThreads &&
+               Objects.equals(uuid, that.uuid) &&
                Objects.equals(days, that.days) &&
                Objects.equals(startTime, that.startTime) &&
                Objects.equals(endTime, that.endTime);
@@ -116,7 +127,8 @@ public class ProfilePeriod {
 
     @Override
     public int hashCode() {
-        return Objects.hash(days,
+        return Objects.hash(uuid,
+                days,
                 startTime,
                 endTime,
                 limitNodeThreads,
@@ -135,6 +147,7 @@ public class ProfilePeriod {
 
     public static class Builder {
 
+        private String uuid;
         private Days days;
         private Time startTime;
         private Time endTime;
@@ -147,6 +160,7 @@ public class ProfilePeriod {
         }
 
         private Builder(final ProfilePeriod profilePeriod) {
+            this.uuid = profilePeriod.uuid;
             this.days = profilePeriod.days;
             this.startTime = profilePeriod.startTime;
             this.endTime = profilePeriod.endTime;
@@ -154,6 +168,11 @@ public class ProfilePeriod {
             this.maxNodeThreads = profilePeriod.maxNodeThreads;
             this.limitClusterThreads = profilePeriod.limitClusterThreads;
             this.maxClusterThreads = profilePeriod.maxClusterThreads;
+        }
+
+        public Builder uuid(final String uuid) {
+            this.uuid = uuid;
+            return this;
         }
 
         public Builder days(final Days days) {
@@ -193,6 +212,7 @@ public class ProfilePeriod {
 
         public ProfilePeriod build() {
             return new ProfilePeriod(
+                    uuid,
                     days,
                     startTime,
                     endTime,

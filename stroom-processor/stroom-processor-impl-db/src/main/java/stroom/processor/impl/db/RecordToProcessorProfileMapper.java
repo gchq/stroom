@@ -20,6 +20,7 @@ import stroom.processor.shared.ProcessorProfile;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.NullSafe;
 
+import org.jooq.JSON;
 import org.jooq.Record;
 
 import java.util.function.Function;
@@ -30,13 +31,12 @@ class RecordToProcessorProfileMapper implements Function<Record, ProcessorProfil
 
     @Override
     public ProcessorProfile apply(final Record record) {
-        final String json = record.get(PROCESSOR_PROFILE.DATA);
-        final ProcessorProfileData data;
-        if (NullSafe.isBlankString(json)) {
-            data = new ProcessorProfileData(null, null);
-        } else {
-            data = JsonUtil.readValue(json, ProcessorProfileData.class);
-        }
+        final JSON json = record.get(PROCESSOR_PROFILE.PERIODS);
+        final ProcessorProfilePeriods processorProfilePeriods = NullSafe
+                .getOrElseGet(json,
+                        JSON::data,
+                        string -> JsonUtil.readValue(string, ProcessorProfilePeriods.class),
+                        () -> new ProcessorProfilePeriods(null, null));
 
         return ProcessorProfile
                 .builder()
@@ -48,8 +48,8 @@ class RecordToProcessorProfileMapper implements Function<Record, ProcessorProfil
                 .updateUser(record.get(PROCESSOR_PROFILE.UPDATE_USER))
                 .name(record.get(PROCESSOR_PROFILE.NAME))
                 .nodeGroupName(record.get(PROCESSOR_PROFILE.NODE_GROUP_NAME))
-                .profilePeriods(data.getProfilePeriods())
-                .timeZone(data.getTimeZone())
+                .profilePeriods(processorProfilePeriods.getProfilePeriods())
+                .timeZone(processorProfilePeriods.getTimeZone())
                 .build();
     }
 }

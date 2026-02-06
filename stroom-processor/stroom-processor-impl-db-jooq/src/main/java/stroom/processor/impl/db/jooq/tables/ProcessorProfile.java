@@ -11,6 +11,7 @@ import java.util.List;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.Identity;
+import org.jooq.JSON;
 import org.jooq.Name;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
@@ -93,9 +94,9 @@ public class ProcessorProfile extends TableImpl<ProcessorProfileRecord> {
     public final TableField<ProcessorProfileRecord, String> NODE_GROUP_NAME = createField(DSL.name("node_group_name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.processor_profile.data</code>.
+     * The column <code>stroom.processor_profile.periods</code>.
      */
-    public final TableField<ProcessorProfileRecord, String> DATA = createField(DSL.name("data"), SQLDataType.CLOB, this, "");
+    public final TableField<ProcessorProfileRecord, JSON> PERIODS = createField(DSL.name("periods"), SQLDataType.JSON, this, "");
 
     private ProcessorProfile(Name alias, Table<ProcessorProfileRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);

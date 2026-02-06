@@ -30,15 +30,13 @@ public interface ProcessorProfileService {
 
     List<ProcessorProfile> getAll();
 
-    ProcessorProfile create();
+    ProcessorProfile create(ProcessorProfile processorProfile);
 
-    ProcessorProfile getOrCreate(String name);
+    ProcessorProfile fetchByName(String name);
 
-    ProcessorProfile update(ProcessorProfile indexVolumeGroup);
+    ProcessorProfile fetchById(int id);
 
-    ProcessorProfile get(String name);
-
-    ProcessorProfile get(int id);
+    ProcessorProfile update(ProcessorProfile processorProfile);
 
     void delete(int id);
 }

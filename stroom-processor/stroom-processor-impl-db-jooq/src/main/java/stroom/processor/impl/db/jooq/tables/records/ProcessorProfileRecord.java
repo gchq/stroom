@@ -4,6 +4,7 @@
 package stroom.processor.impl.db.jooq.tables.records;
 
 
+import org.jooq.JSON;
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
 
@@ -131,17 +132,17 @@ public class ProcessorProfileRecord extends UpdatableRecordImpl<ProcessorProfile
     }
 
     /**
-     * Setter for <code>stroom.processor_profile.data</code>.
+     * Setter for <code>stroom.processor_profile.periods</code>.
      */
-    public void setData(String value) {
+    public void setPeriods(JSON value) {
         set(8, value);
     }
 
     /**
-     * Getter for <code>stroom.processor_profile.data</code>.
+     * Getter for <code>stroom.processor_profile.periods</code>.
      */
-    public String getData() {
-        return (String) get(8);
+    public JSON getPeriods() {
+        return (JSON) get(8);
     }
 
     // -------------------------------------------------------------------------
@@ -167,7 +168,7 @@ public class ProcessorProfileRecord extends UpdatableRecordImpl<ProcessorProfile
     /**
      * Create a detached, initialised ProcessorProfileRecord
      */
-    public ProcessorProfileRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String name, String nodeGroupName, String data) {
+    public ProcessorProfileRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String name, String nodeGroupName, JSON periods) {
         super(ProcessorProfile.PROCESSOR_PROFILE);
 
         setId(id);
@@ -178,7 +179,7 @@ public class ProcessorProfileRecord extends UpdatableRecordImpl<ProcessorProfile
         setUpdateUser(updateUser);
         setName(name);
         setNodeGroupName(nodeGroupName);
-        setData(data);
+        setPeriods(periods);
         resetChangedOnNotNull();
     }
 }

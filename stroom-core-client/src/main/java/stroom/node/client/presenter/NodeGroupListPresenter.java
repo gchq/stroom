@@ -23,6 +23,7 @@ import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeGroupClient;
 import stroom.node.shared.FindNodeGroupRequest;
@@ -87,7 +88,7 @@ public class NodeGroupListPresenter extends MyPresenterWidget<PagerView> {
         // Name.
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(NodeGroup::getName))
-                        .enabledWhen(NodeGroup::isEnabled)
+//                        .enabledWhen(NodeGroup::isEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_NAME)
                         .build(),
                 DataGridUtil.headingBuilder("Name")
@@ -101,7 +102,7 @@ public class NodeGroupListPresenter extends MyPresenterWidget<PagerView> {
                                 (NodeGroup result) -> NullSafe.get(
                                         result,
                                         NodeGroup::isEnabled)))
-                        .enabledWhen(NodeGroup::isEnabled)
+//                        .enabledWhen(NodeGroup::isEnabled)
                         .withSorting(FindNodeStatusCriteria.FIELD_ID_ENABLED)
                         .withFieldUpdater((index, row, value) -> {
                             if (row != null) {
@@ -134,7 +135,10 @@ public class NodeGroupListPresenter extends MyPresenterWidget<PagerView> {
                            final boolean enabled,
                            final Consumer<NodeGroup> resultConsumer,
                            final TaskMonitorFactory taskMonitorFactory) {
-        nodeGroupClient.update(nodeGroup.copy().enabled(enabled).build(), resultConsumer, taskMonitorFactory);
+        nodeGroupClient.update(nodeGroup.copy().enabled(enabled).build(),
+                resultConsumer,
+                new DefaultErrorHandler(this, null),
+                taskMonitorFactory);
     }
 
     public MultiSelectionModel<NodeGroup> getSelectionModel() {

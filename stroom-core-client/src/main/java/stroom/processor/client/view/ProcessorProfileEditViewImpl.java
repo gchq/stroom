@@ -51,7 +51,6 @@ public class ProcessorProfileEditViewImpl extends ViewImpl implements ProcessorP
                                         final TimeZoneWidget timeZoneWidget) {
         this.timeZoneWidget = timeZoneWidget;
         widget = binder.createAndBindUi(this);
-        name.setEnabled(false);
         timeZone.setWidget(timeZoneWidget.asWidget());
     }
 

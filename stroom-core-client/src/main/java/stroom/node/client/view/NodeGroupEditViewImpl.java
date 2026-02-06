@@ -17,6 +17,7 @@
 package stroom.node.client.view;
 
 import stroom.node.client.presenter.NodeGroupEditPresenter.NodeGroupEditView;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -33,6 +34,8 @@ public class NodeGroupEditViewImpl extends ViewImpl implements NodeGroupEditView
 
     @UiField
     TextBox name;
+//    @UiField
+//    CustomCheckBox enabled;
     @UiField
     SimplePanel list;
 
@@ -52,15 +55,25 @@ public class NodeGroupEditViewImpl extends ViewImpl implements NodeGroupEditView
         name.setFocus(true);
     }
 
-    @Override
-    public String getName() {
-        return this.name.getText();
-    }
+//    @Override
+//    public String getName() {
+//        return this.name.getText();
+//    }
 
     @Override
     public void setName(final String name) {
         this.name.setText(name);
     }
+
+//    @Override
+//    public boolean isEnabled() {
+//        return enabled.getValue();
+//    }
+//
+//    @Override
+//    public void setEnabled(final boolean enabled) {
+//        this.enabled.setValue(enabled);
+//    }
 
     @Override
     public void setListView(final View listView) {

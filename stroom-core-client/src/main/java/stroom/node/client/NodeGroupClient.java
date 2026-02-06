@@ -71,13 +71,13 @@ public class NodeGroupClient {
                 .exec();
     }
 
-    public void createNodeGroup(final String name,
-                                final Consumer<NodeGroup> consumer,
-                                final RestErrorHandler errorHandler,
-                                final TaskMonitorFactory taskMonitorFactory) {
+    public void create(final String name,
+                       final Consumer<NodeGroup> consumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(NODE_GROUP_RESOURCE)
-                .method(res -> res.getOrCreate(name))
+                .method(res -> res.create(name))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
@@ -86,21 +86,23 @@ public class NodeGroupClient {
 
     public void update(final NodeGroup nodeGroup,
                        final Consumer<NodeGroup> consumer,
+                       final RestErrorHandler errorHandler,
                        final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(NODE_GROUP_RESOURCE)
                 .method(res -> res.update(nodeGroup.getId(), nodeGroup))
                 .onSuccess(consumer)
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
-    public void fetch(final int id,
-                      final Consumer<NodeGroup> consumer,
-                      final TaskMonitorFactory taskMonitorFactory) {
+    public void fetchById(final int id,
+                          final Consumer<NodeGroup> consumer,
+                          final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(NODE_GROUP_RESOURCE)
-                .method(res -> res.fetch(id))
+                .method(res -> res.fetchById(id))
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
@@ -108,11 +110,13 @@ public class NodeGroupClient {
 
     public void fetchByName(final String name,
                             final Consumer<NodeGroup> consumer,
+                            final RestErrorHandler errorHandler,
                             final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(NODE_GROUP_RESOURCE)
                 .method(res -> res.fetchByName(name))
                 .onSuccess(consumer)
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

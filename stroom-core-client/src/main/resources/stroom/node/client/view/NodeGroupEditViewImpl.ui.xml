@@ -1,11 +1,15 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="nodeGroupEditVolumeGroupName" label="Node Group Name">
+        <form:FormGroup identity="nodeGroupName" label="Node Group Name">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
+<!--        <form:FormGroup identity="nodeGroupEnabled" label="Enabled">-->
+<!--            <tickbox:CustomCheckBox ui:field="enabled"/>-->
+<!--        </form:FormGroup>-->
         <form:FormGroup identity="nodeList" label="Nodes" addStyleNames="dock-max">
             <g:SimplePanel ui:field="list" styleName="dock-max form-control-border form-control-background"/>
         </form:FormGroup>

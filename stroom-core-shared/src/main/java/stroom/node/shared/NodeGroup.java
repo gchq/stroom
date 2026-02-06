@@ -150,7 +150,6 @@ public class NodeGroup implements HasAuditInfoGetters, HasIntegerId {
 
         private Integer id;
         private Integer version;
-        private String updateUser;
         private String name;
         private boolean enabled;
 

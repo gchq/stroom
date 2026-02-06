@@ -16,10 +16,11 @@
 
 package stroom.node.client.presenter;
 
-import stroom.dispatch.client.RestFactory;
-import stroom.node.client.NodeClient;
+import stroom.alert.client.event.AlertEvent;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeGroupClient;
 import stroom.node.shared.NodeGroup;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -30,33 +31,25 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class NodeGroupEditPresenter
         extends MyPresenterWidget<NodeGroupEditPresenter.NodeGroupEditView> {
 
     private final NodeGroupStateListPresenter nodeGroupStateListPresenter;
-    private final RestFactory restFactory;
-    private final NodeClient nodeClient;
     private final NodeGroupClient nodeGroupClient;
 
-    private NodeGroup nodeGroup;
     private boolean opening;
     private boolean open;
-
-//    private final DelayedUpdate delayedUpdate;
 
     @Inject
     public NodeGroupEditPresenter(final EventBus eventBus,
                                   final NodeGroupEditView view,
                                   final NodeGroupStateListPresenter nodeGroupStateListPresenter,
-                                  final RestFactory restFactory,
-                                  final NodeClient nodeClient,
                                   final NodeGroupClient nodeGroupClient) {
         super(eventBus, view);
         this.nodeGroupStateListPresenter = nodeGroupStateListPresenter;
-        this.restFactory = restFactory;
-        this.nodeClient = nodeClient;
         this.nodeGroupClient = nodeGroupClient;
 
         view.setListView(nodeGroupStateListPresenter.getView());
@@ -67,13 +60,6 @@ public class NodeGroupEditPresenter
               final Consumer<NodeGroup> consumer) {
         if (!opening) {
             opening = true;
-//            final ExpressionOperator expression = ExpressionUtil.equalsId(IndexNodeFields.GROUP_ID,
-//                    volumeGroup.getId());
-//            final ExpressionCriteria expressionCriteria = new ExpressionCriteria(expression);
-//            // TODO: 09/09/2022 Need to implement user defined sorting
-//            expressionCriteria.setSort(IndexNodeFields.NODE_NAME.getFldName());
-//            expressionCriteria.addSort(IndexNodeFields.PATH.getFldName());
-
             nodeGroupStateListPresenter.setNodeGroup(nodeGroup);
             open(nodeGroup, title, consumer);
         }
@@ -85,8 +71,8 @@ public class NodeGroupEditPresenter
         if (!open) {
             open = true;
 
-            this.nodeGroup = nodeGroup;
             getView().setName(nodeGroup.getName());
+//            getView().setEnabled(nodeGroup.isEnabled());
 
             final PopupSize popupSize = PopupSize.resizable(800, 600);
             ShowPopupEvent.builder(this)
@@ -96,16 +82,18 @@ public class NodeGroupEditPresenter
                     .onShow(e -> getView().focus())
                     .onHideRequest(e -> {
 //                        if (e.isOk()) {
-//                            nodeGroup.setName(getView().getName());
-//                            try {
-//                                doWithGroupNameValidation(getView().getName(), nodeGroup.getId(), () ->
-//                                        createNodeGroup(consumer, nodeGroup, e), e);
-//                            } catch (final RuntimeException ex) {
-//                                AlertEvent.fireError(
-//                                        NodeGroupEditPresenter.this,
-//                                        ex.getMessage(),
-//                                        e::reset);
-//                            }
+//                            final NodeGroup updated = nodeGroup
+//                                    .copy()
+//                                    .name(getView().getName())
+//                                    .enabled(getView().isEnabled())
+//                                    .build();
+//                            doWithGroupNameValidation(getView().getName(),
+//                                    nodeGroup.getId(),
+//                                    () -> nodeGroupClient.update(updated,
+//                                            consumer,
+//                                            RestErrorHandler.forPopup(this, e),
+//                                            this),
+//                                    e);
 //                        } else {
                             e.hide();
 //                        }
@@ -142,32 +130,16 @@ public class NodeGroupEditPresenter
 //            }, RestErrorHandler.forPopup(this, event), this);
 //        }
 //    }
-//
-//    private void createNodeGroup(final Consumer<NodeGroup> consumer,
-//                                 final NodeGroup nodeGroup,
-//                                 final HidePopupRequestEvent event) {
-//        nodeGroupClient.updateNodeGroupState();
-//        restFactory
-//                .create(INDEX_VOLUME_GROUP_RESOURCE)
-//                .method(res -> res.update(nodeGroup.getId(), nodeGroup))
-//                .onSuccess(r -> {
-//                    consumer.accept(r);
-//                    event.hide();
-//                })
-//                .onFailure(RestErrorHandler.forPopup(this, event))
-//                .taskMonitorFactory(this)
-//                .exec();
-//    }
-
-
-    // --------------------------------------------------------------------------------
-
 
     public interface NodeGroupEditView extends View, Focus {
 
-        String getName();
+//        String getName();
 
         void setName(String name);
+
+//        boolean isEnabled();
+//
+//        void setEnabled(boolean enabled);
 
         void setListView(View listView);
     }

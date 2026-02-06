@@ -21,6 +21,7 @@ import stroom.job.api.ScheduledJobsBinder;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.Node;
+import stroom.node.shared.NodeGroup;
 import stroom.node.shared.NodeGroupResource;
 import stroom.node.shared.NodeResource;
 import stroom.pipeline.writer.ExtendedPathCreator;
@@ -49,7 +50,8 @@ public class NodeModule extends AbstractModule {
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
-                .bind(Node.class, NodeObjectInfoProvider.class);
+                .bind(Node.class, NodeObjectInfoProvider.class)
+                .bind(NodeGroup.class, NodeGroupObjectInfoProvider.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(JavaHeapHistogramStatistics.class, jobBuilder -> jobBuilder

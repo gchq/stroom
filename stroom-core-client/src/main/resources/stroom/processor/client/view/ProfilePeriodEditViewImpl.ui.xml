@@ -15,14 +15,12 @@
         <form:FormGroup identity="startTime"
                         label="Start Time"
                         helpText="Start of the period">
-            <datepicker:TimeBox ui:field="startTime"
-                                addStyleNames="wide-control"/>
+            <datepicker:TimeBox ui:field="startTime"/>
         </form:FormGroup>
         <form:FormGroup identity="endTime"
                         label="End Time"
                         helpText="End of the period">
-            <datepicker:TimeBox ui:field="endTime"
-                                addStyleNames="wide-control"/>
+            <datepicker:TimeBox ui:field="endTime"/>
         </form:FormGroup>
         <form:FormGroup identity="limitNodeThreads"
                         label="Limit Single Node Threads"

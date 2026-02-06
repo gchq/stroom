@@ -22,14 +22,12 @@ import stroom.node.shared.NodeGroupChange;
 import stroom.node.shared.NodeGroupState;
 import stroom.util.shared.ResultPage;
 
-import java.util.List;
-
 public interface NodeGroupDao {
     ResultPage<NodeGroup> find(FindNodeGroupRequest request);
 
-    NodeGroup getOrCreate(NodeGroup nodeGroup);
+    NodeGroup create(NodeGroup nodeGroup);
 
-    NodeGroup fetch(int id);
+    NodeGroup fetchById(int id);
 
     NodeGroup fetchByName(String name);
 

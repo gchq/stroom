@@ -18,14 +18,14 @@ package stroom.processor.client.view;
 
 import stroom.util.shared.time.Day;
 import stroom.util.shared.time.Days;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashSet;
@@ -38,19 +38,19 @@ public final class DaysWidget extends Composite {
     private final Widget widget;
 
     @UiField
-    Label mon;
+    CustomCheckBox mon;
     @UiField
-    Label tue;
+    CustomCheckBox tue;
     @UiField
-    Label wed;
+    CustomCheckBox wed;
     @UiField
-    Label thu;
+    CustomCheckBox thu;
     @UiField
-    Label fri;
+    CustomCheckBox fri;
     @UiField
-    Label sat;
+    CustomCheckBox sat;
     @UiField
-    Label sun;
+    CustomCheckBox sun;
 
     private final Set<Day> value = new HashSet<>();
 
@@ -73,41 +73,41 @@ public final class DaysWidget extends Composite {
         if (selected != null && selected.getDays() != null) {
             this.value.addAll(selected.getDays());
         }
-        updateStyles();
+        update();
     }
 
     @UiHandler("mon")
-    public void onMon(final ClickEvent e) {
+    public void onMon(final ValueChangeEvent<Boolean> e) {
         toggleDay(Day.MONDAY);
     }
 
     @UiHandler("tue")
-    public void onTue(final ClickEvent e) {
+    public void onTue(final ValueChangeEvent<Boolean> e) {
         toggleDay(Day.TUESDAY);
     }
 
     @UiHandler("wed")
-    public void onWed(final ClickEvent e) {
+    public void onWed(final ValueChangeEvent<Boolean> e) {
         toggleDay(Day.WEDNESDAY);
     }
 
     @UiHandler("thu")
-    public void onThu(final ClickEvent e) {
+    public void onThu(final ValueChangeEvent<Boolean> e) {
         toggleDay(Day.THURSDAY);
     }
 
     @UiHandler("fri")
-    public void onFri(final ClickEvent e) {
+    public void onFri(final ValueChangeEvent<Boolean> e) {
         toggleDay(Day.FRIDAY);
     }
 
     @UiHandler("sat")
-    public void onSat(final ClickEvent e) {
+    public void onSat(final ValueChangeEvent<Boolean> e) {
         toggleDay(Day.SATURDAY);
     }
 
     @UiHandler("sun")
-    public void onSun(final ClickEvent e) {
+    public void onSun(final ValueChangeEvent<Boolean> e) {
         toggleDay(Day.SUNDAY);
     }
 
@@ -117,25 +117,21 @@ public final class DaysWidget extends Composite {
         } else {
             value.add(day);
         }
-        updateStyles();
+        update();
     }
 
-    private void updateStyles() {
-        updateStyle(mon, Day.MONDAY);
-        updateStyle(tue, Day.TUESDAY);
-        updateStyle(wed, Day.WEDNESDAY);
-        updateStyle(thu, Day.THURSDAY);
-        updateStyle(fri, Day.FRIDAY);
-        updateStyle(sat, Day.SATURDAY);
-        updateStyle(sun, Day.SUNDAY);
+    private void update() {
+        update(mon, Day.MONDAY);
+        update(tue, Day.TUESDAY);
+        update(wed, Day.WEDNESDAY);
+        update(thu, Day.THURSDAY);
+        update(fri, Day.FRIDAY);
+        update(sat, Day.SATURDAY);
+        update(sun, Day.SUNDAY);
     }
 
-    private void updateStyle(final Label label, final Day day) {
-        if (value.contains(day)) {
-            label.getElement().addClassName("day-selected");
-        } else {
-            label.getElement().removeClassName("day-selected");
-        }
+    private void update(final CustomCheckBox checkBox, final Day day) {
+        checkBox.setValue(value.contains(day));
     }
 
     public interface Binder extends UiBinder<Widget, DaysWidget> {

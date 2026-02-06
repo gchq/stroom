@@ -17,7 +17,6 @@
 package stroom.processor.shared;
 
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -40,8 +39,7 @@ import org.fusesource.restygwt.client.DirectRestService;
 @Path("/processorProfile" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public interface ProcessorProfileResource extends RestResource, DirectRestService,
-        FetchWithIntegerId<ProcessorProfile> {
+public interface ProcessorProfileResource extends RestResource, DirectRestService {
 
     @POST
     @Path("find")
@@ -55,14 +53,14 @@ public interface ProcessorProfileResource extends RestResource, DirectRestServic
     @Operation(
             summary = "Creates a processor profile",
             operationId = "createProcessorProfile")
-    ProcessorProfile create(@Parameter(description = "name", required = true) String name);
+    ProcessorProfile create(@Parameter(description = "processorProfile", required = true) ProcessorProfile processorProfile);
 
     @GET
-    @Path("/{id}")
+    @Path("/fetchById/{id}")
     @Operation(
-            summary = "Gets a processor profile",
-            operationId = "fetchProcessorProfile")
-    ProcessorProfile fetch(@PathParam("id") Integer id);
+            summary = "Gets a processor profile by ID",
+            operationId = "fetchProcessorProfileById")
+    ProcessorProfile fetchById(@PathParam("id") Integer id);
 
     @GET
     @Path("/fetchByName/{name}")
@@ -76,7 +74,7 @@ public interface ProcessorProfileResource extends RestResource, DirectRestServic
     @Operation(
             summary = "Updates a processor profile",
             operationId = "updateProcessorProfile")
-    ProcessorProfile update(@PathParam("id") Integer id, ProcessorProfile nodeGroup);
+    ProcessorProfile update(@PathParam("id") Integer id, ProcessorProfile processorProfile);
 
     @DELETE
     @Path("/{id}")

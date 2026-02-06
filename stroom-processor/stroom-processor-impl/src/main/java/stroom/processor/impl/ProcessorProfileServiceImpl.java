@@ -20,7 +20,6 @@ import stroom.processor.shared.ProcessorProfile;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.util.AuditUtil;
-import stroom.util.NextNameGenerator;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
@@ -67,49 +66,29 @@ public class ProcessorProfileServiceImpl implements ProcessorProfileService {
     }
 
     @Override
-    public ProcessorProfile getOrCreate(final String name) {
-        final ProcessorProfile result = securityContext.secureResult(AppPermission.MANAGE_PROCESSORS_PERMISSION, () -> {
-            final ProcessorProfile.Builder builder = ProcessorProfile.builder();
-            builder.name(name);
-            AuditUtil.stamp(securityContext, builder);
-            return processorProfileDao.getOrCreate(builder.build());
-        });
+    public ProcessorProfile create(final ProcessorProfile processorProfile) {
+        final ProcessorProfile result = securityContext.secureResult(AppPermission.MANAGE_PROCESSORS_PERMISSION, () ->
+                processorProfileDao.create(AuditUtil.stamp(securityContext, processorProfile.copy())));
         fireChange(EntityAction.CREATE);
         return result;
     }
 
     @Override
-    public ProcessorProfile create() {
-        final String newName = NextNameGenerator.getNextName(processorProfileDao.getNames(), "New profile");
-        final ProcessorProfile result = securityContext.secureResult(AppPermission.MANAGE_PROCESSORS_PERMISSION, () -> {
-            final ProcessorProfile.Builder builder = ProcessorProfile.builder();
-            builder.name(newName);
-            AuditUtil.stamp(securityContext, builder);
-            return processorProfileDao.getOrCreate(builder.build());
-        });
-        fireChange(EntityAction.CREATE);
-        return result;
+    public ProcessorProfile fetchByName(final String name) {
+        return securityContext.secureResult(() -> processorProfileDao.fetchByName(name));
+    }
+
+    @Override
+    public ProcessorProfile fetchById(final int id) {
+        return securityContext.secureResult(() -> processorProfileDao.fetchById(id));
     }
 
     @Override
     public ProcessorProfile update(final ProcessorProfile processorProfile) {
-        final ProcessorProfile result = securityContext.secureResult(AppPermission.MANAGE_PROCESSORS_PERMISSION, () -> {
-            final ProcessorProfile.Builder builder = processorProfile.copy();
-            AuditUtil.stamp(securityContext, builder);
-            return processorProfileDao.update(builder.build());
-        });
+        final ProcessorProfile result = securityContext.secureResult(AppPermission.MANAGE_PROCESSORS_PERMISSION, () ->
+                processorProfileDao.update(AuditUtil.stamp(securityContext, processorProfile.copy())));
         fireChange(EntityAction.UPDATE);
         return result;
-    }
-
-    @Override
-    public ProcessorProfile get(final String name) {
-        return securityContext.secureResult(() -> processorProfileDao.get(name));
-    }
-
-    @Override
-    public ProcessorProfile get(final int id) {
-        return securityContext.secureResult(() -> processorProfileDao.get(id));
     }
 
     @Override

@@ -16,29 +16,25 @@
 
 package stroom.node.impl.db;
 
-import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.node.impl.NodeGroupDao;
-import stroom.node.impl.db.jooq.tables.records.NodeGroupRecord;
 import stroom.node.shared.FindNodeGroupRequest;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeGroup;
 import stroom.node.shared.NodeGroupChange;
 import stroom.node.shared.NodeGroupState;
+import stroom.util.exception.DataChangedException;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.exception.DataAccessException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.BiFunction;
+import java.util.Objects;
 
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
 import static stroom.node.impl.db.jooq.tables.NodeGroup.NODE_GROUP;
@@ -46,38 +42,14 @@ import static stroom.node.impl.db.jooq.tables.NodeGroupLink.NODE_GROUP_LINK;
 
 public class NodeGroupDaoImpl implements NodeGroupDao {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(NodeGroupDaoImpl.class);
-
     private static final RecordToNodeMapper RECORD_TO_NODE_MAPPER = new RecordToNodeMapper();
     private static final RecordToNodeGroupMapper RECORD_TO_NODE_GROUP_MAPPER = new RecordToNodeGroupMapper();
 
-    @SuppressWarnings("checkstyle:LineLength")
-    private static final BiFunction<NodeGroup, NodeGroupRecord, NodeGroupRecord> NODE_GROUP_TO_RECORD_MAPPER =
-            (nodeGroup, record) -> {
-                record.from(nodeGroup);
-                record.set(NODE_GROUP.ID, nodeGroup.getId());
-                record.set(NODE_GROUP.VERSION, nodeGroup.getVersion());
-                record.set(NODE_GROUP.CREATE_TIME_MS, nodeGroup.getCreateTimeMs());
-                record.set(NODE_GROUP.CREATE_USER, nodeGroup.getCreateUser());
-                record.set(NODE_GROUP.UPDATE_TIME_MS, nodeGroup.getUpdateTimeMs());
-                record.set(NODE_GROUP.UPDATE_USER, nodeGroup.getUpdateUser());
-                record.set(NODE_GROUP.NAME, nodeGroup.getName());
-                record.set(NODE_GROUP.ENABLED, nodeGroup.isEnabled());
-                return record;
-            };
-
     private final NodeDbConnProvider nodeDbConnProvider;
-    private final GenericDao<NodeGroupRecord, NodeGroup, Integer> genericDao;
 
     @Inject
     NodeGroupDaoImpl(final NodeDbConnProvider nodeDbConnProvider) {
         this.nodeDbConnProvider = nodeDbConnProvider;
-        genericDao = new GenericDao<>(
-                nodeDbConnProvider,
-                NODE_GROUP,
-                NODE_GROUP.ID,
-                NODE_GROUP_TO_RECORD_MAPPER,
-                RECORD_TO_NODE_GROUP_MAPPER);
     }
 
     @Override
@@ -123,31 +95,31 @@ public class NodeGroupDaoImpl implements NodeGroupDao {
 
 
     @Override
-    public NodeGroup getOrCreate(final NodeGroup nodeGroup) {
-        final Optional<Integer> optional = JooqUtil.onDuplicateKeyIgnore(() ->
-                JooqUtil.contextResult(nodeDbConnProvider, context -> context
-                        .insertInto(NODE_GROUP,
-                                NODE_GROUP.VERSION,
-                                NODE_GROUP.CREATE_USER,
-                                NODE_GROUP.CREATE_TIME_MS,
-                                NODE_GROUP.UPDATE_USER,
-                                NODE_GROUP.UPDATE_TIME_MS,
-                                NODE_GROUP.NAME,
-                                NODE_GROUP.ENABLED)
-                        .values(1,
-                                nodeGroup.getCreateUser(),
-                                nodeGroup.getCreateTimeMs(),
-                                nodeGroup.getUpdateUser(),
-                                nodeGroup.getUpdateTimeMs(),
-                                nodeGroup.getName(),
-                                nodeGroup.isEnabled())
-                        .returning(NODE_GROUP.ID)
-                        .fetchOptional(NODE_GROUP.ID)));
-        return optional.map(id -> nodeGroup.copy().id(id).version(1).build()).orElse(fetchByName(nodeGroup.getName()));
+    public NodeGroup create(final NodeGroup nodeGroup) {
+        final Integer id = JooqUtil.contextResult(nodeDbConnProvider, context -> context
+                .insertInto(NODE_GROUP,
+                        NODE_GROUP.VERSION,
+                        NODE_GROUP.CREATE_USER,
+                        NODE_GROUP.CREATE_TIME_MS,
+                        NODE_GROUP.UPDATE_USER,
+                        NODE_GROUP.UPDATE_TIME_MS,
+                        NODE_GROUP.NAME,
+                        NODE_GROUP.ENABLED)
+                .values(1,
+                        nodeGroup.getCreateUser(),
+                        nodeGroup.getCreateTimeMs(),
+                        nodeGroup.getUpdateUser(),
+                        nodeGroup.getUpdateTimeMs(),
+                        nodeGroup.getName(),
+                        nodeGroup.isEnabled())
+                .returning(NODE_GROUP.ID)
+                .fetchOne(NODE_GROUP.ID));
+        Objects.requireNonNull(id, "Id is null");
+        return fetchById(id);
     }
 
     @Override
-    public NodeGroup fetch(final int id) {
+    public NodeGroup fetchById(final int id) {
         return JooqUtil.contextResult(nodeDbConnProvider, context -> context
                         .select()
                         .from(NODE_GROUP)
@@ -170,57 +142,44 @@ public class NodeGroupDaoImpl implements NodeGroupDao {
 
     @Override
     public NodeGroup update(final NodeGroup nodeGroup) {
-//        // Get the current group name.
-//        String currentGroupName = null;
-//        if (nodeGroup.getId() != null) {
-//            final NodeGroup current = get(nodeGroup.getId());
-//            currentGroupName = current.getName();
-//        }
-
-        final NodeGroup saved;
-        try {
-            saved = genericDao.update(nodeGroup);
-        } catch (final DataAccessException e) {
-            if (e.getCause() != null
-                && e.getCause() instanceof final SQLIntegrityConstraintViolationException sqlEx) {
-                if (sqlEx.getErrorCode() == 1062
-                    && sqlEx.getMessage().contains("Duplicate entry")
-                    && sqlEx.getMessage().contains("key")
-                    && sqlEx.getMessage().contains(NODE_GROUP.NAME.getName())) {
-                    throw new RuntimeException("An node group already exists with name '"
-                                               + nodeGroup.getName() + "'");
+        JooqUtil.context(nodeDbConnProvider, context -> {
+            try {
+                final int count = context
+                        .update(NODE_GROUP)
+                        .set(NODE_GROUP.VERSION, NODE_GROUP.VERSION.plus(1))
+                        .set(NODE_GROUP.UPDATE_USER, nodeGroup.getUpdateUser())
+                        .set(NODE_GROUP.UPDATE_TIME_MS, nodeGroup.getUpdateTimeMs())
+                        .set(NODE_GROUP.NAME, nodeGroup.getName())
+                        .set(NODE_GROUP.ENABLED, nodeGroup.isEnabled())
+                        .where(NODE_GROUP.ID.eq(nodeGroup.getId()))
+                        .execute();
+                if (count == 0) {
+                    throw new DataChangedException("This node group has already been updated");
                 }
+
+            } catch (final DataAccessException e) {
+                if (e.getCause() != null
+                    && e.getCause() instanceof final SQLIntegrityConstraintViolationException sqlEx) {
+                    if (sqlEx.getErrorCode() == 1062
+                        && sqlEx.getMessage().contains("Duplicate entry")
+                        && sqlEx.getMessage().contains("key")
+                        && sqlEx.getMessage().contains(NODE_GROUP.NAME.getName())) {
+                        throw new RuntimeException("An node group already exists with name '"
+                                                   + nodeGroup.getName() + "'");
+                    }
+                }
+                throw e;
             }
-            throw e;
-        }
-
-//        // If the group name has changed then update indexes to point to the new group name.
-//        if (currentGroupName != null && !currentGroupName.equals(saved.getName())) {
-//            final IndexStore indexStore = indexStoreProvider.get();
-//            if (indexStore != null) {
-//                final List<DocRef> indexes = indexStore.list();
-//                for (final DocRef docRef : indexes) {
-//                    final LuceneIndexDoc indexDoc = indexStore.readDocument(docRef);
-//                    if (indexDoc.getVolumeGroupName() != null &&
-//                        indexDoc.getVolumeGroupName().equals(currentGroupName)) {
-//                        indexDoc.setVolumeGroupName(saved.getName());
-//                        LOGGER.info("Updating index {} ({}) to change volume group name from {} to {}",
-//                                indexDoc.getName(),
-//                                indexDoc.getUuid(),
-//                                currentGroupName,
-//                                saved.getName());
-//                        indexStore.writeDocument(indexDoc);
-//                    }
-//                }
-//            }
-//        }
-
-        return saved;
+        });
+        return fetchById(nodeGroup.getId());
     }
 
     @Override
     public void delete(final int id) {
-        genericDao.delete(id);
+        JooqUtil.transaction(nodeDbConnProvider, context -> {
+            context.deleteFrom(NODE_GROUP_LINK).where(NODE_GROUP_LINK.FK_NODE_GROUP_ID.eq(id)).execute();
+            context.deleteFrom(NODE_GROUP).where(NODE_GROUP.ID.eq(id)).execute();
+        });
     }
 
     @Override

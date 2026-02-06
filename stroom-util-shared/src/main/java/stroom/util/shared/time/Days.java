@@ -92,7 +92,7 @@ public class Days {
 
                 if (start == null) {
                     start = day;
-                } else if (Objects.equals(last, end)) {
+                } else if (!days.contains(last)) {
                     contiguous = false;
                 }
                 end = day;

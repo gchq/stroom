@@ -11,7 +11,7 @@
             <i:SelectionBox ui:field="nodeGroup" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="nodeList" label="Nodes" addStyleNames="dock-max">
-            <g:SimplePanel ui:field="list" styleName="dock-max form-control-border form-control-background"/>
+            <g:SimplePanel ui:field="list" styleName="dock-max"/>
         </form:FormGroup>
         <g:SimplePanel ui:field="timeZone" addStyleNames="form-group"/>
     </g:FlowPanel>

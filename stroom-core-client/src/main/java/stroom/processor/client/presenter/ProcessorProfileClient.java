@@ -56,38 +56,25 @@ public class ProcessorProfileClient {
                 .exec();
     }
 
-    public void checkProcessorProfileName(final String name,
-                                   final Consumer<ProcessorProfile> consumer,
-                                   final RestErrorHandler errorHandler,
-                                   final TaskMonitorFactory taskMonitorFactory) {
-        restFactory
-                .create(PROCESSOR_PROFILE_RESOURCE)
-                .method(res -> res.fetchByName(name))
-                .onSuccess(consumer)
-                .onFailure(errorHandler)
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
-
-    public void createProcessorProfile(final String name,
+    public void create(final ProcessorProfile processorProfile,
                                 final Consumer<ProcessorProfile> consumer,
                                 final RestErrorHandler errorHandler,
                                 final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(PROCESSOR_PROFILE_RESOURCE)
-                .method(res -> res.create(name))
+                .method(res -> res.create(processorProfile))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
-    public void fetch(final int id,
+    public void fetchById(final int id,
                       final Consumer<ProcessorProfile> consumer,
                       final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(PROCESSOR_PROFILE_RESOURCE)
-                .method(res -> res.fetch(id))
+                .method(res -> res.fetchById(id))
                 .onSuccess(consumer)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
@@ -100,6 +87,20 @@ public class ProcessorProfileClient {
         restFactory
                 .create(PROCESSOR_PROFILE_RESOURCE)
                 .method(res -> res.fetchByName(name))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    public void update(final int id,
+                       final ProcessorProfile processorProfile,
+                       final Consumer<ProcessorProfile> consumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(PROCESSOR_PROFILE_RESOURCE)
+                .method(res -> res.update(id, processorProfile))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)

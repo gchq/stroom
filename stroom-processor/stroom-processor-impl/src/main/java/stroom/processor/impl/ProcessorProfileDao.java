@@ -20,13 +20,19 @@ import stroom.processor.shared.FindProcessorProfileRequest;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.util.shared.ResultPage;
 
+import java.util.List;
+
 public interface ProcessorProfileDao {
 
     ResultPage<ProcessorProfile> find(FindProcessorProfileRequest request);
 
-    ProcessorProfile getOrCreate(ProcessorProfile nodeGroup);
+    List<String> getNames();
 
-    ProcessorProfile fetch(int id);
+    List<ProcessorProfile> getAll();
+
+    ProcessorProfile create(ProcessorProfile nodeGroup);
+
+    ProcessorProfile fetchById(int id);
 
     ProcessorProfile fetchByName(String name);
 

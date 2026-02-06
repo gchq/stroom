@@ -35,7 +35,7 @@ public class MockFsVolumeGroupService implements FsVolumeGroupService {
     }
 
     @Override
-    public FsVolumeGroup create() {
+    public FsVolumeGroup create(final String name) {
         return null;
     }
 

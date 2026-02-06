@@ -22,13 +22,15 @@ import java.util.List;
 
 public interface FsVolumeGroupDao {
 
-    FsVolumeGroup getOrCreate(FsVolumeGroup volumeGroup);
+    FsVolumeGroup getOrCreate(FsVolumeGroup fsVolumeGroup);
+
+    FsVolumeGroup create(FsVolumeGroup volumeGroup);
 
     FsVolumeGroup update(FsVolumeGroup volumeGroup);
 
-    FsVolumeGroup get(int id);
+    FsVolumeGroup fetchById(int id);
 
-    FsVolumeGroup get(String name);
+    FsVolumeGroup fetchByName(String name);
 
     List<String> getNames();
 

@@ -17,7 +17,6 @@
 package stroom.node.client.presenter;
 
 import stroom.cell.tickbox.shared.TickBoxState;
-import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.MyDataGrid;
@@ -30,7 +29,6 @@ import stroom.node.shared.Node;
 import stroom.node.shared.NodeGroup;
 import stroom.node.shared.NodeGroupChange;
 import stroom.node.shared.NodeGroupState;
-import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
@@ -46,31 +44,20 @@ public class NodeGroupStateListPresenter extends MyPresenterWidget<PagerView> {
 
     private final MyDataGrid<NodeGroupState> dataGrid;
     private final NodeGroupClient nodeGroupClient;
-    //    private final TooltipPresenter tooltipPresenter;
-//    private final DateTimeFormatter dateTimeFormatter;
     private final RestDataProvider<NodeGroupState, ResultPage<NodeGroupState>> dataProvider;
-
     private final FindNodeCriteria findNodeStatusCriteria = new FindNodeCriteria();
-//    private final MultiSelectionModelImpl<NodeGroupState> selectionModel;
 
     private NodeGroup nodeGroup;
 
     @Inject
     public NodeGroupStateListPresenter(final EventBus eventBus,
                                        final PagerView view,
-                                       final NodeGroupClient nodeGroupClient,
-//                                       final TooltipPresenter tooltipPresenter,
-//                                       final DateTimeFormatter dateTimeFormatter,
-                                       final UiConfigCache uiConfigCache) {
+                                       final NodeGroupClient nodeGroupClient) {
         super(eventBus, view);
-
         dataGrid = new MyDataGrid<>(this);
         view.setDataWidget(dataGrid);
-//        selectionModel = dataGrid.addDefaultSelectionModel(false);
 
         this.nodeGroupClient = nodeGroupClient;
-//        this.tooltipPresenter = tooltipPresenter;
-//        this.dateTimeFormatter = dateTimeFormatter;
 
         initTableColumns();
         dataProvider = new RestDataProvider<NodeGroupState, ResultPage<NodeGroupState>>(eventBus) {
@@ -94,50 +81,8 @@ public class NodeGroupStateListPresenter extends MyPresenterWidget<PagerView> {
     @Override
     protected void onBind() {
         super.onBind();
-
-//        registerHandler(autoRefreshButton.addClickHandler(event -> {
-//            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-//                autoRefresh = !autoRefresh;
-//                if (autoRefresh) {
-//                    autoRefreshButton.setTitle(AUTO_REFRESH_ON_TITLE);
-//                    internalRefresh();
-//                } else {
-//                    autoRefreshButton.setTitle(AUTO_REFRESH_OFF_TITLE);
-//                }
-//            }
-//        }));
-
         registerHandler(dataGrid.addColumnSortHandler(event -> internalRefresh()));
     }
-
-//    private void scheduleDataGridRedraw() {
-//        // Saves the grid being redrawn for every single row in the list
-//        redrawDelayedUpdate.update();
-//    }
-//
-//    public MultiSelectionModel<NodeGroupState> getSelectionModel() {
-//        return selectionModel;
-//    }
-//
-//    private static boolean isNodeEnabled(final NodeStatusResult nodeStatusResult) {
-//        return NullSafe.isTrue(nodeStatusResult.getNode(), Node::isEnabled);
-//    }
-//
-//    private static Number extractNodePriority(final NodeStatusResult result) {
-//        return NullSafe.get(
-//                result,
-//                NodeStatusResult::getNode,
-//                Node::getPriority,
-//                EditableInteger::new);
-//    }
-//
-//    private String extractLastBootTimeAsStr(final NodeStatusResult result) {
-//        return NullSafe.get(
-//                result,
-//                NodeStatusResult::getNode,
-//                Node::getLastBootMs,
-//                dateTimeFormatter::formatWithDuration);
-//    }
 
     /**
      * Add the columns to the table.
@@ -159,11 +104,9 @@ public class NodeGroupStateListPresenter extends MyPresenterWidget<PagerView> {
                                         internalRefresh(), this);
                             }
                         })
-                        .centerAligned()
                         .build(),
                 DataGridUtil.headingBuilder("In Group")
                         .withToolTip("Whether the node is included in the node group.")
-                        .centerAligned()
                         .build(),
                 100);
 
@@ -191,31 +134,9 @@ public class NodeGroupStateListPresenter extends MyPresenterWidget<PagerView> {
         DataGridUtil.addEndColumn(dataGrid);
     }
 
-    //    @Override
-//    public void refresh() {
-//        if (autoRefresh) {
-//            internalRefresh();
-//        }
-//    }
-//
     private void internalRefresh() {
         dataProvider.refresh();
     }
-
-//    public void setSelected(final String nodeName) {
-//        selectedNodeName = nodeName;
-//        selectionModel.clear();
-//
-//        if (nodeName != null && nodeNameToNodeStatusMap != null) {
-//            final NodeStatusResult nodeStatusResult = nodeNameToNodeStatusMap.get(nodeName);
-//            if (nodeStatusResult != null) {
-//                selectionModel.setSelected(nodeStatusResult);
-//            } else {
-//                selectionModel.clear();
-//            }
-//        }
-//    }
-
 
     public void setNodeGroup(final NodeGroup nodeGroup) {
         this.nodeGroup = nodeGroup;

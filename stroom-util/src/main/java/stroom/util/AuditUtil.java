@@ -50,8 +50,9 @@ public final class AuditUtil {
      * Stamp {@code hasAuditInfo} with the create/update user/time, with the user identity
      * provided by {@code hasAuditableUserIdentity}.
      */
-    public static <T extends HasAuditInfoGetters> void stamp(final HasAuditableUserIdentity hasAuditableUserIdentity,
-                                                             final AbstractHasAuditInfoBuilder<T, ?> builder) {
+    public static <T extends HasAuditInfoGetters, B extends AbstractHasAuditInfoBuilder<T, ?>> T stamp(
+            final HasAuditableUserIdentity hasAuditableUserIdentity,
+            final B builder) {
         final long now = System.currentTimeMillis();
         final String userIdentityForAudit = hasAuditableUserIdentity.getUserIdentityForAudit();
         final T t = builder.build();
@@ -63,5 +64,6 @@ public final class AuditUtil {
         }
         builder.updateTimeMs(now);
         builder.updateUser(userIdentityForAudit);
+        return builder.build();
     }
 }

@@ -30,13 +30,13 @@ public interface NodeGroupService {
 
     ResultPage<NodeGroup> find(FindNodeGroupRequest request);
 
-    NodeGroup getOrCreate(String name);
+    NodeGroup create(String name);
 
     NodeGroup update(NodeGroup indexVolumeGroup);
 
     NodeGroup fetchByName(String name);
 
-    NodeGroup fetch(int id);
+    NodeGroup fetchById(int id);
 
     void delete(int id);
 

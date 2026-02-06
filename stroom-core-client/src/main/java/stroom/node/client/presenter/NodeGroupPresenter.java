@@ -19,7 +19,6 @@ package stroom.node.client.presenter;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.grid.client.WrapperView;
-import stroom.data.table.client.Refreshable;
 import stroom.node.client.NodeGroupClient;
 import stroom.node.shared.NodeGroup;
 import stroom.svg.client.IconColour;
@@ -33,7 +32,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 
-public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> implements Refreshable {
+public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> {
 
     public static final String TAB_TYPE = "NodeGroups";
 
@@ -66,6 +65,7 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> impleme
         deleteButton = nodeGroupListPresenter.getView().addButton(SvgPresets.DELETE);
 
         view.setView(nodeGroupListPresenter.getView());
+        refresh();
     }
 
     @Override
@@ -115,7 +115,7 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> impleme
     private void edit() {
         final NodeGroup nodeGroup = nodeGroupListPresenter.getSelectionModel().getSelected();
         if (nodeGroup != null) {
-            nodeGroupClient.fetch(nodeGroup.getId(), this::edit, this);
+            nodeGroupClient.fetchById(nodeGroup.getId(), this::edit, this);
         }
     }
 
@@ -149,8 +149,7 @@ public class NodeGroupPresenter extends ContentTabPresenter<WrapperView> impleme
         deleteButton.setEnabled(enabled);
     }
 
-    @Override
-    public void refresh() {
+    private void refresh() {
         nodeGroupListPresenter.refresh();
     }
 

@@ -24,6 +24,7 @@ import stroom.processor.shared.ProcessorProfile;
 import stroom.svg.client.IconColour;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 
 import com.google.inject.Inject;
@@ -38,7 +39,7 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
 
     private final ProcessorProfileListPresenter processorProfileListPresenter;
     private final Provider<ProcessorProfileEditPresenter> editProvider;
-    private final ProcessorProfileClient nodeGroupClient;
+    private final ProcessorProfileClient processorProfileClient;
 
     private final ButtonView newButton;
     private final ButtonView openButton;
@@ -50,12 +51,12 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
             final WrapperView view,
             final ProcessorProfileListPresenter processorProfileListPresenter,
             final Provider<ProcessorProfileEditPresenter> editProvider,
-            final ProcessorProfileClient nodeGroupClient) {
+            final ProcessorProfileClient processorProfileClient) {
 
         super(eventBus, view);
         this.processorProfileListPresenter = processorProfileListPresenter;
         this.editProvider = editProvider;
-        this.nodeGroupClient = nodeGroupClient;
+        this.processorProfileClient = processorProfileClient;
 
         newButton = processorProfileListPresenter.getView().addButton(SvgPresets.NEW_ITEM);
         openButton = processorProfileListPresenter.getView().addButton(SvgPresets.EDIT);
@@ -77,62 +78,37 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
         registerHandler(deleteButton.addClickHandler(event -> delete()));
     }
 
-//    public void show() {
-//        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-//            @Override
-//            public void onHideRequest(final boolean autoClose, final boolean ok) {
-//                hide();
-//            }
-//        };
-//        final PopupSize popupSize = PopupSize.resizable(1000, 600);
-//        ShowPopupEvent.fire(
-//                this,
-//                this,
-//                PopupType.CLOSE_DIALOG,
-//                null,
-//                popupSize,
-//                "Node Groups",
-//                popupUiHandlers,
-//                null);
-//    }
-//
-//    public void hide() {
-//        HidePopupEvent.fire(this, this, false, true);
-//    }
-
     private void add() {
-//        final NewProcessorProfilePresenter presenter = newProcessorProfilePresenterProvider.get();
-//        presenter.show("", nodeGroup -> {
-//            edit(nodeGroup);
-//            refresh();
-//        });
+        final ProcessorProfile processorProfile = ProcessorProfile.builder().name("New Profile").build();
+        final ProcessorProfileEditPresenter editor = editProvider.get();
+        editor.show(processorProfile, "Create Processor Profile", result -> refresh());
     }
 
     private void edit() {
-        final ProcessorProfile nodeGroup = processorProfileListPresenter.getSelectionModel().getSelected();
-        if (nodeGroup != null) {
-            nodeGroupClient.fetch(nodeGroup.getId(), this::edit, this);
+        final ProcessorProfile processorProfile = processorProfileListPresenter.getSelectionModel().getSelected();
+        if (processorProfile != null) {
+            processorProfileClient.fetchById(processorProfile.getId(), this::edit, this);
         }
     }
 
-    private void edit(final ProcessorProfile nodeGroup) {
+    private void edit(final ProcessorProfile processorProfile) {
         final ProcessorProfileEditPresenter editor = editProvider.get();
-        editor.show(nodeGroup, "Edit Node Group - " + nodeGroup.getName(), result -> refresh());
+        editor.show(processorProfile, "Edit Processor Profile - " + processorProfile.getName(), result -> refresh());
     }
 
     private void delete() {
         final List<ProcessorProfile> list = processorProfileListPresenter.getSelectionModel().getSelectedItems();
-        if (list != null && list.size() > 0) {
-            String message = "Are you sure you want to delete the selected node group?";
+        if (!NullSafe.isEmptyCollection(list)) {
+            String message = "Are you sure you want to delete the selected processor profile?";
             if (list.size() > 1) {
-                message = "Are you sure you want to delete the selected node groups?";
+                message = "Are you sure you want to delete the selected processor profile?";
             }
             ConfirmEvent.fire(ProcessorProfilePresenter.this, message,
                     result -> {
                         if (result) {
                             processorProfileListPresenter.getSelectionModel().clear();
-                            for (final ProcessorProfile nodeGroup : list) {
-                                nodeGroupClient.delete(nodeGroup.getId(), response -> refresh(), this);
+                            for (final ProcessorProfile processorProfile : list) {
+                                processorProfileClient.delete(processorProfile.getId(), response -> refresh(), this);
                             }
                         }
                     });
@@ -152,7 +128,7 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
 
     @Override
     public SvgImage getIcon() {
-        return SvgImage.NODES;
+        return SvgImage.PROCESS;
     }
 
     @Override
@@ -162,7 +138,7 @@ public class ProcessorProfilePresenter extends ContentTabPresenter<WrapperView> 
 
     @Override
     public String getLabel() {
-        return "Node Groups";
+        return "Processor Profiles";
     }
 
     @Override

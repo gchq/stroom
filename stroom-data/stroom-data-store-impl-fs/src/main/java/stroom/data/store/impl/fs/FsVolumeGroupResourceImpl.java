@@ -43,7 +43,7 @@ class FsVolumeGroupResourceImpl implements FsVolumeGroupResource {
 
     @Override
     public FsVolumeGroup create(final String name) {
-        return volumeGroupServiceProvider.get().getOrCreate(name);
+        return volumeGroupServiceProvider.get().create(name);
     }
 
     @Override

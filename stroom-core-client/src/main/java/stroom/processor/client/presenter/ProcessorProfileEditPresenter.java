@@ -16,6 +16,9 @@
 
 package stroom.processor.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
+import stroom.dispatch.client.DefaultErrorHandler;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.item.client.SelectionBox;
 import stroom.node.client.NodeGroupClient;
 import stroom.node.client.presenter.NodeGroupListModel;
@@ -23,6 +26,7 @@ import stroom.node.shared.NodeGroup;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.query.api.UserTimeZone;
 import stroom.util.shared.NullSafe;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -33,6 +37,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class ProcessorProfileEditPresenter
@@ -42,7 +47,6 @@ public class ProcessorProfileEditPresenter
     private final NodeGroupClient nodeGroupClient;
     private final ProfilePeriodListPresenter profilePeriodListPresenter;
 
-    private ProcessorProfile processorProfile;
     private boolean opening;
     private boolean open;
 
@@ -73,7 +77,7 @@ public class ProcessorProfileEditPresenter
             } else {
                 nodeGroupClient.fetchByName(processorProfile.getNodeGroupName(), nodeGroup -> {
                     getView().getNodeGroup().setValue(nodeGroup);
-                }, this);
+                }, new DefaultErrorHandler(this, null), this);
             }
 
             open(processorProfile, title, consumer);
@@ -85,33 +89,48 @@ public class ProcessorProfileEditPresenter
                       final Consumer<ProcessorProfile> consumer) {
         if (!open) {
             open = true;
-
-            this.processorProfile = processorProfile;
             getView().setName(processorProfile.getName());
             getView().setUserTimeZone(processorProfile.getTimeZone());
             profilePeriodListPresenter.setProfilePeriods(processorProfile.getProfilePeriods());
 
             final PopupSize popupSize = PopupSize.resizable(800, 600);
             ShowPopupEvent.builder(this)
-                    .popupType(PopupType.CLOSE_DIALOG)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)
                     .caption(title)
                     .onShow(e -> getView().focus())
                     .onHideRequest(e -> {
-//                        if (e.isOk()) {
-//                            nodeGroup.setName(getView().getName());
-//                            try {
-//                                doWithGroupNameValidation(getView().getName(), nodeGroup.getId(), () ->
-//                                        createProcessorProfile(consumer, nodeGroup, e), e);
-//                            } catch (final RuntimeException ex) {
-//                                AlertEvent.fireError(
-//                                        ProcessorProfileEditPresenter.this,
-//                                        ex.getMessage(),
-//                                        e::reset);
-//                            }
-//                        } else {
-                        e.hide();
-//                        }
+                        if (e.isOk()) {
+                            final ProcessorProfile updated = processorProfile
+                                    .copy()
+                                    .name(getView().getName())
+                                    .nodeGroupName(NullSafe.get(
+                                            getView(),
+                                            ProcessorProfileEditView::getNodeGroup,
+                                            SelectionBox::getValue,
+                                            NodeGroup::getName))
+                                    .profilePeriods(profilePeriodListPresenter.getProfilePeriods())
+                                    .timeZone(getView().getUserTimeZone())
+                                    .build();
+
+                            if (processorProfile.getId() != null && Objects.equals(updated, processorProfile)) {
+                                // If the profile has not been updated then close,
+                                e.hide();
+
+                            } else {
+                                try {
+                                    doWithGroupNameValidation(getView().getName(), processorProfile.getId(), () ->
+                                            createOrUpdateProcessorProfile(consumer, updated, e), e);
+                                } catch (final RuntimeException ex) {
+                                    AlertEvent.fireError(
+                                            ProcessorProfileEditPresenter.this,
+                                            ex.getMessage(),
+                                            e::reset);
+                                }
+                            }
+                        } else {
+                            e.hide();
+                        }
                     })
                     .onHide(e -> {
                         open = false;
@@ -121,46 +140,46 @@ public class ProcessorProfileEditPresenter
         }
     }
 
-//    private void doWithGroupNameValidation(final String groupName,
-//                                           final Integer groupId,
-//                                           final Runnable work,
-//                                           final HidePopupRequestEvent event) {
-//        if (groupName == null || groupName.isEmpty()) {
-//            AlertEvent.fireError(
-//                    ProcessorProfileEditPresenter.this,
-//                    "You must provide a name for the node group.",
-//                    event::reset);
-//        } else {
-//            nodeGroupClient.fetchByName(getView().getName(), grp -> {
-//                if (grp != null && !Objects.equals(groupId, grp.getId())) {
-//                    AlertEvent.fireError(
-//                            ProcessorProfileEditPresenter.this,
-//                            "Group name '"
-//                            + groupName
-//                            + "' is already in use by another group.",
-//                            event::reset);
-//                } else {
-//                    work.run();
-//                }
-//            }, RestErrorHandler.forPopup(this, event), this);
-//        }
-//    }
-//
-//    private void createProcessorProfile(final Consumer<ProcessorProfile> consumer,
-//                                 final ProcessorProfile nodeGroup,
-//                                 final HidePopupRequestEvent event) {
-//        nodeGroupClient.updateProcessorProfileState();
-//        restFactory
-//                .create(INDEX_VOLUME_GROUP_RESOURCE)
-//                .method(res -> res.update(nodeGroup.getId(), nodeGroup))
-//                .onSuccess(r -> {
-//                    consumer.accept(r);
-//                    event.hide();
-//                })
-//                .onFailure(RestErrorHandler.forPopup(this, event))
-//                .taskMonitorFactory(this)
-//                .exec();
-//    }
+    private void doWithGroupNameValidation(final String groupName,
+                                           final Integer groupId,
+                                           final Runnable work,
+                                           final HidePopupRequestEvent event) {
+        if (groupName == null || groupName.isEmpty()) {
+            AlertEvent.fireError(
+                    ProcessorProfileEditPresenter.this,
+                    "You must provide a name for the processor profile.",
+                    event::reset);
+        } else {
+            processorProfileClient.fetchByName(getView().getName(), grp -> {
+                if (grp != null && !Objects.equals(groupId, grp.getId())) {
+                    AlertEvent.fireError(
+                            ProcessorProfileEditPresenter.this,
+                            "Processor profile name '"
+                            + groupName
+                            + "' is already in use by another processor profile.",
+                            event::reset);
+                } else {
+                    work.run();
+                }
+            }, RestErrorHandler.forPopup(this, event), this);
+        }
+    }
+
+    private void createOrUpdateProcessorProfile(final Consumer<ProcessorProfile> consumer,
+                                                final ProcessorProfile processorProfile,
+                                                final HidePopupRequestEvent event) {
+        if (processorProfile.getId() == null) {
+            processorProfileClient.create(processorProfile, r -> {
+                consumer.accept(r);
+                event.hide();
+            }, RestErrorHandler.forPopup(this, event), this);
+        } else {
+            processorProfileClient.update(processorProfile.getId(), processorProfile, r -> {
+                consumer.accept(r);
+                event.hide();
+            }, RestErrorHandler.forPopup(this, event), this);
+        }
+    }
 
     public interface ProcessorProfileEditView extends View, Focus {
 

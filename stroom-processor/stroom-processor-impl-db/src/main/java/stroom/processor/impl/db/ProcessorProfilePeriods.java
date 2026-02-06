@@ -33,7 +33,7 @@ import java.util.Objects;
 @JsonPropertyOrder({
         "profilePeriods",
         "timeZone"})
-public class ProcessorProfileData {
+public class ProcessorProfilePeriods {
 
     @JsonProperty
     private final List<ProfilePeriod> profilePeriods;
@@ -41,8 +41,8 @@ public class ProcessorProfileData {
     private final UserTimeZone timeZone;
 
     @JsonCreator
-    public ProcessorProfileData(@JsonProperty("profilePeriods") final List<ProfilePeriod> profilePeriods,
-                                @JsonProperty("timeZone") final UserTimeZone timeZone) {
+    public ProcessorProfilePeriods(@JsonProperty("profilePeriods") final List<ProfilePeriod> profilePeriods,
+                                   @JsonProperty("timeZone") final UserTimeZone timeZone) {
         this.profilePeriods = profilePeriods;
         this.timeZone = timeZone;
     }
@@ -60,7 +60,7 @@ public class ProcessorProfileData {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final ProcessorProfileData that = (ProcessorProfileData) o;
+        final ProcessorProfilePeriods that = (ProcessorProfilePeriods) o;
         return Objects.equals(profilePeriods, that.profilePeriods) &&
                Objects.equals(timeZone, that.timeZone);
     }
@@ -87,7 +87,7 @@ public class ProcessorProfileData {
         return new Builder();
     }
 
-    public static class Builder extends AbstractBuilder<ProcessorProfileData, ProcessorProfileData.Builder> {
+    public static class Builder extends AbstractBuilder<ProcessorProfilePeriods, ProcessorProfilePeriods.Builder> {
 
         private List<ProfilePeriod> profilePeriods;
         private UserTimeZone timeZone;
@@ -95,7 +95,7 @@ public class ProcessorProfileData {
         private Builder() {
         }
 
-        private Builder(final ProcessorProfileData processorProfile) {
+        private Builder(final ProcessorProfilePeriods processorProfile) {
             this.profilePeriods = processorProfile.profilePeriods;
             this.timeZone = processorProfile.timeZone;
         }
@@ -115,8 +115,8 @@ public class ProcessorProfileData {
             return this;
         }
 
-        public ProcessorProfileData build() {
-            return new ProcessorProfileData(
+        public ProcessorProfilePeriods build() {
+            return new ProcessorProfilePeriods(
                     profilePeriods,
                     timeZone);
         }

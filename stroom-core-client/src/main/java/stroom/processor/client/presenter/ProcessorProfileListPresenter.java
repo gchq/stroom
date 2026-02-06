@@ -39,7 +39,6 @@ import java.util.function.Consumer;
 
 public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerView> {
 
-    private final ProcessorProfileClient processorProfileClient;
     private final MyDataGrid<ProcessorProfile> dataGrid;
     private final MultiSelectionModelImpl<ProcessorProfile> selectionModel;
     private final RestDataProvider<ProcessorProfile, ResultPage<ProcessorProfile>> dataProvider;
@@ -49,7 +48,6 @@ public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerView> 
                                          final PagerView view,
                                          final ProcessorProfileClient processorProfileClient) {
         super(eventBus, view);
-        this.processorProfileClient = processorProfileClient;
 
         dataGrid = new MyDataGrid<>(this);
         selectionModel = dataGrid.addDefaultSelectionModel(true);
@@ -78,7 +76,7 @@ public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerView> 
         // Name.
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(ProcessorProfile::getName))
-                        .withSorting(FindNodeStatusCriteria.FIELD_ID_NAME)
+//                        .withSorting(FindNodeStatusCriteria.FIELD_ID_NAME)
                         .build(),
                 DataGridUtil.headingBuilder("Name")
                         .withToolTip("The name of the processor profile.")
@@ -87,8 +85,8 @@ public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerView> 
 
         // Node Group.
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(ProcessorProfile::getName))
-                        .withSorting(FindNodeStatusCriteria.FIELD_ID_NAME)
+                DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(ProcessorProfile::getNodeGroupName))
+//                        .withSorting(FindNodeStatusCriteria.FIELD_ID_NAME)
                         .build(),
                 DataGridUtil.headingBuilder("Node Group")
                         .withToolTip("The name of the node group.")
