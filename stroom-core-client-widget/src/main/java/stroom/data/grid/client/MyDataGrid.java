@@ -88,6 +88,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private boolean allowMove = true;
     private boolean allowResize = true;
     private boolean allowHeaderSelection = true;
+    private boolean hasContextMenu = true;
 
     private int horzPos = 0;
     private int vertPos = 0;
@@ -216,10 +217,16 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 colIndex = cell.getCellIndex();
             }
 
-            showContextMenu(clientX, clientY, rowIndex, colIndex, target);
+            if (hasContextMenu) {
+                showContextMenu(clientX, clientY, rowIndex, colIndex, target);
+            }
             return;
         }
         super.onBrowserEvent2(event);
+    }
+
+    public void hasContextMenu(final boolean hasContextMenu) {
+        this.hasContextMenu = hasContextMenu;
     }
 
     private TableCellElement findParentCell(Element target) {

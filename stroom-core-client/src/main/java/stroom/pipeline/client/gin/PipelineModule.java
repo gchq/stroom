@@ -21,11 +21,14 @@ import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.TextConverterPlugin;
 import stroom.pipeline.client.XsltPlugin;
+import stroom.pipeline.client.presenter.DocRefSelectionPresenter;
+import stroom.pipeline.client.presenter.DocRefSelectionPresenter.DocRefSelectionView;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.client.presenter.TextConverterPresenter;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.client.presenter.XsltPresenter;
+import stroom.pipeline.client.view.DocRefSelectionViewImpl;
 import stroom.pipeline.client.view.TextConverterSettingsViewImpl;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
@@ -109,6 +112,8 @@ public class PipelineModule extends PluginModule {
         bindPresenterWidget(PipelineTreePresenter.class, PipelineTreeView.class, PipelineTreeViewImpl.class);
         bindPresenterWidget(PipelineStructurePresenter.class, PipelineStructureView.class,
                 PipelineStructureViewImpl.class);
+
+        bindPresenterWidget(DocRefSelectionPresenter.class, DocRefSelectionView.class, DocRefSelectionViewImpl.class);
 
         bindPresenterWidget(NewElementPresenter.class, NewElementView.class, NewElementViewImpl.class);
         bindPresenterWidget(NewPropertyPresenter.class, NewPropertyView.class, NewPropertyViewImpl.class);
