@@ -339,6 +339,31 @@ public class ResultPage<T> implements Serializable {
     }
 
     @JsonIgnore
+    public T getLast() {
+        if (!values.isEmpty()) {
+            return values.get(values.size() - 1);
+        } else {
+            return null;
+        }
+    }
+
+    public boolean isFirst(final T row) {
+        final T firstRow = getFirst();
+        if (firstRow == null) {
+            return false;
+        }
+        return firstRow.equals(row);
+    }
+
+    public boolean isLast(final T row) {
+        final T lastRow = getLast();
+        if (lastRow == null) {
+            return false;
+        }
+        return lastRow.equals(row);
+    }
+
+    @JsonIgnore
     public int getPageStart() {
         return (int) pageResponse.getOffset();
     }
