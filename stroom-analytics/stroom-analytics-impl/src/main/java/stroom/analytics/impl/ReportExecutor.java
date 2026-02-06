@@ -243,6 +243,9 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                                     errorConsumer.add(e);
                                 }
                             }
+                        } else {
+                            LOGGER.debug("process() - Notifications skipped - sendEmptyReports: {}, reportFile: {}",
+                                    sendEmptyReports, reportFile);
                         }
 
                     } catch (final IOException e) {
@@ -276,14 +279,16 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
             }
 
             // Update tracker.
-            final ExecutionTracker executionTracker = new ExecutionTracker(
-                    now.toEpochMilli(),
-                    effectiveExecutionTime.toEpochMilli(),
-                    nextExecutionTime.toEpochMilli());
-            if (currentTracker != null) {
-                executionScheduleDao.updateTracker(executionSchedule, executionTracker);
-            } else {
-                executionScheduleDao.createTracker(executionSchedule, executionTracker);
+            if (nextExecutionTime != null) {
+                final ExecutionTracker executionTracker = new ExecutionTracker(
+                        now.toEpochMilli(),
+                        effectiveExecutionTime.toEpochMilli(),
+                        nextExecutionTime.toEpochMilli());
+                if (currentTracker != null) {
+                    executionScheduleDao.updateTracker(executionSchedule, executionTracker);
+                } else {
+                    executionScheduleDao.createTracker(executionSchedule, executionTracker);
+                }
             }
 
             if (executionResult.status() == null) {
@@ -309,7 +314,9 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                 // Disable future execution.
                 LOGGER.info(() ->
                         LogUtil.message("Disabling report: {}", RuleUtil.getRuleIdentity(reportDoc)));
-                executionScheduleDao.updateExecutionSchedule(executionSchedule.copy().enabled(false).build());
+                executionScheduleDao.updateExecutionSchedule(executionSchedule.copy()
+                        .enabled(false)
+                        .build());
             }
 
         } finally {
@@ -452,7 +459,6 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                             }
                         }
                     }
-
                 } else {
                     throw new RuntimeException("No stream destination config found: " +
                                                RuleUtil.getRuleIdentity(reportDoc));
@@ -471,6 +477,9 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                                                RuleUtil.getRuleIdentity(reportDoc));
                 }
             }
+        } else {
+            LOGGER.debug("sendFile() - Not notifying - notificationConfig: {}, notificationState: {}",
+                    notificationConfig, notificationState);
         }
     }
 

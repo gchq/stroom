@@ -240,22 +240,37 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
 
         final Instant effectiveExecutionTime;
         if (currentTracker != null) {
-            effectiveExecutionTime = Instant.ofEpochMilli(currentTracker.getNextEffectiveExecutionTimeMs());
+            final Instant startTime = NullSafe.get(
+                    scheduleBounds,
+                    ScheduleBounds::getStartTimeMs,
+                    Instant::ofEpochMilli);
+            final Instant trackerTime = Instant.ofEpochMilli(currentTracker.getNextEffectiveExecutionTimeMs());
+            // User may have changed the start bound since the tracker was last updated, so if the new start
+            // time is later, work from there
+            effectiveExecutionTime = startTime != null && startTime.isAfter(trackerTime)
+                    ? trigger.getNextExecutionTimeAfter(startTime)
+                    : trackerTime;
         } else {
-            if (NullSafe.nonNull(scheduleBounds, ScheduleBounds::getStartTimeMs)) {
-                effectiveExecutionTime = Instant.ofEpochMilli(scheduleBounds.getStartTimeMs());
-            } else {
-                effectiveExecutionTime = trigger.getNextExecutionTimeAfter(executionTime);
-            }
+            // No tracker so base the next eff time off now
+            effectiveExecutionTime = NullSafe.getOrElseGet(
+                    scheduleBounds,
+                    ScheduleBounds::getStartTimeMs,
+                    Instant::ofEpochMilli,
+                    () -> trigger.getNextExecutionTimeAfter(executionTime));
         }
 
         // Calculate end bounds.
-        Instant endTime = Instant.MAX;
-        if (NullSafe.nonNull(scheduleBounds, ScheduleBounds::getEndTimeMs)) {
-            endTime = Instant.ofEpochMilli(scheduleBounds.getEndTimeMs());
-        }
+        final Instant endTime = NullSafe.getOrElse(
+                scheduleBounds,
+                ScheduleBounds::getEndTimeMs,
+                Instant::ofEpochMilli,
+                Instant.MAX);
 
-        // bounds (effectiveExecutionTime => endTime) are inclusive
+        LOGGER.debug("execute() - endTime: {}, executionTime: {}, " +
+                     "effectiveExecutionTime: {}, schedule: {}",
+                endTime, executionTime, effectiveExecutionTime, schedule);
+
+        // bounds are inclusive
         if (effectiveExecutionTime != null
             && !effectiveExecutionTime.isAfter(executionTime)
             && !effectiveExecutionTime.isAfter(endTime)) {

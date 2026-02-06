@@ -22,11 +22,13 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public enum DownloadSearchResultFileType implements HasDisplayValue {
     EXCEL("Excel", "xlsx"),
     CSV("CSV", "csv"),
-    TSV("TSV", "tsv");
+    TSV("TSV", "tsv"),
+    ;
 
     private final String displayValue;
     private final String extension;
@@ -50,8 +52,9 @@ public enum DownloadSearchResultFileType implements HasDisplayValue {
      * in natural order by their displayValue.
      */
     public static List<DownloadSearchResultFileType> asSortedList() {
+        //noinspection SimplifyStreamApiCallChains // Cos GWT
         return Arrays.stream(DownloadSearchResultFileType.values())
                 .sorted(Comparator.comparing(DownloadSearchResultFileType::getDisplayValue))
-                .toList();
+                .collect(Collectors.toUnmodifiableList());
     }
 }

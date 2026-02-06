@@ -25,9 +25,9 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 @NullMarked
-public record ReportFile(Path file,
-                         DownloadSearchResultFileType fileType,
-                         long rowCount) {
+record ReportFile(Path file,
+                  DownloadSearchResultFileType fileType,
+                  long rowCount) {
 
     public ReportFile {
         Objects.requireNonNull(file);
