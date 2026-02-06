@@ -380,5 +380,33 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
 
     public record ExecutionResult(String status, String message) {
 
+        private static final ExecutionResult EMPTY = new ExecutionResult(null, null);
+
+        public static final String STATUS_COMPLETE = ExecutionHistory.STATUS_COMPLETE;
+        public static final String STATUS_ERROR = ExecutionHistory.STATUS_ERROR;
+
+        public ExecutionResult {
+            if (status != null) {
+                if (!STATUS_COMPLETE.equals(status) && !STATUS_ERROR.equals(status)) {
+                    throw new IllegalArgumentException("Invalid status: " + status);
+                }
+            }
+            if (message != null && status == null) {
+                throw new IllegalArgumentException(LogUtil.message(
+                        "Can't have non-null message '{}' with no status", message));
+            }
+        }
+
+        public static ExecutionResult empty() {
+            return EMPTY;
+        }
+
+        public static ExecutionResult complete(final String message) {
+            return new ExecutionResult(STATUS_COMPLETE, message);
+        }
+
+        public static ExecutionResult error(final String message) {
+            return new ExecutionResult(STATUS_ERROR, message);
+        }
     }
 }

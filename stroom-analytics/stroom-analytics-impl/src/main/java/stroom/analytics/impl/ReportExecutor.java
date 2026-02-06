@@ -168,7 +168,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
 
         boolean success = false;
         final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
-        ExecutionResult executionResult = new ExecutionResult(null, null);
+        ExecutionResult executionResult = ExecutionResult.empty();
 
         try {
             final SearchRequestSource searchRequestSource = SearchRequestSource
@@ -276,12 +276,12 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
             }
 
             if (executionResult.status() == null) {
-                executionResult = new ExecutionResult("Complete", executionResult.message());
+                executionResult = ExecutionResult.complete(executionResult.message());
                 success = true;
             }
 
         } catch (final Exception e) {
-            executionResult = new ExecutionResult("Error", e.getMessage());
+            executionResult = ExecutionResult.error(e.getMessage());
 
             try {
                 LOGGER.debug(e::getMessage, e);
