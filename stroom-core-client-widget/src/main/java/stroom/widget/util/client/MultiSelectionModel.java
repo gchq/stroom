@@ -16,6 +16,8 @@
 
 package stroom.widget.util.client;
 
+import stroom.util.shared.NullSafe;
+
 import com.google.gwt.event.shared.HandlerRegistration;
 
 import java.util.List;
@@ -30,6 +32,13 @@ public interface MultiSelectionModel<T> {
      * Get a list of all selected items.
      */
     List<T> getSelectedItems();
+
+    /**
+     * @return True if there are selected items
+     */
+    default boolean hasSelectedItems() {
+        return NullSafe.hasItems(getSelectedItems());
+    }
 
     /**
      * Set a list of all selected items.

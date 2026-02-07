@@ -25,21 +25,19 @@ import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.SvgPresets;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.view.client.Range;
@@ -60,7 +58,6 @@ public class ScheduledProcessHistoryListPresenter
     private final RestFactory restFactory;
     private final MyDataGrid<ExecutionHistory> dataGrid;
     private final MultiSelectionModelImpl<ExecutionHistory> selectionModel;
-    private final DataGridSelectionEventManager<ExecutionHistory> selectionEventManager;
     private RestDataProvider<ExecutionHistory, ResultPage<ExecutionHistory>> dataProvider;
     private final DateTimeFormatter dateTimeFormatter;
     private ExecutionHistoryRequest request;
@@ -76,11 +73,17 @@ public class ScheduledProcessHistoryListPresenter
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        final CriteriaFieldSort defaultSort = new CriteriaFieldSort(ExecutionHistoryFields.ID, true, true);
+        final CriteriaFieldSort defaultSort = new CriteriaFieldSort(
+                ExecutionHistoryFields.ID, true, true);
         request = ExecutionHistoryRequest.builder().sortList(Collections.singletonList(defaultSort)).build();
         dataGrid = new MyDataGrid<>(this);
+        dataGrid.setMultiLine(true);
         selectionModel = new MultiSelectionModelImpl<>();
-        selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
+        final DataGridSelectionEventManager<ExecutionHistory> selectionEventManager =
+                new DataGridSelectionEventManager<>(
+                        dataGrid,
+                        selectionModel,
+                        false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         view.setDataWidget(dataGrid);
 
@@ -92,57 +95,56 @@ public class ScheduledProcessHistoryListPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(replayButton.addClickHandler(e -> replay()));
-        registerHandler(selectionModel.addSelectionHandler(event -> enableButtons()));
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+        registerHandler(replayButton.addClickHandler(ignored -> replay()));
+        registerHandler(selectionModel.addSelectionHandler(ignored -> enableButtons()));
+        registerHandler(dataGrid.addColumnSortHandler(ignored -> refresh()));
     }
 
     private void addColumns() {
         dataGrid.addResizableColumn(
-                new OrderByColumn<ExecutionHistory, String>(
-                        new TextCell(),
-                        ExecutionHistoryFields.EXECUTION_TIME,
-                        false) {
-                    @Override
-                    public String getValue(final ExecutionHistory row) {
-                        return dateTimeFormatter.format(row.getExecutionTimeMs());
-                    }
-                }, ExecutionHistoryFields.EXECUTION_TIME, ColumnSizeConstants.DATE_COL);
+                DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(
+                                ExecutionHistory::getExecutionTimeMs,
+                                dateTimeFormatter::format))
+                        .withSorting(ExecutionHistoryFields.EXECUTION_TIME, false)
+                        .build(),
+                DataGridUtil.headingBuilder(ExecutionHistoryFields.EXECUTION_TIME)
+                        .withToolTip("The time it was actually executed.")
+                        .build(),
+                ColumnSizeConstants.DATE_COL);
 
         dataGrid.addResizableColumn(
-                new OrderByColumn<ExecutionHistory, String>(
-                        new TextCell(),
-                        ExecutionHistoryFields.EFFECTIVE_EXECUTION_TIME,
-                        false) {
-                    @Override
-                    public String getValue(final ExecutionHistory row) {
-                        return dateTimeFormatter.format(row.getEffectiveExecutionTimeMs());
-                    }
-                }, ExecutionHistoryFields.EFFECTIVE_EXECUTION_TIME, ColumnSizeConstants.DATE_COL);
+                DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(
+                                ExecutionHistory::getEffectiveExecutionTimeMs,
+                                dateTimeFormatter::format))
+                        .withSorting(ExecutionHistoryFields.EFFECTIVE_EXECUTION_TIME, false)
+                        .build(),
+                DataGridUtil.headingBuilder(ExecutionHistoryFields.EFFECTIVE_EXECUTION_TIME)
+                        .withToolTip("The time the data was based on rather than the time it was executed.")
+                        .build(),
+                ColumnSizeConstants.DATE_COL);
 
         dataGrid.addResizableColumn(
-                new OrderByColumn<ExecutionHistory, String>(
-                        new TextCell(),
-                        ExecutionHistoryFields.STATUS,
-                        false) {
-                    @Override
-                    public String getValue(final ExecutionHistory row) {
-                        return row.getStatus();
-                    }
-                }, ExecutionHistoryFields.STATUS, ColumnSizeConstants.MEDIUM_COL);
+                DataGridUtil.redGreenTextColumnBuilder(
+                                ExecutionHistory::isComplete,
+                                ExecutionHistory.STATUS_COMPLETE,
+                                ExecutionHistory.STATUS_ERROR)
+                        .withSorting(ExecutionHistoryFields.STATUS, false)
+                        .build(),
+                DataGridUtil.headingBuilder(ExecutionHistoryFields.STATUS)
+                        .withToolTip("The status of the execution (Complete|Error).")
+                        .build(),
+                ColumnSizeConstants.MEDIUM_COL);
 
         dataGrid.addAutoResizableColumn(
-                new OrderByColumn<ExecutionHistory, String>(
-                        new TextCell(),
-                        ExecutionHistoryFields.MESSAGE,
-                        false) {
-                    @Override
-                    public String getValue(final ExecutionHistory row) {
-                        return row.getMessage();
-                    }
-                }, ExecutionHistoryFields.MESSAGE, ColumnSizeConstants.BIG_COL);
+                DataGridUtil.textColumnBuilder(ExecutionHistory::getMessage)
+                        .withSorting(ExecutionHistoryFields.MESSAGE, false)
+                        .build(),
+                DataGridUtil.headingBuilder(ExecutionHistoryFields.MESSAGE)
+                        .withToolTip("Any output or error message output by the execution.")
+                        .build(),
+                ColumnSizeConstants.BIG_COL);
 
-        dataGrid.addEndColumn(new EndColumn<>());
+        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private void replay() {
@@ -164,6 +166,7 @@ public class ScheduledProcessHistoryListPresenter
 
     public void refresh() {
         if (dataProvider == null) {
+            //noinspection Convert2Diamond // Cos GWT
             dataProvider = new RestDataProvider<ExecutionHistory, ResultPage<ExecutionHistory>>(getEventBus()) {
                 @Override
                 protected void exec(final Range range,
@@ -191,7 +194,7 @@ public class ScheduledProcessHistoryListPresenter
     }
 
     private void enableButtons() {
-        replayButton.setEnabled(selectionModel.getSelectedItems().size() > 0);
+        replayButton.setEnabled(selectionModel.hasSelectedItems());
         replayButton.setTitle("Replay Execution");
     }
 

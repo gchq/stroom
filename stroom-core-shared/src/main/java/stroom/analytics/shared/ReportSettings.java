@@ -18,6 +18,7 @@ package stroom.analytics.shared;
 
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -31,42 +32,49 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class ReportSettings {
 
+    public static final DownloadSearchResultFileType DEFAULT_FILE_TYPE = DownloadSearchResultFileType.EXCEL;
+
     @JsonProperty
     private final DownloadSearchResultFileType fileType;
+    @JsonProperty
+    private final boolean sendEmptyReports;
 
     @JsonCreator
-    public ReportSettings(@JsonProperty("fileType") final DownloadSearchResultFileType fileType) {
-        this.fileType = fileType;
+    public ReportSettings(@JsonProperty("fileType") final DownloadSearchResultFileType fileType,
+                          @JsonProperty("sendEmptyReports") final boolean sendEmptyReports) {
+        this.fileType = NullSafe.requireNonNullElse(fileType, DEFAULT_FILE_TYPE);
+        this.sendEmptyReports = sendEmptyReports;
     }
 
     public DownloadSearchResultFileType getFileType() {
         return fileType;
     }
 
+    public boolean isSendEmptyReports() {
+        return sendEmptyReports;
+    }
+
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
         final ReportSettings that = (ReportSettings) o;
-        return fileType == that.fileType;
+        return sendEmptyReports == that.sendEmptyReports && fileType == that.fileType;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(fileType);
+        return Objects.hash(fileType, sendEmptyReports);
     }
 
     @Override
     public String toString() {
         return "ReportSettings{" +
                "fileType=" + fileType +
+               ", sendEmptyReports=" + sendEmptyReports +
                '}';
     }
-
 
     public static Builder builder() {
         return new Builder();
@@ -76,19 +84,30 @@ public class ReportSettings {
         return new Builder(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder extends AbstractBuilder<ReportSettings, Builder> {
 
         private DownloadSearchResultFileType fileType;
+        private boolean sendEmptyReports;
 
         public Builder() {
         }
 
         public Builder(final ReportSettings settings) {
             this.fileType = settings.fileType;
+            this.sendEmptyReports = settings.sendEmptyReports;
         }
 
         public Builder fileType(final DownloadSearchResultFileType fileType) {
-            this.fileType = fileType;
+            this.fileType = Objects.requireNonNull(fileType);
+            return self();
+        }
+
+        public Builder sendEmptyReports(final boolean sendEmptyReports) {
+            this.sendEmptyReports = sendEmptyReports;
             return self();
         }
 
@@ -99,7 +118,7 @@ public class ReportSettings {
 
         @Override
         public ReportSettings build() {
-            return new ReportSettings(fileType);
+            return new ReportSettings(fileType, sendEmptyReports);
         }
     }
 }
