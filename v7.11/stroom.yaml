@@ -17001,6 +17001,8 @@ components:
           - EXCEL
           - CSV
           - TSV
+        sendEmptyReports:
+          type: boolean
     ReportUiDefaultConfig:
       type: object
       properties:
