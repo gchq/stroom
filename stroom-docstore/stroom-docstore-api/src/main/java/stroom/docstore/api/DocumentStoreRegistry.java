@@ -16,27 +16,30 @@
 
 package stroom.docstore.api;
 
+import stroom.util.shared.Document;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
 public class DocumentStoreRegistry {
 
-    private final Map<String, DocumentStore> documentStores;
+    private final Map<String, DocumentStore<? extends Document>> documentStores;
 
     @Inject
-    public DocumentStoreRegistry(final Set<DocumentStore> documentStores) {
-        this.documentStores = documentStores.stream()
+    public DocumentStoreRegistry(final DocumentActionHandlers documentActionHandlers) {
+        this.documentStores = documentActionHandlers.stream()
+                .filter(da -> da instanceof DocumentStore<?>)
+                .map(da -> (DocumentStore<?>) da)
                 .collect(Collectors.toMap(DocumentStore::getType, Function.identity()));
     }
 
-    public DocumentStore getDocumentStore(final String type) {
-        final DocumentStore documentStore = documentStores.get(type);
+    public DocumentStore<? extends Document> getDocumentStore(final String type) {
+        final DocumentStore<? extends Document> documentStore = documentStores.get(type);
         if (documentStore == null) {
             throw new RuntimeException("No document store can be found for '" + type + "'");
         }
