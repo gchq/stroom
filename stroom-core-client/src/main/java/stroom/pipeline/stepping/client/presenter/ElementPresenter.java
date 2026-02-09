@@ -37,6 +37,7 @@ import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
+import stroom.util.shared.Document;
 import stroom.util.shared.Embeddable;
 import stroom.util.shared.ErrorType;
 import stroom.util.shared.HasData;
@@ -87,7 +88,7 @@ public class ElementPresenter
     private boolean loaded;
     private boolean dirtyCode;
     private DocRef docRef;
-    private Object document;
+    private Document document;
     private final EnumMap<IndicatorType, EditorPresenter> presenterMap = new EnumMap<>(IndicatorType.class);
 
     private Indicators indicators;
@@ -243,7 +244,8 @@ public class ElementPresenter
     private void loadEntityRef(final DocRef entityRef,
                                final Consumer<Boolean> future) {
         if (entityRef != null) {
-            final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(entityRef.getType());
+            final DocumentPlugin<Document> documentPlugin = documentPluginRegistry.get(entityRef.getType(),
+                    Document.class);
             documentPlugin.load(entityRef,
                     result -> {
                         docRef = entityRef;
@@ -269,7 +271,8 @@ public class ElementPresenter
         if (loaded && document != null && dirtyCode) {
             write();
 
-            final DocumentPlugin documentPlugin = documentPluginRegistry.get(docRef.getType());
+            final DocumentPlugin<Document> documentPlugin = documentPluginRegistry.get(docRef.getType(),
+                    Document.class);
             documentPlugin.save(docRef, document,
                     result -> {
                         document = result;

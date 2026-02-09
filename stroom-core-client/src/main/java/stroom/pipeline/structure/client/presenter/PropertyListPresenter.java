@@ -423,11 +423,11 @@ public class PropertyListPresenter
                                 final String embeddedPropertyName = "EMBEDDED " + docType + " (" +
                                                                     currentElement.getId() + ")";
 
-                                final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docType);
+                                final DocumentPlugin<Document> documentPlugin = documentPluginRegistry.get(docType,
+                                        Document.class);
 
                                 createEmbeddedDocument(documentPlugin, embeddedPropertyName, parentDocRef,
-                                        d -> {
-                                            final Document document = (Document) d;
+                                        document -> {
                                             final PipelineProperty embeddedProperty = PipelineProperty.builder(editing)
                                                     .value(new PipelinePropertyValue(document.asDocRef(), true))
                                                     .build();
@@ -479,19 +479,19 @@ public class PropertyListPresenter
         }
     }
 
-    private <D> void createEmbeddedDocument(final DocumentPlugin<D> documentPlugin,
+    private void createEmbeddedDocument(final DocumentPlugin<Document> documentPlugin,
                                             final String documentName,
                                             final DocRef parentDocRef,
-                                            final Consumer<D> callback) {
+                                            final Consumer<Document> callback) {
         final RestErrorHandler errorHandler = throwable -> AlertEvent.fireError(
                 this,
                 "Unable to create embedded document",
                 throwable.getMessage(), null);
 
         documentPlugin.create(documentName, document -> {
-            if (document instanceof Document && document instanceof final Embeddable embeddable) {
+            if (document instanceof final Embeddable embeddable) {
                 embeddable.setEmbeddedIn(parentDocRef);
-                documentPlugin.save(((Document) document).asDocRef(), document, callback, errorHandler, this);
+                documentPlugin.save(document.asDocRef(), document, callback, errorHandler, this);
             }
         }, errorHandler, this);
     }
