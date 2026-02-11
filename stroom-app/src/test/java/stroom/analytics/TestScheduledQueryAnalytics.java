@@ -115,7 +115,7 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
                 .build());
 
         // Now run the search process.
-        analyticsExecutor.exec();
+        analyticsExecutor.execFromDocs();
 
         // As we have created alerts ensure we now have more streams.
         testDetectionsStream(expectedStreams, expectedRecords);

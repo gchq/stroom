@@ -22,6 +22,9 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class BeforeRevealMenubarEvent extends GwtEvent<BeforeRevealMenubarEvent.Handler> {
 
     private static Type<Handler> TYPE;

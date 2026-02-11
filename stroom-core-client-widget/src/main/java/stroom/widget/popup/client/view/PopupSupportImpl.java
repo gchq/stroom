@@ -227,6 +227,20 @@ public class PopupSupportImpl implements PopupSupport {
 
                     break;
                 }
+                case SELECTED_AND_FILTERED_DIALOG: {
+                    final SelectedAndFilteredConfirmationDialog content = new SelectedAndFilteredConfirmationDialog(
+                            uiHandlers);
+                    content.setContent(view.asWidget());
+                    dialogActionHandler = content;
+                    dialogButtons = content;
+
+                    final ResizableDialog resizableDialog = new ResizableDialog(content, popupSize);
+                    hasTaskListener.setTaskMonitorFactory(resizableDialog);
+                    resizableDialog.setContent(content);
+                    popup = resizableDialog;
+
+                    break;
+                }
             }
         } else {
             switch (popupType) {
@@ -275,6 +289,20 @@ public class PopupSupportImpl implements PopupSupport {
                     final Dialog dialog = new Dialog(acceptRejectContent);
                     hasTaskListener.setTaskMonitorFactory(dialog);
                     dialog.setContent(acceptRejectContent);
+                    popup = dialog;
+
+                    break;
+                }
+                case SELECTED_AND_FILTERED_DIALOG: {
+                    final SelectedAndFilteredConfirmationDialog content = new SelectedAndFilteredConfirmationDialog(
+                            uiHandlers);
+                    content.setContent(view.asWidget());
+                    dialogActionHandler = content;
+                    dialogButtons = content;
+
+                    final Dialog dialog = new Dialog(content);
+                    hasTaskListener.setTaskMonitorFactory(dialog);
+                    dialog.setContent(content);
                     popup = dialog;
 
                     break;

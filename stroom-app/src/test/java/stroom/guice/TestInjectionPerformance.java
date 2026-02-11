@@ -19,7 +19,7 @@ package stroom.guice;
 
 import stroom.analytics.AnalyticsDataSetup;
 import stroom.analytics.impl.TableBuilderAnalyticExecutor;
-import stroom.analytics.rule.impl.AnalyticRuleStore;
+import stroom.analytics.impl.AnalyticRuleStore;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;

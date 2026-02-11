@@ -54,7 +54,7 @@ public class ExpressionValidator {
         this.restFactory = restFactory;
     }
 
-    protected void validateExpression(final HasHandlers hasHandlers,
+    public void validateExpression(final HasHandlers hasHandlers,
                                       final List<QueryField> fields,
                                       final ExpressionOperator expression,
                                       final Consumer<ExpressionOperator> consumer,

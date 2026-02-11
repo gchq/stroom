@@ -80,7 +80,7 @@ public class ScheduleBox
         final SchedulePopup popup = getSchedulePresenter();
         if (popup != null) {
             schedulePresenterProvider.get().validate(schedule, scheduleRestriction, scheduledTimes -> {
-                if (scheduledTimes == null || scheduledTimes.isError()) {
+                if (isEnabled() && (scheduledTimes == null || scheduledTimes.isError())) {
                     textBox.getElement().addClassName("invalid");
                 } else {
                     textBox.getElement().removeClassName("invalid");
@@ -163,6 +163,11 @@ public class ScheduleBox
 
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
+        validate();
+    }
+
+    public boolean isEnabled() {
+        return textBox.isEnabled();
     }
 
     public Schedule getValue() {

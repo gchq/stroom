@@ -48,6 +48,8 @@ public interface ExecutionScheduleDao {
 
     Boolean deleteExecutionSchedule(ExecutionSchedule executionSchedule);
 
+    Boolean deleteExecutionSchedules(List<ExecutionSchedule> executionSchedules);
+
     Optional<ExecutionTracker> getTracker(ExecutionSchedule schedule);
 
     void createTracker(ExecutionSchedule executionSchedule, ExecutionTracker executionTracker);

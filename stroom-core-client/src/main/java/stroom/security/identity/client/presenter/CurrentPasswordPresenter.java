@@ -62,7 +62,9 @@ public class CurrentPasswordPresenter extends MyPresenterWidget<CurrentPasswordV
         view.setUiHandlers(new HideRequestUiHandlers() {
             @Override
             public void hideRequest(final HideRequest request) {
-                HidePopupRequestEvent.builder(CurrentPasswordPresenter.this).ok(request.isOk()).fire();
+                HidePopupRequestEvent.builder(CurrentPasswordPresenter.this)
+                        .action(request.getAction())
+                        .fire();
             }
         });
     }

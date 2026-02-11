@@ -53,7 +53,7 @@ public class EmailResetPasswordPresenter extends MyPresenterWidget<EmailResetPas
             public void hideRequest(final HideRequest request) {
                 HidePopupRequestEvent
                         .builder(EmailResetPasswordPresenter.this)
-                        .ok(request.isOk())
+                        .action(request.getAction())
                         .fire();
             }
         });
@@ -96,9 +96,9 @@ public class EmailResetPasswordPresenter extends MyPresenterWidget<EmailResetPas
                                 this,
                                 "Password Reset",
                                 "Please check your email.\n" +
-                                        "\n" +
-                                        "If the email address is registered you should shortly\n" +
-                                        "receive a message with a link that will let you change your password.\n",
+                                "\n" +
+                                "If the email address is registered you should shortly\n" +
+                                "receive a message with a link that will let you change your password.\n",
                                 event::hide);
                     } else {
                         AlertEvent.fireError(this, "Error",

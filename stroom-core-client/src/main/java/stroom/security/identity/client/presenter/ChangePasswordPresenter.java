@@ -53,7 +53,9 @@ public class ChangePasswordPresenter extends MyPresenterWidget<ChangePasswordVie
         view.setUiHandlers(new HideRequestUiHandlers() {
             @Override
             public void hideRequest(final HideRequest request) {
-                HidePopupRequestEvent.builder(ChangePasswordPresenter.this).ok(request.isOk()).fire();
+                HidePopupRequestEvent.builder(ChangePasswordPresenter.this)
+                        .action(request.getAction())
+                        .fire();
             }
         });
     }

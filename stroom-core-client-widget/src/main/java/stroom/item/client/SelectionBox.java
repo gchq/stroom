@@ -20,7 +20,9 @@ import stroom.docref.HasDisplayValue;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Function;
 
 public class SelectionBox<T> extends BaseSelectionBox<T, SimpleSelectionItemWrapper<T>> {
@@ -68,6 +70,14 @@ public class SelectionBox<T> extends BaseSelectionBox<T, SimpleSelectionItemWrap
 
     public void addItem(final T item) {
         model.addItem(item);
+    }
+
+    public List<T> getItems() {
+        ArrayList<T> items = new ArrayList<>();
+        for(SimpleSelectionItemWrapper<T> item : model.items) {
+            items.add(item.getItem());
+        }
+        return items;
     }
 
     public void clear() {

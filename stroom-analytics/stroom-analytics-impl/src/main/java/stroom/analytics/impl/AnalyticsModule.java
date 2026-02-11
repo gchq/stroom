@@ -130,7 +130,7 @@ public class AnalyticsModule extends AbstractModule {
 
         @Inject
         ScheduledAnalyticExecutorRunnable(final ScheduledQueryAnalyticExecutor executor) {
-            super(executor::exec);
+            super(executor::execFromDocs);
         }
     }
 
@@ -138,7 +138,7 @@ public class AnalyticsModule extends AbstractModule {
 
         @Inject
         ReportExecutorRunnable(final ReportExecutor executor) {
-            super(executor::exec);
+            super(executor::execFromDocs);
         }
     }
 

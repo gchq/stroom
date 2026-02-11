@@ -28,6 +28,10 @@ import stroom.analytics.client.presenter.AnalyticNotificationEditPresenter.Analy
 import stroom.analytics.client.presenter.AnalyticRulePresenter;
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter;
 import stroom.analytics.client.presenter.AnalyticStreamDestinationPresenter.AnalyticStreamDestinationView;
+import stroom.analytics.client.presenter.BatchExecutionScheduleEditPresenter;
+import stroom.analytics.client.presenter.BatchExecutionScheduleEditPresenter.BatchExecutionScheduleEditView;
+import stroom.analytics.client.presenter.ExecutionScheduleRunNowPresenter;
+import stroom.analytics.client.presenter.ExecutionScheduleRunNowPresenter.ExecutionScheduleRunNowView;
 import stroom.analytics.client.presenter.ScheduledProcessEditPresenter;
 import stroom.analytics.client.presenter.ScheduledProcessEditView;
 import stroom.analytics.client.presenter.ScheduledProcessingPresenter;
@@ -41,7 +45,9 @@ import stroom.analytics.client.view.AnalyticEmailDestinationViewImpl;
 import stroom.analytics.client.view.AnalyticNotificationEditViewImpl;
 import stroom.analytics.client.view.AnalyticProcessingViewImpl;
 import stroom.analytics.client.view.AnalyticStreamDestinationViewImpl;
+import stroom.analytics.client.view.BatchExecutionScheduleEditViewImpl;
 import stroom.analytics.client.view.DuplicateManagementViewImpl;
+import stroom.analytics.client.view.ExecutionScheduleRunNowViewImpl;
 import stroom.analytics.client.view.ScheduledProcessEditViewImpl;
 import stroom.analytics.client.view.ScheduledProcessingViewImpl;
 import stroom.analytics.client.view.StreamingProcessingViewImpl;
@@ -80,6 +86,12 @@ public class AnalyticsModule extends PluginModule {
         bindPresenterWidget(ScheduledProcessingPresenter.class,
                 ScheduledProcessingView.class,
                 ScheduledProcessingViewImpl.class);
+        bindPresenterWidget(BatchExecutionScheduleEditPresenter.class,
+                BatchExecutionScheduleEditView.class,
+                BatchExecutionScheduleEditViewImpl.class);
+        bindPresenterWidget(ExecutionScheduleRunNowPresenter.class,
+                ExecutionScheduleRunNowView.class,
+                ExecutionScheduleRunNowViewImpl.class);
 
         bindSharedView(
                 AnalyticProcessingView.class,

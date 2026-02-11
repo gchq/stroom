@@ -41,10 +41,13 @@ public class DateTimeBox
     private String stringValue;
     private Long longValue;
     private DateTimePopup popup;
+    //Allows the box to be empty
+    private boolean optional = false;
 
     private final EventBinder eventBinder = new EventBinder() {
         @Override
         protected void onBind() {
+
             registerHandler(svgIconBox.addClickHandler(event -> showPopup()));
             registerHandler(textBox.addKeyDownHandler(event -> {
                 final int keyCode = event.getNativeKeyCode();
@@ -72,6 +75,7 @@ public class DateTimeBox
     public DateTimeBox() {
         textBox = new TextBox();
         textBox.addStyleName("ScheduleBox-textBox stroom-control allow-focus");
+        stringValue = textBox.getText();
 
         svgIconBox = new SvgIconBox();
         svgIconBox.addStyleName("ScheduleBox");
@@ -122,6 +126,11 @@ public class DateTimeBox
 
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
+        updateInvalidState();
+    }
+
+    public boolean isEnabled() {
+        return textBox.isEnabled();
     }
 
     private Long parse(final String text) {
@@ -159,8 +168,15 @@ public class DateTimeBox
         if (stringValue == null) {
             return true;
         }
+        if (optional && stringValue.isEmpty()) {
+            return true;
+        }
         final Long ms = parse(stringValue);
         return ms != null;
+    }
+
+    private boolean isEmpty() {
+        return stringValue == null || stringValue.isEmpty();
     }
 
     private void onFocus() {
@@ -168,11 +184,26 @@ public class DateTimeBox
     }
 
     private void onBlur() {
-        if (isValid()) {
+        updateInvalidState();
+    }
+
+    private void updateInvalidState() {
+        if (isEmpty() && optional
+            || !isEnabled()
+            || isValid()
+        ) {
             textBox.getElement().removeClassName("invalid");
         } else {
             textBox.getElement().addClassName("invalid");
         }
+    }
+
+    public void setOptional(final boolean optional) {
+        this.optional = optional;
+    }
+
+    public boolean getOptional() {
+        return optional;
     }
 
     @Override

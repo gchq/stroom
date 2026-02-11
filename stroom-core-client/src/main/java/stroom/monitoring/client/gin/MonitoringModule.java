@@ -35,6 +35,7 @@ import stroom.job.client.view.JobViewImpl;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
 import stroom.monitoring.client.JobListPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
+import stroom.monitoring.client.ExecutionScheduleManagerPlugin;
 import stroom.node.client.ManageGlobalPropertiesPlugin;
 import stroom.node.client.presenter.NodePresenter;
 import stroom.node.client.presenter.NodePresenter.NodeView;
@@ -55,12 +56,17 @@ public class MonitoringModule extends PluginModule {
 
     @Override
     protected void configure() {
+
         bind(UiConfigCache.class).asEagerSingleton();
 
         bindPlugin(DatabaseTablesMonitoringPlugin.class);
 
         // Job management.
         bindPlugin(JobListPlugin.class);
+        bindPlugin(ExecutionScheduleManagerPlugin.class);
+
+
+
         bindPresenterWidget(
                 SchedulePopup.class,
                 ScheduleView.class,

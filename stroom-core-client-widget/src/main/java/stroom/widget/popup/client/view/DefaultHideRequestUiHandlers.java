@@ -33,7 +33,7 @@ public class DefaultHideRequestUiHandlers implements HideRequestUiHandlers {
         HidePopupRequestEvent
                 .builder(presenterWidget)
                 .autoClose(request.isAutoClose())
-                .ok(request.isOk())
+                .action(request.getAction())
                 .cancelHandler(request.getCancelHandler())
                 .fire();
     }

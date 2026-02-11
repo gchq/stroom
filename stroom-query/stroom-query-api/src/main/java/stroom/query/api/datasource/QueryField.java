@@ -254,6 +254,34 @@ public class QueryField implements Field, HasDisplayValue {
                 .build();
     }
 
+    public static QueryField createScheduleTypeSelect(final String name) {
+        return createScheduleTypeSelect(name, true);
+    }
+
+    public static QueryField createScheduleTypeSelect(final String name,
+                                                      final Boolean queryable) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.TEXT)
+                .conditionSet(ConditionSet.SCHEDULE_TYPE)
+                .queryable(queryable)
+                .build();
+    }
+
+    public static QueryField createScheduleParentDocTypeSelect(final String name) {
+        return createScheduleParentDocTypeSelect(name, true);
+    }
+
+    public static QueryField createScheduleParentDocTypeSelect(final String name,
+                                                      final Boolean queryable) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.TEXT)
+                .conditionSet(ConditionSet.SCHEDULE_PARENT_TYPE)
+                .queryable(queryable)
+                .build();
+    }
+
 
     /**
      * A {@link QueryField} for a {@link stroom.docref.DocRef} type whose names are unique, allowing
@@ -300,6 +328,27 @@ public class QueryField implements Field, HasDisplayValue {
                 .conditionSet(ConditionSet.DOC_REF_UUID)
                 .docRefType(docRefType)
                 .queryable(Boolean.TRUE)
+                .build();
+    }
+
+    /**
+     * A {@link QueryField} for a {@link stroom.util.shared.UserRef}.
+     */
+    public static QueryField createUserRef(final String name) {
+        return createUserRef(name, Boolean.TRUE);
+    }
+
+
+    /**
+     * A {@link QueryField} for a {@link stroom.util.shared.UserRef}.
+     */
+    public static QueryField createUserRef(final String name,
+                                           final Boolean queryable) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.USER_REF)
+                .conditionSet(ConditionSet.RUN_AS_USER)
+                .queryable(queryable)
                 .build();
     }
 

@@ -28,11 +28,15 @@ public class HideRequest {
     }
 
     public boolean isOk() {
-        return action == DialogAction.OK;
+        return action.getType() == DialogActionType.OK;
     }
 
     public boolean isAutoClose() {
-        return action == DialogAction.AUTO_CLOSE;
+        return action.getType() == DialogActionType.AUTO_CLOSE;
+    }
+
+    public DialogAction getAction() {
+        return action;
     }
 
     public Runnable getCancelHandler() {

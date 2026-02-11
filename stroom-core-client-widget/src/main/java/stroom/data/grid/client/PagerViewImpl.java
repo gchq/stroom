@@ -30,13 +30,18 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
 
+import java.util.List;
 import javax.inject.Inject;
 
 public class PagerViewImpl extends ViewImpl implements PagerView {
 
+    @UiField
+    FlowPanel viewContainer;
     @UiField
     FlowPanel pagerContainer;
     @UiField
@@ -129,6 +134,29 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     @Override
     public MessagePanel getMessagePanel() {
         return messagePanel;
+    }
+
+    @Override
+    public void addInfoLabel(final HTML label)
+    {
+        toolbarWidgets.add(label);
+    }
+
+    @Override
+    public HTML getInfoLabel(final int index)
+    {
+        int countSeen = 0;
+        for(final Widget widget : toolbarWidgets) {
+            if(widget instanceof HTML) {
+                if(countSeen == index) {
+                    return (HTML) widget;
+                }
+                else {
+                    countSeen++;
+                }
+            }
+        }
+        return null;
     }
 
     public interface Binder extends UiBinder<Widget, PagerViewImpl> {

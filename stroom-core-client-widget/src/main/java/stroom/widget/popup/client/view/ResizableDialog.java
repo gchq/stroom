@@ -202,9 +202,9 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
     public void hide(final boolean autoClosed) {
         if (dialogActionHandler != null) {
             if (autoClosed) {
-                dialogActionHandler.onDialogAction(DialogAction.AUTO_CLOSE);
+                dialogActionHandler.onDialogAction(DialogAction.builder().type(DialogActionType.AUTO_CLOSE).build());
             } else {
-                dialogActionHandler.onDialogAction(DialogAction.CLOSE);
+                dialogActionHandler.onDialogAction(DialogAction.builder().type(DialogActionType.CLOSE).build());
             }
         }
     }
