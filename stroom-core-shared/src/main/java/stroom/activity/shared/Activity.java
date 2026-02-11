@@ -17,6 +17,7 @@
 package stroom.activity.shared;
 
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasAuditInfoBuilder;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.UserRef;
 
@@ -181,7 +182,8 @@ public class Activity implements HasAuditInfo, HasIntegerId {
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder {
+    public static class Builder
+            implements HasAuditInfoBuilder<Activity, Activity.Builder> {
 
         private Integer id;
         private Integer version;

@@ -18,7 +18,6 @@ package stroom.state.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -46,7 +45,11 @@ public class ScyllaDbDocStoreImpl implements ScyllaDbDocStore {
     public ScyllaDbDocStoreImpl(
             final StoreFactory storeFactory,
             final ScyllaDbSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, ScyllaDbDoc.TYPE, ScyllaDbDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                ScyllaDbDoc.TYPE,
+                ScyllaDbDoc::builder,
+                ScyllaDbDoc::copy);
     }
 
     // ---------------------------------------------------------------------
@@ -197,10 +200,7 @@ public class ScyllaDbDocStoreImpl implements ScyllaDbDocStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

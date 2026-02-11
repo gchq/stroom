@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.docref.HasUuid;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasAuditInfoBuilder;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.UserRef;
 
@@ -523,7 +524,8 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder {
+    public static class Builder
+            implements HasAuditInfoBuilder<ProcessorFilter, ProcessorFilter.Builder> {
 
         private Integer id;
         private Integer version;

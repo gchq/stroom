@@ -21,7 +21,6 @@ import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.ReportDoc.Builder;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -64,7 +63,11 @@ class ReportStoreImpl implements ReportStore {
                     final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
                     final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                     final SearchRequestFactory searchRequestFactory) {
-        this.store = storeFactory.createStore(serialiser, ReportDoc.TYPE, ReportDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                ReportDoc.TYPE,
+                ReportDoc::builder,
+                ReportDoc::copy);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
@@ -247,10 +250,7 @@ class ReportStoreImpl implements ReportStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

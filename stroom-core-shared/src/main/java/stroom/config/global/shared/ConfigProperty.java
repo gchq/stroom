@@ -16,8 +16,11 @@
 
 package stroom.config.global.shared;
 
+import stroom.activity.shared.Activity;
+import stroom.activity.shared.Activity.Builder;
 import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasAuditInfoBuilder;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.PropertyPath;
 
@@ -554,7 +557,9 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
         return new Builder(copy);
     }
 
-    public static class Builder extends AbstractBuilder<ConfigProperty, ConfigProperty.Builder> {
+    public static class Builder
+            extends AbstractBuilder<ConfigProperty, ConfigProperty.Builder>
+            implements HasAuditInfoBuilder<ConfigProperty, ConfigProperty.Builder> {
 
         private Integer id;
         private Integer version;

@@ -26,7 +26,6 @@ import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -70,7 +69,11 @@ class DashboardStoreImpl implements DashboardStore {
     DashboardStoreImpl(final StoreFactory storeFactory,
                        final DashboardSerialiser serialiser,
                        final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, DashboardDoc.TYPE, DashboardDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                DashboardDoc.TYPE,
+                DashboardDoc::builder,
+                DashboardDoc::copy);
         this.serialiser = serialiser;
         this.securityContext = securityContext;
     }
@@ -299,10 +302,7 @@ class DashboardStoreImpl implements DashboardStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

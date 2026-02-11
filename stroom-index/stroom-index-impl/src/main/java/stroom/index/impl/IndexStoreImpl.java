@@ -18,7 +18,6 @@ package stroom.index.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -62,7 +61,11 @@ public class IndexStoreImpl implements IndexStore {
                    final Provider<IndexFieldService> indexFieldServiceProvider,
                    final Provider<IndexVolumeGroupService> indexVolumeGroupServiceProvider) {
         this.indexVolumeGroupServiceProvider = indexVolumeGroupServiceProvider;
-        this.store = storeFactory.createStore(serialiser, LuceneIndexDoc.TYPE, LuceneIndexDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                LuceneIndexDoc.TYPE,
+                LuceneIndexDoc::builder,
+                LuceneIndexDoc::copy);
         this.indexFieldServiceProvider = indexFieldServiceProvider;
         this.serialiser = serialiser;
     }
@@ -222,14 +225,7 @@ public class IndexStoreImpl implements IndexStore {
                                               final List<Message> messageList) {
         // Get the first 1000 fields.
         final List<LuceneIndexField> fields = getFieldsForExport(docRef);
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, d -> {
-                new AuditFieldFilter<>().apply(d);
-                d.setFields(fields);
-                return d;
-            });
-        }
-        return store.exportDocument(docRef, messageList, d -> {
+        return store.exportDocument(docRef, omitAuditFields, messageList, d -> {
             d.setFields(fields);
             return d;
         });

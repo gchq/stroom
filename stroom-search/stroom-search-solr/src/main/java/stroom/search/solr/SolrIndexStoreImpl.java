@@ -18,7 +18,6 @@ package stroom.search.solr;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -70,7 +69,11 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     SolrIndexStoreImpl(final StoreFactory storeFactory,
                        final SolrIndexClientCache solrIndexClientCache,
                        final SolrIndexSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, SolrIndexDoc.TYPE, SolrIndexDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                SolrIndexDoc.TYPE,
+                SolrIndexDoc::builder,
+                SolrIndexDoc::copy);
         this.solrIndexClientCache = solrIndexClientCache;
     }
 
@@ -225,7 +228,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                                     deleteCount.incrementAndGet();
                                 } catch (final RuntimeException | SolrServerException | IOException e) {
                                     final String message = "Failed to delete field '" + field.getFldName() +
-                                            "' - " + e.getMessage();
+                                                           "' - " + e.getMessage();
                                     messages.add(message);
                                     LOGGER.error(() -> message, e);
                                 }
@@ -379,23 +382,10 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        Function<SolrIndexDoc, SolrIndexDoc> filter = d -> {
-            d.setSolrSynchState(null);
-            return d;
-        };
-
-        if (omitAuditFields) {
-            filter = new AuditFieldFilter<>() {
-                @Override
-                public SolrIndexDoc apply(final SolrIndexDoc doc) {
-                    final SolrIndexDoc solrIndexDoc = super.apply(doc);
-                    solrIndexDoc.setSolrSynchState(null);
-                    return solrIndexDoc;
-                }
-            };
-        }
-
-        return store.exportDocument(docRef, messageList, filter);
+        return store.exportDocument(docRef, omitAuditFields, messageList, doc -> {
+            doc.setSolrSynchState(null);
+            return doc;
+        });
     }
 
     @Override

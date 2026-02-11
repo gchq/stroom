@@ -49,7 +49,11 @@ class ScriptStoreImpl implements ScriptStore {
     ScriptStoreImpl(final StoreFactory storeFactory,
                     final ScriptSerialiser serialiser,
                     final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, ScriptDoc.TYPE, ScriptDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                ScriptDoc.TYPE,
+                ScriptDoc::builder,
+                ScriptDoc::copy);
         this.securityContext = securityContext;
     }
 
@@ -169,10 +173,7 @@ class ScriptStoreImpl implements ScriptStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

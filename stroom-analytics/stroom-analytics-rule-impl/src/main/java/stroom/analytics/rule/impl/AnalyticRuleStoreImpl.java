@@ -22,7 +22,6 @@ import stroom.analytics.shared.AnalyticRuleDoc.Builder;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -65,7 +64,11 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                           final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
                           final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                           final SearchRequestFactory searchRequestFactory) {
-        this.store = storeFactory.createStore(serialiser, AnalyticRuleDoc.TYPE, AnalyticRuleDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                AnalyticRuleDoc.TYPE,
+                AnalyticRuleDoc::builder,
+                AnalyticRuleDoc::copy);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
@@ -264,10 +267,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

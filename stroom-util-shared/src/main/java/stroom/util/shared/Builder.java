@@ -16,8 +16,7 @@
 
 package stroom.util.shared;
 
-public abstract class AbstractBuilder<T, B extends AbstractBuilder<T, ?>>
-        implements Builder<T> {
+public interface Builder<T> {
 
-    protected abstract B self();
+    T build();
 }

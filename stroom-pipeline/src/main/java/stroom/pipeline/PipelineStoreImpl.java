@@ -18,7 +18,6 @@ package stroom.pipeline;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -64,7 +63,11 @@ public class PipelineStoreImpl implements PipelineStore {
                              final Provider<ProcessorService> processorServiceProvider,
                              final PipelineDataMigration pipelineDataMigration) {
         this.processorServiceProvider = processorServiceProvider;
-        this.store = storeFactory.createStore(serialiser, PipelineDoc.TYPE, PipelineDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                PipelineDoc.TYPE,
+                PipelineDoc::builder,
+                PipelineDoc::copy);
         this.processorFilterServiceProvider = processorFilterServiceProvider;
         this.pipelineDataMigration = pipelineDataMigration;
     }
@@ -241,10 +244,7 @@ public class PipelineStoreImpl implements PipelineStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

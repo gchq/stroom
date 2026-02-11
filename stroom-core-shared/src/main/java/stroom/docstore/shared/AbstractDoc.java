@@ -17,9 +17,9 @@
 package stroom.docstore.shared;
 
 import stroom.util.shared.Document;
+import stroom.util.shared.HasAuditInfoBuilder;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -184,14 +184,15 @@ public abstract class AbstractDoc implements Document {
     // --------------------------------------------------------------------------------
 
 
-    public abstract static class AbstractBuilder<T extends AbstractDoc, B extends AbstractBuilder<T, ?>> {
+    public abstract static class AbstractBuilder<T extends AbstractDoc, B extends AbstractBuilder<T, ?>>
+            implements HasAuditInfoBuilder<T, B> {
 
         protected String uuid;
         protected String name;
         protected String version;
         protected Long createTimeMs;
-        protected Long updateTimeMs;
         protected String createUser;
+        protected Long updateTimeMs;
         protected String updateUser;
 
         public AbstractBuilder() {
@@ -202,9 +203,9 @@ public abstract class AbstractDoc implements Document {
             this.name = doc.name;
             this.version = doc.version;
             this.createTimeMs = doc.createTimeMs;
-            this.updateTimeMs = doc.updateTimeMs;
             this.createUser = doc.createUser;
             this.updateUser = doc.updateUser;
+            this.updateTimeMs = doc.updateTimeMs;
         }
 
         public B uuid(final String uuid) {
@@ -227,13 +228,13 @@ public abstract class AbstractDoc implements Document {
             return self();
         }
 
-        public B updateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
+        public B createUser(final String createUser) {
+            this.createUser = createUser;
             return self();
         }
 
-        public B createUser(final String createUser) {
-            this.createUser = createUser;
+        public B updateTimeMs(final Long updateTimeMs) {
+            this.updateTimeMs = updateTimeMs;
             return self();
         }
 
@@ -243,7 +244,5 @@ public abstract class AbstractDoc implements Document {
         }
 
         protected abstract B self();
-
-        public abstract T build();
     }
 }

@@ -16,8 +16,13 @@
 
 package stroom.util.shared;
 
-public abstract class AbstractBuilder<T, B extends AbstractBuilder<T, ?>>
-        implements Builder<T> {
+public interface HasAuditInfoBuilder<T, B extends HasAuditInfoBuilder<T, ?>> extends Builder<T> {
 
-    protected abstract B self();
+    B createTimeMs(Long createTimeMs);
+
+    B createUser(String createUser);
+
+    B updateTimeMs(Long updateTimeMs);
+
+    B updateUser(String updateUser);
 }

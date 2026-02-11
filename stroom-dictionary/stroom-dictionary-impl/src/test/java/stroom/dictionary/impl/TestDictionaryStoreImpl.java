@@ -239,6 +239,7 @@ class TestDictionaryStoreImpl {
         final Store<DictionaryDoc> store = mockStoreFactory.createStore(
                 Mockito.any(),
                 Mockito.eq(DictionaryDoc.TYPE),
+                Mockito.any(),
                 Mockito.any());
         Mockito.when(store).thenReturn(mockStore);
 

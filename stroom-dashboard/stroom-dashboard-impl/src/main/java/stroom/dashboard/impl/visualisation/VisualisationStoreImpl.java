@@ -18,7 +18,6 @@ package stroom.dashboard.impl.visualisation;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -44,7 +43,11 @@ class VisualisationStoreImpl implements VisualisationStore {
     @Inject
     VisualisationStoreImpl(final StoreFactory storeFactory,
                            final VisualisationSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, VisualisationDoc.TYPE, VisualisationDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                VisualisationDoc.TYPE,
+                VisualisationDoc::builder,
+                VisualisationDoc::copy);
     }
 
     // ---------------------------------------------------------------------
@@ -157,10 +160,7 @@ class VisualisationStoreImpl implements VisualisationStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

@@ -45,7 +45,11 @@ public class GitRepoStoreImpl implements GitRepoStore {
     @Inject
     GitRepoStoreImpl(final StoreFactory storeFactory,
                      final GitRepoSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, GitRepoDoc.TYPE, GitRepoDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                GitRepoDoc.TYPE,
+                GitRepoDoc::builder,
+                GitRepoDoc::copy);
     }
 
     // ---------------------------------------------------------------------
@@ -159,10 +163,7 @@ public class GitRepoStoreImpl implements GitRepoStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

@@ -83,8 +83,13 @@ public interface Store<D extends AbstractDoc>
             ImportSettings importSettings);
 
     Map<String, byte[]> exportDocument(DocRef docRef,
+                                       boolean omitAuditFields,
+                                       List<Message> messageList);
+
+    Map<String, byte[]> exportDocument(DocRef docRef,
+                                       boolean omitAuditFields,
                                        List<Message> messageList,
-                                       Function<D, D> filter);
+                                       Function<D, D> function);
 
     /**
      * List all documents of this stores type

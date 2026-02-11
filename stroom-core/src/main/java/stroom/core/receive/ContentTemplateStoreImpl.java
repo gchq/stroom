@@ -62,7 +62,11 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
         this.securityContext = securityContext;
         final DocumentSerialiser2<ContentTemplates> serialiser = serialiser2Factory.createSerialiser(
                 ContentTemplates.class);
-        this.store = storeFactory.createStore(serialiser, ContentTemplates.TYPE, ContentTemplates::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                ContentTemplates.TYPE,
+                ContentTemplates::builder,
+                ContentTemplates::copy);
     }
 
     @Override
@@ -214,10 +218,7 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override
