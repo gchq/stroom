@@ -22,15 +22,28 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.job.api.ScheduledJobsBinder;
+import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.util.shared.HasUserDependencies;
 
 import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
 
 public class DataGenModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(ScheduledDataGenExecutorRunnable.class, builder -> builder
+                        .name("Data Generator")
+                        .description("Generate data to be fed into the selected feed.")
+                        .frequencySchedule("10m")
+                        .enabled(false)
+                        .enabledOnBootstrap(false)
+                        .advanced(true));
+
         bind(DataGenStore.class).to(DataGenStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
@@ -49,5 +62,16 @@ public class DataGenModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(DataGenResourceImpl.class);
+
+        GuiceUtil.buildMapBinder(binder(), String.class, HasUserDependencies.class)
+                .addBinding(ScheduledDataGenExecutor.class.getName(), ScheduledDataGenExecutor.class);
+    }
+
+    private static class ScheduledDataGenExecutorRunnable extends RunnableWrapper {
+
+        @Inject
+        ScheduledDataGenExecutorRunnable(final ScheduledDataGenExecutor executor) {
+            super(executor::exec);
+        }
     }
 }

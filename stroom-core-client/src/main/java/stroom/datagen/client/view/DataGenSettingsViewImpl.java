@@ -17,18 +17,28 @@
 package stroom.datagen.client.view;
 
 import stroom.datagen.client.presenter.DataGenSettingsPresenter.DataGenSettingsView;
+import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class DataGenSettingsViewImpl extends ViewImpl implements DataGenSettingsView, ReadOnlyChangeHandler {
+public class DataGenSettingsViewImpl
+        extends ViewWithUiHandlers<DirtyUiHandlers>
+        implements DataGenSettingsView, ReadOnlyChangeHandler {
 
     private final Widget widget;
+
+    @UiField
+    SimplePanel destinationFeed;
 
     @UiField
     TextBox template;
@@ -44,13 +54,28 @@ public class DataGenSettingsViewImpl extends ViewImpl implements DataGenSettings
     }
 
     @Override
-    public TextBox getTemplate() {
-        return template;
+    public void setDestinationFeed(final View view) {
+        this.destinationFeed.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setTemplate(final String template) {
+        this.template.setText(template);
+    }
+
+    @Override
+    public String getTemplate() {
+        return template.getText();
     }
 
     @Override
     public void onReadOnly(final boolean readOnly) {
         template.setEnabled(!readOnly);
+    }
+
+    @UiHandler("template")
+    public void onTemplate(final ValueChangeEvent<String> event) {
+        getUiHandlers().onDirty();
     }
 
 

@@ -19,32 +19,80 @@ package stroom.datagen.client.presenter;
 import stroom.datagen.client.presenter.DataGenSettingsPresenter.DataGenSettingsView;
 import stroom.datagen.shared.DataGenDoc;
 import stroom.docref.DocRef;
+import stroom.document.client.event.DirtyUiHandlers;
 import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.feed.shared.FeedDoc;
+import stroom.security.shared.DocumentPermission;
+import stroom.ui.config.client.UiConfigCache;
 
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-public class DataGenSettingsPresenter extends DocumentEditPresenter<DataGenSettingsView, DataGenDoc> {
+public class DataGenSettingsPresenter
+        extends DocumentEditPresenter<DataGenSettingsView, DataGenDoc>
+        implements DirtyUiHandlers {
+
+    final DocSelectionBoxPresenter destinationFeedPresenter;
+    private final UiConfigCache uiConfigCache;
 
     @Inject
-    public DataGenSettingsPresenter(final EventBus eventBus, final DataGenSettingsView view) {
+    public DataGenSettingsPresenter(final EventBus eventBus,
+                                    final DataGenSettingsView view,
+                                    final DocSelectionBoxPresenter destinationFeedPresenter,
+                                    final UiConfigCache uiConfigcache) {
         super(eventBus, view);
+        this.destinationFeedPresenter = destinationFeedPresenter;
+        this.uiConfigCache = uiConfigcache;
+        view.setUiHandlers(this);
+
+        destinationFeedPresenter.setIncludedTypes(FeedDoc.TYPE);
+        destinationFeedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
+        getView().setDestinationFeed(destinationFeedPresenter.getView());
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final DataGenDoc doc, final boolean readOnly) {
-        getView().getTemplate().setText(doc.getTemplate());
+    protected void onBind() {
+        super.onBind();
+        registerHandler(destinationFeedPresenter.addDataSelectionHandler(e -> onDirty()));
+    }
+
+    @Override
+    protected void onRead(final DocRef docRef, final DataGenDoc dataGenDoc, final boolean readOnly) {
+        uiConfigCache.get(extendedUiConfig -> {
+            if (extendedUiConfig != null) {
+                final DocRef selectedDocRef = dataGenDoc.getFeed();
+
+                if (selectedDocRef != null) {
+                    destinationFeedPresenter.setSelectedEntityReference(selectedDocRef, true);
+                }
+                getView().setTemplate(dataGenDoc.getTemplate());
+            }
+        }, this);
+    }
+
+    @Override
+    public void onDirty() {
+        setDirty(true);
     }
 
     @Override
     protected DataGenDoc onWrite(final DataGenDoc doc) {
-        return doc.copy().template(getView().getTemplate().getText()).build();
+        return doc
+                .copy()
+                .template(getView().getTemplate())
+                .feed(destinationFeedPresenter.getSelectedEntityReference())
+                .build();
     }
 
-    public interface DataGenSettingsView extends View {
+    public interface DataGenSettingsView extends View, HasUiHandlers<DirtyUiHandlers> {
 
-        TextBox getTemplate();
+        void setDestinationFeed(View view);
+
+        String getTemplate();
+
+        void setTemplate(String template);
     }
 }

@@ -5,10 +5,18 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="feedSettingsClassification"
+
+        <form:FormGroup identity="dataGenDestinationFeed"
+                        label="Destination Feed"
+                        helpText="The feed that the generated data will be sent to.">
+            <g:SimplePanel ui:field="destinationFeed"/>
+        </form:FormGroup>
+
+        <form:FormGroup identity="dataGenSettingsTemplate"
                         label="Template"
                         helpText="The data that will be sent into this Feed.">
             <g:TextBox ui:field="template" width="400px"/>
         </form:FormGroup>
+
     </g:FlowPanel>
 </ui:UiBinder>

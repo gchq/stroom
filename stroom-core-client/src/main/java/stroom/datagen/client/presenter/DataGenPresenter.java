@@ -36,6 +36,7 @@ public class DataGenPresenter
         extends DocumentEditTabPresenter<LinkTabPanelView, DataGenDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
+    private static final TabData EXECUTION = new TabDataImpl("Execution");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
@@ -43,13 +44,16 @@ public class DataGenPresenter
     public DataGenPresenter(final EventBus eventBus,
                             final LinkTabPanelView view,
                             final Provider<DataGenSettingsPresenter> dataGenSettingsPresenterProvider,
-                            final Provider<ScheduledProcessingPresenter> processPresenterProvider,
+                            final Provider<DataGenProcessingPresenter> dataGenProcessingPresenterProvider,
                             final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
-                            final DocumentUserPermissionsTabProvider<DataGenDoc>
-                                    documentUserPermissionsTabProvider) {
+                            final DocumentUserPermissionsTabProvider<DataGenDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
+        final DataGenProcessingPresenter dataGenProcessingPresenter = dataGenProcessingPresenterProvider.get();
+        dataGenProcessingPresenter.setDocumentEditPresenter(this);
+
         addTab(SETTINGS, new DocumentEditTabProvider<>(dataGenSettingsPresenterProvider::get));
+        addTab(EXECUTION, new DocumentEditTabProvider<>(() -> dataGenProcessingPresenter));
         addTab(DOCUMENTATION, new MarkdownTabProvider<DataGenDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 
 package stroom.datagen.client.view;
 
-import stroom.datagen.client.presenter.ScheduledProcessingPresenter.ScheduledProcessingView;
+import stroom.analytics.client.presenter.AnalyticProcessingUiHandlers;
+import stroom.datagen.client.presenter.DataGenProcessingPresenter.DataGenProcessingView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -24,21 +25,19 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class ScheduledProcessingViewImpl
-        extends ViewImpl
-        implements ScheduledProcessingView {
+public class DataGenProcessingViewImpl
+        extends ViewWithUiHandlers<AnalyticProcessingUiHandlers>
+        implements DataGenProcessingView {
 
     private final Widget widget;
 
     @UiField
-    SimplePanel executionScheduleList;
-    @UiField
-    SimplePanel executionHistoryList;
+    SimplePanel processSettings;
 
     @Inject
-    public ScheduledProcessingViewImpl(final Binder binder) {
+    public DataGenProcessingViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
     }
 
@@ -48,16 +47,11 @@ public class ScheduledProcessingViewImpl
     }
 
     @Override
-    public void setScheduleList(final View view) {
-        this.executionScheduleList.setWidget(view.asWidget());
+    public void setProcessSettings(final View view) {
+        this.processSettings.setWidget(view.asWidget());
     }
 
-    @Override
-    public void setHistoryList(final View view) {
-        this.executionHistoryList.setWidget(view.asWidget());
-    }
-
-    public interface Binder extends UiBinder<Widget, ScheduledProcessingViewImpl> {
+    public interface Binder extends UiBinder<Widget, DataGenProcessingViewImpl> {
 
     }
 }
