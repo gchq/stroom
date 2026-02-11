@@ -36,10 +36,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.util.shared.string.CIKeys.getCommonKey;
-import static stroom.util.shared.string.TestCIKeys.CI_KEYS_RESOURCE_LOCK;
 
-@ResourceLock(CI_KEYS_RESOURCE_LOCK)
+@ResourceLock(TestCIKeys.CI_KEYS_RESOURCE_LOCK)
 @Execution(ExecutionMode.SAME_THREAD) // clearCommonKeys breaks other tests
 class TestCIKeys {
 
@@ -105,7 +103,7 @@ class TestCIKeys {
         // Use a uuid so we know it won't be in the static map
         final String key = UUID.randomUUID().toString().toUpperCase();
 
-        assertThat(getCommonKey(key))
+        assertThat(CIKeys.getCommonKey(key))
                 .isNull();
 
         final CIKey ciKey1 = CIKeys.internCommonKey(key);
@@ -118,7 +116,7 @@ class TestCIKeys {
         assertThat(ciKey2)
                 .isSameAs(ciKey1);
 
-        final CIKey ciKey3 = getCommonKey(key);
+        final CIKey ciKey3 = CIKeys.getCommonKey(key);
 
         assertThat(ciKey3)
                 .isEqualTo(ciKey1);

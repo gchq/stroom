@@ -78,7 +78,7 @@ class SteppingResourceImpl implements SteppingResource {
                             stepLocation.getEventId(),
                             null,
                             request.getChildStreamType(),
-                            request.getPipeline(),
+                            request.getPipelineDoc().asDocRef(),
                             null);
                 }
             }
@@ -92,7 +92,7 @@ class SteppingResourceImpl implements SteppingResource {
                         stepLocation.getEventId(),
                         null,
                         request.getChildStreamType(),
-                        request.getPipeline(),
+                        request.getPipelineDoc().asDocRef(),
                         e);
             }
             throw e;

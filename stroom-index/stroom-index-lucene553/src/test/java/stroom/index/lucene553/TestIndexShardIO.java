@@ -54,7 +54,7 @@ class TestIndexShardIO extends StroomUnitTest {
 
     private PathCreator pathCreator;
 
-    public static void main(final String[] args) {
+    static void main() {
         for (final Object s : System.getProperties().keySet()) {
             System.out.println(s + "=" + System.getProperty((String) s));
         }
@@ -85,12 +85,7 @@ class TestIndexShardIO extends StroomUnitTest {
                 .name("Test")
                 .build();
 
-        final IndexShard idx1 = new IndexShard();
-        idx1.setId(1L);
-        idx1.setIndexUuid(index.getUuid());
-        idx1.setPartition("all");
-        idx1.setVolume(volume);
-        idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
+        final IndexShard idx1 = createShard(index, volume);
 
         // Clean up from previous tests.
         final Path dir = IndexShardUtil.getIndexPath(idx1, pathCreator);
@@ -117,12 +112,7 @@ class TestIndexShardIO extends StroomUnitTest {
 
         final IndexVolume volume = new IndexVolume();
         volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
-        final IndexShard idx1 = new IndexShard();
-        idx1.setIndexUuid(index.getUuid());
-        idx1.setPartition("all");
-        idx1.setId(1L);
-        idx1.setVolume(volume);
-        idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
+        final IndexShard idx1 = createShard(index, volume);
 
         // Clean up from previous tests.
         final Path dir = IndexShardUtil.getIndexPath(idx1, pathCreator);
@@ -297,12 +287,7 @@ class TestIndexShardIO extends StroomUnitTest {
 
         final IndexVolume volume = new IndexVolume();
         volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
-        final IndexShard idx1 = new IndexShard();
-        idx1.setIndexUuid(index.getUuid());
-        idx1.setPartition("all");
-        idx1.setId(1L);
-        idx1.setVolume(volume);
-        idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
+        final IndexShard idx1 = createShard(index, volume);
 
         // Clean up from previous tests.
         final Path dir = IndexShardUtil.getIndexPath(idx1, pathCreator);
@@ -330,12 +315,7 @@ class TestIndexShardIO extends StroomUnitTest {
 
         final IndexVolume volume = new IndexVolume();
         volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
-        final IndexShard idx1 = new IndexShard();
-        idx1.setIndexUuid(index.getUuid());
-        idx1.setPartition("all");
-        idx1.setId(1L);
-        idx1.setVolume(volume);
-        idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
+        final IndexShard idx1 = createShard(index, volume);
 
         // Clean up from previous tests.
         final Path dir = IndexShardUtil.getIndexPath(idx1, pathCreator);
@@ -363,12 +343,7 @@ class TestIndexShardIO extends StroomUnitTest {
         final IndexVolume volume = new IndexVolume();
         final Path testDir = Files.createTempDirectory("stroom");
         volume.setPath(FileUtil.getCanonicalPath(testDir));
-        final IndexShard idx1 = new IndexShard();
-        idx1.setIndexUuid(index.getUuid());
-        idx1.setPartition("all");
-        idx1.setId(1L);
-        idx1.setVolume(volume);
-        idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
+        final IndexShard idx1 = createShard(index, volume);
 
         final IndexShardWriter writer = new Lucene553IndexShardWriter(
                 null, new IndexConfig(), idx1, pathCreator, MAX_DOCS);
@@ -402,5 +377,17 @@ class TestIndexShardIO extends StroomUnitTest {
         assertThat(flushSet.isEmpty()).as("Expected not to flush").isTrue();
         // assertThat( // flushSet.toString()).as("Expected to flush every 2048 docs...").isEqualTo("[2048,
         // 6144, 4096, 8192]");
+    }
+
+    private IndexShard createShard(final LuceneIndexDoc index,
+                                   final IndexVolume volume) {
+        return IndexShard
+                .builder()
+                .id(1L)
+                .indexUuid(index.getUuid())
+                .partition("all")
+                .volume(volume)
+                .indexVersion(LuceneVersionUtil.getCurrentVersion())
+                .build();
     }
 }

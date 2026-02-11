@@ -81,7 +81,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
             new RecordToProcessorFilterTrackerMapper();
 
     private final ProcessorDbConnProvider processorDbConnProvider;
-    private final QueryDataSerialiser queryDataXMLSerialiser;
+    private final QueryDataSerialiser queryDataSerialiser;
     private final ExpressionMapper expressionMapper;
     private final SecurityContext securityContext;
     private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDaoImpl;
@@ -90,19 +90,19 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     @Inject
     ProcessorFilterDaoImpl(final ProcessorDbConnProvider processorDbConnProvider,
                            final ExpressionMapperFactory expressionMapperFactory,
-                           final QueryDataSerialiser queryDataXMLSerialiser,
+                           final QueryDataSerialiser queryDataSerialiser,
                            final Provider<UserRefLookup> userRefLookupProvider,
                            final SecurityContext securityContext,
                            final ProcessorFilterTrackerDaoImpl processorFilterTrackerDaoImpl,
                            final Provider<ProcessorDaoImpl> processorDaoImplProvider) {
         this.processorDbConnProvider = processorDbConnProvider;
-        this.queryDataXMLSerialiser = queryDataXMLSerialiser;
+        this.queryDataSerialiser = queryDataSerialiser;
         this.securityContext = securityContext;
         this.processorFilterTrackerDaoImpl = processorFilterTrackerDaoImpl;
         this.processorDaoImplProvider = processorDaoImplProvider;
 
         recordToProcessorFilterMapper = new RecordToProcessorFilterMapper(
-                queryDataXMLSerialiser,
+                queryDataSerialiser,
                 userRefLookupProvider);
 
         expressionMapper = expressionMapperFactory.create();
@@ -183,7 +183,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     private ProcessorFilter createFilter(final DSLContext context, final ProcessorFilter filter) {
         filter.setVersion(1);
-        final String data = queryDataXMLSerialiser.serialise(filter.getQueryData());
+        final String data = queryDataSerialiser.serialise(filter.getQueryData());
         final Integer id = context
                 .insertInto(PROCESSOR_FILTER)
                 .columns(PROCESSOR_FILTER.VERSION,
@@ -230,7 +230,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     private ProcessorFilter updateFilter(final DSLContext context, final ProcessorFilter filter) {
-        final String data = queryDataXMLSerialiser.serialise(filter.getQueryData());
+        final String data = queryDataSerialiser.serialise(filter.getQueryData());
         final int count = context
                 .update(PROCESSOR_FILTER)
                 .set(PROCESSOR_FILTER.VERSION, PROCESSOR_FILTER.VERSION.plus(1))

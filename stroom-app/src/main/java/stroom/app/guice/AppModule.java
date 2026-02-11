@@ -44,6 +44,7 @@ public class AppModule extends AbstractModule {
 
         install(new UriFactoryModule());
         install(new CoreModule());
+        install(new stroom.langchain.impl.OpenAIModule());
         install(new LifecycleServiceModule());
         install(new JobsModule());
         install(new ClusterModule());

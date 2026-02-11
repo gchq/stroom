@@ -18,14 +18,14 @@ package stroom.security.impl.db;
 
 import stroom.db.util.JooqUtil;
 
-import static stroom.security.impl.db.jooq.Tables.API_KEY;
-import static stroom.security.impl.db.jooq.Tables.PERMISSION_APP;
-import static stroom.security.impl.db.jooq.Tables.PERMISSION_APP_ID;
-import static stroom.security.impl.db.jooq.Tables.PERMISSION_DOC;
-import static stroom.security.impl.db.jooq.Tables.PERMISSION_DOC_CREATE;
-import static stroom.security.impl.db.jooq.Tables.PERMISSION_DOC_TYPE_ID;
-import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
-import static stroom.security.impl.db.jooq.Tables.STROOM_USER_GROUP;
+import static stroom.security.impl.db.jooq.tables.ApiKey.API_KEY;
+import static stroom.security.impl.db.jooq.tables.PermissionApp.PERMISSION_APP;
+import static stroom.security.impl.db.jooq.tables.PermissionAppId.PERMISSION_APP_ID;
+import static stroom.security.impl.db.jooq.tables.PermissionDoc.PERMISSION_DOC;
+import static stroom.security.impl.db.jooq.tables.PermissionDocCreate.PERMISSION_DOC_CREATE;
+import static stroom.security.impl.db.jooq.tables.PermissionDocTypeId.PERMISSION_DOC_TYPE_ID;
+import static stroom.security.impl.db.jooq.tables.StroomUser.STROOM_USER;
+import static stroom.security.impl.db.jooq.tables.StroomUserGroup.STROOM_USER_GROUP;
 
 public class SecurityTestUtil {
 

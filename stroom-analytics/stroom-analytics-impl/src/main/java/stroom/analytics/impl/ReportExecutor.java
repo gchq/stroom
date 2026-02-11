@@ -24,6 +24,7 @@ import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.analytics.shared.ReportDoc;
+import stroom.analytics.shared.ReportSettings;
 import stroom.dashboard.impl.SampleGenerator;
 import stroom.dashboard.impl.download.DelimitedTarget;
 import stroom.dashboard.impl.download.ExcelTarget;
@@ -72,6 +73,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.scheduler.Trigger;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -166,7 +168,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
 
         boolean success = false;
         final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
-        ExecutionResult executionResult = new ExecutionResult(null, null);
+        ExecutionResult executionResult = ExecutionResult.empty();
 
         try {
             final SearchRequestSource searchRequestSource = SearchRequestSource
@@ -193,7 +195,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
 
             // Fix table result requests.
             final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
-            if (resultRequests != null && resultRequests.size() == 1) {
+            if (NullSafe.size(resultRequests) == 1) {
                 final ResultRequest resultRequest = resultRequests.getFirst().copy()
                         .openGroups(null)
                         .requestedRange(OffsetRange.UNBOUNDED)
@@ -209,10 +211,17 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                     // Wait for search to complete.
                     dataStore.getCompletionState().awaitCompletion();
 
-                    Path file = null;
+                    // Determine if we are going to send empty reports.
+                    final boolean sendEmptyReports = NullSafe.getOrElse(
+                            reportDoc,
+                            ReportDoc::getReportSettings,
+                            ReportSettings::isSendEmptyReports,
+                            false);
+
+                    ReportFile reportFile = null;
                     try {
                         // Create the output file.
-                        file = createFile(
+                        reportFile = createFile(
                                 reportDoc,
                                 executionTime,
                                 effectiveExecutionTime,
@@ -220,20 +229,36 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                                 dataStore,
                                 resultRequest);
 
-                        for (final NotificationConfig notificationConfig : reportDoc.getNotifications()) {
-                            try {
-                                sendFile(reportDoc, notificationConfig, file, executionTime, effectiveExecutionTime);
-                            } catch (final IOException e) {
-                                errorConsumer.add(e);
+                        // Send the report if not empty or if we are happy to send empty reports anyway.
+                        if (sendEmptyReports || reportFile.rowCount() > 0) {
+                            for (final NotificationConfig notificationConfig : reportDoc.getNotifications()) {
+                                try {
+                                    sendFile(reportDoc,
+                                            notificationConfig,
+                                            reportFile,
+                                            executionTime,
+                                            effectiveExecutionTime);
+                                } catch (final IOException e) {
+                                    errorConsumer.add(e);
+                                }
                             }
+                        } else {
+                            LOGGER.debug("process() - Notifications skipped - sendEmptyReports: {}, reportFile: {}",
+                                    sendEmptyReports, reportFile);
                         }
 
                     } catch (final IOException e) {
                         errorConsumer.add(e);
                     } finally {
                         // Delete the file after we complete.
-                        if (file != null) {
-                            Files.deleteIfExists(file);
+                        if (reportFile != null) {
+                            try {
+                                Files.deleteIfExists(reportFile.file());
+                            } catch (final IOException e) {
+                                // Swallow as just a temp file
+                                LOGGER.error("Error deleting reportFile: {} - {}",
+                                        reportFile, LogUtil.exceptionMessage(e), e);
+                            }
                         }
                     }
 
@@ -253,23 +278,25 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
             }
 
             // Update tracker.
-            final ExecutionTracker executionTracker = new ExecutionTracker(
-                    now.toEpochMilli(),
-                    effectiveExecutionTime.toEpochMilli(),
-                    nextExecutionTime.toEpochMilli());
-            if (currentTracker != null) {
-                executionScheduleDao.updateTracker(executionSchedule, executionTracker);
-            } else {
-                executionScheduleDao.createTracker(executionSchedule, executionTracker);
+            if (nextExecutionTime != null) {
+                final ExecutionTracker executionTracker = new ExecutionTracker(
+                        now.toEpochMilli(),
+                        effectiveExecutionTime.toEpochMilli(),
+                        nextExecutionTime.toEpochMilli());
+                if (currentTracker != null) {
+                    executionScheduleDao.updateTracker(executionSchedule, executionTracker);
+                } else {
+                    executionScheduleDao.createTracker(executionSchedule, executionTracker);
+                }
             }
 
             if (executionResult.status() == null) {
-                executionResult = new ExecutionResult("Complete", executionResult.message());
+                executionResult = ExecutionResult.complete(executionResult.message());
                 success = true;
             }
 
         } catch (final Exception e) {
-            executionResult = new ExecutionResult("Error", e.getMessage());
+            executionResult = ExecutionResult.error(e.getMessage());
 
             try {
                 LOGGER.debug(e::getMessage, e);
@@ -284,8 +311,11 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
             if (!(e instanceof InterruptedException) &&
                 !(e instanceof UncheckedInterruptedException)) {
                 // Disable future execution.
-                LOGGER.info(() -> LogUtil.message("Disabling: {}", RuleUtil.getRuleIdentity(reportDoc)));
-                executionScheduleDao.updateExecutionSchedule(executionSchedule.copy().enabled(false).build());
+                LOGGER.info(() ->
+                        LogUtil.message("Disabling report: {}", RuleUtil.getRuleIdentity(reportDoc)));
+                executionScheduleDao.updateExecutionSchedule(executionSchedule.copy()
+                        .enabled(false)
+                        .build());
             }
 
         } finally {
@@ -304,54 +334,40 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
         // Nothing to do
     }
 
-    private Path createFile(final ReportDoc reportDoc,
-                            final Instant executionTime,
-                            final Instant effectiveExecutionTime,
-                            final DateTimeSettings dateTimeSettings,
-                            final DataStore dataStore,
-                            final ResultRequest resultRequest) throws IOException {
+    private ReportFile createFile(final ReportDoc reportDoc,
+                                  final Instant executionTime,
+                                  final Instant effectiveExecutionTime,
+                                  final DateTimeSettings dateTimeSettings,
+                                  final DataStore dataStore,
+                                  final ResultRequest resultRequest) throws IOException {
         long totalRowCount = 0;
         final DownloadSearchResultFileType fileType = reportDoc.getReportSettings().getFileType();
         final String dateTime = DateUtil.createFileDateTimeString(effectiveExecutionTime);
-        final String fileName = getFileName(reportDoc.getName() + "_" + dateTime,
-                fileType.getExtension());
+        final String fileName = getFileName(reportDoc.getName() + "_" + dateTime, fileType.getExtension());
         final Path file = tempDirProvider.get().resolve(fileName);
-
-        final FormatterFactory formatterFactory =
-                new FormatterFactory(dateTimeSettings);
+        final FormatterFactory formatterFactory = new FormatterFactory(dateTimeSettings);
 
         // Start target
         try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
-            SearchResultWriter.Target target = null;
+
+            final SearchResultWriter.Target target = switch (fileType) {
+                case CSV -> new DelimitedTarget(outputStream, ",");
+                case TSV -> new DelimitedTarget(outputStream, "\t");
+                case EXCEL -> new ExcelTarget(outputStream, dateTimeSettings);
+            };
 
             // Write delimited file.
-            switch (fileType) {
-                case CSV:
-                    target = new DelimitedTarget(outputStream, ",");
-                    break;
-                case TSV:
-                    target = new DelimitedTarget(outputStream, "\t");
-                    break;
-                case EXCEL:
-                    target = new ExcelTarget(outputStream, dateTimeSettings);
-                    break;
-            }
-
             try {
                 target.start();
-
                 try {
                     target.startTable("Report");
-
                     final SampleGenerator sampleGenerator =
                             new SampleGenerator(false, 100);
                     final SearchResultWriter searchResultWriter = new SearchResultWriter(
                             sampleGenerator,
                             target);
                     final TableResultCreator tableResultCreator =
-                            new TableResultCreator(
-                                    formatterFactory,
-                                    expressionPredicateFactory) {
+                            new TableResultCreator(formatterFactory, expressionPredicateFactory) {
                                 @Override
                                 public TableResultBuilder createTableResultBuilder() {
                                     return searchResultWriter;
@@ -360,7 +376,6 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
 
                     final Result result = tableResultCreator.create(dataStore, resultRequest);
                     totalRowCount += searchResultWriter.getRowCount();
-
                 } catch (final Exception e) {
                     LOGGER.debug(e::getMessage, e);
                     throw e;
@@ -382,7 +397,6 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                             DateUtil.createNormalDateTimeString(effectiveExecutionTime)));
                     excelTarget.writeInfo(info);
                 }
-
             } catch (final Exception e) {
                 LOGGER.debug(e::getMessage, e);
                 throw e;
@@ -390,8 +404,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                 target.end();
             }
         }
-
-        return file;
+        return new ReportFile(file, fileType, totalRowCount);
     }
 
     private String getFileName(final String baseName,
@@ -406,7 +419,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
 
     private void sendFile(final ReportDoc reportDoc,
                           final NotificationConfig notificationConfig,
-                          final Path file,
+                          final ReportFile reportFile,
                           final Instant executionTime,
                           final Instant effectiveExecutionTime) throws IOException {
         final NotificationState notificationState =
@@ -423,7 +436,8 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                             .pipelineUuid(reportDoc.getUuid())
                             .build();
 
-                    try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(file))) {
+                    try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(
+                            reportFile.file()))) {
                         try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
                             try (final OutputStreamProvider outputStreamProvider = streamTarget.next()) {
                                 StreamUtil.streamToStream(inputStream, outputStreamProvider.get());
@@ -444,7 +458,6 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                             }
                         }
                     }
-
                 } else {
                     throw new RuntimeException("No stream destination config found: " +
                                                RuleUtil.getRuleIdentity(reportDoc));
@@ -455,7 +468,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                     emailSenderProvider.get().sendReport(
                             reportDoc,
                             emailDestination,
-                            file,
+                            reportFile,
                             executionTime,
                             effectiveExecutionTime);
                 } else {
@@ -463,6 +476,9 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                                                RuleUtil.getRuleIdentity(reportDoc));
                 }
             }
+        } else {
+            LOGGER.debug("sendFile() - Not notifying - notificationConfig: {}, notificationState: {}",
+                    notificationConfig, notificationState);
         }
     }
 

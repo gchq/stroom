@@ -26,6 +26,7 @@ import stroom.widget.util.client.Templates;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -34,15 +35,13 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.view.client.CellPreviewEvent;
 
-import static com.google.gwt.dom.client.BrowserEvents.MOUSEDOWN;
-
 public class CommandLinkCell extends AbstractCell<CommandLink> implements EventCell {
 
     private static final String ICON_CLASS_NAME = "svgIcon";
     private static final String OPEN_CLASS_NAME = "commandLinkOpen";
 
     public CommandLinkCell() {
-        super(MOUSEDOWN);
+        super(BrowserEvents.MOUSEDOWN);
     }
 
     @Override
@@ -55,7 +54,7 @@ public class CommandLinkCell extends AbstractCell<CommandLink> implements EventC
 //        }
 
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
-        if (MOUSEDOWN.equals(event.getType()) && MouseUtil.isPrimary(event)) {
+        if (BrowserEvents.MOUSEDOWN.equals(event.getType()) && MouseUtil.isPrimary(event)) {
             onEnterKeyDown(context, parent, value, event, valueUpdater);
         }
     }
@@ -78,7 +77,7 @@ public class CommandLinkCell extends AbstractCell<CommandLink> implements EventC
     @Override
     public boolean isConsumed(final CellPreviewEvent<?> event) {
         final NativeEvent nativeEvent = event.getNativeEvent();
-        if (MOUSEDOWN.equals(nativeEvent.getType()) && MouseUtil.isPrimary(nativeEvent)) {
+        if (BrowserEvents.MOUSEDOWN.equals(nativeEvent.getType()) && MouseUtil.isPrimary(nativeEvent)) {
             final Element element = nativeEvent.getEventTarget().cast();
             return ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5);
         }

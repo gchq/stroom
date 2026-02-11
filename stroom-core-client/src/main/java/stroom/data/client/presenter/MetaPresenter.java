@@ -37,10 +37,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
-import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
-import stroom.query.api.ExpressionTerm;
-import stroom.query.api.datasource.QueryField;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.shared.ExpressionResource;
 import stroom.security.client.api.ClientSecurityContext;
@@ -65,7 +62,6 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -196,7 +192,7 @@ public class MetaPresenter
 
         registerHandler(metaListPresenter.getSelectionModel().addSelectionHandler(event -> {
             metaRelationListPresenter.setSelectedStream(metaListPresenter.getSelected(), true,
-                    !Status.UNLOCKED.equals(getSingleStatus(getCriteria())));
+                    !Status.UNLOCKED.equals(MetaExpressionUtil.getSingleStatus(getCriteria())));
             // showData() gets called by the metaRelationListPresenter selection handler
         }));
         registerHandler(metaListPresenter.addDataSelectionHandler(event ->
@@ -218,7 +214,7 @@ public class MetaPresenter
                             MetaFields.getAllFields(),
                             expression, expression2 -> {
                                 if (!expression2.equals(getCriteria().getExpression())) {
-                                    if (hasAdvancedCriteria(expression2)) {
+                                    if (MetaExpressionUtil.hasAdvancedCriteria(expression2)) {
                                         ConfirmEvent.fire(MetaPresenter.this,
                                                 "You are setting advanced filters!  It is recommended you constrain " +
                                                 "your filter (e.g. by 'Created') to avoid an expensive query.  "
@@ -349,72 +345,6 @@ public class MetaPresenter
         // Clear the current selection and get a new list of streams.
         metaListPresenter.getSelectionModel().clear();
         metaListPresenter.refresh();
-    }
-
-    public boolean hasAdvancedCriteria(final ExpressionOperator expression) {
-        final Status status = getSingleStatus(expression);
-
-        if (!Status.UNLOCKED.equals(status)) {
-            return true;
-        }
-
-        final Set<String> statusPeriod = getTerms(expression, MetaFields.STATUS_TIME);
-        return !statusPeriod.isEmpty();
-    }
-
-    private static Status getSingleStatus(final FindMetaCriteria criteria) {
-        if (criteria == null) {
-            return null;
-        }
-        return getSingleStatus(criteria.getExpression());
-    }
-
-    private static Status getSingleStatus(final ExpressionOperator expression) {
-        final Set<Status> streamStatuses = getStatusSet(expression);
-        if (streamStatuses.size() == 1) {
-            return streamStatuses.iterator().next();
-        }
-        return null;
-    }
-
-    private static Set<Status> getStatusSet(final ExpressionOperator expression) {
-        final Set<String> terms = getTerms(expression, MetaFields.STATUS);
-        final Set<Status> streamStatuses = new HashSet<>();
-        for (final String term : terms) {
-            for (final Status streamStatus : Status.values()) {
-                if (streamStatus.getDisplayValue().equals(term)) {
-                    streamStatuses.add(streamStatus);
-                }
-            }
-        }
-
-        return streamStatuses;
-    }
-
-    private static Set<String> getTerms(final ExpressionOperator expression, final QueryField field) {
-        final Set<String> terms = new HashSet<>();
-        if (expression != null) {
-            getTerms(expression, field, terms);
-        }
-        return terms;
-    }
-
-    private static void getTerms(final ExpressionOperator expressionOperator,
-                                 final QueryField field,
-                                 final Set<String> terms) {
-        if (expressionOperator.enabled() && expressionOperator.getChildren() != null) {
-            for (final ExpressionItem item : expressionOperator.getChildren()) {
-                if (item.enabled()) {
-                    if (item instanceof ExpressionTerm) {
-                        if (field.getFldName().equals(((ExpressionTerm) item).getField())) {
-                            terms.add(((ExpressionTerm) item).getValue());
-                        }
-                    } else if (item instanceof ExpressionOperator) {
-                        getTerms((ExpressionOperator) item, field, terms);
-                    }
-                }
-            }
-        }
     }
 
 
@@ -573,7 +503,7 @@ public class MetaPresenter
 //        }
         final boolean someSelected = isSomeSelected(metaListPresenter, streamIdSet);
         if (someSelected) {
-            final Set<Status> statusSet = getStatusSet(getCriteria().getExpression());
+            final Set<Status> statusSet = MetaExpressionUtil.getStatusSet(getCriteria().getExpression());
             final boolean allowDelete = statusSet.isEmpty() ||
                                         statusSet.contains(Status.LOCKED) ||
                                         statusSet.contains(Status.UNLOCKED);
@@ -624,7 +554,7 @@ public class MetaPresenter
                                      final Consumer<Boolean> isEnabledConsumer) {
         final boolean someSelected = isSomeSelected(metaListPresenter, streamIdSet);
         if (someSelected) {
-            final Set<Status> statusSet = getStatusSet(getCriteria().getExpression());
+            final Set<Status> statusSet = MetaExpressionUtil.getStatusSet(getCriteria().getExpression());
             final boolean allowRestore = statusSet.isEmpty() ||
                                          statusSet.contains(Status.DELETED);
 

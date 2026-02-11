@@ -16,6 +16,7 @@
 
 package stroom.app;
 
+import com.google.common.base.Preconditions;
 import io.dropwizard.core.Configuration;
 import io.dropwizard.core.ConfiguredBundle;
 import io.dropwizard.core.setup.Bootstrap;
@@ -24,8 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
-
-import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * A bundle for serving static asset files from the classpath.
@@ -45,8 +44,12 @@ public class BrowserRouterAssetsBundle implements ConfiguredBundle<Configuration
                                      final String indexFile,
                                      final String assetsName,
                                      final String singlePagePrefix) {
-        checkArgument(resourcePath.startsWith("/"), "%s is not an absolute path", resourcePath);
-        checkArgument(!"/".equals(resourcePath), "%s is the classpath root", resourcePath);
+        Preconditions.checkArgument(resourcePath.startsWith("/"),
+                "%s is not an absolute path",
+                resourcePath);
+        Preconditions.checkArgument(!"/".equals(resourcePath),
+                "%s is the classpath root",
+                resourcePath);
         this.resourcePath = resourcePath.endsWith("/")
                 ? resourcePath
                 : (resourcePath + '/');

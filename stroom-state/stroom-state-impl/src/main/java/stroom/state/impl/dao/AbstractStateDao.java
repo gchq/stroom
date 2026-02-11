@@ -29,15 +29,14 @@ import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.data.CqlDuration;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import jakarta.inject.Provider;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.dropTable;
 
 public abstract class AbstractStateDao<T> {
 
@@ -57,7 +56,7 @@ public abstract class AbstractStateDao<T> {
     abstract void createTables();
 
     final void dropTables() {
-        final SimpleStatement statement = dropTable(table)
+        final SimpleStatement statement = SchemaBuilder.dropTable(table)
                 .ifExists()
                 .build();
         sessionProvider.get().execute(statement);
@@ -88,7 +87,7 @@ public abstract class AbstractStateDao<T> {
                                 ValuesConsumer valuesConsumer);
 
     public long count() {
-        final SimpleStatement statement = selectFrom(table).countAll().build();
+        final SimpleStatement statement = QueryBuilder.selectFrom(table).countAll().build();
         return sessionProvider.get().execute(statement).one().getLong(0);
     }
 

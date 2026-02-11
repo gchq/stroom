@@ -91,6 +91,7 @@ public class MetaFields {
     public static final QueryField PARENT_ID = QueryField.createId("Parent Id");
     public static final QueryField PARENT_STATUS = QueryField.createText("Parent Status");
     public static final QueryField PARENT_CREATE_TIME = QueryField.createDate("Parent Create Time");
+    public static final QueryField PARENT_EFFECTIVE_TIME = QueryField.createDate("Parent Effective Time");
     public static final QueryField PARENT_FEED = QueryField.createDocRefByUniqueName("Feed", FIELD_PARENT_FEED);
 
     static {

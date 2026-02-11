@@ -18,6 +18,7 @@ package stroom.analytics.client.gin;
 
 import stroom.analytics.client.AnalyticsPlugin;
 import stroom.analytics.client.presenter.AbstractDuplicateManagementPresenter.DuplicateManagementView;
+import stroom.analytics.client.presenter.AbstractNotificationPresenter.AnalyticNotificationView;
 import stroom.analytics.client.presenter.AbstractProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.client.presenter.AnalyticDataShardsPresenter;
 import stroom.analytics.client.presenter.AnalyticDataShardsPresenter.AnalyticDataShardsView;
@@ -43,6 +44,7 @@ import stroom.analytics.client.presenter.TableBuilderProcessingPresenter.TableBu
 import stroom.analytics.client.view.AnalyticDataShardsViewImpl;
 import stroom.analytics.client.view.AnalyticEmailDestinationViewImpl;
 import stroom.analytics.client.view.AnalyticNotificationEditViewImpl;
+import stroom.analytics.client.view.AnalyticNotificationViewImpl;
 import stroom.analytics.client.view.AnalyticProcessingViewImpl;
 import stroom.analytics.client.view.AnalyticStreamDestinationViewImpl;
 import stroom.analytics.client.view.BatchExecutionScheduleEditViewImpl;
@@ -96,6 +98,9 @@ public class AnalyticsModule extends PluginModule {
         bindSharedView(
                 AnalyticProcessingView.class,
                 AnalyticProcessingViewImpl.class);
+        bindSharedView(
+                AnalyticNotificationView.class,
+                AnalyticNotificationViewImpl.class);
         bindSharedView(
                 DuplicateManagementView.class,
                 DuplicateManagementViewImpl.class);

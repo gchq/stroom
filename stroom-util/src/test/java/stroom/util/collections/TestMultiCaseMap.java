@@ -16,13 +16,14 @@
 
 package stroom.util.collections;
 
+import stroom.util.shared.string.CIKey;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.util.shared.string.CIKey.of;
 
 class TestMultiCaseMap {
 
@@ -115,14 +116,14 @@ class TestMultiCaseMap {
         assertThat(map.keySet())
                 .containsExactlyInAnyOrder("a", "A", "b");
 
-        assertThat(map.get(of("a")))
+        assertThat(map.get(CIKey.of("a")))
                 .isEqualTo("a1");
-        assertThat(map.get(of("A")))
+        assertThat(map.get(CIKey.of("A")))
                 .isEqualTo("a2");
 
-        assertThat(map.get(of("b")))
+        assertThat(map.get(CIKey.of("b")))
                 .isEqualTo("b1");
-        assertThat(map.get(of("B")))
+        assertThat(map.get(CIKey.of("B")))
                 .isEqualTo("b1");
     }
 
@@ -136,14 +137,14 @@ class TestMultiCaseMap {
         assertThat(map.keySet())
                 .containsExactlyInAnyOrder("a", "A", "b");
 
-        assertThat(map.getCaseSensitive(of("a")))
+        assertThat(map.getCaseSensitive(CIKey.of("a")))
                 .isEqualTo("a1");
-        assertThat(map.getCaseSensitive(of("A")))
+        assertThat(map.getCaseSensitive(CIKey.of("A")))
                 .isEqualTo("a2");
 
-        assertThat(map.getCaseSensitive(of("b")))
+        assertThat(map.getCaseSensitive(CIKey.of("b")))
                 .isEqualTo("b1");
-        assertThat(map.getCaseSensitive(of("B")))
+        assertThat(map.getCaseSensitive(CIKey.of("B")))
                 .isNull();
     }
 
@@ -158,12 +159,12 @@ class TestMultiCaseMap {
         assertThat(map.keySet())
                 .containsExactlyInAnyOrder("foo", "FOO", "Foo");
 
-        assertThat(map.getCaseSensitive(of("fOO")))
+        assertThat(map.getCaseSensitive(CIKey.of("fOO")))
                 .isNull();
 
         Assertions.assertThatThrownBy(
                         () -> {
-                            map.get(of("fOO"));
+                            map.get(CIKey.of("fOO"));
                         })
                 .isInstanceOf(MultipleMatchException.class);
     }

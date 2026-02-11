@@ -16,7 +16,6 @@
 
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
@@ -87,7 +86,7 @@ public class StreamingAnalyticCache implements Clearable, EntityEvent.Handler {
                 LOGGER.debug("Loading streaming analytic: {}", analyticRuleRef);
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
                 LOGGER.info(() -> "Loading rule");
-                final AbstractAnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(analyticRuleRef);
+                final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(analyticRuleRef);
 
                 final ViewDoc viewDoc;
 

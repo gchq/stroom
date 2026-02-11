@@ -19,6 +19,7 @@ package stroom.explorer.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
@@ -43,6 +44,8 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -56,6 +59,7 @@ public class ExplorerPopupPresenter
     private final RestFactory restFactory;
     private boolean allowFolderSelection;
     private String caption = "Choose item";
+    private List<String> includedTypes;
     private String initialQuickFilter;
     private Consumer<ExplorerNode> selectionChangeConsumer = e -> {
 
@@ -100,11 +104,15 @@ public class ExplorerPopupPresenter
     }
 
     public void show(final BiConsumer<DocRef, HidePopupRequestEvent> consumer) {
+        show(consumer, PopupType.OK_CANCEL_DIALOG);
+    }
+
+    public void show(final BiConsumer<DocRef, HidePopupRequestEvent> consumer, final PopupType popupType) {
         refresh();
         final PopupSize popupSize = PopupSize.resizable(500, 550);
 
         ShowPopupEvent.builder(this)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupType(popupType)
                 .popupSize(popupSize)
                 .caption(caption)
                 .onShow(e -> {
@@ -121,6 +129,22 @@ public class ExplorerPopupPresenter
                             AlertEvent.fireError(ExplorerPopupPresenter.this,
                                     "You must choose a valid item.", e::reset);
                         }
+                    } else if (e.isCreate()) {
+                        e.hide();
+
+                        if (includedTypes != null && includedTypes.size() == 1) {
+                            final String documentType = includedTypes.get(0);
+                            ShowCreateDocumentDialogEvent.fire(
+                                    this,
+                                    "New " + documentType,
+                                    null,
+                                    documentType,
+                                    "",
+                                    true,
+                                    explorerNode -> {
+                                        consumer.accept(explorerNode.getDocRef(), e);
+                                    });
+                        }
                     } else {
                         e.hide();
                     }
@@ -129,6 +153,10 @@ public class ExplorerPopupPresenter
     }
 
     public void show(final Consumer<DocRef> consumer) {
+        show(consumer, PopupType.OK_CANCEL_DIALOG);
+    }
+
+    public void show(final Consumer<DocRef> consumer, final PopupType popupType) {
         show((docRef, e) -> {
             try {
                 consumer.accept(docRef);
@@ -137,7 +165,7 @@ public class ExplorerPopupPresenter
             } finally {
                 e.hide();
             }
-        });
+        }, popupType);
     }
 
     protected void setIncludeNullSelection(final boolean includeNullSelection) {
@@ -189,6 +217,7 @@ public class ExplorerPopupPresenter
     }
 
     public void setIncludedTypes(final String... includedTypes) {
+        this.includedTypes = Arrays.asList(includedTypes);
         explorerTree.getTreeModel().setIncludedTypes(includedTypes);
     }
 

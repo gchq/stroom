@@ -17,12 +17,15 @@
 package stroom.config.global.impl;
 
 
+import stroom.config.global.api.GlobalConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigProperty.SourceType;
 import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
+import stroom.config.global.shared.OverrideValue;
+import stroom.docref.DocRef;
 import stroom.node.api.NodeInfo;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.FieldProviderImpl;
@@ -36,6 +39,7 @@ import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator.Result;
 import stroom.util.config.PropertyUtil;
 import stroom.util.config.PropertyUtil.ObjectInfo;
+import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -46,9 +50,11 @@ import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PropertyPath;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -56,7 +62,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-public class GlobalConfigService {
+public class GlobalConfigService implements GlobalConfig {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigService.class);
 
@@ -416,5 +422,64 @@ public class GlobalConfigService {
         final AbstractConfig configCopy = objectInfo.createInstance(nameToValueMap::get);
 
         return appConfigValidator.validate(configCopy);
+    }
+
+    @Override
+    public void setDocRef(final AbstractConfig config, final String propertyName, final DocRef value) {
+        setString(config, propertyName, ConfigMapper.convertToString(value));
+    }
+
+    @Override
+    public void setInt(final AbstractConfig config, final String propertyName, final int value) {
+        setString(config, propertyName, ConfigMapper.convertToString(value));
+    }
+
+    @Override
+    public void setString(final AbstractConfig config, final String propertyName, final String value) {
+        Objects.requireNonNull(config, "config not supplied");
+        Objects.requireNonNull(propertyName, "propertyName not supplied");
+        final PropertyPath propertyPath = config.getFullPath(propertyName);
+        final Optional<ConfigProperty> optConfigProperty = fetch(propertyPath);
+        final ConfigProperty configProperty = optConfigProperty.orElseThrow(() ->
+                new RuntimeException("Property not found: " + propertyPath));
+        final String defaultValue = configProperty.getDefaultValue().orElse(null);
+
+        // If the value is the same as the default value then revert to the default value.
+        final ConfigProperty updatedProperty;
+        if (Objects.equals(defaultValue, value)) {
+            updatedProperty = configProperty.copy().databaseOverrideValue(OverrideValue.unSet(null)).build();
+        } else {
+            updatedProperty = configProperty.copy().databaseOverrideValue(value).build();
+        }
+        update(updatedProperty);
+    }
+
+    @Override
+    public void update(final AbstractConfig config) {
+        Objects.requireNonNull(config, "config not supplied");
+        final ObjectInfo<?> objectInfo = configMapper.getObjectInfoMap().get(config.getBasePath());
+        Objects.requireNonNull(objectInfo, "Unexpected Stroom config object");
+        for (final Prop prop : objectInfo.getPropertyMap().values()) {
+            try {
+                final Object value = prop.getGetter().invoke(config);
+                if (value instanceof final AbstractConfig child) {
+                    // Recurse.
+                    update(child);
+                } else if (AbstractConfig.class.isAssignableFrom(prop.getValueClass())) {
+                    // Ignore.
+                } else {
+                    final String name = getNameFromAnnotation(prop);
+                    setString(config, name, ConfigMapper.convertToString(value));
+                }
+            } catch (final InvocationTargetException | IllegalAccessException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        }
+    }
+
+    private String getNameFromAnnotation(final Prop prop) {
+        return prop.getAnnotation(JsonProperty.class)
+                .map(JsonProperty::value)
+                .orElse(null);
     }
 }

@@ -59,7 +59,7 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     private String lastLabel;
     protected final ButtonPanel toolbar;
     private PresenterWidget<?> currentContent;
-    private DocRef docRef;
+    protected DocRef docRef;
 
     private final TabContentProvider<D> tabContentProvider;
     private final Map<CommonDocLinkTab, TabData> commonTabsMap;
@@ -135,6 +135,12 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
     public void addTab(final TabData tab, final TabProvider<D> provider) {
         tabContentProvider.add(tab, provider);
         getView().getTabBar().addTab(tab);
+    }
+
+    public void replaceTab(final TabData tab, final TabProvider<D> provider) {
+        tabContentProvider.replace(tab, provider);
+        getView().getTabBar().selectTab(tab);
+        selectTab(tab);
     }
 
     public void setTabHidden(final TabData tab, final boolean hidden) {

@@ -38,9 +38,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.jooq.impl.DSL.select;
-import static stroom.job.impl.db.jooq.Tables.JOB;
-import static stroom.job.impl.db.jooq.Tables.JOB_NODE;
+import static stroom.job.impl.db.jooq.tables.Job.JOB;
+import static stroom.job.impl.db.jooq.tables.JobNode.JOB_NODE;
 
 /**
  * This class is very slim because it uses the GenericDao.
@@ -127,11 +126,11 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
                 .set(JOB_NODE.ENABLED, enabled)
                 .where(JOB_NODE.NODE_NAME.eq(nodeName)
                         .and(JOB_NODE.JOB_ID.in(
-                                select(JOB.ID).from(JOB)
+                                DSL.select(JOB.ID).from(JOB)
                                         .where(JOB.NAME.in(includeJobs)
                                                 .or(DSL.condition(includeJobs.size() == 0)))
                         )).and(JOB_NODE.JOB_ID.notIn(
-                                select(JOB.ID).from(JOB)
+                                DSL.select(JOB.ID).from(JOB)
                                         .where(JOB.NAME.in(excludeJobs)
                                                 .and(DSL.condition(excludeJobs.size() > 0)))
                         )))

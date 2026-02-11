@@ -26,9 +26,8 @@ import stroom.util.AuditUtil;
 import stroom.util.exception.DataChangedException;
 
 import jakarta.inject.Inject;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestJobNodeDao extends AbstractCoreIntegrationTest {
 
@@ -59,10 +58,10 @@ class TestJobNodeDao extends AbstractCoreIntegrationTest {
 
         // Test optimistic locking
         final Job finalJob = job;
-        assertThrows(DataChangedException.class, () -> {
+        Assertions.assertThatThrownBy(() -> {
             jobDao.update(finalJob);
             jobDao.update(finalJob);
-        });
+        }).isInstanceOf(DataChangedException.class);
 
         // Test that job service can continually update jobs.
         job.setEnabled(false);
@@ -84,10 +83,10 @@ class TestJobNodeDao extends AbstractCoreIntegrationTest {
 
         // Test optimistic locking
         final JobNode finalJobNode = jobNode;
-        assertThrows(DataChangedException.class, () -> {
+        Assertions.assertThatThrownBy(() -> {
             jobNodeDao.update(finalJobNode);
             jobNodeDao.update(finalJobNode);
-        });
+        }).isInstanceOf(DataChangedException.class);
 
         // Test that job node service can continually update jobs.
         jobNode.setEnabled(false);

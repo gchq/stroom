@@ -21,6 +21,7 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.util.shared.http.HttpClientConfig;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -43,9 +44,11 @@ import java.util.Objects;
         "updateUser",
         "description",
         "baseUrl",
-        "apiKey",
+        "apiKeyName",
         "modelId",
-        "maxContextWindowTokens"})
+        "maxContextWindowTokens",
+        "httpClientConfiguration"
+})
 @JsonInclude(Include.NON_NULL)
 public class OpenAIModelDoc extends AbstractDoc {
 
@@ -57,11 +60,13 @@ public class OpenAIModelDoc extends AbstractDoc {
     @JsonProperty
     private String baseUrl;
     @JsonProperty
-    private String apiKey;
+    private String apiKeyName;
     @JsonProperty
     private String modelId;
     @JsonProperty
     private int maxContextWindowTokens;
+    @JsonProperty
+    private HttpClientConfig httpClientConfiguration;
 
     @JsonCreator
     public OpenAIModelDoc(
@@ -74,15 +79,17 @@ public class OpenAIModelDoc extends AbstractDoc {
             @JsonProperty("updateUser") final String updateUser,
             @JsonProperty("description") final String description,
             @JsonProperty("baseUrl") final String baseUrl,
-            @JsonProperty("apiKey") final String apiKey,
+            @JsonProperty("apiKeyName") final String apiKeyName,
             @JsonProperty("modelId") final String modelId,
-            @JsonProperty("maxContextWindowTokens") final int maxContextWindowTokens) {
+            @JsonProperty("maxContextWindowTokens") final int maxContextWindowTokens,
+            @JsonProperty("httpClientConfiguration") HttpClientConfig httpClientConfiguration) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.baseUrl = baseUrl;
-        this.apiKey = apiKey;
+        this.apiKeyName = apiKeyName;
         this.modelId = modelId;
         this.maxContextWindowTokens = maxContextWindowTokens;
+        this.httpClientConfiguration = httpClientConfiguration;
     }
 
     /**
@@ -108,12 +115,12 @@ public class OpenAIModelDoc extends AbstractDoc {
         this.baseUrl = baseUrl;
     }
 
-    public String getApiKey() {
-        return apiKey;
+    public String getApiKeyName() {
+        return apiKeyName;
     }
 
-    public void setApiKey(final String apiKey) {
-        this.apiKey = apiKey;
+    public void setApiKeyName(final String apiKeyName) {
+        this.apiKeyName = apiKeyName;
     }
 
     public String getModelId() {
@@ -132,6 +139,14 @@ public class OpenAIModelDoc extends AbstractDoc {
         this.maxContextWindowTokens = maxContextWindowTokens;
     }
 
+    public HttpClientConfig getHttpClientConfiguration() {
+        return httpClientConfiguration;
+    }
+
+    public void setHttpClientConfiguration(final HttpClientConfig httpClientConfiguration) {
+        this.httpClientConfiguration = httpClientConfiguration;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -146,9 +161,10 @@ public class OpenAIModelDoc extends AbstractDoc {
         final OpenAIModelDoc model = (OpenAIModelDoc) o;
         return Objects.equals(description, model.description) &&
                Objects.equals(baseUrl, model.baseUrl) &&
-               Objects.equals(apiKey, model.apiKey) &&
+               Objects.equals(apiKeyName, model.apiKeyName) &&
                Objects.equals(modelId, model.modelId) &&
-               Objects.equals(maxContextWindowTokens, model.maxContextWindowTokens);
+               Objects.equals(maxContextWindowTokens, model.maxContextWindowTokens) &&
+               Objects.equals(httpClientConfiguration, model.httpClientConfiguration);
     }
 
     @Override
@@ -157,9 +173,10 @@ public class OpenAIModelDoc extends AbstractDoc {
                 super.hashCode(),
                 description,
                 baseUrl,
-                apiKey,
+                apiKeyName,
                 modelId,
-                maxContextWindowTokens);
+                maxContextWindowTokens,
+                httpClientConfiguration);
     }
 
     @Override
@@ -167,8 +184,9 @@ public class OpenAIModelDoc extends AbstractDoc {
         return "OpenAIModel{" +
                "description='" + description + '\'' +
                ", baseUrl='" + baseUrl + '\'' +
-               ", modelId='" + apiKey + '\'' +
+               ", modelId='" + apiKeyName + '\'' +
                ", maxContextWindowTokens=" + maxContextWindowTokens +
+               ", httpClientConfiguration=" + httpClientConfiguration +
                '}';
     }
 
@@ -187,6 +205,7 @@ public class OpenAIModelDoc extends AbstractDoc {
         private String apiKey;
         private String modelId;
         private int maxContextWindowTokens;
+        private HttpClientConfig httpClientConfiguration;
 
         private Builder() {
         }
@@ -195,9 +214,10 @@ public class OpenAIModelDoc extends AbstractDoc {
             super(openAIModelDoc);
             this.description = openAIModelDoc.description;
             this.baseUrl = openAIModelDoc.baseUrl;
-            this.apiKey = openAIModelDoc.apiKey;
+            this.apiKey = openAIModelDoc.apiKeyName;
             this.modelId = openAIModelDoc.modelId;
             this.maxContextWindowTokens = openAIModelDoc.maxContextWindowTokens;
+            this.httpClientConfiguration = openAIModelDoc.httpClientConfiguration;
         }
 
         public Builder description(final String description) {
@@ -225,6 +245,11 @@ public class OpenAIModelDoc extends AbstractDoc {
             return self();
         }
 
+        public Builder httpClientConfiguration(final HttpClientConfig httpClientConfiguration) {
+            this.httpClientConfiguration = httpClientConfiguration;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -243,7 +268,8 @@ public class OpenAIModelDoc extends AbstractDoc {
                     baseUrl,
                     apiKey,
                     modelId,
-                    maxContextWindowTokens);
+                    maxContextWindowTokens,
+                    httpClientConfiguration);
         }
     }
 }

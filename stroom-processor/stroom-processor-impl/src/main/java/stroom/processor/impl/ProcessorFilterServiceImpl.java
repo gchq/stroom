@@ -138,17 +138,18 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         final int calculatedPriority = getAutoPriority(processor, request.getPriority(), request.isAutoPriority());
 
         // Create the filter and tracker
-        final ProcessorFilter processorFilter = new ProcessorFilter();
-        // Blank tracker
-        processorFilter.setReprocess(request.isReprocess());
-        processorFilter.setEnabled(request.isEnabled());
-        processorFilter.setExport(request.isExport());
-        processorFilter.setPriority(calculatedPriority);
-        processorFilter.setMaxProcessingTasks(request.getMaxProcessingTasks());
-        processorFilter.setProcessor(processor);
-        processorFilter.setQueryData(request.getQueryData());
-        processorFilter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
-        processorFilter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        final ProcessorFilter processorFilter = ProcessorFilter
+                .builder()
+                .reprocess(request.isReprocess())
+                .enabled(request.isEnabled())
+                .export(request.isExport())
+                .priority(calculatedPriority)
+                .maxProcessingTasks(request.getMaxProcessingTasks())
+                .processor(processor)
+                .queryData(request.getQueryData())
+                .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
+                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs())
+                .build();
         setRunAs(request, processorFilter);
         return create(processorFilter);
     }
@@ -181,8 +182,9 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         // If we are using auto priority then try and get a priority.
         final int calculatedPriority = getAutoPriority(processor, request.getPriority(), request.isAutoPriority());
 
-        if (request.getQueryData() != null && request.getQueryData().getDataSource() == null) {
-            request.getQueryData().setDataSource(MetaFields.STREAM_STORE_DOC_REF);
+        QueryData queryData = request.getQueryData();
+        if (queryData != null && queryData.getDataSource() == null) {
+            queryData = queryData.copy().dataSource(MetaFields.STREAM_STORE_DOC_REF).build();
         }
 
         // now create the filter and tracker
@@ -197,7 +199,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         processorFilter.setPriority(calculatedPriority);
         processorFilter.setMaxProcessingTasks(request.getMaxProcessingTasks());
         processorFilter.setProcessor(processor);
-        processorFilter.setQueryData(request.getQueryData());
+        processorFilter.setQueryData(queryData);
         processorFilter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
         processorFilter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
         setRunAs(request, processorFilter);
@@ -393,7 +395,10 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                                     // Decorate the expression with resolved dictionaries etc.
                                     final QueryData queryData = processorFilter.getQueryData();
                                     if (queryData != null && queryData.getExpression() != null) {
-                                        queryData.setExpression(decorate(queryData.getExpression()));
+                                        processorFilter.setQueryData(queryData
+                                                .copy()
+                                                .expression(decorate(queryData.getExpression()))
+                                                .build());
                                     }
 
                                     if (processorFilter.getPipelineName() == null) {
@@ -632,12 +637,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
             processorFilter.setUuid(UUID.randomUUID().toString());
         }
 
-        if (processorFilter.getQueryData() == null) {
+        QueryData queryData = processorFilter.getQueryData();
+        if (queryData == null) {
             throw new IllegalArgumentException("QueryData cannot be null creating ProcessorFilter" + processorFilter);
         }
 
-        if (processorFilter.getQueryData().getDataSource() == null) {
-            processorFilter.getQueryData().setDataSource(MetaFields.STREAM_STORE_DOC_REF);
+        if (queryData.getDataSource() == null) {
+            queryData = queryData.copy().dataSource(MetaFields.STREAM_STORE_DOC_REF).build();
+            processorFilter.setQueryData(queryData);
         }
 
         AuditUtil.stamp(securityContext, processorFilter);

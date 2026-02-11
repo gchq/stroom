@@ -46,6 +46,31 @@ public enum TimeUnit implements HasDisplayValue, HasPrimitiveValue {
         this.shortForm = shortForm;
     }
 
+    public static TimeUnit parse(final String string) {
+        if (string != null) {
+            if (string.endsWith(NANOSECONDS.shortForm)) {
+                return NANOSECONDS;
+            } else if (string.endsWith(MILLISECONDS.shortForm)) {
+                return MILLISECONDS;
+            } else if (string.endsWith(SECONDS.shortForm)) {
+                return SECONDS;
+            } else if (string.endsWith(MINUTES.shortForm)) {
+                return MINUTES;
+            } else if (string.endsWith(HOURS.shortForm)) {
+                return HOURS;
+            } else if (string.endsWith(DAYS.shortForm)) {
+                return DAYS;
+            } else if (string.endsWith(WEEKS.shortForm)) {
+                return WEEKS;
+            } else if (string.endsWith(MONTHS.shortForm)) {
+                return MONTHS;
+            } else if (string.endsWith(YEARS.shortForm)) {
+                return YEARS;
+            }
+        }
+        return null;
+    }
+
     @Override
     public String getDisplayValue() {
         return displayValue;

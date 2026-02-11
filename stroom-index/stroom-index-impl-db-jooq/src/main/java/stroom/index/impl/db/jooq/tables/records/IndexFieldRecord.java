@@ -4,6 +4,7 @@
 package stroom.index.impl.db.jooq.tables.records;
 
 
+import org.jooq.JSON;
 import org.jooq.Record2;
 import org.jooq.impl.UpdatableRecordImpl;
 
@@ -130,6 +131,20 @@ public class IndexFieldRecord extends UpdatableRecordImpl<IndexFieldRecord> {
         return (Boolean) get(7);
     }
 
+    /**
+     * Setter for <code>stroom.index_field.dense_vector</code>.
+     */
+    public void setDenseVector(JSON value) {
+        set(8, value);
+    }
+
+    /**
+     * Getter for <code>stroom.index_field.dense_vector</code>.
+     */
+    public JSON getDenseVector() {
+        return (JSON) get(8);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -153,7 +168,7 @@ public class IndexFieldRecord extends UpdatableRecordImpl<IndexFieldRecord> {
     /**
      * Create a detached, initialised IndexFieldRecord
      */
-    public IndexFieldRecord(Integer fkIndexFieldSourceId, Byte type, String name, String analyzer, Boolean indexed, Boolean stored, Boolean termPositions, Boolean caseSensitive) {
+    public IndexFieldRecord(Integer fkIndexFieldSourceId, Byte type, String name, String analyzer, Boolean indexed, Boolean stored, Boolean termPositions, Boolean caseSensitive, JSON denseVector) {
         super(IndexField.INDEX_FIELD);
 
         setFkIndexFieldSourceId(fkIndexFieldSourceId);
@@ -164,6 +179,7 @@ public class IndexFieldRecord extends UpdatableRecordImpl<IndexFieldRecord> {
         setStored(stored);
         setTermPositions(termPositions);
         setCaseSensitive(caseSensitive);
+        setDenseVector(denseVector);
         resetChangedOnNotNull();
     }
 }

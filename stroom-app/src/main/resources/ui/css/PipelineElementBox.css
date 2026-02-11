@@ -130,3 +130,12 @@
 .pipelineElementBox-filterOn .pipelineElementBox-filterImage.svgIcon {
 
 }
+
+.pipelineElementBox-disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.pipelineElementBox-disabled * {
+  pointer-events: inherit;
+}

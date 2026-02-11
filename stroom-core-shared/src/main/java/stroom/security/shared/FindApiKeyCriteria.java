@@ -143,7 +143,7 @@ public class FindApiKeyCriteria extends ExpressionCriteria {
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder extends AbstractBuilder<FindApiKeyCriteria, Builder> {
+    public static class Builder extends ExpressionCriteriaBuilder<FindApiKeyCriteria, Builder> {
 
         private UserRef owner = null;
 

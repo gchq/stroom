@@ -95,9 +95,25 @@
 
 .dialog-buttons {
     width: 100%;
-    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal);
     flex-grow: 0;
+    padding: var(--dialog__padding--vertical) var(--dialog__padding--horizontal);
     gap: var(--dialog__padding--horizontal);
     display: flex;
+    justify-content: space-between;
+}
+
+.dialog-buttons-left {
+    width: 100%;
+    flex-grow: 0;
+    display: flex;
+    gap: var(--dialog__padding--horizontal);
+    justify-content: flex-start;
+}
+
+.dialog-buttons-right {
+    width: 100%;
+    flex-grow: 0;
+    display: flex;
+    gap: var(--dialog__padding--horizontal);
     justify-content: flex-end;
 }

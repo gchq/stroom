@@ -103,9 +103,9 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
         return ExplorerConstants.SYSTEM;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -121,9 +121,9 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
     public void remapDependencies(final DocRef docRef, final Map<DocRef, DocRef> remappings) {
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
 
     @Override

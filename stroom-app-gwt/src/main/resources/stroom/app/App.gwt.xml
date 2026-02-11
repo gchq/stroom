@@ -29,6 +29,7 @@
     <inherits name='stroom.event.Event' />
     <inherits name='stroom.task.Task'/>
     <inherits name='stroom.main.Main'/>
+    <inherits name='stroom.http.Http' />
     <inherits name='stroom.widget.popup.Popup'/>
     <inherits name='stroom.security.Security'/>
     <inherits name='stroom.service.Service'/>
@@ -97,6 +98,7 @@
     <inherits name="stroom.search.elastic.ElasticCluster" />
     <inherits name="stroom.search.elastic.ElasticIndex" />
     <inherits name="stroom.search.solr.SolrIndex" />
+    <inherits name="stroom.ai.AI" />
     <inherits name="stroom.dashboard.Dashboard" />
     <inherits name="stroom.state.ScyllaDb" />
     <inherits name="stroom.state.StateStore" />

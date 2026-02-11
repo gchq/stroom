@@ -17,6 +17,7 @@
 package stroom.index.shared;
 
 import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.Field;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.IndexField;
@@ -45,7 +46,8 @@ import java.util.Objects;
         "indexed",
         "stored",
         "termPositions",
-        "caseSensitive"
+        "caseSensitive",
+        "denseVectorFieldConfig"
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class LuceneIndexField implements IndexField {
@@ -71,18 +73,21 @@ public class LuceneIndexField implements IndexField {
     private final boolean termPositions;
     @JsonProperty
     private final boolean caseSensitive;
+    @JsonProperty
+    private final DenseVectorFieldConfig denseVectorFieldConfig;
 
+    @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
     public LuceneIndexField(@Deprecated @JsonProperty("fieldName") final String fieldName,
                             @Deprecated @JsonProperty("fieldType") final OldIndexFieldType fieldType,
-
                             @JsonProperty("fldName") final String fldName,
                             @JsonProperty("fldType") final FieldType fldType,
                             @JsonProperty("analyzerType") final AnalyzerType analyzerType,
                             @JsonProperty("indexed") final boolean indexed,
                             @JsonProperty("stored") final boolean stored,
                             @JsonProperty("termPositions") final boolean termPositions,
-                            @JsonProperty("caseSensitive") final boolean caseSensitive) {
+                            @JsonProperty("caseSensitive") final boolean caseSensitive,
+                            @JsonProperty("denseVectorFieldConfig") final DenseVectorFieldConfig denseVectorFieldConfig) {
         this.fldName = convertLegacyName(fldName, fieldName);
         this.fldType = convertLegacyType(fldType, fieldType);
         this.analyzerType = analyzerType;
@@ -90,6 +95,7 @@ public class LuceneIndexField implements IndexField {
         this.indexed = indexed;
         this.termPositions = termPositions;
         this.caseSensitive = caseSensitive;
+        this.denseVectorFieldConfig = denseVectorFieldConfig;
     }
 
     public static LuceneIndexField fromIndexField(final IndexField indexField) {
@@ -247,6 +253,10 @@ public class LuceneIndexField implements IndexField {
         return termPositions;
     }
 
+    public DenseVectorFieldConfig getDenseVectorFieldConfig() {
+        return denseVectorFieldConfig;
+    }
+
     @Override
     @JsonIgnore
     public String getDisplayValue() {
@@ -307,6 +317,7 @@ public class LuceneIndexField implements IndexField {
         private boolean stored;
         private boolean termPositions;
         private boolean caseSensitive;
+        private DenseVectorFieldConfig denseVectorFieldConfig;
 
         private Builder() {
         }
@@ -319,6 +330,7 @@ public class LuceneIndexField implements IndexField {
             this.stored = indexField.isStored();
             this.termPositions = indexField.isTermPositions();
             this.caseSensitive = indexField.isCaseSensitive();
+            this.denseVectorFieldConfig = indexField.getDenseVectorFieldConfig();
         }
 
         private Builder(final LuceneIndexField indexField) {
@@ -329,6 +341,7 @@ public class LuceneIndexField implements IndexField {
             this.stored = indexField.stored;
             this.termPositions = indexField.termPositions;
             this.caseSensitive = indexField.caseSensitive;
+            this.denseVectorFieldConfig = indexField.denseVectorFieldConfig;
         }
 
         public Builder fldName(final String fldName) {
@@ -366,6 +379,11 @@ public class LuceneIndexField implements IndexField {
             return this;
         }
 
+        public Builder denseVectorFieldConfig(final DenseVectorFieldConfig denseVectorFieldConfig) {
+            this.denseVectorFieldConfig = denseVectorFieldConfig;
+            return this;
+        }
+
         public LuceneIndexField build() {
             return new LuceneIndexField(
                     null,
@@ -376,7 +394,8 @@ public class LuceneIndexField implements IndexField {
                     indexed,
                     stored,
                     termPositions,
-                    caseSensitive);
+                    caseSensitive,
+                    denseVectorFieldConfig);
         }
     }
 }

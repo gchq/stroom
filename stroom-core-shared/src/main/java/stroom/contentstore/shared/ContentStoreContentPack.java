@@ -86,9 +86,9 @@ public class ContentStoreContentPack {
     @JsonProperty
     private final String gitRepoName;
 
-    /** Git remote repository URL */
+    /** Git remote repository URL. Not final as overridden in testing */
     @JsonProperty
-    private final String gitUrl;
+    private String gitUrl;
 
     /** Git branch */
     @JsonProperty
@@ -301,6 +301,16 @@ public class ContentStoreContentPack {
     }
 
     /**
+     * Used in testing to substitute a different repository URL for the URL given
+     * in the content-store.yml file. Allows us to cache stuff in a local GIT repo
+     * and avoid lots of downloads from remote repositories.
+     * @param overrideGitUrl The new URL.
+     */
+    public void overrideGitUrl(final String overrideGitUrl) {
+        this.gitUrl = overrideGitUrl;
+    }
+
+    /**
      * Sets the metadata of the content store that this belongs to.
      * Resolved later. This structure may change. Only called when creating the list of
      * content packs. Shouldn't be called by anything else.
@@ -439,4 +449,5 @@ public class ContentStoreContentPack {
                + "'\n  gitNeedsAuth='" + gitNeedsAuth
                + "\n}";
     }
+
 }

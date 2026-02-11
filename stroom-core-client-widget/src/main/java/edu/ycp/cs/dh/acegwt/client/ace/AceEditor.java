@@ -59,9 +59,9 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
 
     private AceCommandLine commandLine = null;
 
-    // =====================================================================
+    // ---------------------------------------------------------------------
     // Added for Stroom by at055612 START
-    // =====================================================================
+    // ---------------------------------------------------------------------
 
 
     // To disable the local words from the completions we can do something like
@@ -273,9 +273,9 @@ public class AceEditor extends Composite implements RequiresResize, HasText, Tak
         }, 0.5);
 	}-*/;
 
-    // =====================================================================
+    // ---------------------------------------------------------------------
     // Added for Stroom by at055612 FINISH
-    // =====================================================================
+    // ---------------------------------------------------------------------
 
     /**
      * Preferred constructor.

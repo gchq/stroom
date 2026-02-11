@@ -1,0 +1,27 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:d="urn:import:stroom.widget.customdatebox.client">
+    <g:FlowPanel styleName="askStroomAiViewImpl max default-min-sizes dock-container-vertical">
+        <form:FormGroup identity="maximumBatchSize" label="Maximum Table Batch Size">
+            <v:ValueSpinner ui:field="maximumBatchSize" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="maximumTableInputRows" label="Maximum Table Input Rows">
+            <v:ValueSpinner ui:field="maximumTableInputRows" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="memoryTokenLimit" label="Memory Token Limit">
+            <v:ValueSpinner ui:field="memoryTokenLimit" width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="memoryTimeToLive"
+                        label="Chat Memory TTL">
+            <d:DurationPicker ui:field="memoryTimeToLive"/>
+        </form:FormGroup>
+        <b:Button ui:field="setDefault"
+                  text="Set Default"
+                  width="200px"
+                  addStyleNames="allow-focus"/>
+    </g:FlowPanel>
+</ui:UiBinder>

@@ -46,9 +46,6 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static stroom.security.shared.AppPermission.MANAGE_USERS_PERMISSION;
-import static stroom.security.shared.AppPermissionSet.empty;
-import static stroom.security.shared.DocumentPermission.VIEW;
 
 @ExtendWith(MockitoExtension.class)
 public class TestSecurityContextImpl {
@@ -220,7 +217,7 @@ public class TestSecurityContextImpl {
     void testSecure_notLoggedIn2() {
         doSecureTestWhichThrows(
                 null,
-                AppPermissionSet.of(MANAGE_USERS_PERMISSION),
+                AppPermissionSet.of(AppPermission.MANAGE_USERS_PERMISSION),
                 AuthenticationException.class);
     }
 
@@ -237,7 +234,7 @@ public class TestSecurityContextImpl {
         final UserIdentity userIdentity = setupAdminUser();
         setProcUserState(userIdentity, false);
 
-        doSecureTestWhichDoesWork(userIdentity, AppPermissionSet.of(MANAGE_USERS_PERMISSION));
+        doSecureTestWhichDoesWork(userIdentity, AppPermissionSet.of(AppPermission.MANAGE_USERS_PERMISSION));
     }
 
     @Test
@@ -251,7 +248,7 @@ public class TestSecurityContextImpl {
     void testSecure_procUser2() {
         final UserIdentity userIdentity = setupProcUser();
 
-        doSecureTestWhichDoesWork(userIdentity, AppPermissionSet.of(MANAGE_USERS_PERMISSION));
+        doSecureTestWhichDoesWork(userIdentity, AppPermissionSet.of(AppPermission.MANAGE_USERS_PERMISSION));
     }
 
     @Test
@@ -271,7 +268,7 @@ public class TestSecurityContextImpl {
 
         doSecureTestWhichThrows(
                 userIdentity,
-                AppPermissionSet.of(MANAGE_USERS_PERMISSION),
+                AppPermissionSet.of(AppPermission.MANAGE_USERS_PERMISSION),
                 PermissionException.class);
     }
 
@@ -281,11 +278,11 @@ public class TestSecurityContextImpl {
         setProcUserState(userIdentity, false);
         setUserAppPerms(USER_1, EnumSet.of(
                 AppPermission.VIEW_DATA_PERMISSION,
-                MANAGE_USERS_PERMISSION));
+                AppPermission.MANAGE_USERS_PERMISSION));
 
         doSecureTestWhichDoesWork(
                 userIdentity,
-                AppPermissionSet.of(MANAGE_USERS_PERMISSION));
+                AppPermissionSet.of(AppPermission.MANAGE_USERS_PERMISSION));
     }
 
     @Test
@@ -294,13 +291,13 @@ public class TestSecurityContextImpl {
         setProcUserState(userIdentity, false);
         setUserAppPerms(USER_1, EnumSet.of(
                 AppPermission.VIEW_DATA_PERMISSION,
-                MANAGE_USERS_PERMISSION));
+                AppPermission.MANAGE_USERS_PERMISSION));
 
         doSecureTestWhichDoesWork(
                 userIdentity,
                 AppPermissionSet.allOf(
                         AppPermission.VIEW_DATA_PERMISSION,
-                        MANAGE_USERS_PERMISSION));
+                        AppPermission.MANAGE_USERS_PERMISSION));
     }
 
     @Test
@@ -308,13 +305,13 @@ public class TestSecurityContextImpl {
         final UserIdentity userIdentity = USER_1;
         setProcUserState(userIdentity, false);
         setUserAppPerms(USER_1, EnumSet.of(
-                MANAGE_USERS_PERMISSION));
+                AppPermission.MANAGE_USERS_PERMISSION));
 
         doSecureTestWhichThrows(
                 userIdentity,
                 AppPermissionSet.allOf(
                         AppPermission.VIEW_DATA_PERMISSION,
-                        MANAGE_USERS_PERMISSION),
+                        AppPermission.MANAGE_USERS_PERMISSION),
                 PermissionException.class);
     }
 
@@ -323,13 +320,13 @@ public class TestSecurityContextImpl {
         final UserIdentity userIdentity = USER_1;
         setProcUserState(userIdentity, false);
         setUserAppPerms(USER_1, EnumSet.of(
-                MANAGE_USERS_PERMISSION));
+                AppPermission.MANAGE_USERS_PERMISSION));
 
         doSecureTestWhichDoesWork(
                 userIdentity,
                 AppPermissionSet.oneOf(
                         AppPermission.VIEW_DATA_PERMISSION,
-                        MANAGE_USERS_PERMISSION));
+                        AppPermission.MANAGE_USERS_PERMISSION));
     }
 
     @Test
@@ -343,7 +340,7 @@ public class TestSecurityContextImpl {
                 userIdentity,
                 AppPermissionSet.oneOf(
                         AppPermission.VIEW_DATA_PERMISSION,
-                        MANAGE_USERS_PERMISSION));
+                        AppPermission.MANAGE_USERS_PERMISSION));
     }
 
     @Test
@@ -355,7 +352,7 @@ public class TestSecurityContextImpl {
 
         doSecureTestWhichDoesWork(
                 userIdentity,
-                empty());
+                AppPermissionSet.empty());
     }
 
     @Test
@@ -364,7 +361,7 @@ public class TestSecurityContextImpl {
 
         securityContextImpl.asUser(userIdentity, () -> {
             // No required perms
-            assertThat(securityContextImpl.hasAppPermissions(empty()))
+            assertThat(securityContextImpl.hasAppPermissions(AppPermissionSet.empty()))
                     .isTrue();
         });
     }
@@ -390,7 +387,7 @@ public class TestSecurityContextImpl {
         securityContextImpl.asUser(userIdentity, () -> {
             // No required perms
             assertThat(securityContextImpl.hasAppPermissions(
-                    AppPermissionSet.of(MANAGE_USERS_PERMISSION)))
+                    AppPermissionSet.of(AppPermission.MANAGE_USERS_PERMISSION)))
                     .isFalse();
         });
     }
@@ -405,7 +402,7 @@ public class TestSecurityContextImpl {
                     .isTrue();
             // No required perms
             assertThat(securityContextImpl.hasAppPermissions(
-                    AppPermissionSet.of(MANAGE_USERS_PERMISSION)))
+                    AppPermissionSet.of(AppPermission.MANAGE_USERS_PERMISSION)))
                     .isTrue();
         });
     }
@@ -420,7 +417,7 @@ public class TestSecurityContextImpl {
                     .isTrue();
             // No required perms
             assertThat(securityContextImpl.hasAppPermissions(
-                    AppPermissionSet.of(MANAGE_USERS_PERMISSION)))
+                    AppPermissionSet.of(AppPermission.MANAGE_USERS_PERMISSION)))
                     .isTrue();
         });
     }
@@ -429,12 +426,12 @@ public class TestSecurityContextImpl {
     void testHasAppPermission_hasPerm() {
         final UserIdentity userIdentity = USER_1;
         setProcUserState(userIdentity, false);
-        setUserAppPerms(userIdentity, EnumSet.of(MANAGE_USERS_PERMISSION));
+        setUserAppPerms(userIdentity, EnumSet.of(AppPermission.MANAGE_USERS_PERMISSION));
 
         securityContextImpl.asUser(userIdentity, () -> {
             // No required perms
             assertThat(securityContextImpl.hasAppPermissions(
-                    AppPermissionSet.of(MANAGE_USERS_PERMISSION)))
+                    AppPermissionSet.of(AppPermission.MANAGE_USERS_PERMISSION)))
                     .isTrue();
         });
     }
@@ -444,7 +441,7 @@ public class TestSecurityContextImpl {
         final UserIdentity userIdentity = USER_1;
         setProcUserState(userIdentity, false);
         setUserAppPerms(userIdentity, EnumSet.of(
-                MANAGE_USERS_PERMISSION,
+                AppPermission.MANAGE_USERS_PERMISSION,
                 AppPermission.VIEW_DATA_PERMISSION,
                 AppPermission.STEPPING_PERMISSION));
 
@@ -452,7 +449,7 @@ public class TestSecurityContextImpl {
             // No required perms
             assertThat(securityContextImpl.hasAppPermissions(
                     AppPermissionSet.allOf(
-                            MANAGE_USERS_PERMISSION,
+                            AppPermission.MANAGE_USERS_PERMISSION,
                             AppPermission.VIEW_DATA_PERMISSION)))
                     .isTrue();
         });
@@ -463,14 +460,14 @@ public class TestSecurityContextImpl {
         final UserIdentity userIdentity = USER_1;
         setProcUserState(userIdentity, false);
         setUserAppPerms(userIdentity, EnumSet.of(
-                MANAGE_USERS_PERMISSION,
+                AppPermission.MANAGE_USERS_PERMISSION,
                 AppPermission.STEPPING_PERMISSION));
 
         securityContextImpl.asUser(userIdentity, () -> {
             // No required perms
             assertThat(securityContextImpl.hasAppPermissions(
                     AppPermissionSet.allOf(
-                            MANAGE_USERS_PERMISSION,
+                            AppPermission.MANAGE_USERS_PERMISSION,
                             AppPermission.VIEW_DATA_PERMISSION)))
                     .isFalse();
         });
@@ -481,7 +478,7 @@ public class TestSecurityContextImpl {
         final UserIdentity userIdentity = USER_1;
         setProcUserState(userIdentity, false);
         setUserAppPerms(userIdentity, EnumSet.of(
-                MANAGE_USERS_PERMISSION,
+                AppPermission.MANAGE_USERS_PERMISSION,
                 AppPermission.VIEW_DATA_PERMISSION,
                 AppPermission.STEPPING_PERMISSION));
 
@@ -489,7 +486,7 @@ public class TestSecurityContextImpl {
             // No required perms
             assertThat(securityContextImpl.hasAppPermissions(
                     AppPermissionSet.allOf(
-                            MANAGE_USERS_PERMISSION,
+                            AppPermission.MANAGE_USERS_PERMISSION,
                             AppPermission.VIEW_DATA_PERMISSION)))
                     .isTrue();
         });
@@ -507,7 +504,7 @@ public class TestSecurityContextImpl {
             // No required perms
             assertThat(securityContextImpl.hasAppPermissions(
                     AppPermissionSet.allOf(
-                            MANAGE_USERS_PERMISSION,
+                            AppPermission.MANAGE_USERS_PERMISSION,
                             AppPermission.VIEW_DATA_PERMISSION)))
                     .isFalse();
         });
@@ -520,7 +517,7 @@ public class TestSecurityContextImpl {
 
         setUserAppPerms(USER_1, EnumSet.noneOf(AppPermission.class));
         setUserAppPerms(GROUP_1, EnumSet.of(
-                MANAGE_USERS_PERMISSION));
+                AppPermission.MANAGE_USERS_PERMISSION));
         setUserAppPerms(GROUP_2, EnumSet.of(
                 AppPermission.VIEW_DATA_PERMISSION));
 
@@ -528,7 +525,7 @@ public class TestSecurityContextImpl {
             // No required perms
             assertThat(securityContextImpl.hasAppPermissions(
                     AppPermissionSet.allOf(
-                            MANAGE_USERS_PERMISSION,
+                            AppPermission.MANAGE_USERS_PERMISSION,
                             AppPermission.VIEW_DATA_PERMISSION)))
                     .isTrue();
         });
@@ -543,7 +540,7 @@ public class TestSecurityContextImpl {
 
         setUserAppPerms(USER_1, EnumSet.noneOf(AppPermission.class));
         setUserAppPerms(GROUP_1, EnumSet.of(
-                MANAGE_USERS_PERMISSION));
+                AppPermission.MANAGE_USERS_PERMISSION));
         setUserAppPerms(GROUP_2, EnumSet.of(
                 AppPermission.VIEW_DATA_PERMISSION));
 
@@ -551,7 +548,7 @@ public class TestSecurityContextImpl {
             // No required perms
             assertThat(securityContextImpl.hasAppPermissions(
                     AppPermissionSet.allOf(
-                            MANAGE_USERS_PERMISSION,
+                            AppPermission.MANAGE_USERS_PERMISSION,
                             AppPermission.VIEW_DATA_PERMISSION)))
                     .isTrue();
         });
@@ -573,7 +570,7 @@ public class TestSecurityContextImpl {
             // No required perms
             assertThat(securityContextImpl.hasAppPermissions(
                     AppPermissionSet.oneOf(
-                            MANAGE_USERS_PERMISSION,
+                            AppPermission.MANAGE_USERS_PERMISSION,
                             AppPermission.VIEW_DATA_PERMISSION)))
                     .isTrue();
         });
@@ -625,7 +622,7 @@ public class TestSecurityContextImpl {
 
             assertThat(securityContextImpl.hasDocumentPermission(docRef, DocumentPermission.USE))
                     .isTrue();
-            assertThat(securityContextImpl.hasDocumentPermission(docRef, VIEW))
+            assertThat(securityContextImpl.hasDocumentPermission(docRef, DocumentPermission.VIEW))
                     .isFalse();
             assertThat(securityContextImpl.hasDocumentPermission(docRef, DocumentPermission.EDIT))
                     .isFalse();
@@ -639,7 +636,7 @@ public class TestSecurityContextImpl {
                 assertThat(securityContextImpl.hasDocumentPermission(docRef, DocumentPermission.USE))
                         .isTrue();
                 // Now have VIEW, via useAsRead
-                assertThat(securityContextImpl.hasDocumentPermission(docRef, VIEW))
+                assertThat(securityContextImpl.hasDocumentPermission(docRef, DocumentPermission.VIEW))
                         .isTrue();
                 assertThat(securityContextImpl.hasDocumentPermission(docRef, DocumentPermission.EDIT))
                         .isFalse();
@@ -660,7 +657,7 @@ public class TestSecurityContextImpl {
 
             assertThat(securityContextImpl.hasDocumentPermission(docRef, DocumentPermission.USE))
                     .isFalse();
-            assertThat(securityContextImpl.hasDocumentPermission(docRef, VIEW))
+            assertThat(securityContextImpl.hasDocumentPermission(docRef, DocumentPermission.VIEW))
                     .isFalse();
             assertThat(securityContextImpl.hasDocumentPermission(docRef, DocumentPermission.EDIT))
                     .isFalse();
@@ -674,7 +671,7 @@ public class TestSecurityContextImpl {
                 // No change in useAsRead, as user doesn't have USE
                 assertThat(securityContextImpl.hasDocumentPermission(docRef, DocumentPermission.USE))
                         .isFalse();
-                assertThat(securityContextImpl.hasDocumentPermission(docRef, VIEW))
+                assertThat(securityContextImpl.hasDocumentPermission(docRef, DocumentPermission.VIEW))
                         .isFalse();
                 assertThat(securityContextImpl.hasDocumentPermission(docRef, DocumentPermission.EDIT))
                         .isFalse();
@@ -700,14 +697,14 @@ public class TestSecurityContextImpl {
         securityContextImpl.asUser(userIdentity, () -> {
             assertThat(securityContextImpl.isProcessingUser())
                     .isFalse();
-            assertThat(securityContextImpl.hasAppPermission(MANAGE_USERS_PERMISSION))
+            assertThat(securityContextImpl.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION))
                     .isFalse();
 //
             securityContextImpl.asProcessingUser(() -> {
                 assertThat(securityContextImpl.isProcessingUser())
                         .isTrue();
 
-                assertThat(securityContextImpl.hasAppPermission(MANAGE_USERS_PERMISSION))
+                assertThat(securityContextImpl.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION))
                         .isTrue();
             });
 
@@ -715,7 +712,7 @@ public class TestSecurityContextImpl {
                 assertThat(securityContextImpl.isProcessingUser())
                         .isTrue();
 
-                assertThat(securityContextImpl.hasAppPermission(MANAGE_USERS_PERMISSION))
+                assertThat(securityContextImpl.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION))
                         .isTrue();
                 return 123;
             })).isEqualTo(123);

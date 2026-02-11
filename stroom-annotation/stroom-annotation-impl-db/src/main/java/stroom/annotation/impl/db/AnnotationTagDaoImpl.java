@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,11 @@
 
 package stroom.annotation.impl.db;
 
-import stroom.annotation.impl.AnnotationConfig;
 import stroom.annotation.impl.AnnotationTagDao;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagFields;
 import stroom.annotation.shared.AnnotationTagType;
 import stroom.annotation.shared.CreateAnnotationTagRequest;
-import stroom.cache.api.CacheManager;
-import stroom.cache.api.LoadingStroomCache;
 import stroom.db.util.ExpressionMapper;
 import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
@@ -39,7 +36,6 @@ import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.Record;
@@ -62,26 +58,17 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationTagDaoImpl.class);
 
-    private static final String CACHE_NAME = "Annotation Tag Cache";
-
     private final AnnotationDbConnProvider connectionProvider;
     private final ExpressionMapper expressionMapper;
-    private final LoadingStroomCache<Integer, Optional<AnnotationTag>> cache;
 
     @Inject
     AnnotationTagDaoImpl(final AnnotationDbConnProvider connectionProvider,
-                         final ExpressionMapperFactory expressionMapperFactory,
-                         final CacheManager cacheManager,
-                         final Provider<AnnotationConfig> annotationConfigProvider) {
+                         final ExpressionMapperFactory expressionMapperFactory) {
         this.connectionProvider = connectionProvider;
         this.expressionMapper = createExpressionMapper(expressionMapperFactory);
-        cache = cacheManager.createLoadingCache(
-                CACHE_NAME,
-                () -> annotationConfigProvider.get().getAnnotationTagCache(),
-                this::load);
     }
 
-    private Optional<AnnotationTag> load(final int id) {
+    public Optional<AnnotationTag> load(final int id) {
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .select(ANNOTATION_TAG.ID,
                         ANNOTATION_TAG.UUID,
@@ -91,10 +78,6 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                 .from(ANNOTATION_TAG)
                 .where(ANNOTATION_TAG.ID.eq(id))
                 .fetchOptional(this::mapToAnnotationTag));
-    }
-
-    public AnnotationTag get(final int id) {
-        return cache.get(id).orElse(null);
     }
 
     private ExpressionMapper createExpressionMapper(final ExpressionMapperFactory expressionMapperFactory) {
@@ -132,7 +115,12 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                         request.getName())
                 .returning(ANNOTATION_TAG.ID)
                 .fetchOne(ANNOTATION_TAG.ID));
-        return AnnotationTag.builder().id(id).uuid(uuid).type(request.getType()).name(request.getName()).build();
+        return AnnotationTag.builder()
+                .id(id)
+                .uuid(uuid)
+                .type(request.getType())
+                .name(request.getName())
+                .build();
     }
 
     @Override
@@ -226,7 +214,7 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                 .map(this::mapToAnnotationTag);
     }
 
-    private AnnotationTag mapToAnnotationTag(final Record record) {
+    AnnotationTag mapToAnnotationTag(final Record record) {
         return AnnotationTag
                 .builder()
                 .id(record.get(ANNOTATION_TAG.ID))
@@ -243,9 +231,7 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
     public void clear() {
         JooqUtil.context(connectionProvider, context -> context.deleteFrom(ANNOTATION_TAG_LINK).execute());
         JooqUtil.context(connectionProvider, context -> context.deleteFrom(ANNOTATION_TAG).execute());
-        cache.clear();
     }
-
 
     public List<Integer> getIds(final AnnotationTagType annotationTagType,
                                 final List<String> wildCardedTypeNames) {

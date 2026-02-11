@@ -66,7 +66,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                 CreateProcessFilterRequest
                         .builder()
                         .pipeline(pipelineRef)
-                        .queryData(new QueryData())
+                        .queryData(QueryData.builder().build())
                         .priority(1)
                         .build());
         assertThat(processorService.find(new ExpressionCriteria()).size())
@@ -78,7 +78,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                 CreateProcessFilterRequest
                         .builder()
                         .pipeline(pipelineRef)
-                        .queryData(new QueryData())
+                        .queryData(QueryData.builder().build())
                         .build());
         assertThat(processorService.find(new ExpressionCriteria()).size())
                 .isEqualTo(1);
@@ -103,7 +103,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    void testFeedIncludeExclude() throws Exception {
+    void testFeedIncludeExclude() {
         final DocRef pipelineRef = new DocRef(PipelineDoc.TYPE, "12345", "Test Pipeline");
 
         final String feedName1 = "1749655604143_1";

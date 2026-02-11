@@ -17,6 +17,7 @@
 package stroom.search.solr.shared;
 
 import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.Field;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.IndexField;
@@ -58,13 +59,13 @@ import java.util.Objects;
         "termOffsets",
         "termPayloads",
         "sortMissingFirst",
-        "sortMissingLast"
+        "sortMissingLast",
+        "denseVectorFieldConfig"
 })
 @JsonInclude(Include.NON_NULL)
 public class SolrIndexField implements IndexField {
 
     public static final String VALID_FIELD_NAME_PATTERN = "[a-zA-Z_](?:[a-zA-Z0-9_])*";
-
 
     @Deprecated
     @JsonProperty("fieldUse")
@@ -115,9 +116,8 @@ public class SolrIndexField implements IndexField {
     private boolean sortMissingFirst;
     @JsonProperty
     private boolean sortMissingLast;
-
-    public SolrIndexField() {
-    }
+    @JsonProperty
+    private final DenseVectorFieldConfig denseVectorFieldConfig;
 
     @JsonCreator
     public SolrIndexField(
@@ -143,9 +143,8 @@ public class SolrIndexField implements IndexField {
             @JsonProperty("termOffsets") final boolean termOffsets,
             @JsonProperty("termPayloads") final boolean termPayloads,
             @JsonProperty("sortMissingFirst") final boolean sortMissingFirst,
-            @JsonProperty("sortMissingLast") final boolean sortMissingLast) {
-
-
+            @JsonProperty("sortMissingLast") final boolean sortMissingLast,
+            @JsonProperty("denseVectorFieldConfig") final DenseVectorFieldConfig denseVectorFieldConfig) {
         this.fldName = convertLegacyName(fldName, fieldName);
         this.fldType = convertLegacyType(fldType, fieldUse);
         this.nativeType = convertLegacyNativeType(nativeType, fieldType);
@@ -165,6 +164,7 @@ public class SolrIndexField implements IndexField {
         this.termPayloads = termPayloads;
         this.sortMissingFirst = sortMissingFirst;
         this.sortMissingLast = sortMissingLast;
+        this.denseVectorFieldConfig = denseVectorFieldConfig;
     }
 
     private static String convertLegacyName(final String name, final String fieldName) {
@@ -393,6 +393,10 @@ public class SolrIndexField implements IndexField {
         return IndexField.super.isCaseSensitive();
     }
 
+    public DenseVectorFieldConfig getDenseVectorFieldConfig() {
+        return denseVectorFieldConfig;
+    }
+
     @JsonIgnore
     @Override
     public String getDisplayValue() {
@@ -409,24 +413,24 @@ public class SolrIndexField implements IndexField {
         }
         final SolrIndexField that = (SolrIndexField) o;
         return stored == that.stored &&
-                indexed == that.indexed &&
-                uninvertible == that.uninvertible &&
-                docValues == that.docValues &&
-                multiValued == that.multiValued &&
-                required == that.required &&
-                omitNorms == that.omitNorms &&
-                omitTermFreqAndPositions == that.omitTermFreqAndPositions &&
-                omitPositions == that.omitPositions &&
-                termVectors == that.termVectors &&
-                termPositions == that.termPositions &&
-                termOffsets == that.termOffsets &&
-                termPayloads == that.termPayloads &&
-                sortMissingFirst == that.sortMissingFirst &&
-                sortMissingLast == that.sortMissingLast &&
-                Objects.equals(fldName, that.fldName) &&
-                fldType == that.fldType &&
-                Objects.equals(nativeType, that.nativeType) &&
-                Objects.equals(defaultValue, that.defaultValue);
+               indexed == that.indexed &&
+               uninvertible == that.uninvertible &&
+               docValues == that.docValues &&
+               multiValued == that.multiValued &&
+               required == that.required &&
+               omitNorms == that.omitNorms &&
+               omitTermFreqAndPositions == that.omitTermFreqAndPositions &&
+               omitPositions == that.omitPositions &&
+               termVectors == that.termVectors &&
+               termPositions == that.termPositions &&
+               termOffsets == that.termOffsets &&
+               termPayloads == that.termPayloads &&
+               sortMissingFirst == that.sortMissingFirst &&
+               sortMissingLast == that.sortMissingLast &&
+               Objects.equals(fldName, that.fldName) &&
+               fldType == that.fldType &&
+               Objects.equals(nativeType, that.nativeType) &&
+               Objects.equals(defaultValue, that.defaultValue);
     }
 
     @Override
@@ -492,6 +496,7 @@ public class SolrIndexField implements IndexField {
         private boolean termPayloads;
         private boolean sortMissingFirst;
         private boolean sortMissingLast;
+        private DenseVectorFieldConfig denseVectorFieldConfig;
 
         private Builder() {
         }
@@ -516,6 +521,7 @@ public class SolrIndexField implements IndexField {
             this.termPayloads = solrIndexField.termPayloads;
             this.sortMissingFirst = solrIndexField.sortMissingFirst;
             this.sortMissingLast = solrIndexField.sortMissingLast;
+            this.denseVectorFieldConfig = solrIndexField.denseVectorFieldConfig;
         }
 
         public Builder fldType(final FieldType fldType) {
@@ -614,6 +620,11 @@ public class SolrIndexField implements IndexField {
             return this;
         }
 
+        public Builder denseVectorFieldConfig(final DenseVectorFieldConfig denseVectorFieldConfig) {
+            this.denseVectorFieldConfig = denseVectorFieldConfig;
+            return this;
+        }
+
         public SolrIndexField build() {
             return new SolrIndexField(
                     null,
@@ -637,7 +648,8 @@ public class SolrIndexField implements IndexField {
                     termOffsets,
                     termPayloads,
                     sortMissingFirst,
-                    sortMissingLast);
+                    sortMissingLast,
+                    denseVectorFieldConfig);
         }
     }
 }

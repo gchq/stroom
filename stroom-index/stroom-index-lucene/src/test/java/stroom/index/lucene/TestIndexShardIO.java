@@ -53,6 +53,7 @@ class TestIndexShardIO extends StroomUnitTest {
     private static final int MAX_DOCS = 1000000000;
 
     private PathCreator pathCreator;
+    private final FieldFactory fieldFactory = new FieldFactory();
 
     public static void main(final String[] args) {
         for (final Object s : System.getProperties().keySet()) {
@@ -85,12 +86,7 @@ class TestIndexShardIO extends StroomUnitTest {
                 .name("Test")
                 .build();
 
-        final IndexShard idx1 = new IndexShard();
-        idx1.setId(1L);
-        idx1.setIndexUuid(index.getUuid());
-        idx1.setPartition("all");
-        idx1.setVolume(volume);
-        idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
+        final IndexShard idx1 = createShard(index, volume);
 
         // Clean up from previous tests.
         final Path dir = IndexShardUtil.getIndexPath(idx1, pathCreator);
@@ -98,7 +94,7 @@ class TestIndexShardIO extends StroomUnitTest {
 
         for (int i = 1; i <= 10; i++) {
             final IndexShardWriter writer = new LuceneIndexShardWriter(
-                    null, new IndexConfig(), idx1, pathCreator, MAX_DOCS);
+                    null, new IndexConfig(), idx1, pathCreator, MAX_DOCS, fieldFactory);
             writer.flush();
             writer.addDocument(buildDocument(i));
             writer.flush();
@@ -116,12 +112,7 @@ class TestIndexShardIO extends StroomUnitTest {
 
         final IndexVolume volume = new IndexVolume();
         volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
-        final IndexShard idx1 = new IndexShard();
-        idx1.setIndexUuid(index.getUuid());
-        idx1.setPartition("all");
-        idx1.setId(1L);
-        idx1.setVolume(volume);
-        idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
+        final IndexShard idx1 = createShard(index, volume);
 
         // Clean up from previous tests.
         final Path dir = IndexShardUtil.getIndexPath(idx1, pathCreator);
@@ -129,7 +120,7 @@ class TestIndexShardIO extends StroomUnitTest {
 
         for (int i = 1; i <= 10; i++) {
             final IndexShardWriter writer = new LuceneIndexShardWriter(
-                    null, new IndexConfig(), idx1, pathCreator, MAX_DOCS);
+                    null, new IndexConfig(), idx1, pathCreator, MAX_DOCS, fieldFactory);
             writer.addDocument(buildDocument(i));
             writer.close();
             assertThat(writer.getDocumentCount()).isEqualTo(i);
@@ -295,19 +286,14 @@ class TestIndexShardIO extends StroomUnitTest {
 
         final IndexVolume volume = new IndexVolume();
         volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
-        final IndexShard idx1 = new IndexShard();
-        idx1.setIndexUuid(index.getUuid());
-        idx1.setPartition("all");
-        idx1.setId(1L);
-        idx1.setVolume(volume);
-        idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
+        final IndexShard idx1 = createShard(index, volume);
 
         // Clean up from previous tests.
         final Path dir = IndexShardUtil.getIndexPath(idx1, pathCreator);
         FileUtil.deleteDir(dir);
 
         final IndexShardWriter writer = new LuceneIndexShardWriter(
-                null, new IndexConfig(), idx1, pathCreator, MAX_DOCS);
+                null, new IndexConfig(), idx1, pathCreator, MAX_DOCS, fieldFactory);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
@@ -327,19 +313,14 @@ class TestIndexShardIO extends StroomUnitTest {
 
         final IndexVolume volume = new IndexVolume();
         volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
-        final IndexShard idx1 = new IndexShard();
-        idx1.setIndexUuid(index.getUuid());
-        idx1.setPartition("all");
-        idx1.setId(1L);
-        idx1.setVolume(volume);
-        idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
+        final IndexShard idx1 = createShard(index, volume);
 
         // Clean up from previous tests.
         final Path dir = IndexShardUtil.getIndexPath(idx1, pathCreator);
         FileUtil.deleteDir(dir);
 
         final IndexShardWriter writer = new LuceneIndexShardWriter(
-                null, new IndexConfig(), idx1, pathCreator, MAX_DOCS);
+                null, new IndexConfig(), idx1, pathCreator, MAX_DOCS, fieldFactory);
 
         for (int i = 1; i <= 10; i++) {
             writer.addDocument(buildDocument(i));
@@ -360,15 +341,10 @@ class TestIndexShardIO extends StroomUnitTest {
         final IndexVolume volume = new IndexVolume();
         final Path testDir = Files.createTempDirectory("stroom");
         volume.setPath(FileUtil.getCanonicalPath(testDir));
-        final IndexShard idx1 = new IndexShard();
-        idx1.setIndexUuid(index.getUuid());
-        idx1.setPartition("all");
-        idx1.setId(1L);
-        idx1.setVolume(volume);
-        idx1.setIndexVersion(LuceneVersionUtil.getCurrentVersion());
+        final IndexShard idx1 = createShard(index, volume);
 
         final IndexShardWriter writer = new LuceneIndexShardWriter(
-                null, new IndexConfig(), idx1, pathCreator, MAX_DOCS);
+                null, new IndexConfig(), idx1, pathCreator, MAX_DOCS, fieldFactory);
 
         Long lastSize = null;
 
@@ -399,5 +375,17 @@ class TestIndexShardIO extends StroomUnitTest {
         assertThat(flushSet.isEmpty()).as("Expected not to flush").isTrue();
         // assertThat( // flushSet.toString()).as("Expected to flush every 2048 docs...").isEqualTo("[2048,
         // 6144, 4096, 8192]");
+    }
+
+    private IndexShard createShard(final LuceneIndexDoc index,
+                                   final IndexVolume volume) {
+        return IndexShard
+                .builder()
+                .id(1L)
+                .indexUuid(index.getUuid())
+                .partition("all")
+                .volume(volume)
+                .indexVersion(LuceneVersionUtil.getCurrentVersion())
+                .build();
     }
 }

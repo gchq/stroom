@@ -217,7 +217,8 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
     private transient IndexVolumePath _indexVolume;
 
     /**
-     * Get the implicit join path to the <code>stroom.index_volume</code> table.
+     * Get the implicit join path to the <code>stroom_v7_11.index_volume</code>
+     * table.
      */
     public IndexVolumePath indexVolume() {
         if (_indexVolume == null)

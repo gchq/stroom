@@ -46,6 +46,22 @@ public class SimpleDuration {
                 : timeUnit;
     }
 
+    @JsonCreator
+    public static SimpleDuration parse(final String value) {
+        if (value == null) {
+            throw new NullPointerException("Null value passed to SimpleDuration");
+        }
+
+        final TimeUnit timeUnit = TimeUnit.parse(value);
+        if (timeUnit != null) {
+            final String num = value.substring(0, value.length() - timeUnit.getShortForm().length());
+            final long l = Long.parseLong(num);
+            return new SimpleDuration(l, timeUnit);
+        }
+
+        throw new RuntimeException("Error parsing simple duration: " + value);
+    }
+
     public long getTime() {
         return time;
     }

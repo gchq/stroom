@@ -28,7 +28,6 @@ import stroom.query.api.datasource.FieldType;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrSynchState;
-import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
@@ -75,9 +74,9 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
         this.solrIndexClientCache = solrIndexClientCache;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public DocRef createDocument(final String name) {
@@ -113,13 +112,13 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
         return store.info(docRef);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -137,13 +136,13 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
         store.remapDependencies(docRef, remappings, null);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public SolrIndexDoc readDocument(final DocRef docRef) {
@@ -283,7 +282,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     }
 
     private SolrIndexField fromAttributes(final Map<String, Object> attributes) {
-        final SolrIndexField field = new SolrIndexField();
+        final SolrIndexField field = SolrIndexField.builder().build();
         setString(attributes, "name", field::setFldName);
         setString(attributes, "type", field::setNativeType);
         setString(attributes, "default", field::setDefaultValue);
@@ -355,13 +354,13 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -409,9 +408,9 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
         return null;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public List<DocRef> list() {

@@ -102,6 +102,9 @@
 
   <!-- Add description both case sensitive and insensitive -->
   <xsl:template match="Description">
+    <data name="Dense">
+      <xsl:attribute name="value" select="." />
+    </data>
     <data name="Description">
       <xsl:attribute name="value" select="." />
     </data>

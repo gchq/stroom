@@ -18,9 +18,12 @@ package stroom.search;
 
 import stroom.index.impl.IndexShardCreator;
 import stroom.index.shared.LuceneVersion;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 class TestInteractiveSearchLucene1031 extends AbstractInteractiveSearchTest {
 
@@ -36,5 +39,12 @@ class TestInteractiveSearchLucene1031 extends AbstractInteractiveSearchTest {
             super.setup();
             doneSetup = true;
         }
+    }
+
+    @Test
+    void testDenseVector() {
+        final ExpressionOperator.Builder expression = ExpressionOperator.builder();
+        expression.addTerm("Dense", Condition.EQUALS, "E0567");
+        test(expression, 26);
     }
 }

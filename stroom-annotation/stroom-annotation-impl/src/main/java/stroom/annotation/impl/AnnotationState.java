@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,20 +22,28 @@ import stroom.util.entityevent.EntityEventHandler;
 
 import jakarta.inject.Singleton;
 
+import java.time.Instant;
+import java.util.concurrent.atomic.AtomicLong;
+
 @Singleton
 @EntityEventHandler(
         type = "Annotation",
         action = {EntityAction.UPDATE})
 public class AnnotationState implements EntityEvent.Handler {
 
-    private long lastChangeTime;
+    private final AtomicLong lastChangeTime = new AtomicLong();
 
     public long getLastChangeTime() {
-        return lastChangeTime;
+        return lastChangeTime.get();
     }
 
     @Override
     public void onChange(final EntityEvent event) {
-        lastChangeTime = System.currentTimeMillis();
+        lastChangeTime.set(System.currentTimeMillis());
+    }
+
+    @Override
+    public String toString() {
+        return Instant.ofEpochMilli(lastChangeTime.get()).toString();
     }
 }

@@ -48,7 +48,6 @@ public class CredentialsPresenter
                                 final CredentialsView view,
                                 final CredentialsListPresenter credentialsListPresenter) {
         super(eventBus, view);
-        credentialsListPresenter.setParentPresenter(this);
         this.setInSlot(CredentialsListPresenter.CREDENTIALS_LIST, credentialsListPresenter);
     }
 

@@ -1,0 +1,35 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:d="urn:import:stroom.widget.customdatebox.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="feedDependencies"
+                        label="Feed Dependencies"
+                        addStyleNames="dock-max">
+            <g:SimplePanel ui:field="feedDependencies" addStyleNames="max"/>
+        </form:FormGroup>
+        <form:FormGroup identity="minProcessingDelayEnabled"
+                        label="Enable Minimum Processing Delay"
+                        helpText="Select if you want to enable a minimum processing delay.">
+            <tickbox:CustomCheckBox ui:field="minProcessingDelayEnabled"/>
+        </form:FormGroup>
+        <form:FormGroup identity="minProcessingDelay"
+                        label="Minimum Processing Delay"
+                        helpText="What is the minimum length of time we should wait until we process this data after we have satisfied the dependencies. This should be at least long enough for the effective feed cache to be invalidated, e.g. 10 minutes.">
+            <d:DurationPicker ui:field="minProcessingDelay"/>
+        </form:FormGroup>
+        <form:FormGroup identity="maxProcessingDelayEnabled"
+                        label="Enable Maximum Processing Delay"
+                        helpText="Select if you want to enable a maximum processing delay.">
+            <tickbox:CustomCheckBox ui:field="maxProcessingDelayEnabled"/>
+        </form:FormGroup>
+        <form:FormGroup identity="maxProcessingDelay"
+                        label="Maximum Processing Delay"
+                        helpText="What is the maximum length of time we should wait until we process this data if the dependencies are not satisfied. This allows data to continue processing if we stop receiving reference data.">
+            <d:DurationPicker ui:field="maxProcessingDelay"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>
+

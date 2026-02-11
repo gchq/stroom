@@ -161,9 +161,9 @@ class FolderExplorerActionHandler implements ExplorerActionHandler, ImportExport
         return Set.of();
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -179,9 +179,9 @@ class FolderExplorerActionHandler implements ExplorerActionHandler, ImportExport
     public void remapDependencies(final DocRef docRef, final Map<DocRef, DocRef> remappings) {
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
 
     @Override
@@ -200,9 +200,9 @@ class FolderExplorerActionHandler implements ExplorerActionHandler, ImportExport
                 .collect(Collectors.toSet());
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     @Override
     public DocRef importDocument(final DocRef docRef,
                                  final Map<String, byte[]> dataMap,

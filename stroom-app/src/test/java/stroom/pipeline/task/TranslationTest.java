@@ -36,6 +36,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.PipelineStore;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SharedStepData;
@@ -588,7 +589,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
 
         final PipelineStepRequest.Builder requestBuilder = PipelineStepRequest.builder();
-        requestBuilder.pipeline(pipelineRef);
+
+
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+
+        requestBuilder.pipelineDoc(pipelineDoc);
         requestBuilder.criteria(findMetaCriteria);
         requestBuilder.timeout(Long.MAX_VALUE);
 
@@ -632,7 +637,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             final SharedElementData elementData = stepData.getElementData(elementId);
             assertThat(elementData.getIndicators() != null
                        && elementData.getIndicators().getMaxSeverity() != null).as(
-                    "Translation stepping has indicators.").isFalse();
+                    "Translation stepping has indicators: " + elementData.getIndicators()).isFalse();
 //            assertThat(elementData.getCodeIndicators() != null
 //                    && elementData.getCodeIndicators().getMaxSeverity() != null).as(
 //                    "Translation stepping has code indicators.").isFalse();

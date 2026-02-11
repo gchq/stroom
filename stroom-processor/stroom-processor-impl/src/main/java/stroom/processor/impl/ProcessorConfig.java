@@ -140,9 +140,10 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     }
 
     @JsonPropertyDescription("How long to keep tasks and filters on the database for before deleting them " +
-            "(if they are complete). After a duration of 'deleteAge', they will be logically deleted and unavailable " +
-            "in the user interface. After a subsequent duration of 'deleteAge' they will be physically deleted. " +
-            "In ISO-8601 duration format, e.g. 'P1DT12H'")
+                             "(if they are complete). After a duration of 'deleteAge', they will be logically " +
+                             "deleted and unavailable in the user interface. After a subsequent duration of " +
+                             "'deleteAge' they will be physically deleted. " +
+                             "In ISO-8601 duration format, e.g. 'P1DT12H'")
     public StroomDuration getDeleteAge() {
         return deleteAge;
     }
@@ -153,21 +154,24 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     }
 
     @JsonPropertyDescription("The number of tasks to attempt to queue from filters considered in priority order. " +
-            "Note that this number will be exceeded if we have currently queued tasks from lower priority filters.")
+                             "Note that this number will be exceeded if we have currently queued tasks from lower " +
+                             "priority filters.")
     public int getQueueSize() {
         return queueSize;
     }
 
     @JsonPropertyDescription("How many tasks should we try to create in the DB ready to be queued." +
-            "Note that the number of tasks created may be greater than this number as each task creation thread will " +
-            "try and create the same number of tasks.")
+                             "Note that the number of tasks created may be greater than this number as each task " +
+                             "creation thread will " +
+                             "try and create the same number of tasks.")
     public int getTasksToCreate() {
         return tasksToCreate;
     }
 
     @JsonPropertyDescription("Do we want to eagerly create tasks beyond the concurrent processing limit specified by " +
-            "filters? If we don't then those filters will likely run out of queued tasks to process before new tasks " +
-            "are created.")
+                             "filters? If we don't then those filters will likely run out of queued tasks to process " +
+                             "before new tasks " +
+                             "are created.")
     public boolean isCreateTasksBeyondProcessLimit() {
         return createTasksBeyondProcessLimit;
     }
@@ -178,7 +182,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     }
 
     @JsonPropertyDescription("The maximum number of rows to insert in a single multi insert statement, " +
-            "e.g. INSERT INTO X VALUES (...), (...), (...)")
+                             "e.g. INSERT INTO X VALUES (...), (...), (...)")
     public int getDatabaseMultiInsertMaxBatchSize() {
         return databaseMultiInsertMaxBatchSize;
     }
@@ -205,13 +209,13 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     }
 
     @JsonPropertyDescription("How long should we wait to queue new tasks if we previously managed to queue 0 new " +
-            "tasks.")
+                             "tasks.")
     public StroomDuration getWaitToQueueTasksDuration() {
         return waitToQueueTasksDuration;
     }
 
     @JsonPropertyDescription("How long should we wait before retrying task creation for previously non producing " +
-            "filters.")
+                             "filters.")
     public StroomDuration getSkipNonProducingFiltersDuration() {
         return skipNonProducingFiltersDuration;
     }
@@ -223,22 +227,22 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     @Override
     public String toString() {
         return "ProcessorConfig{" +
-                "dbConfig=" + dbConfig +
-                ", assignTasks=" + assignTasks +
-                ", deleteAge=" + deleteAge +
-                ", fillTaskQueue=" + fillTaskQueue +
-                ", queueSize=" + queueSize +
-                ", tasksToCreate=" + tasksToCreate +
-                ", taskCreationThreadCount=" + taskCreationThreadCount +
-                ", databaseMultiInsertMaxBatchSize=" + databaseMultiInsertMaxBatchSize +
-                ", processorCache=" + processorCache +
-                ", processorFilterCache=" + processorFilterCache +
-                ", processorNodeCache=" + processorNodeCache +
-                ", processorFeedCache=" + processorFeedCache +
-                ", disownDeadTasksAfter=" + disownDeadTasksAfter +
-                ", waitToQueueTasksDuration=" + waitToQueueTasksDuration +
-                ", skipNonProducingFiltersDuration=" + skipNonProducingFiltersDuration +
-                '}';
+               "dbConfig=" + dbConfig +
+               ", assignTasks=" + assignTasks +
+               ", deleteAge=" + deleteAge +
+               ", fillTaskQueue=" + fillTaskQueue +
+               ", queueSize=" + queueSize +
+               ", tasksToCreate=" + tasksToCreate +
+               ", taskCreationThreadCount=" + taskCreationThreadCount +
+               ", databaseMultiInsertMaxBatchSize=" + databaseMultiInsertMaxBatchSize +
+               ", processorCache=" + processorCache +
+               ", processorFilterCache=" + processorFilterCache +
+               ", processorNodeCache=" + processorNodeCache +
+               ", processorFeedCache=" + processorFeedCache +
+               ", disownDeadTasksAfter=" + disownDeadTasksAfter +
+               ", waitToQueueTasksDuration=" + waitToQueueTasksDuration +
+               ", skipNonProducingFiltersDuration=" + skipNonProducingFiltersDuration +
+               '}';
     }
 
     @BootStrapConfig

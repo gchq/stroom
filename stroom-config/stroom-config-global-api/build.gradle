@@ -1,0 +1,6 @@
+ext.moduleName = 'stroom.config.global.api'
+
+dependencies {
+    implementation project(':stroom-docref')
+    implementation project(':stroom-util-shared')
+}

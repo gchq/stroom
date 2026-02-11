@@ -36,6 +36,7 @@ import stroom.widget.util.client.Templates;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.cell.client.ValueUpdater;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.GwtEvent;
@@ -47,8 +48,6 @@ import com.google.gwt.view.client.CellPreviewEvent;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.function.Function;
-
-import static com.google.gwt.dom.client.BrowserEvents.MOUSEDOWN;
 
 public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
         implements HasHandlers, EventCell {
@@ -74,7 +73,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
                         final Function<T_ROW, UserRef> docRefFunction,
                         final Function<T_ROW, String> cssClassFunction,
                         final DisplayType displayType) {
-        super(MOUSEDOWN);
+        super(BrowserEvents.MOUSEDOWN);
         this.eventBus = eventBus;
         this.securityContext = securityContext;
         this.showIcon = showIcon;
@@ -87,7 +86,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
     @Override
     public boolean isConsumed(final CellPreviewEvent<?> event) {
         final NativeEvent nativeEvent = event.getNativeEvent();
-        if (MOUSEDOWN.equals(nativeEvent.getType()) && MouseUtil.isPrimary(nativeEvent)) {
+        if (BrowserEvents.MOUSEDOWN.equals(nativeEvent.getType()) && MouseUtil.isPrimary(nativeEvent)) {
             final Element element = nativeEvent.getEventTarget().cast();
             return ElementUtil.hasClassName(element, COPY_CLASS_NAME, 5) ||
                    ElementUtil.hasClassName(element, OPEN_CLASS_NAME, 5);
@@ -104,7 +103,7 @@ public class UserRefCell<T_ROW> extends AbstractCell<T_ROW>
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
         final UserRef userRef = docRefFunction.apply(value);
         if (userRef != null) {
-            if (MOUSEDOWN.equals(event.getType()) && MouseUtil.isPrimary(event)) {
+            if (BrowserEvents.MOUSEDOWN.equals(event.getType()) && MouseUtil.isPrimary(event)) {
                 onEnterKeyDown(context, parent, value, event, valueUpdater);
             }
         }

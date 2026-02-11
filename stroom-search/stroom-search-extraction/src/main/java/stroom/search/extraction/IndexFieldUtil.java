@@ -55,7 +55,7 @@ public class IndexFieldUtil {
                 final long val = DateUtil.parseNormalDateTimeString(value);
                 return ValDate.create(val);
             }
-            case TEXT -> {
+            case TEXT, DENSE_VECTOR -> {
                 return ValString.create(value);
             }
         }

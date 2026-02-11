@@ -17,6 +17,7 @@
 package stroom.util.io;
 
 import stroom.test.common.DirectorySnapshot;
+import stroom.test.common.DirectorySnapshot.PathFlag;
 import stroom.test.common.DirectorySnapshot.Snapshot;
 import stroom.test.common.TestUtil;
 import stroom.util.concurrent.SimpleExecutor;
@@ -41,8 +42,6 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static stroom.test.common.DirectorySnapshot.PathFlag.DIRECTORY;
-import static stroom.test.common.DirectorySnapshot.PathFlag.REGULAR_FILE;
 
 class TestFileUtil {
 
@@ -237,13 +236,13 @@ class TestFileUtil {
 
         assertThat(snapshot.stream()
                 .filter(pathSnapshot ->
-                        pathSnapshot.flags().contains(REGULAR_FILE))
+                        pathSnapshot.flags().contains(PathFlag.REGULAR_FILE))
                 .count())
                 .isEqualTo(6);
 
         assertThat(snapshot.stream()
                 .filter(pathSnapshot ->
-                        pathSnapshot.flags().contains(DIRECTORY))
+                        pathSnapshot.flags().contains(PathFlag.DIRECTORY))
                 .count())
                 .isEqualTo(6);
     }

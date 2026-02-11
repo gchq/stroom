@@ -83,6 +83,7 @@
     <inherits name="stroom.preferences.Preferences" />
 
     <!-- Additional -->
+    <inherits name="stroom.ai.AI" />
     <inherits name="stroom.dashboard.Dashboard"/>
     <inherits name="stroom.expression.Expression"/>
     <inherits name="stroom.query.Query"/>

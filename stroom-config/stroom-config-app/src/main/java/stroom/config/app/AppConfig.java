@@ -17,6 +17,7 @@
 package stroom.config.app;
 
 import stroom.activity.impl.db.ActivityConfig;
+import stroom.ai.shared.AskStroomAIConfig;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.aws.s3.impl.S3Config;
@@ -29,7 +30,7 @@ import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
-import stroom.credentials.api.CredentialsConfig;
+import stroom.credentials.impl.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
@@ -43,7 +44,6 @@ import stroom.index.impl.IndexFieldDbConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
-import stroom.langchain.api.ChatMemoryConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.node.impl.NodeConfig;
@@ -83,12 +83,12 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_ACTIVITY = "activity";
     public static final String PROP_NAME_ANNOTATION = "annotation";
     public static final String PROP_NAME_ANALYTICS = "analytics";
+    public static final String PROP_NAME_ASK_STROOM_AI = "askStroomAi";
     public static final String PROP_NAME_CONTENT_STORE = "contentStore";
     public static final String PROP_NAME_AUTHENTICATION = "authentication";
     public static final String PROP_NAME_AUTO_CONTENT_CREATION = "autoContentCreation";
     public static final String PROP_NAME_BENCHMARK = "benchmark";
     public static final String PROP_NAME_BYTE_BUFFER_POOL = "byteBufferPool";
-    public static final String PROP_NAME_CHAT_MEMORY = "chatMemory";
     public static final String PROP_NAME_CLUSTER = "cluster";
     public static final String PROP_NAME_CLUSTER_LOCK = "clusterLock";
     public static final String PROP_NAME_CLUSTER_TASK = "clusterTask";
@@ -141,10 +141,10 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ActivityConfig activityConfig;
     private final AnalyticsConfig analyticsConfig;
     private final AnnotationConfig annotationConfig;
+    private final AskStroomAIConfig askStroomAIConfig;
     private final ContentStoreConfig contentStoreConfig;
     private final AutoContentCreationConfig autoContentCreationConfig;
     private final ByteBufferPoolConfig byteBufferPoolConfig;
-    private final ChatMemoryConfig chatMemoryConfig;
     private final ClusterConfig clusterConfig;
     private final ClusterLockConfig clusterLockConfig;
     private final CommonDbConfig commonDbConfig;
@@ -197,14 +197,14 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new ActivityConfig(),
                 new AnalyticsConfig(),
                 new AnnotationConfig(),
-                new ContentStoreConfig(),
+                new AskStroomAIConfig(),
                 new AutoContentCreationConfig(),
                 new ByteBufferPoolConfig(),
-                new ChatMemoryConfig(),
                 new ClusterConfig(),
                 new ClusterLockConfig(),
                 new CommonDbConfig(),
                 new ContentPackImportConfig(),
+                new ContentStoreConfig(),
                 new CredentialsConfig(),
                 new DashboardConfig(),
                 new DataConfig(),
@@ -252,14 +252,14 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
                      @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                      @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
-                     @JsonProperty(PROP_NAME_CONTENT_STORE) final ContentStoreConfig contentStoreConfig,
+                     @JsonProperty(PROP_NAME_ASK_STROOM_AI) final AskStroomAIConfig askStroomAIConfig,
                      @JsonProperty(PROP_NAME_AUTO_CONTENT_CREATION) final AutoContentCreationConfig autoContentCreationConfig,
                      @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL) final ByteBufferPoolConfig byteBufferPoolConfig,
-                     @JsonProperty(PROP_NAME_CHAT_MEMORY) final ChatMemoryConfig chatMemoryConfig,
                      @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
                      @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                      @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
                      @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
+                     @JsonProperty(PROP_NAME_CONTENT_STORE) final ContentStoreConfig contentStoreConfig,
                      @JsonProperty(PROP_NAME_CREDENTIALS) final CredentialsConfig credentialsConfig,
                      @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                      @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
@@ -303,10 +303,10 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.activityConfig = activityConfig;
         this.analyticsConfig = analyticsConfig;
         this.annotationConfig = annotationConfig;
+        this.askStroomAIConfig = askStroomAIConfig;
         this.contentStoreConfig = contentStoreConfig;
         this.autoContentCreationConfig = autoContentCreationConfig;
         this.byteBufferPoolConfig = byteBufferPoolConfig;
-        this.chatMemoryConfig = chatMemoryConfig;
         this.clusterConfig = clusterConfig;
         this.clusterLockConfig = clusterLockConfig;
         this.commonDbConfig = commonDbConfig;
@@ -383,6 +383,11 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         return annotationConfig;
     }
 
+    @JsonProperty(PROP_NAME_ASK_STROOM_AI)
+    public AskStroomAIConfig getAskStroomAIConfig() {
+        return askStroomAIConfig;
+    }
+
     @JsonProperty(PROP_NAME_CONTENT_STORE)
     public ContentStoreConfig getContentStoreConfig() {
         return contentStoreConfig;
@@ -401,11 +406,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL)
     public ByteBufferPoolConfig getByteBufferPoolConfig() {
         return byteBufferPoolConfig;
-    }
-
-    @JsonProperty(PROP_NAME_CHAT_MEMORY)
-    public ChatMemoryConfig getChatMemoryConfig() {
-        return chatMemoryConfig;
     }
 
     @JsonProperty(PROP_NAME_CLUSTER)

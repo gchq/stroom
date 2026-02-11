@@ -13,6 +13,124 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.23] - 2026-02-09
+
+* Feature **#5313** : Allow users to prevent empty reports from being sent on a per report basis.
+
+
+## [v7.11-beta.22] - 2026-02-07
+
+* Feature **#5314** : Add `rowCount`, `fileType` (EXCEL|CSV|TSV), `fileName` to the templating context when generating email reports.
+
+* Feature **#5313** : Allow users to prevent empty reports from being sent on a per report basis.
+
+* Feature : Add enabled/disabled styling to table rows in the Report screens.
+
+* Feature : Add column header tool tips to tables in the Report screens.
+
+* Feature : Change the Report > Notifications _Max_ column to be right aligned.
+
+* Feature : Add red/green sytling to the Report > Notifications _Status_ column (Complete/Error).
+
+* Bug : Fix Reports not respecting the start date during execution. It was executing from the last tracker time rather than from the start date, if the start date is later.
+
+
+## [v7.11-beta.21] - 2026-02-04
+
+* Bug **#5384** : Improvements to annotations database code.
+
+
+## [v7.11-beta.20] - 2026-01-28
+
+* Bug **#5360** : Fix NPE when annotation data retention fires change events.
+
+* Bug **#5361** : Fix invalid SQL error when annotation data retention runs.
+
+* Bug : Fix 'Data source already in use' errors when using annotations.
+
+* Bug : Add missing cluster lock protection for annotation data retention job.
+
+* Bug **#5359** : Fix 'Data source already in use' errors in the _Data Delete_ job.
+
+* Bug **#5185** : Fix dashboard maximise NPE.
+
+* Bug **#5370** : Hide rule notification doc checkbox on reports as it is not applicable.
+
+* Bug **#5311** : Fix documentation markdown edit bug.
+
+* Bug **#5234** : Fix spaces in `createAnnotation()` function link text.
+
+* Bug **#5364** : Change PlanB snapshots to prevent closure when in use.
+
+
+## [v7.11-beta.19] - 2026-01-14
+
+* Issue **#5355** : Fix HttpClient being closed by cache while in use.
+
+
+## [v7.11-beta.18] - 2026-01-13
+
+* Issue **#5303** : Add debug to index dense vector retrieval.
+
+* Issue **#5344** : Fix credential manager UI.
+
+* Issue **#5342** : Fix issue querying Plan B shards where some stores have been deleted.
+
+* Issue **#5351** : Make SSH key and known host configuration clearer.
+
+* Issue **#5353** : Fix keystore config issue.
+
+
+## [v7.11-beta.17] - 2026-01-08
+
+* Issue **#5282** : Processor task creation now supports feed dependencies to delay processing until reference data is available.
+
+* Issue **#5339** : Fix NPE thrown when adding vises to dashboards.
+
+* Issue **#5337** : Fix analytic doc serialisation.
+
+
+## [v7.11-beta.16] - 2026-01-08
+
+* Issue **#5100** : Fix selection filters auto quoting parameter replacements.
+
+
+## [v7.11-beta.15] - 2026-01-07
+
+* Issue **#4124** : Fix NodeResultSerialiser and add node name to errors.
+
+* Issue **#5256** : Add option to omit documentation from rule detection.
+
+* Issue **#5309** : Add long support to pathway values.
+
+* Remove static imports except in test classes.
+
+* Uplift base docker images to eclipse-temurin:25.0.1_8-jdk-alpine-3.23.
+
+* Uplift dependency com.hubspot.jinjava:jinjava from 2.7.2 to 2.8.2.
+
+* Uplift dependency swagger-* from 2.2.38 to 2.2.41.
+
+* Uplift com.sun.xml.bind:jaxb-impl from 4.0.5 to 4.0.6.
+
+* Uplift lanchain4j dependencies from 1.8.0-beta15 to 1.10.0-beta18 and 1.8.0 to 1.10.0.
+
+* Issue **#5303** : Make AI HTTP connection configurable.
+
+* Issue **#5303** : Make AI HTTP SSL certificate stores configurable.
+
+* Issue **#5303** : Add KNN dense vector support to Lucene indexes.
+
+* Issue **#5303** : Pass only visible columns to the Ask Stroom AI service.
+
+* Issue **#5317** : Pathways now load current state to not endlessly output mutations.
+
+* Issue **#4123** : New pipeline stepping mode.
+
+* Issue **#5100** : Fix selection filters auto quoting parameter replacements.
+
+* Issue **#5318** : Fix Plan B session condensation.
+
 * Issue **#5288** : Fix config defaults for `ForwardHttpPostConfig` and `HttpClientConfiguration`.
 
 * Issue **#5281** : Fix behaviour of query expression IN condition.
@@ -1882,7 +2000,16 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.14...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.23...HEAD
+[v7.11-beta.23]: https://github.com/gchq/stroom/compare/v7.11-beta.22...v7.11-beta.23
+[v7.11-beta.22]: https://github.com/gchq/stroom/compare/v7.11-beta.21...v7.11-beta.22
+[v7.11-beta.21]: https://github.com/gchq/stroom/compare/v7.11-beta.20...v7.11-beta.21
+[v7.11-beta.20]: https://github.com/gchq/stroom/compare/v7.11-beta.19...v7.11-beta.20
+[v7.11-beta.19]: https://github.com/gchq/stroom/compare/v7.11-beta.18...v7.11-beta.19
+[v7.11-beta.18]: https://github.com/gchq/stroom/compare/v7.11-beta.17...v7.11-beta.18
+[v7.11-beta.17]: https://github.com/gchq/stroom/compare/v7.11-beta.16...v7.11-beta.17
+[v7.11-beta.16]: https://github.com/gchq/stroom/compare/v7.11-beta.15...v7.11-beta.16
+[v7.11-beta.15]: https://github.com/gchq/stroom/compare/v7.11-beta.14...v7.11-beta.15
 [v7.11-beta.14]: https://github.com/gchq/stroom/compare/v7.11-beta.13...v7.11-beta.14
 [v7.11-beta.13]: https://github.com/gchq/stroom/compare/v7.11-beta.12...v7.11-beta.13
 [v7.11-beta.12]: https://github.com/gchq/stroom/compare/v7.11-beta.11...v7.11-beta.12

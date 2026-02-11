@@ -26,7 +26,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
-import javax.print.Doc;
 
 /**
  * {@value #CLASS_DESC}
@@ -53,7 +52,7 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
     @Schema(description = "The name for the data source",
             example = "MyStatistic")
     @JsonProperty
-    private String name;
+    private final String name;
 
     public DocRef() {
         this("test", "test");

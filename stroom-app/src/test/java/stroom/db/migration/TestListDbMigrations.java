@@ -48,10 +48,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static stroom.util.ConsoleColour.BLUE;
-import static stroom.util.ConsoleColour.RED;
-import static stroom.util.ConsoleColour.YELLOW;
-
 @Disabled // Manual running only as it is just listing stuff, not really a test
 @Isolated // This is walking the file tree so doesn't like it if another test is mutating
 // the file tree at the same time.
@@ -96,7 +92,7 @@ public class TestListDbMigrations {
             final StringBuilder sb = new StringBuilder();
             sb.append(LogUtil.message("""
                     ### Migration Scripts
-
+                    \s
                     <!--
                     #############################################################################################
                     #                                                                                           #
@@ -104,10 +100,10 @@ public class TestListDbMigrations {
                     #                                                                                           #
                     #############################################################################################
                     -->
-
+                    \s
                     For information purposes only, the following are the database migrations that will be run \
                     when upgrading to {} from the previous minor version.
-
+                    \s
                     Note, the `legacy` module will run first (if present) then the other module will run in no \
                     particular order.""", latestVersion));
 
@@ -120,8 +116,8 @@ public class TestListDbMigrations {
                         final List<Script> scripts = entry.getValue();
 
                         sb.append(LogUtil.message("""
-
-
+                                \s
+                                \s
                                 #### Module `{}`""", module));
 
                         scripts.forEach(script -> {
@@ -152,12 +148,12 @@ public class TestListDbMigrations {
         }
 
         final String template = """
-
-
+                \s
+                \s
                 ##### Script `{}`
-
+                \s
                 **Path**: `{}`
-
+                \s
                 ```sql
                 {}
                 ```
@@ -173,12 +169,12 @@ public class TestListDbMigrations {
         final String branch = version.getMajor() + "." + version.getMinor();
         final String githubUrl = "https://github.com/gchq/stroom/tree/" + branch + "/" + script.relPath.toString();
         final String template = """
-
-
+                \s
+                \s
                 ##### Script `{}`
-
+                \s
                 **Path**: `{}`
-
+                \s
                 It is not possible to display the content here.
                 The file can be viewed on : {{< external-link "GitHub" "{}" >}}""";
         sb.append(LogUtil.message(
@@ -266,11 +262,11 @@ public class TestListDbMigrations {
 
         final ConsoleColour colour;
         if (filename.endsWith(".sql")) {
-            colour = YELLOW;
+            colour = ConsoleColour.YELLOW;
         } else if (filename.endsWith(".java")) {
-            colour = BLUE;
+            colour = ConsoleColour.BLUE;
         } else {
-            colour = RED;
+            colour = ConsoleColour.RED;
         }
         stringBuilder
                 .append(Strings.padEnd(filename, maxFileNameLength, ' '), colour)

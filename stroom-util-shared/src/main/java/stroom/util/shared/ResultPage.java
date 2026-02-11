@@ -326,12 +326,17 @@ public class ResultPage<T> implements Serializable {
         return values.isEmpty();
     }
 
+    public boolean hasItems() {
+        return !values.isEmpty();
+    }
+
     /**
      * @return the first item or null if the list is empty
      */
     @JsonIgnore
     public T getFirst() {
         if (!values.isEmpty()) {
+            //noinspection SequencedCollectionMethodCanBeUsed // Not in GWT
             return values.get(0);
         } else {
             return null;

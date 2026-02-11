@@ -17,6 +17,7 @@
 ext.moduleName = 'stroom.query.impl'
 
 dependencies {
+    implementation project(':stroom-config:stroom-config-global-api')
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dashboard:stroom-dashboard-impl')
     implementation project(':stroom-docref')
@@ -30,6 +31,7 @@ dependencies {
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-langchain:stroom-langchain-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
@@ -43,6 +45,8 @@ dependencies {
     implementation libs.guice
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.inject
+    implementation libs.langchain4j
+    implementation libs.langchain4j.open.ai
     implementation libs.restygwt
     implementation libs.slf4j.api
     implementation libs.ws.rs.api

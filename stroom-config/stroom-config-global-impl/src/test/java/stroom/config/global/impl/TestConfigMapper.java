@@ -17,6 +17,7 @@
 package stroom.config.global.impl;
 
 import stroom.activity.impl.db.ActivityConfig;
+import stroom.ai.shared.AskStroomAIConfig;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.aws.s3.impl.S3Config;
@@ -39,7 +40,7 @@ import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
 import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
-import stroom.credentials.api.CredentialsConfig;
+import stroom.credentials.impl.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.db.DocStoreConfig;
@@ -54,7 +55,6 @@ import stroom.index.impl.IndexFieldDbConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
-import stroom.langchain.api.ChatMemoryConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbLibraryConfig;
@@ -936,14 +936,14 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
                 @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                 @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
-                @JsonProperty(PROP_NAME_CONTENT_STORE) final ContentStoreConfig appStoreConfig,
+                @JsonProperty(PROP_NAME_ASK_STROOM_AI) final AskStroomAIConfig askStroomAIConfig,
                 @JsonProperty(PROP_NAME_AUTO_CONTENT_CREATION) final AutoContentCreationConfig autoContentCreationConfig,
                 @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL) final ByteBufferPoolConfig byteBufferPoolConfig,
-                @JsonProperty(PROP_NAME_CHAT_MEMORY) final ChatMemoryConfig chatMemoryConfig,
                 @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
                 @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                 @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
                 @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
+                @JsonProperty(PROP_NAME_CONTENT_STORE) final ContentStoreConfig contentStoreConfig,
                 @JsonProperty(PROP_NAME_CREDENTIALS) final CredentialsConfig credentialsConfig,
                 @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                 @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
@@ -1002,14 +1002,14 @@ class TestConfigMapper {
                     activityConfig,
                     analyticsConfig,
                     annotationConfig,
-                    appStoreConfig,
+                    askStroomAIConfig,
                     autoContentCreationConfig,
                     byteBufferPoolConfig,
-                    chatMemoryConfig,
                     clusterConfig,
                     clusterLockConfig,
                     commonDbConfig,
                     contentPackImportConfig,
+                    contentStoreConfig,
                     credentialsConfig,
                     dashboardConfig,
                     dataConfig,

@@ -12,6 +12,7 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.InverseForeignKey;
+import org.jooq.JSON;
 import org.jooq.Name;
 import org.jooq.Path;
 import org.jooq.PlainSQL;
@@ -96,6 +97,11 @@ public class IndexField extends TableImpl<IndexFieldRecord> {
      */
     public final TableField<IndexFieldRecord, Boolean> CASE_SENSITIVE = createField(DSL.name("case_sensitive"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
 
+    /**
+     * The column <code>stroom.index_field.dense_vector</code>.
+     */
+    public final TableField<IndexFieldRecord, JSON> DENSE_VECTOR = createField(DSL.name("dense_vector"), SQLDataType.JSON, this, "");
+
     private IndexField(Name alias, Table<IndexFieldRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -174,8 +180,8 @@ public class IndexField extends TableImpl<IndexFieldRecord> {
     private transient IndexFieldSourcePath _indexFieldSource;
 
     /**
-     * Get the implicit join path to the <code>stroom.index_field_source</code>
-     * table.
+     * Get the implicit join path to the
+     * <code>stroom_v7_11.index_field_source</code> table.
      */
     public IndexFieldSourcePath indexFieldSource() {
         if (_indexFieldSource == null)

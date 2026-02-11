@@ -16,6 +16,7 @@
 
 package stroom.query.client.presenter;
 
+import stroom.ai.shared.QueryTableContext;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.annotation.shared.AnnotationDecorationFields;
@@ -37,6 +38,7 @@ import stroom.dashboard.client.table.TableExpandButton;
 import stroom.dashboard.client.table.TableRowStyles;
 import stroom.dashboard.client.table.TableUpdateEvent;
 import stroom.dashboard.client.table.cf.RulesPresenter;
+import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.grid.client.MessagePanel;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
@@ -135,6 +137,7 @@ public class QueryResultTablePresenter
     private final InlineSvgToggleButton valueFilterButton;
     private final ButtonView annotateButton;
     private final EventBus eventBus;
+    private final ButtonView askAiButton;
 
     private Supplier<QueryTablePreferences> queryTablePreferencesSupplier;
     private Consumer<QueryTablePreferences> queryTablePreferencesConsumer;
@@ -229,6 +232,11 @@ public class QueryResultTablePresenter
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
         annotateButton.setVisible(annotationManager.isEnabled());
 
+        // Ask AI
+        askAiButton = pagerView.addButton(SvgPresets.AI);
+        askAiButton.setTitle("Ask Stroom AI");
+        pagerView.addButton(askAiButton);
+
         annotationManager.setColumnSupplier(() -> currentColumns);
     }
 
@@ -317,6 +325,23 @@ public class QueryResultTablePresenter
             if (MouseUtil.isPrimary(event)) {
                 annotationManager.showAnnotationMenu(event.getNativeEvent(),
                         selectionModel.getSelectedItems());
+            }
+        }));
+
+        registerHandler(askAiButton.addClickHandler(event -> {
+            if (currentSearchModel != null) {
+                if (currentSearchModel.isSearching()) {
+                    ConfirmEvent.fire(QueryResultTablePresenter.this,
+                            "Search still in progress. AI response may be based on incomplete data. " +
+                            "Do you wish to continue? ",
+                            ok -> {
+                                if (ok) {
+                                    askStroomAi();
+                                }
+                            });
+                } else {
+                    askStroomAi();
+                }
             }
         }));
 
@@ -1005,5 +1030,23 @@ public class QueryResultTablePresenter
     @Override
     public HandlerRegistration addUpdateHandler(final TableUpdateEvent.Handler handler) {
         return eventBus.addHandler(TableUpdateEvent.getType(), handler);
+    }
+
+    private void askStroomAi() {
+        if (currentSearchModel != null) {
+            final QueryKey queryKey = currentSearchModel.getCurrentQueryKey();
+            final QuerySearchRequest currentSearch = currentSearchModel.getCurrentSearch();
+            if (queryKey != null && currentSearch != null) {
+                final QuerySearchRequest request = currentSearch
+                        .copy()
+                        .queryKey(queryKey)
+                        .storeHistory(false)
+                        .requestedRange(OffsetRange.UNBOUNDED)
+                        .build();
+                AskStroomAiEvent.fire(this,
+                        currentSearchModel.getCurrentNode(),
+                        new QueryTableContext(queryKey.toString(), request));
+            }
+        }
     }
 }

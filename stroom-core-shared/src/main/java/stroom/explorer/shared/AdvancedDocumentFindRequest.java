@@ -75,7 +75,7 @@ public class AdvancedDocumentFindRequest extends ExpressionCriteria {
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder extends AbstractBuilder<AdvancedDocumentFindRequest, Builder> {
+    public static class Builder extends ExpressionCriteriaBuilder<AdvancedDocumentFindRequest, Builder> {
 
         private Set<DocumentPermission> requiredPermissions;
 

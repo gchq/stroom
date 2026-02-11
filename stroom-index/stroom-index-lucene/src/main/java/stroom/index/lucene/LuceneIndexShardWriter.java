@@ -42,6 +42,7 @@ import stroom.util.time.StroomDuration;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.LiveIndexWriterConfig;
@@ -56,6 +57,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -107,6 +109,7 @@ class LuceneIndexShardWriter implements IndexShardWriter {
 
     private final AtomicBoolean open = new AtomicBoolean();
     private final AtomicInteger adding = new AtomicInteger();
+    private final FieldFactory fieldFactory;
 
     /**
      * Convenience constructor used in tests.
@@ -115,13 +118,15 @@ class LuceneIndexShardWriter implements IndexShardWriter {
                            final IndexConfig indexConfig,
                            final IndexShard indexShard,
                            final PathCreator pathCreator,
-                           final int maxDocumentCount) {
+                           final int maxDocumentCount,
+                           final FieldFactory fieldFactory) {
         this(indexShardDao,
                 indexConfig,
                 indexShard,
                 DEFAULT_RAM_BUFFER_MB_SIZE,
                 pathCreator,
-                maxDocumentCount);
+                maxDocumentCount,
+                fieldFactory);
     }
 
     LuceneIndexShardWriter(final IndexShardDao indexShardDao,
@@ -129,7 +134,8 @@ class LuceneIndexShardWriter implements IndexShardWriter {
                            final IndexShard indexShard,
                            final int ramBufferSizeMB,
                            final PathCreator pathCreator,
-                           final int maxDocumentCount) {
+                           final int maxDocumentCount,
+                           final FieldFactory fieldFactory) {
         try {
             this.indexShardDao = indexShardDao;
             this.slowIndexWriteWarningThreshold = NullSafe.getOrElse(
@@ -140,6 +146,7 @@ class LuceneIndexShardWriter implements IndexShardWriter {
             this.indexShardId = indexShard.getId();
             this.creationTime = System.currentTimeMillis();
             this.maxDocumentCount = maxDocumentCount;
+            this.fieldFactory = fieldFactory;
 
             // Find the index shard dir.
             dir = IndexShardUtil.getIndexPath(indexShard, pathCreator);
@@ -240,20 +247,17 @@ class LuceneIndexShardWriter implements IndexShardWriter {
             final IndexField indexField = fieldValue.field();
 
             // Ensure analyzer is present.
-            Analyzer analyzer = fieldAnalyzers.get(indexField.getFldName());
-            if (analyzer == null) {
-                // Add the field analyser.
-                analyzer = AnalyzerFactory.create(indexField.getAnalyzerType(),
-                        indexField.isCaseSensitive());
+            fieldAnalyzers.computeIfAbsent(indexField.getFldName(), k -> {
                 LOGGER.debug(() ->
                         "Adding field analyser for: " + indexField.getFldName() + " " + this);
-                fieldAnalyzers.put(indexField.getFldName(), analyzer);
-            }
+                // Add the field analyser.
+                return AnalyzerFactory.create(indexField.getAnalyzerType(), indexField.isCaseSensitive());
+            });
 
-            final org.apache.lucene.document.Field field = FieldFactory.create(fieldValue);
+            final Collection<Field> fields = fieldFactory.create(fieldValue);
 
-            // Add the current field to the document if it is not null.
-            if (field != null) {
+            // Add the fields to the document.
+            for (final Field field : fields) {
                 document.add(field);
             }
         }

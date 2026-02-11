@@ -62,6 +62,7 @@ import org.jooq.Field;
 import org.jooq.OrderField;
 import org.jooq.Record;
 import org.jooq.Result;
+import org.jooq.SelectJoinStep;
 import org.jooq.impl.DSL;
 
 import java.util.Arrays;
@@ -75,33 +76,32 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static stroom.index.impl.db.jooq.Tables.INDEX_SHARD;
-import static stroom.index.impl.db.jooq.Tables.INDEX_VOLUME_GROUP;
+import static stroom.index.impl.db.jooq.tables.IndexShard.INDEX_SHARD;
 import static stroom.index.impl.db.jooq.tables.IndexVolume.INDEX_VOLUME;
+import static stroom.index.impl.db.jooq.tables.IndexVolumeGroup.INDEX_VOLUME_GROUP;
 
 @Singleton // holding all the volume selectors
 class IndexShardDaoImpl implements IndexShardDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardDaoImpl.class);
 
-    private static final Function<Record, IndexShard> RECORD_TO_INDEX_SHARD_MAPPER = record -> {
-        final IndexShard indexShard = new IndexShard();
-        indexShard.setId(record.get(INDEX_SHARD.ID));
-        indexShard.setPartition(record.get(INDEX_SHARD.PARTITION_NAME));
-        indexShard.setPartitionFromTime(record.get(INDEX_SHARD.PARTITION_FROM_MS));
-        indexShard.setPartitionToTime(record.get(INDEX_SHARD.PARTITION_TO_MS));
-        indexShard.setDocumentCount(record.get(INDEX_SHARD.DOCUMENT_COUNT));
-        indexShard.setCommitMs(record.get(INDEX_SHARD.COMMIT_MS));
-        indexShard.setCommitDurationMs(record.get(INDEX_SHARD.COMMIT_DURATION_MS));
-        indexShard.setCommitDocumentCount(record.get(INDEX_SHARD.COMMIT_DOCUMENT_COUNT));
-        indexShard.setStatus(IndexShardStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
-                record.get(INDEX_SHARD.STATUS)));
-        indexShard.setFileSize(record.get(INDEX_SHARD.FILE_SIZE));
-        indexShard.setIndexVersion(record.get(INDEX_SHARD.INDEX_VERSION));
-        indexShard.setNodeName(record.get(INDEX_SHARD.NODE_NAME));
-        indexShard.setIndexUuid(record.get(INDEX_SHARD.INDEX_UUID));
-        return indexShard;
-    };
+    private static final Function<Record, IndexShard> RECORD_TO_INDEX_SHARD_MAPPER = record -> IndexShard
+            .builder()
+            .id(record.get(INDEX_SHARD.ID))
+            .partition(record.get(INDEX_SHARD.PARTITION_NAME))
+            .partitionFromTime(record.get(INDEX_SHARD.PARTITION_FROM_MS))
+            .partitionToTime(record.get(INDEX_SHARD.PARTITION_TO_MS))
+            .documentCount(record.get(INDEX_SHARD.DOCUMENT_COUNT))
+            .commitMs(record.get(INDEX_SHARD.COMMIT_MS))
+            .commitDurationMs(record.get(INDEX_SHARD.COMMIT_DURATION_MS))
+            .commitDocumentCount(record.get(INDEX_SHARD.COMMIT_DOCUMENT_COUNT))
+            .status(IndexShardStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+            record.get(INDEX_SHARD.STATUS)))
+            .fileSize(record.get(INDEX_SHARD.FILE_SIZE))
+            .indexVersion(record.get(INDEX_SHARD.INDEX_VERSION))
+            .nodeName(record.get(INDEX_SHARD.NODE_NAME))
+            .indexUuid(record.get(INDEX_SHARD.INDEX_UUID))
+            .build();
 
     private static final BiFunction<IndexShard, IndexShardRecord, IndexShardRecord> INDEX_SHARD_TO_RECORD_MAPPER =
             (indexShard, record) -> {
@@ -163,9 +163,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                         .fetchOptional())
                 .map(r -> {
                     final IndexVolume indexVolume = IndexVolumeDaoImpl.RECORD_TO_INDEX_VOLUME_MAPPER.apply(r);
-                    final IndexShard indexShard = RECORD_TO_INDEX_SHARD_MAPPER.apply(r);
-                    indexShard.setVolume(indexVolume);
-                    return indexShard;
+                    return RECORD_TO_INDEX_SHARD_MAPPER.apply(r).copy().volume(indexVolume).build();
                 });
     }
 
@@ -203,9 +201,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                                 .fetch())
                 .map(r -> {
                     final IndexVolume indexVolume = IndexVolumeDaoImpl.RECORD_TO_INDEX_VOLUME_MAPPER.apply(r);
-                    final IndexShard indexShard = RECORD_TO_INDEX_SHARD_MAPPER.apply(r);
-                    indexShard.setVolume(indexVolume);
-                    return indexShard;
+                    return RECORD_TO_INDEX_SHARD_MAPPER.apply(r).copy().volume(indexVolume).build();
                 });
 
         return ResultPage.createCriterialBasedList(list, criteria);
@@ -241,7 +237,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                 numberOfRows = pageRequest.getLength();
             }
 
-            var select = context
+            SelectJoinStep<Record> select = context
                     .select(dbFields)
                     .from(INDEX_SHARD);
 
@@ -287,19 +283,18 @@ class IndexShardDaoImpl implements IndexShardDao {
                              final String ownerNodeName,
                              final String indexVersion) {
         final Partition partition = indexShardKey.getPartition();
-        final IndexShard indexShard = new IndexShard();
-        indexShard.setIndexUuid(indexShardKey.getIndexUuid());
-        indexShard.setNodeName(ownerNodeName);
-        indexShard.setPartition(partition.getLabel());
-        indexShard.setPartitionFromTime(partition.getPartitionFromTime());
-        indexShard.setPartitionToTime(partition.getPartitionToTime());
-        indexShard.setVolume(indexVolume);
-        indexShard.setIndexVersion(indexVersion);
+        final IndexShard indexShard = IndexShard
+                .builder()
+                .indexUuid(indexShardKey.getIndexUuid())
+                .nodeName(ownerNodeName)
+                .partition(partition.getLabel())
+                .partitionFromTime(partition.getPartitionFromTime())
+                .partitionToTime(partition.getPartitionToTime())
+                .volume(indexVolume)
+                .indexVersion(indexVersion)
+                .build();
 
-        final IndexShard created = genericDao.create(indexShard);
-        created.setVolume(indexVolume);
-
-        return created;
+        return genericDao.create(indexShard).copy().volume(indexVolume).build();
     }
 
     @Override
@@ -392,7 +387,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                            final String[] fields,
                            final ExpressionCriteria criteria) {
         return Arrays.stream(fields).filter(Objects::nonNull).anyMatch(fieldSet::contains) ||
-                ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
+               ExpressionUtil.termCount(criteria.getExpression(), fieldSet) > 0;
     }
 
 

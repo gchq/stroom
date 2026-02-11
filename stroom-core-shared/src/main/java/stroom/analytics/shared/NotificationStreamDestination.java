@@ -42,6 +42,7 @@ public final class NotificationStreamDestination extends NotificationDestination
 
         this.destinationFeed = destinationFeed;
         this.useSourceFeedIfPossible = useSourceFeedIfPossible;
+
     }
 
     public DocRef getDestinationFeed() {
@@ -61,8 +62,8 @@ public final class NotificationStreamDestination extends NotificationDestination
             return false;
         }
         final NotificationStreamDestination that = (NotificationStreamDestination) o;
-        return Objects.equals(destinationFeed, that.destinationFeed) &&
-                useSourceFeedIfPossible == that.useSourceFeedIfPossible;
+        return Objects.equals(destinationFeed, that.destinationFeed)
+               && useSourceFeedIfPossible == that.useSourceFeedIfPossible;
     }
 
     @Override
@@ -73,9 +74,9 @@ public final class NotificationStreamDestination extends NotificationDestination
     @Override
     public String toString() {
         return "AnalyticNotificationStreamDestination{" +
-                ", destinationFeed=" + destinationFeed +
-                ", useSourceFeedIfPossible=" + useSourceFeedIfPossible +
-                '}';
+               ", destinationFeed=" + destinationFeed +
+               ", useSourceFeedIfPossible=" + useSourceFeedIfPossible +
+               '}';
     }
 
     public Builder copy() {

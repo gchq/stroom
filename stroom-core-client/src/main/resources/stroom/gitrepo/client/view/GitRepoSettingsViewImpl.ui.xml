@@ -65,11 +65,11 @@
                         label="Credentials"
                         helpText="Select credentials to use with the Git repository">
             <g:HorizontalPanel>
-                <sel:SelectionBox ui:field="selCredentials"/>
-                <b:Button ui:field="btnSetCredentials"
-                          text="..."
-                          addStyleNames="allow-focus credentials-button"
-                          title="Manage Credentials"/>
+                <sel:SelectionBox ui:field="credentialSelectionBox"/>
+<!--                <b:Button ui:field="btnSetCredentials"-->
+<!--                          text="..."-->
+<!--                          addStyleNames="allow-focus credentials-button"-->
+<!--                          title="Manage Credentials"/>-->
             </g:HorizontalPanel>
         </form:FormGroup>
 

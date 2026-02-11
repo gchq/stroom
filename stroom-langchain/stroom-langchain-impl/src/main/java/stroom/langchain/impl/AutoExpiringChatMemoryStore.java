@@ -16,10 +16,12 @@
 
 package stroom.langchain.impl;
 
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.time.SimpleDurationUtil;
+
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.store.memory.chat.ChatMemoryStore;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,14 +33,14 @@ public class AutoExpiringChatMemoryStore implements ChatMemoryStore {
 
     private final Map<Object, List<ChatMessage>> messagesByMemoryId = new ConcurrentHashMap<>();
     private final Map<Object, Instant> memoryAgeMap = new ConcurrentHashMap<>();
-    private final Duration timeToLive;
+    private final SimpleDuration timeToLive;
 
-    public AutoExpiringChatMemoryStore(final Duration timeToLive) {
+    public AutoExpiringChatMemoryStore(final SimpleDuration timeToLive) {
         this.timeToLive = timeToLive;
     }
 
     public void prune() {
-        final Instant expiryCutoff = Instant.now().minus(timeToLive);
+        final Instant expiryCutoff = SimpleDurationUtil.minus(Instant.now(), timeToLive);
         for (final Entry<Object, Instant> entry : memoryAgeMap.entrySet()) {
             if (entry.getValue().isBefore(expiryCutoff)) {
                 messagesByMemoryId.remove(entry.getKey());

@@ -16,23 +16,26 @@
 
 package stroom.credentials.impl.db;
 
+import stroom.credentials.api.StoredSecret;
 import stroom.credentials.impl.CredentialsDao;
-import stroom.credentials.shared.Credentials;
-import stroom.credentials.shared.CredentialsSecret;
-import stroom.credentials.shared.CredentialsType;
+import stroom.credentials.shared.Credential;
+import stroom.credentials.shared.CredentialWithPerms;
+import stroom.credentials.shared.FindCredentialRequest;
+import stroom.util.shared.ResultPage;
 
 import com.google.inject.AbstractModule;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Credentials DAO module used in tests.
  */
 public class MockCredentialsDaoModule extends AbstractModule {
+
     @Override
     protected void configure() {
         super.configure();
@@ -44,50 +47,57 @@ public class MockCredentialsDaoModule extends AbstractModule {
      */
     public static class MockCredentialsDao implements CredentialsDao {
 
-        private final Map<String, Credentials> idToCred = new HashMap<>();
-        private final Map<String, CredentialsSecret> idToSecret = new HashMap<>();
+        private final Map<String, StoredSecret> uuidToCred = new HashMap<>();
+        private final Map<String, StoredSecret> nameToCred = new HashMap<>();
 
+        @SuppressWarnings("checkstyle:LineLength")
         @Override
-        public List<Credentials> listCredentials() {
-            return new ArrayList<>(idToCred.values());
+        public ResultPage<CredentialWithPerms> findCredentialsWithPermissions(final FindCredentialRequest request,
+                                                                              final Function<Credential, CredentialWithPerms> permissionDecorator) {
+            return ResultPage.createUnboundedList(uuidToCred.values()
+                    .stream()
+                    .map(StoredSecret::credential)
+                    .map(credential -> new CredentialWithPerms(credential, true, true))
+                    .toList());
         }
 
         @Override
-        public List<Credentials> listCredentials(final CredentialsType type) {
-            final List<Credentials> allCreds = this.listCredentials();
-            return allCreds.stream().filter(c -> c.getType() == type).toList();
+        public ResultPage<Credential> findCredentials(final FindCredentialRequest request,
+                                                      final Predicate<Credential> permissionFilter) {
+            return ResultPage.createUnboundedList(uuidToCred.values()
+                    .stream()
+                    .map(StoredSecret::credential)
+                    .toList());
         }
 
         @Override
-        public Credentials createCredentials(final Credentials clientCredentials) {
-            final Credentials dbCredentials = clientCredentials.copyWithUuid(UUID.randomUUID().toString());
-            idToCred.put(clientCredentials.getUuid(), dbCredentials);
-            return dbCredentials;
+        public Credential getCredentialByUuid(final String uuid) {
+            return Optional.ofNullable(uuidToCred.get(uuid)).map(StoredSecret::credential).orElse(null);
         }
 
         @Override
-        public void storeCredentials(final Credentials credentials) {
-            idToCred.put(credentials.getUuid(), credentials);
-        }
-
-        @Override
-        public Credentials getCredentials(final String uuid) {
-            return idToCred.get(uuid);
+        public Credential getCredentialByName(final String name) {
+            return Optional.ofNullable(nameToCred.get(name)).map(StoredSecret::credential).orElse(null);
         }
 
         @Override
         public void deleteCredentialsAndSecret(final String uuid) {
-            idToCred.remove(uuid);
+            final StoredSecret secret = uuidToCred.remove(uuid);
+            if (secret != null) {
+                nameToCred.remove(secret.credential().getName());
+            }
         }
 
         @Override
-        public void storeSecret(final CredentialsSecret secret) {
-            idToSecret.put(secret.getUuid(), secret);
+        public StoredSecret getStoredSecretByName(final String name) {
+            return nameToCred.get(name);
         }
 
         @Override
-        public CredentialsSecret getSecret(final String uuid) {
-            return idToSecret.get(uuid);
+        public void putStoredSecret(final StoredSecret secret, final boolean update) {
+            deleteCredentialsAndSecret(secret.credential().getUuid());
+            uuidToCred.put(secret.credential().getUuid(), secret);
+            nameToCred.put(secret.credential().getName(), secret);
         }
     }
 }

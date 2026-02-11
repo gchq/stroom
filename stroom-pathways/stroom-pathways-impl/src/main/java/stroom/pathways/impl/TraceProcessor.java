@@ -65,7 +65,7 @@ public class TraceProcessor {
             byteBuffers.useBytes(traceId, keyByteBuffer -> {
                 final SimpleDb processingStatus = pathwaysDb.getProcessingStatus();
                 final boolean processed = processingStatus
-                        .get(keyByteBuffer.duplicate(), Objects::nonNull);
+                        .get(writer.getWriteTxn(), keyByteBuffer.duplicate(), Objects::nonNull);
                 if (!processed) {
                     // Get the full trace.
                     final Trace trace = traceFunction.apply(traceId);
@@ -103,7 +103,7 @@ public class TraceProcessor {
         final SimpleDb pathways = pathwaysDb.getPathways();
         final byte[] keyBytes = pathKey.toString().getBytes(StandardCharsets.UTF_8);
         byteBuffers.useBytes(keyBytes, keyByteBuffer -> {
-            Pathway pathway = pathways.get(keyByteBuffer, valueByteBuffer -> {
+            Pathway pathway = pathways.get(writer.getWriteTxn(), keyByteBuffer, valueByteBuffer -> {
                 if (valueByteBuffer == null) {
                     messageReceiver.log(Severity.INFO, () -> "Adding new root path: " + root.getName());
                     final PathNode pathNode = new PathNode(root.getName());

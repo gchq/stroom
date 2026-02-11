@@ -64,8 +64,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-import static stroom.security.impl.db.jooq.Tables.API_KEY;
-import static stroom.security.impl.db.jooq.Tables.STROOM_USER;
+import static stroom.security.impl.db.jooq.tables.ApiKey.API_KEY;
+import static stroom.security.impl.db.jooq.tables.StroomUser.STROOM_USER;
 
 @Singleton
 public class ApiKeyDaoImpl implements ApiKeyDao {

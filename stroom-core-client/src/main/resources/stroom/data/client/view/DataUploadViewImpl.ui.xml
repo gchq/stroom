@@ -4,20 +4,18 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:c="urn:import:stroom.widget.customdatebox.client"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FormPanel ui:field="form" styleName="max">
-        <g:FlowPanel styleName="max form">
-            <form:FormGroup identity="dataUploadMetaData" label="Meta Data" addStyleNames="dock-max">
-                <g:TextArea ui:field="metaData" addStyleNames="max"/>
-            </form:FormGroup>
-            <form:FormGroup identity="dataUploadType" label="Type" addStyleNames="dock-min">
-                <l:SelectionBox ui:field="type" addStyleNames="w-100"/>
-            </form:FormGroup>
-            <form:FormGroup identity="dataUploadEffectiveDate" label="Effective Date" addStyleNames="dock-min">
-                <c:MyDateBox ui:field="effective" addStyleNames="w-100"/>
-            </form:FormGroup>
-            <form:FormGroup identity="dataUploadFile" label="File" addStyleNames="dock-min">
-                <g:FileUpload ui:field="fileUpload" addStyleNames="stroom-control w-100" name="fileUpload"/>
-            </form:FormGroup>
-        </g:FlowPanel>
-    </g:FormPanel>
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup identity="dataUploadMetaData" label="Meta Data" addStyleNames="dock-max">
+            <g:TextArea ui:field="metaData" addStyleNames="max"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataUploadType" label="Type" addStyleNames="dock-min">
+            <l:SelectionBox ui:field="type" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataUploadEffectiveDate" label="Effective Date" addStyleNames="dock-min">
+            <c:MyDateBox ui:field="effective" addStyleNames="w-100"/>
+        </form:FormGroup>
+        <form:FormGroup identity="dataUploadFile" label="File" addStyleNames="dock-min">
+            <form:CustomFileUpload ui:field="fileUpload"/>
+        </form:FormGroup>
+    </g:FlowPanel>
 </ui:UiBinder>

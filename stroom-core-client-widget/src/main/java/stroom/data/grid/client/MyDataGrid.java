@@ -22,6 +22,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.IconMenuItem.Builder;
+import stroom.widget.menu.client.presenter.IconParentMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -76,6 +77,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private final SimplePanel emptyTableWidget = new SimplePanel();
     private final SimplePanel loadingTableWidget = new SimplePanel();
     private final List<ColSettings> colSettings = new ArrayList<>();
+    private final MyDataGridAiSupport<R> aiSupport;
     private final HasHandlers globalEventBus;
 
     private HeadingListener headingListener;
@@ -86,6 +88,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private boolean allowMove = true;
     private boolean allowResize = true;
     private boolean allowHeaderSelection = true;
+    private boolean hasContextMenu = true;
 
     private int horzPos = 0;
     private int vertPos = 0;
@@ -133,6 +136,8 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
             }
         });
         sinkEvents(Event.ONCONTEXTMENU);
+
+        aiSupport = new MyDataGridAiSupport<>(globalEventBus, this);
     }
 
     public MultiSelectionModelImpl<R> addDefaultSelectionModel(final boolean allowMultiSelect) {
@@ -212,10 +217,16 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 colIndex = cell.getCellIndex();
             }
 
-            showContextMenu(clientX, clientY, rowIndex, colIndex, target);
+            if (hasContextMenu) {
+                showContextMenu(clientX, clientY, rowIndex, colIndex, target);
+            }
             return;
         }
         super.onBrowserEvent2(event);
+    }
+
+    public void hasContextMenu(final boolean hasContextMenu) {
+        this.hasContextMenu = hasContextMenu;
     }
 
     private TableCellElement findParentCell(Element target) {
@@ -331,6 +342,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
             }
         }
 
+        final List<Item> copyMenuItems = new ArrayList<>();
         if (rowIndex >= 0 && colIndex >= 0) {
             final Column<R, ?> column = getColumn(colIndex);
             final com.google.gwt.cell.client.Cell<?> cell = column.getCell();
@@ -361,48 +373,56 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 menuItems.add(new stroom.widget.menu.client.presenter.Separator(1));
             }
 
-            menuItems.add(new IconMenuItem.Builder()
+            copyMenuItems.add(new IconMenuItem.Builder()
                     .icon(SvgImage.COPY)
-                    .text("Copy Cell")
+                    .text("Cell")
                     .command(() -> exportCell(rowIndex, colIndex))
                     .build());
 
-            menuItems.add(new IconMenuItem.Builder()
+            copyMenuItems.add(new IconMenuItem.Builder()
                     .icon(SvgImage.COPY)
-                    .text("Copy Row")
+                    .text("Row")
                     .command(() -> exportRow(rowIndex))
                     .build());
 
-            menuItems.add(new IconMenuItem.Builder()
+            copyMenuItems.add(new IconMenuItem.Builder()
                     .icon(SvgImage.COPY)
-                    .text("Copy Selected Rows")
+                    .text("Selected Rows")
                     .command(this::exportSelectedRows)
                     .build());
 
-            menuItems.add(new IconMenuItem.Builder()
+            copyMenuItems.add(new IconMenuItem.Builder()
                     .icon(SvgImage.COPY)
-                    .text("Copy Column")
+                    .text("Column")
                     .command(() -> exportColumn(colIndex))
                     .build());
 
-            menuItems.add(new IconMenuItem.Builder()
+            copyMenuItems.add(new IconMenuItem.Builder()
                     .icon(SvgImage.COPY)
-                    .text("Copy Column For Selected Rows")
+                    .text("Column For Selected Rows")
                     .command(() -> exportColumnForSelectedRows(colIndex))
                     .build());
         }
 
-        menuItems.add(new IconMenuItem.Builder()
+        copyMenuItems.add(new IconMenuItem.Builder()
                 .icon(SvgImage.COPY)
-                .text("Copy Page")
+                .text("Table")
                 .command(this::copyTableAsCSV)
+                .build());
+
+        menuItems.add(new IconParentMenuItem.Builder()
+                .icon(SvgImage.COPY)
+                .text("Copy")
+                .children(copyMenuItems)
                 .build());
 
         menuItems.add(new IconMenuItem.Builder()
                 .icon(SvgImage.DOWNLOAD)
-                .text("Export Page")
+                .text("Export Table")
                 .command(this::exportTableAsCSV)
                 .build());
+
+        menuItems.add(aiSupport.createContextMenu(rowIndex, colIndex));
 
         ShowMenuEvent.builder()
                 .items(menuItems)
@@ -410,7 +430,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
                 .fire(globalEventBus);
     }
 
-    private String getCellText(final int row, final int col) {
+    String getCellText(final int row, final int col) {
         final TableRowElement rowElement = getRowElement(row);
         if (rowElement != null) {
             final TableCellElement cellElement = rowElement.getCells().getItem(col);
@@ -434,19 +454,20 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         return cleanedText;
     }
 
-    private void exportCell(final int rowIndex, final int colIndex) {
-        if (rowIndex >= 0 && colIndex >= 0) {
-            copyToClipboard(getCellText(rowIndex, colIndex));
+
+    private void exportCell(final int row, final int col) {
+        if (row >= 0 && col >= 0) {
+            copyToClipboard(getCellText(row, col));
         }
     }
 
-    private void exportRow(final int rowIndex) {
+    private void exportRow(final int row) {
         final int columnOffset = getColumnOffset();
-        if (rowIndex >= 0) {
+        if (row >= 0) {
             final StringBuilder sb = new StringBuilder();
             for (int col = columnOffset; col < getColumnCount(); col++) {
                 addDelimiter(sb, col, columnOffset);
-                sb.append(escapeCsv(getCellText(rowIndex, col)));
+                sb.append(escapeCsv(getCellText(row, col)));
             }
             copyToClipboard(sb.toString());
         }
@@ -455,14 +476,14 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
     private void exportSelectedRows() {
         final StringBuilder sb = new StringBuilder();
         final int columnOffset = getColumnOffset();
-        for (int rowNum = 0; rowNum < getVisibleItemCount(); rowNum++) {
-            final R item = getVisibleItem(rowNum);
+        for (int row = 0; row < getVisibleItemCount(); row++) {
+            final R item = getVisibleItem(row);
             if (item != null) {
                 if (getSelectionModel().isSelected(item)) {
                     addNewLine(sb);
                     for (int col = columnOffset; col < getColumnCount(); col++) {
                         addDelimiter(sb, col, columnOffset);
-                        sb.append(escapeCsv(getCellText(rowNum, col)));
+                        sb.append(escapeCsv(getCellText(row, col)));
                     }
                 }
             }
@@ -470,26 +491,26 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         copyToClipboard(sb.toString());
     }
 
-    private void exportColumn(final int colIndex) {
-        if (colIndex >= 0) {
+    private void exportColumn(final int col) {
+        if (col >= 0) {
             final StringBuilder sb = new StringBuilder();
             for (int row = 0; row < getVisibleItemCount(); row++) {
                 addNewLine(sb);
-                sb.append(getCellText(row, colIndex));
+                sb.append(getCellText(row, col));
             }
             copyToClipboard(sb.toString());
         }
     }
 
-    private void exportColumnForSelectedRows(final int colIndex) {
-        if (colIndex >= 0) {
+    private void exportColumnForSelectedRows(final int col) {
+        if (col >= 0) {
             final StringBuilder sb = new StringBuilder();
-            for (int rowNum = 0; rowNum < getVisibleItemCount(); rowNum++) {
-                final R item = getVisibleItem(rowNum);
+            for (int row = 0; row < getVisibleItemCount(); row++) {
+                final R item = getVisibleItem(row);
                 if (item != null) {
                     if (getSelectionModel().isSelected(item)) {
                         addNewLine(sb);
-                        sb.append(getCellText(rowNum, colIndex));
+                        sb.append(getCellText(row, col));
                     }
                 }
             }
@@ -571,7 +592,7 @@ public class MyDataGrid<R> extends DataGrid<R> implements NativePreviewHandler {
         $doc.body.removeChild(link);
     }-*/;
 
-    private int getColumnOffset() {
+    int getColumnOffset() {
         final TableSectionElement head = getTableHeadElement();
         int columnOffset = 0;
 

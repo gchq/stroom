@@ -26,6 +26,7 @@ import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportSettings;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.StringUtil;
+import stroom.widget.form.client.CustomFileUpload;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -59,9 +60,9 @@ public class ImportConfigPresenter
         super(eventBus, view, proxy);
         this.restFactory = restFactory;
 
-        view.getForm().setAction(ImportUtil.getImportFileURL());
-        view.getForm().setEncoding(FormPanel.ENCODING_MULTIPART);
-        view.getForm().setMethod(FormPanel.METHOD_POST);
+        view.getFileUpload().setAction(ImportUtil.getImportFileURL());
+        view.getFileUpload().setEncoding(FormPanel.ENCODING_MULTIPART);
+        view.getFileUpload().setMethod(FormPanel.METHOD_POST);
     }
 
     @Override
@@ -99,8 +100,8 @@ public class ImportConfigPresenter
             }
         };
 
-        registerHandler(getView().getForm().addSubmitHandler(submitCompleteHandler));
-        registerHandler(getView().getForm().addSubmitCompleteHandler(submitCompleteHandler));
+        registerHandler(getView().getFileUpload().addSubmitHandler(submitCompleteHandler));
+        registerHandler(getView().getFileUpload().addSubmitCompleteHandler(submitCompleteHandler));
     }
 
     private void show() {
@@ -113,9 +114,9 @@ public class ImportConfigPresenter
                 .onHideRequest(e -> {
                     currentHidePopupRequestEvent = e;
                     if (e.isOk()) {
-                        final String filename = getView().getFilename();
+                        final String filename = getView().getFileUpload().getFilename();
                         if (!StringUtil.isBlank(filename)) {
-                            getView().getForm().submit();
+                            getView().getFileUpload().submit();
                         } else {
                             error("You must select a file to import.");
                             e.reset();
@@ -148,9 +149,7 @@ public class ImportConfigPresenter
 
     public interface ImportConfigView extends View, Focus {
 
-        FormPanel getForm();
-
-        String getFilename();
+        CustomFileUpload getFileUpload();
     }
 
     @ProxyCodeSplit

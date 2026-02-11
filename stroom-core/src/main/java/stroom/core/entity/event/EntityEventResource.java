@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.core.entity.event;
 
 import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBatch;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -38,12 +39,22 @@ public interface EntityEventResource extends RestResource {
 
     String BASE_PATH = "/entityEvent" + ResourcePaths.V1;
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
+    String SINGLE_SUB_PATH = "/fireEvent";
+    String BATCH_SUB_PATH = "/fireEvents";
 
     @PUT
-    @Path(NODE_NAME_PATH_PARAM)
+    @Path(SINGLE_SUB_PATH + NODE_NAME_PATH_PARAM)
     @Operation(
             summary = "Sends an entity event",
             operationId = "fireEntityEvent")
     Boolean fireEvent(@PathParam("nodeName") String nodeName,
                       @Parameter(description = "entityevent", required = true) EntityEvent entityEvent);
+
+    @PUT
+    @Path(BATCH_SUB_PATH + NODE_NAME_PATH_PARAM)
+    @Operation(
+            summary = "Sends a batch of entity events",
+            operationId = "fireEntityEventBatch")
+    Boolean fireEvents(@PathParam("nodeName") String nodeName,
+                       @Parameter(description = "entityevents", required = true) EntityEventBatch entityEventBatch);
 }

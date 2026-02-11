@@ -60,6 +60,8 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
     FabButton steppingButton;
     @UiField
     SpinnerLarge spinner;
+    @UiField
+    SimplePanel metaListContainer;
 
     @Inject
     public SourceViewImpl(final Binder binder) {
@@ -115,6 +117,15 @@ public class SourceViewImpl extends ViewImpl implements SourceView {
             navigatorContainer.setWidget(characterNavigatorView.asWidget());
         } else {
             navigatorContainer.clear();
+        }
+    }
+
+    @Override
+    public void setMetaListContainerView(final Widget widget) {
+        if (widget != null) {
+            metaListContainer.setWidget(widget);
+        } else {
+            metaListContainer.clear();
         }
     }
 

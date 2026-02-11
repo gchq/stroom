@@ -213,6 +213,19 @@ public class PopupSupportImpl implements PopupSupport {
 
                     break;
                 }
+                case CREATE_OK_CANCEL_DIALOG: {
+                    final ResizableCreateOkCancelContent content = new ResizableCreateOkCancelContent(uiHandlers);
+                    content.setContent(view.asWidget());
+                    dialogActionHandler = content;
+                    dialogButtons = content;
+
+                    final ResizableDialog resizableDialog = new ResizableDialog(content, popupSize);
+                    hasTaskListener.setTaskMonitorFactory(resizableDialog);
+                    resizableDialog.setContent(content);
+                    popup = resizableDialog;
+
+                    break;
+                }
                 case ACCEPT_REJECT_DIALOG: {
                     final ResizableAcceptRejectContent acceptRejectContent = new ResizableAcceptRejectContent(
                             uiHandlers);

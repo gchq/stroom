@@ -84,15 +84,17 @@ public class MockIndexShardDao implements IndexShardDao {
                              final String ownerNodeName,
                              final String indexVersion) {
         final Partition partition = key.getPartition();
-        final IndexShard indexShard = new IndexShard();
-        indexShard.setId(generatedId.incrementAndGet());
-        indexShard.setIndexUuid(key.getIndexUuid());
-        indexShard.setNodeName(ownerNodeName);
-        indexShard.setPartition(partition.getLabel());
-        indexShard.setPartitionFromTime(partition.getPartitionFromTime());
-        indexShard.setPartitionToTime(partition.getPartitionToTime());
-        indexShard.setVolume(indexVolume);
-        indexShard.setIndexVersion(indexVersion);
+        final IndexShard indexShard = IndexShard
+                .builder()
+                .id(generatedId.incrementAndGet())
+                .indexUuid(key.getIndexUuid())
+                .nodeName(ownerNodeName)
+                .partition(partition.getLabel())
+                .partitionFromTime(partition.getPartitionFromTime())
+                .partitionToTime(partition.getPartitionToTime())
+                .volume(indexVolume)
+                .indexVersion(indexVersion)
+                .build();
 
         map.put(indexShard.getId(), indexShard);
 
@@ -107,8 +109,8 @@ public class MockIndexShardDao implements IndexShardDao {
     @Override
     public boolean setStatus(final Long id, final IndexShardStatus status) {
         final IndexShard indexShard = map.get(id);
-        if (null != indexShard) {
-            indexShard.setStatus(status);
+        if (indexShard != null) {
+            map.put(id, indexShard.copy().status(status).build());
             return true;
         }
         return false;
@@ -116,18 +118,12 @@ public class MockIndexShardDao implements IndexShardDao {
 
     @Override
     public void logicalDelete(final Long id) {
-        final IndexShard indexShard = map.get(id);
-        if (null != indexShard) {
-            indexShard.setStatus(IndexShardStatus.DELETED);
-        }
+        setStatus(id, IndexShardStatus.DELETED);
     }
 
     @Override
     public void reset(final Long id) {
-        final IndexShard indexShard = map.get(id);
-        if (null != indexShard) {
-            indexShard.setStatus(IndexShardStatus.CLOSED);
-        }
+        setStatus(id, IndexShardStatus.CLOSED);
     }
 
     @Override
@@ -136,7 +132,16 @@ public class MockIndexShardDao implements IndexShardDao {
                        final Long commitDurationMs,
                        final Long commitMs,
                        final Long fileSize) {
-
+        final IndexShard indexShard = map.get(id);
+        if (indexShard != null) {
+            map.put(id, indexShard
+                    .copy()
+                    .documentCount(documentCount)
+                    .commitDurationMs(commitDurationMs)
+                    .commitMs(commitMs)
+                    .fileSize(fileSize)
+                    .build());
+        }
     }
 
     public long getMaxId() {

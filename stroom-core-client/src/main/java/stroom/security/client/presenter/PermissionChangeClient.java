@@ -18,7 +18,7 @@ package stroom.security.client.presenter;
 
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationTag;
-import stroom.credentials.shared.Credentials;
+import stroom.credentials.shared.Credential;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.PermissionChangeResource;
@@ -39,7 +39,7 @@ public class PermissionChangeClient extends AbstractRestClient {
      */
     private static final Set<String> SUPPORTED_TYPES = Set.of(Annotation.TYPE,
             AnnotationTag.TYPE,
-            Credentials.TYPE);
+            Credential.TYPE);
 
     /** Resource to talk to */
     private static final PermissionChangeResource PERMISSION_CHANGE_RESOURCE =

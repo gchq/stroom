@@ -37,8 +37,7 @@ import java.util.Objects;
 )
 @JsonPropertyOrder({
         "contentPack",
-        "username",
-        "password"
+        "credentialName"
 })
 @JsonInclude(Include.NON_NULL)
 public class ContentStoreCreateGitRepoRequest {
@@ -47,22 +46,25 @@ public class ContentStoreCreateGitRepoRequest {
     private final ContentStoreContentPack contentPack;
 
     @JsonProperty
-    private final String credentialsId;
+    private final String credentialName;
 
     /**
      * Constructor for content pack. Called by JSON serialisation system.
-     * @param contentPack The content pack to create the GitRepoDoc from.
-     *                    Must never be null.
-     * @param credentialsId The credentialsId, if authentication is required. Can be null.
+     *
+     * @param contentPack    The content pack to create the GitRepoDoc from.
+     *                       Must never be null.
+     * @param credentialName The credentialsId, if authentication is required. Can be null.
      */
     @JsonCreator
     @SuppressWarnings("unused")
     public ContentStoreCreateGitRepoRequest(@JsonProperty("contentPack") final ContentStoreContentPack contentPack,
-                                            @JsonProperty("credentialsId") final String credentialsId) {
+                                            @JsonProperty("credentialName") final String credentialName) {
         Objects.requireNonNull(contentPack);
         this.contentPack = contentPack;
         final boolean gitNeedsAuth = contentPack.getGitNeedsAuth();
-        this.credentialsId = gitNeedsAuth && credentialsId != null ? credentialsId : "";
+        this.credentialName = gitNeedsAuth && credentialName != null
+                ? credentialName
+                : "";
     }
 
     /**
@@ -70,8 +72,7 @@ public class ContentStoreCreateGitRepoRequest {
      */
     @SerialisationTestConstructor
     public ContentStoreCreateGitRepoRequest() {
-        this(new ContentStoreContentPack(),
-                "credentialsId");
+        this(new ContentStoreContentPack(), "credentialName");
     }
 
     /**
@@ -85,8 +86,8 @@ public class ContentStoreCreateGitRepoRequest {
      * @return The credentialsId, if getGitNeedsAuth() returns true.
      * Never returns null but may return empty string.
      */
-    public String getCredentialsId() {
-        return credentialsId;
+    public String getCredentialName() {
+        return credentialName;
     }
 
     @Override
@@ -96,19 +97,19 @@ public class ContentStoreCreateGitRepoRequest {
         }
         final ContentStoreCreateGitRepoRequest that = (ContentStoreCreateGitRepoRequest) o;
         return Objects.equals(contentPack, that.contentPack)
-               && Objects.equals(credentialsId, that.credentialsId);
+               && Objects.equals(credentialName, that.credentialName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(contentPack, credentialsId);
+        return Objects.hash(contentPack, credentialName);
     }
 
     @Override
     public String toString() {
         return "ContentStoreCreateGitRepoRequest{" +
                "\n   contentPack=" + contentPack +
-               ",\n   username='" + credentialsId +
+               ",\n   credentialName='" + credentialName +
                "'\n}";
     }
 }

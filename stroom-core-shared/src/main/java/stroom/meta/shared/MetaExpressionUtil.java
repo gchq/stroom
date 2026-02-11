@@ -17,11 +17,15 @@
 package stroom.meta.shared;
 
 import stroom.docref.DocRef;
+import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.ExpressionUtil;
+import stroom.query.api.datasource.QueryField;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -116,5 +120,71 @@ public final class MetaExpressionUtil {
                 .addDocRefTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF, pipelineRef)
                 .addTextTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
                 .build();
+    }
+
+    public static boolean hasAdvancedCriteria(final ExpressionOperator expression) {
+        final Status status = getSingleStatus(expression);
+
+        if (!Status.UNLOCKED.equals(status)) {
+            return true;
+        }
+
+        final Set<String> statusPeriod = getTerms(expression, MetaFields.STATUS_TIME);
+        return !statusPeriod.isEmpty();
+    }
+
+    public static Status getSingleStatus(final ExpressionOperator expression) {
+        final Set<Status> streamStatuses = getStatusSet(expression);
+        if (streamStatuses.size() == 1) {
+            return streamStatuses.iterator().next();
+        }
+        return null;
+    }
+
+    public static Status getSingleStatus(final FindMetaCriteria criteria) {
+        if (criteria == null) {
+            return null;
+        }
+        return getSingleStatus(criteria.getExpression());
+    }
+
+    public static Set<Status> getStatusSet(final ExpressionOperator expression) {
+        final Set<String> terms = getTerms(expression, MetaFields.STATUS);
+        final Set<Status> streamStatuses = new HashSet<>();
+        for (final String term : terms) {
+            for (final Status streamStatus : Status.values()) {
+                if (streamStatus.getDisplayValue().equals(term)) {
+                    streamStatuses.add(streamStatus);
+                }
+            }
+        }
+
+        return streamStatuses;
+    }
+
+    private static Set<String> getTerms(final ExpressionOperator expression, final QueryField field) {
+        final Set<String> terms = new HashSet<>();
+        if (expression != null) {
+            getTerms(expression, field, terms);
+        }
+        return terms;
+    }
+
+    private static void getTerms(final ExpressionOperator expressionOperator,
+                          final QueryField field,
+                          final Set<String> terms) {
+        if (expressionOperator.enabled() && expressionOperator.getChildren() != null) {
+            for (final ExpressionItem item : expressionOperator.getChildren()) {
+                if (item.enabled()) {
+                    if (item instanceof ExpressionTerm) {
+                        if (field.getFldName().equals(((ExpressionTerm) item).getField())) {
+                            terms.add(((ExpressionTerm) item).getValue());
+                        }
+                    } else if (item instanceof ExpressionOperator) {
+                        getTerms((ExpressionOperator) item, field, terms);
+                    }
+                }
+            }
+        }
     }
 }

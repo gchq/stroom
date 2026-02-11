@@ -69,6 +69,13 @@ public class TraceLoader {
     private static final DocRef TRACE_STORE_DOC_REF = DocRef.builder().type(PlanBDoc.TYPE).uuid("traces").build();
     private static final PathwaysDoc PATHWAYS_DOC = PathwaysDoc.builder().uuid("1").build();
 
+    public void addOneMore(final TracePersistence persistence) {
+        try (final TraceWriter writer = persistence.createWriter()) {
+            final Path path = Paths.get("src/test/resources/" + StringIdUtil.idToString(18) + ".dat");
+            loadData(path, writer);
+        }
+    }
+
     public void load(final TracePersistence persistence) {
         try (final TraceWriter writer = persistence.createWriter()) {
             for (int i = 1; i <= 13; i++) {

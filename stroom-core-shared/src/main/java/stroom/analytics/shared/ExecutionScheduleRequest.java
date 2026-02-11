@@ -21,6 +21,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.ExpressionOperator;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.FindApiKeyCriteria.Builder;
+import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
@@ -114,7 +115,7 @@ public class ExecutionScheduleRequest extends ExpressionCriteria {
         return new Builder();
     }
 
-    public static class Builder extends AbstractBuilder<ExecutionScheduleRequest, ExecutionScheduleRequest.Builder> {
+    public static class Builder extends AbstractBuilder<ExecutionScheduleRequest, Builder> {
 
         private DocRef ownerDocRef;
         private String nodeName;

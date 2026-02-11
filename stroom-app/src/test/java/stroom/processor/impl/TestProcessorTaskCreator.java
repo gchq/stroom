@@ -25,13 +25,23 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.shared.CreateProcessFilterRequest;
+import stroom.processor.shared.FeedDependencies;
+import stroom.processor.shared.FeedDependency;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorType;
+import stroom.processor.shared.QueryData;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
+import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.date.DateUtil;
+import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -40,6 +50,8 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.atomic.LongAdder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,8 +62,6 @@ class TestProcessorTaskCreator extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
-    private CommonTestControl commonTestControl;
-    @Inject
     private ProcessorTaskCreatorImpl processorTaskCreator;
     @Inject
     private ProcessorTaskService processorTaskService;
@@ -59,6 +69,10 @@ class TestProcessorTaskCreator extends AbstractCoreIntegrationTest {
     private ProcessorTaskDeleteExecutor streamTaskDeleteExecutor;
     @Inject
     private MetaService metaService;
+    @Inject
+    private ProcessorFilterService processorFilterService;
+    @Inject
+    private ProcessorConfig processorConfig;
 
     @Test
     void testBasic() {
@@ -68,62 +82,182 @@ class TestProcessorTaskCreator extends AbstractCoreIntegrationTest {
         assertThat(processorTaskService.find(new ExpressionCriteria()).size()).isZero();
         final List<Meta> streams = metaService.find(new FindMetaCriteria()).getValues();
         assertThat(streams.size()).isEqualTo(1);
+        final Meta meta = streams.getFirst();
 
         ExpressionOperator expression = ExpressionOperator.builder().build();
-        assertThat(processorTaskCreator.runSelectMetaQuery(expression,
-                0,
-                null,
-                null,
-                null,
-                false,
-                100).size()).isEqualTo(1);
+        runSelectMetaQuery(expression, 1);
 
-        expression = ExpressionOperator.builder().addTextTerm(MetaFields.FEED, Condition.EQUALS, feedName).build();
-        assertThat(processorTaskCreator.runSelectMetaQuery(expression,
-                0,
-                null,
-                null,
-                null,
-                false,
-                100).size()).isEqualTo(1);
+        expression = ExpressionOperator.builder()
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, feedName).build();
+        runSelectMetaQuery(expression, 1);
 
-        expression = ExpressionOperator.builder().addTextTerm(MetaFields.FEED, Condition.EQUALS, "otherFed").build();
-        assertThat(processorTaskCreator.runSelectMetaQuery(expression,
-                0,
-                null,
-                null,
-                null,
-                false,
-                100).size()).isEqualTo(0);
+        expression = ExpressionOperator.builder()
+                .addTextTerm(MetaFields.EFFECTIVE_TIME, Condition.EQUALS,
+                        DateUtil.createNormalDateTimeString(meta.getEffectiveMs())).build();
+        runSelectMetaQuery(expression, 1);
 
-        expression = ExpressionOperator.builder().addDocRefTerm(MetaFields.PIPELINE,
-                Condition.IS_DOC_REF,
-                new DocRef(PipelineDoc.TYPE, "1234")).build();
-        assertThat(processorTaskCreator.runSelectMetaQuery(expression,
-                0,
-                null,
-                null,
-                null,
-                false,
-                100).size()).isEqualTo(0);
+        expression = ExpressionOperator.builder()
+                .addTextTerm(MetaFields.FEED, Condition.EQUALS, "otherFed").build();
+        runSelectMetaQuery(expression, 0);
+
+        expression = ExpressionOperator.builder()
+                .addDocRefTerm(MetaFields.PIPELINE, Condition.IS_DOC_REF,
+                        new DocRef(PipelineDoc.TYPE, "1234")).build();
+        runSelectMetaQuery(expression, 0);
 
         // Check DB cleanup.
         expression = ExpressionOperator.builder().build();
-        assertThat(processorTaskCreator.runSelectMetaQuery(expression,
-                0,
-                null,
-                null,
-                null,
-                false,
-                100).size()).isEqualTo(1);
+        runSelectMetaQuery(expression, 1);
         streamTaskDeleteExecutor.delete(Instant.EPOCH);
+        runSelectMetaQuery(expression, 1);
+    }
+
+    @Test
+    void testBasicTaskCreation() {
+        final DocRef pipeline = DocRef
+                .builder()
+                .type(PipelineDoc.TYPE)
+                .uuid(UUID.randomUUID().toString())
+                .name("test")
+                .build();
+        final String eventFeed = FileSystemTestUtil.getUniqueTestString();
+
+        final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
+        commonTestScenarioCreator.createSample2LineRawFile(
+                eventFeed,
+                StreamTypeNames.RAW_EVENTS,
+                refTime);
+
+        assertThat(processorTaskService.find(new ExpressionCriteria()).size()).isZero();
+        final List<Meta> streams = metaService.find(new FindMetaCriteria()).getValues();
+        assertThat(streams.size()).isEqualTo(1);
+
+        // Now create the processor filter using the find stream criteria.
+        final QueryData findStreamQueryData = QueryData.builder()
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                .expression(ExpressionOperator.builder()
+                        .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .build())
+                .build();
+        final CreateProcessFilterRequest request = CreateProcessFilterRequest
+                .builder()
+                .processorType(ProcessorType.PIPELINE)
+                .pipeline(pipeline)
+                .queryData(findStreamQueryData)
+                .autoPriority(true)
+                .enabled(true)
+                .minMetaCreateTimeMs(0L)
+                .maxMetaCreateTimeMs(Long.MAX_VALUE)
+                .build();
+        final ProcessorFilter filter = processorFilterService.create(request);
+
+        // Create tasks.
+        createTasks(filter);
+
+        assertThat(taskCount()).isEqualTo(1);
+    }
+
+    @Test
+    void testFeedDependency() {
+        // Ensure we can create tasks immediately after changes.
+        processorConfig.setSkipNonProducingFiltersDuration(StroomDuration.ZERO);
+
+        final DocRef pipeline = DocRef
+                .builder()
+                .type(PipelineDoc.TYPE)
+                .uuid(UUID.randomUUID().toString())
+                .name("test")
+                .build();
+        final String refFeed = FileSystemTestUtil.getUniqueTestString();
+        final String eventFeed = FileSystemTestUtil.getUniqueTestString();
+
+        final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
+
+        commonTestScenarioCreator.createSample2LineRawFile(
+                refFeed,
+                StreamTypeNames.REFERENCE,
+                refTime);
+        commonTestScenarioCreator.createSample2LineRawFile(
+                eventFeed,
+                StreamTypeNames.RAW_EVENTS,
+                refTime.plusMillis(1));
+
+        assertThat(processorTaskService.find(new ExpressionCriteria()).size()).isZero();
+        List<Meta> streams = metaService.find(new FindMetaCriteria()).getValues();
+        assertThat(streams.size()).isEqualTo(2);
+
+        final FeedDependencies feedDependencies = FeedDependencies
+                .builder()
+                .feedDependencies(List.of(new FeedDependency(
+                        UUID.randomUUID().toString(),
+                        refFeed,
+                        StreamTypeNames.REFERENCE)))
+                .build();
+
+        // Now create the processor filter using the find stream criteria.
+        final QueryData findStreamQueryData = QueryData.builder()
+                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                .expression(ExpressionOperator.builder()
+                        .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.RAW_EVENTS)
+                        .build())
+                .feedDependencies(feedDependencies)
+                .build();
+        final CreateProcessFilterRequest request = CreateProcessFilterRequest
+                .builder()
+                .processorType(ProcessorType.PIPELINE)
+                .pipeline(pipeline)
+                .queryData(findStreamQueryData)
+                .autoPriority(true)
+                .enabled(true)
+                .minMetaCreateTimeMs(0L)
+                .maxMetaCreateTimeMs(Long.MAX_VALUE)
+                .build();
+        final ProcessorFilter filter = processorFilterService.create(request);
+
+        // Create tasks.
+        createTasks(filter);
+
+        // Ensure no tasks were created.
+        assertThat(taskCount()).isEqualTo(0);
+
+        // Now add a newer ref feed and make sure tasks are created.
+        commonTestScenarioCreator.createSample2LineRawFile(
+                refFeed,
+                StreamTypeNames.REFERENCE,
+                refTime.plusMillis(1));
+        streams = metaService.find(new FindMetaCriteria()).getValues();
+        assertThat(streams.size()).isEqualTo(3);
+
+        createTasks(filter);
+
+        // Ensure a task was created.
+        assertThat(taskCount()).isEqualTo(1);
+    }
+
+    private void createTasks(final ProcessorFilter filter) {
+        processorTaskCreator.createTasksForFilter(
+                new SimpleTaskContext(),
+                filter,
+                new ProgressMonitor(1),
+                100,
+                new LongAdder());
+    }
+
+    private int taskCount() {
+        return processorTaskService.find(ExpressionCriteria.criteriaBuilder().build()).size();
+    }
+
+    private void runSelectMetaQuery(final ExpressionOperator expression,
+                                    final int expected) {
+        final long maxId = metaService.getMaxId();
         assertThat(processorTaskCreator.runSelectMetaQuery(expression,
                 0,
+                maxId,
                 null,
                 null,
                 null,
                 false,
-                100).size()).isEqualTo(1);
+                100).size()).isEqualTo(expected);
     }
 
 //    @Test

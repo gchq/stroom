@@ -49,8 +49,8 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static stroom.job.impl.db.jooq.Tables.JOB;
-import static stroom.job.impl.db.jooq.Tables.JOB_NODE;
+import static stroom.job.impl.db.jooq.tables.Job.JOB;
+import static stroom.job.impl.db.jooq.tables.JobNode.JOB_NODE;
 
 public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 

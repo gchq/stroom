@@ -17,8 +17,10 @@
 package stroom.index.shared;
 
 import stroom.docref.HasDisplayValue;
+import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PrimitiveValueConverter;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -67,62 +69,59 @@ public class IndexShard {
                     IndexShardStatus.CORRUPT)));
 
     @JsonProperty
-    private Long id;
+    private final Long id;
 
     /**
      * The time that the partition that this shard belongs to starts
      */
     @JsonProperty
-    private String partition;
+    private final String partition;
     /**
      * The time that the partition that this shard belongs to starts
      */
     @JsonProperty
-    private Long partitionFromTime;
+    private final Long partitionFromTime;
     /**
      * The time that the partition that this shard belongs to ends
      */
     @JsonProperty
-    private Long partitionToTime;
+    private final Long partitionToTime;
     /**
      * Number of documents indexed
      */
     @JsonProperty
-    private int documentCount;
+    private final int documentCount;
     /**
      * When the item was last commited / updated
      */
     @JsonProperty
-    private Long commitMs;
+    private final Long commitMs;
     /**
      * How long did the commit take
      */
     @JsonProperty
-    private Long commitDurationMs;
+    private final Long commitDurationMs;
     /**
      * The number of extra documents commited
      */
     @JsonProperty
-    private Integer commitDocumentCount;
+    private final Integer commitDocumentCount;
     /**
      * Status
      */
     @JsonProperty
-    private volatile IndexShardStatus status = IndexShardStatus.NEW;
+    private final IndexShardStatus status;
 
     @JsonProperty
-    private Long fileSize;
+    private final Long fileSize;
     @JsonProperty
-    private String indexVersion;
+    private final String indexVersion;
     @JsonProperty
-    private IndexVolume volume;
+    private final IndexVolume volume;
     @JsonProperty
-    private String nodeName;
+    private final String nodeName;
     @JsonProperty
-    private String indexUuid;
-
-    public IndexShard() {
-    }
+    private final String indexUuid;
 
     @JsonCreator
     public IndexShard(@JsonProperty("id") final Long id,
@@ -147,7 +146,7 @@ public class IndexShard {
         this.commitMs = commitMs;
         this.commitDurationMs = commitDurationMs;
         this.commitDocumentCount = commitDocumentCount;
-        this.status = status;
+        this.status = NullSafe.requireNonNullElse(status, IndexShardStatus.NEW);
         this.fileSize = fileSize;
         this.indexVersion = indexVersion;
         this.volume = volume;
@@ -157,14 +156,6 @@ public class IndexShard {
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(final Long id) {
-        this.id = id;
-    }
-
-    public void setVolume(final IndexVolume volume) {
-        this.volume = volume;
     }
 
     public IndexVolume getVolume() {
@@ -179,92 +170,44 @@ public class IndexShard {
         return indexUuid;
     }
 
-    public void setNodeName(final String nodeName) {
-        this.nodeName = nodeName;
-    }
-
-    public void setIndexUuid(final String indexUuid) {
-        this.indexUuid = indexUuid;
-    }
-
     public String getPartition() {
         return partition;
-    }
-
-    public void setPartition(final String partition) {
-        this.partition = partition;
     }
 
     public Long getPartitionFromTime() {
         return partitionFromTime;
     }
 
-    public void setPartitionFromTime(final Long partitionFromTime) {
-        this.partitionFromTime = partitionFromTime;
-    }
-
     public Long getPartitionToTime() {
         return partitionToTime;
-    }
-
-    public void setPartitionToTime(final Long partitionToTime) {
-        this.partitionToTime = partitionToTime;
     }
 
     public IndexShardStatus getStatus() {
         return status;
     }
 
-    public void setStatus(final IndexShardStatus status) {
-        this.status = status;
-    }
-
     public Long getFileSize() {
         return fileSize;
-    }
-
-    public void setFileSize(final Long fileSize) {
-        this.fileSize = fileSize;
     }
 
     public Long getCommitMs() {
         return commitMs;
     }
 
-    public void setCommitMs(final Long commitTimeMs) {
-        this.commitMs = commitTimeMs;
-    }
-
     public int getDocumentCount() {
         return documentCount;
-    }
-
-    public void setDocumentCount(final int documentCount) {
-        this.documentCount = documentCount;
     }
 
     public Long getCommitDurationMs() {
         return commitDurationMs;
     }
 
-    public void setCommitDurationMs(final Long commitDurationMs) {
-        this.commitDurationMs = commitDurationMs;
-    }
-
     public Integer getCommitDocumentCount() {
         return commitDocumentCount;
     }
 
-    public void setCommitDocumentCount(final Integer commitDocuments) {
-        this.commitDocumentCount = commitDocuments;
-    }
-
     public String getIndexVersion() {
         return indexVersion;
-    }
-
-    public void setIndexVersion(final String indexVersion) {
-        this.indexVersion = indexVersion;
     }
 
     @JsonIgnore
@@ -313,9 +256,146 @@ public class IndexShard {
         return sb.toString();
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
 
-    // --------------------------------------------------------------------------------
+    public Builder copy() {
+        return new Builder(this);
+    }
 
+    public static final class Builder extends AbstractBuilder<IndexShard, Builder> {
+
+        private Long id;
+        private String partition;
+        private Long partitionFromTime;
+        private Long partitionToTime;
+        private int documentCount;
+        private Long commitMs;
+        private Long commitDurationMs;
+        private Integer commitDocumentCount;
+        private IndexShardStatus status = IndexShardStatus.NEW;
+        private Long fileSize;
+        private String indexVersion;
+        private IndexVolume volume;
+        private String nodeName;
+        private String indexUuid;
+
+        private Builder() {
+        }
+
+        private Builder(final IndexShard indexShard) {
+            this.id = indexShard.id;
+            this.partition = indexShard.partition;
+            this.partitionFromTime = indexShard.partitionFromTime;
+            this.partitionToTime = indexShard.partitionToTime;
+            this.documentCount = indexShard.documentCount;
+            this.commitMs = indexShard.commitMs;
+            this.commitDurationMs = indexShard.commitDurationMs;
+            this.commitDocumentCount = indexShard.commitDocumentCount;
+            this.status = indexShard.status;
+            this.fileSize = indexShard.fileSize;
+            this.indexVersion = indexShard.indexVersion;
+            this.volume = indexShard.volume;
+            this.nodeName = indexShard.nodeName;
+            this.indexUuid = indexShard.indexUuid;
+        }
+
+        public Builder id(final Long id) {
+            this.id = id;
+            return self();
+        }
+
+        public Builder partition(final String partition) {
+            this.partition = partition;
+            return self();
+        }
+
+        public Builder partitionFromTime(final Long partitionFromTime) {
+            this.partitionFromTime = partitionFromTime;
+            return self();
+        }
+
+        public Builder partitionToTime(final Long partitionToTime) {
+            this.partitionToTime = partitionToTime;
+            return self();
+        }
+
+        public Builder documentCount(final int documentCount) {
+            this.documentCount = documentCount;
+            return self();
+        }
+
+        public Builder commitMs(final Long commitMs) {
+            this.commitMs = commitMs;
+            return self();
+        }
+
+        public Builder commitDurationMs(final Long commitDurationMs) {
+            this.commitDurationMs = commitDurationMs;
+            return self();
+        }
+
+        public Builder commitDocumentCount(final Integer commitDocumentCount) {
+            this.commitDocumentCount = commitDocumentCount;
+            return self();
+        }
+
+        public Builder status(final IndexShardStatus status) {
+            this.status = status;
+            return self();
+        }
+
+        public Builder fileSize(final Long fileSize) {
+            this.fileSize = fileSize;
+            return self();
+        }
+
+        public Builder indexVersion(final String indexVersion) {
+            this.indexVersion = indexVersion;
+            return self();
+        }
+
+        public Builder volume(final IndexVolume volume) {
+            this.volume = volume;
+            return self();
+        }
+
+        public Builder nodeName(final String nodeName) {
+            this.nodeName = nodeName;
+            return self();
+        }
+
+        public Builder indexUuid(final String indexUuid) {
+            this.indexUuid = indexUuid;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public IndexShard build() {
+            return new IndexShard(
+                    id,
+                    partition,
+                    partitionFromTime,
+                    partitionToTime,
+                    documentCount,
+                    commitMs,
+                    commitDurationMs,
+                    commitDocumentCount,
+                    status,
+                    fileSize,
+                    indexVersion,
+                    volume,
+                    nodeName,
+                    indexUuid
+            );
+        }
+    }
 
     /**
      * The status of this indexUuid shard

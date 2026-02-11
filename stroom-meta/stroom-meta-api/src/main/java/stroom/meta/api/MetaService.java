@@ -27,6 +27,7 @@ import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
+import stroom.processor.shared.FeedDependency;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.ResultPage;
 import stroom.util.time.TimePeriod;
@@ -44,6 +45,13 @@ public interface MetaService {
      * @return The maximum id of any data item or null if there is no data.
      */
     Long getMaxId();
+
+    /**
+     * Get the current maximum id of any data with a create time less than or equal to the supplied time.
+     *
+     * @return The maximum id of any data item or null if there is no data.
+     */
+    Long getMaxId(long maxCreateTimeMs);
 
     /**
      * Create meta data with the supplied properties.
@@ -164,9 +172,9 @@ public interface MetaService {
      * Return true if the passed meta type name is a 'raw' type, i.e. used for receipt of
      * raw data.
      */
-    default boolean isRaw(final String typeName) {
+    default boolean isRaw(String typeName) {
         return typeName != null
-                && getRawTypes().contains(typeName);
+               && getRawTypes().contains(typeName);
     }
 
     /**
@@ -224,7 +232,7 @@ public interface MetaService {
      * @param criteria The selection criteria.
      * @return An object that provides a summary of the current selection.
      */
-    SelectionSummary getSelectionSummary(FindMetaCriteria criteria, final DocumentPermission permission);
+    SelectionSummary getSelectionSummary(FindMetaCriteria criteria, DocumentPermission permission);
 
 
     /**
@@ -243,7 +251,7 @@ public interface MetaService {
      * @return An object that provides a summary of the parent items of the current selection for
      * reprocessing purposes.
      */
-    SelectionSummary getReprocessSelectionSummary(FindMetaCriteria criteria, final DocumentPermission permission);
+    SelectionSummary getReprocessSelectionSummary(FindMetaCriteria criteria, DocumentPermission permission);
 
     /**
      * Return back a aet of meta data records that are effective for a period in
@@ -273,13 +281,13 @@ public interface MetaService {
                                                                DataRetentionRules rules,
                                                                FindDataRetentionImpactCriteria criteria);
 
-    boolean cancelRetentionDeleteSummary(final String queryId);
+    boolean cancelRetentionDeleteSummary(String queryId);
 
     Set<Long> findLockedMeta(Collection<Long> metaIdCollection);
 
-    List<SimpleMeta> getLogicallyDeleted(final Instant deleteThreshold,
-                                         final int batchSize,
-                                         final Set<Long> metaIdExcludeSet);
+    List<SimpleMeta> getLogicallyDeleted(Instant deleteThreshold,
+                                         int batchSize,
+                                         Set<Long> metaIdExcludeSet);
 
     /**
      * Gets a batch of {@link SimpleMeta} in ID order. Does not do any permission checking.
@@ -289,9 +297,9 @@ public interface MetaService {
      * @param batchSize Number of {@link SimpleMeta}s to return
      * @return
      */
-    List<SimpleMeta> findBatch(final long minId,
-                               final Long maxId,
-                               final int batchSize);
+    List<SimpleMeta> findBatch(long minId,
+                               Long maxId,
+                               int batchSize);
 
     /**
      * Check if ids exist.
@@ -299,5 +307,13 @@ public interface MetaService {
      * @param ids A list of IDs to check the presence of
      * @return The sub-set of ids that exist in the database
      */
-    Set<Long> exists(final Set<Long> ids);
+    Set<Long> exists(Set<Long> ids);
+
+    /**
+     * Find the minimum effective time of streams across a list of feed dependencies.
+     *
+     * @param feedDependencies The feed dependencies to use.
+     * @return An effective time in milliseconds since epoch or null if none is applicable.
+     */
+    Instant getFeedDependencyEffectiveTime(List<FeedDependency> feedDependencies);
 }

@@ -156,7 +156,7 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
 
         boolean success = false;
         final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
-        ExecutionResult executionResult = new ExecutionResult(null, null);
+        ExecutionResult executionResult = ExecutionResult.empty();
 
         try {
             final MappedRequestBundle mappedRequestBundle = buildMappedSearchRequest(analytic, effectiveExecutionTime);
@@ -300,12 +300,16 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                         if (errorMessages != null) {
                             for (final ErrorMessage errorMessage : errorMessages) {
                                 if (executionResult.status() == null) {
-                                    executionResult = new ExecutionResult("Error", errorMessage.getMessage());
+                                    executionResult = ExecutionResult.error(errorMessage.getMessage());
                                 }
 
                                 errorReceiverProxyProvider.get()
                                         .getErrorReceiver()
-                                        .log(errorMessage.getSeverity(), null, null, errorMessage.getMessage(), null);
+                                        .log(errorMessage.getSeverity(),
+                                                null,
+                                                null,
+                                                errorMessage.getMessage(),
+                                                null);
                             }
                         }
 
@@ -326,24 +330,31 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                 nextExecutionTime = trigger.getNextExecutionTimeAfter(now);
             }
 
-            // Update tracker.
-            final ExecutionTracker executionTracker = new ExecutionTracker(
-                    now.toEpochMilli(),
-                    effectiveExecutionTime.toEpochMilli(),
-                    nextExecutionTime.toEpochMilli());
-            if (currentTracker != null) {
-                executionScheduleDao.updateTracker(executionSchedule, executionTracker);
+            if (nextExecutionTime != null) {
+                // Update tracker.
+                final ExecutionTracker executionTracker = new ExecutionTracker(
+                        now.toEpochMilli(),
+                        effectiveExecutionTime.toEpochMilli(),
+                        nextExecutionTime.toEpochMilli());
+                if (currentTracker != null) {
+                    executionScheduleDao.updateTracker(executionSchedule, executionTracker);
+                } else {
+                    executionScheduleDao.createTracker(executionSchedule, executionTracker);
+                }
             } else {
-                executionScheduleDao.createTracker(executionSchedule, executionTracker);
+                LOGGER.debug(() -> LogUtil.message(
+                        "process() - nextExecutionTime is null, analytic: {}, executionTime: {}, " +
+                        "effectiveExecutionTime: {}, currentTracker: {}",
+                        analytic.asDocRef().toShortString(), executionTime, effectiveExecutionTime, currentTracker));
             }
 
             if (executionResult.status() == null) {
-                executionResult = new ExecutionResult("Complete", executionResult.message());
+                executionResult = ExecutionResult.complete(executionResult.message());
                 success = true;
             }
 
         } catch (final Exception e) {
-            executionResult = new ExecutionResult("Error", e.getMessage());
+            executionResult = ExecutionResult.error(e.getMessage());
 
             try {
                 LOGGER.debug(e::getMessage, e);

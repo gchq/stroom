@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -515,5 +515,44 @@ public final class LogUtil {
 
     public static String getClassName(final Object obj) {
         return NullSafe.get(obj, Object::getClass, Class::getName);
+    }
+
+    /**
+     * Returns a comma-delimited string of sampleSize items from the collection.
+     * Each item is converted to a string using {@link Objects#toString()}.
+     *
+     * @param sampleSize The number of items in the collection to output,
+     *                   taken in iteration order.
+     * @return null if collection is null, else something like '[X, Y, Z]'
+     */
+    public static <T> String getSample(final Collection<T> collection,
+                                       final int sampleSize) {
+        return getSample(collection, sampleSize, null);
+    }
+
+    /**
+     * Returns a comma-delimited string of sampleSize items from the collection.
+     * Each item is converted to a string using {@link Objects#toString()}.
+     *
+     * @param sampleSize       The number of items in the collection to output,
+     *                         taken in iteration order.
+     * @param toStringFunction The function to use to convert each item to a string.
+     * @return null if collection is null, else something like '[X, Y, Z]'
+     */
+    public static <T> String getSample(final Collection<T> collection,
+                                       final int sampleSize,
+                                       final Function<T, String> toStringFunction) {
+        if (collection == null) {
+            return null;
+        } else {
+            final Function<T, String> func = Objects.requireNonNullElse(
+                    toStringFunction,
+                    Objects::toString);
+            final String str = NullSafe.stream(collection)
+                    .limit(sampleSize)
+                    .map(func)
+                    .collect(Collectors.joining(", "));
+            return "[" + str + "]";
+        }
     }
 }

@@ -87,11 +87,20 @@ public class TestPathwayProcessor {
                 }
             };
 
-            new TraceLoader().load(tracesStore);
-
-            // Load pathways DB for doc.
+            // Load pathways DB for doc
             final PathwaysDb pathwaysDb = PathwaysDb
                     .create(pathwaysDir, BYTE_BUFFERS, false);
+
+            // Insert traces
+            new TraceLoader().load(tracesStore);
+
+            // Build and test pathways
+            testPathways(pathwaysDb, traceDb);
+
+            // Insert one more trace
+            new TraceLoader().addOneMore(tracesStore);
+
+            // Build and test more pathways
             testPathways(pathwaysDb, traceDb);
         }
     }

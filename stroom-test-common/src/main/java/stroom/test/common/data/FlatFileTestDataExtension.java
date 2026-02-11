@@ -16,6 +16,7 @@
 
 package stroom.test.common.data;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -31,9 +32,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
-
-import static org.junit.jupiter.api.Assertions.fail;
-
 
 public class FlatFileTestDataExtension implements BeforeAllCallback {
 
@@ -62,7 +60,7 @@ public class FlatFileTestDataExtension implements BeforeAllCallback {
                     try {
                         bw.write(String.format("%s\n", s));
                     } catch (final IOException e) {
-                        fail(e.getLocalizedMessage());
+                        Assertions.fail(e.getLocalizedMessage());
                     }
                 });
             }

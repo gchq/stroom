@@ -16,7 +16,7 @@
 
 package stroom.credentials.impl.db;
 
-import stroom.credentials.api.CredentialsConfig.CredentialsDbConfig;
+import stroom.credentials.impl.CredentialsConfig.CredentialsDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 
@@ -29,10 +29,8 @@ import javax.sql.DataSource;
 public class CredentialsDbModule extends AbstractFlyWayDbModule<CredentialsDbConfig, CredentialsDbConnProvider> {
 
     private static final String MODULE = "stroom-credentials";
-
     private static final String FLYWAY_LOCATIONS = "stroom/credentials/impl/db/migration";
-
-    private static final String FLYWAY_TABLE = "credentials_schema_history";
+    private static final String FLYWAY_TABLE = "credential_schema_history";
 
     @Override
     protected String getFlyWayTableName() {

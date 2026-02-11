@@ -41,10 +41,16 @@ public class ScheduleBounds {
         this.endTimeMs = endTimeMs;
     }
 
+    /**
+     * @return Start time in epoch millis (inc.), may be null.
+     */
     public Long getStartTimeMs() {
         return startTimeMs;
     }
 
+    /**
+     * @return End time in epoch millis (inc.), may be null.
+     */
     public Long getEndTimeMs() {
         return endTimeMs;
     }
@@ -62,7 +68,7 @@ public class ScheduleBounds {
         }
         final ScheduleBounds that = (ScheduleBounds) o;
         return Objects.equals(startTimeMs, that.startTimeMs) &&
-                Objects.equals(endTimeMs, that.endTimeMs);
+               Objects.equals(endTimeMs, that.endTimeMs);
     }
 
     @Override
@@ -75,9 +81,9 @@ public class ScheduleBounds {
     @Override
     public String toString() {
         return "ScheduleBounds{" +
-                "startTimeMs=" + startTimeMs +
-                ", endTimeMs=" + endTimeMs +
-                '}';
+               "startTimeMs=" + startTimeMs +
+               ", endTimeMs=" + endTimeMs +
+               '}';
     }
 
     public Builder copy() {
@@ -87,6 +93,10 @@ public class ScheduleBounds {
     public static Builder builder() {
         return new Builder();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 
@@ -102,11 +112,17 @@ public class ScheduleBounds {
         }
 
 
+        /**
+         * Start time in epoch millis (inc.)
+         */
         public Builder startTimeMs(final Long startTimeMs) {
             this.startTimeMs = startTimeMs;
             return this;
         }
 
+        /**
+         * End time in epoch millis (inc.)
+         */
         public Builder endTimeMs(final Long endTimeMs) {
             this.endTimeMs = endTimeMs;
             return this;

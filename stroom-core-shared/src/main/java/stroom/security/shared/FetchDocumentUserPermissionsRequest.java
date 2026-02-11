@@ -66,7 +66,7 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
     }
 
     public static class Builder
-            extends ExpressionCriteria.AbstractBuilder<FetchDocumentUserPermissionsRequest, Builder> {
+            extends ExpressionCriteriaBuilder<FetchDocumentUserPermissionsRequest, Builder> {
 
         private DocRef docRef;
         private UserRef userRef;

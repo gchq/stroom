@@ -22,5 +22,7 @@ public interface OpenAIModelSettingsUiHandlers extends UiHandlers {
 
     void onChange();
 
+    void onSetHttpClientConfiguration();
+
     void onTestModel();
 }

@@ -100,11 +100,16 @@ public class StepControlPresenter
         return getView().isEnabled(stepType);
     }
 
-    public void setEnabledButtons(final boolean justStepped,
-                                  final StepType stepType,
-                                  final boolean showingData,
+    public void initButtons() {
+        getView().setStepFirstEnabled(false);
+        getView().setStepBackwardEnabled(false);
+        getView().setStepForwardEnabled(false);
+        getView().setStepLastEnabled(false);
+        getView().setStepRefreshEnabled(true);
+    }
+
+    public void setEnabledButtons(final StepType stepType,
                                   final boolean foundRecord,
-                                  final boolean hasFatal,
                                   final boolean isFiltered,
                                   final StepLocation stepLocation) {
 
@@ -114,70 +119,48 @@ public class StepControlPresenter
                 && stepLocation.getRecordIndex() == 0;
         // If a filter is in place the end record is a variable concept
         final boolean isLastRecord = !isFiltered
-                && !hasFatal // if hasFatal then
                 && stepLocation != null
                 && endLocation != null
                 && stepLocation.getPartIndex() == endLocation.getPartIndex()
                 && stepLocation.getRecordIndex() == endLocation.getRecordIndex();
-        final boolean canStepFurtherBack = foundRecord && !hasFatal && !isFirstRecord;
-        final boolean canStepFurtherForward = foundRecord && !hasFatal && !isLastRecord;
+        final boolean canStepFurtherBack = foundRecord && !isFirstRecord;
+        final boolean canStepFurtherForward = foundRecord && !isLastRecord;
 
-        if (justStepped) {
-            if (stepType == StepType.FIRST) {
-                getView().setStepFirstEnabled(false);
-                getView().setStepBackwardEnabled(false);
-                getView().setStepForwardEnabled(true);
-                getView().setStepLastEnabled(true);
-            } else if (stepType == StepType.BACKWARD) {
-                getView().setStepFirstEnabled(canStepFurtherBack);
-                getView().setStepBackwardEnabled(canStepFurtherBack);
-                getView().setStepForwardEnabled(true);
-                getView().setStepLastEnabled(true);
-            } else if (stepType == StepType.FORWARD) {
-                markEndLocation(foundRecord, hasFatal, isFiltered, stepLocation);
-                getView().setStepFirstEnabled(true);
-                getView().setStepBackwardEnabled(true);
-                getView().setStepForwardEnabled(canStepFurtherForward);
-                getView().setStepLastEnabled(canStepFurtherForward);
-            } else if (stepType == StepType.LAST) {
-                markEndLocation(foundRecord, hasFatal, isFiltered, stepLocation);
-                getView().setStepFirstEnabled(true);
-                getView().setStepBackwardEnabled(true);
-                getView().setStepForwardEnabled(false);
-                getView().setStepLastEnabled(false);
-            } else if (stepType == StepType.REFRESH) {
-                getView().setStepFirstEnabled(!isFirstRecord);
-                getView().setStepBackwardEnabled(!isFirstRecord);
-                getView().setStepForwardEnabled(!isLastRecord);
-                getView().setStepLastEnabled(!isLastRecord);
-            }
-        } else {
-            if (stepType == null || stepType == StepType.BACKWARD) {
-                getView().setStepFirstEnabled(showingData);
-                getView().setStepBackwardEnabled(showingData);
-                getView().setStepForwardEnabled(true);
-                getView().setStepLastEnabled(true);
-            } else if (stepType == StepType.FORWARD) {
-                getView().setStepFirstEnabled(true);
-                getView().setStepBackwardEnabled(true);
-                getView().setStepForwardEnabled(showingData);
-                getView().setStepLastEnabled(showingData);
-            } else {
-                getView().setStepFirstEnabled(showingData);
-                getView().setStepBackwardEnabled(showingData);
-                getView().setStepForwardEnabled(showingData);
-                getView().setStepLastEnabled(showingData);
-            }
+        if (stepType == StepType.FIRST) {
+            getView().setStepFirstEnabled(false);
+            getView().setStepBackwardEnabled(false);
+            getView().setStepForwardEnabled(true);
+            getView().setStepLastEnabled(true);
+        } else if (stepType == StepType.BACKWARD) {
+            getView().setStepFirstEnabled(canStepFurtherBack);
+            getView().setStepBackwardEnabled(canStepFurtherBack);
+            getView().setStepForwardEnabled(true);
+            getView().setStepLastEnabled(true);
+        } else if (stepType == StepType.FORWARD) {
+            markEndLocation(foundRecord, isFiltered, stepLocation);
+            getView().setStepFirstEnabled(true);
+            getView().setStepBackwardEnabled(true);
+            getView().setStepForwardEnabled(canStepFurtherForward);
+            getView().setStepLastEnabled(canStepFurtherForward);
+        } else if (stepType == StepType.LAST) {
+            markEndLocation(foundRecord, isFiltered, stepLocation);
+            getView().setStepFirstEnabled(true);
+            getView().setStepBackwardEnabled(true);
+            getView().setStepForwardEnabled(false);
+            getView().setStepLastEnabled(false);
+        } else if (stepType == StepType.REFRESH) {
+            getView().setStepFirstEnabled(canStepFurtherBack);
+            getView().setStepBackwardEnabled(canStepFurtherBack);
+            getView().setStepForwardEnabled(canStepFurtherForward);
+            getView().setStepLastEnabled(canStepFurtherForward);
         }
-        getView().setStepRefreshEnabled(showingData);
     }
 
     private void markEndLocation(final boolean foundRecord,
-                                 final boolean hasFatal,
                                  final boolean isFiltered,
                                  final StepLocation stepLocation) {
         // Record the end location for future now that we know it.
-        if (endLocation == null && !isFiltered && !hasFatal && !foundRecord) {
+        if (endLocation == null && !isFiltered && !foundRecord) {
             endLocation = stepLocation;
         }
     }

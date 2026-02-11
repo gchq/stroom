@@ -21,11 +21,13 @@ import stroom.query.api.DateTimeSettings;
 import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 
 public interface Searchable extends DataSourceProvider {
 
     void search(ExpressionCriteria criteria,
                 FieldIndex fieldIndex,
                 DateTimeSettings dateTimeSettings,
-                ValuesConsumer consumer);
+                ValuesConsumer consumer,
+                ErrorConsumer errorConsumer);
 }

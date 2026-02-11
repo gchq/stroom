@@ -865,10 +865,6 @@ public class SearchRequestFactory {
 
             // Ensure StreamId and EventId fields exist if there is no grouping.
             if (groupDepth == 0) {
-                if (!addedFields.contains(SpecialColumns.RESERVED_ID)) {
-                    tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_ID_COLUMN);
-                    addedFields.add(SpecialColumns.RESERVED_ID);
-                }
                 if (!addedFields.contains(SpecialColumns.RESERVED_STREAM_ID)) {
                     tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_STREAM_ID_COLUMN);
                     addedFields.add(SpecialColumns.RESERVED_STREAM_ID);
@@ -876,6 +872,10 @@ public class SearchRequestFactory {
                 if (!addedFields.contains(SpecialColumns.RESERVED_EVENT_ID)) {
                     tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_EVENT_ID_COLUMN);
                     addedFields.add(SpecialColumns.RESERVED_EVENT_ID);
+                }
+                if (!addedFields.contains(SpecialColumns.RESERVED_ANNOTATION_ID)) {
+                    tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_ANNOTATION_ID_COLUMN);
+                    addedFields.add(SpecialColumns.RESERVED_ANNOTATION_ID);
                 }
             }
 

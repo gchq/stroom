@@ -46,7 +46,10 @@ import org.jooq.Field;
 import org.jooq.Name;
 import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.Record11;
+import org.jooq.Record9;
 import org.jooq.Select;
+import org.jooq.SelectLimitPercentAfterOffsetStep;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 import org.jooq.types.UByte;
@@ -578,7 +581,16 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                     request, additionalSortFieldMappings);
             // Join recursive select to user.
             // Max on the perms, as a user may be a member of multiple groups each with a perm on the doc
-            final var sql = context
+            final SelectLimitPercentAfterOffsetStep<Record9<
+                    String,
+                    String,
+                    String,
+                    String,
+                    Boolean,
+                    Boolean,
+                    Integer,
+                    Integer,
+                    Integer>> sql = context
                     .select(STROOM_USER.UUID,
                             STROOM_USER.NAME,
                             STROOM_USER.DISPLAY_NAME,
@@ -811,7 +823,18 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
                     request, additionalSortFieldMappings);
 
             // Join recursive select to user.
-            final var sql = context
+            final SelectLimitPercentAfterOffsetStep<Record11<
+                    String,
+                    String,
+                    String,
+                    String,
+                    Boolean,
+                    Boolean,
+                    Integer,
+                    Integer,
+                    Integer,
+                    String,
+                    String>> sql = context
                     .select(STROOM_USER.UUID,
                             STROOM_USER.NAME,
                             STROOM_USER.DISPLAY_NAME,

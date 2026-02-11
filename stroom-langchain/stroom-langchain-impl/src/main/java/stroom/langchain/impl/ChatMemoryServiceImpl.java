@@ -16,9 +16,9 @@
 
 package stroom.langchain.impl;
 
-import stroom.langchain.api.ChatMemoryConfig;
+import stroom.ai.shared.ChatMemoryConfig;
 import stroom.langchain.api.ChatMemoryService;
-import stroom.util.time.StroomDuration;
+import stroom.util.shared.time.SimpleDuration;
 
 import dev.langchain4j.store.memory.chat.ChatMemoryStore;
 import jakarta.inject.Inject;
@@ -35,8 +35,8 @@ public class ChatMemoryServiceImpl implements ChatMemoryService {
 
     @Inject
     public ChatMemoryServiceImpl(final Provider<ChatMemoryConfig> chatMemoryConfigProvider) {
-        final StroomDuration timeToLive = chatMemoryConfigProvider.get().getTimeToLive();
-        chatMemoryStore = new AutoExpiringChatMemoryStore(timeToLive.getDuration());
+        final SimpleDuration timeToLive = chatMemoryConfigProvider.get().getTimeToLive();
+        chatMemoryStore = new AutoExpiringChatMemoryStore(timeToLive);
     }
 
     @Override

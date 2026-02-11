@@ -40,6 +40,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Objects;
+
 public class NewPipelineReferencePresenter
         extends MyPresenterWidget<NewPipelineReferencePresenter.NewPipelineReferenceView>
         implements Focus {
@@ -113,9 +115,7 @@ public class NewPipelineReferencePresenter
         pipelinePresenter.addDataSelectionHandler(event -> {
             if (initialised) {
                 final DocRef selection = pipelinePresenter.getSelectedEntityReference();
-                if ((pipelineReference.getPipeline() == null && selection != null)
-                    || (pipelineReference.getPipeline() != null
-                        && !pipelineReference.getPipeline().equals(selection))) {
+                if (!Objects.equals(pipelineReference.getPipeline(), selection)) {
                     setDirty(true);
                 }
             }
@@ -123,8 +123,7 @@ public class NewPipelineReferencePresenter
         feedPresenter.addDataSelectionHandler(event -> {
             if (initialised) {
                 final DocRef selection = feedPresenter.getSelectedEntityReference();
-                if ((pipelineReference.getFeed() == null && selection != null)
-                    || (pipelineReference.getFeed() != null && !pipelineReference.getFeed().equals(selection))) {
+                if (!Objects.equals(pipelineReference.getFeed(), selection)) {
                     setDirty(true);
                 }
             }
@@ -132,9 +131,7 @@ public class NewPipelineReferencePresenter
         dataTypeWidget.addValueChangeHandler(event -> {
             if (initialised) {
                 final String selection = dataTypeWidget.getValue();
-                if ((pipelineReference.getStreamType() == null && selection != null)
-                    || (pipelineReference.getStreamType() != null
-                        && !pipelineReference.getStreamType().equals(selection))) {
+                if (!Objects.equals(pipelineReference.getStreamType(), selection)) {
                     setDirty(true);
                 }
             }

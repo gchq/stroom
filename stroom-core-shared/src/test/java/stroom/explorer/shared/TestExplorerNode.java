@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.explorer.shared.NodeFlag.NodeFlagGroups.EXPANDER_GROUP;
 
 class TestExplorerNode {
 
@@ -90,7 +89,7 @@ class TestExplorerNode {
                 .addNodeFlag(NodeFlag.FILTER_MATCH)
                 .build();
 
-        assertThat(node.hasNodeFlagGroup(EXPANDER_GROUP))
+        assertThat(node.hasNodeFlagGroup(NodeFlagGroups.EXPANDER_GROUP))
                 .isTrue();
         assertThat(node.hasNodeFlagGroup(NodeFlagGroups.FILTER_MATCH_PAIR))
                 .isTrue();
@@ -102,7 +101,7 @@ class TestExplorerNode {
                 .addNodeFlag(NodeFlag.FAVOURITE)
                 .build();
 
-        assertThat(node.hasNodeFlagGroup(EXPANDER_GROUP))
+        assertThat(node.hasNodeFlagGroup(NodeFlagGroups.EXPANDER_GROUP))
                 .isFalse();
         assertThat(node.hasNodeFlagGroup(NodeFlagGroups.FILTER_MATCH_PAIR))
                 .isFalse();

@@ -173,21 +173,20 @@ public class CreateProcessFilterRequest {
     @Override
     public String toString() {
         return "CreateProcessFilterRequest{" +
-               "pipeline=" + pipeline +
+               "processorType=" + processorType +
+               ", pipeline=" + pipeline +
                ", queryData=" + queryData +
                ", priority=" + priority +
+               ", maxProcessingTasks=" + maxProcessingTasks +
                ", autoPriority=" + autoPriority +
                ", reprocess=" + reprocess +
                ", enabled=" + enabled +
                ", export=" + export +
                ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
                ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
+               ", runAsUser=" + runAsUser +
                '}';
     }
-
-
-    // --------------------------------------------------------------------------------
-
 
     public static class Builder {
 

@@ -24,6 +24,7 @@ import stroom.openai.client.presenter.OpenAIModelSettingsPresenter.OpenAIModelSe
 import stroom.openai.client.view.OpenAIModelSettingsViewImpl;
 
 public class OpenAIModelModule extends PluginModule {
+
     @Override
     protected void configure() {
         bindPlugin(OpenAIModelPlugin.class);

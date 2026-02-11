@@ -102,6 +102,15 @@ appConfig:
     defaultRetentionPeriod: "5y"
     physicalDeleteAge: "P7D"
     standardComments: []
+  askStroomAi:
+    chatMemory:
+      timeToLive:
+        time: 1
+        timeUnit: "HOURS"
+      tokenLimit: 30000
+    tableSummary:
+      maximumBatchSize: 16384
+      maximumTableInputRows: 100
   autoContentCreation:
     additionalGroupTemplate: "grp-${accountid}-sandbox"
     createAsSubjectId: "Administrators"
@@ -128,9 +137,6 @@ appConfig:
       100000: 10
       1000000: 3
     warningThresholdPercentage: 90
-  chatMemory:
-    timeToLive: "PT1H"
-    tokenLimit: 1024
   cluster:
     clusterCallIgnoreSSLHostnameVerifier: true
     clusterCallReadTimeout: "PT30S"
@@ -195,6 +201,7 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    keyStoreCachePath: "${stroom.home}/keystores"
   crossModule:
     db:
       connection:
@@ -213,12 +220,6 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
   dashboard:
-    openAIModel:
-      apiKey: null
-      baseUrl: null
-      maximumBatchSize: 1024
-      maximumTableInputRows: 100
-      modelId: null
     visualisationDocCache:
       expireAfterAccess: null
       expireAfterWrite: "PT10M"

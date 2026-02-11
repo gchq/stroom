@@ -16,9 +16,11 @@
 
 package stroom.util.scheduler;
 
+import org.jspecify.annotations.Nullable;
+
 import java.time.Instant;
 
 public interface Trigger {
 
-    Instant getNextExecutionTimeAfter(Instant afterTime);
+    @Nullable Instant getNextExecutionTimeAfter(Instant afterTime);
 }

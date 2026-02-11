@@ -55,6 +55,10 @@
   --button-icon-secondary__background-color--hover: rgba(var(--pink-500-rgb), 0.2); /* material pink 500 20% */
   --button-icon-secondary__background-color--selected: rgba(var(--pink-500-rgb), 0.1); /* material pink 500 10% */
 
+  --button-icon-green__color: var(--green-500); /* material green 500  */
+  --button-icon-green__background-color--hover: rgba(var(--green-500-rgb), 0.2); /* material green 500 20% */
+  --button-icon-green__background-color--selected: rgba(var(--green-500-rgb), 0.1); /* material green 500 10% */
+
   --button-icon__color--disabled: rgba(var(--black-rgb), 0.26);
 
   /*
@@ -74,6 +78,11 @@
   --button-contained-secondary__background-color: var(--pink-500); /* material pink 500  */
   --button-contained-secondary__background-color--hover: var(--pink-400); /* material pink 400  */
   --button-contained-secondary__background-color--selected: var(--pink-600); /* material pink 600 */
+
+  --button-contained-green__color: var(--white);
+  --button-contained-green__background-color: var(--green-500); /* material green 500  */
+  --button-contained-green__background-color--hover: var(--green-400); /* material green 400  */
+  --button-contained-green__background-color--selected: var(--green-600); /* material green 600 */
 
   --button-contained__color--disabled: rgba(var(--black-rgb), 0.26);
   --button-contained__background-color--disabled: rgba(var(--black-rgb), 0.12);

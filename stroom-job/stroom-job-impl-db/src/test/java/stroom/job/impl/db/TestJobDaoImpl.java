@@ -26,6 +26,7 @@ import stroom.util.exception.DataChangedException;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.assertj.core.api.Assertions;
 import org.jooq.exception.DataAccessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TestJobDaoImpl {
 
@@ -44,10 +44,10 @@ class TestJobDaoImpl {
     @BeforeEach
     void beforeEach() {
         Guice.createInjector(
-                new JobDbModule(),
-                new JobDaoModule(),
-                new MockSecurityContextModule(),
-                new DbTestModule())
+                        new JobDbModule(),
+                        new JobDaoModule(),
+                        new MockSecurityContextModule(),
+                        new DbTestModule())
                 .injectMembers(this);
         cleanup();
     }
@@ -78,7 +78,8 @@ class TestJobDaoImpl {
         job.setName(RandomStringUtils.randomAlphabetic(256));
 
         // When/then
-        assertThrows(DataAccessException.class, () -> dao.create(job));
+        Assertions.assertThatThrownBy(() -> dao.create(job))
+                .isInstanceOf(DataAccessException.class);
     }
 
     @Test
@@ -149,7 +150,8 @@ class TestJobDaoImpl {
         copy2.setName("change 2");
 
         // When/then
-        assertThrows(DataChangedException.class, () -> dao.update(copy2));
+        Assertions.assertThatThrownBy(() -> dao.update(copy2))
+                .isInstanceOf(DataChangedException.class);
     }
 
     private Job createStandardJob() {

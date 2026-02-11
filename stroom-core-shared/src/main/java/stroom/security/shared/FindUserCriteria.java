@@ -61,7 +61,7 @@ public class FindUserCriteria extends ExpressionCriteria {
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder extends AbstractBuilder<FindUserCriteria, Builder> {
+    public static class Builder extends ExpressionCriteriaBuilder<FindUserCriteria, Builder> {
 
         private FindUserContext context;
 

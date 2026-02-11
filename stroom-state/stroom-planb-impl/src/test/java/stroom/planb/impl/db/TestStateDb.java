@@ -83,7 +83,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.planb.impl.db.StateValueTestUtil.makeString;
 
 class TestStateDb {
 
@@ -126,9 +125,9 @@ class TestStateDb {
             new KeyFunction(KeyType.VARIABLE.name(), KeyType.VARIABLE,
                     i -> KeyPrefix.create(ValString.create("test-" + i))),
             new KeyFunction("Variable mid", KeyType.VARIABLE,
-                    i -> KeyPrefix.create(ValString.create(makeString(400)))),
+                    i -> KeyPrefix.create(ValString.create(StateValueTestUtil.makeString(400)))),
             new KeyFunction("Variable long", KeyType.VARIABLE,
-                    i -> KeyPrefix.create(ValString.create(makeString(1000)))));
+                    i -> KeyPrefix.create(ValString.create(StateValueTestUtil.makeString(1000)))));
 
     @Test
     void testReadWrite(@TempDir final Path tempDir) {
@@ -395,7 +394,10 @@ class TestStateDb {
             ZipUtil.zip(zipFile, partPath);
             FileUtil.deleteDir(partPath);
             final String fileHash = FileHashUtil.hash(zipFile);
-            mergeProcessor.add(new FileDescriptor(System.currentTimeMillis(), 1, fileHash), zipFile, false);
+            mergeProcessor.add(new FileDescriptor(
+                    System.currentTimeMillis(),
+                    1,
+                    fileHash), zipFile, false);
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -625,7 +627,7 @@ class TestStateDb {
         tests.add(createStaticKeyTest(
                 "Hash lookup key (long)",
                 KeyType.HASH_LOOKUP,
-                KeyPrefix.create(ValString.create(makeString(800))),
+                KeyPrefix.create(ValString.create(StateValueTestUtil.makeString(800))),
                 iterations,
                 read));
 
@@ -638,13 +640,13 @@ class TestStateDb {
         tests.add(createStaticKeyTest(
                 "Variable string uid lookup key",
                 KeyType.VARIABLE,
-                KeyPrefix.create(ValString.create(makeString(200))),
+                KeyPrefix.create(ValString.create(StateValueTestUtil.makeString(200))),
                 iterations,
                 read));
         tests.add(createStaticKeyTest(
                 "Variable string hash lookup key",
                 KeyType.VARIABLE,
-                KeyPrefix.create(ValString.create(makeString(800))),
+                KeyPrefix.create(ValString.create(StateValueTestUtil.makeString(800))),
                 iterations,
                 read));
         return tests;

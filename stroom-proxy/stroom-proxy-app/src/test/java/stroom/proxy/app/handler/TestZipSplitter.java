@@ -18,6 +18,7 @@ package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.TestDataUtil.Item;
 import stroom.proxy.app.handler.TestDataUtil.ItemGroup;
 import stroom.proxy.app.handler.TestDataUtil.ProxyZipSnapshot;
@@ -44,8 +45,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.meta.api.StandardHeaderArguments.FEED;
-import static stroom.meta.api.StandardHeaderArguments.TYPE;
 
 class TestZipSplitter {
 
@@ -154,8 +153,8 @@ class TestZipSplitter {
             final Path zipFilePath = TestDataUtil.getZipFile(subDir);
 
             final ProxyZipSnapshot proxyZipSnapshot = ProxyZipSnapshot.of(zipFilePath);
-            final String feed = meta.get(FEED);
-            final String type = meta.get(TYPE);
+            final String feed = meta.get(StandardHeaderArguments.FEED);
+            final String type = meta.get(StandardHeaderArguments.TYPE);
             final FeedKey feedKey = FeedKey.of(feed, type);
             if (feedKeys.contains(feedKey)) {
                 // Two item groups per zip
@@ -176,8 +175,8 @@ class TestZipSplitter {
                         .stream()
                         .map(ItemGroup::meta)
                         .map(Item::content)
-                        .allMatch(attrMap -> feedKey.feed().equals(attrMap.get(FEED))
-                                             && feedKey.type().equals(attrMap.get(TYPE))))
+                        .allMatch(attrMap -> feedKey.feed().equals(attrMap.get(StandardHeaderArguments.FEED))
+                                             && feedKey.type().equals(attrMap.get(StandardHeaderArguments.TYPE))))
                         .isTrue();
             } else {
                 Assertions.fail("Unexpected feedKey in meta " + feedKey);
@@ -277,8 +276,8 @@ class TestZipSplitter {
             final Path zipFilePath = TestDataUtil.getZipFile(subDir);
 
             final ProxyZipSnapshot proxyZipSnapshot = ProxyZipSnapshot.of(zipFilePath);
-            final String feed = meta.get(FEED);
-            final String type = meta.get(TYPE);
+            final String feed = meta.get(StandardHeaderArguments.FEED);
+            final String type = meta.get(StandardHeaderArguments.TYPE);
             final FeedKey feedKey = FeedKey.of(feed, type);
             if (feedKeys.contains(feedKey)) {
                 // Two item groups per zip
@@ -299,8 +298,8 @@ class TestZipSplitter {
                         .stream()
                         .map(ItemGroup::meta)
                         .map(Item::content)
-                        .allMatch(attrMap -> feedKey.feed().equals(attrMap.get(FEED))
-                                             && feedKey.type().equals(attrMap.get(TYPE))))
+                        .allMatch(attrMap -> feedKey.feed().equals(attrMap.get(StandardHeaderArguments.FEED))
+                                             && feedKey.type().equals(attrMap.get(StandardHeaderArguments.TYPE))))
                         .isTrue();
             } else {
                 Assertions.fail("Unexpected feedKey in meta " + feedKey);
@@ -400,8 +399,8 @@ class TestZipSplitter {
             final Path zipFilePath = TestDataUtil.getZipFile(subDir);
 
             final ProxyZipSnapshot proxyZipSnapshot = ProxyZipSnapshot.of(zipFilePath);
-            final String feed = meta.get(FEED);
-            final String type = meta.get(TYPE);
+            final String feed = meta.get(StandardHeaderArguments.FEED);
+            final String type = meta.get(StandardHeaderArguments.TYPE);
             final FeedKey feedKey = FeedKey.of(feed, type);
 
             if (feedKeys.contains(feedKey)) {
@@ -423,8 +422,8 @@ class TestZipSplitter {
                         .stream()
                         .map(ItemGroup::meta)
                         .map(Item::content)
-                        .allMatch(attrMap -> feedKey.feed().equals(attrMap.get(FEED))
-                                             && feedKey.type().equals(attrMap.get(TYPE))))
+                        .allMatch(attrMap -> feedKey.feed().equals(attrMap.get(StandardHeaderArguments.FEED))
+                                             && feedKey.type().equals(attrMap.get(StandardHeaderArguments.TYPE))))
                         .isTrue();
             } else {
                 Assertions.fail("Unexpected feedKey in meta " + feedKey);
@@ -526,8 +525,8 @@ class TestZipSplitter {
             final Path zipFilePath = TestDataUtil.getZipFile(subDir);
 
             final ProxyZipSnapshot proxyZipSnapshot = ProxyZipSnapshot.of(zipFilePath);
-            final String feed = meta.get(FEED);
-            final String type = meta.get(TYPE);
+            final String feed = meta.get(StandardHeaderArguments.FEED);
+            final String type = meta.get(StandardHeaderArguments.TYPE);
             final FeedKey feedKey = FeedKey.of(feed, type);
 
             if (allowedFeedKeys.contains(feedKey)) {
@@ -549,8 +548,8 @@ class TestZipSplitter {
                         .stream()
                         .map(ItemGroup::meta)
                         .map(Item::content)
-                        .allMatch(attrMap -> feedKey.feed().equals(attrMap.get(FEED))
-                                             && feedKey.type().equals(attrMap.get(TYPE))))
+                        .allMatch(attrMap -> feedKey.feed().equals(attrMap.get(StandardHeaderArguments.FEED))
+                                             && feedKey.type().equals(attrMap.get(StandardHeaderArguments.TYPE))))
                         .isTrue();
             } else {
                 Assertions.fail("Unexpected feedKey in meta " + feedKey);

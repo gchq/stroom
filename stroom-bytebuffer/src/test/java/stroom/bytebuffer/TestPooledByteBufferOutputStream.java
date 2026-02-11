@@ -34,7 +34,6 @@ import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static java.lang.Long.BYTES;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPooledByteBufferOutputStream {
@@ -304,10 +303,10 @@ class TestPooledByteBufferOutputStream {
             assertThat(pooledBuffer.position())
                     .isZero();
             assertThat(pooledBuffer.capacity())
-                    .isGreaterThan(BYTES);
+                    .isGreaterThan(Long.BYTES);
             assertThat(pooledBuffer.limit())
-                    .isEqualTo(BYTES);
-            assertThat(byteBuffer.slice(5, BYTES)).isEqualTo(pooledBuffer.slice(0, BYTES));
+                    .isEqualTo(Long.BYTES);
+            assertThat(byteBuffer.slice(5, Long.BYTES)).isEqualTo(pooledBuffer.slice(0, Long.BYTES));
         }
     }
 
@@ -316,11 +315,11 @@ class TestPooledByteBufferOutputStream {
         final ByteBufferPool byteBufferPool = getByteBufferPool();
         try (final PooledByteBufferOutputStream pooledByteBufferOutputStream = new PooledByteBufferOutputStream(
                 byteBufferPool,
-                BYTES)) {
+                Long.BYTES)) {
             pooledByteBufferOutputStream.writeLong(234556L);
             final ByteBuffer pooledBuffer = pooledByteBufferOutputStream.getByteBuffer();
             final byte[] actual = ByteBufferUtils.toBytes(pooledBuffer);
-            final byte[] expected = new byte[BYTES];
+            final byte[] expected = new byte[Long.BYTES];
             oldPutLong(expected, 0, 234556L);
             assertThat(actual).isEqualTo(expected);
         }
@@ -332,6 +331,6 @@ class TestPooledByteBufferOutputStream {
             val >>>= 8;
         }
         bytes[offset] = (byte) val;
-        return offset + BYTES;
+        return offset + Long.BYTES;
     }
 }

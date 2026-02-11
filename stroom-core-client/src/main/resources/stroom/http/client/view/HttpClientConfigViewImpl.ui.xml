@@ -1,0 +1,73 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:d="urn:import:stroom.widget.customdatebox.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="httpClientTimeout"
+                        label="Timeout"
+                        helpText="Determines the timeout until arrival of a response from the opposite endpoint. A timeout value of zero is interpreted as an infinite timeout. Default: 3 minutes">
+            <d:DurationPicker ui:field="timeout"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientConnectionTimeout"
+                        label="Connection Timeout"
+                        helpText="Determines the timeout until a new connection is fully established. This may also include transport security negotiation exchanges such as SSL or TLS protocol negotiation. A timeout value of zero is interpreted as an infinite timeout. Default: 3 minutes">
+            <d:DurationPicker ui:field="connectionTimeout"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientConnectionRequestTimeout"
+                        label="Connection Request Timeout"
+                        helpText="Returns the connection lease request timeout used when requesting a connection from the connection manager. Default: 3 minutes">
+            <d:DurationPicker ui:field="connectionRequestTimeout"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientTimeToLive"
+                        label="Time To Live"
+                        helpText="The maximum time a pooled connection can stay idle (not leased to any thread) before it is shut down. Default: 1 hour">
+            <d:DurationPicker ui:field="timeToLive"/>
+        </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="cookiesEnabled"
+                                    identity="httpClientCookiesEnabled"
+                                    label="Cookies Enabled"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientMaxConnections"
+                        label="Max Connections"
+                        helpText="Max Connections">
+            <v:ValueSpinner ui:field="maxConnections"
+                            width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientMaxConnectionsPerRoute"
+                        label="Max Connections Per Route"
+                        helpText="Max Connections Per Route">
+            <v:ValueSpinner ui:field="maxConnectionsPerRoute"
+                            width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientKeepAlive"
+                        label="Keep Alive"
+                        helpText="The maximum time a connection will be kept alive before it is reconnected. If set to 0, connections will be immediately closed after every request/response. Default: 0">
+            <d:DurationPicker ui:field="keepAlive"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientRetries"
+                        label="Retries"
+                        helpText="Retries">
+            <v:ValueSpinner ui:field="retries"
+                            width="200px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientUserAgent"
+                        label="User Agent"
+                        helpText="User Agent">
+            <g:TextBox ui:field="userAgent"
+                       width="400px"
+                       title="User Agent"/>
+        </form:FormGroup>
+        <form:FormGroup identity="httpClientValidateAfterInactivityPeriod"
+                        label="Validate After Inactivity Period"
+                        helpText="Validate After Inactivity Period">
+            <d:DurationPicker ui:field="validateAfterInactivityPeriod"/>
+        </form:FormGroup>
+        <b:Button ui:field="setHttpTlsConfig" text="Set HTTP TLS Config" width="200px" addStyleNames="allow-focus"/>
+    </g:FlowPanel>
+</ui:UiBinder>

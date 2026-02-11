@@ -29,7 +29,7 @@ import java.time.format.DateTimeParseException;
         commonReturnDescription = "The result date and time.",
         signatures =
         @FunctionSignature(
-                description = "Floors the supplied time to the nearest duration.",
+                description = "Rounds the supplied time up to the nearest duration.",
                 args = {
                         @FunctionArg(
                                 name = "time",

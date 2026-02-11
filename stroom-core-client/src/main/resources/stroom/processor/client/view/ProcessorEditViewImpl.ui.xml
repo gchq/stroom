@@ -4,7 +4,7 @@
              xmlns:c="urn:import:stroom.widget.customdatebox.client"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
->
+             xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="processorEditExpression" label="Expression" addStyleNames="dock-max">
             <g:SimplePanel ui:field="expression" styleName="max default-min-sizes"/>
@@ -20,6 +20,12 @@
         </form:FormGroup>
         <form:FormGroup identity="runAsUser" label="Run As User">
             <g:SimplePanel ui:field="runAsUser"/>
+        </form:FormGroup>
+        <form:FormGroup identity="processorEditFeedDependencies"
+                        label="Set Feed Dependencies">
+            <b:Button addStyleNames="dock-min allow-focus"
+                      ui:field="editFeedDependencies"
+                      text="Set Feed Dependencies"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

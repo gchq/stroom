@@ -5,14 +5,11 @@ buildscript {
     }
     dependencies {
         classpath libs.mysql.connector.java
-        //classpath 'org.reflections:reflections:0.9.12'
     }
 }
 
 plugins {
-//    id "com.benjaminsproule.swagger" version "1.0.14"
-    //id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.1"
-    id "io.swagger.core.v3.swagger-gradle-plugin" version "2.2.19"
+    alias libs.plugins.swagger.gradle.plugin
     id "java"
 }
 
@@ -152,6 +149,7 @@ dependencies {
     implementation project(':stroom-job:stroom-job-impl-db-jooq')
     implementation project(':stroom-kafka:stroom-kafka-api')
     implementation project(':stroom-kafka:stroom-kafka-impl')
+    implementation project(':stroom-langchain:stroom-langchain-api')
     implementation project(':stroom-langchain:stroom-langchain-impl')
     implementation project(':stroom-lifecycle:stroom-lifecycle-api')
     implementation project(':stroom-lifecycle:stroom-lifecycle-impl')
@@ -239,6 +237,7 @@ dependencies {
     implementation libs.jetty.server
     implementation libs.jetty.servlet
     implementation libs.jetty.servlets
+    implementation libs.jgit
     implementation libs.jooq
     implementation libs.jose4j
     implementation libs.logback.classic
@@ -286,6 +285,7 @@ dependencies {
     testImplementation project(':stroom-headless')
     testImplementation project(':stroom-importexport:stroom-importexport-api')
     testImplementation project(':stroom-index:stroom-index-mock')
+    testImplementation project(':stroom-langchain:stroom-langchain-mock')
     testImplementation project(':stroom-meta:stroom-meta-api')
     testImplementation project(':stroom-meta:stroom-meta-mock')
     testImplementation project(':stroom-node:stroom-node-mock')
@@ -315,6 +315,7 @@ dependencies {
     testImplementation libs.guice.grapher
     testImplementation libs.hikari
     testImplementation libs.jinjava
+    testImplementation libs.langchain4j
     testImplementation libs.lmdbjava
     testImplementation libs.saxon.he
     testImplementation libs.slf4j.api

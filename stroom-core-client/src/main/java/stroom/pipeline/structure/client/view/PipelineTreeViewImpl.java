@@ -50,7 +50,7 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         treePanel = new PipelineTreePanel();
         subTreePanel = new PipelineTreePanel();
 
-        layoutPanel = new DraggableTreePanel<PipelineElement>(treePanel, subTreePanel) {
+        layoutPanel = new DraggableTreePanel<>(treePanel, subTreePanel) {
             @Override
             protected boolean isValidTarget(final PipelineElement parent, final PipelineElement child) {
                 final PipelineElementType parentType = pipelineModel.getElementType(parent);
@@ -138,6 +138,11 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     @Override
     public int getTreeHeight() {
         return treePanel.getTreeHeight();
+    }
+
+    @Override
+    public void setDisabledElements(final List<PipelineElement> disabledElements) {
+        treePanel.setDisabledElements(disabledElements);
     }
 
     @Override

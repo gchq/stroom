@@ -39,6 +39,10 @@ public class HideRequest {
         return action;
     }
 
+    public DialogAction getAction() {
+        return action;
+    }
+
     public Runnable getCancelHandler() {
         return cancelHandler;
     }

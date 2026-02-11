@@ -265,9 +265,9 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
 //        return parent;
 //    }
 
-    /////////////////////////////////
+    // ---------------------------------------------------------------------
     // START INTERNAL SOURCE
-    /////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public InputStream getInputStream() {
@@ -300,7 +300,7 @@ final class FsSource implements InternalSource, SegmentInputStreamProviderFactor
         return null;
     }
 
-    /////////////////////////////////
+    // ---------------------------------------------------------------------
     // END INTERNAL SOURCE
-    /////////////////////////////////
+    // ---------------------------------------------------------------------
 }

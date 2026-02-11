@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,9 @@ import stroom.cache.service.impl.CacheServiceModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.core.receive.ReceiveDataModule;
+import stroom.credentials.api.KeyStore;
+import stroom.credentials.api.StoredSecret;
+import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.impl.db.MockCredentialsDaoModule;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.impl.DictionaryModule;
@@ -104,13 +107,24 @@ public class TestBaseModule extends AbstractModule {
         bind(ContentPackUserService.class).to(MockSecurityContext.class); //?
         bind(PathConfig.class).to(StroomPathConfig.class);
         bind(TempDirProvider.class).to(TempDirProviderImpl.class);
+
+        bind(StoredSecrets.class).toInstance(new StoredSecrets() {
+            @Override
+            public StoredSecret get(final String name) {
+                return null;
+            }
+
+            @Override
+            public KeyStore getKeyStore(final String name) {
+                return null;
+            }
+        });
     }
 
     @SuppressWarnings("unused")
     @Provides
     EntityEventBus entityEventBus() {
-        return event -> {
-        };
+        return EntityEventBus.NO_OP_EVENT_BUS;
     }
 
     @SuppressWarnings("unused")

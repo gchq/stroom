@@ -37,6 +37,8 @@ import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.schema.ClusteringOrder;
 import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
+import com.datastax.oss.driver.api.querybuilder.SchemaBuilder;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.internal.querybuilder.schema.compaction.DefaultTimeWindowCompactionStrategy;
 import jakarta.inject.Provider;
@@ -49,13 +51,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
-
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.bindMarker;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.deleteFrom;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.insertInto;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.selectFrom;
-import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createTable;
 
 public class SessionDao extends AbstractStateDao<Session> {
 
@@ -84,7 +79,7 @@ public class SessionDao extends AbstractStateDao<Session> {
     void createTables() {
         LOGGER.info("Creating table: " + table);
         LOGGER.logDurationIfInfoEnabled(() -> {
-            final SimpleStatement statement = createTable(table)
+            final SimpleStatement statement = SchemaBuilder.createTable(table)
                     .ifNotExists()
                     .withPartitionKey(COLUMN_KEY, DataTypes.TEXT)
                     .withClusteringColumn(COLUMN_START, DataTypes.TIMESTAMP)
@@ -101,11 +96,11 @@ public class SessionDao extends AbstractStateDao<Session> {
     @Override
     public void insert(final List<Session> sessions) {
         Objects.requireNonNull(sessions, "Null sessions list");
-        final SimpleStatement statement = insertInto(table)
-                .value(COLUMN_KEY, bindMarker())
-                .value(COLUMN_START, bindMarker())
-                .value(COLUMN_END, bindMarker())
-                .value(COLUMN_TERMINAL, bindMarker())
+        final SimpleStatement statement = QueryBuilder.insertInto(table)
+                .value(COLUMN_KEY, QueryBuilder.bindMarker())
+                .value(COLUMN_START, QueryBuilder.bindMarker())
+                .value(COLUMN_END, QueryBuilder.bindMarker())
+                .value(COLUMN_TERMINAL, QueryBuilder.bindMarker())
                 .usingTimeout(TEN_SECONDS)
                 .build();
         final PreparedStatement preparedStatement = prepare(statement);
@@ -126,11 +121,11 @@ public class SessionDao extends AbstractStateDao<Session> {
 
     @Override
     public void delete(final List<Session> sessions) {
-        final SimpleStatement statement = deleteFrom(table)
-                .whereColumn(COLUMN_KEY).isEqualTo(bindMarker())
-                .whereColumn(COLUMN_START).isEqualTo(bindMarker())
-                .whereColumn(COLUMN_END).isEqualTo(bindMarker())
-                .whereColumn(COLUMN_TERMINAL).isEqualTo(bindMarker())
+        final SimpleStatement statement = QueryBuilder.deleteFrom(table)
+                .whereColumn(COLUMN_KEY).isEqualTo(QueryBuilder.bindMarker())
+                .whereColumn(COLUMN_START).isEqualTo(QueryBuilder.bindMarker())
+                .whereColumn(COLUMN_END).isEqualTo(QueryBuilder.bindMarker())
+                .whereColumn(COLUMN_TERMINAL).isEqualTo(QueryBuilder.bindMarker())
                 .build();
         doDelete(sessions, statement, session -> new Object[]{
                 session.key(),
@@ -153,7 +148,7 @@ public class SessionDao extends AbstractStateDao<Session> {
                 dateTimeSettings);
         findKeys(relations, key -> {
             final List<Relation> childRelations = new ArrayList<>(relations);
-            childRelations.add(Relation.column(COLUMN_KEY).isEqualTo(literal(key)));
+            childRelations.add(Relation.column(COLUMN_KEY).isEqualTo(QueryBuilder.literal(key)));
 
             final RowConsumer rowConsumer = new RowConsumer(key, sessionConsumer);
             // Find rows and turn them into sessions with the row consumer.
@@ -183,7 +178,7 @@ public class SessionDao extends AbstractStateDao<Session> {
 
     private void findKeys(final List<Relation> relations,
                           final Consumer<String> consumer) {
-        final SimpleStatement statement = selectFrom(table)
+        final SimpleStatement statement = QueryBuilder.selectFrom(table)
                 .column(COLUMN_KEY)
                 .where(relations)
                 .groupByColumnIds(COLUMN_KEY)
@@ -196,7 +191,7 @@ public class SessionDao extends AbstractStateDao<Session> {
 
     private void findRows(final List<Relation> relations,
                           final Consumer<Row> consumer) {
-        final SimpleStatement statement = selectFrom(table)
+        final SimpleStatement statement = QueryBuilder.selectFrom(table)
                 .column(COLUMN_START)
                 .column(COLUMN_END)
                 .column(COLUMN_TERMINAL)
@@ -209,12 +204,12 @@ public class SessionDao extends AbstractStateDao<Session> {
     }
 
     public boolean inSession(final TemporalStateRequest request) {
-        final SimpleStatement statement = selectFrom(table)
+        final SimpleStatement statement = QueryBuilder.selectFrom(table)
                 .column(COLUMN_START)
                 .column(COLUMN_END)
                 .column(COLUMN_TERMINAL)
-                .whereColumn(COLUMN_KEY).isEqualTo(bindMarker())
-                .whereColumn(COLUMN_START).isLessThanOrEqualTo(bindMarker())
+                .whereColumn(COLUMN_KEY).isEqualTo(QueryBuilder.bindMarker())
+                .whereColumn(COLUMN_START).isLessThanOrEqualTo(QueryBuilder.bindMarker())
                 .orderBy(COLUMN_START, ClusteringOrder.DESC)
                 .limit(1)
                 .allowFiltering()
@@ -235,7 +230,7 @@ public class SessionDao extends AbstractStateDao<Session> {
                     Objects.requireNonNull(end);
 
                     return (start.equals(request.effectiveTime()) || start.isBefore(request.effectiveTime())) &&
-                            (end.equals(request.effectiveTime()) || end.isAfter(request.effectiveTime()));
+                           (end.equals(request.effectiveTime()) || end.isAfter(request.effectiveTime()));
                 })
                 .orElse(false);
     }
@@ -249,9 +244,9 @@ public class SessionDao extends AbstractStateDao<Session> {
     public void removeOldData(final Instant oldest) {
         try (final BatchStatementExecutor executor = new BatchStatementExecutor(sessionProvider)) {
             findKeys(Collections.emptyList(), key -> {
-                final SimpleStatement statement = deleteFrom(table)
-                        .whereColumn(COLUMN_KEY).isEqualTo(literal(key))
-                        .whereColumn(COLUMN_START).isLessThan(literal(oldest))
+                final SimpleStatement statement = QueryBuilder.deleteFrom(table)
+                        .whereColumn(COLUMN_KEY).isEqualTo(QueryBuilder.literal(key))
+                        .whereColumn(COLUMN_START).isLessThan(QueryBuilder.literal(oldest))
                         .build();
                 executor.addStatement(statement);
             });
@@ -273,7 +268,7 @@ public class SessionDao extends AbstractStateDao<Session> {
         public void condense(final Instant oldest) {
             sessionDao.findKeys(Collections.emptyList(), key -> {
                 final List<Relation> childRelations = new ArrayList<>();
-                childRelations.add(Relation.column(COLUMN_KEY).isEqualTo(literal(key)));
+                childRelations.add(Relation.column(COLUMN_KEY).isEqualTo(QueryBuilder.literal(key)));
                 sessionDao.findRows(childRelations, row -> {
                     final Instant start = row.getInstant(0);
                     final Instant end = row.getInstant(1);
@@ -358,7 +353,7 @@ public class SessionDao extends AbstractStateDao<Session> {
             insertList.add(newSession);
             deleteList.addAll(oldSessions);
             if (insertList.size() >= BatchStatementExecutor.MAX_BATCH_STATEMENTS ||
-                    deleteList.size() >= BatchStatementExecutor.MAX_BATCH_STATEMENTS) {
+                deleteList.size() >= BatchStatementExecutor.MAX_BATCH_STATEMENTS) {
                 flush();
             }
         }

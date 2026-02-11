@@ -43,6 +43,13 @@ public interface MetaDao {
 
     Long getMaxId();
 
+    /**
+     * Get the current maximum id of any data with a create time less than or equal to the supplied time.
+     *
+     * @return The maximum id of any data item or null if there is no data.
+     */
+    Long getMaxId(long maxCreateTimeMs);
+
     Meta create(MetaProperties metaProperties);
 
     void search(ExpressionCriteria criteria, FieldIndex fieldIndex, ValuesConsumer consumer);

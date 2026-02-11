@@ -35,7 +35,6 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionPopup;
-import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
@@ -44,7 +43,10 @@ import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.UpdateStatusRequest;
+import stroom.pipeline.client.event.ChangeDataEvent;
+import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.CreateProcessorEvent;
+import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.CreateProcessFilterRequest;
@@ -75,6 +77,7 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.Range;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Collections;
@@ -89,7 +92,7 @@ import javax.inject.Provider;
 
 public abstract class AbstractMetaListPresenter
         extends MyPresenterWidget<PagerView>
-        implements HasDataSelectionHandlers<Selection<Long>>, Refreshable {
+        implements HasDataSelectionHandlers<Selection<Long>>, Refreshable, HasChangeDataHandlers<ResultPage<MetaRow>> {
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
@@ -142,7 +145,7 @@ public abstract class AbstractMetaListPresenter
         addColumns(allowSelectAll);
 
         criteria = new FindMetaCriteria();
-        dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus) {
+        dataProvider = new RestDataProvider<>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<MetaRow>> dataConsumer,
@@ -153,7 +156,10 @@ public abstract class AbstractMetaListPresenter
                     restFactory
                             .create(META_RESOURCE)
                             .method(res -> res.findMetaRow(criteria))
-                            .onSuccess(dataConsumer)
+                            .onSuccess(resultSet -> {
+                                dataConsumer.accept(resultSet);
+                                ChangeDataEvent.fire(AbstractMetaListPresenter.this, resultSet);
+                            })
                             .onFailure(errorHandler)
                             .taskMonitorFactory(view)
                             .exec();
@@ -172,6 +178,11 @@ public abstract class AbstractMetaListPresenter
     @Override
     protected void onBind() {
         registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+    }
+
+    @Override
+    public HandlerRegistration addChangeDataHandler(final ChangeDataHandler<ResultPage<MetaRow>> handler) {
+        return getEventBus().addHandlerToSource(ChangeDataEvent.getType(), this, handler);
     }
 
     protected ResultPage<MetaRow> onProcessData(final ResultPage<MetaRow> data) {

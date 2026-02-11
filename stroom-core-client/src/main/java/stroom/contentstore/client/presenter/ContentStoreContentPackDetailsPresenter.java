@@ -385,12 +385,12 @@ public class ContentStoreContentPackDetailsPresenter
                             null);
                     builder.onHideRequest(e -> {
                         if (e.isOk()) {
-                            final String credentialsId = credentialsDialog.getCredentialsId();
+                            final String credentialsName = credentialsDialog.getCredentialName();
 
-                            if (credentialsId != null) {
+                            if (credentialsName != null) {
                                 // Create the GitRepo with the given credentials
                                 e.hide();
-                                requestGitRepoCreation(cpws, credentialsId);
+                                requestGitRepoCreation(cpws, credentialsName);
                             } else {
                                 // Something is wrong
                                 AlertEvent.fireWarn(credentialsDialog,
@@ -423,13 +423,13 @@ public class ContentStoreContentPackDetailsPresenter
      * Performs the REST request to the server to create a GitRepo.
      *
      * @param cpws          The content pack with state. Must not be null.
-     * @param credentialsId The credentials ID for authentication, if required.
+     * @param credentialName The credentials name for authentication, if required.
      */
     private void requestGitRepoCreation(final ContentStoreContentPackWithDynamicState cpws,
-                                        final String credentialsId) {
+                                        final String credentialName) {
 
         final ContentStoreCreateGitRepoRequest request =
-                new ContentStoreCreateGitRepoRequest(cpws.getContentPack(), credentialsId);
+                new ContentStoreCreateGitRepoRequest(cpws.getContentPack(), credentialName);
 
         restFactory
                 .create(ContentStorePresenter.CONTENT_STORE_RESOURCE)

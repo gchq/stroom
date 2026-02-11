@@ -176,7 +176,7 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>stroom.index_volume</code> table
+     * <code>stroom_v7_11.index_volume</code> table
      */
     public IndexVolumePath indexVolume() {
         if (_indexVolume == null)

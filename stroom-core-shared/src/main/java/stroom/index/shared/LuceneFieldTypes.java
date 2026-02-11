@@ -34,5 +34,6 @@ public class LuceneFieldTypes {
         FIELD_TYPES.add(FieldType.DOUBLE);
         FIELD_TYPES.add(FieldType.DATE);
         FIELD_TYPES.add(FieldType.TEXT);
+        FIELD_TYPES.add(FieldType.DENSE_VECTOR);
     }
 }

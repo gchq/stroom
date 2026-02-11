@@ -18,15 +18,14 @@ package stroom.lmdb.stream;
 
 import java.nio.ByteBuffer;
 import java.util.Comparator;
-
-import static java.util.Objects.requireNonNull;
+import java.util.Objects;
 
 class OldUnsignedByteBufferComparator implements Comparator<ByteBuffer> {
 
     @Override
     public int compare(final ByteBuffer o1, final ByteBuffer o2) {
-        requireNonNull(o1);
-        requireNonNull(o2);
+        Objects.requireNonNull(o1);
+        Objects.requireNonNull(o2);
         if (o1.equals(o2)) {
             return 0;
         }

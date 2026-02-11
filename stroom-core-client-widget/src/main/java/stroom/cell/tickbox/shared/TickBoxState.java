@@ -17,6 +17,8 @@
 package stroom.cell.tickbox.shared;
 
 
+import stroom.util.shared.NullSafe;
+
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -39,7 +41,22 @@ public enum TickBoxState {
     }
 
     public Boolean toBoolean() {
+        // TODO Either this should return null/false/true to be consistent with fromBoolean
+        //  or return a primitive boolean
         return this.equals(TICK);
+    }
+
+    // This method is only here until the above TO DO is resolved
+
+    /**
+     * Convert tickBoxState into a primitive boolean. Is null-safe.
+     */
+    public static boolean getAsBoolean(final TickBoxState tickBoxState) {
+        return NullSafe.test(
+                tickBoxState,
+                TickBoxState::toBoolean,
+                boolObj ->
+                        boolObj != null && boolObj);
     }
 
     public static <T> Function<T, TickBoxState> createTickBoxFunc(
@@ -50,4 +67,5 @@ public enum TickBoxState {
             return TickBoxState.fromBoolean(bool);
         };
     }
+
 }

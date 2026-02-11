@@ -1,19 +1,16 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:list="urn:import:stroom.item.client"
-             xmlns:form="urn:import:stroom.widget.form.client">
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:list="urn:import:stroom.item.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="searchDownloadFileType" label="File Type">
             <list:SelectionBox ui:field="fileType"/>
         </form:FormGroup>
-<!--        <form:FormGroup ui:field="downloadAll">-->
-<!--          <view:CustomCheckBox ui:field="downloadAllTables" identity="searchDownloadAllTables" label="Download All Tables"/>-->
-<!--        </form:FormGroup>-->
-<!--        <form:FormGroup>-->
-<!--            <view:CustomCheckBox ui:field="sample" identity="searchDownloadSampleOnly" label="Sample Only"/>-->
-<!--        </form:FormGroup>-->
-<!--        <form:FormGroup identity="searchDownloadSampleSize" label="Sample Size (%)">-->
-<!--            <v:ValueSpinner ui:field="percent"/>-->
-<!--        </form:FormGroup>-->
+        <form:FormGroup label="Send Empty Reports"
+                        helpText="If a report contains no data because none is found by the query then do you still want to send an empty report? In some cases you might want to so the recipient knows there is nothing to report rather than the possibility that the report just didn't execute.">
+            <tickbox:CustomCheckBox ui:field="sendEmptyReports" addStyleNames="allow-focus"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

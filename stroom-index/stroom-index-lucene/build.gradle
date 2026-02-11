@@ -27,6 +27,7 @@ dependencies {
     implementation project(':stroom-index:stroom-index-impl')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-job:stroom-job-api')
+    implementation project(':stroom-langchain:stroom-langchain-api')
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-query-api')
@@ -41,13 +42,14 @@ dependencies {
 
     implementation "org.apache.lucene:lucene-analyzers-common:8.11.4"
     implementation "org.apache.lucene:lucene-backward-codecs:10.3.2"
-    implementation "org.apache.lucene:lucene-core:10.3.1"
-    implementation "org.apache.lucene:lucene-memory:10.3.1"
+    implementation "org.apache.lucene:lucene-core:10.3.2"
+    implementation "org.apache.lucene:lucene-memory:10.3.2"
     implementation "org.apache.lucene:lucene-queryparser:10.3.2"
-    implementation "org.apache.lucene:lucene-highlighter:10.3.1"
+    implementation "org.apache.lucene:lucene-highlighter:10.3.2"
 
     implementation libs.jackson.annotations
     implementation libs.guice
+    implementation libs.langchain4j
     implementation libs.slf4j.api
     implementation libs.vavr
     implementation libs.ws.rs.api

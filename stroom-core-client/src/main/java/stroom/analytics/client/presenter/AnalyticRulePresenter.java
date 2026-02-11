@@ -52,7 +52,7 @@ public class AnalyticRulePresenter
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
                                  final AnalyticQueryEditPresenter analyticQueryEditPresenter,
-                                 final Provider<AnalyticNotificationListPresenter> notificationPresenterProvider,
+                                 final Provider<AnalyticNotificationPresenter> notificationPresenterProvider,
                                  final Provider<AnalyticProcessingPresenter> processPresenterProvider,
                                  final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
                                  final Provider<AnalyticDuplicateManagementPresenter>

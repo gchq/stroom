@@ -53,6 +53,7 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContext;
@@ -724,10 +725,11 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
                        final DateTimeSettings dateTimeSettings,
-                       final ValuesConsumer consumer) {
+                       final ValuesConsumer valuesConsumer,
+                       final ErrorConsumer errorConsumer) {
         withPermissionCheck(() -> LOGGER.logDurationIfInfoEnabled(
                 () -> taskContextFactory.context("Querying reference data store", taskContext ->
-                                doSearch(criteria, fieldIndex, consumer, taskContext))
+                                doSearch(criteria, fieldIndex, valuesConsumer, taskContext))
                         .run(),
                 "Querying ref store"));
     }

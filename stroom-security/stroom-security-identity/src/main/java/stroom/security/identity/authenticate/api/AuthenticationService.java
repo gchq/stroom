@@ -24,11 +24,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.util.Optional;
 
-import static stroom.util.shared.ResourcePaths.SIGN_IN_PATH;
-
 public interface AuthenticationService {
 
-    String SIGN_IN_URL_PATH = ResourcePaths.buildServletPath(SIGN_IN_PATH);
+    String SIGN_IN_URL_PATH = ResourcePaths.buildServletPath(ResourcePaths.SIGN_IN_PATH);
 
     AuthStatus currentAuthState(HttpServletRequest request);
 

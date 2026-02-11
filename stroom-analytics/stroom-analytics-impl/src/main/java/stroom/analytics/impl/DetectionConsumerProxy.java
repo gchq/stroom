@@ -16,7 +16,7 @@
 
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AbstractAnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.api.Column;
@@ -57,7 +57,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
 
     private DetectionConsumer detectionConsumer;
 
-    private AbstractAnalyticRuleDoc analyticRuleDoc;
+    private AnalyticRuleDoc analyticRuleDoc;
 
     private CompiledColumns compiledColumns;
 
@@ -105,7 +105,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
         }
     }
 
-    public void setAnalyticRuleDoc(final AbstractAnalyticRuleDoc analyticRuleDoc) {
+    public void setAnalyticRuleDoc(final AnalyticRuleDoc analyticRuleDoc) {
         this.analyticRuleDoc = analyticRuleDoc;
     }
 
@@ -234,7 +234,9 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
                 .withDetectorName(analyticRuleDoc.getName())
                 .withDetectorUuid(analyticRuleDoc.getUuid())
                 .withDetectorVersion(analyticRuleDoc.getVersion())
-                .withDetailedDescription(analyticRuleDoc.getDescription())
+                .withDetailedDescription(analyticRuleDoc.isIncludeRuleDocumentation()
+                        ? analyticRuleDoc.getDescription()
+                        : null)
                 .withRandomDetectionUniqueId()
                 .withDetectionRevision(0)
                 .withExecutionSchedule(NullSafe

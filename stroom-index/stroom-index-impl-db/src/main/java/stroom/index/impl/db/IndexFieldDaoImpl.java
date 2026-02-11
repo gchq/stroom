@@ -21,12 +21,14 @@ import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexFieldDao;
+import stroom.index.impl.db.jooq.tables.records.IndexFieldRecord;
 import stroom.index.shared.AddField;
 import stroom.index.shared.DeleteField;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.UpdateField;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.IndexField;
@@ -34,6 +36,7 @@ import stroom.query.api.datasource.IndexFieldFields;
 import stroom.query.common.v2.FieldProviderImpl;
 import stroom.query.common.v2.SimpleStringExpressionParser;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -45,7 +48,11 @@ import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.InsertValuesStep9;
+import org.jooq.JSON;
 import org.jooq.OrderField;
+import org.jooq.Record1;
+import org.jooq.SelectConditionStep;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
@@ -114,7 +121,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
     private Optional<Integer> getFieldSource(final DSLContext context,
                                              final DocRef docRef,
                                              final boolean lockFieldSource) {
-        final var c = context
+        final SelectConditionStep<Record1<Integer>> c = context
                 .select(INDEX_FIELD_SOURCE.ID)
                 .from(INDEX_FIELD_SOURCE)
                 .where(INDEX_FIELD_SOURCE.TYPE.eq(docRef.getType()))
@@ -170,7 +177,17 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                                 .fetch(INDEX_FIELD.NAME));
 
                         // Insert any new fields under lock
-                        var c = txnContext.insertInto(INDEX_FIELD,
+                        InsertValuesStep9<
+                                IndexFieldRecord,
+                                Integer,
+                                Byte,
+                                String,
+                                String,
+                                Boolean,
+                                Boolean,
+                                Boolean,
+                                Boolean,
+                                JSON> c = txnContext.insertInto(INDEX_FIELD,
                                 INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID,
                                 INDEX_FIELD.TYPE,
                                 INDEX_FIELD.NAME,
@@ -178,7 +195,8 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                                 INDEX_FIELD.INDEXED,
                                 INDEX_FIELD.STORED,
                                 INDEX_FIELD.TERM_POSITIONS,
-                                INDEX_FIELD.CASE_SENSITIVE);
+                                INDEX_FIELD.CASE_SENSITIVE,
+                                INDEX_FIELD.DENSE_VECTOR);
 
                         int fieldCount = 0;
                         for (final IndexField field : fields) {
@@ -191,7 +209,8 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                                         field.isIndexed(),
                                         field.isStored(),
                                         field.isTermPositions(),
-                                        field.isCaseSensitive());
+                                        field.isCaseSensitive(),
+                                        writeDenseVector(field.getDenseVectorFieldConfig()));
                                 fieldCount++;
                             }
                         }
@@ -272,7 +291,8 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                                 INDEX_FIELD.INDEXED,
                                 INDEX_FIELD.STORED,
                                 INDEX_FIELD.TERM_POSITIONS,
-                                INDEX_FIELD.CASE_SENSITIVE)
+                                INDEX_FIELD.CASE_SENSITIVE,
+                                INDEX_FIELD.DENSE_VECTOR)
                         .from(INDEX_FIELD)
                         .where(conditions)
                         .orderBy(orderFields)
@@ -286,6 +306,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                     final boolean stored = r.get(INDEX_FIELD.STORED);
                     final boolean termPositions = r.get(INDEX_FIELD.TERM_POSITIONS);
                     final boolean caseSensitive = r.get(INDEX_FIELD.CASE_SENSITIVE);
+                    final JSON denseVector = r.get(INDEX_FIELD.DENSE_VECTOR);
 
                     final FieldType fieldType = FieldType.fromTypeId(typeId);
                     final AnalyzerType analyzerType = AnalyzerType.fromDisplayValue(analyzer);
@@ -298,9 +319,34 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                             .stored(stored)
                             .termPositions(termPositions)
                             .caseSensitive(caseSensitive)
+                            .denseVectorFieldConfig(readDenseVector(denseVector))
                             .build();
                 });
         return ResultPage.createCriterialBasedList(fieldInfoList, criteria);
+    }
+
+    private DenseVectorFieldConfig readDenseVector(final JSON denseVector) {
+        try {
+            if (denseVector != null) {
+                return JsonUtil.readValue(denseVector.data(),
+                        DenseVectorFieldConfig.class);
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+        }
+        return null;
+    }
+
+    private JSON writeDenseVector(final DenseVectorFieldConfig denseVector) {
+        try {
+            if (denseVector != null) {
+                final String json = JsonUtil.writeValueAsString(denseVector);
+                return JSON.json(json);
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+        }
+        return null;
     }
 
     @Override
@@ -339,7 +385,8 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                             INDEX_FIELD.INDEXED,
                             INDEX_FIELD.STORED,
                             INDEX_FIELD.TERM_POSITIONS,
-                            INDEX_FIELD.CASE_SENSITIVE)
+                            INDEX_FIELD.CASE_SENSITIVE,
+                            INDEX_FIELD.DENSE_VECTOR)
                     .values(fieldSourceId,
                             field.getFldType().getPrimitiveValue(),
                             field.getFldName(),
@@ -347,7 +394,8 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                             field.isIndexed(),
                             field.isStored(),
                             field.isTermPositions(),
-                            field.isCaseSensitive())
+                            field.isCaseSensitive(),
+                            writeDenseVector(field.getDenseVectorFieldConfig()))
                     .execute();
         });
     }
@@ -374,6 +422,7 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                     .set(INDEX_FIELD.STORED, field.isStored())
                     .set(INDEX_FIELD.TERM_POSITIONS, field.isTermPositions())
                     .set(INDEX_FIELD.CASE_SENSITIVE, field.isCaseSensitive())
+                    .set(INDEX_FIELD.DENSE_VECTOR, writeDenseVector(field.getDenseVectorFieldConfig()))
                     .where(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID.eq(fieldSourceId))
                     .and(INDEX_FIELD.NAME.eq(updateField.getFieldName()))
                     .execute();
@@ -433,7 +482,8 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                             INDEX_FIELD.INDEXED,
                             INDEX_FIELD.STORED,
                             INDEX_FIELD.TERM_POSITIONS,
-                            INDEX_FIELD.CASE_SENSITIVE)
+                            INDEX_FIELD.CASE_SENSITIVE,
+                            INDEX_FIELD.DENSE_VECTOR)
                     .select(DSL.select(
                                     DSL.val(destId),
                                     INDEX_FIELD.TYPE,
@@ -442,7 +492,8 @@ public class IndexFieldDaoImpl implements IndexFieldDao {
                                     INDEX_FIELD.INDEXED,
                                     INDEX_FIELD.STORED,
                                     INDEX_FIELD.TERM_POSITIONS,
-                                    INDEX_FIELD.CASE_SENSITIVE)
+                                    INDEX_FIELD.CASE_SENSITIVE,
+                                    INDEX_FIELD.DENSE_VECTOR)
                             .from(INDEX_FIELD)
                             .where(INDEX_FIELD.FK_INDEX_FIELD_SOURCE_ID.eq(sourceId)))
                     .execute();

@@ -27,6 +27,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.Literal;
+import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.datastax.oss.driver.api.querybuilder.relation.ColumnRelationBuilder;
 import com.datastax.oss.driver.api.querybuilder.relation.Relation;
 import com.datastax.oss.driver.api.querybuilder.term.Term;
@@ -34,8 +35,6 @@ import com.datastax.oss.driver.api.querybuilder.term.Term;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 
 public class ScyllaDbExpressionUtil {
 
@@ -46,9 +45,9 @@ public class ScyllaDbExpressionUtil {
                                     final List<Relation> relations,
                                     final DateTimeSettings dateTimeSettings) {
         if (expressionOperator != null &&
-                expressionOperator.enabled() &&
-                expressionOperator.getChildren() != null &&
-                !expressionOperator.getChildren().isEmpty()) {
+            expressionOperator.enabled() &&
+            expressionOperator.getChildren() != null &&
+            !expressionOperator.getChildren().isEmpty()) {
             switch (expressionOperator.op()) {
                 case AND -> expressionOperator.getChildren().forEach(child -> {
                     if (child instanceof final ExpressionTerm expressionTerm) {
@@ -123,20 +122,20 @@ public class ScyllaDbExpressionUtil {
                                           final String value,
                                           final DateTimeSettings dateTimeSettings) {
         if (DataTypes.TEXT.equals(column.dataType())) {
-            return literal(value);
+            return QueryBuilder.literal(value);
         } else if (DataTypes.BOOLEAN.equals(column.dataType())) {
-            return literal(Boolean.parseBoolean(value));
+            return QueryBuilder.literal(Boolean.parseBoolean(value));
         } else if (DataTypes.INT.equals(column.dataType())) {
-            return literal(Integer.parseInt(value));
+            return QueryBuilder.literal(Integer.parseInt(value));
         } else if (DataTypes.BIGINT.equals(column.dataType())) {
-            return literal(Long.parseLong(value));
+            return QueryBuilder.literal(Long.parseLong(value));
         } else if (DataTypes.FLOAT.equals(column.dataType())) {
-            return literal(Float.parseFloat(value));
+            return QueryBuilder.literal(Float.parseFloat(value));
         } else if (DataTypes.DOUBLE.equals(column.dataType())) {
-            return literal(Double.parseDouble(value));
+            return QueryBuilder.literal(Double.parseDouble(value));
         } else if (DataTypes.TIMESTAMP.equals(column.dataType())) {
             final long ms = DateExpressionParser.getMs(column.name(), value, dateTimeSettings);
-            return literal(Instant.ofEpochMilli(ms));
+            return QueryBuilder.literal(Instant.ofEpochMilli(ms));
         }
 
         throw new RuntimeException("Unable to convert literal: " + column.dataType());

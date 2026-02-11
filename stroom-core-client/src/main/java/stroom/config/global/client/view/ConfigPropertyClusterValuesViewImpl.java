@@ -35,7 +35,6 @@ public class ConfigPropertyClusterValuesViewImpl
     @UiField
     SimplePanel dataGrid;
 
-
     private Widget list;
 
     @Inject
