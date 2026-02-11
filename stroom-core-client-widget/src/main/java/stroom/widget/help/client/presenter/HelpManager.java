@@ -59,7 +59,7 @@ public class HelpManager {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class HelpPopup extends AbstractPopupPanel implements Popup {

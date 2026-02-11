@@ -63,7 +63,7 @@ public class FastInfosetByteBufferConsumer implements RefDataValueByteBufferCons
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Factory implements RefDataValueByteBufferConsumer.Factory {

@@ -47,7 +47,7 @@ public class EntityCheckTreeViewImpl extends ViewImpl implements EntityCheckTree
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, EntityCheckTreeViewImpl> {

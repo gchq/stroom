@@ -81,7 +81,7 @@ public class AnalyticStreamDestinationPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface AnalyticStreamDestinationView extends View, HasUiHandlers<DirtyUiHandlers> {

@@ -62,7 +62,7 @@ class TestAllMatchPatternValidatorImpl extends AbstractValidatorTest {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class PoJo {

@@ -148,7 +148,7 @@ public class TestV07_02_00_005 extends AbstractAnnotationMigrationTest {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public record Row(String createUser, String updateUser, String assignedToUuid) {

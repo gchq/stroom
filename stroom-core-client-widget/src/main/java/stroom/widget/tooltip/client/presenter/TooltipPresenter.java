@@ -53,7 +53,7 @@ public class TooltipPresenter extends MyPresenterWidget<TooltipPresenter.Tooltip
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface TooltipView extends View, Focus {

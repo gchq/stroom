@@ -516,7 +516,7 @@ public class RuleSetSettingsPresenter
         updateButtons();
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface RuleSetSettingsView extends View {

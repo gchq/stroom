@@ -685,7 +685,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class MatchException extends RuntimeException {
@@ -696,7 +696,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface ValueFunctionFactories<T> {
@@ -705,7 +705,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface ValueFunctionFactory<T> {
@@ -722,7 +722,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class AndPredicate<T> implements ScoringPredicate<T> {
@@ -770,7 +770,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class OrPredicate<T> implements ScoringPredicate<T> {
@@ -818,7 +818,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class NotPredicate<T> implements ScoringPredicate<T> {
@@ -854,7 +854,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private abstract static class ExpressionTermPredicate<T> implements ScoringPredicate<T> {
@@ -879,7 +879,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class IsNullPredicate<T> extends ExpressionTermPredicate<T> {
@@ -904,7 +904,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private abstract static class NumericExpressionTermPredicate<T> extends ExpressionTermPredicate<T> {
@@ -921,7 +921,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class NumericEquals<T> extends NumericExpressionTermPredicate<T> {
@@ -948,7 +948,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class NumericGreaterThan<T> extends NumericExpressionTermPredicate<T> {
@@ -972,7 +972,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class NumericGreaterThanOrEqualTo<T> extends NumericExpressionTermPredicate<T> {
@@ -996,7 +996,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class NumericLessThan<T> extends NumericExpressionTermPredicate<T> {
@@ -1020,7 +1020,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class NumericLessThanOrEqualTo<T> extends NumericExpressionTermPredicate<T> {
@@ -1044,7 +1044,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class NumericBetween<T> extends ExpressionTermPredicate<T> {
@@ -1083,7 +1083,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class NumericIn<T> extends ExpressionTermPredicate<T> {
@@ -1122,7 +1122,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class NumericInDictionary<T> extends ExpressionTermPredicate<T> {
@@ -1166,7 +1166,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private abstract static class DateExpressionTermPredicate<T> extends ExpressionTermPredicate<T> {
@@ -1226,7 +1226,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class DateGreaterThanOrEqualTo<T> extends DateExpressionTermPredicate<T> {
@@ -1251,7 +1251,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class DateLessThan<T> extends DateExpressionTermPredicate<T> {
@@ -1276,7 +1276,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class DateLessThanOrEqualTo<T> extends DateExpressionTermPredicate<T> {
@@ -1301,7 +1301,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class DateBetween<T> extends ExpressionTermPredicate<T> {
@@ -1341,7 +1341,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class DateIn<T> extends ExpressionTermPredicate<T> {
@@ -1381,7 +1381,7 @@ public class ExpressionPredicateFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class DateInDictionary<T> extends ExpressionTermPredicate<T> {

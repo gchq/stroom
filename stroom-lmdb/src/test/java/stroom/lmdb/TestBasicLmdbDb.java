@@ -1718,7 +1718,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record MultiKey(
@@ -1732,7 +1732,7 @@ class TestBasicLmdbDb extends AbstractLmdbDbTest {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class MultiKeySerde implements Serde<MultiKey> {

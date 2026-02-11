@@ -447,7 +447,7 @@ public class ExtractionDecorator {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record Receiver(FieldIndex fieldIndex, ValuesConsumer valuesConsumer) {

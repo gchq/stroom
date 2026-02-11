@@ -564,7 +564,7 @@ public class ConfigMapper {
         final PropertyPath fullPath = dbConfigProperty.getName();
 
         synchronized (this) {
-            final ConfigProperty globalConfigProperty = getGlobalProperty(fullPath)
+            ConfigProperty globalConfigProperty = getGlobalProperty(fullPath)
                     .orElseThrow(() ->
                             new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath)));
 
@@ -575,13 +575,16 @@ public class ConfigMapper {
                 final SourceType sourceBefore = globalConfigProperty.getSource();
 
                 // Update all the DB related values from the passed DB config prop
-                globalConfigProperty.setId(dbConfigProperty.getId());
-                globalConfigProperty.setDatabaseOverrideValue(dbConfigProperty.getDatabaseOverrideValue());
-                globalConfigProperty.setVersion(dbConfigProperty.getVersion());
-                globalConfigProperty.setCreateTimeMs(dbConfigProperty.getCreateTimeMs());
-                globalConfigProperty.setCreateUser(dbConfigProperty.getCreateUser());
-                globalConfigProperty.setUpdateTimeMs(dbConfigProperty.getUpdateTimeMs());
-                globalConfigProperty.setUpdateUser(dbConfigProperty.getUpdateUser());
+                globalConfigProperty = globalConfigProperty
+                        .copy()
+                        .id(dbConfigProperty.getId())
+                        .databaseOverrideValue(dbConfigProperty.getDatabaseOverrideValue())
+                        .version(dbConfigProperty.getVersion())
+                        .createTimeMs(dbConfigProperty.getCreateTimeMs())
+                        .createUser(dbConfigProperty.getCreateUser())
+                        .updateTimeMs(dbConfigProperty.getUpdateTimeMs())
+                        .updateUser(dbConfigProperty.getUpdateUser())
+                        .build();
 
                 final boolean hasChanged = hasEffectiveValueChanged(
                         fullPath, effectiveValueBefore, sourceBefore);

@@ -35,7 +35,7 @@ public interface AuthenticationService {
     URI createErrorUri(BadRequestException badRequestException);
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     interface AuthStatus {
@@ -48,7 +48,7 @@ public interface AuthenticationService {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     interface AuthState {

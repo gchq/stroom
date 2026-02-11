@@ -181,7 +181,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     /**
@@ -206,7 +206,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class DefaultAppearance implements Appearance {
@@ -283,7 +283,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Template extends SafeHtmlTemplates {
@@ -296,7 +296,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class NoBorderAppearance extends DefaultAppearance {

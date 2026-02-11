@@ -24,6 +24,16 @@ public abstract class AbstractHasAuditInfoBuilder<T, B extends AbstractHasAuditI
     protected Long updateTimeMs;
     protected String updateUser;
 
+    public AbstractHasAuditInfoBuilder() {
+    }
+
+    public AbstractHasAuditInfoBuilder(final HasAuditInfoGetters hasAuditInfoGetters) {
+        this.createTimeMs = hasAuditInfoGetters.getCreateTimeMs();
+        this.createUser = hasAuditInfoGetters.getCreateUser();
+        this.updateTimeMs = hasAuditInfoGetters.getUpdateTimeMs();
+        this.updateUser = hasAuditInfoGetters.getUpdateUser();
+    }
+
     public B createTimeMs(final Long createTimeMs) {
         this.createTimeMs = createTimeMs;
         return self();

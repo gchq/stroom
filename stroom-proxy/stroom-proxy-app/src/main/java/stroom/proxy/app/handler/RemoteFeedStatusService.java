@@ -171,7 +171,7 @@ public class RemoteFeedStatusService implements FeedStatusService, Managed {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class FeedStatusUpdater {
@@ -216,7 +216,7 @@ public class RemoteFeedStatusService implements FeedStatusService, Managed {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class CachedResponse {

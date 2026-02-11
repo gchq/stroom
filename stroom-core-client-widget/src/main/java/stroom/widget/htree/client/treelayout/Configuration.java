@@ -55,7 +55,7 @@ package stroom.widget.htree.client.treelayout;
  * @author Udo Borkowski (ub@abego.org)
  */
 public interface Configuration<T_TREE_NODE> {
-    // ------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // rootLocation
 
     /**
@@ -87,7 +87,7 @@ public interface Configuration<T_TREE_NODE> {
      */
     Location getRootLocation();
 
-    // ------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // alignmentInLevel
 
     /**
@@ -169,7 +169,7 @@ public interface Configuration<T_TREE_NODE> {
      */
     double getGapBetweenNodes(T_TREE_NODE node1, T_TREE_NODE node2);
 
-    // ------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // gapBetweenLevels/Nodes
 
     /**

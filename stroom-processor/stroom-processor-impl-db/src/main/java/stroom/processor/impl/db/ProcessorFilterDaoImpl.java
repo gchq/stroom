@@ -131,8 +131,11 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 processorDbConnProvider,
                 context -> {
                     final ProcessorFilterTracker tracker = createTracker(context);
-                    processorFilter.setProcessorFilterTracker(tracker);
-                    return createFilter(context, processorFilter);
+                    return createFilter(context, processorFilter
+                            .copy()
+                            .version(1)
+                            .processorFilterTracker(tracker)
+                            .build());
                 });
     }
 
@@ -142,9 +145,11 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     private ProcessorFilterTracker createTracker(final DSLContext context) {
-        final ProcessorFilterTracker tracker = new ProcessorFilterTracker();
-        tracker.setVersion(1);
-        tracker.setStatus(ProcessorFilterTrackerStatus.CREATED);
+        final ProcessorFilterTracker tracker = ProcessorFilterTracker
+                .builder()
+                .version(1)
+                .status(ProcessorFilterTrackerStatus.CREATED)
+                .build();
         final Integer id = context
                 .insertInto(PROCESSOR_FILTER_TRACKER)
                 .columns(
@@ -176,12 +181,10 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .returning(PROCESSOR_FILTER_TRACKER.ID)
                 .fetchOne(PROCESSOR_FILTER_TRACKER.ID);
         Objects.requireNonNull(id);
-        tracker.setId(id);
-        return tracker;
+        return tracker.copy().id(id).build();
     }
 
     private ProcessorFilter createFilter(final DSLContext context, final ProcessorFilter filter) {
-        filter.setVersion(1);
         final String data = queryDataSerialiser.serialise(filter.getQueryData());
         final Integer id = context
                 .insertInto(PROCESSOR_FILTER)
@@ -224,8 +227,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .returning(PROCESSOR_FILTER.ID)
                 .fetchOne(PROCESSOR_FILTER.ID);
         Objects.requireNonNull(id);
-        filter.setId(id);
-        return filter;
+        return filter.copy().id(id).build();
     }
 
     private ProcessorFilter updateFilter(final DSLContext context, final ProcessorFilter filter) {
@@ -324,6 +326,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
         return JooqUtil.transactionResult(processorDbConnProvider, txnContext -> {
             if (processorFilter.isDeleted()) {
+                final ProcessorFilter.Builder builder = processorFilter.copy();
                 final Integer processorFilterTrackerId = NullSafe.get(processorFilter,
                         ProcessorFilter::getProcessorFilterTracker,
                         ProcessorFilterTracker::getId);
@@ -331,19 +334,19 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 // Un-delete the parent processor if needs be
                 Processor processor = processorFilter.getProcessor();
                 if (processor.isDeleted()) {
-                    processor.setDeleted(false);
+                    processor = processor.copy().deleted(false).build();
                     processor = processorDaoImplProvider.get()
                             .update(processor, txnContext);
-                    processorFilter.setProcessor(processor);
+                    builder.processor(processor);
                 }
 
                 // We are un-deleting the filter so reset the tracker back to clean slate
                 if (processorFilterTrackerId != null && resetTracker) {
-                    resetTracker(processorFilter, txnContext);
+                    builder.processorFilterTracker(resetTracker(processorFilter, txnContext));
                 }
-                processorFilter.setDeleted(false);
-                AuditUtil.stamp(securityContext.getUserIdentity(), processorFilter);
-                return updateFilter(txnContext, processorFilter);
+                builder.deleted(false);
+                AuditUtil.stamp(securityContext.getUserIdentity(), processorFilter, builder);
+                return updateFilter(txnContext, builder.build());
             } else {
                 LOGGER.debug("restoreProcessorFilter() - Processor filter is not in a deleted state {}",
                         processorFilter);
@@ -376,10 +379,12 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         final ProcessorFilterTracker existingTracker = processorFilter.getProcessorFilterTracker();
         final Integer processorFilterTrackerId = existingTracker.getId();
         // Reset the tracker to the state it would be in if it was just created fresh
-        final ProcessorFilterTracker tracker = new ProcessorFilterTracker();
-        tracker.setId(processorFilterTrackerId);
-        tracker.setStatus(ProcessorFilterTrackerStatus.CREATED);
-        tracker.setVersion(existingTracker.getVersion());
+        final ProcessorFilterTracker tracker = ProcessorFilterTracker
+                .builder()
+                .id(processorFilterTrackerId)
+                .status(ProcessorFilterTrackerStatus.CREATED)
+                .version(existingTracker.getVersion())
+                .build();
         final int count = processorFilterTrackerDaoImpl.update(context, tracker);
         LOGGER.debug("resetTracker() - processorFilterId: {}, count: {}", processorFilterTrackerId, count);
         return tracker;
@@ -557,13 +562,15 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         final ProcessorFilter processorFilter = recordToProcessorFilterMapper.apply(record);
         final ProcessorFilterTracker processorFilterTracker =
                 RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
-        processorFilter.setProcessor(processor);
-        processorFilter.setProcessorFilterTracker(processorFilterTracker);
-        return processorFilter;
+        return processorFilter
+                .copy()
+                .processor(processor)
+                .processorFilterTracker(processorFilterTracker)
+                .build();
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record PipeFilterKeys(

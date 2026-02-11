@@ -68,7 +68,7 @@ public class OpenAccountEvent extends GwtEvent<OpenAccountHandler> {
                '}';
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface OpenAccountHandler extends EventHandler {

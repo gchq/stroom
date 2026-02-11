@@ -53,9 +53,11 @@ public final class PipelineTestUtil {
                                             final String name,
                                             final String description,
                                             final String data) {
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(docRef);
-        pipelineDoc.setName(name);
-        pipelineDoc.setDescription(description);
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(docRef)
+                .copy()
+                .name(name)
+                .description(description)
+                .build();
         if (data != null) {
             final PipelineData pipelineData = JsonUtil.readValue(data, PipelineData.class);
             pipelineDoc.setPipelineData(pipelineData);

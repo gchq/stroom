@@ -61,7 +61,7 @@ public class ShowEditNodeTagsDialogEvent extends GwtEvent<ShowEditNodeTagsDialog
         return explorerNodes;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

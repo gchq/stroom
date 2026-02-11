@@ -71,7 +71,36 @@ public final class ProcessorFilterRow extends ProcessorListRow {
     @Override
     public String toString() {
         return "ProcessorFilterRow{" +
-                "processorFilter=" + processorFilter +
-                '}';
+               "processorFilter=" + processorFilter +
+               '}';
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
+        private ProcessorFilter processorFilter;
+
+        private Builder() {
+        }
+
+        private Builder(final ProcessorFilterRow processorFilterRow) {
+            this.processorFilter = processorFilterRow.processorFilter;
+        }
+
+        public Builder processorFilter(final ProcessorFilter processorFilter) {
+            this.processorFilter = processorFilter;
+            return this;
+        }
+
+        public ProcessorFilterRow build() {
+            return new ProcessorFilterRow(processorFilter);
+        }
     }
 }

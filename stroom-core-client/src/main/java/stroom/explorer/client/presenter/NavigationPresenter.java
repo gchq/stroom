@@ -491,7 +491,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface NavigationView extends View, HasUiHandlers<NavigationUiHandlers> {

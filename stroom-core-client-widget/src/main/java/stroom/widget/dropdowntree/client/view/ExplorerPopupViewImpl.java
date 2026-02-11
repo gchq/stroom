@@ -82,7 +82,7 @@ public class ExplorerPopupViewImpl extends ViewWithUiHandlers<ExplorerPopupUiHan
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, ExplorerPopupViewImpl> {

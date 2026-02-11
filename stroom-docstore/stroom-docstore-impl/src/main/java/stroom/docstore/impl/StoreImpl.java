@@ -19,7 +19,6 @@ package stroom.docstore.impl;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefDecorator;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.DocumentSerialiser2;
@@ -65,7 +64,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class StoreImpl<D extends AbstractDoc> implements Store<D> {
+public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> implements Store<D> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StoreImpl.class);
 
@@ -76,7 +75,8 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
 
     private final DocumentSerialiser2<D> serialiser;
     private final String type;
-    private final Supplier<AbstractBuilder<D, ?>> builderSupplier;
+    private final Supplier<B> builderSupplier;
+    private final Function<D, B> builderFunction;
 
     @Inject
     StoreImpl(final Persistence persistence,
@@ -85,7 +85,8 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
               final Provider<DocRefDecorator> docRefInfoServiceProvider,
               final DocumentSerialiser2<D> serialiser,
               final String type,
-              final Supplier<AbstractBuilder<D, ?>> builderSupplier) {
+              final Supplier<B> builderSupplier,
+              final Function<D, B> builderFunction) {
         this.persistence = persistence;
         this.entityEventBus = entityEventBus;
         this.securityContext = securityContext;
@@ -93,12 +94,12 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
         this.serialiser = serialiser;
         this.type = type;
         this.builderSupplier = builderSupplier;
+        this.builderFunction = builderFunction;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
-
-    /// /////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public final DocRef createDocument(final String name) {
@@ -108,7 +109,7 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
         final AbstractBuilder<D, ?> builder = builderSupplier.get();
 
         // Add audit data.
-        stampAuditData(builder);
+        AuditUtil.stampNew(securityContext, builder);
 
         final D document = builder
                 .uuid(UUID.randomUUID().toString())
@@ -146,14 +147,18 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
         Objects.requireNonNull(newName);
 
         final D document = read(originalUuid);
-        document.setUuid(UUID.randomUUID().toString());
-        document.setName(newName);
-        document.setVersion(UUID.randomUUID().toString());
+
+        // Copy and mutate the doc.
+        final AbstractBuilder<D, ?> builder = builderFunction
+                .apply(document)
+                .uuid(UUID.randomUUID().toString())
+                .name(newName)
+                .version(UUID.randomUUID().toString());
 
         // Add audit data.
-        stampAuditData(document);
+        AuditUtil.stamp(securityContext, document, builder);
 
-        final D created = create(document);
+        final D created = create(builder.build());
         return createDocRef(created);
     }
 
@@ -183,8 +188,11 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
 
         // Only update the document if the name has actually changed.
         if (!Objects.equals(document.getName(), name)) {
-            document.setName(name);
-            final D updated = update(document, oldDocRef);
+            // Copy and mutate the doc.
+            final AbstractBuilder<D, ?> builder = builderFunction
+                    .apply(document)
+                    .name(name);
+            final D updated = update(builder.build(), oldDocRef);
             return createDocRef(updated);
         }
 
@@ -225,14 +233,13 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
                 .build();
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-
-    /// /////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies(final BiConsumer<D, DependencyRemapper> mapper) {
@@ -281,14 +288,13 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF DocumentActionHandler
-
-    /// /////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public D readDocument(final DocRef docRef) {
@@ -307,14 +313,13 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
         return type;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-
-    /// /////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
 
     @Override
@@ -364,7 +369,6 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
                         checkForUpdatedFields(
                                 existingDocument,
                                 dataMap,
-                                new AuditFieldFilter<>(),
                                 updatedFields);
                         if (updatedFields.isEmpty()) {
                             importState.setState(State.EQUAL);
@@ -399,16 +403,23 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
             try {
                 // Turn the data map into a document.
                 final D newDocument = serialiser.read(convertedDataMap);
+
+                // Get a builder to mutate the doc.
+                final AbstractBuilder<D, ?> builder = builderFunction.apply(newDocument);
+
                 // Copy create time and user from the existing document.
                 if (existingDocument != null) {
-                    newDocument.setName(existingDocument.getName());
-                    newDocument.setCreateTimeMs(existingDocument.getCreateTimeMs());
-                    newDocument.setCreateUser(existingDocument.getCreateUser());
+                    builder
+                            .name(existingDocument.getName())
+                            .createTimeMs(existingDocument.getCreateTimeMs())
+                            .createUser(existingDocument.getCreateUser());
                 }
+
                 // Stamp audit data on the imported document.
-                stampAuditData(newDocument);
+                AuditUtil.stamp(securityContext, newDocument, builder);
+
                 // Convert the document back into a data map.
-                final Map<String, byte[]> finalData = serialiser.write(newDocument);
+                final Map<String, byte[]> finalData = serialiser.write(builder.build());
                 // Write the data.
                 persistence.write(docRef, existingDocument != null, finalData);
 
@@ -446,7 +457,8 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
     @Override
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final List<Message> messageList,
-                                              final Function<D, D> filter) {
+                                              final boolean omitAuditFields,
+                                              final Function<D, D> function) {
         Map<String, byte[]> data = Collections.emptyMap();
 
         try {
@@ -458,8 +470,10 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
                 if (document == null) {
                     throw new IOException("Unable to read " + toDocRefDisplayString(docRef));
                 }
-                document = filter.apply(document);
-                data = serialiser.write(document);
+                if (omitAuditFields) {
+                    document = AuditUtil.removeAuditData(builderFunction, document);
+                }
+                data = serialiser.write(function.apply(document));
             }
         } catch (final IOException e) {
             messageList.add(new Message(Severity.ERROR, e.getMessage()));
@@ -470,12 +484,11 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
 
     private void checkForUpdatedFields(final D existingDoc,
                                        final Map<String, byte[]> dataMap,
-                                       final Function<D, D> filter,
                                        final List<String> updatedFieldList) {
         try {
             final D newDoc = serialiser.read(dataMap);
-            final D existingDocument = filter.apply(existingDoc);
-            final D newDocument = filter.apply(newDoc);
+            final D existingDocument = AuditUtil.removeAuditData(builderFunction, existingDoc);
+            final D newDocument = AuditUtil.removeAuditData(builderFunction, newDoc);
 
             try {
                 final Method[] methods = existingDocument.getClass().getMethods();
@@ -501,10 +514,9 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ImportExportActionHandler
-
-    /// /////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     private DocRef createDocRef(final D document) {
         if (document == null) {
@@ -602,7 +614,8 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
     }
 
     private D update(final D document, final DocRef oldDocRef) {
-        final DocRef docRef = createDocRef(document);
+        D updatedDoc = document;
+        final DocRef docRef = createDocRef(updatedDoc);
 
         // Check that the user has permission to update this item.
         if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
@@ -612,15 +625,19 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
         try {
             // Get the current document version to make sure the document hasn't been changed by
             // somebody else since we last read it.
-            final String currentVersion = document.getVersion();
-            document.setVersion(UUID.randomUUID().toString());
+            final String currentVersion = updatedDoc.getVersion();
+            // Copy and mutate the doc.
+            final AbstractBuilder<D, ?> builder = builderFunction
+                    .apply(updatedDoc)
+                    .version(UUID.randomUUID().toString());
 
             // Add audit data.
-            stampAuditData(document);
+            AuditUtil.stamp(securityContext, updatedDoc, builder);
+            updatedDoc = builder.build();
 
-            final Map<String, byte[]> newData = serialiser.write(document);
+            final Map<String, byte[]> newData = serialiser.write(updatedDoc);
 
-            persistence.getLockFactory().lock(document.getUuid(), () -> {
+            persistence.getLockFactory().lock(updatedDoc.getUuid(), () -> {
                 try {
                     // Read existing data for this document.
                     final Map<String, byte[]> data = persistence.read(docRef);
@@ -650,7 +667,7 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
             throw new UncheckedIOException(e);
         }
 
-        return document;
+        return updatedDoc;
     }
 
     @Override
@@ -741,19 +758,5 @@ public class StoreImpl<D extends AbstractDoc> implements Store<D> {
                 }
             }
         }
-    }
-
-    private void stampAuditData(final D document) {
-        AuditUtil.stamp(securityContext, document);
-    }
-
-    private void stampAuditData(final AbstractBuilder<D, ?> builder) {
-        final long now = System.currentTimeMillis();
-        final String userIdentityForAudit = securityContext.getUserIdentityForAudit();
-
-        builder.createTimeMs(now);
-        builder.createUser(userIdentityForAudit);
-        builder.updateTimeMs(now);
-        builder.updateUser(userIdentityForAudit);
     }
 }

@@ -939,7 +939,7 @@ public class QueryPresenter
         return TAB_TYPE;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface QueryView extends View, SearchStateListener {

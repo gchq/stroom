@@ -63,7 +63,7 @@ public class CopyFeedUrlEvent extends GwtEvent<Handler> {
         return new Builder(handlers, name);
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     public static final class Builder {
 
@@ -80,7 +80,7 @@ public class CopyFeedUrlEvent extends GwtEvent<Handler> {
         }
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

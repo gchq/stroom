@@ -55,7 +55,7 @@ public class DictionarySettingsViewImpl extends ViewImpl implements DictionarySe
         wordsPanel.setWidget(view.asWidget());
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, DictionarySettingsViewImpl> {

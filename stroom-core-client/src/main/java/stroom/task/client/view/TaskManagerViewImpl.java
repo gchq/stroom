@@ -79,7 +79,7 @@ public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandler
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, TaskManagerViewImpl> {

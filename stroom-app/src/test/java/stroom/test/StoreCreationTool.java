@@ -850,17 +850,17 @@ public final class StoreCreationTool {
         final DocRef newDocRef = newNode != null
                 ? newNode.getDocRef()
                 : pipelineStore.createDocument(newName);
-        final PipelineDoc newPipeline = pipelineStore.readDocument(newDocRef);
+        final PipelineDoc.Builder builder = pipelineStore.readDocument(newDocRef).copy();
 
-        newPipeline.setName(newName);
+        builder.name(newName);
         if (newDescription != null) {
-            newPipeline.setDescription(newDescription);
+            builder.description(newDescription);
         }
 
         // copy the data part
-        newPipeline.setPipelineData(sourcePipeline.getPipelineData());
+        builder.pipelineData(sourcePipeline.getPipelineData());
 
-        pipelineStore.writeDocument(newPipeline);
+        pipelineStore.writeDocument(builder.build());
         return newDocRef;
     }
 

@@ -214,7 +214,7 @@ public class EditAccountPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface EditAccountView extends View, Focus, HasUiHandlers<EditAccountUiHandlers> {

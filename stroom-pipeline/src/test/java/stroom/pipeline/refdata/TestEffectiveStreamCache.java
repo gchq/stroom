@@ -310,7 +310,7 @@ class TestEffectiveStreamCache extends StroomUnitTest {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class InnerStreamMetaService extends MockMetaService {

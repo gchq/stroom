@@ -300,7 +300,7 @@ public class ProxySecurityContextImpl implements CommonSecurityContext {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private enum CheckType {

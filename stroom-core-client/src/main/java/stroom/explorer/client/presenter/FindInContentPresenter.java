@@ -311,7 +311,7 @@ public class FindInContentPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface FindInContentView extends View, Focus, HasUiHandlers<FindInContentUiHandlers> {

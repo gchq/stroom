@@ -55,7 +55,7 @@ public class MockProcessorTaskQueueManager implements ProcessorTaskQueueManager 
         final ExpressionCriteria criteria = new ExpressionCriteria();
         final List<ProcessorFilter> processorFilters = processorFilterService
                 .find(criteria).getValues();
-        if (processorFilters != null && processorFilters.size() > 0) {
+        if (processorFilters != null && !processorFilters.isEmpty()) {
             // Sort by priority.
             processorFilters.sort((o1, o2) -> o2.getPriority() - o1.getPriority());
 
@@ -70,19 +70,25 @@ public class MockProcessorTaskQueueManager implements ProcessorTaskQueueManager 
 
                 streams.sort(Comparator.comparing(Meta::getId));
 
-                if (streams.size() > 0) {
+                if (!streams.isEmpty()) {
                     for (final Meta meta : streams) {
                         if (meta.getId() >= filter.getProcessorFilterTracker().getMinMetaId()) {
                             // Only process streams with an id of 1 or more
                             // greater than this stream in future.
-                            filter.getProcessorFilterTracker().setMinMetaId(meta.getId() + 1);
-
-                            final ProcessorTask streamTask = new ProcessorTask();
-                            streamTask.setMetaId(meta.getId());
-                            streamTask.setProcessorFilter(filter);
-                            streamTask.setNodeName(nodeName);
-                            streamTask.setStatus(TaskStatus.PROCESSING);
-
+                            final ProcessorTask streamTask = ProcessorTask
+                                    .builder()
+                                    .metaId(meta.getId())
+                                    .processorFilter(filter
+                                            .copy()
+                                            .processorFilterTracker(filter
+                                                    .getProcessorFilterTracker()
+                                                    .copy()
+                                                    .minMetaId(meta.getId() + 1)
+                                                    .build())
+                                            .build())
+                                    .nodeName(nodeName)
+                                    .status(TaskStatus.PROCESSING)
+                                    .build();
                             taskList.add(streamTask);
                         }
                     }

@@ -216,10 +216,10 @@ public class IndexVolumeGroupEditPresenter
                     .onShow(e -> getView().focus())
                     .onHideRequest(e -> {
                         if (e.isOk()) {
-                            volumeGroup.setName(getView().getName());
+                            final IndexVolumeGroup updated = volumeGroup.copy().name(getView().getName()).build();
                             try {
-                                doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
-                                        createVolumeGroup(consumer, volumeGroup, e), e);
+                                doWithGroupNameValidation(getView().getName(), updated.getId(), () ->
+                                        createVolumeGroup(consumer, updated, e), e);
                             } catch (final RuntimeException ex) {
                                 AlertEvent.fireError(
                                         IndexVolumeGroupEditPresenter.this,
@@ -285,7 +285,7 @@ public class IndexVolumeGroupEditPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface IndexVolumeGroupEditView extends View, Focus {

@@ -74,6 +74,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -399,7 +400,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             priorityColumn.setFieldUpdater((index, row, value) -> {
                 if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-                    processorFilter.setPriority(value.intValue());
+                    // Try to update the current list in place
+                    updateLocalList(index, row, processorFilter.copy().priority(value.intValue()).build());
+                    // Send the change.
                     processorFilterPrioritySaveQueue.setValue(processorFilter.getId(), value.intValue());
                 }
             });
@@ -430,7 +433,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             maxProcessingTasksColumn.setFieldUpdater((index, row, value) -> {
                 if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-                    processorFilter.setMaxProcessingTasks(value.intValue());
+                    // Try to update the current list in place
+                    updateLocalList(index, row, processorFilter.copy().maxProcessingTasks(value.intValue()).build());
+                    // Send the change.
                     processorFilterMaxProcessingTasksSaveQueue.setValue(processorFilter.getId(), value.intValue());
                 }
             });
@@ -497,16 +502,18 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             enabledColumn.setFieldUpdater((index, row, value) -> {
                 if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-                    processorFilter.setEnabled(value.toBoolean());
-
+                    // Try to update the current list in place
+                    updateLocalList(index, row, processorFilter.copy().enabled(value.toBoolean()).build());
+                    // Send the change.
                     processorFilterEnabledSaveQueue.setValue(processorFilter.getId(), value.toBoolean());
 //                    final Rest<ProcessorFilter> rest = restFactory.create();
 //                    rest.call(PROCESSOR_FILTER_RESOURCE).setEnabled(processorFilter.getId(), value.toBoolean());
 
                 } else if (row instanceof final ProcessorRow processorRow) {
                     final Processor processor = processorRow.getProcessor();
-                    processor.setEnabled(value.toBoolean());
-
+                    // Try to update the current list in place
+                    updateLocalList(index, row, processor.copy().enabled(value.toBoolean()).build());
+                    // Send the change.
                     processorEnabledSaveQueue.setValue(processor.getId(), value.toBoolean());
 //                    final Rest<Processor> rest = restFactory.create();
 //                    rest.call(PROCESSOR_RESOURCE).setEnabled(processor.getId(), value.toBoolean());
@@ -570,6 +577,34 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
 
     private void addEndColumn() {
         dataGrid.addEndColumn(new EndColumn<>());
+    }
+
+    private void updateLocalList(final int index, final ProcessorListRow row, final ProcessorFilter processorFilter) {
+        if (currentResultPageResponse != null) {
+            final List<ProcessorListRow> list = currentResultPageResponse.getValues();
+            if (list != null && list.size() > index) {
+                final ProcessorListRow item = list.get(index);
+                if (item == row) {
+                    if (row instanceof final ProcessorFilterRow processorFilterRow) {
+                        list.set(index, processorFilterRow.copy().processorFilter(processorFilter).build());
+                    }
+                }
+            }
+        }
+    }
+
+    private void updateLocalList(final int index, final ProcessorListRow row, final Processor processor) {
+        if (currentResultPageResponse != null) {
+            final List<ProcessorListRow> list = currentResultPageResponse.getValues();
+            if (list != null && list.size() > index) {
+                final ProcessorListRow item = list.get(index);
+                if (item == row) {
+                    if (row instanceof final ProcessorRow processorRow) {
+                        list.set(index, processorRow.copy().processor(processor).build());
+                    }
+                }
+            }
+        }
     }
 
     public MultiSelectionModel<ProcessorListRow> getSelectionModel() {

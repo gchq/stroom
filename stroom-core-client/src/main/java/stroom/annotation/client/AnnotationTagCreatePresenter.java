@@ -106,7 +106,7 @@ public class AnnotationTagCreatePresenter
                 }, RestErrorHandler.forPopup(this, event), this);
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface AnnotationTagCreateView extends View, Focus {

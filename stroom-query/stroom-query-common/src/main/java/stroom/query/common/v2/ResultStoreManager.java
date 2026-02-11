@@ -623,7 +623,7 @@ public final class ResultStoreManager implements Clearable, HasResultStoreInfo {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public record RequestAndStore(SearchRequest searchRequest, ResultStore resultStore) {

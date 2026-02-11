@@ -116,7 +116,7 @@ public class SimpleSelectionItemWrapper<T> implements SelectionItem {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @FunctionalInterface

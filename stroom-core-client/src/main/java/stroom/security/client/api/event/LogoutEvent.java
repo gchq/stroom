@@ -50,7 +50,7 @@ public class LogoutEvent extends GwtEvent<LogoutEvent.LogoutHandler> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface LogoutHandler extends EventHandler {

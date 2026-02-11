@@ -283,7 +283,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface ExpressionTreeView extends View, HasContextMenuHandlers, HasUiHandlers<ExpressionUiHandlers> {

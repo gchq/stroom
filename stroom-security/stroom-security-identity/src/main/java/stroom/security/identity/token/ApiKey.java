@@ -16,7 +16,7 @@
 
 package stroom.security.identity.token;
 
-import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -30,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 @Deprecated // Keeping it else it breaks the React code
-public class ApiKey implements HasIntegerId, HasAuditInfo {
+public class ApiKey implements HasIntegerId, HasAuditInfoGetters {
 
     @JsonProperty
     private Integer id;

@@ -485,7 +485,7 @@ public class ExpressionMatcher {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class MatchException extends RuntimeException {

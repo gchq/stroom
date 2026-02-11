@@ -123,17 +123,17 @@ class TestActivityServiceImpl {
         final UserRef userRef = UserRef.builder().uuid(UUID.randomUUID().toString()).subjectId("test").build();
 
         // Save 1
-        final Activity activity1 = Activity.create();
+        Activity activity1 = Activity.create();
         activity1.getDetails().add(createProp("foo", "\\w{3,}"), "bar");
         activity1.getDetails().add(createProp("this", "\\w{4,}"), "that");
-        activity1.setUserRef(userRef);
+        activity1 = activity1.copy().userRef(userRef).build();
         final ActivityValidationResult activityValidationResult1 = activityService.validate(activity1);
         assertThat(activityValidationResult1.isValid()).isTrue();
 
-        final Activity activity2 = Activity.create();
+        Activity activity2 = Activity.create();
         activity2.getDetails().add(createProp("foo", ".{3,}"), "bar");
         activity2.getDetails().add(createProp("this", ".{80,}"), "that");
-        activity2.setUserRef(userRef);
+        activity2 = activity2.copy().userRef(userRef).build();
         final ActivityValidationResult activityValidationResult2 = activityService.validate(activity2);
         assertThat(activityValidationResult2.isValid()).isFalse();
     }

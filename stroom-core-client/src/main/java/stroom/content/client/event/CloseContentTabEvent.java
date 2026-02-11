@@ -66,7 +66,7 @@ public class CloseContentTabEvent extends GwtEvent<CloseContentTabEvent.CloseCon
         return resizeTabBar;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface CloseContentTabHandler extends EventHandler {

@@ -86,7 +86,7 @@ public class ConfirmEvent extends CommonAlertEvent<ConfirmEvent.Handler> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

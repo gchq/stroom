@@ -32,7 +32,7 @@ public interface DataVolumeDao {
     int delete(Collection<Long> metaIdList);
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     interface DataVolume {

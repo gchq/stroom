@@ -56,7 +56,7 @@ public class RuleSetSettingsViewImpl extends ViewImpl implements RuleSetSettings
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, RuleSetSettingsViewImpl> {

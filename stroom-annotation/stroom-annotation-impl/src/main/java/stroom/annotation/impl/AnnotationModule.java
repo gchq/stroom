@@ -70,7 +70,7 @@ public class AnnotationModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class DataRetention extends RunnableWrapper {

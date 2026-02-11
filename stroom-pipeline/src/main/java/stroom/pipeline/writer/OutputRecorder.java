@@ -81,7 +81,7 @@ public class OutputRecorder extends AbstractDestinationProvider implements Recor
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class MemoryDestination implements Destination {

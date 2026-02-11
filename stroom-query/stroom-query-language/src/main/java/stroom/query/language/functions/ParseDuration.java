@@ -86,7 +86,7 @@ class ParseDuration extends AbstractFunction {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static final class Gen extends AbstractSingleChildGenerator {

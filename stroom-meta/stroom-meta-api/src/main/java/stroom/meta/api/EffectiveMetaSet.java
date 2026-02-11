@@ -340,7 +340,7 @@ public class EffectiveMetaSet implements Iterable<EffectiveMeta> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static final class Builder {

@@ -64,7 +64,7 @@ public class AppConfigTestModule extends AppConfigModule {
 //    }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ConfigHolderImpl implements ConfigHolder {

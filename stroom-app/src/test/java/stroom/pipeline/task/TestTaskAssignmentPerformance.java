@@ -201,8 +201,7 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
                 PageRequest.oneRow(),
                 Collections.emptyList(),
                 new StringCriteria(JobNames.DATA_PROCESSOR)));
-        final Job job = jobs.getFirst();
-        job.setEnabled(true);
+        final Job job = jobs.getFirst().copy().enabled(true).build();
         jobDao.update(job);
 
         final JobNodeListResponse response = jobNodeDao.find(new FindJobNodeCriteria(
@@ -210,8 +209,7 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
                 Collections.emptyList(),
                 new StringCriteria(JobNames.DATA_PROCESSOR),
                 null, null));
-        final JobNode jobNode = response.getFirst();
-        jobNode.setEnabled(true);
+        final JobNode jobNode = response.getFirst().copy().enabled(true).build();
         jobNodeDao.update(jobNode);
 
         final String feedName = "TEST-FEED";

@@ -83,7 +83,7 @@ public class FindResult {
         return path + " / " + NullSafe.get(docRef, DocRef::toShortString);
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static final class Builder {

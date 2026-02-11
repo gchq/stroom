@@ -63,11 +63,12 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
     private final Map<String, DocumentEventLog> documentEventLogMap = new HashMap<>();
 
     private static JobNode buildJobNode(final int id, final int version, final String node) {
-        final JobNode jobNode = new JobNode();
-        jobNode.setId(id);
-        jobNode.setVersion(version);
-        jobNode.setNodeName(node);
-        return jobNode;
+        return JobNode
+                .builder()
+                .id(id)
+                .version(version)
+                .nodeName(node)
+                .build();
     }
 
     private static final int BASE_PORT = 7020;
@@ -275,14 +276,12 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
         when(jobNodeService.update(any(JobNode.class)))
                 .then(invocation -> {
                     final JobNode input = invocation.getArgument(0);
-
-                    final JobNode output = buildJobNode(
-                            input.getId(), input.getVersion() + 1, input.getNodeName());
-                    output.setTaskLimit(input.getTaskLimit());
-                    output.setSchedule(input.getSchedule());
-                    output.setEnabled(input.isEnabled());
-
-                    return output;
+                    return buildJobNode(input.getId(), input.getVersion() + 1, input.getNodeName())
+                            .copy()
+                            .taskLimit(input.getTaskLimit())
+                            .schedule(input.getSchedule())
+                            .enabled(input.isEnabled())
+                            .build();
                 });
 
         jobNodeServiceMap.put(node.getNodeName(), jobNodeService);

@@ -288,7 +288,7 @@ class ParseDateTime extends StroomExtensionFunctionCall {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class FieldSet {
@@ -308,7 +308,7 @@ class ParseDateTime extends StroomExtensionFunctionCall {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class Key {
@@ -341,7 +341,7 @@ class ParseDateTime extends StroomExtensionFunctionCall {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class RegularParser implements Function<String, Instant> {
@@ -364,7 +364,7 @@ class ParseDateTime extends StroomExtensionFunctionCall {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class RegularParserWithReferenceTime implements Function<String, Instant> {
@@ -411,7 +411,7 @@ class ParseDateTime extends StroomExtensionFunctionCall {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class WeekBasedParser implements Function<String, Instant> {

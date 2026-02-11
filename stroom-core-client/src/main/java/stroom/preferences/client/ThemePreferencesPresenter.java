@@ -99,7 +99,7 @@ public final class ThemePreferencesPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface ThemePreferencesView extends View, Focus, HasUiHandlers<DirtyUiHandlers> {

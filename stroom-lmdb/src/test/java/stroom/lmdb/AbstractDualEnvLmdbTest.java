@@ -158,7 +158,7 @@ public abstract class AbstractDualEnvLmdbTest extends StroomUnitTest {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record TestEnv(Path dbDir, LmdbEnv lmdbEnv) {

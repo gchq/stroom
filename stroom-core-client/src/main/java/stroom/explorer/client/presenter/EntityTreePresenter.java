@@ -117,7 +117,7 @@ public class EntityTreePresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface EntityTreeView extends View, Focus, HasUiHandlers<EntityTreeUiHandlers> {

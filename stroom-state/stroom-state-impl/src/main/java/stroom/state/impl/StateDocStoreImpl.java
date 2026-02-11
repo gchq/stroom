@@ -18,7 +18,6 @@ package stroom.state.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.importexport.shared.ImportSettings;
@@ -56,14 +55,18 @@ public class StateDocStoreImpl implements StateDocStore {
             final StateDocSerialiser serialiser,
             final Provider<CqlSessionCache> cqlSessionCacheProvider,
             final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, StateDoc.TYPE, StateDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                StateDoc.TYPE,
+                StateDoc::builder,
+                StateDoc::copy);
         this.cqlSessionCacheProvider = cqlSessionCacheProvider;
         this.securityContext = securityContext;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public DocRef createDocument(final String name) {
@@ -93,8 +96,8 @@ public class StateDocStoreImpl implements StateDocStore {
     private void validateName(final String name) {
         if (!ScyllaDbNameValidator.isValidName(name)) {
             throw new EntityServiceException("The state store name must match the pattern '" +
-                    ScyllaDbNameValidator.getPattern() +
-                    "'");
+                                             ScyllaDbNameValidator.getPattern() +
+                                             "'");
         }
     }
 
@@ -106,7 +109,7 @@ public class StateDocStoreImpl implements StateDocStore {
         final List<DocRef> list = list();
         for (final DocRef docRef : list) {
             if (name.equals(docRef.getName()) &&
-                    (whitelistDocRef == null || !whitelistDocRef.equals(docRef))) {
+                (whitelistDocRef == null || !whitelistDocRef.equals(docRef))) {
                 return true;
             }
         }
@@ -208,13 +211,13 @@ public class StateDocStoreImpl implements StateDocStore {
         return store.info(docRef);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public StateDoc readDocument(final DocRef docRef) {
@@ -227,13 +230,13 @@ public class StateDocStoreImpl implements StateDocStore {
         return store.writeDocument(document);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -251,13 +254,13 @@ public class StateDocStoreImpl implements StateDocStore {
         store.remapDependencies(docRef, remappings, null);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -276,10 +279,7 @@ public class StateDocStoreImpl implements StateDocStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, messageList, omitAuditFields, d -> d);
     }
 
     @Override
@@ -292,9 +292,9 @@ public class StateDocStoreImpl implements StateDocStore {
         return null;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public List<DocRef> list() {

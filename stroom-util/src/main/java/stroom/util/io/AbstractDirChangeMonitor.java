@@ -401,7 +401,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
     protected abstract void onOverflow();
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record SimpleWatchEvent(EventType eventType,
@@ -410,7 +410,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public enum EventType {

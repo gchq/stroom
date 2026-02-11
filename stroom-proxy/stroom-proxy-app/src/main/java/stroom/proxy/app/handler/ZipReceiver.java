@@ -712,7 +712,7 @@ public class ZipReceiver implements Receiver {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     record ReceiveResult(Map<FeedKey, List<ZipEntryGroup>> feedGroups,

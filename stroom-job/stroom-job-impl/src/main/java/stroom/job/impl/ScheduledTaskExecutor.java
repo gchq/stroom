@@ -321,7 +321,7 @@ class ScheduledTaskExecutor {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class JobNodeTrackedFunction extends ScheduledJobFunction {

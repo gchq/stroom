@@ -44,8 +44,8 @@ class TestVolumeSelector {
     private static final String PATH_5 = "path5";
 
     private List<IndexVolume> createVolumeList() {
-        final Node node1 = Node.create("node1");
-        final Node node2 = Node.create("node2");
+        final Node node1 = Node.builder().name("node1").build();
+        final Node node2 = Node.builder().name("node2").build();
 
         // 4k free, 80% free
         final IndexVolume v1 = IndexVolume.builder()

@@ -107,7 +107,7 @@ public class TestV07_02_00_005 extends AbstractExplorerMigrationTest {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public record Row(String type, String uuid, String name, String tags) {

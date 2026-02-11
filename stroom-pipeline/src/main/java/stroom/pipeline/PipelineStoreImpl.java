@@ -18,7 +18,6 @@ package stroom.pipeline;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -64,14 +63,18 @@ public class PipelineStoreImpl implements PipelineStore {
                              final Provider<ProcessorService> processorServiceProvider,
                              final PipelineDataMigration pipelineDataMigration) {
         this.processorServiceProvider = processorServiceProvider;
-        this.store = storeFactory.createStore(serialiser, PipelineDoc.TYPE, PipelineDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                PipelineDoc.TYPE,
+                PipelineDoc::builder,
+                PipelineDoc::copy);
         this.processorFilterServiceProvider = processorFilterServiceProvider;
         this.pipelineDataMigration = pipelineDataMigration;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
-    /// /////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public DocRef createDocument(final String name) {
@@ -111,13 +114,13 @@ public class PipelineStoreImpl implements PipelineStore {
         return store.info(docRef);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -196,13 +199,13 @@ public class PipelineStoreImpl implements PipelineStore {
         }
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public PipelineDoc readDocument(final DocRef docRef) {
@@ -214,13 +217,13 @@ public class PipelineStoreImpl implements PipelineStore {
         return store.writeDocument(document);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -241,10 +244,7 @@ public class PipelineStoreImpl implements PipelineStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, messageList, omitAuditFields, d -> d);
     }
 
     @Override
@@ -269,9 +269,9 @@ public class PipelineStoreImpl implements PipelineStore {
         return store.getType();
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {

@@ -70,7 +70,7 @@ public class OpenUserEvent extends GwtEvent<OpenUserHandler> {
                '}';
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface OpenUserHandler extends EventHandler {

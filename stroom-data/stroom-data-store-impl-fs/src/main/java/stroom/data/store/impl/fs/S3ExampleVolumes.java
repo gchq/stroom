@@ -61,12 +61,13 @@ public class S3ExampleVolumes {
                     .endpointOverride("http://localhost:9444")
                     .build();
 
-            final FsVolume volume = new FsVolume();
-            volume.setVolumeGroupId(s3VolumeGroup.getId());
-            volume.setVolumeType(FsVolumeType.S3);
-            volume.setS3ClientConfig(s3ClientConfig);
-            volume.setS3ClientConfigData(JsonUtil.writeValueAsString(s3ClientConfig));
-            volume.setPath("s3");
+            final FsVolume volume = FsVolume.builder()
+                    .volumeGroupId(s3VolumeGroup.getId())
+                    .volumeType(FsVolumeType.S3)
+                    .s3ClientConfig(s3ClientConfig)
+                    .s3ClientConfigData(JsonUtil.writeValueAsString(s3ClientConfig))
+                    .path("s3")
+                    .build();
             fsVolumeService.create(volume);
         }
 

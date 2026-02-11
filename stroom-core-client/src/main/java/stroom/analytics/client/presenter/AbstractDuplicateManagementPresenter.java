@@ -78,7 +78,7 @@ public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAna
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface DuplicateManagementView extends View, HasUiHandlers<DirtyUiHandlers> {

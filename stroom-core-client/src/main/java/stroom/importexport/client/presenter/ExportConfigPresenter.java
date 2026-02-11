@@ -209,7 +209,7 @@ public class ExportConfigPresenter
         typeFilterPresenter.show(target, filterStateConsumer);
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface ExportConfigView extends View, Focus, HasUiHandlers<ExportConfigUiHandlers> {
@@ -220,7 +220,7 @@ public class ExportConfigPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @ProxyCodeSplit

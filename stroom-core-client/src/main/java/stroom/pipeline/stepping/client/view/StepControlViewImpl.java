@@ -166,7 +166,7 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, StepControlViewImpl> {

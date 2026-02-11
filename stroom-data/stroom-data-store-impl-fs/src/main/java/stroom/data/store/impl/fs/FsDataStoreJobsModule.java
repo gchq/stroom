@@ -51,7 +51,7 @@ public class FsDataStoreJobsModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class DataDelete extends RunnableWrapper {
@@ -64,7 +64,7 @@ public class FsDataStoreJobsModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class OrphanFileFinder extends RunnableWrapper {
@@ -76,7 +76,7 @@ public class FsDataStoreJobsModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class OrphanMetaFinder extends RunnableWrapper {

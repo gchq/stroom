@@ -35,7 +35,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
-import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.time.StroomDuration;
@@ -629,7 +629,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     private static Set<String> ignorePropertiesFromStandardInterfaces(final Object obj) {
         final Set<String> ignore = new HashSet<>();
         ignorePropertiesFromSuperType(obj, HasIntegerId.class, ignore);
-        ignorePropertiesFromSuperType(obj, HasAuditInfo.class, ignore);
+        ignorePropertiesFromSuperType(obj, HasAuditInfoGetters.class, ignore);
         ignorePropertiesFromSuperType(obj, HasId.class, ignore);
         ignorePropertiesFromSuperType(obj, HasName.class, ignore);
         ignorePropertiesFromSuperType(obj, HasUuid.class, ignore);

@@ -316,7 +316,7 @@ public class DocumentUserPermissionsPresenter
         return "DocumentPermissions";
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface DocumentUserPermissionsView extends View {

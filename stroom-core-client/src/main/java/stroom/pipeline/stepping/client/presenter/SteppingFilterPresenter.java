@@ -315,7 +315,7 @@ public class SteppingFilterPresenter extends
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface SteppingFilterView extends View {

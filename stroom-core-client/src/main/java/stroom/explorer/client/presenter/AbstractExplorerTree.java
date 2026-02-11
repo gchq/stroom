@@ -327,7 +327,7 @@ public abstract class AbstractExplorerTree extends Composite implements Focus {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private class ExplorerTreeSelectionEventManager extends AbstractSelectionEventManager<ExplorerNode> {

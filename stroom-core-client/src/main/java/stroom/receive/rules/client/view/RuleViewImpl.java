@@ -80,7 +80,7 @@ public class RuleViewImpl extends ViewImpl implements RuleView {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, RuleViewImpl> {

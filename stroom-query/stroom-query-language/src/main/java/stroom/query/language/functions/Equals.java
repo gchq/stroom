@@ -54,7 +54,7 @@ class Equals extends AbstractEqualityFunction {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class EqualsEvaluator extends Evaluator {

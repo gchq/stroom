@@ -119,7 +119,7 @@ public class AppPermissionsPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface AppPermissionsView extends View {

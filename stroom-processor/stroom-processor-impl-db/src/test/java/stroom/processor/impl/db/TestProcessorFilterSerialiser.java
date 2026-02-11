@@ -58,15 +58,17 @@ class TestProcessorFilterSerialiser {
                 )
                 .build();
 
-        final ProcessorFilter processorFilter = new ProcessorFilter();
         // Blank tracker
-        processorFilter.setReprocess(true);
-        processorFilter.setEnabled(true);
-        processorFilter.setPriority(1);
-        processorFilter.setProcessor(null);
-        processorFilter.setQueryData(queryData);
-        processorFilter.setMinMetaCreateTimeMs(System.currentTimeMillis());
-        processorFilter.setMaxMetaCreateTimeMs(System.currentTimeMillis());
+        final ProcessorFilter processorFilter = ProcessorFilter
+                .builder()
+                .reprocess(true)
+                .enabled(true)
+                .priority(1)
+                .processor(null)
+                .queryData(queryData)
+                .minMetaCreateTimeMs(System.currentTimeMillis())
+                .maxMetaCreateTimeMs(System.currentTimeMillis())
+                .build();
 
         final QueryDataSerialiser serialiser = new QueryDataSerialiser();
         final String xml1 = serialiser.serialise(processorFilter.getQueryData());
@@ -77,8 +79,10 @@ class TestProcessorFilterSerialiser {
         // Now un-marshall
 
         final QueryData queryData2 = serialiser.deserialise(xml1);
-        final ProcessorFilter processorFilter2 = new ProcessorFilter();
-        processorFilter2.setQueryData(queryData2);
+        final ProcessorFilter processorFilter2 = ProcessorFilter
+                .builder()
+                .queryData(queryData2)
+                .build();
 
         Assertions.assertThat(processorFilter2)
                 .isEqualTo(processorFilter);

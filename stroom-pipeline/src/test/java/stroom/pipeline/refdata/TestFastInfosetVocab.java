@@ -332,7 +332,7 @@ public class TestFastInfosetVocab {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class SerialiserHandler extends DefaultHandler {
@@ -405,7 +405,7 @@ public class TestFastInfosetVocab {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class LoggingHandler extends DefaultHandler {
@@ -463,7 +463,7 @@ public class TestFastInfosetVocab {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class NoCharsVocabularyGenerator extends VocabularyGenerator {
@@ -481,7 +481,7 @@ public class TestFastInfosetVocab {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record Vocabs(Vocabulary vocabulary,

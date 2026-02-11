@@ -169,19 +169,19 @@ class TestIndexShardDaoImpl {
     private IndexVolume createVolume(final String nodeName,
                                      final String path,
                                      final IndexVolumeGroup indexVolumeGroup) {
-        final IndexVolume indexVolume = new IndexVolume();
-        indexVolume.setNodeName(nodeName);
-        indexVolume.setPath(path);
-        indexVolume.setIndexVolumeGroupId(indexVolumeGroup.getId());
-        AuditUtil.stamp(() -> "test", indexVolume);
-        return indexVolumeDao.create(indexVolume);
+        final IndexVolume.Builder builder = IndexVolume.builder()
+                .nodeName(nodeName)
+                .path(path)
+                .indexVolumeGroupId(indexVolumeGroup.getId());
+        AuditUtil.stampNew(() -> "test", builder);
+        return indexVolumeDao.create(builder.build());
     }
 
     private IndexVolumeGroup createGroup(final String name) {
-        final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
-        indexVolumeGroup.setName(name);
-        AuditUtil.stamp(() -> "test", indexVolumeGroup);
-        return indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
+        final IndexVolumeGroup.Builder builder = IndexVolumeGroup.builder()
+                .name(name);
+        AuditUtil.stampNew(() -> "test", builder);
+        return indexVolumeGroupDao.getOrCreate(builder.build());
     }
 
     @Test

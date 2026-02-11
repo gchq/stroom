@@ -650,13 +650,12 @@ class TestDataRetentionPolicyExecutor {
     }
 
     private DataRetentionRules buildRules(final List<DataRetentionRule> rules) {
-        final DataRetentionRules dataRetentionRules = DataRetentionRules
+        return DataRetentionRules
                 .builder()
                 .uuid(UUID.randomUUID().toString())
                 .rules(rules)
+                .version(RULES_VERSION)
                 .build();
-        dataRetentionRules.setVersion(RULES_VERSION);
-        return dataRetentionRules;
     }
 
     private DataRetentionRule buildRule(final int ruleNo,

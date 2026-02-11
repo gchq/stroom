@@ -164,7 +164,7 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @SuppressWarnings("TextBlockMigration") // Because GWT :-(

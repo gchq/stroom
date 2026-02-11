@@ -134,7 +134,7 @@ public class ContentTemplateEditPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface ContentTemplateEditView extends View {

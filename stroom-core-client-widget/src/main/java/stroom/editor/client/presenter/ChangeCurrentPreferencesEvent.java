@@ -72,7 +72,7 @@ public class ChangeCurrentPreferencesEvent extends GwtEvent<ChangeCurrentPrefere
         return currentPreferences.getEditorLiveAutoCompletion();
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

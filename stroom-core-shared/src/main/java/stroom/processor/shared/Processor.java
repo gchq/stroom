@@ -20,7 +20,8 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
 import stroom.docref.HasUuid;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.AbstractHasAuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -31,46 +32,34 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class Processor implements HasAuditInfo, HasUuid {
+public class Processor implements HasAuditInfoGetters, HasUuid {
 
     public static final String ENTITY_TYPE = "Processor";
 
-    // standard id, OCC and audit fields
     @JsonProperty
-    private Integer id;
+    private final Integer id;
     @JsonProperty
-    private Integer version;
+    private final Integer version;
     @JsonProperty
-    private Long createTimeMs;
+    private final Long createTimeMs;
     @JsonProperty
-    private String createUser;
+    private final String createUser;
     @JsonProperty
-    private Long updateTimeMs;
+    private final Long updateTimeMs;
     @JsonProperty
-    private String updateUser;
+    private final String updateUser;
     @JsonProperty
-    private String uuid;
-
-    // Only One type for the moment
+    private final String uuid;
     @JsonProperty
-    private ProcessorType processorType;
+    private final ProcessorType processorType;
     @JsonProperty
-    private String pipelineUuid;
+    private final String pipelineUuid;
     @JsonProperty
-    private String pipelineName;
+    private final String pipelineName;
     @JsonProperty
-    private boolean enabled;
+    private final boolean enabled;
     @JsonProperty
-    private boolean deleted;
-
-    public Processor() {
-        processorType = ProcessorType.PIPELINE;
-    }
-
-    public Processor(final DocRef pipelineRef) {
-        processorType = ProcessorType.PIPELINE;
-        this.pipelineUuid = pipelineRef.getUuid();
-    }
+    private final boolean deleted;
 
     @JsonCreator
     public Processor(@JsonProperty("id") final Integer id,
@@ -103,16 +92,8 @@ public class Processor implements HasAuditInfo, HasUuid {
         return id;
     }
 
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
     public Integer getVersion() {
         return version;
-    }
-
-    public void setVersion(final Integer version) {
-        this.version = version;
     }
 
     @Override
@@ -120,17 +101,9 @@ public class Processor implements HasAuditInfo, HasUuid {
         return createTimeMs;
     }
 
-    public void setCreateTimeMs(final Long createTimeMs) {
-        this.createTimeMs = createTimeMs;
-    }
-
     @Override
     public String getCreateUser() {
         return createUser;
-    }
-
-    public void setCreateUser(final String createUser) {
-        this.createUser = createUser;
     }
 
     @Override
@@ -138,17 +111,9 @@ public class Processor implements HasAuditInfo, HasUuid {
         return updateTimeMs;
     }
 
-    public void setUpdateTimeMs(final Long updateTimeMs) {
-        this.updateTimeMs = updateTimeMs;
-    }
-
     @Override
     public String getUpdateUser() {
         return updateUser;
-    }
-
-    public void setUpdateUser(final String updateUser) {
-        this.updateUser = updateUser;
     }
 
     @Override
@@ -156,32 +121,16 @@ public class Processor implements HasAuditInfo, HasUuid {
         return uuid;
     }
 
-    public void setUuid(final String uuid) {
-        this.uuid = uuid;
-    }
-
     public ProcessorType getProcessorType() {
         return processorType;
-    }
-
-    public void setProcessorType(final ProcessorType processorType) {
-        this.processorType = processorType;
     }
 
     public String getPipelineUuid() {
         return pipelineUuid;
     }
 
-    public void setPipelineUuid(final String uuid) {
-        this.pipelineUuid = uuid;
-    }
-
     public String getPipelineName() {
         return pipelineName;
-    }
-
-    public void setPipelineName(final String pipelineName) {
-        this.pipelineName = pipelineName;
     }
 
     @JsonIgnore
@@ -195,11 +144,11 @@ public class Processor implements HasAuditInfo, HasUuid {
         return new DocRef(docType, pipelineUuid, pipelineName);
     }
 
-    @JsonIgnore
-    public void setPipeline(final DocRef pipelineDocRef) {
-        this.pipelineUuid = pipelineDocRef.getUuid();
-        this.pipelineName = pipelineDocRef.getName();
-    }
+//    @JsonIgnore
+//    public void setPipeline(final DocRef pipelineDocRef) {
+//        this.pipelineUuid = pipelineDocRef.getUuid();
+//        this.pipelineName = pipelineDocRef.getName();
+//    }
 
 //    public String getPipelineName() {
 //        return pipelineName;
@@ -213,16 +162,8 @@ public class Processor implements HasAuditInfo, HasUuid {
         return enabled;
     }
 
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
-    }
-
     public boolean isDeleted() {
         return deleted;
-    }
-
-    public void setDeleted(final boolean deleted) {
-        this.deleted = deleted;
     }
 
     @Override
@@ -272,5 +213,107 @@ public class Processor implements HasAuditInfo, HasUuid {
      */
     public static DocRef.TypedBuilder buildDocRef() {
         return DocRef.builder(ENTITY_TYPE);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder extends AbstractHasAuditInfoBuilder<Processor, Builder> {
+
+        private Integer id;
+        private Integer version;
+        private String uuid;
+        private ProcessorType processorType = ProcessorType.PIPELINE;
+        private String pipelineUuid;
+        private String pipelineName;
+        private boolean enabled = false;
+        private boolean deleted = false;
+
+        private Builder() {
+        }
+
+        private Builder(final Processor processor) {
+            super(processor);
+            this.id = processor.id;
+            this.version = processor.version;
+            this.uuid = processor.uuid;
+            this.processorType = processor.processorType;
+            this.pipelineUuid = processor.pipelineUuid;
+            this.pipelineName = processor.pipelineName;
+            this.enabled = processor.enabled;
+            this.deleted = processor.deleted;
+        }
+
+        public Builder id(final Integer id) {
+            this.id = id;
+            return self();
+        }
+
+        public Builder version(final Integer version) {
+            this.version = version;
+            return self();
+        }
+
+        public Builder uuid(final String uuid) {
+            this.uuid = uuid;
+            return self();
+        }
+
+        public Builder processorType(final ProcessorType processorType) {
+            this.processorType = processorType;
+            return self();
+        }
+
+        public Builder pipelineUuid(final String pipelineUuid) {
+            this.pipelineUuid = pipelineUuid;
+            return self();
+        }
+
+        public Builder pipelineName(final String pipelineName) {
+            this.pipelineName = pipelineName;
+            return self();
+        }
+
+        public Builder pipeline(final DocRef pipelineDocRef) {
+            this.pipelineUuid = pipelineDocRef.getUuid();
+            this.pipelineName = pipelineDocRef.getName();
+            return self();
+        }
+
+        public Builder enabled(final boolean enabled) {
+            this.enabled = enabled;
+            return self();
+        }
+
+        public Builder deleted(final boolean deleted) {
+            this.deleted = deleted;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public Processor build() {
+            return new Processor(
+                    id,
+                    version,
+                    createTimeMs,
+                    createUser,
+                    updateTimeMs,
+                    updateUser,
+                    uuid,
+                    processorType,
+                    pipelineUuid,
+                    pipelineName,
+                    enabled,
+                    deleted);
+        }
     }
 }

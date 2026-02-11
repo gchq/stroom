@@ -125,7 +125,7 @@ class Case extends AbstractManyChildFunction {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static final class Gen extends AbstractManyChildGenerator {

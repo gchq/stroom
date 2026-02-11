@@ -57,7 +57,7 @@ public class BeforeRevealMenubarEvent extends GwtEvent<BeforeRevealMenubarEvent.
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

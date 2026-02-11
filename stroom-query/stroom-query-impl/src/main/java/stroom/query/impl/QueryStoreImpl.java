@@ -18,7 +18,6 @@ package stroom.query.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -60,15 +59,19 @@ class QueryStoreImpl implements QueryStore {
                    final SecurityContext securityContext,
                    final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                    final SearchRequestFactory searchRequestFactory) {
-        this.store = storeFactory.createStore(serialiser, QueryDoc.TYPE, QueryDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                QueryDoc.TYPE,
+                QueryDoc::builder,
+                QueryDoc::copy);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public DocRef createDocument(final String name) {
@@ -114,13 +117,13 @@ class QueryStoreImpl implements QueryStore {
         return store.info(docRef);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -157,13 +160,13 @@ class QueryStoreImpl implements QueryStore {
                                     if (remapped != null) {
                                         String query = doc.getQuery();
                                         if (remapped.getName() != null &&
-                                                !remapped.getName().isBlank() &&
-                                                !Objects.equals(remapped.getName(), docRef.getName())) {
+                                            !remapped.getName().isBlank() &&
+                                            !Objects.equals(remapped.getName(), docRef.getName())) {
                                             query = query.replaceFirst(docRef.getName(), remapped.getName());
                                         }
                                         if (remapped.getUuid() != null &&
-                                                !remapped.getUuid().isBlank() &&
-                                                !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
+                                            !remapped.getUuid().isBlank() &&
+                                            !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
                                             query = query.replaceFirst(docRef.getUuid(), remapped.getUuid());
                                         }
                                         doc.setQuery(query);
@@ -181,13 +184,13 @@ class QueryStoreImpl implements QueryStore {
         };
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public QueryDoc readDocument(final DocRef docRef) {
@@ -199,13 +202,13 @@ class QueryStoreImpl implements QueryStore {
         return store.writeDocument(document);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -224,10 +227,7 @@ class QueryStoreImpl implements QueryStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, messageList, omitAuditFields, d -> d);
     }
 
     @Override
@@ -240,9 +240,9 @@ class QueryStoreImpl implements QueryStore {
         return null;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public List<DocRef> list() {

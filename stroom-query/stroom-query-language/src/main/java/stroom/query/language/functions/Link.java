@@ -83,7 +83,7 @@ class Link extends AbstractLink {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static final class LinkGen extends AbstractLinkGen {

@@ -265,7 +265,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface TypeFilterView extends View {
@@ -274,7 +274,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private class TypeFilterSelectionEventManager extends CheckListSelectionEventManager<DocumentType> {

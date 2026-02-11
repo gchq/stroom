@@ -57,7 +57,7 @@ public class ShowFullScreenEvent extends GwtEvent<ShowFullScreenEvent.Handler> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

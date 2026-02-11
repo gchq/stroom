@@ -115,7 +115,7 @@ public class QueryToolbarViewImpl
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, QueryToolbarViewImpl> {

@@ -147,7 +147,7 @@ final class MultiForwardDestination implements ForwardDestination {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record DestinationCopy(ForwardDestination destination,

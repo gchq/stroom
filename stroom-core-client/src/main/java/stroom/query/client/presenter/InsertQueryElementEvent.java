@@ -61,7 +61,7 @@ public class InsertQueryElementEvent extends GwtEvent<Handler> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

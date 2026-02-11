@@ -152,10 +152,10 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
 
         boolean includeRuleDocumentation = INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final AnalyticRuleDoc doc) {
+        private Builder(final AnalyticRuleDoc doc) {
             super(doc);
             this.includeRuleDocumentation = doc.includeRuleDocumentation;
         }

@@ -67,7 +67,7 @@ public class OpenJobNodeEvent extends GwtEvent<OpenJobNodeHandler> {
                 '}';
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface OpenJobNodeHandler extends EventHandler {

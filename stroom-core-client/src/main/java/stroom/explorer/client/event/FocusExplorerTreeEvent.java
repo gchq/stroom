@@ -49,7 +49,7 @@ public class FocusExplorerTreeEvent extends GwtEvent<FocusExplorerTreeEvent.Hand
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

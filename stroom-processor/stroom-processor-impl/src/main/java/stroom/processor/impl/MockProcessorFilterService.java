@@ -56,26 +56,26 @@ public class MockProcessorFilterService implements ProcessorFilterService {
 
     @Override
     public ProcessorFilter create(final CreateProcessFilterRequest request) {
-        final ProcessorFilter filter = new ProcessorFilter();
-        filter.setPipelineUuid(request.getPipeline().getUuid());
-        filter.setQueryData(request.getQueryData());
-        filter.setPriority(request.getPriority());
-        filter.setMaxProcessingTasks(request.getMaxProcessingTasks());
-        filter.setEnabled(request.isEnabled());
-        filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
-        filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
-        setRunAs(request, filter);
+        final ProcessorFilter.Builder builder = ProcessorFilter
+                .builder()
+                .pipelineUuid(request.getPipeline().getUuid())
+                .queryData(request.getQueryData())
+                .priority(request.getPriority())
+                .maxProcessingTasks(request.getMaxProcessingTasks())
+                .enabled(request.isEnabled())
+                .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
+                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        setRunAs(request, builder);
         final Processor processor = processorService.create(
                 request.getProcessorType(),
                 request.getPipeline(),
                 request.isEnabled());
-
-        filter.setProcessor(processor);
-        return dao.create(filter);
+        builder.processor(processor);
+        return dao.create(builder.build());
     }
 
-    private void setRunAs(final CreateProcessFilterRequest request, final ProcessorFilter filter) {
-        filter.setRunAsUser(NullSafe.getOrElse(request,
+    private void setRunAs(final CreateProcessFilterRequest request, final ProcessorFilter.Builder filter) {
+        filter.runAsUser(NullSafe.getOrElse(request,
                 CreateProcessFilterRequest::getRunAsUser,
                 securityContext.getUserRef()));
     }
@@ -89,16 +89,17 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     @Override
     public ProcessorFilter create(final Processor processor,
                                   final CreateProcessFilterRequest request) {
-        final ProcessorFilter filter = new ProcessorFilter();
-        filter.setProcessor(processor);
-        filter.setQueryData(request.getQueryData());
-        filter.setPriority(request.getPriority());
-        filter.setMaxProcessingTasks(request.getMaxProcessingTasks());
-        filter.setEnabled(request.isEnabled());
-        filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
-        filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
-        setRunAs(request, filter);
-        return dao.create(filter);
+        final ProcessorFilter.Builder builder = ProcessorFilter
+                .builder()
+                .processor(processor)
+                .queryData(request.getQueryData())
+                .priority(request.getPriority())
+                .maxProcessingTasks(request.getMaxProcessingTasks())
+                .enabled(request.isEnabled())
+                .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
+                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        setRunAs(request, builder);
+        return dao.create(builder.build());
     }
 
     @Override
@@ -111,17 +112,18 @@ public class MockProcessorFilterService implements ProcessorFilterService {
                                         final Processor processor,
                                         final DocRef processorFilterDocRef,
                                         final CreateProcessFilterRequest request) {
-        final ProcessorFilter filter = new ProcessorFilter();
-        filter.setProcessor(processor);
-        filter.setQueryData(request.getQueryData());
-        filter.setPriority(request.getPriority());
-        filter.setMaxProcessingTasks(request.getMaxProcessingTasks());
-        filter.setUuid(processorFilterDocRef.getUuid());
-        filter.setEnabled(request.isEnabled());
-        filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
-        filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
-        setRunAs(request, filter);
-        return dao.create(filter);
+        final ProcessorFilter.Builder builder = ProcessorFilter
+                .builder()
+                .processor(processor)
+                .queryData(request.getQueryData())
+                .priority(request.getPriority())
+                .maxProcessingTasks(request.getMaxProcessingTasks())
+                .uuid(processorFilterDocRef.getUuid())
+                .enabled(request.isEnabled())
+                .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
+                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        setRunAs(request, builder);
+        return dao.create(builder.build());
     }
 
     @Override
@@ -186,8 +188,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     public ProcessorFilter restore(final DocRef processorFilterDocRef, final boolean resetTracker) {
         final ProcessorFilter processorFilter = dao.fetchByUuid(processorFilterDocRef.getUuid())
                 .orElseThrow();
-        processorFilter.setDeleted(false);
-        return processorFilter;
+        return processorFilter.copy().deleted(false).build();
     }
 
     @Override

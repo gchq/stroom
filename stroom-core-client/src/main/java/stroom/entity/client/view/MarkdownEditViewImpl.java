@@ -49,7 +49,7 @@ public class MarkdownEditViewImpl extends ViewImpl implements MarkdownEditView {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, MarkdownEditViewImpl> {

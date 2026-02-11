@@ -87,7 +87,7 @@ class JobResourceImpl implements JobResource {
 
     @Override
     public void setEnabled(final Integer id, final Boolean enabled) {
-        modifyJob(id, job -> job.setEnabled(enabled));
+        modifyJob(id, job -> job.copy().enabled(enabled).build());
     }
 
     private void modifyJob(final int id, final Consumer<Job> mutation) {

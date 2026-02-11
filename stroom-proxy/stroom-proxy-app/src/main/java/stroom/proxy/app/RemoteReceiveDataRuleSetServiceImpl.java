@@ -364,7 +364,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record RuleState(HashedReceiveDataRules hashedReceiveDataRules,
@@ -373,7 +373,7 @@ public class RemoteReceiveDataRuleSetServiceImpl implements ReceiveDataRuleSetSe
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static final class AttributeMapHasher implements AttributeMapper {

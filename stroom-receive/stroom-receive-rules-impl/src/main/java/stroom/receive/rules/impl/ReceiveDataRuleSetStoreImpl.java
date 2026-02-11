@@ -19,7 +19,6 @@ package stroom.receive.rules.impl;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
@@ -80,7 +79,11 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
         this.clusterLockService = clusterLockService;
         final DocumentSerialiser2<ReceiveDataRules> serialiser = serialiser2Factory.createSerialiser(
                 ReceiveDataRules.class);
-        this.store = storeFactory.createStore(serialiser, ReceiveDataRules.TYPE, ReceiveDataRules::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                ReceiveDataRules.TYPE,
+                ReceiveDataRules::builder,
+                ReceiveDataRules::copy);
     }
 
     @Override
@@ -156,9 +159,9 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
         return docRef;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public DocRef createDocument(final String name) {
@@ -193,13 +196,13 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
         throw new UnsupportedOperationException("Info not supported by Data Receipt Rules");
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -230,13 +233,13 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
         };
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public ReceiveDataRules readDocument(final DocRef docRef) {
@@ -253,13 +256,13 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
 
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -278,10 +281,7 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, messageList, omitAuditFields, d -> d);
     }
 
     @Override
@@ -294,9 +294,9 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
         return null;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {

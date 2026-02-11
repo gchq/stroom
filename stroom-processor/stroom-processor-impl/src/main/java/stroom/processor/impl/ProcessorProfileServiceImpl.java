@@ -68,7 +68,8 @@ public class ProcessorProfileServiceImpl implements ProcessorProfileService {
     @Override
     public ProcessorProfile create(final ProcessorProfile processorProfile) {
         final ProcessorProfile result = securityContext.secureResult(AppPermission.MANAGE_PROCESSORS_PERMISSION, () ->
-                processorProfileDao.create(AuditUtil.stamp(securityContext, processorProfile.copy())));
+                processorProfileDao.create(AuditUtil
+                        .stamp(securityContext, processorProfile, processorProfile.copy()).build()));
         fireChange(EntityAction.CREATE);
         return result;
     }
@@ -86,7 +87,8 @@ public class ProcessorProfileServiceImpl implements ProcessorProfileService {
     @Override
     public ProcessorProfile update(final ProcessorProfile processorProfile) {
         final ProcessorProfile result = securityContext.secureResult(AppPermission.MANAGE_PROCESSORS_PERMISSION, () ->
-                processorProfileDao.update(AuditUtil.stamp(securityContext, processorProfile.copy())));
+                processorProfileDao.update(AuditUtil
+                        .stamp(securityContext, processorProfile, processorProfile.copy()).build()));
         fireChange(EntityAction.UPDATE);
         return result;
     }

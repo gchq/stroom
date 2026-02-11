@@ -44,7 +44,7 @@ public class ToolTipCell extends AbstractCell<ToolTipCellValue> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class ToolTipCellValue {

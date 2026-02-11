@@ -43,18 +43,16 @@ public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
 
     @Override
     public IndexVolumeGroup create() {
-        final IndexVolumeGroup group = new IndexVolumeGroup();
-        group.setName("New name");
-        AuditUtil.stamp(() -> TEST_USER, group);
+        final IndexVolumeGroup group = AuditUtil.stampNew(() ->
+                TEST_USER, IndexVolumeGroup.builder().name("New name")).build();
         groups.add(group);
         return group;
     }
 
     @Override
     public IndexVolumeGroup getOrCreate(final String name) {
-        final IndexVolumeGroup group = new IndexVolumeGroup();
-        group.setName(name);
-        AuditUtil.stamp(() -> TEST_USER, group);
+        final IndexVolumeGroup group = AuditUtil.stampNew(() ->
+                TEST_USER, IndexVolumeGroup.builder().name(name)).build();
         groups.add(group);
         return group;
     }

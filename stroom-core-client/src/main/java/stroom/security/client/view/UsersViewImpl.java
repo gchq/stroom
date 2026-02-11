@@ -49,7 +49,7 @@ public final class UsersViewImpl extends ViewImpl implements UsersView {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, UsersViewImpl> {

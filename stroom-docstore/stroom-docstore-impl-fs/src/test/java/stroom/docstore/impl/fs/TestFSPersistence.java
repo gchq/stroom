@@ -18,10 +18,9 @@ package stroom.docstore.impl.fs;
 
 import stroom.docref.DocRef;
 import stroom.docstore.impl.Persistence;
-import stroom.docstore.shared.AbstractDoc;
+import stroom.docstore.shared.GenericDoc;
 import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
@@ -50,7 +49,7 @@ class TestFSPersistence {
             persistence.delete(docRef);
         }
 
-        final GenericDoc doc = new GenericDoc(
+        GenericDoc doc = new GenericDoc(
                 docRef.getUuid(),
                 docRef.getName(),
                 null,
@@ -82,7 +81,7 @@ class TestFSPersistence {
         assertThat(refs.get(0).getName()).isEqualTo(docRef.getName());
 
         // Update
-        doc.setName("New Name");
+        doc = doc.copy().name("New Name").build();
         bytes = mapper.writeValueAsBytes(doc);
         data = new HashMap<>();
         data.put("meta", bytes);
@@ -102,18 +101,5 @@ class TestFSPersistence {
 
         // Delete
         persistence.delete(docRef);
-    }
-
-    private static class GenericDoc extends AbstractDoc {
-
-        public GenericDoc(@JsonProperty("uuid") final String uuid,
-                          @JsonProperty("name") final String name,
-                          @JsonProperty("version") final String version,
-                          @JsonProperty("createTimeMs") final Long createTimeMs,
-                          @JsonProperty("updateTimeMs") final Long updateTimeMs,
-                          @JsonProperty("createUser") final String createUser,
-                          @JsonProperty("updateUser") final String updateUser) {
-            super("GenericDoc", uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
-        }
     }
 }

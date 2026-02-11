@@ -136,7 +136,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {
@@ -145,7 +145,7 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Builder {

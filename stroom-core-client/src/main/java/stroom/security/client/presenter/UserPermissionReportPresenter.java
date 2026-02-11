@@ -319,7 +319,7 @@ public class UserPermissionReportPresenter
 //    }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface UserPermissionReportView extends View {

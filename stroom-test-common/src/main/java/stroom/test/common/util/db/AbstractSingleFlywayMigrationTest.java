@@ -288,7 +288,7 @@ public abstract class AbstractSingleFlywayMigrationTest<
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class ScriptBuilder {

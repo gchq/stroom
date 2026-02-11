@@ -62,7 +62,7 @@ public class NodeChangeEvent extends GwtEvent<NodeChangeEvent.Handler> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

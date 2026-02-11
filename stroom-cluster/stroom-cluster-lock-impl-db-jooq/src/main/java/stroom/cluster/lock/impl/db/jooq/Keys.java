@@ -36,9 +36,9 @@ import org.jooq.impl.Internal;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Keys {
 
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
     // UNIQUE and PRIMARY KEY definitions
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
     public static final UniqueKey<ClusterLockRecord> KEY_CLUSTER_LOCK_NAME = Internal.createUniqueKey(ClusterLock.CLUSTER_LOCK, DSL.name("KEY_cluster_lock_name"), new TableField[] { ClusterLock.CLUSTER_LOCK.NAME }, true);
     public static final UniqueKey<ClusterLockRecord> KEY_CLUSTER_LOCK_PRIMARY = Internal.createUniqueKey(ClusterLock.CLUSTER_LOCK, DSL.name("KEY_cluster_lock_PRIMARY"), new TableField[] { ClusterLock.CLUSTER_LOCK.ID }, true);

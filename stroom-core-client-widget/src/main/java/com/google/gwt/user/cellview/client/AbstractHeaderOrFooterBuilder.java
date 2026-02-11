@@ -179,7 +179,7 @@ public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<
     }
 
 
-    // --------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
 
     private static class TwoWayHashMap<K, V> {

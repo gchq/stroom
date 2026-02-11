@@ -51,7 +51,7 @@ public class CrossModuleConfig extends AbstractConfig implements IsStroomConfig,
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @BootStrapConfig

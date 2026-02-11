@@ -257,7 +257,7 @@ public class EditApiKeyViewImpl
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, EditApiKeyViewImpl> {

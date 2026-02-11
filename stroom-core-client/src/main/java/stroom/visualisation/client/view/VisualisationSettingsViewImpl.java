@@ -71,7 +71,7 @@ public class VisualisationSettingsViewImpl extends ViewImpl
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, VisualisationSettingsViewImpl> {

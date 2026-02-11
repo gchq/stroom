@@ -160,7 +160,7 @@ public final class QueryHelpFunctionSignature extends QueryHelpData {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -282,7 +282,7 @@ public final class QueryHelpFunctionSignature extends QueryHelpData {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public enum Type {
@@ -309,7 +309,7 @@ public final class QueryHelpFunctionSignature extends QueryHelpData {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     public enum OverloadType {
         NOT_OVERLOADED,

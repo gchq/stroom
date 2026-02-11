@@ -75,7 +75,7 @@ public class RenameDocumentEvent extends GwtEvent<RenameDocumentEvent.Handler> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

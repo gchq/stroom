@@ -186,10 +186,10 @@ public class Annotation extends AbstractDoc {
         private SimpleDuration retentionPeriod;
         private Long retainUntilTimeMs;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final Annotation doc) {
+        private Builder(final Annotation doc) {
             super(doc);
             this.id = doc.id;
             this.subject = doc.subject;

@@ -92,7 +92,7 @@ public class ShowHelpEvent extends GwtEvent<Handler> {
 //    }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {
@@ -101,7 +101,7 @@ public class ShowHelpEvent extends GwtEvent<Handler> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static final class Builder {

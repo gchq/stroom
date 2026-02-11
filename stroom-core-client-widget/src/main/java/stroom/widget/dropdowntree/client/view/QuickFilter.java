@@ -217,7 +217,7 @@ public class QuickFilter extends FlowPanel
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class HelpPopup extends PopupPanel {

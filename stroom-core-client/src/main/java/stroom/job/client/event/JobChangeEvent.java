@@ -63,7 +63,7 @@ public class JobChangeEvent extends GwtEvent<JobChangeEvent.Handler> {
                 '}';
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

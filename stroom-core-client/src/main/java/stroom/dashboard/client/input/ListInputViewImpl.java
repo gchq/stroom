@@ -129,7 +129,7 @@ public class ListInputViewImpl extends ViewWithUiHandlers<ListInputUiHandlers> i
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, ListInputViewImpl> {

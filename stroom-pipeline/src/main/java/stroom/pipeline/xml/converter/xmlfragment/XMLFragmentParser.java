@@ -84,7 +84,7 @@ public class XMLFragmentParser extends AbstractParser {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
 
     private class FragmentEntity implements EntityResolver {

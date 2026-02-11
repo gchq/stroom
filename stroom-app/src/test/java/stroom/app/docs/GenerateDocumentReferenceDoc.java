@@ -206,7 +206,7 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record DocInfo(

@@ -86,7 +86,7 @@ public final class AppPermissionsViewImpl
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, AppPermissionsViewImpl> {

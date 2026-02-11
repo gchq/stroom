@@ -77,12 +77,11 @@ public class NamePresenter
                                     e::reset);
 
                         } else {
-                            queryEntity.setName(entityName);
-                            queryEntity.setFavourite(true);
-                            if (queryEntity.getId() == null) {
-                                create(queryEntity, consumer, e);
+                            final StoredQuery updated = queryEntity.copy().name(entityName).favourite(true).build();
+                            if (updated.getId() == null) {
+                                create(updated, consumer, e);
                             } else {
-                                update(queryEntity, consumer, e);
+                                update(updated, consumer, e);
                             }
                         }
                     } else {

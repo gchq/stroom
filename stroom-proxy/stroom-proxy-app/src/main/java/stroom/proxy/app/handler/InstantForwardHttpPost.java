@@ -57,7 +57,7 @@ public class InstantForwardHttpPost {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class InstantForwardHttpPostReceiverFactory implements ReceiverFactory {
@@ -85,7 +85,7 @@ public class InstantForwardHttpPost {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class InstantForwardHttpPostReceiver implements Receiver {

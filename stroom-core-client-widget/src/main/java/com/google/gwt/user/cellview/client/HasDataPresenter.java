@@ -892,11 +892,11 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
                 // Check the new selection state.
                 final T rowValue = newState.getRowDataValue(i - pageStart);
 
-                // ----------------------------------------------------------------------------------------
+                // ---------------------------------------------------------------------
                 // ADDED CODE HERE TO DEAL WITH THE FACT THAT TICKBOX SELECTION DOES NOT HAVE BINARY STATE
                 //
                 // START OF INSERTED CODE
-                // ----------------------------------------------------------------------------------------
+                // ---------------------------------------------------------------------
                 if (rowValue != null && selectionModel != null && selectionModel instanceof HasSelection) {
                     @SuppressWarnings("unchecked") final HasSelection<T> hasSelection =
                             (HasSelection<T>) selectionModel;
@@ -905,9 +905,9 @@ class HasDataPresenter<T> implements HasData<T>, HasKeyProvider<T>, HasKeyboardP
                         modifiedRows.push(i);
                     }
                 } else {
-                    // ------------------------------------------------------------------------------------
+                    // ---------------------------------------------------------------------
                     // END OF INSERTED CODE
-                    // ------------------------------------------------------------------------------------
+                    // ---------------------------------------------------------------------
                     final boolean isSelected = (rowValue != null && selectionModel != null
                             && selectionModel.isSelected(rowValue));
 

@@ -145,7 +145,7 @@ public class TaskManagerPresenter
         return false;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface TaskManagerView extends View, HasUiHandlers<TaskManagerUiHandlers> {

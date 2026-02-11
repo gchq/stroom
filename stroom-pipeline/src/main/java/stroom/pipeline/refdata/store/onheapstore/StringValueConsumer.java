@@ -51,7 +51,7 @@ public class StringValueConsumer implements RefDataValueConsumer {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Factory implements RefDataValueConsumer.Factory {

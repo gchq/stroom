@@ -55,10 +55,11 @@ public class StoredQueryServiceImpl implements StoredQueryService {
                                     "different to the logged in user.", ownerFromReq));
         }
 
-        AuditUtil.stamp(securityContext, storedQuery);
-        storedQuery.setOwner(securityContext.getUserRef());
-        storedQuery.setUuid(UUID.randomUUID().toString());
-        return securityContext.secureResult(() -> dao.create(storedQuery));
+        final StoredQuery.Builder builder = storedQuery.copy();
+        AuditUtil.stamp(securityContext, storedQuery, builder);
+        builder.owner(securityContext.getUserRef());
+        builder.uuid(UUID.randomUUID().toString());
+        return securityContext.secureResult(() -> dao.create(builder.build()));
     }
 
     @Override
@@ -80,11 +81,12 @@ public class StoredQueryServiceImpl implements StoredQueryService {
             if (securityContext.isAdmin()
                 || securityContext.isCurrentUser(existingOwner)) {
 
-                AuditUtil.stamp(securityContext, storedQuery);
+                final StoredQuery.Builder builder = storedQuery.copy();
+                AuditUtil.stamp(securityContext, storedQuery, builder);
                 if (storedQuery.getOwner() == null) {
-                    storedQuery.setOwner(securityContext.getUserRef());
+                    builder.owner(securityContext.getUserRef());
                 }
-                return dao.update(storedQuery);
+                return dao.update(builder.build());
             } else {
                 throw new PermissionException(securityContext.getUserRef(),
                         "You must be the owner of a stored query to update it, or be administrator.");

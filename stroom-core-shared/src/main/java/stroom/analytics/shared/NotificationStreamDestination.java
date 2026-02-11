@@ -88,7 +88,7 @@ public final class NotificationStreamDestination extends NotificationDestination
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Builder {

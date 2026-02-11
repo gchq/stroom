@@ -100,7 +100,7 @@ public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGrou
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, UserAndGroupsViewImpl> {

@@ -266,7 +266,7 @@ public class ReferenceDataResult implements ErrorReceiver {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class LazyMessage {

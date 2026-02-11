@@ -394,7 +394,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public enum Mode {

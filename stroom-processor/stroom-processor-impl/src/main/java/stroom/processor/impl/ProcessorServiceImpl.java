@@ -59,11 +59,6 @@ public class ProcessorServiceImpl implements ProcessorService {
                             final DocRef pipelineRef,
                             final boolean enabled) {
 
-        final Processor processor = new Processor();
-        processor.setProcessorType(processorType);
-        processor.setPipeline(pipelineRef);
-        processor.setEnabled(enabled);
-
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(
                 pipelineRef,
@@ -72,22 +67,13 @@ public class ProcessorServiceImpl implements ProcessorService {
                     "You do not have permission to create this processor");
         }
 
+        final Processor processor = Processor
+                .builder()
+                .processorType(processorType)
+                .pipeline(pipelineRef)
+                .enabled(enabled)
+                .build();
         return create(processor);
-
-//        Processor processor = null;
-//
-//        final List<Processor> list = find(new FindProcessorCriteria(pipelineRef));
-//        if (list.size() > 0) {
-//            processor = list.get(0);
-//        }
-//
-//        if (processor == null) {
-//            final Processor processor = new Processor();
-//            processor.setEnabled(enabled);
-//            processor.setPipelineUuid(pipelineRef.getUuid());
-//            return create(processor);
-//        }
-//        return processor;
     }
 
     @Override
@@ -95,12 +81,6 @@ public class ProcessorServiceImpl implements ProcessorService {
                             final DocRef processorDocRef,
                             final DocRef pipelineDocRef,
                             final boolean enabled) {
-        final Processor processor = new Processor();
-        processor.setProcessorType(processorType);
-        processor.setPipeline(pipelineDocRef);
-        processor.setEnabled(enabled);
-        processor.setUuid(processorDocRef.getUuid());
-
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(
                 pipelineDocRef,
@@ -108,20 +88,27 @@ public class ProcessorServiceImpl implements ProcessorService {
             throw new PermissionException(securityContext.getUserRef(),
                     "You do not have permission to create this processor");
         }
+
+        final Processor processor = Processor
+                .builder()
+                .processorType(processorType)
+                .pipeline(pipelineDocRef)
+                .enabled(enabled)
+                .uuid(processorDocRef.getUuid())
+                .build();
         return create(processor);
     }
 
 
     @Override
     public Processor create(final Processor processor) {
+        final Processor.Builder builder = processor.copy();
         if (processor.getUuid() == null) {
-            processor.setUuid(UUID.randomUUID().toString());
+            builder.uuid(UUID.randomUUID().toString());
         }
-
-        AuditUtil.stamp(securityContext, processor);
-
+        AuditUtil.stamp(securityContext, processor, builder);
         return securityContext.secureResult(PERMISSION, () ->
-                processorDao.create(processor));
+                processorDao.create(builder.build()));
     }
 
     @Override
@@ -138,13 +125,13 @@ public class ProcessorServiceImpl implements ProcessorService {
 
     @Override
     public Processor update(final Processor processor) {
+        final Processor.Builder builder = processor.copy();
         if (processor.getUuid() == null) {
-            processor.setUuid(UUID.randomUUID().toString());
+            builder.uuid(UUID.randomUUID().toString());
         }
-
-        AuditUtil.stamp(securityContext, processor);
+        AuditUtil.stamp(securityContext, processor, builder);
         return securityContext.secureResult(PERMISSION, () ->
-                processorDao.update(processor));
+                processorDao.update(builder.build()));
     }
 
     @Override
@@ -172,7 +159,7 @@ public class ProcessorServiceImpl implements ProcessorService {
                                 return delete(processor.getId());
                             } catch (final Exception e) {
                                 throw new RuntimeException("Error deleting filters and processor for pipelineUuid "
-                                        + pipelineUuid, e);
+                                                           + pipelineUuid, e);
                             }
                         })
                         .orElseGet(() -> {
@@ -189,10 +176,7 @@ public class ProcessorServiceImpl implements ProcessorService {
 
     @Override
     public void setEnabled(final Integer id, final Boolean enabled) {
-        fetch(id).ifPresent(processor -> {
-            processor.setEnabled(enabled);
-            update(processor);
-        });
+        fetch(id).ifPresent(processor -> update(processor.copy().enabled(enabled).build()));
     }
 
 }

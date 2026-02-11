@@ -73,9 +73,11 @@ class TestJobDaoImpl {
     @Test
     void descriptionTooLong() {
         // Given
-        final Job job = new Job();
-        job.setEnabled(true);
-        job.setName(RandomStringUtils.randomAlphabetic(256));
+        final Job job = Job
+                .builder()
+                .enabled(true)
+                .name(RandomStringUtils.randomAlphabetic(256))
+                .build();
 
         // When/then
         Assertions.assertThatThrownBy(() -> dao.create(job))
@@ -93,10 +95,9 @@ class TestJobDaoImpl {
     @Test
     void update() {
         // Given
-        final Job job = createStandardJob();
+        Job job = createStandardJob();
         final int version = job.getVersion();
-        job.setName("Different name");
-        job.setEnabled(false);
+        job = job.copy().name("Different name").enabled(false).build();
 
         // When
         final Job updatedJob = dao.update(job);
@@ -141,13 +142,10 @@ class TestJobDaoImpl {
     void checkOcc() {
         // Given
         final Job job = createStandardJob();
-        final Job copy1 = dao.fetch(job.getId()).get();
-        final Job copy2 = dao.fetch(job.getId()).get();
+        final Job copy1 = dao.fetch(job.getId()).get().copy().name("change 1").build();
+        final Job copy2 = dao.fetch(job.getId()).get().copy().name("change 2").build();
 
-        copy1.setName("change 1");
         dao.update(copy1);
-
-        copy2.setName("change 2");
 
         // When/then
         Assertions.assertThatThrownBy(() -> dao.update(copy2))
@@ -155,12 +153,10 @@ class TestJobDaoImpl {
     }
 
     private Job createStandardJob() {
-        final Job job = new Job();
-        AuditUtil.stamp(() -> "test", job);
-        job.setEnabled(true);
-        job.setName("Some name");
-        final Job createdJob = dao.create(job);
-        return createdJob;
+        final Job.Builder builder = Job.builder();
+        AuditUtil.stampNew(() -> "test", builder);
+        builder.enabled(true).name("Some name");
+        return dao.create(builder.build());
     }
 
     private void cleanup() {

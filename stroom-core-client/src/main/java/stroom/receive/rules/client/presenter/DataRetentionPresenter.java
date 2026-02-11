@@ -237,7 +237,7 @@ public class DataRetentionPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface DataRetentionView extends LinkTabsLayoutView {

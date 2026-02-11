@@ -214,7 +214,7 @@ public class StroomReceiptPolicyConfig extends AbstractConfig implements IsStroo
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static final class Builder {

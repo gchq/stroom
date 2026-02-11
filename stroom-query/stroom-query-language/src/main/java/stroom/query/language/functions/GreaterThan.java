@@ -52,7 +52,7 @@ class GreaterThan extends AbstractEqualityFunction {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class GreaterThanEvaluator extends Evaluator {

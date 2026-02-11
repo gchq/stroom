@@ -62,7 +62,7 @@ public class DefaultConfiguration<T_TREE_NODE> implements Configuration<T_TREE_N
     private final double gapBetweenNodes;
     private final Location location;
 
-    // -----------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // gapBetweenLevels
     private final AlignmentInLevel alignmentInLevel;
 
@@ -89,7 +89,7 @@ public class DefaultConfiguration<T_TREE_NODE> implements Configuration<T_TREE_N
         this.alignmentInLevel = alignmentInLevel;
     }
 
-    // -----------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // gapBetweenNodes
 
     /**
@@ -121,7 +121,7 @@ public class DefaultConfiguration<T_TREE_NODE> implements Configuration<T_TREE_N
         this(gapBetweenLevels, gapBetweenNodes, Location.Top, AlignmentInLevel.Center);
     }
 
-    // -----------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // location
 
     @Override
@@ -134,7 +134,7 @@ public class DefaultConfiguration<T_TREE_NODE> implements Configuration<T_TREE_N
         return gapBetweenNodes;
     }
 
-    // -----------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // alignmentInLevel
 
     @Override

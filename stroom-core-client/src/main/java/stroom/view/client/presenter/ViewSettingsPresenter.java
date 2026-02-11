@@ -118,7 +118,7 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface ViewSettingsView extends View {

@@ -88,7 +88,7 @@ public class SourceTabPresenter extends ContentTabPresenter<SourceTabView> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface SourceTabView extends View {

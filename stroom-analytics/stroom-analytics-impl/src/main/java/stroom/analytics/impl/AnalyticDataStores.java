@@ -510,7 +510,7 @@ public class AnalyticDataStores implements HasResultStoreInfo {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public record AnalyticDataStore(SearchRequest searchRequest, LmdbDataStore lmdbDataStore) {

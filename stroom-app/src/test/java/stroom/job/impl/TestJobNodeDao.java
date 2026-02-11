@@ -46,10 +46,11 @@ class TestJobNodeDao extends AbstractCoreIntegrationTest {
 
     @Test
     void test() {
-        Job job = new Job();
-        job.setName("Test Job" + System.currentTimeMillis());
-        job.setEnabled(true);
-        AuditUtil.stamp(() -> "test", job);
+        Job job = AuditUtil.stampNew(() -> "test", Job
+                        .builder()
+                        .name("Test Job" + System.currentTimeMillis())
+                        .enabled(true))
+                .build();
         job = jobDao.create(job);
 
         // Test update
@@ -64,18 +65,18 @@ class TestJobNodeDao extends AbstractCoreIntegrationTest {
         }).isInstanceOf(DataChangedException.class);
 
         // Test that job service can continually update jobs.
-        job.setEnabled(false);
+        job = job.copy().enabled(false).build();
         jobService.update(job);
-        job.setEnabled(true);
+        job = job.copy().enabled(true).build();
         jobService.update(job);
 
-        JobNode jobNode = new JobNode();
-        jobNode.setJob(job);
-        jobNode.setNodeName(nodeInfo.getThisNodeName());
-
-        AuditUtil.stamp(() -> "test", jobNode);
+        JobNode jobNode = AuditUtil.stampNew(() -> "test", JobNode
+                        .builder()
+                        .job(job)
+                        .nodeName(nodeInfo.getThisNodeName()))
+                .build();
         jobNode = jobNodeDao.create(jobNode);
-        jobNode.setEnabled(true);
+        jobNode = jobNode.copy().enabled(true).build();
 
         // Test update
         jobNode = jobNodeDao.update(jobNode);
@@ -89,9 +90,7 @@ class TestJobNodeDao extends AbstractCoreIntegrationTest {
         }).isInstanceOf(DataChangedException.class);
 
         // Test that job node service can continually update jobs.
-        jobNode.setEnabled(false);
-        jobNodeService.update(jobNode);
-        jobNode.setEnabled(true);
-        jobNodeService.update(jobNode);
+        jobNodeService.update(jobNode.copy().enabled(false).build());
+        jobNodeService.update(jobNode.copy().enabled(true).build());
     }
 }

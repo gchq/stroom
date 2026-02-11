@@ -69,7 +69,7 @@ public class OpenAppPermissionsScreenEvent extends GwtEvent<OpenAppPermissionsSc
                '}';
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface OpenAppPermissionsScreenHandler extends EventHandler {

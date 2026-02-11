@@ -66,7 +66,7 @@ public class JobSystemModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class FetchNewTasks extends RunnableWrapper {
@@ -78,7 +78,7 @@ public class JobSystemModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class JobBootstrapStartup extends RunnableWrapper {
@@ -90,7 +90,7 @@ public class JobSystemModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class DistributedTaskFetcherShutdown extends RunnableWrapper {
@@ -102,7 +102,7 @@ public class JobSystemModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ScheduledTaskExecutorStartup extends RunnableWrapper {
@@ -114,7 +114,7 @@ public class JobSystemModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ScheduledTaskExecutorShutdown extends RunnableWrapper {

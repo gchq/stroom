@@ -106,7 +106,7 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface EntityCheckTreeView extends View {

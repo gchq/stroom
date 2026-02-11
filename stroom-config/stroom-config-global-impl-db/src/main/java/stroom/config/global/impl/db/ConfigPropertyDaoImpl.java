@@ -18,6 +18,7 @@ package stroom.config.global.impl.db;
 
 import stroom.config.global.impl.ConfigPropertyDao;
 import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.OverrideValue;
 import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
@@ -50,20 +51,24 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
     private static final int TRACKER_ID = 1;
 
     private static final Function<Record, ConfigProperty> RECORD_TO_CONFIG_PROPERTY_MAPPER = record -> {
-        final ConfigProperty configProperty = new ConfigProperty(PropertyPath.fromPathString(record.get(CONFIG.NAME)));
-        configProperty.setId(record.get(CONFIG.ID));
-        configProperty.setVersion(record.get(CONFIG.VERSION));
-        configProperty.setCreateTimeMs(record.get(CONFIG.CREATE_TIME_MS));
-        configProperty.setCreateUser(record.get(CONFIG.CREATE_USER));
-        configProperty.setUpdateTimeMs(record.get(CONFIG.UPDATE_TIME_MS));
-        configProperty.setUpdateUser(record.get(CONFIG.UPDATE_USER));
         String value = record.get(CONFIG.VAL);
         // value col is not-null
         if (value.isEmpty()) {
             value = null;
         }
-        configProperty.setDatabaseOverrideValue(value);
-        return configProperty;
+
+        return ConfigProperty
+                .builder()
+                .name(PropertyPath.fromPathString(record.get(CONFIG.NAME)))
+                .databaseOverrideValue(value)
+                .yamlOverrideValue(OverrideValue.unSet(String.class))
+                .id(record.get(CONFIG.ID))
+                .version(record.get(CONFIG.VERSION))
+                .createTimeMs(record.get(CONFIG.CREATE_TIME_MS))
+                .createUser(record.get(CONFIG.CREATE_USER))
+                .updateTimeMs(record.get(CONFIG.UPDATE_TIME_MS))
+                .updateUser(record.get(CONFIG.UPDATE_USER))
+                .build();
     };
 
     private static final BiFunction<ConfigProperty, ConfigRecord, ConfigRecord> CONFIG_PROPERTY_TO_RECORD_MAPPER =

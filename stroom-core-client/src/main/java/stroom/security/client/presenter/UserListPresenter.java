@@ -498,7 +498,7 @@ public class UserListPresenter
         this.validUserScreensForActionMenu = validUserScreensForActionMenu;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public enum Mode {

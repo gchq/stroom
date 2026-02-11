@@ -310,7 +310,7 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class Layer {

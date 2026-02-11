@@ -35,7 +35,7 @@ public interface HasCaseInsensitiveForm<T extends Enum<T>> {
     T fromString(final String str);
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     class CaseInsensitiveConverter<T extends Enum<T>> {

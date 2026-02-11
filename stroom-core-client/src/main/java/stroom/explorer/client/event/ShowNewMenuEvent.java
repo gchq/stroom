@@ -67,7 +67,7 @@ public class ShowNewMenuEvent extends GwtEvent<ShowNewMenuEvent.Handler> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

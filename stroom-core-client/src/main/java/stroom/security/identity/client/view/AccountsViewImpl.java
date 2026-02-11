@@ -68,7 +68,7 @@ public class AccountsViewImpl
 //    }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, AccountsViewImpl> {

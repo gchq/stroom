@@ -54,7 +54,7 @@ class LessThanOrEqualTo extends AbstractEqualityFunction {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class LessThanOrEqualToEvaluator extends Evaluator {

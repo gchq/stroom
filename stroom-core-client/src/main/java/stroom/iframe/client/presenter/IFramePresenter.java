@@ -75,7 +75,7 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface IFrameView extends View, HasUiHandlers<IFrameLoadUiHandlers> {
@@ -95,7 +95,7 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
         void cleanup();
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     /**
      * The possible values for the sandbox iframe attribute. Multiple options may be used.

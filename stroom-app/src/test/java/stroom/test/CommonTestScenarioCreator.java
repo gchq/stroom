@@ -84,9 +84,10 @@ public class CommonTestScenarioCreator {
     }
 
     public void createProcessor(final QueryData queryData) {
-        Processor processor = new Processor();
-        processor.setPipelineUuid(UUID.randomUUID().toString());
-        processor.setEnabled(true);
+        Processor processor = Processor.builder()
+                .pipelineUuid(UUID.randomUUID().toString())
+                .enabled(true)
+                .build();
         processor = streamProcessorService.create(processor);
         processorFilterService.create(processor,
                 CreateProcessFilterRequest
@@ -156,12 +157,12 @@ public class CommonTestScenarioCreator {
                 .build();
 
         final String data = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                + "<Events xpath-default-namespace=\"records:2\" "
-                + "xmlns:stroom=\"stroom\" "
-                + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
-                + "xmlns=\"event-logging:3\" "
-                + "xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\" "
-                + "Version=\"3.0.0\"/>";
+                            + "<Events xpath-default-namespace=\"records:2\" "
+                            + "xmlns:stroom=\"stroom\" "
+                            + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
+                            + "xmlns=\"event-logging:3\" "
+                            + "xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\" "
+                            + "Version=\"3.0.0\"/>";
 
         try (final Target target = streamStore.openTarget(metaProperties)) {
             TargetUtil.write(target, data);

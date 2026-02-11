@@ -58,7 +58,7 @@ public class SaveDocumentEvent extends GwtEvent<SaveDocumentEvent.Handler> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

@@ -160,7 +160,7 @@ public class AuthorisationConfig extends AbstractConfig implements IsStroomConfi
     }
 
 
-// --------------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 
 
     @BootStrapConfig

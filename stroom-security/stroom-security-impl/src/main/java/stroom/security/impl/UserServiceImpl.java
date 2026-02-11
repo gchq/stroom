@@ -99,15 +99,18 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     public User getOrCreateUser(final UserDesc userDesc, final Consumer<User> onCreateAction) {
         final Optional<User> optional = userDao.getUserBySubjectId(userDesc.getSubjectId());
         return optional.orElseGet(() -> {
-            final User user = new User();
-            AuditUtil.stamp(securityContext, user);
+            final User.Builder builder = User.builder();
+            AuditUtil.stampNew(securityContext, builder);
             final String subjectId = userDesc.getSubjectId();
-            user.setSubjectId(subjectId);
+
             // Make sure we set a display name even if it is the same as the subject id.
-            user.setDisplayName(NullSafe.nonBlankStringElse(userDesc.getDisplayName(), subjectId));
-            user.setFullName(userDesc.getFullName());
-            user.setGroup(false);
-            user.setEnabled(true);
+            final User user = builder
+                    .subjectId(subjectId)
+                    .displayName(NullSafe.nonBlankStringElse(userDesc.getDisplayName(), subjectId))
+                    .fullName(userDesc.getFullName())
+                    .group(false)
+                    .enabled(true)
+                    .build();
 
             return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () ->
                     userDao.tryCreate(user, persistedUser -> {
@@ -123,12 +126,14 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     public User getOrCreateUserGroup(final String name, final Consumer<User> onCreateAction) {
         final Optional<User> optional = userDao.getGroupByName(name);
         return optional.orElseGet(() -> {
-            final User user = new User();
-            AuditUtil.stamp(securityContext, user);
-            user.setSubjectId(name);
-            user.setDisplayName(name);
-            user.setGroup(true);
-            user.setEnabled(true);
+            final User.Builder builder = User.builder();
+            AuditUtil.stampNew(securityContext, builder);
+            final User user = builder
+                    .subjectId(name)
+                    .displayName(name)
+                    .group(true)
+                    .enabled(true)
+                    .build();
 
             return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () ->
                     userDao.tryCreate(user, persistedUser -> {
@@ -165,9 +170,8 @@ class UserServiceImpl implements UserService, ContentPackUserService {
 
     @Override
     public User update(final User user) {
-        AuditUtil.stamp(securityContext, user);
         return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () -> {
-            final User updatedUser = userDao.update(user);
+            final User updatedUser = userDao.update(AuditUtil.stamp(securityContext, user, user.copy()).build());
 
             // If the updated user is a group then we need to let all children know there has been a change as we cache
             // parent groups for children.
@@ -186,14 +190,11 @@ class UserServiceImpl implements UserService, ContentPackUserService {
     @Override
     public User copyGroupsAndPermissions(final String fromUserUuid, final String toUserUuid) {
         final User toUser = userDao.getByUuid(toUserUuid).orElseThrow();
-        AuditUtil.stamp(securityContext, toUser);
-
         return securityContext.secureResult(AppPermission.MANAGE_USERS_PERMISSION, () -> {
+            final User user = AuditUtil.stamp(securityContext, toUser, toUser.copy()).build();
             userDao.copyGroupsAndPermissions(fromUserUuid, toUserUuid);
-
-            fireUserChangeEvent(toUser.asRef());
-
-            return toUser;
+            fireUserChangeEvent(user.asRef());
+            return user;
         });
     }
 

@@ -189,7 +189,7 @@ public final class ExpressionOperator extends ExpressionItem {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public enum Op implements HasDisplayValue {

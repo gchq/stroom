@@ -186,7 +186,7 @@ public class RefDataStoreTestModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public record MetaFeedAssociation(

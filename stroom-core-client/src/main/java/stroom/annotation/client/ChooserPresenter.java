@@ -167,7 +167,7 @@ public class ChooserPresenter<T>
         onFilterChange(null);
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface DataSupplier<T> {
@@ -176,7 +176,7 @@ public class ChooserPresenter<T>
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface ChooserView extends View, HasUiHandlers<ChooserUiHandlers> {

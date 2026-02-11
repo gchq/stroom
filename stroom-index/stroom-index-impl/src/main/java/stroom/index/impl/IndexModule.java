@@ -128,7 +128,7 @@ public class IndexModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class IndexShardDelete extends RunnableWrapper {
@@ -140,7 +140,7 @@ public class IndexModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class IndexShardRetention extends RunnableWrapper {
@@ -152,7 +152,7 @@ public class IndexModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class IndexWriterCacheSweep extends RunnableWrapper {
@@ -164,7 +164,7 @@ public class IndexModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class IndexWriterFlush extends RunnableWrapper {
@@ -176,7 +176,7 @@ public class IndexModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class VolumeStatus extends RunnableWrapper {
@@ -188,7 +188,7 @@ public class IndexModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class IndexShardWriterCacheStartup extends RunnableWrapper {
@@ -200,7 +200,7 @@ public class IndexModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class IndexShardWriterCacheShutdown extends RunnableWrapper {

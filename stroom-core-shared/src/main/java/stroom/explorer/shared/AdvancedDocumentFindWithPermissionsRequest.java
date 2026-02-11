@@ -81,7 +81,7 @@ public class AdvancedDocumentFindWithPermissionsRequest extends AdvancedDocument
         return Objects.hash(super.hashCode(), userRef, showLevel);
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Builder extends ExpressionCriteriaBuilder<AdvancedDocumentFindWithPermissionsRequest, Builder> {

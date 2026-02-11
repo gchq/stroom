@@ -532,7 +532,7 @@ class TestByteBufferPool {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static final class NonPooledByteBufferPool implements ByteBufferPool {
@@ -594,7 +594,7 @@ class TestByteBufferPool {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static final class JettyByteBufferPool implements ByteBufferPool {

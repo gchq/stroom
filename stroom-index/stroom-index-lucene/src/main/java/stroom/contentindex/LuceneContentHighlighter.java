@@ -121,7 +121,7 @@ public class LuceneContentHighlighter implements ContentHighlighter {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
 
     private static class ListFullException extends RuntimeException {

@@ -88,7 +88,7 @@ public class ChangeAssignedToViewImpl
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, ChangeAssignedToViewImpl> {

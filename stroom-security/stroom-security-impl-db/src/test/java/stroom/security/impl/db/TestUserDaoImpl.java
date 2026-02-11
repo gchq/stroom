@@ -130,9 +130,9 @@ class TestUserDaoImpl {
         final String userName = String.format("SomeTestPerson_%s", UUID.randomUUID());
 
         // When
-        final User userCreated = createUser(userName, false);
+        User userCreated = createUser(userName, false);
         final Optional<User> userFoundBeforeDelete = userDao.getByUuid(userCreated.getUuid());
-        userCreated.setEnabled(false);
+        userCreated = userCreated.copy().enabled(false).build();
         userDao.update(userCreated);
         final Optional<User> userFoundAfterDelete = userDao.getByUuid(userCreated.getUuid());
 
@@ -596,12 +596,12 @@ class TestUserDaoImpl {
     }
 
     private User createUser(final String name, final boolean group) {
-        final User userOrGroup = User.builder()
+        final User.Builder builder = User.builder()
                 .subjectId(name)
                 .uuid(UUID.randomUUID().toString())
-                .group(group)
-                .build();
-        AuditUtil.stamp(() -> "test", userOrGroup);
+                .group(group);
+        AuditUtil.stampNew(() -> "test", builder);
+        final User userOrGroup = builder.build();
         userDao.create(userOrGroup);
 
         if (group) {

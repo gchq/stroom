@@ -168,9 +168,9 @@ public class ExplorerNode extends TableImpl<ExplorerNodeRecord> {
         return new ExplorerNode(name, null);
     }
 
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
     // Row5 type methods
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
     @Override
     public Row5<Integer, String, String, String, String> fieldsRow() {

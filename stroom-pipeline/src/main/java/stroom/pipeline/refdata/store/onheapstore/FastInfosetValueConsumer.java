@@ -58,7 +58,7 @@ public class FastInfosetValueConsumer implements RefDataValueConsumer {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Factory implements RefDataValueConsumer.Factory {

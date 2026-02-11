@@ -104,7 +104,7 @@ public final class NotificationEmailDestination extends NotificationDestination 
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Builder {

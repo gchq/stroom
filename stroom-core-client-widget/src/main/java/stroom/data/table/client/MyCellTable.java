@@ -60,7 +60,7 @@ public class MyCellTable<T> extends CellTable<T> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @ImportedWithPrefix("gwt-CellTable")
@@ -70,7 +70,7 @@ public class MyCellTable<T> extends CellTable<T> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface DefaultResources extends Resources {

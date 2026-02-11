@@ -81,7 +81,7 @@ class TestPrimitiveValueConverter {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private enum Small implements HasPrimitiveValue {
@@ -105,7 +105,7 @@ class TestPrimitiveValueConverter {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private enum Large implements HasPrimitiveValue {
@@ -129,7 +129,7 @@ class TestPrimitiveValueConverter {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private enum BelowZero implements HasPrimitiveValue {

@@ -105,7 +105,7 @@ public interface RefDataLoader extends AutoCloseable {
     void setRangePutOutcomeHandler(final RangePutOutcomeHandler keyPutOutcomeHandler);
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     interface KeyPutOutcomeHandler {
@@ -116,7 +116,7 @@ public interface RefDataLoader extends AutoCloseable {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     interface RangePutOutcomeHandler {

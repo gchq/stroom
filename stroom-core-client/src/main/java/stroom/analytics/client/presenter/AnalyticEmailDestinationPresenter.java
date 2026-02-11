@@ -243,7 +243,7 @@ public class AnalyticEmailDestinationPresenter
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface AnalyticEmailDestinationView extends View, HasUiHandlers<DirtyUiHandlers> {
@@ -272,7 +272,7 @@ public class AnalyticEmailDestinationPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private enum ValidationMode {

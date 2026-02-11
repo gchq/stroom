@@ -57,7 +57,7 @@ public class SelectContentTabEvent extends GwtEvent<SelectContentTabEvent.Select
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface SelectContentTabHandler extends EventHandler {

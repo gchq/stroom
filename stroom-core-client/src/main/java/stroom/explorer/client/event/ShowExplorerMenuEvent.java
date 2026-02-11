@@ -68,7 +68,7 @@ public class ShowExplorerMenuEvent extends GwtEvent<ShowExplorerMenuEvent.Handle
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

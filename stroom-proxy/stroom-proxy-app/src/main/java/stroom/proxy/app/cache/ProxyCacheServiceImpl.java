@@ -136,7 +136,7 @@ public class ProxyCacheServiceImpl implements ProxyCacheService, HasAdminTasks {
 //                                entry.getValue().size()));
 //    }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class CacheClearTask extends Task {
@@ -164,7 +164,7 @@ public class ProxyCacheServiceImpl implements ProxyCacheService, HasAdminTasks {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ClearAllCachesTask extends Task {

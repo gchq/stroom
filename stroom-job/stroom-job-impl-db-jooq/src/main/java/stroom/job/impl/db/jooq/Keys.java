@@ -39,17 +39,17 @@ import org.jooq.impl.Internal;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Keys {
 
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
     // UNIQUE and PRIMARY KEY definitions
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
     public static final UniqueKey<JobRecord> KEY_JOB_NAME = Internal.createUniqueKey(Job.JOB, DSL.name("KEY_job_name"), new TableField[] { Job.JOB.NAME }, true);
     public static final UniqueKey<JobRecord> KEY_JOB_PRIMARY = Internal.createUniqueKey(Job.JOB, DSL.name("KEY_job_PRIMARY"), new TableField[] { Job.JOB.ID }, true);
     public static final UniqueKey<JobNodeRecord> KEY_JOB_NODE_PRIMARY = Internal.createUniqueKey(JobNode.JOB_NODE, DSL.name("KEY_job_node_PRIMARY"), new TableField[] { JobNode.JOB_NODE.ID }, true);
 
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
     // FOREIGN KEY definitions
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
     public static final ForeignKey<JobNodeRecord, JobRecord> JOB_ID = Internal.createForeignKey(JobNode.JOB_NODE, DSL.name("job_id"), new TableField[] { JobNode.JOB_NODE.JOB_ID }, Keys.KEY_JOB_PRIMARY, new TableField[] { Job.JOB.ID }, true);
 }

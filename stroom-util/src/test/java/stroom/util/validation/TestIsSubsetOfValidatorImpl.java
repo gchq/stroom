@@ -72,7 +72,7 @@ class TestIsSubsetOfValidatorImpl extends AbstractValidatorTest {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class PoJo {

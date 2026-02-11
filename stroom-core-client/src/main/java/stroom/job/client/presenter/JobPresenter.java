@@ -98,7 +98,7 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> impl
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface JobView extends View {

@@ -16,7 +16,8 @@
 
 package stroom.activity.shared;
 
-import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.AbstractHasAuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.UserRef;
 
@@ -30,7 +31,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @JsonInclude(Include.NON_NULL)
-public class Activity implements HasAuditInfo, HasIntegerId {
+public class Activity implements HasAuditInfoGetters, HasIntegerId {
 
     public static final String ENTITY_TYPE = "Activity";
 
@@ -39,34 +40,17 @@ public class Activity implements HasAuditInfo, HasIntegerId {
     @JsonProperty
     private final Integer version;
     @JsonProperty
-    private Long createTimeMs;
+    private final Long createTimeMs;
     @JsonProperty
-    private String createUser;
+    private final String createUser;
     @JsonProperty
-    private Long updateTimeMs;
+    private final Long updateTimeMs;
     @JsonProperty
-    private String updateUser;
+    private final String updateUser;
     @JsonProperty
-    private UserRef userRef;
+    private final UserRef userRef;
     @JsonProperty
-    private ActivityDetails details;
-
-    public Activity(final Integer id,
-                    final Integer version,
-                    final Long createTimeMs,
-                    final String createUser,
-                    final Long updateTimeMs,
-                    final String updateUser,
-                    final UserRef userRef) {
-        this.id = id;
-        this.version = version;
-        this.createTimeMs = createTimeMs;
-        this.createUser = createUser;
-        this.updateTimeMs = updateTimeMs;
-        this.updateUser = updateUser;
-        this.userRef = userRef;
-        this.details = new ActivityDetails(new ArrayList<>());
-    }
+    private final ActivityDetails details;
 
     @JsonCreator
     public Activity(@JsonProperty("id") final Integer id,
@@ -113,17 +97,9 @@ public class Activity implements HasAuditInfo, HasIntegerId {
         return createTimeMs;
     }
 
-    public void setCreateTimeMs(final Long createTimeMs) {
-        this.createTimeMs = createTimeMs;
-    }
-
     @Override
     public String getCreateUser() {
         return createUser;
-    }
-
-    public void setCreateUser(final String createUser) {
-        this.createUser = createUser;
     }
 
     @Override
@@ -131,33 +107,17 @@ public class Activity implements HasAuditInfo, HasIntegerId {
         return updateTimeMs;
     }
 
-    public void setUpdateTimeMs(final Long updateTimeMs) {
-        this.updateTimeMs = updateTimeMs;
-    }
-
     @Override
     public String getUpdateUser() {
         return updateUser;
-    }
-
-    public void setUpdateUser(final String updateUser) {
-        this.updateUser = updateUser;
     }
 
     public UserRef getUserRef() {
         return userRef;
     }
 
-    public void setUserRef(final UserRef userRef) {
-        this.userRef = userRef;
-    }
-
     public ActivityDetails getDetails() {
         return details;
-    }
-
-    public void setDetails(final ActivityDetails details) {
-        this.details = details;
     }
 
     @Override
@@ -178,17 +138,13 @@ public class Activity implements HasAuditInfo, HasIntegerId {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
-    public static class Builder {
+    public static class Builder extends AbstractHasAuditInfoBuilder<Activity, Activity.Builder> {
 
         private Integer id;
         private Integer version;
-        private Long createTimeMs;
-        private String createUser;
-        private Long updateTimeMs;
-        private String updateUser;
         private UserRef userRef;
         private ActivityDetails details;
 
@@ -196,53 +152,35 @@ public class Activity implements HasAuditInfo, HasIntegerId {
         }
 
         private Builder(final Activity activity) {
+            super(activity);
             this.id = activity.id;
             this.version = activity.version;
-            this.createTimeMs = activity.createTimeMs;
-            this.createUser = activity.createUser;
-            this.updateTimeMs = activity.updateTimeMs;
-            this.updateUser = activity.updateUser;
             this.userRef = activity.userRef;
             this.details = activity.details;
         }
 
         public Builder id(final Integer id) {
             this.id = id;
-            return this;
+            return self();
         }
 
         public Builder version(final Integer version) {
             this.version = version;
-            return this;
-        }
-
-        public Builder createTimeMs(final Long createTimeMs) {
-            this.createTimeMs = createTimeMs;
-            return this;
-        }
-
-        public Builder createUser(final String createUser) {
-            this.createUser = createUser;
-            return this;
-        }
-
-        public Builder updateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
-            return this;
-        }
-
-        public Builder updateUser(final String updateUser) {
-            this.updateUser = updateUser;
-            return this;
+            return self();
         }
 
         public Builder userRef(final UserRef userRef) {
             this.userRef = userRef;
-            return this;
+            return self();
         }
 
         public Builder details(final ActivityDetails details) {
             this.details = details;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
             return this;
         }
 
@@ -260,7 +198,7 @@ public class Activity implements HasAuditInfo, HasIntegerId {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @JsonInclude(Include.NON_NULL)
@@ -309,7 +247,7 @@ public class Activity implements HasAuditInfo, HasIntegerId {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @JsonInclude(Include.NON_NULL)

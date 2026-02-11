@@ -175,7 +175,7 @@ public class StepControlPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface StepControlView extends View, HasUiHandlers<StepControlUIHandlers> {

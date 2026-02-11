@@ -108,7 +108,7 @@ public class ShowCreateDocumentDialogEvent extends GwtEvent<ShowCreateDocumentDi
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

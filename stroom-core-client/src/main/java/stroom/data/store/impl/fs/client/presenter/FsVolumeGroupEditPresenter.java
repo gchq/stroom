@@ -112,8 +112,7 @@ public class FsVolumeGroupEditPresenter
     }
 
     private void create() {
-        final FsVolume fsVolume = new FsVolume();
-        fsVolume.setVolumeGroupId(volumeGroup.getId());
+        final FsVolume fsVolume = FsVolume.builder().volumeGroupId(volumeGroup.getId()).build();
         editVolume(fsVolume, "Add Volume");
     }
 
@@ -203,10 +202,10 @@ public class FsVolumeGroupEditPresenter
                     .onShow(e -> getView().focus())
                     .onHideRequest(e -> {
                         if (e.isOk()) {
-                            volumeGroup.setName(getView().getName());
+                            final FsVolumeGroup updated = volumeGroup.copy().name(getView().getName()).build();
                             try {
-                                doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
-                                        createVolumeGroup(consumer, volumeGroup, e), e);
+                                doWithGroupNameValidation(getView().getName(), updated.getId(), () ->
+                                        createVolumeGroup(consumer, updated, e), e);
                             } catch (final RuntimeException ex) {
                                 AlertEvent.fireError(
                                         FsVolumeGroupEditPresenter.this,
@@ -243,8 +242,8 @@ public class FsVolumeGroupEditPresenter
                             AlertEvent.fireError(
                                     FsVolumeGroupEditPresenter.this,
                                     "Group name '"
-                                            + groupName
-                                            + "' is already in use by another group.",
+                                    + groupName
+                                    + "' is already in use by another group.",
                                     event::reset);
                         } else {
                             work.run();
@@ -272,7 +271,7 @@ public class FsVolumeGroupEditPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface FsVolumeGroupEditView extends View, Focus {

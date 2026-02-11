@@ -156,7 +156,7 @@ public class BasicTableFilterSettingsPresenter
         this.multiRulesPresenter = multiRulesPresenter;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface BasicTableFilterSettingsView

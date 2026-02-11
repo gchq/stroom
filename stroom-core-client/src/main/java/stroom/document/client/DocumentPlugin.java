@@ -627,7 +627,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     public abstract String getType();
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private class EntityCloseHandler implements CloseContentEvent.Handler {

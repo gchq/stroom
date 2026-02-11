@@ -166,7 +166,7 @@ public class CreateDocumentPresenter
         entityTreePresenter.setTaskMonitorFactory(taskMonitorFactory);
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface CreateDocumentView extends View, Focus, HasUiHandlers<DialogActionUiHandlers> {
@@ -183,7 +183,7 @@ public class CreateDocumentPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @ProxyCodeSplit

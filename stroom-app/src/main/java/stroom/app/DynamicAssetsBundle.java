@@ -76,7 +76,7 @@ public class DynamicAssetsBundle extends AssetsBundle {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class DynamicAssetsServlet extends AssetServlet {

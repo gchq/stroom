@@ -518,7 +518,7 @@ public class ProcessorPresenter
         this.editInterceptor = editInterceptor;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface ProcessorView extends View {

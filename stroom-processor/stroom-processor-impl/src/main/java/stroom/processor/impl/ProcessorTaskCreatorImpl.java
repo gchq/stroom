@@ -282,9 +282,11 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                         // If the tracker is complete we need to make sure the status is updated, so we can
                         // see that it is not delivering any more tasks.
                         if (tracker.getLastPollTaskCount() != null && tracker.getLastPollTaskCount() > 0) {
-                            tracker.setLastPollMs(System.currentTimeMillis());
-                            tracker.setLastPollTaskCount(0);
-                            updateTracker(tracker, null);
+                            updateTracker(tracker
+                                    .copy()
+                                    .lastPollMs(System.currentTimeMillis())
+                                    .lastPollTaskCount(0)
+                                    .build(), null);
                         }
 
                     } else {
@@ -384,9 +386,11 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                             }
 
                             final ProcessorFilterTracker loadedTracker = loadedFilter.getProcessorFilterTracker();
-                            loadedTracker.setStatus(ProcessorFilterTrackerStatus.ERROR);
-                            loadedTracker.setMessage(error);
-                            updateTracker(tracker, filterProgressMonitor);
+                            updateTracker(loadedTracker
+                                    .copy()
+                                    .status(ProcessorFilterTrackerStatus.ERROR)
+                                    .message(error)
+                                    .build(), filterProgressMonitor);
                         });
                     } catch (final RuntimeException e2) {
                         LOGGER.error(e.getMessage(), e);
@@ -503,8 +507,9 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                             final ProcessorFilterTracker tracker,
                                             final TaskContext taskContext,
                                             final LongAdder totalTasksCreated) {
+        ProcessorFilterTracker updatedTracker1 = tracker;
         final AtomicInteger totalTasks = new AtomicInteger();
-        final EventRef minEvent = new EventRef(tracker.getMinMetaId(), tracker.getMinEventId());
+        final EventRef minEvent = new EventRef(updatedTracker1.getMinMetaId(), updatedTracker1.getMinEventId());
         final EventRef maxEvent = new EventRef(Long.MAX_VALUE, 0L);
         long maxStreams = maxTasks;
         LOGGER.debug("Creating search query tasks maxStreams: {}, filer: {}", maxStreams, filter);
@@ -521,36 +526,36 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 final long start = filter.getCreateTimeMs();
                 final long end = start + limits.getDurationMs();
                 if (end < System.currentTimeMillis()) {
-                    tracker.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
-                    updateTracker(tracker, filterProgressMonitor);
+                    updatedTracker1 = updateStatus(updatedTracker1, ProcessorFilterTrackerStatus.COMPLETE);
+                    updateTracker(updatedTracker1, filterProgressMonitor);
                 }
             }
 
             if (limits.getStreamCount() != null) {
                 long streamLimit = limits.getStreamCount();
-                if (tracker.getMetaCount() != null) {
-                    streamLimit -= tracker.getMetaCount();
+                if (updatedTracker1.getMetaCount() != null) {
+                    streamLimit -= updatedTracker1.getMetaCount();
                 }
 
                 maxStreams = Math.min(streamLimit, maxStreams);
 
                 if (streamLimit <= 0) {
-                    tracker.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
-                    updateTracker(tracker, filterProgressMonitor);
+                    updatedTracker1 = updateStatus(updatedTracker1, ProcessorFilterTrackerStatus.COMPLETE);
+                    updateTracker(updatedTracker1, filterProgressMonitor);
                 }
             }
 
             if (limits.getEventCount() != null) {
                 long eventLimit = limits.getEventCount();
-                if (tracker.getEventCount() != null) {
-                    eventLimit -= tracker.getEventCount();
+                if (updatedTracker1.getEventCount() != null) {
+                    eventLimit -= updatedTracker1.getEventCount();
                 }
 
                 maxEvents = Math.min(eventLimit, maxEvents);
 
                 if (maxEvents <= 0) {
-                    tracker.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
-                    updateTracker(tracker, filterProgressMonitor);
+                    updateStatus(updatedTracker1, ProcessorFilterTrackerStatus.COMPLETE);
+                    updateTracker(updatedTracker1, filterProgressMonitor);
                 }
             }
         }
@@ -563,7 +568,9 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
 
         final Long maxMetaId = metaService.getMaxId();
 
+        final ProcessorFilterTracker finalTracker = updatedTracker1;
         final BiConsumer<EventRefs, Throwable> consumer = (eventRefs, throwable) -> {
+            ProcessorFilterTracker updatedTracker2 = finalTracker;
             LOGGER.debug(() -> LogUtil.message(
                     "createTasksFromEventRefs() called for {} eventRefs, filter {}", eventRefs.size(), filter));
             try {
@@ -575,13 +582,13 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                             throwable.getMessage();
                     LOGGER.error(message);
                     LOGGER.debug(message, throwable);
-                    tracker.setStatus(ProcessorFilterTrackerStatus.ERROR);
-                    updateTracker(tracker, filterProgressMonitor);
+                    updatedTracker2 = updateStatus(updatedTracker2, ProcessorFilterTrackerStatus.ERROR);
+                    updateTracker(updatedTracker2, filterProgressMonitor);
 
                 } else if (eventRefs == null) {
                     LOGGER.debug(() -> "eventRefs is null");
-                    tracker.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
-                    updateTracker(tracker, filterProgressMonitor);
+                    updatedTracker2 = updateStatus(updatedTracker2, ProcessorFilterTrackerStatus.COMPLETE);
+                    updateTracker(updatedTracker2, filterProgressMonitor);
 
                 } else {
                     final boolean reachedLimit = eventRefs.isReachedLimit();
@@ -595,7 +602,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
 
                     final int createdTasks = processorTaskDao.createNewTasks(
                             filter,
-                            tracker,
+                            updatedTracker2,
                             filterProgressMonitor,
                             streamQueryTime,
                             map,
@@ -634,6 +641,14 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
             filterProgressMonitor.complete();
         });
         future2.join();
+    }
+
+    private ProcessorFilterTracker updateStatus(final ProcessorFilterTracker tracker,
+                                                final ProcessorFilterTrackerStatus status) {
+        return tracker
+                .copy()
+                .status(status)
+                .build();
     }
 
     private void updateTracker(final ProcessorFilterTracker tracker,

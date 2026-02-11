@@ -32,9 +32,11 @@ import jakarta.inject.Singleton;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Singleton
 class JobService {
@@ -74,12 +76,13 @@ class JobService {
     Job update(final Job job) {
         return securityContext.secureResult(AppPermission.MANAGE_JOBS_PERMISSION, () -> {
             final Optional<Job> before = fetch(job.getId());
+            final Job.Builder builder = job.copy();
 
             // We always want to update a job instance even if we have a stale version.
-            before.ifPresent(j -> job.setVersion(j.getVersion()));
+            before.ifPresent(j -> builder.version(j.getVersion()));
 
-            AuditUtil.stamp(securityContext, job);
-            final Job after = jobDao.update(job);
+            AuditUtil.stamp(securityContext, job, builder);
+            final Job after = jobDao.update(builder.build());
             return decorate(after);
         });
     }
@@ -87,16 +90,20 @@ class JobService {
     ResultPage<Job> find(final FindJobCriteria findJobCriteria) {
         final ResultPage<Job> results = securityContext.secureResult(AppPermission.MANAGE_JOBS_PERMISSION,
                 () -> jobDao.find(findJobCriteria));
-        results.getValues().forEach(this::decorate);
+        final List<Job> values = results
+                .getValues()
+                .stream()
+                .map(this::decorate)
+                .collect(Collectors.toList());
 
         if (!findJobCriteria.getSortList().isEmpty()) {
-            final CriteriaFieldSort sort = findJobCriteria.getSortList().get(0);
+            final CriteriaFieldSort sort = findJobCriteria.getSortList().getFirst();
             if (sort.getId().equals(FindJobCriteria.FIELD_ADVANCED)) {
-                results.getValues().sort(Comparator.comparing(Job::isAdvanced).thenComparing(Job::getName));
+                values.sort(Comparator.comparing(Job::isAdvanced).thenComparing(Job::getName));
             }
         }
 
-        return results;
+        return new ResultPage<>(values, results.getPageResponse());
     }
 
     Optional<Job> fetch(final int id) {
@@ -104,9 +111,13 @@ class JobService {
     }
 
     Job decorate(final Job job) {
-        job.setDescription(jobDescriptionMap.get(job.getName()));
-        job.setAdvanced(jobAdvancedSet.contains(job.getName()));
-        return job;
+        return decorate(job.getName(), job.copy()).build();
+    }
+
+    Job.Builder decorate(final String jobName, final Job.Builder builder) {
+        builder.description(jobDescriptionMap.get(jobName));
+        builder.advanced(jobAdvancedSet.contains(jobName));
+        return builder;
     }
 
     int setJobsEnabledForNode(final String nodeName,

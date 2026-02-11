@@ -236,7 +236,7 @@ public class MenuPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface MenuView extends View, Focus, HasUiHandlers<MenuUiHandlers> {

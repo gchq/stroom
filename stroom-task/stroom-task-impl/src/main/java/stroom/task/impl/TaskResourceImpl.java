@@ -132,7 +132,7 @@ class TaskResourceImpl implements TaskResource {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     static class TerminateDecorator implements EventActionDecorator<ProcessEventAction> {

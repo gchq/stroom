@@ -86,7 +86,7 @@ public class ContentTemplateTabViewImpl extends ViewImpl implements ContentTempl
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, ContentTemplateTabViewImpl> {

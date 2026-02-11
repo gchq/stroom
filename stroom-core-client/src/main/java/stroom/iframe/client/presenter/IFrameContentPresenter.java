@@ -84,7 +84,7 @@ public class IFrameContentPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface IFrameContentView extends View, HasUiHandlers<IFrameLoadUiHandlers> {

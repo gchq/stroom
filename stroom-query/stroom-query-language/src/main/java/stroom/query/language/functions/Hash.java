@@ -203,7 +203,7 @@ class Hash extends AbstractManyChildFunction {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     /**
@@ -243,7 +243,7 @@ class Hash extends AbstractManyChildFunction {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static final class ManyChildGenerator extends AbstractManyChildGenerator {

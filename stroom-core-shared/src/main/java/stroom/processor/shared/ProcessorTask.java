@@ -32,35 +32,31 @@ public class ProcessorTask {
 
     // standard id and OCC fields
     @JsonProperty
-    private long id;
+    private final long id;
     @JsonProperty
-    private Integer version;
+    private final Integer version;
     @JsonProperty
-    private Long metaId;
+    private final Long metaId;
     @JsonProperty
-    private String data;
+    private final String data;
     @JsonProperty
-    private String nodeName;
+    private final String nodeName;
     @JsonProperty
-    private String feedName;
+    private final String feedName;
     @JsonProperty
-    private Long createTimeMs;
+    private final Long createTimeMs;
     @JsonProperty
-    private Long statusTimeMs;
+    private final Long statusTimeMs;
     @JsonProperty
-    private Long startTimeMs;
+    private final Long startTimeMs;
     @JsonProperty
-    private Long endTimeMs;
+    private final Long endTimeMs;
     @JsonProperty
-    private TaskStatus status;
+    private final TaskStatus status;
 
     // parent filter
     @JsonProperty
-    private ProcessorFilter processorFilter;
-
-    public ProcessorTask() {
-        status = TaskStatus.CREATED;
-    }
+    private final ProcessorFilter processorFilter;
 
     @JsonCreator
     public ProcessorTask(@JsonProperty("id") final long id,
@@ -93,114 +89,66 @@ public class ProcessorTask {
         return id;
     }
 
-    public void setId(final long id) {
-        this.id = id;
-    }
-
     public Integer getVersion() {
         return version;
-    }
-
-    public void setVersion(final Integer version) {
-        this.version = version;
     }
 
     public Long getMetaId() {
         return metaId;
     }
 
-    public void setMetaId(final Long metaId) {
-        this.metaId = metaId;
-    }
-
     public String getData() {
         return data;
-    }
-
-    public void setData(final String data) {
-        this.data = data;
     }
 
     public String getNodeName() {
         return nodeName;
     }
 
-    public void setNodeName(final String nodeName) {
-        this.nodeName = nodeName;
-    }
-
     public String getFeedName() {
         return feedName;
-    }
-
-    public void setFeedName(final String feedName) {
-        this.feedName = feedName;
     }
 
     public TaskStatus getStatus() {
         return status;
     }
 
-    public void setStatus(final TaskStatus status) {
-        this.status = status;
-    }
-
     public Long getStartTimeMs() {
         return startTimeMs;
-    }
-
-    public void setStartTimeMs(final Long startTimeMs) {
-        this.startTimeMs = startTimeMs;
     }
 
     public Long getCreateTimeMs() {
         return createTimeMs;
     }
 
-    public void setCreateTimeMs(final Long createTimeMs) {
-        this.createTimeMs = createTimeMs;
-    }
-
     public Long getStatusTimeMs() {
         return statusTimeMs;
-    }
-
-    public void setStatusTimeMs(final Long statusTimeMs) {
-        this.statusTimeMs = statusTimeMs;
     }
 
     public Long getEndTimeMs() {
         return endTimeMs;
     }
 
-    public void setEndTimeMs(final Long endTimeMs) {
-        this.endTimeMs = endTimeMs;
-    }
-
     public ProcessorFilter getProcessorFilter() {
         return processorFilter;
-    }
-
-    public void setProcessorFilter(final ProcessorFilter processorFilter) {
-        this.processorFilter = processorFilter;
     }
 
     @Override
     public String toString() {
         return "ProcessorTask{" +
-                "id=" + id +
-                ", version=" + version +
-                ", metaId=" + metaId +
-                ", data='" + data + '\'' +
-                ", nodeName='" + nodeName + '\'' +
-                ", feedName='" + feedName + '\'' +
-                ", createTimeMs=" + createTimeMs +
-                ", statusTimeMs=" + statusTimeMs +
-                ", startTimeMs=" + startTimeMs +
-                ", endTimeMs=" + endTimeMs +
-                ", status=" + status +
-                ", processorFilter=" + processorFilter +
-                '}';
+               "id=" + id +
+               ", version=" + version +
+               ", metaId=" + metaId +
+               ", data='" + data + '\'' +
+               ", nodeName='" + nodeName + '\'' +
+               ", feedName='" + feedName + '\'' +
+               ", createTimeMs=" + createTimeMs +
+               ", statusTimeMs=" + statusTimeMs +
+               ", startTimeMs=" + startTimeMs +
+               ", endTimeMs=" + endTimeMs +
+               ", status=" + status +
+               ", processorFilter=" + processorFilter +
+               '}';
     }
 
     @Override
@@ -218,5 +166,123 @@ public class ProcessorTask {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
+        private long id;
+        private Integer version;
+        private Long metaId;
+        private String data;
+        private String nodeName;
+        private String feedName;
+        private Long createTimeMs;
+        private Long statusTimeMs;
+        private Long startTimeMs;
+        private Long endTimeMs;
+        private TaskStatus status = TaskStatus.CREATED;
+        private ProcessorFilter processorFilter;
+
+        private Builder() {
+        }
+
+        private Builder(final ProcessorTask processorTask) {
+            this.id = processorTask.id;
+            this.version = processorTask.version;
+            this.metaId = processorTask.metaId;
+            this.data = processorTask.data;
+            this.nodeName = processorTask.nodeName;
+            this.feedName = processorTask.feedName;
+            this.createTimeMs = processorTask.createTimeMs;
+            this.statusTimeMs = processorTask.statusTimeMs;
+            this.startTimeMs = processorTask.startTimeMs;
+            this.endTimeMs = processorTask.endTimeMs;
+            this.status = processorTask.status;
+            this.processorFilter = processorTask.processorFilter;
+        }
+
+        public Builder id(final long id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder version(final Integer version) {
+            this.version = version;
+            return this;
+        }
+
+        public Builder metaId(final Long metaId) {
+            this.metaId = metaId;
+            return this;
+        }
+
+        public Builder data(final String data) {
+            this.data = data;
+            return this;
+        }
+
+        public Builder nodeName(final String nodeName) {
+            this.nodeName = nodeName;
+            return this;
+        }
+
+        public Builder feedName(final String feedName) {
+            this.feedName = feedName;
+            return this;
+        }
+
+        public Builder createTimeMs(final Long createTimeMs) {
+            this.createTimeMs = createTimeMs;
+            return this;
+        }
+
+        public Builder statusTimeMs(final Long statusTimeMs) {
+            this.statusTimeMs = statusTimeMs;
+            return this;
+        }
+
+        public Builder startTimeMs(final Long startTimeMs) {
+            this.startTimeMs = startTimeMs;
+            return this;
+        }
+
+        public Builder endTimeMs(final Long endTimeMs) {
+            this.endTimeMs = endTimeMs;
+            return this;
+        }
+
+        public Builder status(final TaskStatus status) {
+            this.status = status;
+            return this;
+        }
+
+        public Builder processorFilter(final ProcessorFilter processorFilter) {
+            this.processorFilter = processorFilter;
+            return this;
+        }
+
+        public ProcessorTask build() {
+            return new ProcessorTask(
+                    id,
+                    version,
+                    metaId,
+                    data,
+                    nodeName,
+                    feedName,
+                    createTimeMs,
+                    statusTimeMs,
+                    startTimeMs,
+                    endTimeMs,
+                    status,
+                    processorFilter);
+        }
     }
 }

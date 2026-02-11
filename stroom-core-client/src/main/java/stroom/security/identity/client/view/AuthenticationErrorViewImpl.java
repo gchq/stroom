@@ -68,7 +68,7 @@ public class AuthenticationErrorViewImpl extends ViewImpl implements Authenticat
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, AuthenticationErrorViewImpl> {

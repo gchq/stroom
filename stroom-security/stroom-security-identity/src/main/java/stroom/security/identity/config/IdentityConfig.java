@@ -204,7 +204,7 @@ public class IdentityConfig extends AbstractConfig implements IsStroomConfig, Ha
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @BootStrapConfig

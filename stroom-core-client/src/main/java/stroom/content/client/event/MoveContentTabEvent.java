@@ -63,7 +63,7 @@ public class MoveContentTabEvent extends GwtEvent<MoveContentTabEvent.MoveConten
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface MoveContentTabHandler extends EventHandler {

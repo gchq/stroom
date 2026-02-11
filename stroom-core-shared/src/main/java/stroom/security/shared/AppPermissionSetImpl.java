@@ -164,7 +164,7 @@ public class AppPermissionSetImpl implements AppPermissionSet {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @JsonPropertyOrder(alphabetic = true)
@@ -280,7 +280,7 @@ public class AppPermissionSetImpl implements AppPermissionSet {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @JsonPropertyOrder(alphabetic = true)

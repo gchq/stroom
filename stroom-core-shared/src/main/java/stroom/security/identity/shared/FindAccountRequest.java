@@ -48,7 +48,7 @@ public class FindAccountRequest extends ExpressionCriteria {
 //    }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Builder extends ExpressionCriteriaBuilder<FindAccountRequest, Builder> {

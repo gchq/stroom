@@ -323,22 +323,22 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
     @Override
     public IndexVolume create(final IndexVolume indexVolume) {
-        AuditUtil.stamp(securityContext, indexVolume);
+        final IndexVolume.Builder builder = AuditUtil.stamp(securityContext, indexVolume, indexVolume.copy());
 
         final List<String> names = indexVolumeDao.getAll().stream().map(i -> Strings.isNullOrEmpty(i.getNodeName())
                         ? ""
                         : i.getNodeName())
                 .toList();
-        indexVolume.setNodeName(Strings.isNullOrEmpty(indexVolume.getNodeName())
+        builder.nodeName(Strings.isNullOrEmpty(indexVolume.getNodeName())
                 ? NextNameGenerator.getNextName(names, "New index volume")
                 : indexVolume.getNodeName());
-        indexVolume.setPath(Strings.isNullOrEmpty(indexVolume.getPath())
+        builder.path(Strings.isNullOrEmpty(indexVolume.getPath())
                 ? null
                 : indexVolume.getPath());
-        indexVolume.setIndexVolumeGroupId(indexVolume.getIndexVolumeGroupId());
+        builder.indexVolumeGroupId(indexVolume.getIndexVolumeGroupId());
 
         final IndexVolume result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
-                () -> indexVolumeDao.create(indexVolume));
+                () -> indexVolumeDao.create(builder.build()));
         fireChange(EntityAction.CREATE);
         return result;
     }
@@ -354,16 +354,18 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                 indexVolumeDao.fetch(indexVolume.getId()).orElse(
                         null));
 
-        loadedIndexVolume.setIndexVolumeGroupId(indexVolume.getIndexVolumeGroupId());
-        loadedIndexVolume.setPath((indexVolume.getPath()));
-        loadedIndexVolume.setNodeName(indexVolume.getNodeName());
-        loadedIndexVolume.setBytesLimit(indexVolume.getBytesLimit());
-        loadedIndexVolume.setState(indexVolume.getState());
+        final IndexVolume.Builder builder = loadedIndexVolume
+                .copy()
+                .indexVolumeGroupId(indexVolume.getIndexVolumeGroupId())
+                .path((indexVolume.getPath()))
+                .nodeName(indexVolume.getNodeName())
+                .bytesLimit(indexVolume.getBytesLimit())
+                .state(indexVolume.getState());
 
-        AuditUtil.stamp(securityContext, loadedIndexVolume);
+        AuditUtil.stamp(securityContext, loadedIndexVolume, builder);
 
         final IndexVolume result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
-                () -> indexVolumeDao.update(loadedIndexVolume));
+                () -> indexVolumeDao.update(builder.build()));
         fireChange(EntityAction.UPDATE);
         return result;
     }
@@ -432,7 +434,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
         return volume;
     }
 
-    private void setSizes(final Path path, final IndexVolume indexVolume) {
+    private void setSizes(final Path path, IndexVolume indexVolume) {
         try {
             final FileStore fileStore = Files.getFileStore(path);
             final long osUsableSpace = fileStore.getUsableSpace();
@@ -446,10 +448,13 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                     .findAny()
                     .orElse(osUsableSpace);
 
-            indexVolume.setUpdateTimeMs(System.currentTimeMillis());
-            indexVolume.setBytesTotal(totalSpace);
-            indexVolume.setBytesFree(freeSpace);
-            indexVolume.setBytesUsed(usedSpace);
+            indexVolume = indexVolume
+                    .copy()
+                    .updateTimeMs(System.currentTimeMillis())
+                    .bytesTotal(totalSpace)
+                    .bytesFree(freeSpace)
+                    .bytesUsed(usedSpace)
+                    .build();
 
             indexVolumeDao.updateVolumeState(
                     indexVolume.getId(),

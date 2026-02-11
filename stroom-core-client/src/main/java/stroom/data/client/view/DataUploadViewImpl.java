@@ -85,7 +85,7 @@ public class DataUploadViewImpl extends ViewImpl implements DataUploadView {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, DataUploadViewImpl> {

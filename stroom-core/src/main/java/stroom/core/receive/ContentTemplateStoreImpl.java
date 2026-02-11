@@ -18,7 +18,6 @@ package stroom.core.receive;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
@@ -62,7 +61,11 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
         this.securityContext = securityContext;
         final DocumentSerialiser2<ContentTemplates> serialiser = serialiser2Factory.createSerialiser(
                 ContentTemplates.class);
-        this.store = storeFactory.createStore(serialiser, ContentTemplates.TYPE, ContentTemplates::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                ContentTemplates.TYPE,
+                ContentTemplates::builder,
+                ContentTemplates::copy);
     }
 
     @Override
@@ -91,9 +94,9 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
         });
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public DocRef createDocument(final String name) {
@@ -129,13 +132,13 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
         return store.info(docRef);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -166,13 +169,13 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
         };
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public ContentTemplates readDocument(final DocRef docRef) {
@@ -189,13 +192,13 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
 
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -214,10 +217,7 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, messageList, omitAuditFields, d -> d);
     }
 
     @Override
@@ -230,9 +230,9 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
         return null;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {

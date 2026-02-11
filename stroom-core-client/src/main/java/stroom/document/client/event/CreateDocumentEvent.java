@@ -108,7 +108,7 @@ public class CreateDocumentEvent extends GwtEvent<CreateDocumentEvent.Handler> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

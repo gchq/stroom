@@ -108,8 +108,11 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         // This one is complete but has tasks so won't get logically deleted
         processorFilter1 = createProcessorFilter(processor1);
         processorFilterTracker1 = processorFilter1.getProcessorFilterTracker();
-        processorFilterTracker1.setLastPollMs(Instant.now().toEpochMilli());
-        processorFilterTracker1.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
+        processorFilterTracker1 = processorFilterTracker1
+                .copy()
+                .lastPollMs(Instant.now().toEpochMilli())
+                .status(ProcessorFilterTrackerStatus.COMPLETE)
+                .build();
         processorFilterTrackerDao.update(processorFilterTracker1);
         createProcessorTask(processorFilter1, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter1, TaskStatus.QUEUED, NODE1, FEED);
@@ -118,8 +121,11 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         // This one is not COMPLETE but has tasks so won't get logically deleted
         processorFilter2 = createProcessorFilter(processor2);
         processorFilterTracker2 = processorFilter2.getProcessorFilterTracker();
-        processorFilterTracker2.setLastPollMs(Instant.now().toEpochMilli());
-        processorFilterTracker2.setStatus(ProcessorFilterTrackerStatus.ERROR);
+        processorFilterTracker2 = processorFilterTracker2
+                .copy()
+                .lastPollMs(Instant.now().toEpochMilli())
+                .status(ProcessorFilterTrackerStatus.ERROR)
+                .build();
         processorFilterTrackerDao.update(processorFilterTracker2);
         createProcessorTask(processorFilter2, TaskStatus.CREATED, NODE1, FEED);
         createProcessorTask(processorFilter2, TaskStatus.QUEUED, NODE1, FEED);
@@ -128,8 +134,11 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
         // This one is COMPLETE and has no tasks so will get logically deleted
         processorFilter3 = createProcessorFilter(processor3);
         processorFilterTracker3 = processorFilter3.getProcessorFilterTracker();
-        processorFilterTracker3.setLastPollMs(Instant.now().toEpochMilli());
-        processorFilterTracker3.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
+        processorFilterTracker3 = processorFilterTracker3
+                .copy()
+                .lastPollMs(Instant.now().toEpochMilli())
+                .status(ProcessorFilterTrackerStatus.COMPLETE)
+                .build();
         processorFilterTrackerDao.update(processorFilterTracker3);
 
         assertThat(getProcessorCount(null))
@@ -171,8 +180,8 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
                 .isEqualTo(0);
 
         assertThat(processorFilterDao.fetch(processorFilter3.getId())
-                        .orElseThrow()
-                        .isDeleted())
+                .orElseThrow()
+                .isDeleted())
                 .isTrue();
     }
 

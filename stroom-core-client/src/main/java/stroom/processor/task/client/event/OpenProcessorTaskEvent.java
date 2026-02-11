@@ -67,7 +67,7 @@ public class OpenProcessorTaskEvent extends GwtEvent<Handler> {
                '}';
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

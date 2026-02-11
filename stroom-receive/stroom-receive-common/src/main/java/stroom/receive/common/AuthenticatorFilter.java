@@ -73,7 +73,7 @@ public interface AuthenticatorFilter {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     class MultiAuthenticatorFilter implements AuthenticatorFilter {

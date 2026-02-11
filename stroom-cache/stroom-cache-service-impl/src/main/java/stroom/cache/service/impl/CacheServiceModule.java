@@ -42,7 +42,7 @@ public class CacheServiceModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class EvictExpiredElements extends RunnableWrapper {

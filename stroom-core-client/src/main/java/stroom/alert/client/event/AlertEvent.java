@@ -139,7 +139,7 @@ public class AlertEvent extends CommonAlertEvent<AlertEvent.Handler> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

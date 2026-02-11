@@ -33,7 +33,7 @@ public class ContentPackModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ContentPackImportStartup extends RunnableWrapper {

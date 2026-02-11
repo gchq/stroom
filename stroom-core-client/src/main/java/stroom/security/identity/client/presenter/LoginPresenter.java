@@ -159,7 +159,7 @@ public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implement
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @ProxyStandard
@@ -168,7 +168,7 @@ public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implement
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface LoginView extends View, Focus, HasUiHandlers<LoginUiHandlers> {

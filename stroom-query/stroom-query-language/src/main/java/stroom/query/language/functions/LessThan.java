@@ -52,7 +52,7 @@ class LessThan extends AbstractEqualityFunction {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class LessThanEvaluator extends Evaluator {

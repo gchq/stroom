@@ -178,7 +178,7 @@ public class ExplorerNodeRemoveTagsPresenter
                 .collect(Collectors.toList());
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface ExplorerNodeRemoveTagsView
@@ -194,7 +194,7 @@ public class ExplorerNodeRemoveTagsPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @ProxyCodeSplit

@@ -52,7 +52,7 @@ class NotEquals extends AbstractEqualityFunction {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class NotEqualsEvaluator extends Evaluator {

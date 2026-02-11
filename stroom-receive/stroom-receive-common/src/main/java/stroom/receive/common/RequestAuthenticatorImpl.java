@@ -214,7 +214,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record ConfigState(

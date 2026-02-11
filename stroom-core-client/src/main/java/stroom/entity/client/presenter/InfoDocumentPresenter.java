@@ -151,7 +151,7 @@ public class InfoDocumentPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface InfoDocumentView extends View, Focus {
@@ -160,7 +160,7 @@ public class InfoDocumentPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     @ProxyCodeSplit
     public interface InfoDocumentProxy extends Proxy<InfoDocumentPresenter> {

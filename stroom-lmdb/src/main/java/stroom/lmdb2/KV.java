@@ -49,7 +49,7 @@ public abstract class KV<K, V> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public abstract static class AbstractKVBuilder<T, B extends AbstractKVBuilder<T, ?, K, V>, K, V>

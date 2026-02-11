@@ -119,7 +119,7 @@ public class AnalyticsConfig extends AbstractConfig implements IsStroomConfig, H
         return executionHistoryRetention;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @BootStrapConfig

@@ -85,7 +85,7 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class MyApp extends Application<Config> {

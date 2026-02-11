@@ -187,7 +187,7 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public enum StatisticsMode {
@@ -212,7 +212,7 @@ public class CacheConfig extends AbstractConfig implements IsStroomConfig, IsPro
         ;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static final class Builder {

@@ -140,7 +140,7 @@ public class FindApiKeyCriteria extends ExpressionCriteria {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Builder extends ExpressionCriteriaBuilder<FindApiKeyCriteria, Builder> {

@@ -90,26 +90,26 @@ public class PrioritisedFilters implements Clearable {
             filters.sort(ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
 
             // Try and ensure we have pipeline names for each filter
-            for (final ProcessorFilter filter : NullSafe.list(filters)) {
+            return filters.stream().map(filter -> {
+                ProcessorFilter result = filter;
                 try {
-                    if (filter != null
-                        && filter.getPipelineUuid() != null
-                        && NullSafe.isEmptyString(filter.getPipelineName())) {
+                    if (filter.getPipelineUuid() != null && NullSafe.isEmptyString(filter.getPipelineName())) {
                         final Optional<String> pipelineName = processorFilterService
                                 .getPipelineName(filter.getProcessorType(), filter.getPipelineUuid());
-                        pipelineName.ifPresent(newPipeName -> {
+                        result = pipelineName.map(newPipeName -> {
                             if (!Objects.equals(filter.getPipelineName(), newPipeName)) {
-                                filter.setPipelineName(newPipeName);
+                                return filter.copy().pipelineName(newPipeName).build();
                             }
-                        });
+                            return filter;
+                        }).orElse(result);
                     }
                 } catch (final RuntimeException e) {
                     // This error is expected in tests and the pipeline name isn't essential
                     // as it is only used in here for logging purposes.
                     LOGGER.trace(e::getMessage, e);
                 }
-            }
-            return filters;
+                return result;
+            }).toList();
         });
     }
 

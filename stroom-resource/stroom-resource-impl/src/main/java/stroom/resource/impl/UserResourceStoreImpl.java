@@ -332,7 +332,7 @@ public class UserResourceStoreImpl extends HttpServlet implements ResourceStore,
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record UserResourceKey(UserRef userRef, ResourceKey resourceKey) {
@@ -349,7 +349,7 @@ public class UserResourceStoreImpl extends HttpServlet implements ResourceStore,
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ResourceItem {

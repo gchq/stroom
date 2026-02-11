@@ -60,7 +60,7 @@ class CountGroups extends AbstractFunction implements AggregateFunction {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static final class Gen extends AbstractNoChildGenerator {

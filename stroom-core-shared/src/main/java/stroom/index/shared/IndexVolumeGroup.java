@@ -16,7 +16,8 @@
 
 package stroom.index.shared;
 
-import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.AbstractHasAuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -27,25 +28,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId {
+public class IndexVolumeGroup implements HasAuditInfoGetters, HasIntegerId {
 
     @JsonProperty
-    private Integer id;
+    private final Integer id;
     @JsonProperty
-    private Integer version;
+    private final Integer version;
     @JsonProperty
-    private Long createTimeMs;
+    private final Long createTimeMs;
     @JsonProperty
-    private String createUser;
+    private final String createUser;
     @JsonProperty
-    private Long updateTimeMs;
+    private final Long updateTimeMs;
     @JsonProperty
-    private String updateUser;
+    private final String updateUser;
     @JsonProperty
-    private String name;
-
-    public IndexVolumeGroup() {
-    }
+    private final String name;
 
     @JsonCreator
     public IndexVolumeGroup(@JsonProperty("id") final Integer id,
@@ -69,16 +67,8 @@ public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId {
         return id;
     }
 
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
     public Integer getVersion() {
         return version;
-    }
-
-    public void setVersion(final Integer version) {
-        this.version = version;
     }
 
     @Override
@@ -86,17 +76,9 @@ public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId {
         return createTimeMs;
     }
 
-    public void setCreateTimeMs(final Long createTimeMs) {
-        this.createTimeMs = createTimeMs;
-    }
-
     @Override
     public String getCreateUser() {
         return createUser;
-    }
-
-    public void setCreateUser(final String createUser) {
-        this.createUser = createUser;
     }
 
     @Override
@@ -104,54 +86,101 @@ public class IndexVolumeGroup implements HasAuditInfo, HasIntegerId {
         return updateTimeMs;
     }
 
-    public void setUpdateTimeMs(final Long updateTimeMs) {
-        this.updateTimeMs = updateTimeMs;
-    }
-
     @Override
     public String getUpdateUser() {
         return updateUser;
-    }
-
-    public void setUpdateUser(final String updateUser) {
-        this.updateUser = updateUser;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(final String name) {
-        this.name = name;
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final IndexVolumeGroup that = (IndexVolumeGroup) o;
+        return Objects.equals(id, that.id) &&
+               Objects.equals(version, that.version) &&
+               Objects.equals(createTimeMs, that.createTimeMs) &&
+               Objects.equals(createUser, that.createUser) &&
+               Objects.equals(updateTimeMs, that.updateTimeMs) &&
+               Objects.equals(updateUser, that.updateUser) &&
+               Objects.equals(name, that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, version, createTimeMs, createUser, updateTimeMs, updateUser, name);
     }
 
     @Override
     public String toString() {
         return "IndexVolumeGroup{" +
-                "id=" + id +
-                ", version=" + version +
-                ", createTimeMs=" + createTimeMs +
-                ", createUser='" + createUser + '\'' +
-                ", updateTimeMs=" + updateTimeMs +
-                ", updateUser='" + updateUser + '\'' +
-                ", name='" + name + '\'' +
-                '}';
+               "id=" + id +
+               ", version=" + version +
+               ", createTimeMs=" + createTimeMs +
+               ", createUser='" + createUser + '\'' +
+               ", updateTimeMs=" + updateTimeMs +
+               ", updateUser='" + updateUser + '\'' +
+               ", name='" + name + '\'' +
+               '}';
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        final IndexVolumeGroup that = (IndexVolumeGroup) o;
-        return Objects.equals(id, that.id);
+    public Builder copy() {
+        return new Builder(this);
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder extends AbstractHasAuditInfoBuilder<IndexVolumeGroup, IndexVolumeGroup.Builder> {
+
+        private Integer id;
+        private Integer version;
+        private String name;
+
+        private Builder() {
+        }
+
+        private Builder(final IndexVolumeGroup indexVolumeGroup) {
+            super(indexVolumeGroup);
+            this.id = indexVolumeGroup.id;
+            this.version = indexVolumeGroup.version;
+            this.name = indexVolumeGroup.name;
+        }
+
+        public Builder id(final Integer id) {
+            this.id = id;
+            return self();
+        }
+
+        public Builder version(final Integer version) {
+            this.version = version;
+            return self();
+        }
+
+        public Builder name(final String name) {
+            this.name = name;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public IndexVolumeGroup build() {
+            return new IndexVolumeGroup(
+                    id,
+                    version,
+                    createTimeMs,
+                    createUser,
+                    updateTimeMs,
+                    updateUser,
+                    name);
+        }
     }
 }

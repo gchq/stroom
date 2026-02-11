@@ -49,7 +49,7 @@ public class FocusExplorerFilterEvent extends GwtEvent<FocusExplorerFilterEvent.
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

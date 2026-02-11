@@ -22,10 +22,12 @@ import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.security.api.SecurityContext;
 import stroom.util.AuditUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -91,14 +93,13 @@ public class JobManagerImpl implements JobManager {
     /**
      * Sets all jobs on the given node to the supplied enabled state.
      *
-     * @param node    The node to set the enabled state on.
-     * @param enabled The value of the enabled flag.
+     * @param nodeName The node to set the enabled state on.
+     * @param enabled  The value of the enabled flag.
      * @return True if successful.
      */
     @Override
     public Boolean setNodeEnabled(final String nodeName, final boolean enabled) {
         modifyNode(nodeName, enabled);
-
         return Boolean.TRUE;
     }
 
@@ -133,9 +134,11 @@ public class JobManagerImpl implements JobManager {
 
         final Job job = jobs.getFirst();
         if (job != null) {
-            job.setEnabled(enabled);
-            AuditUtil.stamp(securityContext, job);
-            jobDao.update(job);
+            final Job.Builder builder = job
+                    .copy()
+                    .enabled(enabled);
+            AuditUtil.stamp(securityContext, job, builder);
+            jobDao.update(builder.build());
         }
     }
 
@@ -145,34 +148,34 @@ public class JobManagerImpl implements JobManager {
      *
      * @param jobName The name of the job that the job instances are associated
      *                with.
+     * @param enabled The value of the enabled flag.
      */
     private void modifyJob(final String jobName, final boolean enabled) {
         final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
         criteria.getJobName().setString(jobName);
-
-        final ResultPage<JobNode> jobNodes = jobNodeDao.find(criteria);
-        for (final JobNode jobNode : jobNodes.getValues()) {
-            jobNode.setEnabled(enabled);
-            AuditUtil.stamp(securityContext, jobNode);
-            jobNodeDao.update(jobNode);
-        }
+        setJobNodesEnabled(jobNodeDao.find(criteria).getValues(), enabled);
     }
 
     /**
      * Used to set the job command for all job instances associated with a
      * specified node.
      *
-     * @param node The node that the job instances are associated with.
+     * @param nodeName The node that the job instances are associated with.
+     * @param enabled  The value of the enabled flag.
      */
     private void modifyNode(final String nodeName, final boolean enabled) {
         final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
         criteria.getNodeName().setString(nodeName);
+        setJobNodesEnabled(jobNodeDao.find(criteria).getValues(), enabled);
+    }
 
-        final ResultPage<JobNode> jobNodes = jobNodeDao.find(criteria);
-        for (final JobNode jobNode : jobNodes.getValues()) {
-            jobNode.setEnabled(enabled);
-            AuditUtil.stamp(securityContext, jobNode);
-            jobNodeDao.update(jobNode);
+    private void setJobNodesEnabled(final List<JobNode> jobNodes, final boolean enabled) {
+        for (final JobNode jobNode : NullSafe.list(jobNodes)) {
+            final JobNode.Builder builder = jobNode
+                    .copy()
+                    .enabled(enabled);
+            AuditUtil.stamp(securityContext, jobNode, builder);
+            jobNodeDao.update(builder.build());
         }
     }
 }

@@ -137,7 +137,7 @@ public class FindInContentViewImpl
         return spinner;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, FindInContentViewImpl> {

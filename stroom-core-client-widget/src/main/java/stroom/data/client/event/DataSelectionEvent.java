@@ -98,7 +98,7 @@ public class DataSelectionEvent<I> extends GwtEvent<DataSelectionEvent.DataSelec
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface DataSelectionHandler<I> extends EventHandler {

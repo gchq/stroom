@@ -95,22 +95,25 @@ public class TestFsVolumeService extends AbstractCoreIntegrationTest {
         for (int i = 0; i < 5; i++) {
             final String path = pathCreator.toAppPath("testFsVol_" + i).toString();
             paths.add(path);
-            fsVolume = new FsVolume();
-            fsVolume.setPath(path);
 
-            final FsVolumeState fsVolumeState = new FsVolumeState();
-            fsVolumeState.setBytesUsed(ByteSizeUnit.GIBIBYTE.longBytes(1));
-            fsVolumeState.setBytesFree(ByteSizeUnit.GIBIBYTE.longBytes(4));
-            fsVolumeState.setBytesTotal(ByteSizeUnit.GIBIBYTE.longBytes(5));
-            fsVolumeState.setUpdateTimeMs(Instant.now().toEpochMilli());
-            fsVolume.setVolumeState(fsVolumeState);
+            final FsVolumeState fsVolumeState = FsVolumeState.builder()
+                    .bytesUsed(ByteSizeUnit.GIBIBYTE.longBytes(1))
+                    .bytesFree(ByteSizeUnit.GIBIBYTE.longBytes(4))
+                    .bytesTotal(ByteSizeUnit.GIBIBYTE.longBytes(5))
+                    .updateTimeMs(Instant.now().toEpochMilli())
+                    .build();
+
+            fsVolume = FsVolume.builder()
+                    .path(path)
+                    .volumeState(fsVolumeState)
+                    .build();
 
             final FsVolume dbFsVolume = fsVolumeService.create(fsVolume);
             fsVolumes.add(dbFsVolume);
         }
 
         // Close the last vol so it should not be selected
-        fsVolumes.get(4).setStatus(VolumeUseStatus.CLOSED);
+        fsVolumes.set(4, fsVolumes.get(4).copy().status(VolumeUseStatus.CLOSED).build());
         fsVolumes.set(4, fsVolumeService.update(fsVolumes.get(4)));
 
         // Make sure all paths are there

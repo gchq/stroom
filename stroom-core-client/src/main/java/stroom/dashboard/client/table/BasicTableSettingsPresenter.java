@@ -280,7 +280,7 @@ public class BasicTableSettingsPresenter
         return list;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface BasicTableSettingsView extends BasicSettingsView, HasUiHandlers<BasicTableSettingsUihandlers> {

@@ -250,7 +250,7 @@ public abstract class AbstractEditorViewImpl extends ViewImpl {
     abstract SimplePanel getContentPanel();
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
 }

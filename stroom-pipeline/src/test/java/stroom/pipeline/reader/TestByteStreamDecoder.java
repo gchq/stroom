@@ -588,7 +588,7 @@ class TestByteStreamDecoder {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class MyByteBuffer extends ByteArrayOutputStream {

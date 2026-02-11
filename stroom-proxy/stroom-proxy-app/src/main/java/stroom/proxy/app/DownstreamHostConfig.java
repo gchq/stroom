@@ -283,7 +283,7 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static final class Builder {

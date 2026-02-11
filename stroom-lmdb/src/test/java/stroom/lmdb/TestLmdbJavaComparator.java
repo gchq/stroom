@@ -253,7 +253,7 @@ public class TestLmdbJavaComparator extends AbstractLmdbDbTest {
         return o1.remaining() - o2.remaining();
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record PaddedLong(int padding, long val) {
@@ -261,7 +261,7 @@ public class TestLmdbJavaComparator extends AbstractLmdbDbTest {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class PaddedLongSerde implements Serde<PaddedLong> {
@@ -301,7 +301,7 @@ public class TestLmdbJavaComparator extends AbstractLmdbDbTest {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class ByteBufferSerde implements Serde<ByteBuffer> {

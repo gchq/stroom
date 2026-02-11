@@ -142,7 +142,7 @@ public class BasicQuerySettingsPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface BasicQuerySettingsView extends BasicSettingsView {

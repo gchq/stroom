@@ -178,7 +178,7 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record KeySetWrapper(

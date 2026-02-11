@@ -29,23 +29,24 @@ class RecordToProcessorFilterTrackerMapper implements Function<Record, Processor
 
     @Override
     public ProcessorFilterTracker apply(final Record record) {
-        final ProcessorFilterTracker processorFilterTracker = new ProcessorFilterTracker();
-        processorFilterTracker.setId(record.get(PROCESSOR_FILTER_TRACKER.ID));
-        processorFilterTracker.setVersion(record.get(PROCESSOR_FILTER_TRACKER.VERSION));
-        processorFilterTracker.setMinMetaId(record.get(PROCESSOR_FILTER_TRACKER.MIN_META_ID));
-        processorFilterTracker.setMinEventId(record.get(PROCESSOR_FILTER_TRACKER.MIN_EVENT_ID));
-        processorFilterTracker.setMaxMetaCreateMs(record.get(PROCESSOR_FILTER_TRACKER.MAX_META_CREATE_MS));
-        processorFilterTracker.setMinMetaCreateMs(record.get(PROCESSOR_FILTER_TRACKER.MIN_META_CREATE_MS));
-        processorFilterTracker.setMetaCreateMs(record.get(PROCESSOR_FILTER_TRACKER.META_CREATE_MS));
-        processorFilterTracker.setLastPollMs(record.get(PROCESSOR_FILTER_TRACKER.LAST_POLL_MS));
-        processorFilterTracker.setLastPollTaskCount(record.get(PROCESSOR_FILTER_TRACKER.LAST_POLL_TASK_COUNT));
-        processorFilterTracker.setStatus(ProcessorFilterTrackerStatus.PRIMITIVE_VALUE_CONVERTER
-                .fromPrimitiveValue(
-                        record.get(PROCESSOR_FILTER_TRACKER.STATUS),
-                        ProcessorFilterTrackerStatus.CREATED));
-        processorFilterTracker.setMessage(record.get(PROCESSOR_FILTER_TRACKER.MESSAGE));
-        processorFilterTracker.setMetaCount(record.get(PROCESSOR_FILTER_TRACKER.META_COUNT));
-        processorFilterTracker.setEventCount(record.get(PROCESSOR_FILTER_TRACKER.EVENT_COUNT));
-        return processorFilterTracker;
+        return ProcessorFilterTracker
+                .builder()
+                .id(record.get(PROCESSOR_FILTER_TRACKER.ID))
+                .version(record.get(PROCESSOR_FILTER_TRACKER.VERSION))
+                .minMetaId(record.get(PROCESSOR_FILTER_TRACKER.MIN_META_ID))
+                .minEventId(record.get(PROCESSOR_FILTER_TRACKER.MIN_EVENT_ID))
+                .maxMetaCreateMs(record.get(PROCESSOR_FILTER_TRACKER.MAX_META_CREATE_MS))
+                .minMetaCreateMs(record.get(PROCESSOR_FILTER_TRACKER.MIN_META_CREATE_MS))
+                .metaCreateMs(record.get(PROCESSOR_FILTER_TRACKER.META_CREATE_MS))
+                .lastPollMs(record.get(PROCESSOR_FILTER_TRACKER.LAST_POLL_MS))
+                .lastPollTaskCount(record.get(PROCESSOR_FILTER_TRACKER.LAST_POLL_TASK_COUNT))
+                .status(ProcessorFilterTrackerStatus.PRIMITIVE_VALUE_CONVERTER
+                        .fromPrimitiveValue(
+                                record.get(PROCESSOR_FILTER_TRACKER.STATUS),
+                                ProcessorFilterTrackerStatus.CREATED))
+                .message(record.get(PROCESSOR_FILTER_TRACKER.MESSAGE))
+                .metaCount(record.get(PROCESSOR_FILTER_TRACKER.META_COUNT))
+                .eventCount(record.get(PROCESSOR_FILTER_TRACKER.EVENT_COUNT))
+                .build();
     }
 }

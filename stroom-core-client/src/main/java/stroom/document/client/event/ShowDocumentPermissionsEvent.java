@@ -57,7 +57,7 @@ public class ShowDocumentPermissionsEvent extends GwtEvent<ShowDocumentPermissio
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

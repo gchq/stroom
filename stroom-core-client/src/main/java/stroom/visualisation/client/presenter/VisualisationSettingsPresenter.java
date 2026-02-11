@@ -92,7 +92,7 @@ public class VisualisationSettingsPresenter extends DocumentEditPresenter<Visual
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface VisualisationSettingsView extends View {

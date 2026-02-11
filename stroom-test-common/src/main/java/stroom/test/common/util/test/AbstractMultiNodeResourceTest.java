@@ -427,7 +427,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class JerseyTestBuilder<R extends RestResource> {
@@ -491,7 +491,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class TestNode {
@@ -550,7 +550,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class RequestListener implements ApplicationEventListener {
@@ -582,7 +582,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class MyExceptionMapper implements ExceptionMapper<Throwable> {

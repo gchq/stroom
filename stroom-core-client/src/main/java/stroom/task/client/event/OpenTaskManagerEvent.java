@@ -88,7 +88,7 @@ public class OpenTaskManagerEvent extends GwtEvent<OpenTaskManagerEvent.Handler>
         return userName;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

@@ -58,7 +58,7 @@ public class FindUserCriteria extends ExpressionCriteria {
         return context;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Builder extends ExpressionCriteriaBuilder<FindUserCriteria, Builder> {

@@ -55,7 +55,6 @@ class TestIndexVolumeGroupDaoImpl {
         assertThat(group.getName()).isEqualTo(groupName);
     }
 
-
     @Test
     void testUpdate() {
         // Given
@@ -65,15 +64,13 @@ class TestIndexVolumeGroupDaoImpl {
         final IndexVolumeGroup reloadedGroup = indexVolumeGroupDao.get(group.getId());
 
         // When
-        reloadedGroup.setName(newGroupName);
-        indexVolumeGroupDao.update(reloadedGroup);
+        indexVolumeGroupDao.update(reloadedGroup.copy().name(newGroupName).build());
 
         // Then
         final IndexVolumeGroup updatedGroup = indexVolumeGroupDao.get(group.getId());
         assertThat(updatedGroup).isNotNull();
         assertThat(updatedGroup.getName()).isEqualTo(newGroupName);
     }
-
 
     @Test
     void testDelete() {
@@ -88,7 +85,6 @@ class TestIndexVolumeGroupDaoImpl {
         final IndexVolumeGroup deletedGroup = indexVolumeGroupDao.get(group.getId());
         assertThat(deletedGroup).isNull();
     }
-
 
     @Test
     void testCreateGetDelete() {
@@ -147,9 +143,8 @@ class TestIndexVolumeGroupDaoImpl {
     }
 
     private IndexVolumeGroup createGroup(final String name) {
-        final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
-        indexVolumeGroup.setName(name);
-        AuditUtil.stamp(() -> TestModule.TEST_USER, indexVolumeGroup);
+        final IndexVolumeGroup indexVolumeGroup = AuditUtil.stampNew(() ->
+                TestModule.TEST_USER, IndexVolumeGroup.builder().name(name)).build();
         return indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
     }
 }

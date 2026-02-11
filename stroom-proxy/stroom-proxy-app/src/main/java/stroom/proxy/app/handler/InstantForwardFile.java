@@ -94,7 +94,7 @@ public class InstantForwardFile {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class InstantForwardFileReceiverFactory implements ReceiverFactory {
@@ -122,7 +122,7 @@ public class InstantForwardFile {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class InstantForwardFileReceiver implements Receiver {

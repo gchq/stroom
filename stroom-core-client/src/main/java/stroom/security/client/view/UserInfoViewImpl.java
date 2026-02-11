@@ -104,7 +104,7 @@ public class UserInfoViewImpl extends ViewImpl implements UserInfoView {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, UserInfoViewImpl> {

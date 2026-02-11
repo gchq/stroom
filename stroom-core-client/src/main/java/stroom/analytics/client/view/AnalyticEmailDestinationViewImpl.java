@@ -141,7 +141,7 @@ public class AnalyticEmailDestinationViewImpl
         return testBodyTemplateBtn;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, AnalyticEmailDestinationViewImpl> {

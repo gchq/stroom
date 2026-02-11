@@ -21,6 +21,7 @@ import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.GetScheduledTimesRequest;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
+import stroom.job.shared.JobNode.Builder;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeListResponse;
@@ -76,12 +77,13 @@ class JobNodeService {
 
         return securityContext.secureResult(AppPermission.MANAGE_JOBS_PERMISSION, () -> {
             final Optional<JobNode> before = fetch(jobNode.getId());
+            final Builder builder = jobNode.copy();
 
             // We always want to update a job node instance even if we have a stale version.
-            before.ifPresent(j -> jobNode.setVersion(j.getVersion()));
+            before.ifPresent(j -> builder.version(j.getVersion()));
 
-            AuditUtil.stamp(securityContext, jobNode);
-            return jobNodeDao.update(jobNode);
+            AuditUtil.stamp(securityContext, jobNode, builder);
+            return jobNodeDao.update(builder.build());
         });
     }
 
@@ -109,9 +111,9 @@ class JobNodeService {
                         final List<JobNode> advancedList = new ArrayList<>();
                         final List<JobNode> nonAdvancedList = new ArrayList<>();
                         for (final JobNode jobNode : list) {
-                            final Job job = jobNode.getJob();
+                            Job job = jobNode.getJob();
                             // Add the advanced state
-                            jobService.decorate(job);
+                            job = jobService.decorate(job);
                             if (job.isAdvanced()) {
                                 advancedList.add(jobNode);
                             } else {

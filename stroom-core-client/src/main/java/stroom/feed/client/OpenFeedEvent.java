@@ -102,7 +102,7 @@ public class OpenFeedEvent extends GwtEvent<Handler> {
         return new Builder(handlers, name);
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     public static final class Builder {
 
@@ -140,7 +140,7 @@ public class OpenFeedEvent extends GwtEvent<Handler> {
         }
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

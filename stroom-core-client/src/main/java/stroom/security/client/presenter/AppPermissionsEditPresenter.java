@@ -327,7 +327,7 @@ public class AppPermissionsEditPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface AppPermissionsEditView extends View {
@@ -340,7 +340,7 @@ public class AppPermissionsEditPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @SuppressWarnings("ClassCanBeRecord") // GWT :-(

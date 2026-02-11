@@ -419,7 +419,7 @@ public class ValComparators {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     interface ValComparatorFactory {
@@ -428,7 +428,7 @@ public class ValComparators {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record SingleValComparatorFactory(Comparator<Val> comparator) implements ValComparatorFactory {
@@ -444,7 +444,7 @@ public class ValComparators {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record DualValComparatorFactory(Comparator<Val> caseSensitiveComparator,

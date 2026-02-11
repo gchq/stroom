@@ -92,7 +92,7 @@ public class ExpressionCriteria extends BaseCriteria {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Builder extends ExpressionCriteriaBuilder<ExpressionCriteria, Builder> {
@@ -117,7 +117,7 @@ public class ExpressionCriteria extends BaseCriteria {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public abstract static class ExpressionCriteriaBuilder

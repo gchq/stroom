@@ -36,7 +36,7 @@ public class MockHasUserDependenciesModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
 
     public static class MockHasUserDependencies implements HasUserDependencies {

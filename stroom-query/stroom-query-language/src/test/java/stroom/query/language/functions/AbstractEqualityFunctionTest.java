@@ -96,7 +96,7 @@ abstract class AbstractEqualityFunctionTest<T extends AbstractEqualityFunction>
     }
 
 
-    // --------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
 
     protected record Values(Object param1, Object param2, boolean expectedOutput) {

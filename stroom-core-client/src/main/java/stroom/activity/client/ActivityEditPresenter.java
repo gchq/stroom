@@ -206,7 +206,7 @@ public class ActivityEditPresenter
         }
 
         final ActivityDetails details = new ActivityDetails(properties);
-        activity.setDetails(details);
+        activity = activity.copy().details(details).build();
 
         // Validate the activity.
         restFactory
@@ -236,9 +236,7 @@ public class ActivityEditPresenter
                         .create(ACTIVITY_RESOURCE)
                         .method(ActivityResource::create)
                         .onSuccess(result -> {
-                            activity = result;
-                            activity.setDetails(details);
-
+                            activity = result.copy().details(details).build();
                             update(activity, details, consumer, event);
                         })
                         .onFailure(RestErrorHandler.forPopup(this, event))

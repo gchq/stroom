@@ -90,7 +90,7 @@ public class PipelineProperty implements Comparable<PipelineProperty> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Builder {

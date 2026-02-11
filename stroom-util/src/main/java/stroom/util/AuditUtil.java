@@ -17,9 +17,10 @@
 package stroom.util;
 
 import stroom.util.shared.AbstractHasAuditInfoBuilder;
-import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasAuditableUserIdentity;
+
+import java.util.function.Function;
 
 public final class AuditUtil {
 
@@ -27,43 +28,82 @@ public final class AuditUtil {
         // Utility class.
     }
 
+//    /**
+//     * Stamp {@code hasAuditInfo} with the create/update user/time, with the user identity
+//     * provided by {@code hasAuditableUserIdentity}.
+//     */
+//    public static void stamp(final HasAuditableUserIdentity hasAuditableUserIdentity,
+//                             final HasAuditInfo hasAuditInfo) {
+//        final long now = System.currentTimeMillis();
+//        final String userIdentityForAudit = hasAuditableUserIdentity.getUserIdentityForAudit();
+//
+//        if (hasAuditInfo.getCreateTimeMs() == null) {
+//            hasAuditInfo.setCreateTimeMs(now);
+//        }
+//        if (hasAuditInfo.getCreateUser() == null) {
+//            hasAuditInfo.setCreateUser(userIdentityForAudit);
+//        }
+//        hasAuditInfo.setUpdateTimeMs(now);
+//        hasAuditInfo.setUpdateUser(userIdentityForAudit);
+//    }
+//
+
     /**
      * Stamp {@code hasAuditInfo} with the create/update user/time, with the user identity
      * provided by {@code hasAuditableUserIdentity}.
      */
-    public static void stamp(final HasAuditableUserIdentity hasAuditableUserIdentity,
-                             final HasAuditInfo hasAuditInfo) {
+    public static <T extends HasAuditInfoGetters, B extends AbstractHasAuditInfoBuilder<T, ?>> B stampNew(
+            final HasAuditableUserIdentity hasAuditableUserIdentity,
+            final B builder) {
         final long now = System.currentTimeMillis();
         final String userIdentityForAudit = hasAuditableUserIdentity.getUserIdentityForAudit();
-
-        if (hasAuditInfo.getCreateTimeMs() == null) {
-            hasAuditInfo.setCreateTimeMs(now);
-        }
-        if (hasAuditInfo.getCreateUser() == null) {
-            hasAuditInfo.setCreateUser(userIdentityForAudit);
-        }
-        hasAuditInfo.setUpdateTimeMs(now);
-        hasAuditInfo.setUpdateUser(userIdentityForAudit);
+        builder.createTimeMs(now);
+        builder.createUser(userIdentityForAudit);
+        builder.updateTimeMs(now);
+        builder.updateUser(userIdentityForAudit);
+        return builder;
     }
 
     /**
      * Stamp {@code hasAuditInfo} with the create/update user/time, with the user identity
      * provided by {@code hasAuditableUserIdentity}.
      */
-    public static <T extends HasAuditInfoGetters, B extends AbstractHasAuditInfoBuilder<T, ?>> T stamp(
+    public static <T extends HasAuditInfoGetters, B extends AbstractHasAuditInfoBuilder<T, ?>> B stamp(
             final HasAuditableUserIdentity hasAuditableUserIdentity,
+            final T doc,
             final B builder) {
         final long now = System.currentTimeMillis();
         final String userIdentityForAudit = hasAuditableUserIdentity.getUserIdentityForAudit();
-        final T t = builder.build();
-        if (t.getCreateTimeMs() == null) {
+        if (doc == null || doc.getCreateTimeMs() == null) {
             builder.createTimeMs(now);
         }
-        if (t.getCreateUser() == null) {
+        if (doc == null || doc.getCreateUser() == null) {
             builder.createUser(userIdentityForAudit);
         }
         builder.updateTimeMs(now);
         builder.updateUser(userIdentityForAudit);
-        return builder.build();
+        return builder;
+    }
+
+    /**
+     * Remove audit data from docs.
+     *
+     * @param builderFactory The builder factory that allows a builder to be created for the doc that can remove the
+     *                       fields.
+     * @param doc            The doc to alter.
+     * @param <D>            Doc type.
+     * @param <B>            Builder type.
+     * @return The doc with audit fields removed.
+     */
+    public static <D, B extends AbstractHasAuditInfoBuilder<D, ?>> D
+    removeAuditData(final Function<D, B> builderFunction,
+                    final D doc) {
+        return builderFunction
+                .apply(doc)
+                .createTimeMs(null)
+                .createUser(null)
+                .updateTimeMs(null)
+                .updateUser(null)
+                .build();
     }
 }

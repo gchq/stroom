@@ -69,7 +69,7 @@ public class AppModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class AdminAccountBootstrapStartup extends RunnableWrapper {

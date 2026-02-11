@@ -17,7 +17,8 @@
 package stroom.config.global.shared;
 
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.AbstractHasAuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.PropertyPath;
 
@@ -53,7 +54,7 @@ import java.util.Optional;
  */
 @JsonIgnoreProperties(value = {"source"}, allowGetters = true)
 @JsonInclude(Include.NON_NULL)
-public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<ConfigProperty> {
+public class ConfigProperty implements HasIntegerId, Comparable<ConfigProperty>, HasAuditInfoGetters {
 
     @JsonProperty
     private Integer id;
@@ -554,14 +555,10 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
         return new Builder(copy);
     }
 
-    public static class Builder extends AbstractBuilder<ConfigProperty, ConfigProperty.Builder> {
+    public static class Builder extends AbstractHasAuditInfoBuilder<ConfigProperty, ConfigProperty.Builder> {
 
         private Integer id;
         private Integer version;
-        private Long createTimeMs;
-        private String createUser;
-        private Long updateTimeMs;
-        private String updateUser;
         private PropertyPath name;
         private String defaultValue;
         private OverrideValue<String> databaseOverrideValue;
@@ -579,12 +576,9 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
         }
 
         private Builder(final ConfigProperty copy) {
+            super(copy);
             this.id = copy.id;
             this.version = copy.version;
-            this.createTimeMs = copy.createTimeMs;
-            this.createUser = copy.createUser;
-            this.updateTimeMs = copy.updateTimeMs;
-            this.updateUser = copy.updateUser;
             this.name = copy.name;
             this.defaultValue = copy.defaultValue;
             this.databaseOverrideValue = copy.databaseOverrideValue;
@@ -604,26 +598,6 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
 
         public Builder version(final Integer version) {
             this.version = version;
-            return self();
-        }
-
-        public Builder createTimeMs(final Long createTimeMs) {
-            this.createTimeMs = createTimeMs;
-            return self();
-        }
-
-        public Builder createUser(final String createUser) {
-            this.createUser = createUser;
-            return self();
-        }
-
-        public Builder updateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
-            return self();
-        }
-
-        public Builder updateUser(final String updateUser) {
-            this.updateUser = updateUser;
             return self();
         }
 

@@ -551,7 +551,7 @@ public class HttpSender implements StreamDestination {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public record ResponseStatus(StroomStatusCode stroomStatusCode,

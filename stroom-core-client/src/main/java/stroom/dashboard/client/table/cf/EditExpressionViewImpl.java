@@ -67,7 +67,7 @@ public class EditExpressionViewImpl
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, EditExpressionViewImpl> {

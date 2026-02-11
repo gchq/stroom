@@ -233,7 +233,7 @@ public class ExplorerNodeEditTagsPresenter
                 .collect(Collectors.toList());
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface ExplorerNodeEditTagsView extends View, Focus, HasUiHandlers<HideRequestUiHandlers> {
@@ -249,7 +249,7 @@ public class ExplorerNodeEditTagsPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @ProxyCodeSplit

@@ -1149,7 +1149,7 @@ public class LmdbDataStore implements DataStore {
         }
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class LmdbReadContext {
@@ -1207,7 +1207,7 @@ public class LmdbDataStore implements DataStore {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ChildDataImpl implements ChildData {
@@ -1316,7 +1316,7 @@ public class LmdbDataStore implements DataStore {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     private static class FetchState {
 
@@ -1447,7 +1447,7 @@ public class LmdbDataStore implements DataStore {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class LmdbItem implements Item {
@@ -1493,7 +1493,7 @@ public class LmdbDataStore implements DataStore {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class CompletionStateImpl implements CompletionState {

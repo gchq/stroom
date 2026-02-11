@@ -56,7 +56,7 @@ public class CreateNewDocumentEvent extends GwtEvent<CreateNewDocumentEvent.Hand
         return documentType;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

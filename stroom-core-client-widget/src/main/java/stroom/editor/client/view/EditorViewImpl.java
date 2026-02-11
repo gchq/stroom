@@ -436,7 +436,7 @@ public class EditorViewImpl
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<FlowPanel, EditorViewImpl> {

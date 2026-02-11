@@ -72,7 +72,7 @@ public class ApiKeysViewImpl extends ViewImpl implements ApiKeysView {
 //    }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, ApiKeysViewImpl> {

@@ -51,7 +51,7 @@ public class ShowAboutEvent extends GwtEvent<ShowAboutHandler> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface ShowAboutHandler extends EventHandler {

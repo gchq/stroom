@@ -134,7 +134,7 @@ public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, 
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, FeedSettingsViewImpl> {

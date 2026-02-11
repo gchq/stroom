@@ -311,7 +311,7 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
         return sizeOfLevel.get(level);
     }
 
-    // ------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // NormalizedPosition
 
     private double getMod(final TreeNode node) {
@@ -321,7 +321,7 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
                 : 0;
     }
 
-    // ------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // The Algorithm
 
     private void setMod(final TreeNode node, final double d) {
@@ -691,7 +691,7 @@ public class AbegoTreeLayout<TreeNode> implements TreeLayout<TreeNode> {
         }
     }
 
-    // ------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
     // checkTree
 
     /**

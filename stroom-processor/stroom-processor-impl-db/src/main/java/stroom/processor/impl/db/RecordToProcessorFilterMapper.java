@@ -40,27 +40,28 @@ class RecordToProcessorFilterMapper implements Function<Record, ProcessorFilter>
 
     @Override
     public ProcessorFilter apply(final Record record) {
-        final ProcessorFilter processorFilter = new ProcessorFilter();
-        processorFilter.setId(record.get(PROCESSOR_FILTER.ID));
-        processorFilter.setVersion(record.get(PROCESSOR_FILTER.VERSION));
-        processorFilter.setCreateTimeMs(record.get(PROCESSOR_FILTER.CREATE_TIME_MS));
-        processorFilter.setCreateUser(record.get(PROCESSOR_FILTER.CREATE_USER));
-        processorFilter.setUpdateTimeMs(record.get(PROCESSOR_FILTER.UPDATE_TIME_MS));
-        processorFilter.setUpdateUser(record.get(PROCESSOR_FILTER.UPDATE_USER));
-        processorFilter.setUuid(record.get(PROCESSOR_FILTER.UUID));
-        processorFilter.setQueryData(queryDataSerialiser.deserialise(record.get(PROCESSOR_FILTER.DATA)));
-        processorFilter.setPriority(record.get(PROCESSOR_FILTER.PRIORITY));
-        processorFilter.setMaxProcessingTasks(record.get(PROCESSOR_FILTER.MAX_PROCESSING_TASKS));
-        processorFilter.setReprocess(record.get(PROCESSOR_FILTER.REPROCESS));
-        processorFilter.setEnabled(record.get(PROCESSOR_FILTER.ENABLED));
-        processorFilter.setDeleted(record.get(PROCESSOR_FILTER.DELETED));
-        processorFilter.setExport(record.get(PROCESSOR_FILTER.EXPORT));
-        processorFilter.setMinMetaCreateTimeMs(record.get(PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS));
-        processorFilter.setMaxMetaCreateTimeMs(record.get(PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS));
-        processorFilter.setRunAsUser(userRefLookupProvider
-                .get()
-                .getByUuid(record.get(PROCESSOR_FILTER.RUN_AS_USER_UUID), FindUserContext.RUN_AS)
-                .orElse(null));
-        return processorFilter;
+        return ProcessorFilter
+                .builder()
+                .id(record.get(PROCESSOR_FILTER.ID))
+                .version(record.get(PROCESSOR_FILTER.VERSION))
+                .createTimeMs(record.get(PROCESSOR_FILTER.CREATE_TIME_MS))
+                .createUser(record.get(PROCESSOR_FILTER.CREATE_USER))
+                .updateTimeMs(record.get(PROCESSOR_FILTER.UPDATE_TIME_MS))
+                .updateUser(record.get(PROCESSOR_FILTER.UPDATE_USER))
+                .uuid(record.get(PROCESSOR_FILTER.UUID))
+                .queryData(queryDataSerialiser.deserialise(record.get(PROCESSOR_FILTER.DATA)))
+                .priority(record.get(PROCESSOR_FILTER.PRIORITY))
+                .maxProcessingTasks(record.get(PROCESSOR_FILTER.MAX_PROCESSING_TASKS))
+                .reprocess(record.get(PROCESSOR_FILTER.REPROCESS))
+                .enabled(record.get(PROCESSOR_FILTER.ENABLED))
+                .deleted(record.get(PROCESSOR_FILTER.DELETED))
+                .export(record.get(PROCESSOR_FILTER.EXPORT))
+                .minMetaCreateTimeMs(record.get(PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS))
+                .maxMetaCreateTimeMs(record.get(PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS))
+                .runAsUser(userRefLookupProvider
+                        .get()
+                        .getByUuid(record.get(PROCESSOR_FILTER.RUN_AS_USER_UUID), FindUserContext.RUN_AS)
+                        .orElse(null))
+                .build();
     }
 }

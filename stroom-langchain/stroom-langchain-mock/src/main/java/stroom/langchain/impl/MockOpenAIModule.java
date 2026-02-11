@@ -55,7 +55,7 @@ public class MockOpenAIModule extends AbstractModule {
 //                .bind(OpenAIModelResourceImpl.class);
     }
 
-//    // --------------------------------------------------------------------------------
+//    // -------------------------------------------------------------------------
 //
 //    private static class ChatMemoryPrune extends RunnableWrapper {
 //

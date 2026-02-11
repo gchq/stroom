@@ -78,7 +78,7 @@ public class TaskModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class TaskManagerStartup extends RunnableWrapper {
@@ -90,7 +90,7 @@ public class TaskModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class TaskManagerShutdown extends RunnableWrapper {

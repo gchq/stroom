@@ -378,7 +378,7 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record ElementInfo(
@@ -405,7 +405,7 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record PropertyInfo(

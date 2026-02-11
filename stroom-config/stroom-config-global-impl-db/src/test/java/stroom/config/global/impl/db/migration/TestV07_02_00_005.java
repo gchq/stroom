@@ -126,7 +126,7 @@ public class TestV07_02_00_005 extends AbstractConfigMigrationTest {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record Row(String createUser, String updateUser, String userUuid) {

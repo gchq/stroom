@@ -55,7 +55,7 @@ public class SecurityDbModule extends AbstractFlyWayDbModule<AuthorisationDbConf
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class DataSourceImpl extends DataSourceProxy implements SecurityDbConnProvider {

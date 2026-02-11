@@ -92,7 +92,7 @@ public class DeleteDocumentEvent extends GwtEvent<DeleteDocumentEvent.Handler> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

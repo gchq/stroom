@@ -262,7 +262,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @BootStrapConfig

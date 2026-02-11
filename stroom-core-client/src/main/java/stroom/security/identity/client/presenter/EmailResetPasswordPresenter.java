@@ -112,7 +112,7 @@ public class EmailResetPasswordPresenter extends MyPresenterWidget<EmailResetPas
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface EmailResetPasswordView extends View, Focus, HasUiHandlers<HideRequestUiHandlers> {

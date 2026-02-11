@@ -69,7 +69,7 @@ public class OpenApiKeysScreenEvent extends GwtEvent<OpenApiKeysScreenHandler> {
                '}';
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface OpenApiKeysScreenHandler extends EventHandler {

@@ -85,7 +85,7 @@ public class SearchModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
 
     private static class EvictExpiredElements extends RunnableWrapper {

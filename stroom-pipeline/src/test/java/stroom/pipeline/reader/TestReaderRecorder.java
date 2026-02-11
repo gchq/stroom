@@ -125,7 +125,7 @@ class TestReaderRecorder {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class MyByteBuffer extends ByteArrayOutputStream {

@@ -167,7 +167,7 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface UsersView extends View {

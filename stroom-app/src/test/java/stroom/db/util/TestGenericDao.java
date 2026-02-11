@@ -63,11 +63,7 @@ public class TestGenericDao extends AbstractCoreIntegrationTest {
         assertThat(isJobPresent())
                 .isFalse();
 
-        final Job job = new Job();
-        job.setName(JOB_NAME);
-        job.setEnabled(true);
-        AuditUtil.stamp(() -> "TestUser", job);
-
+        final Job job = AuditUtil.stampNew(() -> "TestUser", Job.builder().name(JOB_NAME).enabled(true)).build();
         assertThat(job.getId())
                 .isNull();
         assertThat(job.getVersion())
@@ -100,10 +96,7 @@ public class TestGenericDao extends AbstractCoreIntegrationTest {
         assertThat(isJobPresent())
                 .isFalse();
 
-        final Job job = new Job();
-        job.setName(JOB_NAME);
-        job.setEnabled(true);
-        AuditUtil.stamp(() -> "TestUser", job);
+        final Job job = AuditUtil.stampNew(() -> "TestUser", Job.builder().name(JOB_NAME).enabled(true)).build();
 
         assertThat(job.getId())
                 .isNull();
@@ -117,10 +110,7 @@ public class TestGenericDao extends AbstractCoreIntegrationTest {
         assertThat(persistedJob.getVersion())
                 .isNotNull();
 
-        final Job job2 = new Job();
-        job2.setName(JOB_NAME);
-        job2.setEnabled(true);
-        AuditUtil.stamp(() -> "TestUser", job2);
+        final Job job2 = AuditUtil.stampNew(() -> "TestUser", Job.builder().name(JOB_NAME).enabled(true)).build();
 
         final Job persistedJob2 = genericDao.tryCreate(job2, JOB.NAME);
 
@@ -137,10 +127,7 @@ public class TestGenericDao extends AbstractCoreIntegrationTest {
         assertThat(isJobPresent())
                 .isFalse();
 
-        final Job job = new Job();
-        job.setName(JOB_NAME);
-        job.setEnabled(true);
-        AuditUtil.stamp(() -> "TestUser", job);
+        final Job job = AuditUtil.stampNew(() -> "TestUser", Job.builder().name(JOB_NAME).enabled(true)).build();
 
         assertThat(job.getId())
                 .isNull();
@@ -158,10 +145,7 @@ public class TestGenericDao extends AbstractCoreIntegrationTest {
         assertThat(didCreateHappen)
                 .isTrue();
 
-        final Job job2 = new Job();
-        job2.setName(JOB_NAME);
-        job2.setEnabled(true);
-        AuditUtil.stamp(() -> "TestUser", job2);
+        final Job job2 = AuditUtil.stampNew(() -> "TestUser", Job.builder().name(JOB_NAME).enabled(true)).build();
 
         didCreateHappen.set(false);
 
@@ -181,24 +165,21 @@ public class TestGenericDao extends AbstractCoreIntegrationTest {
         assertThat(isJobPresent())
                 .isFalse();
 
-        final Job job = new Job();
-        job.setName(JOB_NAME);
-        job.setEnabled(true);
-        AuditUtil.stamp(() -> "TestUser", job);
+        final Job job = AuditUtil.stampNew(() -> "TestUser", Job.builder().name(JOB_NAME).enabled(true)).build();
 
         assertThat(job.getId())
                 .isNull();
         assertThat(job.getVersion())
                 .isNull();
 
-        final Job persistedJob = genericDao.create(job);
+        Job persistedJob = genericDao.create(job);
         final int id = persistedJob.getId();
         final int originalVersion = persistedJob.getVersion();
 
         assertThat(genericDao.fetch(id))
                 .isPresent();
 
-        persistedJob.setEnabled(false);
+        persistedJob = persistedJob.copy().enabled(false).build();
 
         final Job persistedJob2 = genericDao.update(persistedJob);
 
@@ -217,10 +198,7 @@ public class TestGenericDao extends AbstractCoreIntegrationTest {
         assertThat(isJobPresent())
                 .isFalse();
 
-        final Job job = new Job();
-        job.setName(JOB_NAME);
-        job.setEnabled(true);
-        AuditUtil.stamp(() -> "TestUser", job);
+        final Job job = AuditUtil.stampNew(() -> "TestUser", Job.builder().name(JOB_NAME).enabled(true)).build();
 
         assertThat(job.getId())
                 .isNull();

@@ -157,7 +157,7 @@ public class QueryToolbarPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     public interface QueryToolbarView extends View, HasUiHandlers<QueryToolbarUiHandlers> {
 

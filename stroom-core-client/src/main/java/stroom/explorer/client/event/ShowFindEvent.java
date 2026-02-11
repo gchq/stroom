@@ -49,7 +49,7 @@ public class ShowFindEvent extends GwtEvent<ShowFindEvent.Handler> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

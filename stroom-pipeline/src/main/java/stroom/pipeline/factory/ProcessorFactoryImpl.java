@@ -73,7 +73,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     static class MultiWayProcessor implements Processor {

@@ -153,7 +153,7 @@ public class CrossModuleDbMigrationsModule
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class DataSourceImpl extends DataSourceProxy implements CrossModuleDbConnProvider {

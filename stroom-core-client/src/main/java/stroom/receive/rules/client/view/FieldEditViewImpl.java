@@ -85,7 +85,7 @@ public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, FieldEditViewImpl> {

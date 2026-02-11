@@ -171,7 +171,7 @@ public class MetricRegistrationBuilder {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class VoidRegisterStage<M extends Metric> {
@@ -201,7 +201,7 @@ public class MetricRegistrationBuilder {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class CreateAndRegisterStage<M extends Metric> {

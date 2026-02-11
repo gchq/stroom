@@ -69,7 +69,7 @@ public class DictionarySettingsPresenter extends DocumentEditPresenter<Dictionar
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface DictionarySettingsView extends View {

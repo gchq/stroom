@@ -260,7 +260,7 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
                '}';
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static final class Builder {

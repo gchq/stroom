@@ -393,7 +393,7 @@ class FormatDate extends StroomExtensionFunctionCall {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class FieldSet {
@@ -413,7 +413,7 @@ class FormatDate extends StroomExtensionFunctionCall {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class Key {
@@ -446,7 +446,7 @@ class FormatDate extends StroomExtensionFunctionCall {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class RegularParser implements Function<String, Long> {
@@ -469,7 +469,7 @@ class FormatDate extends StroomExtensionFunctionCall {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class RegularParserWithReferenceTime implements Function<String, Long> {
@@ -516,7 +516,7 @@ class FormatDate extends StroomExtensionFunctionCall {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class WeekBasedParser implements Function<String, Long> {

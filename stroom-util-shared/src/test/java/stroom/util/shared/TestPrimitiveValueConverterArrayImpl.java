@@ -85,7 +85,7 @@ class TestPrimitiveValueConverterArrayImpl {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private enum MyEnum implements HasPrimitiveValue {

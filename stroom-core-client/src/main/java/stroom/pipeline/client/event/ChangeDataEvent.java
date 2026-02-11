@@ -55,7 +55,7 @@ public class ChangeDataEvent<T> extends GwtEvent<ChangeDataEvent.ChangeDataHandl
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface ChangeDataHandler<T> extends EventHandler {

@@ -249,7 +249,7 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private class MenuSelectionEventManager

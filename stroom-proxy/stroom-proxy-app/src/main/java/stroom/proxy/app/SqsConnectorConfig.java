@@ -96,7 +96,7 @@ public class SqsConnectorConfig extends AbstractConfig implements IsProxyConfig 
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Builder {

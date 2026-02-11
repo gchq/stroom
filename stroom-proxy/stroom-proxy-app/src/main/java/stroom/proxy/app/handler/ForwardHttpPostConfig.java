@@ -298,7 +298,7 @@ public final class ForwardHttpPostConfig
         return CollectionUtil.cleanItems(fields, s -> s.trim().toLowerCase());
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Builder {

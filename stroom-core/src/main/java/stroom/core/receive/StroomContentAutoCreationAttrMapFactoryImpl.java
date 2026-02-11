@@ -59,7 +59,7 @@ public class StroomContentAutoCreationAttrMapFactoryImpl
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record StroomContentAutoCreationAttrMapFilter(ContentAutoCreationService contentAutoCreationService)

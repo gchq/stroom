@@ -205,7 +205,7 @@ class TestInvalidCharFilterReaderElement {
         return cnt;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class TestTarget extends AbstractIOElement implements TakesReader, Target {

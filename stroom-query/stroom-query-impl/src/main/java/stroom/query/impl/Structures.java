@@ -426,7 +426,7 @@ class Structures {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record StructureElement(String title, String detail, String... snippets) {

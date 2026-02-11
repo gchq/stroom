@@ -99,7 +99,7 @@ public class PercentBarCell extends AbstractCell<Number> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     interface Template extends SafeHtmlTemplates {

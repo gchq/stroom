@@ -40,7 +40,10 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
         if (processorFilter.getProcessorFilterTracker() == null) {
-            processorFilter.setProcessorFilterTracker(new ProcessorFilterTracker());
+            return dao.create(processorFilter
+                    .copy()
+                    .processorFilterTracker(ProcessorFilterTracker.builder().build())
+                    .build());
         }
         return dao.create(processorFilter);
     }
@@ -64,7 +67,7 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     public int logicalDeleteByProcessorFilterId(final int processorFilterId) {
         return fetch(processorFilterId)
                 .map(processorFilter -> {
-                    processorFilter.setDeleted(true);
+                    dao.update(processorFilter.copy().deleted(true).build());
                     return 1;
                 })
                 .orElse(0);
@@ -77,8 +80,7 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
 
     @Override
     public ProcessorFilter restoreProcessorFilter(final ProcessorFilter processorFilter, final boolean resetTracker) {
-        processorFilter.setDeleted(false);
-        return processorFilter;
+        return dao.update(processorFilter.copy().deleted(false).build());
     }
 
     @Override

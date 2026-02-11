@@ -170,7 +170,7 @@ public class MyDateBox extends Composite implements DateBoxView {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private class DateBoxHandler implements ValueChangeHandler<Date>,

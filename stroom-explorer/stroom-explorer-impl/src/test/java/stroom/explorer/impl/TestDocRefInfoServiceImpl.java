@@ -295,7 +295,7 @@ class TestDocRefInfoServiceImpl {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class MySpecialDataSource1 implements IsSpecialExplorerDataSource {
@@ -314,7 +314,7 @@ class TestDocRefInfoServiceImpl {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class MySpecialDataSource2 implements IsSpecialExplorerDataSource {

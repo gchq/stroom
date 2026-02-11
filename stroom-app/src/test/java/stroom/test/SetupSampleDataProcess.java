@@ -632,15 +632,15 @@ public final class SetupSampleDataProcess {
         final Optional<User> optionalGroup = userDao.getGroupByName(name);
         return optionalGroup.orElseGet(() -> {
             final User user = User.builder()
+                    .createUser("admin")
+                    .updateUser("admin")
+                    .createTimeMs(System.currentTimeMillis())
+                    .updateTimeMs(System.currentTimeMillis())
                     .subjectId(name)
                     .displayName(name)
                     .uuid(UUID.randomUUID().toString())
                     .group(true)
                     .build();
-            user.setCreateUser("admin");
-            user.setUpdateUser("admin");
-            user.setCreateTimeMs(System.currentTimeMillis());
-            user.setUpdateTimeMs(System.currentTimeMillis());
             return userDao.create(user);
         });
     }
@@ -649,15 +649,15 @@ public final class SetupSampleDataProcess {
         final Optional<User> optional = userDao.getUserBySubjectId(name);
         return optional.orElseGet(() -> {
             final User user = User.builder()
+                    .createUser("admin")
+                    .updateUser("admin")
+                    .createTimeMs(System.currentTimeMillis())
+                    .updateTimeMs(System.currentTimeMillis())
                     .subjectId(name)
                     .displayName(name)
                     .uuid(UUID.randomUUID().toString())
                     .group(false)
                     .build();
-            user.setCreateUser("admin");
-            user.setUpdateUser("admin");
-            user.setCreateTimeMs(System.currentTimeMillis());
-            user.setUpdateTimeMs(System.currentTimeMillis());
             return userDao.create(user);
         });
     }

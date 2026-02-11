@@ -202,12 +202,9 @@ public class ProcessorProfile implements HasIntegerId, HasAuditInfoGetters {
         }
 
         private Builder(final ProcessorProfile processorProfile) {
+            super(processorProfile);
             this.id = processorProfile.id;
             this.version = processorProfile.version;
-            this.createTimeMs = processorProfile.createTimeMs;
-            this.createUser = processorProfile.createUser;
-            this.updateTimeMs = processorProfile.updateTimeMs;
-            this.updateUser = processorProfile.updateUser;
             this.name = processorProfile.name;
             this.nodeGroupName = processorProfile.nodeGroupName;
             this.profilePeriods = processorProfile.profilePeriods;

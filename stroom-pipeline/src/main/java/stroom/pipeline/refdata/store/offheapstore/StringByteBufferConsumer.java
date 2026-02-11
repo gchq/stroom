@@ -60,7 +60,7 @@ public class StringByteBufferConsumer implements RefDataValueByteBufferConsumer 
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Factory implements RefDataValueByteBufferConsumer.Factory {

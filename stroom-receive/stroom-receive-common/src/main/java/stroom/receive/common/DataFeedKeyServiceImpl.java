@@ -632,7 +632,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
         return CIKey.of(receiveDataConfig.getDataFeedKeyOwnerMetaKey());
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
 //    private record CacheKey(DataFeedKeyHashAlgorithm dataFeedKeyHashAlgorithm,
@@ -641,7 +641,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
 //    }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record UnHashedCacheKey(String unHashedKey, CIKey keyOwner) {

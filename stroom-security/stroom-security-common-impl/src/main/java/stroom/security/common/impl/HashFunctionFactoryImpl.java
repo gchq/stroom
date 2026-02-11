@@ -63,7 +63,7 @@ public class HashFunctionFactoryImpl implements HashFunctionFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private abstract static class AbstractHashFunction implements HashFunction {
@@ -83,7 +83,7 @@ public class HashFunctionFactoryImpl implements HashFunctionFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ShaThree256Hasher extends AbstractHashFunction {
@@ -101,7 +101,7 @@ public class HashFunctionFactoryImpl implements HashFunctionFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ShaTwo256Hasher extends AbstractHashFunction {
@@ -119,7 +119,7 @@ public class HashFunctionFactoryImpl implements HashFunctionFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ShaTwo512Hasher extends AbstractHashFunction {
@@ -137,7 +137,7 @@ public class HashFunctionFactoryImpl implements HashFunctionFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class BCryptHasher implements HashFunction {
@@ -173,7 +173,7 @@ public class HashFunctionFactoryImpl implements HashFunctionFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class Argon2Hasher extends AbstractHashFunction {

@@ -220,9 +220,9 @@ public class JobNode extends TableImpl<JobNodeRecord> {
         return new JobNode(name, null);
     }
 
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
     // Row12 type methods
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
     @Override
     public Row12<Integer, Integer, Long, String, Long, String, Integer, Byte, String, Integer, String, Boolean> fieldsRow() {

@@ -586,13 +586,12 @@ class TestDocPermissionDaoImpl {
     }
 
     private UserRef createUserOrGroup(final String name, final boolean group) {
-        final User user = User.builder()
+        final User.Builder builder = User.builder()
                 .subjectId(name)
                 .displayName(name)
                 .uuid(UUID.randomUUID().toString())
-                .group(group)
-                .build();
-        AuditUtil.stamp(() -> "test", user);
-        return userDao.create(user).asRef();
+                .group(group);
+        AuditUtil.stampNew(() -> "test", builder);
+        return userDao.create(builder.build()).asRef();
     }
 }

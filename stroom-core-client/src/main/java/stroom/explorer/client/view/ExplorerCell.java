@@ -209,7 +209,7 @@ public class ExplorerCell extends AbstractCell<ExplorerNode> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     interface Template extends SafeHtmlTemplates {

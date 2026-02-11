@@ -71,8 +71,44 @@ public final class ProcessorRow extends ProcessorListRow {
     @Override
     public String toString() {
         return "ProcessorRow{" +
-                "processor=" + processor +
-                ", expander=" + expander +
-                '}';
+               "processor=" + processor +
+               ", expander=" + expander +
+               '}';
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
+        private Processor processor;
+        private Expander expander;
+
+        private Builder() {
+        }
+
+        private Builder(final ProcessorRow processorRow) {
+            this.processor = processorRow.processor;
+            this.expander = processorRow.expander;
+        }
+
+        public Builder processor(final Processor processor) {
+            this.processor = processor;
+            return this;
+        }
+
+        public Builder expander(final Expander expander) {
+            this.expander = expander;
+            return this;
+        }
+
+        public ProcessorRow build() {
+            return new ProcessorRow(expander, processor);
+        }
     }
 }

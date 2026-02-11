@@ -842,7 +842,7 @@ public class DelegatingRefDataOffHeapStore implements RefDataStore, HasSystemInf
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record FeedSpecificStore(String feedName, RefDataOffHeapStore refDataOffHeapStore) {

@@ -57,7 +57,7 @@ final class ProxyCurrentUserState {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record State(UserIdentity userIdentity, boolean elevatePermissions) {

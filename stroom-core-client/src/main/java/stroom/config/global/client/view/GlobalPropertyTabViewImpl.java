@@ -80,7 +80,7 @@ public class GlobalPropertyTabViewImpl
         nameFilter.registerPopupTextProvider(popupTextSupplier);
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, GlobalPropertyTabViewImpl> {

@@ -380,11 +380,15 @@ public class EmbeddedQueryPresenter
     }
 
     private QueryDoc getQueryDoc() {
+        final String name = getDashboardContext().getDashboardDocRef().getName() +
+                            " - " +
+                            getComponentConfig().getName();
         QueryDoc doc = getQuerySettings().getEmbeddedQueryDoc();
         if (doc == null) {
-            doc = QueryDoc.builder().uuid("Embedded Query").build();
+            doc = QueryDoc.builder().uuid("Embedded Query").name(name).build();
+        } else {
+            doc = doc.copy().name(name).build();
         }
-        doc.setName(getDashboardContext().getDashboardDocRef().getName() + " - " + getComponentConfig().getName());
         return doc;
     }
 

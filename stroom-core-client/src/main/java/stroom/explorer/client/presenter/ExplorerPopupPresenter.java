@@ -296,7 +296,7 @@ public class ExplorerPopupPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ExtendedExplorerTree extends ExplorerTree {

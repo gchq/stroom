@@ -34,9 +34,9 @@ import org.jooq.impl.Internal;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Indexes {
 
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
     // INDEX definitions
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
     public static final Index EXPLORER_PATH_EXPLORER_PATH_ANCESTOR_DEPTH_ORDER_INDEX = Internal.createIndex(DSL.name("explorer_path_ancestor_depth_order_index"), ExplorerPath.EXPLORER_PATH, new OrderField[] { ExplorerPath.EXPLORER_PATH.ANCESTOR, ExplorerPath.EXPLORER_PATH.DEPTH, ExplorerPath.EXPLORER_PATH.ORDER_INDEX }, false);
     public static final Index EXPLORER_PATH_EXPLORER_PATH_DEPTH = Internal.createIndex(DSL.name("explorer_path_depth"), ExplorerPath.EXPLORER_PATH, new OrderField[] { ExplorerPath.EXPLORER_PATH.DEPTH }, false);

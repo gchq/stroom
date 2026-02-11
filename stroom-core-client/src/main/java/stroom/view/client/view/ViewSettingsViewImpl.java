@@ -63,7 +63,7 @@ public class ViewSettingsViewImpl extends ViewImpl implements ViewSettingsView {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, ViewSettingsViewImpl> {

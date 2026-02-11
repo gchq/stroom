@@ -154,7 +154,7 @@ public class DuplicateCheckFactoryImpl implements DuplicateCheckFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class NoOpDuplicateCheck implements DuplicateCheck {

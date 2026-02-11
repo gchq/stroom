@@ -36,17 +36,16 @@ import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeGroup.FS_VOLUME_G
 
 class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
 
-    static final Function<Record, FsVolumeGroup> RECORD_TO_FS_VOLUME_GROUP_MAPPER = record -> {
-        final FsVolumeGroup fsVolumeGroup = new FsVolumeGroup();
-        fsVolumeGroup.setId(record.get(FS_VOLUME_GROUP.ID));
-        fsVolumeGroup.setVersion(record.get(FS_VOLUME_GROUP.VERSION));
-        fsVolumeGroup.setCreateTimeMs(record.get(FS_VOLUME_GROUP.CREATE_TIME_MS));
-        fsVolumeGroup.setCreateUser(record.get(FS_VOLUME_GROUP.CREATE_USER));
-        fsVolumeGroup.setUpdateTimeMs(record.get(FS_VOLUME_GROUP.UPDATE_TIME_MS));
-        fsVolumeGroup.setUpdateUser(record.get(FS_VOLUME_GROUP.UPDATE_USER));
-        fsVolumeGroup.setName(record.get(FS_VOLUME_GROUP.NAME));
-        return fsVolumeGroup;
-    };
+    static final Function<Record, FsVolumeGroup> RECORD_TO_FS_VOLUME_GROUP_MAPPER = record -> FsVolumeGroup
+            .builder()
+            .id(record.get(FS_VOLUME_GROUP.ID))
+            .version(record.get(FS_VOLUME_GROUP.VERSION))
+            .createTimeMs(record.get(FS_VOLUME_GROUP.CREATE_TIME_MS))
+            .createUser(record.get(FS_VOLUME_GROUP.CREATE_USER))
+            .updateTimeMs(record.get(FS_VOLUME_GROUP.UPDATE_TIME_MS))
+            .updateUser(record.get(FS_VOLUME_GROUP.UPDATE_USER))
+            .name(record.get(FS_VOLUME_GROUP.NAME))
+            .build();
 
     @SuppressWarnings("checkstyle:LineLength")
     private static final BiFunction<FsVolumeGroup, FsVolumeGroupRecord, FsVolumeGroupRecord> FS_VOLUME_GROUP_TO_RECORD_MAPPER =
@@ -95,9 +94,11 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
                 .returning(FS_VOLUME_GROUP.ID)
                 .fetchOne(FS_VOLUME_GROUP.ID));
         Objects.requireNonNull(id, "Id is null");
-        fsVolumeGroup.setId(id);
-        fsVolumeGroup.setVersion(1);
-        return fsVolumeGroup;
+        return fsVolumeGroup
+                .copy()
+                .id(id)
+                .version(1)
+                .build();
     }
 
     @Override

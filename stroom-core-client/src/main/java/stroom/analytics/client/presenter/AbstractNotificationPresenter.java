@@ -106,7 +106,7 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface AnalyticNotificationView extends View, HasUiHandlers<DirtyUiHandlers> {

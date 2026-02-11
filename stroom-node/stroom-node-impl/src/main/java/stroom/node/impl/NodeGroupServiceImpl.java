@@ -65,7 +65,7 @@ public class NodeGroupServiceImpl implements NodeGroupService {
     @Override
     public NodeGroup create(final String name) {
         final NodeGroup result = securityContext.secureResult(AppPermission.MANAGE_NODES_PERMISSION, () ->
-                nodeGroupDao.create(AuditUtil.stamp(securityContext, NodeGroup.builder().name(name))));
+                nodeGroupDao.create(AuditUtil.stampNew(securityContext, NodeGroup.builder().name(name)).build()));
         fireChange(EntityAction.CREATE);
         return result;
     }
@@ -73,7 +73,7 @@ public class NodeGroupServiceImpl implements NodeGroupService {
     @Override
     public NodeGroup update(final NodeGroup nodeGroup) {
         final NodeGroup result = securityContext.secureResult(AppPermission.MANAGE_NODES_PERMISSION, () ->
-                nodeGroupDao.update(AuditUtil.stamp(securityContext, nodeGroup.copy())));
+                nodeGroupDao.update(AuditUtil.stamp(securityContext, nodeGroup, nodeGroup.copy()).build()));
         fireChange(EntityAction.UPDATE);
         return result;
     }

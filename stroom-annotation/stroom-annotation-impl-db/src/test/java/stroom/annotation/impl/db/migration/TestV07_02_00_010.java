@@ -212,7 +212,7 @@ public class TestV07_02_00_010 extends AbstractAnnotationMigrationTest {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public record Row(String createUser, String updateUser, String type, String data) {

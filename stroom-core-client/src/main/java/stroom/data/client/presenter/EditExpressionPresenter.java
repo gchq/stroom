@@ -253,7 +253,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface EditExpressionView extends View {

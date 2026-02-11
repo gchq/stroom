@@ -92,7 +92,7 @@ public class OpenItemsImpl implements OpenItems {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class All implements OpenItems {

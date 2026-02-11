@@ -52,7 +52,7 @@ public class MarkdownPreviewViewImpl extends ViewImpl implements MarkdownPreview
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, MarkdownPreviewViewImpl> {

@@ -152,7 +152,7 @@ class TestDocRefInfoCache {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class MyDocumentActionHandler implements DocumentActionHandler {
@@ -193,7 +193,7 @@ class TestDocRefInfoCache {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class MyFolderExplorerActionHandler implements ExplorerActionHandler {

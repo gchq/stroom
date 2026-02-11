@@ -65,7 +65,7 @@ public class CurveTabSelector extends AbstractTabSelector {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     interface Binder extends UiBinder<DivElement, CurveTabSelector> {

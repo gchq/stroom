@@ -217,7 +217,7 @@ public class MockStore implements Store, Clearable, AttributeMapFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private class MockTarget implements InternalTarget, SegmentOutputStreamProviderFactory {
@@ -430,7 +430,7 @@ public class MockStore implements Store, Clearable, AttributeMapFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private class MockSource implements InternalSource, SegmentInputStreamProviderFactory {

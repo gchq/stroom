@@ -253,7 +253,7 @@ public class StroomUserIdentityFactory
 
                     final UserService userService = userServiceProvider.get();
                     while (!success && iterationCount < 10) {
-                        final User persistedUser = userService.loadByUuid(user.getUuid())
+                        User persistedUser = userService.loadByUuid(user.getUuid())
                                 .orElseThrow(() -> new RuntimeException(
                                         "Expecting to find user with uuid " + user.getUuid()));
 
@@ -261,8 +261,11 @@ public class StroomUserIdentityFactory
                             final String currentDisplayName = persistedUser.getDisplayName();
                             final String currentFullName = persistedUser.getFullName();
 
-                            persistedUser.setDisplayName(displayName);
-                            persistedUser.setFullName(fullName);
+                            persistedUser = persistedUser
+                                    .copy()
+                                    .displayName(displayName)
+                                    .fullName(fullName)
+                                    .build();
                             try {
                                 // It is possible for another node to do this, so OCC would throw
                                 // an exception
@@ -548,12 +551,13 @@ public class StroomUserIdentityFactory
 
         if (!Objects.equals(newDisplayName, user.getDisplayName())
             || !Objects.equals(newFullName, user.getFullName())) {
-
             LOGGER.debug("Updating user {} with displayName: '{}' and fullName: '{}'",
                     user, newDisplayName, newFullName);
-            user.setDisplayName(newDisplayName);
-            user.setFullName(newFullName);
-            userService.update(user);
+            userService.update(user
+                    .copy()
+                    .displayName(newDisplayName)
+                    .fullName(newFullName)
+                    .build());
         }
     }
 

@@ -106,7 +106,7 @@ public class SimplePopup extends AbstractPopupPanel {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, SimplePopup> {

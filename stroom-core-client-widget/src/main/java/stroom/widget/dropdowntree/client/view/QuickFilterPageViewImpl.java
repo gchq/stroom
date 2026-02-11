@@ -96,7 +96,7 @@ public class QuickFilterPageViewImpl extends ViewWithUiHandlers<QuickFilterUiHan
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, QuickFilterPageViewImpl> {

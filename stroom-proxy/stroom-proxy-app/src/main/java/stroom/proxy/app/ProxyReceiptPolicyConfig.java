@@ -120,7 +120,7 @@ public class ProxyReceiptPolicyConfig extends AbstractConfig implements IsProxyC
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static final class Builder {

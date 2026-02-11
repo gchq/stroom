@@ -195,7 +195,7 @@ public class TextPresenter extends MyPresenterWidget<TextPresenter.TextView> imp
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface TextView extends View, HasUiHandlers<TextUiHandlers> {

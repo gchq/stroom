@@ -108,7 +108,7 @@ public class ExplorerConfig extends AbstractConfig implements IsStroomConfig, Ha
         return dependencyWarningsEnabled;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @BootStrapConfig

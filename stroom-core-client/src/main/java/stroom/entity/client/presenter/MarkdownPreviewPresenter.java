@@ -131,7 +131,7 @@ public class MarkdownPreviewPresenter extends MyPresenterWidget<MarkdownPreviewV
         return codePresenter.addFormatHandler(handler);
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface MarkdownPreviewView extends View {

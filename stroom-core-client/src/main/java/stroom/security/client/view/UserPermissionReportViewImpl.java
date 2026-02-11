@@ -60,7 +60,7 @@ public final class UserPermissionReportViewImpl
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, UserPermissionReportViewImpl> {

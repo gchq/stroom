@@ -52,7 +52,7 @@ public abstract class Item {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     protected abstract static class AbstractBuilder<T extends Item, B extends Item.AbstractBuilder<T, ?>> {

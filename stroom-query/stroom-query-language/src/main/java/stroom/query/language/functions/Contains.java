@@ -93,7 +93,7 @@ class Contains extends AbstractManyChildFunction {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static final class Gen extends AbstractManyChildGenerator {

@@ -52,7 +52,7 @@ public class MenuItemCell extends AbstractCell<Item> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Appearance<I extends Item> {
@@ -61,7 +61,7 @@ public class MenuItemCell extends AbstractCell<Item> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class SeparatorAppearance implements Appearance<Separator> {
@@ -77,7 +77,7 @@ public class MenuItemCell extends AbstractCell<Item> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class GroupHeadingAppearance implements Appearance<GroupHeading> {
@@ -94,7 +94,7 @@ public class MenuItemCell extends AbstractCell<Item> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class MenuItemAppearance implements Appearance<MenuItem> {
@@ -109,7 +109,7 @@ public class MenuItemCell extends AbstractCell<Item> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class IconMenuItemAppearance implements Appearance<IconMenuItem> {
@@ -179,7 +179,7 @@ public class MenuItemCell extends AbstractCell<Item> {
         }
 
 
-        // --------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
 
 
         public interface Template extends SafeHtmlTemplates {
@@ -196,7 +196,7 @@ public class MenuItemCell extends AbstractCell<Item> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class SimpleMenuItemAppearance implements Appearance<SimpleMenuItem> {
@@ -238,7 +238,7 @@ public class MenuItemCell extends AbstractCell<Item> {
         }
 
 
-        // --------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
 
 
         public interface Template extends SafeHtmlTemplates {
@@ -255,7 +255,7 @@ public class MenuItemCell extends AbstractCell<Item> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class InfoMenuItemAppearance implements Appearance<InfoMenuItem> {
@@ -281,7 +281,7 @@ public class MenuItemCell extends AbstractCell<Item> {
         }
 
 
-        // --------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
 
 
         public interface Template extends SafeHtmlTemplates {

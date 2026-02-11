@@ -21,6 +21,7 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.util.shared.BuilderFactory;
 import stroom.util.shared.HasData;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -105,9 +106,22 @@ public class DocumentationDoc extends AbstractDoc implements HasData {
         return Objects.hash(super.hashCode(), documentation, data);
     }
 
-
     public Builder copy() {
         return new Builder(this);
+    }
+
+    public static BuilderFactory<DocumentationDoc, Builder> builderFactory() {
+        return new BuilderFactory<DocumentationDoc, Builder>() {
+            @Override
+            public Builder create() {
+                return new Builder();
+            }
+
+            @Override
+            public Builder create(final DocumentationDoc doc) {
+                return new Builder(doc);
+            }
+        };
     }
 
     public static Builder builder() {

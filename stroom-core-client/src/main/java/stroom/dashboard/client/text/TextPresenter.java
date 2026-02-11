@@ -724,7 +724,7 @@ public class TextPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface TextView extends View, HasUiHandlers<TextUiHandlers>, TaskMonitorFactory {

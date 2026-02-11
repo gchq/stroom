@@ -95,7 +95,7 @@ public class XPathFilterPresenter extends MyPresenterWidget<XPathFilterPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface XPathFilterView extends View, Focus {

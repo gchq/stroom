@@ -58,7 +58,7 @@ public interface ReceiveDataRuleSetService {
     BundledRules getBundledRules();
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     record BundledRules(ReceiveDataRules receiveDataRules,

@@ -78,7 +78,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
 //            FileUtil.getCanonicalPath(tempDir.resolve("PUBLIC_2B")),
 //            FsVolumeState.create(0, 1000));
 //    //    private final SecurityContext securityContext = new MockSecurityContext();
-////    private FileSystemVolumeConfig volumeConfig = new FileSystemVolumeConfig();
+    /// /    private FileSystemVolumeConfig volumeConfig = new FileSystemVolumeConfig();
     private FsVolumeService volumeService = null;
 
     @TempDir
@@ -138,8 +138,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
         final FsVolume public1a = FsVolume.create(
                 FileUtil.getCanonicalPath(tempDir.resolve("PUBLIC_1A")),
                 FsVolumeState.create(0, 1000));
-        FsVolume fileVolume = volumeService.create(public1a);
-        fileVolume.setByteLimit(2000000L);
+        FsVolume fileVolume = volumeService.create(public1a).copy().byteLimit(2000000L).build();
 
         // Update
         fileVolume = volumeService.update(fileVolume);
@@ -147,7 +146,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
         // Find
         list = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
         assertThat(list.size()).isOne();
-        assertThat(list.get(0)).isEqualTo(fileVolume);
+        assertThat(list.getFirst()).isEqualTo(fileVolume);
 
         // Fetch
         assertThat(volumeService.fetch(fileVolume.getId())).isEqualTo(fileVolume);

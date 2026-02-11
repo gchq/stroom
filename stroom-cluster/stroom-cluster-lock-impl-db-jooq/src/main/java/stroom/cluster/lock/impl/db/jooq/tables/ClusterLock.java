@@ -163,9 +163,9 @@ public class ClusterLock extends TableImpl<ClusterLockRecord> {
         return new ClusterLock(name, null);
     }
 
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
     // Row3 type methods
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
     @Override
     public Row3<Integer, Integer, String> fieldsRow() {

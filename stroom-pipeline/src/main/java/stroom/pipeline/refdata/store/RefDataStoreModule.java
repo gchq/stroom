@@ -101,7 +101,7 @@ public class RefDataStoreModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class RefDataPurge extends RunnableWrapper {

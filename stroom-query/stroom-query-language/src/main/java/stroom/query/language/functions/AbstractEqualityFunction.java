@@ -65,7 +65,7 @@ abstract class AbstractEqualityFunction extends AbstractManyChildFunction {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static final class Gen extends AbstractManyChildGenerator {

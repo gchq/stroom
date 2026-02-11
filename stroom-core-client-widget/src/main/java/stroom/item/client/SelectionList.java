@@ -399,7 +399,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private void setKeyboardSelection(final I value, final boolean stealFocus) {
@@ -488,7 +488,7 @@ public class SelectionList<T, I extends SelectionItem> extends Composite {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class NavigationState<I extends SelectionItem> {

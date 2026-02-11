@@ -418,7 +418,7 @@ public class NewPropertyPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface NewPropertyView extends View, Focus, HasUiHandlers<NewPropertyUiHandlers> {

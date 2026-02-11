@@ -194,7 +194,7 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, ContentTemplateEditViewImpl> {

@@ -57,7 +57,7 @@ public class RefreshDocumentEvent extends GwtEvent<RefreshDocumentEvent.Handler>
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

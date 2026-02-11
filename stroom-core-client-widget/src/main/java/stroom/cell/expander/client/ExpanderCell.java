@@ -132,7 +132,7 @@ public class ExpanderCell extends AbstractCell<Expander> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     interface Template extends SafeHtmlTemplates {

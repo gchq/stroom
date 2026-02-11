@@ -733,7 +733,7 @@ public class VisPresenter
         return TAB_TYPE;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface VisView extends View, RequiresResize {

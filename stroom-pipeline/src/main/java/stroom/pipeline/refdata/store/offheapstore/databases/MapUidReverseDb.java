@@ -101,7 +101,7 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Factory {

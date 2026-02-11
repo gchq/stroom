@@ -138,7 +138,7 @@ public class ExplorerNodeRemoveTagsViewImpl
         updateNodeTagsListBoxContents();
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, ExplorerNodeRemoveTagsViewImpl> {

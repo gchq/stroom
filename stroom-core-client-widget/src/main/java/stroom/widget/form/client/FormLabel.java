@@ -59,7 +59,7 @@ public class FormLabel extends Composite {
         return disabled;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class Lbl extends Widget {

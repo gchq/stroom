@@ -71,7 +71,7 @@ abstract class AbstractStringFunction extends AbstractFunction {
     abstract Operation getOperation();
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     interface Operation {
@@ -80,7 +80,7 @@ abstract class AbstractStringFunction extends AbstractFunction {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static final class Gen extends AbstractSingleChildGenerator {

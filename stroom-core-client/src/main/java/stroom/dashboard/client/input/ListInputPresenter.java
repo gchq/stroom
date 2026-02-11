@@ -169,7 +169,7 @@ public class ListInputPresenter
         return TAB_TYPE;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface ListInputView extends View, HasUiHandlers<ListInputUiHandlers> {
@@ -184,7 +184,7 @@ public class ListInputPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class WordItem implements HasDisplayValue {

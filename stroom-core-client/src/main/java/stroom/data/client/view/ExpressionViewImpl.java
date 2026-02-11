@@ -49,7 +49,7 @@ public class ExpressionViewImpl extends ViewImpl implements ExpressionView {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, ExpressionViewImpl> {

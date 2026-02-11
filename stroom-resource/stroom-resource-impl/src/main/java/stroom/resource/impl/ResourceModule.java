@@ -47,7 +47,7 @@ public class ResourceModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class DeleteTempFile extends RunnableWrapper {
@@ -59,7 +59,7 @@ public class ResourceModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ResourceStoreStartup extends RunnableWrapper {
@@ -71,7 +71,7 @@ public class ResourceModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ResourceStoreShutdown extends RunnableWrapper {

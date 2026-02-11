@@ -79,8 +79,9 @@ class TestIndexShardIO extends StroomUnitTest {
 
     @Test
     void testOpenCloseManyWrite() throws IOException {
-        final IndexVolume volume = new IndexVolume();
-        volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
+        final IndexVolume volume = IndexVolume.builder()
+                .path(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")))
+                .build();
         final LuceneIndexDoc index = LuceneIndexDoc.builder()
                 .uuid(UUID.randomUUID().toString())
                 .name("Test")
@@ -110,8 +111,9 @@ class TestIndexShardIO extends StroomUnitTest {
                 .name("Test")
                 .build();
 
-        final IndexVolume volume = new IndexVolume();
-        volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
+        final IndexVolume volume = IndexVolume.builder()
+                .path(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")))
+                .build();
         final IndexShard idx1 = createShard(index, volume);
 
         // Clean up from previous tests.
@@ -284,8 +286,9 @@ class TestIndexShardIO extends StroomUnitTest {
                 .name("Test")
                 .build();
 
-        final IndexVolume volume = new IndexVolume();
-        volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
+        final IndexVolume volume = IndexVolume.builder()
+                .path(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")))
+                .build();
         final IndexShard idx1 = createShard(index, volume);
 
         // Clean up from previous tests.
@@ -311,8 +314,9 @@ class TestIndexShardIO extends StroomUnitTest {
                 .name("Test")
                 .build();
 
-        final IndexVolume volume = new IndexVolume();
-        volume.setPath(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")));
+        final IndexVolume volume = IndexVolume.builder()
+                .path(FileUtil.getCanonicalPath(Files.createTempDirectory("stroom")))
+                .build();
         final IndexShard idx1 = createShard(index, volume);
 
         // Clean up from previous tests.
@@ -338,9 +342,10 @@ class TestIndexShardIO extends StroomUnitTest {
                 .name("Test")
                 .build();
 
-        final IndexVolume volume = new IndexVolume();
         final Path testDir = Files.createTempDirectory("stroom");
-        volume.setPath(FileUtil.getCanonicalPath(testDir));
+        final IndexVolume volume = IndexVolume.builder()
+                .path(FileUtil.getCanonicalPath(testDir))
+                .build();
         final IndexShard idx1 = createShard(index, volume);
 
         final IndexShardWriter writer = new LuceneIndexShardWriter(

@@ -240,7 +240,7 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Factory {

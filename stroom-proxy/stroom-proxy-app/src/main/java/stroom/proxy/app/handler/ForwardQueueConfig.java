@@ -254,7 +254,7 @@ public abstract class ForwardQueueConfig extends AbstractConfig implements IsPro
                '}';
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
 //    public static class Builder {

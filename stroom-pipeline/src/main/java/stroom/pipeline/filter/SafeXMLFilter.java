@@ -73,7 +73,7 @@ public class SafeXMLFilter extends AbstractXMLFilter {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
 
     static class SafeBuffer extends CharBuffer {
@@ -225,7 +225,7 @@ public class SafeXMLFilter extends AbstractXMLFilter {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
 
     private static class OutputBuffer extends CharBuffer {
@@ -240,7 +240,7 @@ public class SafeXMLFilter extends AbstractXMLFilter {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
 
     private static class SafeAttributes extends AttributesImpl {

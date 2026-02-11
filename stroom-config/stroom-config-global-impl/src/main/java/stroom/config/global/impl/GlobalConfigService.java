@@ -244,59 +244,57 @@ public class GlobalConfigService implements GlobalConfig {
 
     public ConfigProperty update(final ConfigProperty configProperty) {
         return securityContext.secureResult(AppPermission.MANAGE_PROPERTIES_PERMISSION, () -> {
+            ConfigProperty result = configProperty;
 
-            LOGGER.debug(() -> LogUtil.message(
-                    "Saving property [{}] with new database value [{}]",
-                    configProperty.getName(), configProperty.getDatabaseOverrideValue()));
+            LOGGER.debug("Saving property [{}] with new database value [{}]",
+                    result.getName(), result.getDatabaseOverrideValue());
 
             // Make sure we can parse the string value,
             // into an object (e.g. if it is a docref, list, map etc)
-            final ConfigProperty persistedConfigProperty;
-            if (configProperty.hasDatabaseOverride()) {
+            if (result.hasDatabaseOverride()) {
 
                 // Ensure the value is a valid serialised form and that the de-serialised form
                 // passes javax validation
-                validateConfigProperty(configProperty);
+                validateConfigProperty(result);
 
-                AuditUtil.stamp(securityContext, configProperty);
+                result = AuditUtil.stamp(securityContext, result, result.copy()).build();
 
-                if (configProperty.getId() == null) {
+                if (result.getId() == null) {
                     try {
-                        persistedConfigProperty = dao.create(configProperty);
+                        result = dao.create(result);
                     } catch (final Exception e) {
                         throw new RuntimeException(LogUtil.message("Error inserting property {}: {}",
-                                configProperty.getName(), e.getMessage()));
+                                result.getName(), e.getMessage()));
                     }
                 } else {
                     try {
-                        persistedConfigProperty = dao.update(configProperty);
+                        result = dao.update(result);
                     } catch (final Exception e) {
                         throw new RuntimeException(LogUtil.message("Error updating property {} with id {}: {}",
-                                configProperty.getName(), configProperty.getId(), e.getMessage()));
+                                result.getName(), result.getId(), e.getMessage()));
                     }
                 }
             } else {
-                if (configProperty.getId() != null) {
+                if (result.getId() != null) {
                     // getDatabaseValue is unset so we need to remove it from the DB
                     try {
-                        dao.delete(configProperty.getName());
+                        dao.delete(result.getName());
                     } catch (final Exception e) {
                         throw new RuntimeException(LogUtil.message("Error deleting property {}: {}",
-                                configProperty.getName(), e.getMessage()));
+                                result.getName(), e.getMessage()));
                     }
                     // this is now orphaned so clear the ID
-                    configProperty.setId(null);
+                    result.setId(null);
                 }
-                persistedConfigProperty = configProperty;
             }
 
             // Update property in the config object tree
-            configMapper.decorateDbConfigProperty(persistedConfigProperty);
+            configMapper.decorateDbConfigProperty(result);
 
             // Having updated a prop make sure the in mem config is correct.
             globalConfigBootstrapService.updateConfigFromDb(false);
 
-            return persistedConfigProperty;
+            return result;
         });
     }
 

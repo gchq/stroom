@@ -35,15 +35,15 @@ public class ProcessorFilterTracker implements HasIntegerId {
 
     // standard id and OCC fields
     @JsonProperty
-    private Integer id;
+    private final Integer id;
     @JsonProperty
-    private Integer version;
+    private final Integer version;
 
     // These numbers are inclusive use getStreamRange to get a nice Stroom style
     @JsonProperty
-    private long minMetaId;
+    private final long minMetaId;
     @JsonProperty
-    private long minEventId;
+    private final long minEventId;
 
     // For info only to display in the GUI
 
@@ -57,28 +57,25 @@ public class ProcessorFilterTracker implements HasIntegerId {
      * would show the % complete since the last complete time.
      */
     @JsonProperty
-    private Long minMetaCreateMs;
+    private final Long minMetaCreateMs;
     @JsonProperty
-    private Long maxMetaCreateMs;
+    private final Long maxMetaCreateMs;
     @JsonProperty
-    private Long metaCreateMs;
+    private final Long metaCreateMs;
 
     @JsonProperty
-    private Long lastPollMs;
+    private final Long lastPollMs;
     @JsonProperty
-    private Integer lastPollTaskCount;
+    private final Integer lastPollTaskCount;
     @JsonProperty
-    private ProcessorFilterTrackerStatus status;
+    private final ProcessorFilterTrackerStatus status;
     @JsonProperty
-    private String message;
+    private final String message;
 
     @JsonProperty
-    private Long metaCount;
+    private final Long metaCount;
     @JsonProperty
-    private Long eventCount;
-
-    public ProcessorFilterTracker() {
-    }
+    private final Long eventCount;
 
     @JsonCreator
     public ProcessorFilterTracker(@JsonProperty("id") final Integer id,
@@ -114,48 +111,24 @@ public class ProcessorFilterTracker implements HasIntegerId {
         return id;
     }
 
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
     public Integer getVersion() {
         return version;
-    }
-
-    public void setVersion(final Integer version) {
-        this.version = version;
     }
 
     public long getMinMetaId() {
         return minMetaId;
     }
 
-    public void setMinMetaId(final long minMetaId) {
-        this.minMetaId = minMetaId;
-    }
-
     public long getMinEventId() {
         return minEventId;
-    }
-
-    public void setMinEventId(final long minEventId) {
-        this.minEventId = minEventId;
     }
 
     public Long getMaxMetaCreateMs() {
         return maxMetaCreateMs;
     }
 
-    public void setMaxMetaCreateMs(final Long maxMetaCreateMs) {
-        this.maxMetaCreateMs = maxMetaCreateMs;
-    }
-
     public Long getMinMetaCreateMs() {
         return minMetaCreateMs;
-    }
-
-    public void setMinMetaCreateMs(final Long minMetaCreateMs) {
-        this.minMetaCreateMs = minMetaCreateMs;
     }
 
     /**
@@ -166,60 +139,28 @@ public class ProcessorFilterTracker implements HasIntegerId {
         return metaCreateMs;
     }
 
-    /**
-     * For UI use only to see current progress. Not used to influence task
-     * creation.
-     */
-    public void setMetaCreateMs(final Long metaCreateMs) {
-        this.metaCreateMs = metaCreateMs;
-    }
-
     public Long getLastPollMs() {
         return lastPollMs;
-    }
-
-    public void setLastPollMs(final Long lastPollMs) {
-        this.lastPollMs = lastPollMs;
     }
 
     public Integer getLastPollTaskCount() {
         return lastPollTaskCount;
     }
 
-    public void setLastPollTaskCount(final Integer lastPollTaskCount) {
-        this.lastPollTaskCount = lastPollTaskCount;
-    }
-
     public ProcessorFilterTrackerStatus getStatus() {
         return status;
-    }
-
-    public void setStatus(final ProcessorFilterTrackerStatus status) {
-        this.status = status;
     }
 
     public String getMessage() {
         return message;
     }
 
-    public void setMessage(final String message) {
-        this.message = message;
-    }
-
     public Long getMetaCount() {
         return metaCount;
     }
 
-    public void setMetaCount(final Long metaCount) {
-        this.metaCount = metaCount;
-    }
-
     public Long getEventCount() {
         return eventCount;
-    }
-
-    public void setEventCount(final Long eventCount) {
-        this.eventCount = eventCount;
     }
 
     /**
@@ -242,20 +183,20 @@ public class ProcessorFilterTracker implements HasIntegerId {
     @Override
     public String toString() {
         return "ProcessorFilterTracker{" +
-                "id=" + id +
-                ", version=" + version +
-                ", minMetaId=" + minMetaId +
-                ", minEventId=" + minEventId +
-                ", minMetaCreateMs=" + minMetaCreateMs +
-                ", maxMetaCreateMs=" + maxMetaCreateMs +
-                ", metaCreateMs=" + metaCreateMs +
-                ", lastPollMs=" + lastPollMs +
-                ", lastPollTaskCount=" + lastPollTaskCount +
-                ", status=" + status +
-                ", message='" + message + '\'' +
-                ", metaCount=" + metaCount +
-                ", eventCount=" + eventCount +
-                '}';
+               "id=" + id +
+               ", version=" + version +
+               ", minMetaId=" + minMetaId +
+               ", minEventId=" + minEventId +
+               ", minMetaCreateMs=" + minMetaCreateMs +
+               ", maxMetaCreateMs=" + maxMetaCreateMs +
+               ", metaCreateMs=" + metaCreateMs +
+               ", lastPollMs=" + lastPollMs +
+               ", lastPollTaskCount=" + lastPollTaskCount +
+               ", status=" + status +
+               ", message='" + message + '\'' +
+               ", metaCount=" + metaCount +
+               ", eventCount=" + eventCount +
+               '}';
     }
 
     @Override
@@ -273,5 +214,131 @@ public class ProcessorFilterTracker implements HasIntegerId {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
+        private Integer id;
+        private Integer version;
+        private long minMetaId;
+        private long minEventId;
+        private Long minMetaCreateMs;
+        private Long maxMetaCreateMs;
+        private Long metaCreateMs;
+        private Long lastPollMs;
+        private Integer lastPollTaskCount;
+        private ProcessorFilterTrackerStatus status;
+        private String message;
+        private Long metaCount;
+        private Long eventCount;
+
+        private Builder() {
+        }
+
+        private Builder(final ProcessorFilterTracker processorFilterTracker) {
+            this.id = processorFilterTracker.id;
+            this.version = processorFilterTracker.version;
+            this.minMetaId = processorFilterTracker.minMetaId;
+            this.minEventId = processorFilterTracker.minEventId;
+            this.minMetaCreateMs = processorFilterTracker.minMetaCreateMs;
+            this.maxMetaCreateMs = processorFilterTracker.maxMetaCreateMs;
+            this.metaCreateMs = processorFilterTracker.metaCreateMs;
+            this.lastPollMs = processorFilterTracker.lastPollMs;
+            this.lastPollTaskCount = processorFilterTracker.lastPollTaskCount;
+            this.status = processorFilterTracker.status;
+            this.message = processorFilterTracker.message;
+            this.metaCount = processorFilterTracker.metaCount;
+            this.eventCount = processorFilterTracker.eventCount;
+        }
+
+        public Builder id(final Integer id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder version(final Integer version) {
+            this.version = version;
+            return this;
+        }
+
+        public Builder minMetaId(final long minMetaId) {
+            this.minMetaId = minMetaId;
+            return this;
+        }
+
+        public Builder minEventId(final long minEventId) {
+            this.minEventId = minEventId;
+            return this;
+        }
+
+        public Builder minMetaCreateMs(final Long minMetaCreateMs) {
+            this.minMetaCreateMs = minMetaCreateMs;
+            return this;
+        }
+
+        public Builder maxMetaCreateMs(final Long maxMetaCreateMs) {
+            this.maxMetaCreateMs = maxMetaCreateMs;
+            return this;
+        }
+
+        public Builder metaCreateMs(final Long metaCreateMs) {
+            this.metaCreateMs = metaCreateMs;
+            return this;
+        }
+
+        public Builder lastPollMs(final Long lastPollMs) {
+            this.lastPollMs = lastPollMs;
+            return this;
+        }
+
+        public Builder lastPollTaskCount(final Integer lastPollTaskCount) {
+            this.lastPollTaskCount = lastPollTaskCount;
+            return this;
+        }
+
+        public Builder status(final ProcessorFilterTrackerStatus status) {
+            this.status = status;
+            return this;
+        }
+
+        public Builder message(final String message) {
+            this.message = message;
+            return this;
+        }
+
+        public Builder metaCount(final Long metaCount) {
+            this.metaCount = metaCount;
+            return this;
+        }
+
+        public Builder eventCount(final Long eventCount) {
+            this.eventCount = eventCount;
+            return this;
+        }
+
+        public ProcessorFilterTracker build() {
+            return new ProcessorFilterTracker(
+                    id,
+                    version,
+                    minMetaId,
+                    minEventId,
+                    minMetaCreateMs,
+                    maxMetaCreateMs,
+                    metaCreateMs,
+                    lastPollMs,
+                    lastPollTaskCount,
+                    status,
+                    message,
+                    metaCount,
+                    eventCount);
+        }
     }
 }

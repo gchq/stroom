@@ -663,7 +663,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record HeaderToken(
@@ -673,7 +673,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     // Pkg private for testing

@@ -81,7 +81,7 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
         return TAB_TYPE;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface CacheView extends View {

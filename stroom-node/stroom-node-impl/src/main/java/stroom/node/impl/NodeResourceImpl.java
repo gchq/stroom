@@ -256,14 +256,14 @@ class NodeResourceImpl implements NodeResource {
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public boolean setPriority(final String nodeName, final Integer priority) {
-        modifyNode(nodeName, node -> node.setPriority(priority));
+        modifyNode(nodeName, node -> node.copy().priority(priority).build());
         return true;
     }
 
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public boolean setEnabled(final String nodeName, final Boolean enabled) {
-        modifyNode(nodeName, node -> node.setEnabled(enabled));
+        modifyNode(nodeName, node -> node.copy().enabled(enabled).build());
         return true;
     }
 

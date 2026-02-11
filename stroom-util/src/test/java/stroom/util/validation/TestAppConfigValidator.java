@@ -165,7 +165,7 @@ public class TestAppConfigValidator {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class MyPojoErrors extends AbstractConfig {
@@ -248,7 +248,7 @@ public class TestAppConfigValidator {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class MyPojoWarnings extends AbstractConfig {
@@ -318,7 +318,7 @@ public class TestAppConfigValidator {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class NoddyPojo {
@@ -336,7 +336,7 @@ public class TestAppConfigValidator {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class NoddyPojoWithValidationMethod extends AbstractConfig {

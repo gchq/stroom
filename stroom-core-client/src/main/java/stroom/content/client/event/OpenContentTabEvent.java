@@ -79,7 +79,7 @@ public class OpenContentTabEvent extends GwtEvent<OpenContentTabEvent.OpenConten
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface OpenContentTabHandler extends EventHandler {

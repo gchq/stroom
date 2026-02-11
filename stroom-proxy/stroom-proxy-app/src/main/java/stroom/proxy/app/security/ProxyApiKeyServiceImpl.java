@@ -374,7 +374,7 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @JsonPropertyOrder(alphabetic = true)
@@ -420,7 +420,7 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @JsonPropertyOrder(alphabetic = true)

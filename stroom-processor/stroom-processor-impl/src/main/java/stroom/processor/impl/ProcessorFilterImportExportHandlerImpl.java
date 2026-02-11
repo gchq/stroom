@@ -19,7 +19,6 @@ package stroom.processor.impl;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentNotFoundException;
@@ -46,6 +45,7 @@ import stroom.processor.shared.ProcessorFilterFields;
 import stroom.processor.shared.ProcessorType;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
+import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -142,7 +142,7 @@ public class ProcessorFilterImportExportHandlerImpl
             importState.addMessage(Severity.WARNING,
                     "Unable to import processor filter as it already exists.");
         } else {
-            final ProcessorFilter processorFilter;
+             ProcessorFilter processorFilter;
             try {
                 // Read the filter being imported
                 processorFilter = delegate.read(dataMap.get(META));
@@ -175,11 +175,14 @@ public class ProcessorFilterImportExportHandlerImpl
 
                     final boolean enableFilters = importSettings.isEnableFilters();
                     final Long minMetaCreateTimeMs = importSettings.getEnableFiltersFromTime();
-                    processorFilter.setProcessor(findProcessorForFilter(processorFilter));
-                    processorFilter.setEnabled(enableFilters);
+                    final ProcessorFilter.Builder builder = processorFilter
+                            .copy()
+                            .processor(findProcessorForFilter(processorFilter))
+                            .enabled(enableFilters);
                     if (existingProcessorFilter != null) {
-                        processorFilter.setDeleted(existingProcessorFilter.isDeleted());
+                        builder.deleted(existingProcessorFilter.isDeleted());
                     }
+                    processorFilter = builder.build();
 
                     // Make sure we can get the processor for this filter.
                     final Processor processor = getOrCreateProcessor(
@@ -244,12 +247,13 @@ public class ProcessorFilterImportExportHandlerImpl
                     if (filter.getPipelineName() == null && filter.getPipelineUuid() != null) {
                         final Optional<String> optional = docRefInfoServiceProvider.get()
                                 .name(new DocRef(PipelineDoc.TYPE, filter.getPipelineUuid()));
-                        filter.setPipelineName(optional.orElse(null));
-                        if (filter.getPipelineName() == null) {
+                        final String pipelineName = optional.orElse(null);
+                        if (pipelineName == null) {
                             LOGGER.warn("Unable to find Pipeline " + filter.getPipelineUuid()
                                         + " associated with ProcessorFilter " + filter.getUuid()
                                         + " (id: " + filter.getId() + ")");
                         }
+                        return filter.copy().pipelineName(pipelineName).build();
                     }
                     return filter;
                 })
@@ -265,16 +269,17 @@ public class ProcessorFilterImportExportHandlerImpl
         }
 
         // Don't export certain fields
-        ProcessorFilter processorFilter = findProcessorFilter(docRef);
-
-        processorFilter.setId(null);
-        processorFilter.setVersion(null);
-        processorFilter.setProcessorFilterTracker(null);
-        processorFilter.setProcessor(null);
-        processorFilter.setRunAsUser(null);
+        ProcessorFilter processorFilter = findProcessorFilter(docRef)
+                .copy()
+                .id(null)
+                .version(null)
+                .processorFilterTracker(null)
+                .processor(null)
+                .runAsUser(null)
+                .build();
 
         if (omitAuditFields) {
-            processorFilter = new AuditFieldFilter<ProcessorFilter>().apply(processorFilter);
+            processorFilter = AuditUtil.removeAuditData(ProcessorFilter::copy, processorFilter);
         }
 
         final Map<String, byte[]> data;
@@ -325,7 +330,6 @@ public class ProcessorFilterImportExportHandlerImpl
     public DocRef findNearestExplorerDocRef(final DocRef docref) {
         if (docref != null && ProcessorFilter.ENTITY_TYPE.equals(docref.getType())) {
             final ProcessorFilter processorFilter = findProcessorFilter(docref);
-
             if (processorFilter != null) {
                 final Processor processor = findProcessorForFilter(processorFilter);
                 return new DocRef(PipelineDoc.TYPE, processor.getPipelineUuid());
@@ -386,9 +390,7 @@ public class ProcessorFilterImportExportHandlerImpl
                     filter.getProcessorUuid(),
                     filter.getPipelineUuid(),
                     filter.getPipelineName());
-            filter.setProcessor(processor);
         }
-
         return processor;
     }
 
@@ -449,9 +451,9 @@ public class ProcessorFilterImportExportHandlerImpl
         return null;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -502,7 +504,7 @@ public class ProcessorFilterImportExportHandlerImpl
                                   final Map<DocRef, DocRef> remappings) {
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 }

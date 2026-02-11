@@ -541,7 +541,7 @@ class TestValueStoreDb extends AbstractStoreDbTest {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ConstantHashHashAlgorithm implements ValueStoreHashAlgorithm {

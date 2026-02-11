@@ -47,7 +47,7 @@ interface DataFeedKeyHasher {
     DataFeedKeyHashAlgorithm getAlgorithm();
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     record HashOutput(String hash, String salt) {

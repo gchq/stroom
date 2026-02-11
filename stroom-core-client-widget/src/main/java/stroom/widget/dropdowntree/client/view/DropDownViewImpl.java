@@ -105,7 +105,7 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, DropDownViewImpl> {

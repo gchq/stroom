@@ -119,7 +119,7 @@ public class TextInputPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface TextInputView extends View, HasUiHandlers<TextInputUiHandlers> {

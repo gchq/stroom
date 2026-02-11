@@ -98,7 +98,7 @@ public class WelcomeViewImpl extends ViewImpl implements WelcomeView {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, WelcomeViewImpl> {

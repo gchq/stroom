@@ -805,7 +805,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
         }
     }
 
-// --------------------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 
     static class NGramAnalyzer extends Analyzer {
@@ -819,7 +819,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
     }
 
 
-// --------------------------------------------------------------------------------
+// ---------------------------------------------------------------------
 
 
     static class NGramCSAnalyzer extends Analyzer {

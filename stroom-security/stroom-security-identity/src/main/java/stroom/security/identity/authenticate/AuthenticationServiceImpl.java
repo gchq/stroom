@@ -433,7 +433,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class AuthStateImpl implements AuthState {
@@ -475,7 +475,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class AuthStatusImpl implements AuthStatus {

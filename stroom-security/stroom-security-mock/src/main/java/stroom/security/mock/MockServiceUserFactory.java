@@ -39,7 +39,7 @@ public class MockServiceUserFactory implements ServiceUserFactory {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
 
     private static class MockProcessingUserIdentity implements UserIdentity {

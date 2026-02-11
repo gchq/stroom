@@ -195,7 +195,7 @@ public final class ExpressionTerm extends ExpressionItem {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public enum Condition implements HasDisplayValue {

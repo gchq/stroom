@@ -106,7 +106,7 @@ abstract class AbstractIncludeExclude extends AbstractManyChildFunction {
     abstract boolean inverse();
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     abstract static class AbstractGen extends AbstractManyChildGenerator {

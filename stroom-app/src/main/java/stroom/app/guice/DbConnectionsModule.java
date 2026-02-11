@@ -69,7 +69,7 @@ public class DbConnectionsModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @SuppressWarnings("unused") // Eager singleton to ensure migrations get run

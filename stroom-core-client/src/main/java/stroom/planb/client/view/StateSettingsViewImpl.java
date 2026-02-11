@@ -166,7 +166,7 @@ public class StateSettingsViewImpl
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, StateSettingsViewImpl> {

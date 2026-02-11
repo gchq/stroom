@@ -208,7 +208,7 @@ class CIStringHashMap implements Map<String, String> {
                 .collect(Collectors.toMap(keyMapper, Entry::getValue));
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     protected static class CIString implements Comparable<CIString>, Serializable {
@@ -258,7 +258,7 @@ class CIStringHashMap implements Map<String, String> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class CIEntryAdaptor implements Entry<String, String> {

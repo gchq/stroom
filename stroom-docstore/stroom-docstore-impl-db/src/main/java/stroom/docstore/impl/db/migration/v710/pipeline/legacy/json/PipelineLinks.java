@@ -35,7 +35,7 @@ public class PipelineLinks extends AbstractAddRemove<PipelineLink> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Builder extends AbstractAddRemoveListBuilder<PipelineLink, PipelineLinks, Builder> {

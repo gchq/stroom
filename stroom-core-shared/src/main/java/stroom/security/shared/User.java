@@ -17,7 +17,8 @@
 package stroom.security.shared;
 
 
-import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.AbstractHasAuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
@@ -35,7 +36,7 @@ import java.util.Objects;
  * Represents a user or a named group of users.
  */
 @JsonInclude(Include.NON_NULL)
-public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
+public class User implements HasAuditInfoGetters, HasIntegerId, HasUserRef {
 
     /**
      * The unique subjectId of the default Admin user that gets created if
@@ -50,36 +51,33 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
     public static final String ADMINISTRATORS_GROUP_SUBJECT_ID = "Administrators";
 
     @JsonProperty
-    private Integer id;
+    private final Integer id;
     @JsonProperty
-    private Integer version;
+    private final Integer version;
     @JsonProperty
-    private Long createTimeMs;
+    private final Long createTimeMs;
     @JsonProperty
-    private String createUser;
+    private final String createUser;
     @JsonProperty
-    private Long updateTimeMs;
+    private final Long updateTimeMs;
     @JsonProperty
-    private String updateUser;
+    private final String updateUser;
     @JsonProperty
-    private String subjectId;
+    private final String subjectId;
     @JsonProperty
-    private String uuid;
+    private final String uuid;
     @JsonProperty
-    private String displayName;
+    private final String displayName;
     @JsonProperty
-    private String fullName;
+    private final String fullName;
     @JsonProperty
-    private boolean enabled;
+    private final boolean enabled;
 
     /**
      * Is this user a user group or a regular user?
      */
     @JsonProperty
-    private boolean group;
-
-    public User() {
-    }
+    private final boolean group;
 
     @JsonCreator
     public User(@JsonProperty("id") final Integer id,
@@ -118,16 +116,8 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
         return id;
     }
 
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
     public Integer getVersion() {
         return version;
-    }
-
-    public void setVersion(final Integer version) {
-        this.version = version;
     }
 
     @Override
@@ -135,17 +125,9 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
         return createTimeMs;
     }
 
-    public void setCreateTimeMs(final Long createTimeMs) {
-        this.createTimeMs = createTimeMs;
-    }
-
     @Override
     public String getCreateUser() {
         return createUser;
-    }
-
-    public void setCreateUser(final String createUser) {
-        this.createUser = createUser;
     }
 
     @Override
@@ -153,17 +135,9 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
         return updateTimeMs;
     }
 
-    public void setUpdateTimeMs(final Long updateTimeMs) {
-        this.updateTimeMs = updateTimeMs;
-    }
-
     @Override
     public String getUpdateUser() {
         return updateUser;
-    }
-
-    public void setUpdateUser(final String updateUser) {
-        this.updateUser = updateUser;
     }
 
     /**
@@ -182,13 +156,6 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
     }
 
     /**
-     * See {@link User#getSubjectId()}
-     */
-    public void setSubjectId(final String subjectId) {
-        this.subjectId = NullSafe.get(subjectId, String::trim);
-    }
-
-    /**
      * @return An optional, potentially non-unique, more human friendly username for the user.
      * Will be null if this is a group or the IDP does not provide one
      * or one has not been set for the user.
@@ -197,13 +164,6 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
      */
     public String getDisplayName() {
         return displayName;
-    }
-
-    /**
-     * See {@link User#getDisplayName()}
-     */
-    public void setDisplayName(final String displayName) {
-        this.displayName = NullSafe.get(displayName, String::trim);
     }
 
     /**
@@ -219,14 +179,6 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
         return fullName;
     }
 
-
-    /**
-     * See {@link User#getFullName()}
-     */
-    public void setFullName(final String fullName) {
-        this.fullName = NullSafe.get(fullName, String::trim);
-    }
-
     /**
      * @return A globally unique identifier for identifying this user in other areas of stroom code.
      * Unrelated to any subjectId that an IDP may use to identify the user.
@@ -237,29 +189,14 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
     }
 
     /**
-     * See {@link User#getUuid()}
-     */
-    public void setUuid(final String uuid) {
-        this.uuid = uuid;
-    }
-
-    /**
      * @return True if this object represents a named user-group instead of a user.
      */
     public boolean isGroup() {
         return group;
     }
 
-    public void setGroup(final boolean group) {
-        this.group = group;
-    }
-
     public boolean isEnabled() {
         return enabled;
-    }
-
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
     }
 
     public UserRef asRef() {
@@ -339,17 +276,13 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
-    public static final class Builder {
+    public static final class Builder extends AbstractHasAuditInfoBuilder<User, User.Builder> {
 
         private Integer id;
         private Integer version;
-        private Long createTimeMs;
-        private String createUser;
-        private Long updateTimeMs;
-        private String updateUser;
         private String subjectId;
         private String uuid;
         private boolean group;
@@ -361,12 +294,9 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
         }
 
         private Builder(final User user) {
+            super(user);
             this.id = user.id;
             this.version = user.version;
-            this.createTimeMs = user.createTimeMs;
-            this.createUser = user.createUser;
-            this.updateTimeMs = user.updateTimeMs;
-            this.updateUser = user.updateUser;
             this.subjectId = user.subjectId;
             this.uuid = user.uuid;
             this.group = user.group;
@@ -377,7 +307,12 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
 
         public Builder id(final int value) {
             id = value;
-            return this;
+            return self();
+        }
+
+        public Builder version(final Integer version) {
+            this.version = version;
+            return self();
         }
 
         /**
@@ -385,7 +320,7 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
          */
         public Builder uuid(final String value) {
             uuid = value;
-            return this;
+            return self();
         }
 
         /**
@@ -394,18 +329,18 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
          * If isGroup is true then this is the name of the group.
          */
         public Builder subjectId(final String subjectId) {
-            this.subjectId = subjectId;
-            return this;
+            this.subjectId = NullSafe.get(subjectId, String::trim);
+            return self();
         }
 
         public Builder displayName(final String displayName) {
-            this.displayName = displayName;
-            return this;
+            this.displayName = NullSafe.get(displayName, String::trim);
+            return self();
         }
 
         public Builder fullName(final String fullName) {
-            this.fullName = fullName;
-            return this;
+            this.fullName = NullSafe.get(fullName, String::trim);
+            return self();
         }
 
         /**
@@ -413,11 +348,16 @@ public class User implements HasAuditInfo, HasIntegerId, HasUserRef {
          */
         public Builder group(final boolean value) {
             group = value;
-            return this;
+            return self();
         }
 
         public Builder enabled(final boolean value) {
             enabled = value;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
             return this;
         }
 

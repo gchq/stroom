@@ -97,7 +97,7 @@ public class QueryHelpViewImpl extends ViewWithUiHandlers<QueryHelpUiHandlers> i
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, QueryHelpViewImpl> {

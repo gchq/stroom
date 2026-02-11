@@ -59,7 +59,7 @@ public class UserTaskManagerViewImpl extends ViewImpl implements UserTaskManager
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, UserTaskManagerViewImpl> {

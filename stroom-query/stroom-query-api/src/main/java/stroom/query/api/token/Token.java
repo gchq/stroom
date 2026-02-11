@@ -29,7 +29,7 @@ public class Token extends AbstractToken {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Builder extends AbstractTokenBuilder<Token, Builder> {

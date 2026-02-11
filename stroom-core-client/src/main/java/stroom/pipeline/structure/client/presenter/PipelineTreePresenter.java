@@ -175,7 +175,7 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface PipelineTreeView extends View, HasContextMenuHandlers, HasUiHandlers<PipelineTreeUiHandlers> {

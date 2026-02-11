@@ -138,7 +138,7 @@ class FormatIECByteSize extends AbstractFunction {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class Gen extends AbstractSingleChildGenerator {

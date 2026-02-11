@@ -78,7 +78,7 @@ public class QueryButtons
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, QueryButtons> {

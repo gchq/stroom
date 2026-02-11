@@ -89,7 +89,7 @@ public class FieldEditPresenter extends MyPresenterWidget<FieldEditPresenter.Fie
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface FieldEditView extends View, Focus {

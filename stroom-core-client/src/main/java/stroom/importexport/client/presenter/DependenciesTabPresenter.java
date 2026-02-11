@@ -110,7 +110,7 @@ public class DependenciesTabPresenter
         dependenciesPresenter.setTaskMonitorFactory(taskMonitorFactory);
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface DependenciesTabView extends View, HasUiHandlers<DependenciesUiHandlers> {

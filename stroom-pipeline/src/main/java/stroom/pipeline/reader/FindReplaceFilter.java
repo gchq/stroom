@@ -338,7 +338,7 @@ public class FindReplaceFilter extends FilterReader {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     static class PaddingWrapper implements CharSequence {
@@ -396,7 +396,7 @@ public class FindReplaceFilter extends FilterReader {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     static class SubSequence implements CharSequence {
@@ -433,7 +433,7 @@ public class FindReplaceFilter extends FilterReader {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class InBuffer extends CharBuffer {
@@ -519,7 +519,7 @@ public class FindReplaceFilter extends FilterReader {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class OutBuffer {
@@ -567,7 +567,7 @@ public class FindReplaceFilter extends FilterReader {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     static final class Builder {

@@ -665,7 +665,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         }
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface PipelineStructureView extends View, HasUiHandlers<PipelineStructureUiHandlers> {
@@ -688,7 +688,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private class AddPipelineElementCommand implements Command {
@@ -750,7 +750,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private class RestorePipelineElementCommand implements Command {

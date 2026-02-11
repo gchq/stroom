@@ -245,7 +245,7 @@ public class RestResources {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class HK2toGuiceModule extends AbstractBinder {
@@ -264,7 +264,7 @@ public class RestResources {
         }
 
 
-        // --------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
 
 
         private record ServiceFactory<T>(Provider<T> provider) implements Factory<T> {
@@ -281,7 +281,7 @@ public class RestResources {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record ResourceProvider(Class<?> resourceClass,

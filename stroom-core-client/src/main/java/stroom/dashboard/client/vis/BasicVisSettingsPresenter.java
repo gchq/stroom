@@ -269,7 +269,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface BasicVisSettingsView

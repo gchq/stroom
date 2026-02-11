@@ -90,7 +90,7 @@ public class WelcomePresenter extends ContentTabPresenter<WelcomePresenter.Welco
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface WelcomeView extends View {

@@ -224,7 +224,7 @@ public interface ExplorerResource extends RestResource, DirectRestService {
     Boolean changeDocumentPermissions(
             @Parameter(description = "request", required = true) BulkDocumentPermissionChangeRequest request);
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     enum TagFetchMode {

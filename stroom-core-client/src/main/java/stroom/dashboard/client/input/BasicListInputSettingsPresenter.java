@@ -109,7 +109,7 @@ public class BasicListInputSettingsPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface BasicListInputSettingsView extends BasicSettingsView {

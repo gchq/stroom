@@ -466,7 +466,7 @@ public class QueryEditPresenter
         queryResultPresenter.onContentTabVisible(visible);
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface QueryEditView extends View {

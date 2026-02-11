@@ -47,7 +47,7 @@ public class DropwizardModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class NoMetrics implements HasMetrics {
@@ -59,7 +59,7 @@ public class DropwizardModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class NoAdminTasks implements HasAdminTasks {

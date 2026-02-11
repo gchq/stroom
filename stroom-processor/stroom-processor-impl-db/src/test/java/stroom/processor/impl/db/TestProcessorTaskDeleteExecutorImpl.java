@@ -68,8 +68,11 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
 
         processorFilter1a = createProcessorFilter(processor1);
         processorFilterTracker1 = processorFilter1a.getProcessorFilterTracker();
-        processorFilterTracker1.setLastPollMs(Instant.now().minus(3, ChronoUnit.DAYS).toEpochMilli());
-        processorFilterTracker1.setStatus(ProcessorFilterTrackerStatus.COMPLETE);
+        processorFilterTracker1 = processorFilterTracker1
+                .copy()
+                .lastPollMs(Instant.now().minus(3, ChronoUnit.DAYS).toEpochMilli())
+                .status(ProcessorFilterTrackerStatus.COMPLETE)
+                .build();
         processorFilterTrackerDao.update(processorFilterTracker1);
 
 
@@ -93,8 +96,11 @@ class TestProcessorTaskDeleteExecutorImpl extends AbstractProcessorTest {
 
         processorFilter2 = createProcessorFilter(processor2);
         processorFilterTracker2 = processorFilter2.getProcessorFilterTracker();
-        processorFilterTracker2.setLastPollMs(Instant.now().minus(3, ChronoUnit.DAYS).toEpochMilli());
-        processorFilterTracker2.setStatus(ProcessorFilterTrackerStatus.ERROR);
+        processorFilterTracker2 = processorFilterTracker2
+                .copy()
+                .lastPollMs(Instant.now().minus(3, ChronoUnit.DAYS).toEpochMilli())
+                .status(ProcessorFilterTrackerStatus.ERROR)
+                .build();
         processorFilterTrackerDao.update(processorFilterTracker2);
 
         createProcessorTask(processorFilter2, TaskStatus.CREATED, NODE1, FEED);

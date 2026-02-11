@@ -30,7 +30,7 @@ public class KeywordGroup extends AbstractTokenGroup {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Builder extends AbstractTokenGroupBuilder<KeywordGroup, Builder> {

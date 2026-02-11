@@ -17,7 +17,8 @@
 package stroom.node.shared;
 
 
-import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.AbstractHasAuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -45,26 +46,26 @@ import java.util.Objects;
         "buildVersion",
         "lastBootMs"})
 @JsonInclude(Include.NON_NULL)
-public class Node implements HasAuditInfo, HasIntegerId {
+public class Node implements HasAuditInfoGetters, HasIntegerId {
 
     public static final String ENTITY_TYPE = "Node";
 
     @JsonProperty
-    private Integer id;
+    private final Integer id;
     @JsonProperty
-    private Integer version;
+    private final Integer version;
     @JsonProperty
-    private Long createTimeMs;
+    private final Long createTimeMs;
     @JsonProperty
-    private String createUser;
+    private final String createUser;
     @JsonProperty
-    private Long updateTimeMs;
+    private final Long updateTimeMs;
     @JsonProperty
-    private String updateUser;
+    private final String updateUser;
     @JsonProperty
-    private String name;
+    private final String name;
     @JsonProperty
-    private String url;
+    private final String url;
 
     /**
      * A number to imply how important that this node is from the POV of being a
@@ -72,18 +73,13 @@ public class Node implements HasAuditInfo, HasIntegerId {
      * master
      */
     @JsonProperty
-    private int priority;
+    private final int priority;
     @JsonProperty
-    private boolean enabled;
+    private final boolean enabled;
     @JsonProperty
-    private String buildVersion;
+    private final String buildVersion;
     @JsonProperty
-    private Long lastBootMs;
-
-    public Node() {
-        priority = 1;
-        enabled = true;
-    }
+    private final Long lastBootMs;
 
     @JsonCreator
     public Node(@JsonProperty("id") final Integer id,
@@ -112,30 +108,13 @@ public class Node implements HasAuditInfo, HasIntegerId {
         this.lastBootMs = lastBootMs;
     }
 
-    /**
-     * Utility to create a node.
-     */
-    public static Node create(final String name) {
-        final Node node = new Node();
-        node.setName(name);
-        return node;
-    }
-
     @Override
     public Integer getId() {
         return id;
     }
 
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
     public Integer getVersion() {
         return version;
-    }
-
-    public void setVersion(final Integer version) {
-        this.version = version;
     }
 
     @Override
@@ -143,17 +122,9 @@ public class Node implements HasAuditInfo, HasIntegerId {
         return createTimeMs;
     }
 
-    public void setCreateTimeMs(final Long createTimeMs) {
-        this.createTimeMs = createTimeMs;
-    }
-
     @Override
     public String getCreateUser() {
         return createUser;
-    }
-
-    public void setCreateUser(final String createUser) {
-        this.createUser = createUser;
     }
 
     @Override
@@ -161,92 +132,34 @@ public class Node implements HasAuditInfo, HasIntegerId {
         return updateTimeMs;
     }
 
-    public void setUpdateTimeMs(final Long updateTimeMs) {
-        this.updateTimeMs = updateTimeMs;
-    }
-
     @Override
     public String getUpdateUser() {
         return updateUser;
-    }
-
-    public void setUpdateUser(final String updateUser) {
-        this.updateUser = updateUser;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(final String name) {
-        this.name = name;
-    }
-
     public String getUrl() {
         return url;
-    }
-
-    public void setUrl(final String url) {
-        this.url = url;
     }
 
     public int getPriority() {
         return priority;
     }
 
-    public void setPriority(final int priority) {
-        this.priority = priority;
-    }
-
     public boolean isEnabled() {
         return enabled;
-    }
-
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
     }
 
     public String getBuildVersion() {
         return buildVersion;
     }
 
-    public void setBuildVersion(final String buildVersion) {
-        this.buildVersion = buildVersion;
-    }
-
     public Long getLastBootMs() {
         return lastBootMs;
     }
-
-    public void setLastBootMs(final Long lastBootMs) {
-        this.lastBootMs = lastBootMs;
-    }
-
-    //    @Override
-//    protected void toString(final StringBuilder sb) {
-//        super.toString(sb);
-//        sb.append(", name=");
-//        sb.append(getName());
-//        sb.append(", clusterCallUrl=");
-//        sb.append(url);
-//        sb.append(", priority=");
-//        sb.append(priority);
-//    }
-//
-//    @Transient
-//    @Override
-//    public final String getType() {
-//        return ENTITY_TYPE;
-//    }
-//
-//    public Node copy() {
-//        final Node node = new Node();
-//        node.setName(getName());
-//        node.priority = priority;
-//        node.enabled = enabled;
-//        return node;
-//    }
-
 
     @Override
     public boolean equals(final Object o) {
@@ -258,17 +171,17 @@ public class Node implements HasAuditInfo, HasIntegerId {
         }
         final Node node = (Node) o;
         return priority == node.priority &&
-                enabled == node.enabled &&
-                Objects.equals(id, node.id) &&
-                Objects.equals(version, node.version) &&
-                Objects.equals(createTimeMs, node.createTimeMs) &&
-                Objects.equals(createUser, node.createUser) &&
-                Objects.equals(updateTimeMs, node.updateTimeMs) &&
-                Objects.equals(updateUser, node.updateUser) &&
-                Objects.equals(name, node.name) &&
-                Objects.equals(url, node.url) &&
-                Objects.equals(buildVersion, node.buildVersion) &&
-                Objects.equals(lastBootMs, node.lastBootMs);
+               enabled == node.enabled &&
+               Objects.equals(id, node.id) &&
+               Objects.equals(version, node.version) &&
+               Objects.equals(createTimeMs, node.createTimeMs) &&
+               Objects.equals(createUser, node.createUser) &&
+               Objects.equals(updateTimeMs, node.updateTimeMs) &&
+               Objects.equals(updateUser, node.updateUser) &&
+               Objects.equals(name, node.name) &&
+               Objects.equals(url, node.url) &&
+               Objects.equals(buildVersion, node.buildVersion) &&
+               Objects.equals(lastBootMs, node.lastBootMs);
     }
 
     @Override
@@ -290,18 +203,114 @@ public class Node implements HasAuditInfo, HasIntegerId {
     @Override
     public String toString() {
         return "Node{" +
-                "id=" + id +
-                ", version=" + version +
-                ", createTimeMs=" + createTimeMs +
-                ", createUser='" + createUser + '\'' +
-                ", updateTimeMs=" + updateTimeMs +
-                ", updateUser='" + updateUser + '\'' +
-                ", name='" + name + '\'' +
-                ", url='" + url + '\'' +
-                ", priority=" + priority +
-                ", enabled=" + enabled +
-                ", buildVersion=" + buildVersion +
-                ", lastBootMs=" + lastBootMs +
-                '}';
+               "id=" + id +
+               ", version=" + version +
+               ", createTimeMs=" + createTimeMs +
+               ", createUser='" + createUser + '\'' +
+               ", updateTimeMs=" + updateTimeMs +
+               ", updateUser='" + updateUser + '\'' +
+               ", name='" + name + '\'' +
+               ", url='" + url + '\'' +
+               ", priority=" + priority +
+               ", enabled=" + enabled +
+               ", buildVersion=" + buildVersion +
+               ", lastBootMs=" + lastBootMs +
+               '}';
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+    
+    public static class Builder extends AbstractHasAuditInfoBuilder<Node, Node.Builder> {
+
+        private Integer id;
+        private Integer version;
+        private String name;
+        private String url;
+        private int priority = 1;
+        private boolean enabled = true;
+        private String buildVersion;
+        private Long lastBootMs;
+
+        private Builder() {
+        }
+
+        private Builder(final Node node) {
+            super(node);
+            this.id = node.id;
+            this.version = node.version;
+            this.name = node.name;
+            this.url = node.url;
+            this.priority = node.priority;
+            this.enabled = node.enabled;
+            this.buildVersion = node.buildVersion;
+            this.lastBootMs = node.lastBootMs;
+        }
+
+        public Builder id(final Integer id) {
+            this.id = id;
+            return self();
+        }
+
+        public Builder version(final Integer version) {
+            this.version = version;
+            return self();
+        }
+
+        public Builder name(final String name) {
+            this.name = name;
+            return self();
+        }
+
+        public Builder url(final String url) {
+            this.url = url;
+            return self();
+        }
+
+        public Builder priority(final int priority) {
+            this.priority = priority;
+            return self();
+        }
+
+        public Builder enabled(final boolean enabled) {
+            this.enabled = enabled;
+            return self();
+        }
+
+        public Builder buildVersion(final String buildVersion) {
+            this.buildVersion = buildVersion;
+            return self();
+        }
+
+        public Builder lastBootMs(final Long lastBootMs) {
+            this.lastBootMs = lastBootMs;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public Node build() {
+            return new Node(
+                    id,
+                    version,
+                    createTimeMs,
+                    createUser,
+                    updateTimeMs,
+                    updateUser,
+                    name,
+                    url,
+                    priority,
+                    enabled,
+                    buildVersion,
+                    lastBootMs);
+        }
     }
 }

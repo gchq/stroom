@@ -124,7 +124,7 @@ public abstract class AbstractToken {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     abstract static class AbstractTokenBuilder<T extends AbstractToken, B extends AbstractTokenBuilder<T, ?>> {

@@ -56,7 +56,7 @@ public class RedGreenTextCell extends AbstractCell<Boolean> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     interface Template extends SafeHtmlTemplates {

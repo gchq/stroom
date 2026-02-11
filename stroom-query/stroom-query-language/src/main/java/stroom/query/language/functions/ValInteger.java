@@ -120,7 +120,7 @@ public final class ValInteger implements ValNumber {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ValIntegerCache {

@@ -188,9 +188,9 @@ public class Job extends TableImpl<JobRecord> {
         return new Job(name, null);
     }
 
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
     // Row8 type methods
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
     @Override
     public Row8<Integer, Integer, Long, String, Long, String, String, Boolean> fieldsRow() {

@@ -64,7 +64,7 @@ class JobNodeTrackerCacheImpl implements JobNodeTrackerCache {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     static class JobNodeTrackersImpl implements JobNodeTrackers {

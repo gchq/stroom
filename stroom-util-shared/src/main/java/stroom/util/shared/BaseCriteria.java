@@ -161,7 +161,7 @@ public abstract class BaseCriteria {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public abstract static class BaseCriteriaBuilder<T extends BaseCriteria, B extends BaseCriteriaBuilder<T, B>>

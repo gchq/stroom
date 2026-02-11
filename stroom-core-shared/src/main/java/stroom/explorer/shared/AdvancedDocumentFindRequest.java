@@ -72,7 +72,7 @@ public class AdvancedDocumentFindRequest extends ExpressionCriteria {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Builder extends ExpressionCriteriaBuilder<AdvancedDocumentFindRequest, Builder> {

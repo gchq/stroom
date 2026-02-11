@@ -18,12 +18,16 @@ package stroom.docstore.api;
 
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.AbstractDoc.AbstractBuilder;
+import stroom.util.shared.BuilderFactory;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public interface StoreFactory {
 
-    <D extends AbstractDoc> Store<D> createStore(final DocumentSerialiser2<D> serialiser,
-                                                 final String type,
-                                                 final Supplier<AbstractBuilder<D, ?>> builderSupplier);
+    <D extends AbstractDoc, B extends AbstractBuilder<D, ?>> Store<D> createStore(
+            DocumentSerialiser2<D> serialiser,
+            String type,
+            Supplier<B> builderSupplier,
+            Function<D, B> builderFunction);
 }

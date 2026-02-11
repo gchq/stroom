@@ -432,7 +432,7 @@ public class SAXEventRecorder extends TinyTreeBufferFilter implements Recorder, 
                '}';
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class CompiledXPathFilter {

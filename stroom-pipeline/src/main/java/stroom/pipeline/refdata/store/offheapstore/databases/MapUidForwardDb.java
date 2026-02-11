@@ -142,7 +142,7 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Factory {

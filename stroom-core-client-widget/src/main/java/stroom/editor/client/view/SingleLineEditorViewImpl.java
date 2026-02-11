@@ -80,7 +80,7 @@ public class SingleLineEditorViewImpl
         return "single-line-editor";
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<FlowPanel, SingleLineEditorViewImpl> {

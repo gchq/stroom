@@ -143,7 +143,7 @@ public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> imple
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public enum CreateType implements HasDisplayValue {
@@ -166,7 +166,7 @@ public class CreateUserPresenter extends MyPresenterWidget<CreateUserView> imple
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface CreateUserView extends View, HasUiHandlers<CreateUserUiHandlers> {

@@ -47,7 +47,7 @@ public class RulesViewImpl extends ViewImpl implements RulesPresenter.RulesView 
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, RulesViewImpl> {

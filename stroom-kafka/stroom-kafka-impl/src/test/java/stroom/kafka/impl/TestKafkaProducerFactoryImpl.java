@@ -157,8 +157,10 @@ public class TestKafkaProducerFactoryImpl {
         assertThat(kafkaProducer1).isNotNull();
 
         // create an updated version of the doc with the same uuid
-        final KafkaConfigDoc kafkaConfigDoc1mk2 = createKafkaConfigDoc("Config1", "v2");
-        kafkaConfigDoc1mk2.setUuid(kafkaConfigDoc1mk1.getUuid());
+        final KafkaConfigDoc kafkaConfigDoc1mk2 = createKafkaConfigDoc("Config1", "v2")
+                .copy()
+                .uuid(kafkaConfigDoc1mk1.getUuid())
+                .build();
 
         Mockito.when(kafkaConfigDocCache.get(Mockito.eq(docRef1)))
                 .thenReturn(Optional.of(kafkaConfigDoc1mk2));

@@ -1533,7 +1533,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         return NullSafe.get(lmdbEnvironment, RefDataLmdbEnv::getFeedName);
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static final class PurgeCounts {
@@ -1585,7 +1585,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static final class RefStreamPurgeCounts {
@@ -1652,7 +1652,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Factory {
@@ -1661,7 +1661,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class PurgeCounter {

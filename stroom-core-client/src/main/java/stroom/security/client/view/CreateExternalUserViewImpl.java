@@ -103,7 +103,7 @@ public class CreateExternalUserViewImpl
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, CreateExternalUserViewImpl> {

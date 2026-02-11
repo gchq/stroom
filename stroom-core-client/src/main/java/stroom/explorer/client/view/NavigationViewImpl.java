@@ -130,7 +130,7 @@ public class NavigationViewImpl extends ViewWithUiHandlers<NavigationUiHandlers>
         return spinner;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, NavigationViewImpl> {

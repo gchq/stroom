@@ -158,7 +158,7 @@ public class TestV07_00_21_005 extends AbstractProcessorMigrationTest {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
 
     private record Row(Integer nodeId, int status) {

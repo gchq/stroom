@@ -149,7 +149,7 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public enum CompareResult {

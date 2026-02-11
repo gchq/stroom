@@ -102,8 +102,6 @@ public class TestFsVolume {
     private void doIsFullTest(final Long limit,
                               final Long used,
                               final boolean expectedIsFull) {
-        final FsVolume fsVolume = new FsVolume();
-        fsVolume.setByteLimit(limit);
         final long total = 1000;
         final long free = total - used;
         final FsVolumeState fsVolumeState = new FsVolumeState(
@@ -113,7 +111,12 @@ public class TestFsVolume {
                 free,
                 total,
                 System.currentTimeMillis());
-        fsVolume.setVolumeState(fsVolumeState);
+
+        final FsVolume fsVolume = FsVolume
+                .builder()
+                .byteLimit(limit)
+                .volumeState(fsVolumeState)
+                .build();
 
         Assertions.assertThat(fsVolume.getCapacityInfo().isFull())
                 .isEqualTo(expectedIsFull);

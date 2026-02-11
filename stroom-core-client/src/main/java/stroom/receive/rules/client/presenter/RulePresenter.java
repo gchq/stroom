@@ -66,7 +66,7 @@ public class RulePresenter extends MyPresenterWidget<RuleView> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface RuleView extends View {

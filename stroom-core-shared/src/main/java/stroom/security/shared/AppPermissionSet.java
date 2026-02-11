@@ -175,7 +175,7 @@ public interface AppPermissionSet extends Iterable<AppPermission> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     enum AppPermissionOperator {

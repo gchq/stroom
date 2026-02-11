@@ -75,7 +75,7 @@ public class ShowTracesEvent extends GwtEvent<ShowTracesEvent.Handler> {
         return pathway;
     }
 
-// --------------------------------------------------------------------------------
+// -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

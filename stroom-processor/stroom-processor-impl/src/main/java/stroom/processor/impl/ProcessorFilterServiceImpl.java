@@ -138,7 +138,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         final int calculatedPriority = getAutoPriority(processor, request.getPriority(), request.isAutoPriority());
 
         // Create the filter and tracker
-        final ProcessorFilter processorFilter = ProcessorFilter
+        final ProcessorFilter.Builder builder = ProcessorFilter
                 .builder()
                 .reprocess(request.isReprocess())
                 .enabled(request.isEnabled())
@@ -148,14 +148,13 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                 .processor(processor)
                 .queryData(request.getQueryData())
                 .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
-                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs())
-                .build();
-        setRunAs(request, processorFilter);
-        return create(processorFilter);
+                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        setRunAs(request, builder);
+        return create(builder.build());
     }
 
-    private void setRunAs(final CreateProcessFilterRequest request, final ProcessorFilter filter) {
-        filter.setRunAsUser(NullSafe.getOrElseGet(
+    private void setRunAs(final CreateProcessFilterRequest request, final ProcessorFilter.Builder filter) {
+        filter.runAsUser(NullSafe.getOrElseGet(
                 request,
                 CreateProcessFilterRequest::getRunAsUser,
                 securityContext::getUserRef));
@@ -188,25 +187,28 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         }
 
         // now create the filter and tracker
-        final ProcessorFilter processorFilter = Objects.requireNonNullElseGet(
+        final ProcessorFilter.Builder builder = NullSafe.getOrElseGet(
                 existingProcessorFilter,
-                ProcessorFilter::new);
+                ProcessorFilter::copy,
+                ProcessorFilter::builder);
 
-        AuditUtil.stamp(securityContext, processorFilter);
-        processorFilter.setReprocess(request.isReprocess());
-        processorFilter.setEnabled(request.isEnabled());
-        processorFilter.setExport(request.isExport());
-        processorFilter.setPriority(calculatedPriority);
-        processorFilter.setMaxProcessingTasks(request.getMaxProcessingTasks());
-        processorFilter.setProcessor(processor);
-        processorFilter.setQueryData(queryData);
-        processorFilter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
-        processorFilter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
-        setRunAs(request, processorFilter);
+        AuditUtil.stamp(securityContext, existingProcessorFilter, builder);
+        builder
+                .reprocess(request.isReprocess())
+                .enabled(request.isEnabled())
+                .export(request.isExport())
+                .priority(calculatedPriority)
+                .maxProcessingTasks(request.getMaxProcessingTasks())
+                .processor(processor)
+                .queryData(queryData)
+                .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
+                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        setRunAs(request, builder);
         if (processorFilterDocRef != null) {
-            processorFilter.setUuid(processorFilterDocRef.getUuid());
+            builder.uuid(processorFilterDocRef.getUuid());
         }
 
+        final ProcessorFilter processorFilter = builder.build();
         if (existingProcessorFilter != null) {
             LOGGER.debug("importFilter() - updating {}", processorFilter);
             return update(processorFilter);
@@ -216,12 +218,13 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         }
     }
 
-    private void checkRunAs(final ProcessorFilter processorFilter) {
+    private void checkRunAs(final ProcessorFilter processorFilter,
+                            final ProcessorFilter.Builder builder) {
         final UserRef currentUser = securityContext.getUserRef();
         if (processorFilter.getRunAsUser() == null) {
             // By default the creator of the filter becomes the run as user for the filter
             // (see stroom.processor.impl.ProcessorTaskCreatorImpl.createNewTasks)
-            processorFilter.setRunAsUser(currentUser);
+            builder.runAsUser(currentUser);
         } else {
             checkRunAs(processorFilter.getRunAsUser());
         }
@@ -238,13 +241,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
-        checkRunAs(processorFilter);
+        final ProcessorFilter.Builder builder = processorFilter.copy();
+        checkRunAs(processorFilter, builder);
 
-        final ProcessorFilter createdFilter = securityContext.secureResult(PERMISSION, () ->
-                processorFilterDao.create(ensureValid(processorFilter)));
-        createdFilter.setProcessor(processorFilter.getProcessor());
-
-        return createdFilter;
+        final ProcessorFilter createdFilter = securityContext.secureResult(PERMISSION, () -> {
+            ensureValid(processorFilter, builder);
+            return processorFilterDao.create(builder.build());
+        });
+        return createdFilter.copy().processor(processorFilter.getProcessor()).build();
     }
 
     @Override
@@ -272,15 +276,16 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                     "You do not have permission to update this processor filter");
         }
 
+        final ProcessorFilter.Builder builder = processorFilter.copy();
         if (processorFilter.getUuid() == null) {
-            processorFilter.setUuid(UUID.randomUUID().toString());
+            builder.uuid(UUID.randomUUID().toString());
         }
 
-        checkRunAs(processorFilter);
+        checkRunAs(processorFilter, builder);
 
-        AuditUtil.stamp(securityContext, processorFilter);
+        AuditUtil.stamp(securityContext, processorFilter, builder);
         return securityContext.secureResult(PERMISSION, () ->
-                processorFilterDao.update(processorFilter));
+                processorFilterDao.update(builder.build()));
     }
 
     @Override
@@ -299,26 +304,20 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
 
     @Override
     public void setPriority(final Integer id, final Integer priority) {
-        fetch(id).ifPresent(processorFilter -> {
-            processorFilter.setPriority(priority);
-            update(processorFilter);
-        });
+        fetch(id).ifPresent(processorFilter ->
+                update(processorFilter.copy().priority(priority).build()));
     }
 
     @Override
     public void setMaxProcessingTasks(final Integer id, final Integer maxProcessingTasks) {
-        fetch(id).ifPresent(processorFilter -> {
-            processorFilter.setMaxProcessingTasks(maxProcessingTasks);
-            update(processorFilter);
-        });
+        fetch(id).ifPresent(processorFilter ->
+                update(processorFilter.copy().maxProcessingTasks(maxProcessingTasks).build()));
     }
 
     @Override
     public void setEnabled(final Integer id, final Boolean enabled) {
-        fetch(id).ifPresent(processorFilter -> {
-            processorFilter.setEnabled(enabled);
-            update(processorFilter);
-        });
+        fetch(id).ifPresent(processorFilter ->
+                update(processorFilter.copy().enabled(enabled).build()));
     }
 
     @Override
@@ -352,8 +351,8 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                 final ExpressionOperator processorExpression = ExpressionOperator.builder()
                         .addTerm(ProcessorFields.ID.getFldName(), Condition.IN, processorIds)
                         .build();
-                final ResultPage<Processor> streamProcessors = processorService.find(new ExpressionCriteria(
-                        processorExpression));
+                final ResultPage<Processor> streamProcessors = processorService.find(
+                        new ExpressionCriteria(processorExpression));
 
                 // Get unique processors.
                 final Set<Processor> processors = new HashSet<>(streamProcessors.getValues());
@@ -372,13 +371,11 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                     return o1.getId().compareTo(o2.getId());
                 });
 
-                for (final Processor processor : sorted) {
+                for (Processor processor : sorted) {
+                    processor = updatePipelineName(processor);
                     final Expander processorExpander = new Expander(0, false, false);
 
-                    updatePipelineName(processor);
-
-                    final ProcessorRow processorRow = new ProcessorRow(processorExpander,
-                            processor);
+                    final ProcessorRow processorRow = new ProcessorRow(processorExpander, processor);
                     values.add(processorRow);
 
                     // If the job row is open then add child rows.
@@ -394,21 +391,19 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                                     Objects.equals(currentUser, processorFilter.getRunAsUser())) {
                                     // Decorate the expression with resolved dictionaries etc.
                                     final QueryData queryData = processorFilter.getQueryData();
+                                    final ProcessorFilter.Builder builder = processorFilter.copy();
                                     if (queryData != null && queryData.getExpression() != null) {
-                                        processorFilter.setQueryData(queryData
+                                        builder.queryData(queryData
                                                 .copy()
                                                 .expression(decorate(queryData.getExpression()))
                                                 .build());
                                     }
 
                                     if (processorFilter.getPipelineName() == null) {
-                                        if (processor.getPipelineName() == null) {
-                                            updatePipelineName(processor);
-                                        }
-                                        processorFilter.setPipelineName(processor.getPipelineName());
+                                        builder.pipelineName(processor.getPipelineName());
                                     }
 
-                                    final ProcessorFilterRow processorFilterRow = getRow(processorFilter);
+                                    final ProcessorFilterRow processorFilterRow = getRow(builder.build());
                                     values.add(processorFilterRow);
                                 }
                             }
@@ -426,12 +421,12 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         return new ProcessorFilterRow(processorFilter);
     }
 
-    private void updatePipelineName(final Processor processor) {
+    private Processor updatePipelineName(final Processor processor) {
         if (processor.getPipelineName() == null && processor.getPipelineUuid() != null) {
             final Optional<String> pipelineName = getPipelineName(
                     processor.getProcessorType(),
                     processor.getPipelineUuid());
-            processor.setPipelineName(pipelineName.orElseGet(() -> {
+            final String name = pipelineName.orElseGet(() -> {
                 LOGGER.warn("Unable to find Pipeline " +
                             processor.getPipelineUuid() +
                             " associated with Processor " +
@@ -441,8 +436,10 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                             ")" +
                             " Has it been deleted?");
                 return null;
-            }));
+            });
+            return processor.copy().pipelineName(name).build();
         }
+        return processor;
     }
 
     @Override
@@ -628,13 +625,11 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         return uuid;
     }
 
-    private ProcessorFilter ensureValid(final ProcessorFilter processorFilter) {
-        if (processorFilter == null) {
-            return null;
-        }
-
+    private void ensureValid(final ProcessorFilter processorFilter,
+                             final ProcessorFilter.Builder builder) {
+        Objects.requireNonNull(processorFilter, "Null filter");
         if (processorFilter.getUuid() == null) {
-            processorFilter.setUuid(UUID.randomUUID().toString());
+            builder.uuid(UUID.randomUUID().toString());
         }
 
         QueryData queryData = processorFilter.getQueryData();
@@ -644,11 +639,10 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
 
         if (queryData.getDataSource() == null) {
             queryData = queryData.copy().dataSource(MetaFields.STREAM_STORE_DOC_REF).build();
-            processorFilter.setQueryData(queryData);
+            builder.queryData(queryData);
         }
 
-        AuditUtil.stamp(securityContext, processorFilter);
-        return processorFilter;
+        AuditUtil.stamp(securityContext, processorFilter, builder);
     }
 
     @Override

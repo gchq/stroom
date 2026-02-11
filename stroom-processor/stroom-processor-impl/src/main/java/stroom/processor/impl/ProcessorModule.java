@@ -124,7 +124,7 @@ public class ProcessorModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ProcessorTaskQueueStatistics extends RunnableWrapper {
@@ -136,7 +136,7 @@ public class ProcessorModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ProcessorTaskRetention extends RunnableWrapper {
@@ -148,7 +148,7 @@ public class ProcessorModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ProcessorTaskManagerStartup extends RunnableWrapper {
@@ -160,7 +160,7 @@ public class ProcessorModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ProcessorTaskManagerShutdown extends RunnableWrapper {
@@ -172,7 +172,7 @@ public class ProcessorModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ProcessorTaskManagerDisownDeadTasks extends RunnableWrapper {
@@ -184,7 +184,7 @@ public class ProcessorModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ProcessorTaskManagerReleaseOldQueuedTasks extends RunnableWrapper {
@@ -196,7 +196,7 @@ public class ProcessorModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ProcessorTaskCreatorJob extends RunnableWrapper {

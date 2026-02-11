@@ -885,7 +885,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     protected interface MapNameFunc {

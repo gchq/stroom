@@ -145,7 +145,7 @@ public class TestV07_02_00_005 extends AbstractStoredQueryMigrationTest {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public record Row(String createUser, String updateUser, String ownerUuid) {

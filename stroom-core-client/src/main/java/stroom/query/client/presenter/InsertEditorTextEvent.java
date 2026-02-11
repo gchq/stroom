@@ -74,7 +74,7 @@ public class InsertEditorTextEvent extends GwtEvent<Handler> {
         return insertType;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

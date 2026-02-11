@@ -26,7 +26,7 @@ public interface RefDataValueByteBufferConsumer {
     void consumeBytes(final ByteBuffer byteBuffer);
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     interface Factory {

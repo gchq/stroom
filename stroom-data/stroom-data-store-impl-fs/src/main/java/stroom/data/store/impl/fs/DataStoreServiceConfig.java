@@ -154,7 +154,7 @@ public class DataStoreServiceConfig extends AbstractConfig implements IsStroomCo
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @BootStrapConfig

@@ -20,7 +20,6 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
-import stroom.node.shared.Node;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
@@ -205,10 +204,9 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
 
     @Test
     void testApplyAllCriteria() {
-        final String feedName = FileSystemTestUtil.getUniqueTestString();
-
-        final Node testNode = new Node();
-        testNode.setId(1);
+//        final String feedName = FileSystemTestUtil.getUniqueTestString();
+//
+//        final Node testNode = Node.builder().id(1).build();
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTextTerm(ProcessorTaskFields.NODE_NAME, Condition.EQUALS, "Node name")
@@ -237,10 +235,10 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
 
     @Test
     void testApplyAllCriteriaSummary() {
-        final String feedName = FileSystemTestUtil.getUniqueTestString();
-
-        final Node testNode = new Node();
-        testNode.setId(1);
+//        final String feedName = FileSystemTestUtil.getUniqueTestString();
+//
+//        final Node testNode = new Node();
+//        testNode.setId(1);
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTextTerm(ProcessorTaskFields.NODE_NAME, Condition.EQUALS, "Node name")

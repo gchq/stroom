@@ -111,7 +111,7 @@ public class AnalyticsModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class TableBuilderAnalyticExecutorRunnable extends RunnableWrapper {
@@ -123,7 +123,7 @@ public class AnalyticsModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ScheduledAnalyticExecutorRunnable extends RunnableWrapper {
@@ -143,7 +143,7 @@ public class AnalyticsModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class ExecutionHistoryRetentionRunnable extends RunnableWrapper {

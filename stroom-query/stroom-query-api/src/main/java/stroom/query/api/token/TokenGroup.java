@@ -30,7 +30,7 @@ public class TokenGroup extends AbstractTokenGroup {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Builder extends AbstractTokenGroupBuilder<TokenGroup, Builder> {

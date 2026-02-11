@@ -24,7 +24,7 @@ import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.security.shared.HashAlgorithm;
 import stroom.test.common.TestUtil;
-import stroom.util.shared.HasAuditInfoSetters;
+import stroom.util.AuditUtil;
 
 import org.junit.jupiter.api.Test;
 
@@ -75,7 +75,7 @@ class TestHashedReceiveDataRules {
                                 .build()))
                 .build();
 
-        final DictionaryDoc dict1 = DictionaryDoc.builder()
+        DictionaryDoc dict1 = DictionaryDoc.builder()
                 .uuid(UUID.randomUUID().toString())
                 .name("dic1")
                 .data("""
@@ -84,9 +84,9 @@ class TestHashedReceiveDataRules {
                         Apple
                         """)
                 .build();
-        HasAuditInfoSetters.set(dict1, "user1");
+        dict1 = AuditUtil.stamp(() -> "user1", dict1, dict1.copy()).build();
 
-        final DictionaryDoc dict2 = DictionaryDoc.builder()
+        DictionaryDoc dict2 = DictionaryDoc.builder()
                 .uuid(UUID.randomUUID().toString())
                 .name("dic2")
                 .data("""
@@ -95,7 +95,7 @@ class TestHashedReceiveDataRules {
                         Cow
                         """)
                 .build();
-        HasAuditInfoSetters.set(dict2, "user2");
+        dict2 = AuditUtil.stamp(() -> "user2", dict2, dict2.copy()).build();
 
         final Map<String, DictionaryDoc> uuidToDictMap = DocRefUtil.toMapByUuid(dict1, dict2);
 

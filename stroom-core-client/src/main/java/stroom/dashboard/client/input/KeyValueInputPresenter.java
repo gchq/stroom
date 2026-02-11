@@ -107,7 +107,7 @@ public class KeyValueInputPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface KeyValueInputView extends View, HasUiHandlers<KeyValueInputUiHandlers> {

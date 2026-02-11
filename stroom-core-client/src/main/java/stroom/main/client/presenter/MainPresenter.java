@@ -214,7 +214,7 @@ public class MainPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface MainView extends View, HasUiHandlers<MainUiHandlers> {
@@ -231,7 +231,7 @@ public class MainPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface SpinnerDisplay extends HasClickHandlers, HasDoubleClickHandlers {

@@ -106,7 +106,7 @@ public final class EditorPreferencesPresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface EditorPreferencesView extends View, Focus, HasUiHandlers<DirtyUiHandlers> {

@@ -575,7 +575,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface UserAndGroupsView extends View {

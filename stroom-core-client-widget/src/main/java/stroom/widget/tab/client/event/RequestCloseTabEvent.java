@@ -87,7 +87,7 @@ public class RequestCloseTabEvent extends GwtEvent<RequestCloseTabEvent.Handler>
         return resizeTabBar;
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Handler extends EventHandler {

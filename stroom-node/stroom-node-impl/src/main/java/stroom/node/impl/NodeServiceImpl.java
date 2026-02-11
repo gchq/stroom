@@ -98,8 +98,7 @@ public class NodeServiceImpl implements NodeService {
             throw new PermissionException(
                     securityContext.getUserRef(), "You are not authorised to update nodes");
         }
-        AuditUtil.stamp(securityContext, node);
-        final Node updated = nodeDao.update(node);
+        final Node updated = nodeDao.update(AuditUtil.stamp(securityContext, node, node.copy()).build());
 
         // Let all nodes know that the node has changed.
         EntityEvent.fire(entityEventBus,
@@ -242,7 +241,7 @@ public class NodeServiceImpl implements NodeService {
 
                     LOGGER.debug(() -> "Response status " + response.getStatus());
                     if (response.getStatus() != Status.OK.getStatusCode()
-                            && response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
+                        && response.getStatus() != Status.NO_CONTENT.getStatusCode()) {
                         throw new WebApplicationException(response);
                     }
                 }
@@ -285,30 +284,30 @@ public class NodeServiceImpl implements NodeService {
             // Get the node endpoint URL from config or determine it
             if (thisNode == null) {
                 // This will start a new mini transaction to create the node record
-                final Node node = new Node();
-                AuditUtil.stamp(securityContext, node);
-                node.setName(nodeName);
-                updateNodeObj(node);
-
+                final Node.Builder builder = Node.builder();
+                AuditUtil.stampNew(securityContext, builder);
+                builder.name(nodeName);
+                final Node node = updateNodeObj(builder);
                 LOGGER.info("Creating node record for {} with endpoint url: {} and buildVersion: {}",
                         node.getName(), node.getUrl(), node.getBuildVersion());
                 nodeDao.tryCreate(node);
             } else {
                 // Node record already exists so create it
-                updateNodeObj(thisNode);
-
+                final Node node = updateNodeObj(thisNode.copy());
                 LOGGER.info("Updating node record for {} with endpoint url: {} and buildVersion: {}",
-                        thisNode.getName(), thisNode.getUrl(), thisNode.getBuildVersion());
-                update(thisNode);
+                        node.getName(), node.getUrl(), node.getBuildVersion());
+                update(node);
             }
         });
     }
 
-    private void updateNodeObj(final Node node) {
+    private Node updateNodeObj(final Node.Builder builder) {
         final String endpointUrl = uriFactory.nodeUri("").toString();
         final BuildInfo buildInfo = buildInfoProvider.get();
-        node.setUrl(endpointUrl);
-        node.setBuildVersion(buildInfo.getBuildVersion());
-        node.setLastBootMs(Instant.now().toEpochMilli());
+        return builder
+                .url(endpointUrl)
+                .buildVersion(buildInfo.getBuildVersion())
+                .lastBootMs(Instant.now().toEpochMilli())
+                .build();
     }
 }

@@ -180,7 +180,7 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, LoginViewImpl> {

@@ -88,8 +88,8 @@ class StoredQueryDaoImpl implements StoredQueryDao {
     }
 
     private StoredQuery create(final DSLContext context, final StoredQuery storedQuery) {
-        storedQuery.setVersion(1);
-        storedQuery.setUuid(UUID.randomUUID().toString());
+        final int version = 1;
+        final String uuid = UUID.randomUUID().toString();
         final String data = queryJsonSerialiser.serialise(storedQuery.getQuery());
         final Integer id = context
                 .insertInto(QUERY)
@@ -105,7 +105,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
                         QUERY.FAVOURITE,
                         QUERY.UUID,
                         QUERY.OWNER_UUID)
-                .values(storedQuery.getVersion(),
+                .values(version,
                         storedQuery.getCreateTimeMs(),
                         storedQuery.getCreateUser(),
                         storedQuery.getUpdateTimeMs(),
@@ -115,12 +115,18 @@ class StoredQueryDaoImpl implements StoredQueryDao {
                         storedQuery.getName(),
                         data,
                         storedQuery.isFavourite(),
-                        storedQuery.getUuid(),
+                        uuid,
                         NullSafe.get(storedQuery.getOwner(), UserRef::getUuid))
                 .returning(QUERY.ID)
                 .fetchOne(QUERY.ID);
-        storedQuery.setId(id);
-        return storedQuery;
+        Objects.requireNonNull(id, "Null id");
+
+        return storedQuery
+                .copy()
+                .id(id)
+                .version(version)
+                .uuid(uuid)
+                .build();
     }
 
     @Override

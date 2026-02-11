@@ -62,13 +62,14 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
         final long now = System.currentTimeMillis();
         dao.getMap().values().forEach(task -> {
             if (TaskStatus.CREATED.equals(task.getStatus()) ||
-                    TaskStatus.PROCESSING.equals(task.getStatus())) {
+                TaskStatus.PROCESSING.equals(task.getStatus())) {
 
                 boolean release = false;
                 if (releaseForNodes != null) {
                     for (final String node : releaseForNodes) {
                         if (node.equals(task.getNodeName())) {
                             release = true;
+                            break;
                         }
                     }
 
@@ -77,6 +78,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                     for (final String node : retainForNodes) {
                         if (node.equals(task.getNodeName())) {
                             release = false;
+                            break;
                         }
                     }
                 }
@@ -88,10 +90,12 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                 }
 
                 if (release) {
-                    task.setStatus(TaskStatus.CREATED);
-                    task.setStatusTimeMs(now);
-                    task.setNodeName(null);
-                    dao.update(task);
+                    dao.update(task
+                            .copy()
+                            .status(TaskStatus.CREATED)
+                            .statusTimeMs(now)
+                            .nodeName(null)
+                            .build());
                 }
             }
         });
@@ -109,12 +113,13 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
         final long now = System.currentTimeMillis();
 
         metaMap.forEach((meta, eventRanges) -> {
-            final ProcessorTask task = new ProcessorTask();
-            task.setVersion(1);
-            task.setCreateTimeMs(now);
-            task.setStatus(TaskStatus.CREATED);
-            task.setStartTimeMs(now);
-            task.setMetaId(meta.getId());
+            final ProcessorTask.Builder builder = ProcessorTask
+                    .builder()
+                    .version(1)
+                    .createTimeMs(now)
+                    .status(TaskStatus.CREATED)
+                    .startTimeMs(now)
+                    .metaId(meta.getId());
 
             String eventRangeData = null;
             if (eventRanges != null) {
@@ -123,12 +128,12 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
             }
 
             if (eventRangeData != null && !eventRangeData.isEmpty()) {
-                task.setData(eventRangeData);
+                builder.data(eventRangeData);
             }
 
-            task.setProcessorFilter(filter);
+            builder.processorFilter(filter);
 
-            dao.create(task);
+            dao.create(builder.build());
         });
 
         return metaMap.size();
@@ -167,12 +172,14 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                                           final TaskStatus status,
                                           final Long startTime,
                                           final Long endTime) {
-        processorTask.setNodeName(nodeName);
-        processorTask.setStatus(status);
-        processorTask.setStatusTimeMs(System.currentTimeMillis());
-        processorTask.setStartTimeMs(startTime);
-        processorTask.setEndTimeMs(endTime);
-        return processorTask;
+        return processorTask
+                .copy()
+                .nodeName(nodeName)
+                .status(status)
+                .statusTimeMs(System.currentTimeMillis())
+                .startTimeMs(startTime)
+                .endTimeMs(endTime)
+                .build();
     }
 
     @Override

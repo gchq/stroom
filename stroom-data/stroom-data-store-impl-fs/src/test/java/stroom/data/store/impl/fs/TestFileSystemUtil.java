@@ -52,9 +52,7 @@ class TestFileSystemUtil {
     Path tempDir;
 
     private FsVolume buildTestVolume() {
-        final FsVolume config = new FsVolume();
-        config.setPath(FileUtil.getCanonicalPath(tempDir));
-        return config;
+        return FsVolume.builder().path(FileUtil.getCanonicalPath(tempDir)).build();
     }
 
     @Test
@@ -263,7 +261,7 @@ class TestFileSystemUtil {
         final Path nonExistingRoot = rootDir.resolve(FileSystemTestUtil.getUniqueTestString());
         assertThat(FileSystemUtil
                 .mkdirs(nonExistingRoot, nonExistingRoot.resolve(FileSystemTestUtil.getUniqueTestString() + "/a/b")))
-                .withFailMessage("Should be NOT be OK to create a dir off a non existant root")
+                .withFailMessage("Should be NOT be OK to create a dir off a non existent root")
                 .isFalse();
 
     }

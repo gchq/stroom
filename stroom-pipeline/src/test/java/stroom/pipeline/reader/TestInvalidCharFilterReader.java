@@ -143,7 +143,7 @@ public class TestInvalidCharFilterReader {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record Params(String attributeValue, String content) {

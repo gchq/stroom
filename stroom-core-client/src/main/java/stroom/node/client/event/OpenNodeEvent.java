@@ -91,7 +91,7 @@ public class OpenNodeEvent extends GwtEvent<OpenNodeHandler> {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface OpenNodeHandler extends EventHandler {

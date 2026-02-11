@@ -556,7 +556,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     @SuppressWarnings("ClassCanBeRecord")

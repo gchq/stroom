@@ -243,7 +243,7 @@ public class ContentTabPanePresenter
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class TabTaskMonitorFactory implements TaskMonitorFactory {

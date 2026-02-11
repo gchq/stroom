@@ -466,7 +466,7 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private record PropDiff(String name, Object defaultValue, Object value) {

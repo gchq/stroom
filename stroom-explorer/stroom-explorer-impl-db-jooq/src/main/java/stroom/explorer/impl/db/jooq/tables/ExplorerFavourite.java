@@ -181,9 +181,9 @@ public class ExplorerFavourite extends TableImpl<ExplorerFavouriteRecord> {
         return new ExplorerFavourite(name, null);
     }
 
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
     // Row4 type methods
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
     @Override
     public Row4<Integer, Integer, String, Long> fieldsRow() {

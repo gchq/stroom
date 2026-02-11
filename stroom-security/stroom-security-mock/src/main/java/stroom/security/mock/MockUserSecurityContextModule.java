@@ -65,11 +65,11 @@ public class MockUserSecurityContextModule extends AbstractModule {
                             .subjectId(ADMINISTRATORS)
                             .uuid(UUID.randomUUID().toString())
                             .group(true)
+                            .createUser(ADMIN)
+                            .updateUser(ADMIN)
+                            .createTimeMs(System.currentTimeMillis())
+                            .updateTimeMs(System.currentTimeMillis())
                             .build();
-                    user.setCreateUser(ADMIN);
-                    user.setUpdateUser(ADMIN);
-                    user.setCreateTimeMs(System.currentTimeMillis());
-                    user.setUpdateTimeMs(System.currentTimeMillis());
                     final User created = userDao.create(user);
                     appPermissionDao.addPermission(created.getUuid(), AppPermission.ADMINISTRATOR);
                     return created;
@@ -81,11 +81,11 @@ public class MockUserSecurityContextModule extends AbstractModule {
                             .subjectId(ADMIN)
                             .uuid(UUID.randomUUID().toString())
                             .group(false)
+                            .createUser(ADMIN)
+                            .updateUser(ADMIN)
+                            .createTimeMs(System.currentTimeMillis())
+                            .updateTimeMs(System.currentTimeMillis())
                             .build();
-                    user.setCreateUser(ADMIN);
-                    user.setUpdateUser(ADMIN);
-                    user.setCreateTimeMs(System.currentTimeMillis());
-                    user.setUpdateTimeMs(System.currentTimeMillis());
                     final User created = userDao.create(user);
                     userDao.addUserToGroup(created.getUuid(), group.getUuid());
                     LOGGER.info(() -> LogUtil.message("Created user with subjectId: {}, UUID: {}",

@@ -33,9 +33,9 @@ import java.util.function.Function;
 
 public interface Store<D extends AbstractDoc>
         extends DocumentActionHandler<D>, HasFindDocsByName, ContentIndexable {
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     DocRef createDocument(String name);
 
@@ -50,13 +50,13 @@ public interface Store<D extends AbstractDoc>
 
     DocRefInfo info(DocRef docRef);
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     Map<DocRef, Set<DocRef>> getDependencies(BiConsumer<D, DependencyRemapper> mapper);
 
@@ -64,9 +64,9 @@ public interface Store<D extends AbstractDoc>
 
     void remapDependencies(DocRef docRef, Map<DocRef, DocRef> remappings, BiConsumer<D, DependencyRemapper> mapper);
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     /**
      * Creates the named document, using the supplied {@link DocumentCreator} to
@@ -85,7 +85,8 @@ public interface Store<D extends AbstractDoc>
 
     Map<String, byte[]> exportDocument(DocRef docRef,
                                        List<Message> messageList,
-                                       Function<D, D> filter);
+                                       boolean omitAuditFields,
+                                       final Function<D, D> function);
 
     /**
      * List all documents of this stores type

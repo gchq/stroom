@@ -1100,7 +1100,7 @@ public class SteppingPresenter
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface SteppingView extends View {

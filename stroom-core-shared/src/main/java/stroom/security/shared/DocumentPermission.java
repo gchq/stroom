@@ -137,7 +137,7 @@ public enum DocumentPermission implements HasDisplayValue, HasPrimitiveValue {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public enum PermissionType {

@@ -31,23 +31,25 @@ class RecordToProcessorTaskMapper implements Function<Record, ProcessorTask> {
 
     @Override
     public ProcessorTask apply(final Record record) {
-        final ProcessorTask processorTask = new ProcessorTask();
-        processorTask.setId(record.get(PROCESSOR_TASK.ID));
-        processorTask.setVersion(record.get(PROCESSOR_TASK.VERSION));
-        processorTask.setMetaId(record.get(PROCESSOR_TASK.META_ID));
-        processorTask.setData(record.get(PROCESSOR_TASK.DATA));
+        final ProcessorTask.Builder builder = ProcessorTask
+                .builder()
+                .id(record.get(PROCESSOR_TASK.ID))
+                .version(record.get(PROCESSOR_TASK.VERSION))
+                .metaId(record.get(PROCESSOR_TASK.META_ID))
+                .data(record.get(PROCESSOR_TASK.DATA));
         if (record.field(PROCESSOR_NODE.NAME) != null) {
-            processorTask.setNodeName(record.get(PROCESSOR_NODE.NAME));
+            builder.nodeName(record.get(PROCESSOR_NODE.NAME));
         }
         if (record.field(PROCESSOR_FEED.NAME) != null) {
-            processorTask.setFeedName(record.get(PROCESSOR_FEED.NAME));
+            builder.feedName(record.get(PROCESSOR_FEED.NAME));
         }
-        processorTask.setStatus(
-                TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(PROCESSOR_TASK.STATUS)));
-        processorTask.setStartTimeMs(record.get(PROCESSOR_TASK.START_TIME_MS));
-        processorTask.setCreateTimeMs(record.get(PROCESSOR_TASK.CREATE_TIME_MS));
-        processorTask.setStatusTimeMs(record.get(PROCESSOR_TASK.STATUS_TIME_MS));
-        processorTask.setEndTimeMs(record.get(PROCESSOR_TASK.END_TIME_MS));
-        return processorTask;
+        builder
+                .status(
+                        TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(PROCESSOR_TASK.STATUS)))
+                .startTimeMs(record.get(PROCESSOR_TASK.START_TIME_MS))
+                .createTimeMs(record.get(PROCESSOR_TASK.CREATE_TIME_MS))
+                .statusTimeMs(record.get(PROCESSOR_TASK.STATUS_TIME_MS))
+                .endTimeMs(record.get(PROCESSOR_TASK.END_TIME_MS));
+        return builder.build();
     }
 }

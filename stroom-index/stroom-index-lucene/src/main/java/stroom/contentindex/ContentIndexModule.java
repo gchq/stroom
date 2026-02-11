@@ -47,7 +47,7 @@ public class ContentIndexModule extends AbstractModule {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
 
     private static class IndexContent extends RunnableWrapper {

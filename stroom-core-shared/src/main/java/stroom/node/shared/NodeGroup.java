@@ -157,12 +157,9 @@ public class NodeGroup implements HasAuditInfoGetters, HasIntegerId {
         }
 
         private Builder(final NodeGroup nodeGroup) {
+            super(nodeGroup);
             this.id = nodeGroup.id;
             this.version = nodeGroup.version;
-            this.createTimeMs = nodeGroup.createTimeMs;
-            this.createUser = nodeGroup.createUser;
-            this.updateTimeMs = nodeGroup.updateTimeMs;
-            this.updateUser = nodeGroup.updateUser;
             this.name = nodeGroup.name;
             this.enabled = nodeGroup.enabled;
         }

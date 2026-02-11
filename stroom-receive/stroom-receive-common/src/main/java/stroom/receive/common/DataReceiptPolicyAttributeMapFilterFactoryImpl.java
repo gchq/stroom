@@ -204,7 +204,7 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Checker {
@@ -213,7 +213,7 @@ public class DataReceiptPolicyAttributeMapFilterFactoryImpl implements DataRecei
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class CheckerImpl implements Checker {

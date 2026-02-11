@@ -176,10 +176,10 @@ public class ScyllaDbDoc extends AbstractDoc {
         private String keyspace;
         private String keyspaceCql;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final ScyllaDbDoc scyllaDbDoc) {
+        private Builder(final ScyllaDbDoc scyllaDbDoc) {
             super(scyllaDbDoc);
             this.description = scyllaDbDoc.description;
             this.connection = scyllaDbDoc.connection;

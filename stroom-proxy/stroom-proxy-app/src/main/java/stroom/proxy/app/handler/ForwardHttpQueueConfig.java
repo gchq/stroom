@@ -76,7 +76,7 @@ public class ForwardHttpQueueConfig extends ForwardQueueConfig {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public static class Builder {

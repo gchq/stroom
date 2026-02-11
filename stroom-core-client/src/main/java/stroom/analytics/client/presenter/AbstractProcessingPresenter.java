@@ -159,7 +159,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface AnalyticProcessingView extends View, HasUiHandlers<AnalyticProcessingUiHandlers> {

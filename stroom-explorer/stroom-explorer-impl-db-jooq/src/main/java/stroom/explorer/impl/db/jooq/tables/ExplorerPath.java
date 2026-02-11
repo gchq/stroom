@@ -159,9 +159,9 @@ public class ExplorerPath extends TableImpl<ExplorerPathRecord> {
         return new ExplorerPath(name, null);
     }
 
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
     // Row4 type methods
-    // -------------------------------------------------------------------------
+    // ---------------------------------------------------------------------
 
     @Override
     public Row4<Integer, Integer, Integer, Integer> fieldsRow() {

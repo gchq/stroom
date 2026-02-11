@@ -157,7 +157,7 @@ public class TestLmdbOrdering extends AbstractLmdbDbTest {
             byteBuffer.flip();
         }
     }
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     private static class TestKey {
 
@@ -193,7 +193,7 @@ public class TestLmdbOrdering extends AbstractLmdbDbTest {
         }
     }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
     private static class TestKeySerde implements Serde<TestKey> {
 

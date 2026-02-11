@@ -138,10 +138,10 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
 
         private ReportSettings reportSettings;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final ReportDoc doc) {
+        private Builder(final ReportDoc doc) {
             super(doc);
             this.reportSettings = doc.reportSettings;
         }

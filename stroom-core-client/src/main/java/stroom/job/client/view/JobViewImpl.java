@@ -53,7 +53,7 @@ public class JobViewImpl extends ViewImpl implements JobPresenter.JobView {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, JobViewImpl> {

@@ -60,7 +60,7 @@ public class NodeViewImpl extends ViewImpl implements NodePresenter.NodeView {
 //        nodeJobListFormGroup.setLabel(heading);
 //    }
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     public interface Binder extends UiBinder<Widget, NodeViewImpl> {

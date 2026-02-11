@@ -594,7 +594,7 @@ class TestDuplicateCheckStore {
     }
 
 
-    // --------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
 
 
     private static class HashClashDupCheckRowSerde extends DuplicateCheckRowSerde {
