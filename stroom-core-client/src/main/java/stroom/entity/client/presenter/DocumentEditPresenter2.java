@@ -23,56 +23,56 @@ import stroom.document.client.event.HasDirtyHandlers;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-public abstract class DocumentEditPresenter<V extends View, D> extends AbstractDocPresenter<V, D>
+import java.util.Objects;
+
+public abstract class DocumentEditPresenter2<V extends View, D>
+        extends AbstractDocPresenter<V, D>
         implements HasDocumentRead<D>, HasDocumentWrite<D>, HasDirtyHandlers, HasClose {
 
     private D entity;
-    private boolean dirty;
-    private boolean reading;
     private boolean readOnly = true;
+    private boolean dirty;
 
-    public DocumentEditPresenter(final EventBus eventBus, final V view) {
+    public DocumentEditPresenter2(final EventBus eventBus, final V view) {
         super(eventBus, view);
     }
 
-    private void setDirty(final boolean dirty, final boolean force) {
+    public final void onChange() {
         if (!isReadOnly()) {
-            if (!reading && (force || this.dirty != dirty)) {
-                this.dirty = dirty;
-                DirtyEvent.fire(this, dirty);
-                onDirty(dirty);
-            }
+            final D updated = write(entity);
+            final boolean dirty = !Objects.equals(entity, updated);
+            setDirty(dirty);
         }
     }
 
-    public void onDirty(final boolean dirty) {
+    private void setDirty(final boolean dirty) {
+        if (this.dirty != dirty) {
+            this.dirty = dirty;
+            onDirty(dirty);
+            DirtyEvent.fire(this, dirty);
+        }
     }
 
-    public boolean isDirty() {
-        return !readOnly && dirty;
+    public final boolean isDirty() {
+        return dirty;
     }
 
-    public void setDirty(final boolean dirty) {
-        setDirty(dirty, false);
+    void onDirty(final boolean dirty) {
     }
 
     @Override
     public final void read(final DocRef docRef, final D document, final boolean readOnly) {
         this.entity = document;
         this.readOnly = readOnly;
-        if (getView() instanceof ReadOnlyChangeHandler) {
-            final ReadOnlyChangeHandler changeHandler = (ReadOnlyChangeHandler) getView();
+        setDirty(false);
+
+        if (getView() instanceof final ReadOnlyChangeHandler changeHandler) {
             changeHandler.onReadOnly(readOnly);
         }
-
         if (docRef != null && document != null) {
-            reading = true;
             onRead(docRef, document, readOnly);
-            reading = false;
-            setDirty(false, true);
         }
     }
 

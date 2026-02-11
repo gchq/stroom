@@ -21,7 +21,7 @@ import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter2;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.client.FeedClient;
 import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
@@ -43,11 +43,10 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class FeedSettingsPresenter
-        extends DocumentEditPresenter<FeedSettingsView, FeedDoc> {
+        extends DocumentEditPresenter2<FeedSettingsView, FeedDoc> {
 
     @SuppressWarnings("SimplifyStreamApiCallChains") // Cos GWT
     private static final List<String> FORMATS = DataFormatNames.ALL_HARD_CODED_FORMAT_NAMES.stream()
@@ -85,49 +84,27 @@ public class FeedSettingsPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        // Add listeners for dirty events.
-        final ValueChangeHandler<Boolean> checkHandler = event -> setDirty(true);
-        registerHandler(getView().getClassification().addValueChangeHandler(e -> setDirty(true)));
+        // Add listeners for change events.
+        final ValueChangeHandler<Boolean> checkHandler = event -> onChange();
+        registerHandler(getView().getClassification().addValueChangeHandler(e -> onChange()));
         registerHandler(getView().getReference().addValueChangeHandler(checkHandler));
         registerHandler(getView().getDataEncoding().addValueChangeHandler(event -> {
             final String dataEncoding = ensureEncoding(getView().getDataEncoding().getValue());
             getView().getDataEncoding().setValue(dataEncoding);
-
-            if (!Objects.equals(dataEncoding, getEntity().getEncoding())) {
-                getEntity().setEncoding(dataEncoding);
-                setDirty(true);
-            }
+            onChange();
         }));
         registerHandler(getView().getContextEncoding().addValueChangeHandler(event -> {
             final String contextEncoding = ensureEncoding(getView().getContextEncoding().getValue());
             getView().getContextEncoding().setValue(contextEncoding);
-
-            if (!Objects.equals(contextEncoding, getEntity().getContextEncoding())) {
-                setDirty(true);
-                getEntity().setContextEncoding(contextEncoding);
-            }
+            onChange();
         }));
-        registerHandler(getView().getFeedStatus().addValueChangeHandler(event -> setDirty(true)));
-        registerHandler(getView().getDataFormat().addValueChangeHandler(event -> setDirty(true)));
-        registerHandler(getView().getContextFormat().addValueChangeHandler(event -> setDirty(true)));
-        registerHandler(getView().getSchema().addValueChangeHandler(event -> setDirty(true)));
-        registerHandler(getView().getSchemaVersion().addValueChangeHandler(event -> setDirty(true)));
-        registerHandler(getView().getReceivedType().addValueChangeHandler(event -> {
-            final String streamType = getView().getReceivedType().getValue();
-            getView().getReceivedType().setValue(streamType);
-
-            if (!Objects.equals(streamType, getEntity().getStreamType())) {
-                setDirty(true);
-                getEntity().setStreamType(streamType);
-            }
-        }));
-        registerHandler(getView().getVolumeGroup().addValueChangeHandler(event -> {
-            final String volumeGroup = getView().getVolumeGroup().getValue();
-            if (!Objects.equals(volumeGroup, getEntity().getVolumeGroup())) {
-                setDirty(true);
-                getEntity().setVolumeGroup(volumeGroup);
-            }
-        }));
+        registerHandler(getView().getFeedStatus().addValueChangeHandler(event -> onChange()));
+        registerHandler(getView().getDataFormat().addValueChangeHandler(event -> onChange()));
+        registerHandler(getView().getContextFormat().addValueChangeHandler(event -> onChange()));
+        registerHandler(getView().getSchema().addValueChangeHandler(event -> onChange()));
+        registerHandler(getView().getSchemaVersion().addValueChangeHandler(event -> onChange()));
+        registerHandler(getView().getReceivedType().addValueChangeHandler(event -> onChange()));
+        registerHandler(getView().getVolumeGroup().addValueChangeHandler(event -> onChange()));
     }
 
     private void updateEncodings() {
@@ -221,19 +198,20 @@ public class FeedSettingsPresenter
 
     @Override
     protected FeedDoc onWrite(final FeedDoc feed) {
-        feed.setReference(getView().getReference().getValue());
-        feed.setClassification(getView().getClassification().getText());
-        feed.setEncoding(ensureEncoding(getView().getDataEncoding().getValue()));
-        feed.setContextEncoding(ensureEncoding(getView().getContextEncoding().getValue()));
-        feed.setStreamType(getView().getReceivedType().getValue());
-        feed.setDataFormat(getView().getDataFormat().getValue());
-        feed.setContextFormat(getView().getContextFormat().getValue());
-        feed.setSchema(getView().getSchema().getValue());
-        feed.setSchemaVersion(getView().getSchemaVersion().getValue());
-        // Set the process stage.
-        feed.setStatus(getView().getFeedStatus().getValue());
-        feed.setVolumeGroup(getView().getVolumeGroup().getValue());
-        return feed;
+        return feed
+                .copy()
+                .reference(getView().getReference().getValue())
+                .classification(getView().getClassification().getText())
+                .encoding(ensureEncoding(getView().getDataEncoding().getValue()))
+                .contextEncoding(ensureEncoding(getView().getContextEncoding().getValue()))
+                .streamType(getView().getReceivedType().getValue())
+                .dataFormat(getView().getDataFormat().getValue())
+                .contextFormat(getView().getContextFormat().getValue())
+                .schema(getView().getSchema().getValue())
+                .schemaVersion(getView().getSchemaVersion().getValue())
+                .status(getView().getFeedStatus().getValue())
+                .volumeGroup(getView().getVolumeGroup().getValue())
+                .build();
     }
 
     private String ensureEncoding(final String encoding) {

@@ -25,6 +25,7 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
+import stroom.entity.client.presenter.AbstractDocPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourcePresenter;
@@ -85,9 +86,9 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
 
     @Override
     public void save(final DocumentTabData tabData) {
-        if (tabData instanceof DocumentEditPresenter<?, ?>) {
-            final DocumentEditPresenter<?, StatisticStoreDoc> presenter =
-                    (DocumentEditPresenter<?, StatisticStoreDoc>) tabData;
+        if (tabData instanceof AbstractDocPresenter<?, ?>) {
+            final AbstractDocPresenter<?, StatisticStoreDoc> presenter =
+                    (AbstractDocPresenter<?, StatisticStoreDoc>) tabData;
             if (presenter.isDirty()) {
                 final StatisticStoreDoc entity = presenter.getEntity();
 
@@ -103,7 +104,7 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
         }
     }
 
-    private void doConfirmSave(final DocumentEditPresenter<?, StatisticStoreDoc> presenter,
+    private void doConfirmSave(final AbstractDocPresenter<?, StatisticStoreDoc> presenter,
                                final StatisticStoreDoc entity,
                                final StatisticStoreDoc entityFromDb,
                                final TaskMonitorFactory taskMonitorFactory) {
@@ -120,17 +121,17 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
         // only need a null check on the engine name as the rest will never be
         // null
         if (!prevType.equals(writtenEntity.getStatisticType())
-                || !prevRollUpType.equals(writtenEntity.getRollUpType())
-                || !prevInterval.equals(writtenEntity.getPrecision())
-                || !prevFieldList.equals(writtenEntity.getStatisticFields())
-                || !prevMaskSet.equals(writtenEntity.getCustomRollUpMasks())) {
+            || !prevRollUpType.equals(writtenEntity.getRollUpType())
+            || !prevInterval.equals(writtenEntity.getPrecision())
+            || !prevFieldList.equals(writtenEntity.getStatisticFields())
+            || !prevMaskSet.equals(writtenEntity.getCustomRollUpMasks())) {
             ConfirmEvent.fireWarn(
                     this,
                     SafeHtmlUtils.fromTrustedString("Changes to the following attributes of a statistic data " +
-                            "source:<br/><br/>Engine Name<br/>Statistic Type<br/>Precision<br/>Rollup Type<br/>" +
-                            "Field list<br/>Custom roll-ups<br/><br/>can potentially cause corruption of the " +
-                            "existing statistics data. Please ensure you understand the full consequences of the " +
-                            "change.<br/><br/>" + "Do you wish to continue?"),
+                                                    "source:<br/><br/>Engine Name<br/>Statistic Type<br/>Precision<br/>Rollup Type<br/>" +
+                                                    "Field list<br/>Custom roll-ups<br/><br/>can potentially cause corruption of the " +
+                                                    "existing statistics data. Please ensure you understand the full consequences of the " +
+                                                    "change.<br/><br/>" + "Do you wish to continue?"),
                     result -> {
                         if (result) {
                             doSave(presenter, writtenEntity, taskMonitorFactory);
@@ -139,13 +140,12 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                         }
                     });
         } else {
-            // user has changed some attributes we don't care about so just do
-            // the save
+            // user has changed some attributes we don't care about so just do the save
             doSave(presenter, writtenEntity, taskMonitorFactory);
         }
     }
 
-    private void doSave(final DocumentEditPresenter<?, StatisticStoreDoc> presenter,
+    private void doSave(final AbstractDocPresenter<?, StatisticStoreDoc> presenter,
                         final StatisticStoreDoc entity,
                         final TaskMonitorFactory taskMonitorFactory) {
         save(DocRefUtil.create(entity), entity, doc ->

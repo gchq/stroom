@@ -25,6 +25,7 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
+import stroom.entity.client.presenter.AbstractDocPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.statistics.impl.hbase.client.presenter.StroomStatsStorePresenter;
@@ -85,9 +86,9 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
 
     @Override
     public void save(final DocumentTabData tabData) {
-        if (tabData instanceof DocumentEditPresenter<?, ?>) {
-            final DocumentEditPresenter<?, StroomStatsStoreDoc> presenter =
-                    (DocumentEditPresenter<?, StroomStatsStoreDoc>) tabData;
+        if (tabData instanceof AbstractDocPresenter<?, ?>) {
+            final AbstractDocPresenter<?, StroomStatsStoreDoc> presenter =
+                    (AbstractDocPresenter<?, StroomStatsStoreDoc>) tabData;
             if (presenter.isDirty()) {
                 final StroomStatsStoreDoc entity = presenter.getEntity();
 
@@ -103,7 +104,7 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
         }
     }
 
-    private void doConfirmSave(final DocumentEditPresenter<?, StroomStatsStoreDoc> presenter,
+    private void doConfirmSave(final AbstractDocPresenter<?, StroomStatsStoreDoc> presenter,
                                final StroomStatsStoreDoc entity,
                                final StroomStatsStoreDoc entityFromDb,
                                final TaskMonitorFactory taskMonitorFactory) {
@@ -119,19 +120,18 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
         // if one of a select list of attributes has changed then warn the user
         // only need a null check on the engine name as the rest will never be
         // null
-        if (entityFromDb != null && (
-                !prevType.equals(entity.getStatisticType()) ||
-                        !prevRollUpType.equals(entity.getRollUpType()) ||
-                        !prevInterval.equals(entity.getPrecision()) ||
-                        !prevFieldList.equals(entity.getStatisticFields()) ||
-                        !prevMaskSet.equals(entity.getCustomRollUpMasks()))) {
+        if (!prevType.equals(entity.getStatisticType()) ||
+            !prevRollUpType.equals(entity.getRollUpType()) ||
+            !prevInterval.equals(entity.getPrecision()) ||
+            !prevFieldList.equals(entity.getStatisticFields()) ||
+            !prevMaskSet.equals(entity.getCustomRollUpMasks())) {
             ConfirmEvent.fireWarn(
                     this,
                     SafeHtmlUtils.fromTrustedString("Changes to the following attributes of a statistic data " +
-                            "source:<br/><br/>Engine Name<br/>Statistic Type<br/>Precision<br/>Rollup Type<br/>" +
-                            "Field list<br/>Custom roll-ups<br/><br/>can potentially cause corruption of the " +
-                            "existing statistics data. Please ensure you understand the full consequences of " +
-                            "the change.<br/><br/>" + "Do you wish to continue?"),
+                                                    "source:<br/><br/>Engine Name<br/>Statistic Type<br/>Precision<br/>Rollup Type<br/>" +
+                                                    "Field list<br/>Custom roll-ups<br/><br/>can potentially cause corruption of the " +
+                                                    "existing statistics data. Please ensure you understand the full consequences of " +
+                                                    "the change.<br/><br/>" + "Do you wish to continue?"),
                     result -> {
                         if (result) {
                             doSave(presenter, entity, taskMonitorFactory);
@@ -146,7 +146,7 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
         }
     }
 
-    private void doSave(final DocumentEditPresenter<?, StroomStatsStoreDoc> presenter,
+    private void doSave(final AbstractDocPresenter<?, StroomStatsStoreDoc> presenter,
                         final StroomStatsStoreDoc entity,
                         final TaskMonitorFactory taskMonitorFactory) {
         save(DocRefUtil.create(entity), entity, doc ->

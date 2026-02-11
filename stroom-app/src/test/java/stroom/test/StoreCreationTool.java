@@ -1073,25 +1073,4 @@ public final class StoreCreationTool {
             return childFolder;
         }
     }
-
-    public DocRef createFeed(final String feedName,
-                             final DocRef folder,
-                             final String streamType,
-                             final String encoding,
-                             final boolean isReference) {
-        LOGGER.info("Creating feed {} in {} with type {} encoding {}");
-        final ExplorerNode feedNode;
-        feedNode = explorerService.create(FeedDoc.TYPE, feedName,
-                ExplorerConstants.SYSTEM_NODE,
-                PermissionInheritance.DESTINATION);
-        final DocRef feedDocRef = feedNode != null
-                ? feedNode.getDocRef()
-                : feedStore.createDocument(feedName);
-        final FeedDoc feedDoc = feedStore.readDocument(feedDocRef);
-        feedDoc.setReference(isReference);
-        feedDoc.setEncoding(encoding);
-        feedDoc.setStreamType(streamType);
-        feedStore.writeDocument(feedDoc);
-        return feedDocRef;
-    }
 }

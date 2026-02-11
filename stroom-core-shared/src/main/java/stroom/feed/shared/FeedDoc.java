@@ -34,6 +34,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @Description(
         "The {{< glossary \"Feed\" >}} is Stroom's way of compartmentalising data that has been ingested or " +
         "created by a [Pipeline]({{< relref \"#pipeline\" >}}).\n" +
@@ -220,7 +222,6 @@ public class FeedDoc extends AbstractDoc {
         return retentionDayAge;
     }
 
-
     public void setRetentionDayAge(final Integer retentionDayAge) {
         this.retentionDayAge = retentionDayAge;
     }
@@ -297,6 +298,67 @@ public class FeedDoc extends AbstractDoc {
         public byte getPrimitiveValue() {
             return primitiveValue;
         }
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        final FeedDoc feedDoc = (FeedDoc) o;
+        return reference == feedDoc.reference &&
+               Objects.equals(description, feedDoc.description) &&
+               Objects.equals(classification, feedDoc.classification) &&
+               Objects.equals(encoding, feedDoc.encoding) &&
+               Objects.equals(contextEncoding, feedDoc.contextEncoding) &&
+               Objects.equals(retentionDayAge, feedDoc.retentionDayAge) &&
+               Objects.equals(streamType, feedDoc.streamType) &&
+               Objects.equals(dataFormat, feedDoc.dataFormat) &&
+               Objects.equals(contextFormat, feedDoc.contextFormat) &&
+               Objects.equals(schema, feedDoc.schema) &&
+               Objects.equals(schemaVersion, feedDoc.schemaVersion) &&
+               status == feedDoc.status &&
+               Objects.equals(volumeGroup, feedDoc.volumeGroup);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(),
+                description,
+                classification,
+                encoding,
+                contextEncoding,
+                retentionDayAge,
+                reference,
+                streamType,
+                dataFormat,
+                contextFormat,
+                schema,
+                schemaVersion,
+                status,
+                volumeGroup);
+    }
+
+    @Override
+    public String toString() {
+        return "FeedDoc{" +
+               "description='" + description + '\'' +
+               ", classification='" + classification + '\'' +
+               ", encoding='" + encoding + '\'' +
+               ", contextEncoding='" + contextEncoding + '\'' +
+               ", retentionDayAge=" + retentionDayAge +
+               ", reference=" + reference +
+               ", streamType='" + streamType + '\'' +
+               ", dataFormat='" + dataFormat + '\'' +
+               ", contextFormat='" + contextFormat + '\'' +
+               ", schema='" + schema + '\'' +
+               ", schemaVersion='" + schemaVersion + '\'' +
+               ", status=" + status +
+               ", volumeGroup='" + volumeGroup + '\'' +
+               '}';
     }
 
     public Builder copy() {
