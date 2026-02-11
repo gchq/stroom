@@ -95,9 +95,8 @@ public final class AuditUtil {
      * @param <B>            Builder type.
      * @return The doc with audit fields removed.
      */
-    public static <D, B extends HasAuditInfoBuilder<D, ?>> D
-    removeAuditData(final Function<D, B> builderFunction,
-                    final D doc) {
+    public static <D, B extends HasAuditInfoBuilder<D, ?>> D removeAuditData(final Function<D, B> builderFunction,
+                                                                             final D doc) {
         return builderFunction
                 .apply(doc)
                 .createTimeMs(null)
