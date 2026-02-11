@@ -18,6 +18,7 @@ package stroom.view.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -127,7 +128,7 @@ class ViewStoreImpl implements ViewStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<ViewDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<ViewDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
             if (doc.getDataSource() != null) {
                 doc.setDataSource(dependencyRemapper.remap(doc.getDataSource()));
@@ -135,6 +136,7 @@ class ViewStoreImpl implements ViewStore {
             if (doc.getPipeline() != null) {
                 doc.setPipeline(dependencyRemapper.remap(doc.getPipeline()));
             }
+            return doc;
         };
     }
 

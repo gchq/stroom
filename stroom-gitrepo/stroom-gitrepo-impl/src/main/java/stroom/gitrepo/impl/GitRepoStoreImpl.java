@@ -18,8 +18,7 @@ package stroom.gitrepo.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -35,7 +34,6 @@ import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 public class GitRepoStoreImpl implements GitRepoStore {
@@ -114,9 +112,10 @@ public class GitRepoStoreImpl implements GitRepoStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<GitRepoDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<GitRepoDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
             // No dependencies to map
+            return doc;
         };
     }
 

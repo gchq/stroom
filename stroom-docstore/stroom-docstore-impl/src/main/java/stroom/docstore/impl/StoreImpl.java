@@ -19,6 +19,7 @@ package stroom.docstore.impl;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefDecorator;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.DocumentSerialiser2;
@@ -59,7 +60,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -242,7 +242,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     // ---------------------------------------------------------------------
 
     @Override
-    public Map<DocRef, Set<DocRef>> getDependencies(final BiConsumer<D, DependencyRemapper> mapper) {
+    public Map<DocRef, Set<DocRef>> getDependencies(final DependencyRemapFunction<D> mapper) {
         return list()
                 .stream()
                 .filter(this::canRead)
@@ -252,13 +252,13 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
 
     @Override
     public Set<DocRef> getDependencies(final DocRef docRef,
-                                       final BiConsumer<D, DependencyRemapper> mapper) {
+                                       final DependencyRemapFunction<D> mapper) {
         if (mapper != null) {
             try {
-                final D doc = readDocument(docRef);
+                D doc = readDocument(docRef);
                 if (doc != null) {
                     final DependencyRemapper dependencyRemapper = new DependencyRemapper();
-                    mapper.accept(doc, dependencyRemapper);
+                    doc = mapper.remap(doc, dependencyRemapper);
                     return dependencyRemapper.getDependencies();
                 }
             } catch (final RuntimeException e) {
@@ -271,13 +271,13 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     @Override
     public void remapDependencies(final DocRef docRef,
                                   final Map<DocRef, DocRef> remappings,
-                                  final BiConsumer<D, DependencyRemapper> mapper) {
+                                  final DependencyRemapFunction<D> mapper) {
         if (mapper != null) {
             try {
-                final D doc = readDocument(docRef);
+                D doc = readDocument(docRef);
                 if (doc != null) {
                     final DependencyRemapper dependencyRemapper = new DependencyRemapper(remappings);
-                    mapper.accept(doc, dependencyRemapper);
+                    doc = mapper.remap(doc, dependencyRemapper);
                     if (dependencyRemapper.isChanged()) {
                         writeDocument(doc);
                     }

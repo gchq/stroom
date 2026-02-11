@@ -18,7 +18,7 @@ package stroom.search.elastic;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -33,7 +33,6 @@ import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 public class ElasticIndexStoreImpl implements ElasticIndexStore {
@@ -138,11 +137,12 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<ElasticIndexDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<ElasticIndexDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
             dependencyRemapper.remap(doc.getClusterRef());
             dependencyRemapper.remap(doc.getVectorGenerationModelRef());
             dependencyRemapper.remap(doc.getRerankModelRef());
+            return doc;
         };
     }
 

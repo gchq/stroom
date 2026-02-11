@@ -18,6 +18,7 @@ package stroom.pipeline;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -138,7 +139,7 @@ public class PipelineStoreImpl implements PipelineStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<PipelineDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<PipelineDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
             if (doc.getParentPipeline() != null) {
                 doc.setParentPipeline(dependencyRemapper.remap(doc.getParentPipeline()));
@@ -167,6 +168,7 @@ public class PipelineStoreImpl implements PipelineStore {
 
                 doc.setPipelineData(builder.build());
             }
+            return doc;
         };
     }
 

@@ -19,6 +19,7 @@ package stroom.receive.rules.impl;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
@@ -220,7 +221,7 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<ReceiveDataRules, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<ReceiveDataRules> createMapper() {
         return (doc, dependencyRemapper) -> {
             final List<ReceiveDataRule> templates = doc.getRules();
             if (NullSafe.hasItems(templates)) {
@@ -230,6 +231,7 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
                     }
                 });
             }
+            return doc;
         };
     }
 

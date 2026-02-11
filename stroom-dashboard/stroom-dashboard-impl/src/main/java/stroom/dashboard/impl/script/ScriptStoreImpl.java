@@ -19,6 +19,7 @@ package stroom.dashboard.impl.script;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -119,7 +120,7 @@ class ScriptStoreImpl implements ScriptStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<ScriptDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<ScriptDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
             if (doc.getDependencies() != null) {
                 doc.setDependencies(doc.getDependencies()
@@ -127,6 +128,7 @@ class ScriptStoreImpl implements ScriptStore {
                         .map(dependencyRemapper::remap)
                         .toList());
             }
+            return doc;
         };
     }
 

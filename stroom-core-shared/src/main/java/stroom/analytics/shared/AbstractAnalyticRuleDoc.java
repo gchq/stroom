@@ -46,7 +46,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     @JsonProperty
     private final TimeRange timeRange;
     @JsonProperty
-    private String query;
+    private final String query;
     @JsonProperty
     private final AnalyticProcessType analyticProcessType;
     @JsonProperty
@@ -137,10 +137,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
         return query;
     }
 
-    public void setQuery(final String query) {
-        this.query = query;
-    }
-
     public AnalyticProcessType getAnalyticProcessType() {
         return analyticProcessType;
     }
@@ -148,12 +144,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     public AnalyticProcessConfig getAnalyticProcessConfig() {
         return analyticProcessConfig;
     }
-
-//    @Deprecated
-//    public AnalyticNotificationConfig getAnalyticNotificationConfig() {
-//        return analyticNotificationConfig;
-//    }
-
 
     public List<NotificationConfig> getNotifications() {
         return notifications;

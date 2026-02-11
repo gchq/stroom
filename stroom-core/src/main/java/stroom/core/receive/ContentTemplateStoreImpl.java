@@ -18,8 +18,7 @@ package stroom.core.receive;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
@@ -42,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 /**
  * A bit of a special store that only ever holds one doc with a hard coded name.
@@ -157,7 +155,7 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<ContentTemplates, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<ContentTemplates> createMapper() {
         return (doc, dependencyRemapper) -> {
             final List<ContentTemplate> templates = doc.getContentTemplates();
             if (NullSafe.hasItems(templates)) {
@@ -167,6 +165,7 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
                     }
                 });
             }
+            return doc;
         };
     }
 

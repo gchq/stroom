@@ -26,6 +26,7 @@ import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
@@ -48,7 +49,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 class DashboardStoreImpl implements DashboardStore {
@@ -170,7 +170,7 @@ class DashboardStoreImpl implements DashboardStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<DashboardDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<DashboardDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
             if (doc.getDashboardConfig() != null) {
                 final List<ComponentConfig> components = doc.getDashboardConfig().getComponents();
@@ -215,6 +215,7 @@ class DashboardStoreImpl implements DashboardStore {
                     doc.getDashboardConfig().setComponents(newComponents);
                 }
             }
+            return doc;
         };
     }
 

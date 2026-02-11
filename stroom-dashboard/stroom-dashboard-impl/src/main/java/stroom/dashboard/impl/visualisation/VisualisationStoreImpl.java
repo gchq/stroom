@@ -18,7 +18,7 @@ package stroom.dashboard.impl.visualisation;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -33,7 +33,6 @@ import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 class VisualisationStoreImpl implements VisualisationStore {
@@ -112,9 +111,11 @@ class VisualisationStoreImpl implements VisualisationStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<VisualisationDoc, DependencyRemapper> createMapper() {
-        return (doc, dependencyRemapper) ->
-                doc.setScriptRef(dependencyRemapper.remap(doc.getScriptRef()));
+    private DependencyRemapFunction<VisualisationDoc> createMapper() {
+        return (doc, dependencyRemapper) -> {
+            doc.setScriptRef(dependencyRemapper.remap(doc.getScriptRef()));
+            return doc;
+        };
     }
 
     // ---------------------------------------------------------------------

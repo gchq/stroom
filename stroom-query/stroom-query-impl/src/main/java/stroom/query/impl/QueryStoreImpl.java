@@ -18,7 +18,7 @@ package stroom.query.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -41,7 +41,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 class QueryStoreImpl implements QueryStore {
@@ -141,7 +140,7 @@ class QueryStoreImpl implements QueryStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<QueryDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<QueryDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
             try {
                 if (doc.getQuery() != null) {
@@ -181,6 +180,7 @@ class QueryStoreImpl implements QueryStore {
             } catch (final RuntimeException e) {
                 LOGGER.debug(e::getMessage, e);
             }
+            return doc;
         };
     }
 

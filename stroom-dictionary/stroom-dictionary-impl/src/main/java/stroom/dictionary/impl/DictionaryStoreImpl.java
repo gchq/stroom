@@ -24,7 +24,7 @@ import stroom.dictionary.shared.WordList.Builder;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefDecorator;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -48,7 +48,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -131,7 +130,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<DictionaryDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<DictionaryDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
             if (doc.getImports() != null) {
                 final List<DocRef> replacedDocRefImports = doc
@@ -141,6 +140,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
                         .toList();
                 doc.setImports(replacedDocRefImports);
             }
+            return doc;
         };
     }
 
