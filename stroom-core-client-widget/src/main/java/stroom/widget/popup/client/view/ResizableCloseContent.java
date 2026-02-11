@@ -65,7 +65,7 @@ public class ResizableCloseContent extends Composite implements DialogButtons {
 
     @UiHandler("close")
     public void onCloseClick(final ClickEvent event) {
-        onDialogAction(DialogAction.CLOSE);
+        onDialogAction(DialogAction.builder().type(DialogActionType.CLOSE).build());
     }
 
     @Override

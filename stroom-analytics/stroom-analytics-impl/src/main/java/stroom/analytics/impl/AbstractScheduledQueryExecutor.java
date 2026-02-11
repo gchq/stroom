@@ -53,6 +53,7 @@ import jakarta.inject.Provider;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -90,7 +91,7 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
         this.processType = processType;
     }
 
-    public void exec() {
+    public void execFromDocs() {
         final TaskContext taskContext = taskContextFactory.current();
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try {
@@ -130,6 +131,61 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
         }
     }
 
+
+    public void execFromSchedules(final List<ExecutionSchedule> executionSchedules) {
+        //Could potentially tidy this up and join more in common with execFromDocs, but the distinction of
+        //only running on _some_ schedules for each rule adds some complexity.
+        final TaskContext taskContext = taskContextFactory.current();
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+        try {
+            info(() -> "Starting scheduled " + processType + " processing from schedules");
+
+            // Group by rules.
+            final HashMap<T, List<ExecutionSchedule>> docScheduleMap = new HashMap<>();
+            for (final ExecutionSchedule executionSchedule : executionSchedules) {
+                final T doc = load(executionSchedule.getOwningDoc());
+                if(!docScheduleMap.containsKey(doc)) {
+                    docScheduleMap.put(doc, new ArrayList<>());
+                }
+                docScheduleMap.get(doc).add(executionSchedule);
+            }
+
+            info(() -> "Processing " + LogUtil.namedCount("scheduled " + processType, NullSafe.size(docScheduleMap.keySet()))
+                        + " across " + LogUtil.namedCount("schedule", NullSafe.size(executionSchedules)));
+
+            final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
+            for (final T doc : docScheduleMap.keySet()) {
+                final Runnable runnable = createRunnable(doc, taskContext, docScheduleMap.get(doc));
+                try {
+                    workQueue.exec(runnable);
+                } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    throw e;
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
+                }
+            }
+
+            // Join.
+            workQueue.join();
+
+            postExecuteTidyUp(docScheduleMap.keySet().stream().toList());
+
+            info(() ->
+                    LogUtil.message("Finished scheduled {} processing in {}", processType, logExecutionTime));
+        } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+            LOGGER.debug("Task terminated", e);
+            LOGGER.debug(() ->
+                    LogUtil.message("Scheduled {} processing terminated after {}", processType, logExecutionTime));
+        } catch (final RuntimeException e) {
+            LOGGER.error(() ->
+                    LogUtil.message("Error during scheduled {} processing: {}", processType, e.getMessage()), e);
+        }
+    }
+
+
+
+
     /**
      * Called at the end of execution to perform any tidy up operations.
      *
@@ -138,11 +194,12 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
     abstract void postExecuteTidyUp(final List<T> analyticDocs);
 
     private Runnable createRunnable(final T doc,
-                                    final TaskContext parentTaskContext) {
+                                    final TaskContext parentTaskContext,
+                                    final List<ExecutionSchedule> executionSchedules) {
         return () -> {
             if (!parentTaskContext.isTerminated()) {
                 try {
-                    execRule(doc, parentTaskContext);
+                    execSchedules(doc, parentTaskContext, executionSchedules);
                 } catch (final RuntimeException e) {
                     LOGGER.error(() ->
                             LogUtil.message("Error executing {}: {}",
@@ -153,8 +210,9 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
         };
     }
 
-    private void execRule(final T doc,
-                          final TaskContext parentTaskContext) {
+    private Runnable createRunnable(final T doc,
+                                    final TaskContext parentTaskContext)
+    {
         final DocRef docRef = doc.asDocRef();
 
         // Load schedules for the rule. Do this as the processing user as permission is required to load associated
@@ -169,14 +227,20 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
             return executionScheduleDao.fetchExecutionSchedule(request);
         });
 
+        return createRunnable(doc, parentTaskContext, executionSchedules.getValues());
+    }
+
+    private void execSchedules(final T doc,
+                               final TaskContext parentTaskContext,
+                               final List<ExecutionSchedule> executionSchedules) {
         final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
-        for (final ExecutionSchedule executionSchedule : executionSchedules.getValues()) {
+        for (final ExecutionSchedule executionSchedule : executionSchedules) {
             final Runnable runnable = () -> {
                 try {
                     // We need to set the user again here as it will have been lost from the parent context as we are
                     // running within a new thread.
                     LOGGER.debug(() -> LogUtil.message("DocRef: {}, running as user: {}",
-                            docRef.toShortString(), executionSchedule.getRunAsUser()));
+                            doc.asDocRef().toShortString(), executionSchedule.getRunAsUser()));
 
                     securityContext.asUser(executionSchedule.getRunAsUser(), () -> securityContext.useAsRead(() -> {
                         boolean success = true;

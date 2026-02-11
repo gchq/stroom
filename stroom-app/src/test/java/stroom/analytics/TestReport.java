@@ -18,7 +18,7 @@ package stroom.analytics;
 
 import stroom.analytics.impl.ExecutionScheduleDao;
 import stroom.analytics.impl.ReportExecutor;
-import stroom.analytics.rule.impl.ReportStore;
+import stroom.analytics.impl.ReportStore;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.ExecutionHistory;
 import stroom.analytics.shared.ExecutionHistoryRequest;
@@ -136,7 +136,7 @@ class TestReport extends AbstractAnalyticsTest {
                 .build());
 
         // Now run the search process.
-        reportExecutor.exec();
+        reportExecutor.execFromDocs();
 
         // As we have created alerts ensure we now have more streams.
         testReportStream(expectedStreams, expectedRecords);

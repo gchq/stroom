@@ -18,6 +18,7 @@ package stroom.entity.client.view;
 
 import stroom.entity.client.presenter.NameDocumentView;
 import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.popup.client.view.DialogActionType;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -64,7 +65,7 @@ public class NameDocumentViewImpl extends ViewWithUiHandlers<DialogActionUiHandl
     @UiHandler("name")
     void onKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == '\r') {
-            getUiHandlers().onDialogAction(DialogAction.OK);
+            getUiHandlers().onDialogAction(DialogAction.builder().type(DialogActionType.OK).build());
         }
     }
 

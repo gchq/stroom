@@ -23,7 +23,8 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
 
 import com.google.gwt.user.cellview.client.AbstractHasData;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
 import com.gwtplatform.mvp.client.View;
 
 public interface PagerView extends View, TaskMonitorFactory {
@@ -31,6 +32,10 @@ public interface PagerView extends View, TaskMonitorFactory {
     ButtonView addButton(Preset preset);
 
     void addButton(ButtonView buttonView);
+
+    void addInfoLabel(HTML label);
+
+    HTML getInfoLabel(int index);
 
     ToggleButtonView addToggleButton(Preset primaryPreset,
                                      Preset secondaryPreset);

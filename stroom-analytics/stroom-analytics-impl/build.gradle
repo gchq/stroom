@@ -31,6 +31,7 @@ dependencies {
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-feed:stroom-feed-api')
@@ -57,6 +58,7 @@ dependencies {
 //    implementation project(':stroom-view:stroom-view-impl')
     implementation project(':stroom-view:stroom-view-api')
 
+    implementation libs.eventLogging
     implementation libs.guice
     implementation libs.jackson.annotations
     implementation libs.jakarta.validation.api

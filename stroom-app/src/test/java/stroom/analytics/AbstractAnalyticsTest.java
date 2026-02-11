@@ -16,7 +16,7 @@
 
 package stroom.analytics;
 
-import stroom.analytics.rule.impl.AnalyticRuleStore;
+import stroom.analytics.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.NotificationConfig;
 import stroom.analytics.shared.NotificationDestinationType;

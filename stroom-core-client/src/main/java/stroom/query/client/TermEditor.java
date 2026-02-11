@@ -16,6 +16,8 @@
 
 package stroom.query.client;
 
+import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.ReportDoc;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
@@ -34,6 +36,7 @@ import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.StringUtil;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
@@ -54,6 +57,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static stroom.explorer.shared.ExplorerConstants.FOLDER_LIKE;
+
 public class TermEditor extends Composite {
 
     private static final String ITEM_CLASS_NAME = "termEditor-item";
@@ -71,6 +76,9 @@ public class TermEditor extends Composite {
     private final MyDateBox date;
     private final MyDateBox dateFrom;
     private final MyDateBox dateTo;
+    //Should be possible to unify the multiple uses of termlistbox so that the only difference
+    //is the values supplied.
+    private final SelectionBox<String> termListBox;
     private final Widget docRefWidget;
     private final Widget userRefWidget;
     private final Label fieldTypeLabel;
@@ -94,6 +102,7 @@ public class TermEditor extends Composite {
         docRefPresenter.setRequiredPermissions(DocumentPermission.USE);
         docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
         suggestOracle = new AsyncSuggestOracle(docRefPresenter);
+
 
         this.docSelectionBoxPresenter = docRefPresenter;
         this.userRefSelectionBoxPresenter = userRefProvider.get();
@@ -132,6 +141,9 @@ public class TermEditor extends Composite {
         dateTo = createDateBox(NARROW_CLASS_NAME);
         dateTo.setVisible(false);
 
+        termListBox = createTermSelectionListBox(NARROW_CLASS_NAME);
+        termListBox.setVisible(false);
+
         fieldTypeLabel = createFieldTypeLabel();
 
         final FlowPanel inner = new FlowPanel();
@@ -145,6 +157,7 @@ public class TermEditor extends Composite {
         inner.add(andLabel);
         inner.add(valueTo);
         inner.add(dateTo);
+        inner.add(termListBox);
         inner.add(docRefWidget);
         inner.add(userRefWidget);
 
@@ -231,6 +244,9 @@ public class TermEditor extends Composite {
                     sb.append(",");
                 } else if (widget instanceof MyDateBox) {
                     sb.append(((MyDateBox) widget).getValue());
+                    sb.append(",");
+                } else if (widget instanceof SelectionBox<?>) {
+                    sb.append(((SelectionBox<?>) widget).getValue());
                     sb.append(",");
                 } else if (widget.equals(docRefWidget)) {
                     if (docSelectionBoxPresenter != null) {
@@ -337,7 +353,7 @@ public class TermEditor extends Composite {
                      LESS_THAN_OR_EQUAL_TO,
                      GREATER_THAN,
                      GREATER_THAN_OR_EQUAL_TO:
-                    enterTextOrDateMode(indexFieldType);
+                    enterTextOrDateOrBooleanMode(indexFieldType);
                     break;
                 case BETWEEN:
                     enterTextOrDateRangeMode(indexFieldType);
@@ -345,10 +361,12 @@ public class TermEditor extends Composite {
                 case IN_DICTIONARY,
                      IN_FOLDER,
                      IS_DOC_REF,
+                     IS_NOT_DOC_REF,
                      OF_DOC_REF:
                     enterDocRefMode(field, condition);
                     break;
                 case IS_USER_REF,
+                     IS_NOT_USER_REF,
                      USER_HAS_PERM,
                      USER_HAS_OWNER,
                      USER_HAS_DELETE,
@@ -357,6 +375,14 @@ public class TermEditor extends Composite {
                      USER_HAS_USE:
                     enterUserRefMode(field, condition);
                     break;
+                case IS_SCHEDULE_TYPE,
+                     IS_NOT_SCHEDULE_TYPE:
+                    enterScheduleTypeMode();
+                    break;
+                case IS_PARENT_DOC_TYPE,
+                     IS_NOT_PARENT_DOC_TYPE:
+                    enterParentDocTypeMode();
+                    break;
                 default:
                     enterTextMode();
                     break;
@@ -364,8 +390,11 @@ public class TermEditor extends Composite {
         }
     }
 
-    private void enterTextOrDateMode(final FieldType indexFieldType) {
-        if (FieldType.DATE.equals(indexFieldType)) {
+    private void enterTextOrDateOrBooleanMode(final FieldType indexFieldType) {
+        if (FieldType.BOOLEAN.equals(indexFieldType)) {
+            enterBooleanMode();
+        }
+        else if (FieldType.DATE.equals(indexFieldType)) {
             enterDateMode();
         } else {
             enterTextMode();
@@ -395,6 +424,30 @@ public class TermEditor extends Composite {
         updateDateBoxes();
     }
 
+    private void enterBooleanMode() {
+        termListBox.clear();
+        termListBox.addItem("true");
+        termListBox.addItem("false");
+        setActiveWidgets(termListBox);
+        updateTermListBox();
+    }
+
+    private void enterScheduleTypeMode() {
+        termListBox.clear();
+        termListBox.addItem(ScheduleType.CRON.getDisplayValue());
+        termListBox.addItem(ScheduleType.FREQUENCY.getDisplayValue());
+        setActiveWidgets(termListBox);
+        updateTermListBox();
+    }
+
+    private void enterParentDocTypeMode() {
+        termListBox.clear();
+        termListBox.addItem(AnalyticRuleDoc.TYPE);
+        termListBox.addItem(ReportDoc.TYPE);
+        setActiveWidgets(termListBox);
+        updateTermListBox();
+    }
+
     private void enterDateRangeMode() {
         setActiveWidgets(dateFrom, andLabel, dateTo);
         updateDateBoxes();
@@ -408,7 +461,7 @@ public class TermEditor extends Composite {
             if (Condition.IN_DICTIONARY.equals(condition)) {
                 docSelectionBoxPresenter.setIncludedTypes("Dictionary");
             } else if (Condition.IN_FOLDER.equals(condition) || Condition.OF_DOC_REF.equals(condition)) {
-                docSelectionBoxPresenter.setIncludedTypes("Folder");
+                docSelectionBoxPresenter.setIncludedTypes(FOLDER_LIKE);
                 docSelectionBoxPresenter.setAllowFolderSelection(true);
             } else if (FieldType.DOC_REF.equals(field.getFldType())) {
                 if (field.getDocRefType() != null) {
@@ -477,6 +530,13 @@ public class TermEditor extends Composite {
                     dateTo.setValue(vals[1]);
                 }
             }
+        }
+    }
+
+    private void updateTermListBox() {
+        if (term.getValue() != null) {
+            // Set the current data.
+            termListBox.setValue(term.getValue());
         }
     }
 
@@ -585,6 +645,13 @@ public class TermEditor extends Composite {
         dateBox.addStyleName(ITEM_CLASS_NAME);
         dateBox.addStyleName(widthClassName);
         return dateBox;
+    }
+
+    private SelectionBox<String> createTermSelectionListBox(final String widthClassName) {
+        final SelectionBox<String> termSelectionListBox = new SelectionBox<String>();
+        termSelectionListBox.addStyleName(ITEM_CLASS_NAME);
+        termSelectionListBox.addStyleName(widthClassName);
+        return termSelectionListBox;
     }
 
     private Label createLabel(final String text) {

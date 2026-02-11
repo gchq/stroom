@@ -81,7 +81,9 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
     @Override
     public Condition apply(final ExpressionTerm term) {
         switch (term.getCondition()) {
-            case EQUALS -> {
+            case EQUALS,
+                 IS_SCHEDULE_TYPE,
+                 IS_PARENT_DOC_TYPE -> {
                 // TODO : Currently equality is used for wild carding with `*` but should probably use the
                 //  `MATCHES_REGEX` condition.
                 //  Also `is null` is being assumed if the value is null when we probably want to change this to
@@ -97,7 +99,9 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
 //                    return getCondition(term, field::eq);
 //                }
             }
-            case NOT_EQUALS -> {
+            case NOT_EQUALS,
+                 IS_NOT_SCHEDULE_TYPE,
+                 IS_NOT_PARENT_DOC_TYPE -> {
                 return neq(term);
             }
             case EQUALS_CASE_SENSITIVE -> {
@@ -192,6 +196,19 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                     }
                 }
             }
+            case IS_NOT_DOC_REF -> {
+                if (term.getDocRef() == null || term.getDocRef().getUuid() == null) {
+                    return field.isNull();
+                } else {
+                    final String docValue = getDocValue(term, term.getDocRef());
+                    final List<T> value = getValues(docValue);
+                    // IS_DOC_REF does not support wild carding so should only get one thing back
+                    // else fall through and match nothing
+                    if (value.size() == 1) {
+                        return field.notEqual(value.getFirst());
+                    }
+                }
+            }
             case IS_USER_REF -> {
                 if (term.getDocRef() == null || term.getDocRef().getUuid() == null) {
                     return field.isNull();
@@ -202,6 +219,19 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
                     // else fall through and match nothing
                     if (value.size() == 1) {
                         return field.equal(value.getFirst());
+                    }
+                }
+            }
+            case IS_NOT_USER_REF -> {
+                if (term.getDocRef() == null || term.getDocRef().getUuid() == null) {
+                    return field.isNull();
+                } else {
+                    final String docValue = getDocValue(term, term.getDocRef());
+                    final List<T> value = getValues(docValue);
+                    // IS_NOT_DOC_REF does not support wild carding so should only get one thing back
+                    // else fall through and match nothing
+                    if (value.size() == 1) {
+                        return field.notEqual(value.getFirst());
                     }
                 }
             }

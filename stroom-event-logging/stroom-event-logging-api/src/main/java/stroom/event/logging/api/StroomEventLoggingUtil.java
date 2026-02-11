@@ -324,6 +324,7 @@ public class StroomEventLoggingUtil {
                     value = "docRef: " + expressionTerm.getDocRef();
                     break;
                 case IS_USER_REF:
+                case IS_NOT_USER_REF:
                 case USER_HAS_PERM:
                 case USER_HAS_OWNER:
                 case USER_HAS_DELETE:

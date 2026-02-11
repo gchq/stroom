@@ -75,6 +75,7 @@ public enum ConditionSet {
             Condition.IN_DICTIONARY),
     DOC_REF_ALL(
             Condition.IS_DOC_REF,
+            Condition.IS_NOT_DOC_REF,
             Condition.IN_FOLDER,
             Condition.EQUALS,
             Condition.NOT_EQUALS,
@@ -92,6 +93,12 @@ public enum ConditionSet {
             Condition.NOT_EQUALS_CASE_SENSITIVE,
             Condition.IN,
             Condition.IN_DICTIONARY),
+    SCHEDULE_TYPE(
+            Condition.IS_SCHEDULE_TYPE,
+            Condition.IS_NOT_SCHEDULE_TYPE),
+    SCHEDULE_PARENT_TYPE(
+            Condition.IS_PARENT_DOC_TYPE,
+            Condition.IS_NOT_PARENT_DOC_TYPE),
 
     // Receipt Policy Rules
     /**
@@ -306,7 +313,8 @@ public enum ConditionSet {
             Condition.USER_HAS_VIEW,
             Condition.USER_HAS_USE),
     RUN_AS_USER(
-            Condition.IS_USER_REF);
+            Condition.IS_USER_REF,
+            Condition.IS_NOT_USER_REF);
 
     private final List<Condition> conditionList;
     private final Set<Condition> conditionSet;

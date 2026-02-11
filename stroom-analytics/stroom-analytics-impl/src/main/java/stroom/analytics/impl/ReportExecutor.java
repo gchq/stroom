@@ -17,7 +17,6 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.api.NotificationState;
-import stroom.analytics.rule.impl.ReportStore;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionTracker;
 import stroom.analytics.shared.NotificationConfig;

@@ -66,6 +66,14 @@
     min-width: 175px;
 }
 
+.termEditor-item.checkbox {
+	width: 50px;
+    min-width: 50px;
+    text-align: center
+
+
+}
+
 .termEditor-item.dropdown {
 }
 

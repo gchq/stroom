@@ -19,6 +19,7 @@ package stroom.explorer.shared;
 import stroom.docref.DocRef;
 import stroom.gitrepo.shared.GitRepoDoc;
 
+import java.util.ArrayList;
 import java.util.Objects;
 
 public final class ExplorerConstants {
@@ -41,6 +42,12 @@ public final class ExplorerConstants {
             .docRef(FAVOURITES_DOC_REF)
             .rootNodeUuid(FAVOURITES_DOC_REF.getUuid())
             .build();
+    
+    public static final ArrayList<String> FOLDER_LIKE = new ArrayList<>();
+    static {
+        FOLDER_LIKE.add("Folder");
+        FOLDER_LIKE.add("GitRepo");
+    }
 
     private ExplorerConstants() {
     }

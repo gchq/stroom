@@ -19,6 +19,7 @@ package stroom.security.identity.client.view;
 import stroom.security.identity.client.presenter.EmailResetPasswordPresenter.EmailResetPasswordView;
 import stroom.security.identity.client.presenter.EmailValidator;
 import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.popup.client.view.DialogActionType;
 import stroom.widget.popup.client.view.HideRequest;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
@@ -91,10 +92,10 @@ public class EmailResetPasswordViewImpl
 
     private void onKeyDown(final KeyDownEvent e) {
         if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-            getUiHandlers().hideRequest(new HideRequest(DialogAction.OK, () -> {
+            getUiHandlers().hideRequest(new HideRequest(DialogAction.builder().type(DialogActionType.OK).build(), () -> {
             }));
         } else if (e.getNativeKeyCode() == KeyCodes.KEY_ESCAPE) {
-            getUiHandlers().hideRequest(new HideRequest(DialogAction.CANCEL, () -> {
+            getUiHandlers().hideRequest(new HideRequest(DialogAction.builder().type(DialogActionType.CANCEL).build(), () -> {
             }));
         }
     }
