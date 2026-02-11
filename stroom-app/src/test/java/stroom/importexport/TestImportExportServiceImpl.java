@@ -109,32 +109,32 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
                 FileSystemTestUtil.getUniqueTestString(),
                 folder1,
                 null);
-        final FeedDoc referenceFeed = feedStore.readDocument(referenceFeedRef.getDocRef());
-        referenceFeed.setDescription("Description");
+        final FeedDoc referenceFeed = feedStore.readDocument(referenceFeedRef.getDocRef())
+                .copy().description("Description").build();
         feedStore.writeDocument(referenceFeed);
 
         final ExplorerNode eventFeedNode = explorerService.create(FeedDoc.TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 folder2,
                 null);
-        final FeedDoc eventFeed = feedStore.readDocument(eventFeedNode.getDocRef());
-        eventFeed.setDescription("Description");
+        final FeedDoc eventFeed = feedStore.readDocument(eventFeedNode.getDocRef())
+                .copy().description("Description").build();
         feedStore.writeDocument(eventFeed);
 
         final ExplorerNode eventFeedChildNode = explorerService.create(FeedDoc.TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 folder2child1,
                 null);
-        final FeedDoc eventFeedChild = feedStore.readDocument(eventFeedChildNode.getDocRef());
-        eventFeedChild.setDescription("Description");
+        final FeedDoc eventFeedChild = feedStore.readDocument(eventFeedChildNode.getDocRef())
+                .copy().description("Description").build();
         feedStore.writeDocument(eventFeedChild);
 
         final ExplorerNode eventFeedChild2Node = explorerService.create(FeedDoc.TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 folder2child2,
                 null);
-        final FeedDoc eventFeedChild2 = feedStore.readDocument(eventFeedChild2Node.getDocRef());
-        eventFeedChild2.setDescription("Description2");
+        final FeedDoc eventFeedChild2 = feedStore.readDocument(eventFeedChild2Node.getDocRef())
+                .copy().description("Description2").build();
         feedStore.writeDocument(eventFeedChild2);
 
         final int startTranslationSize = pipelineStore.list().size();

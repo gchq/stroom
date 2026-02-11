@@ -554,8 +554,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     void testNestedMaps() {
         pipelineScopeRunnable.scopeRunnable(() -> {
             final DocRef feed1Ref = feedStore.createDocument("TEST_FEED_V1");
-            final FeedDoc feedDoc = feedStore.readDocument(feed1Ref);
-            feedDoc.setReference(true);
+            final FeedDoc feedDoc = feedStore.readDocument(feed1Ref).copy().reference(true).build();
             feedStore.writeDocument(feedDoc);
 
             final DocRef pipelineRef = pipelineStore.createDocument("12345");
@@ -638,8 +637,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     void testRange() {
         pipelineScopeRunnable.scopeRunnable(() -> {
             final DocRef feed1Ref = feedStore.createDocument("TEST_FEED_V1");
-            final FeedDoc feedDoc = feedStore.readDocument(feed1Ref);
-            feedDoc.setReference(true);
+            final FeedDoc feedDoc = feedStore.readDocument(feed1Ref).copy().reference(true).build();
             feedStore.writeDocument(feedDoc);
 
             final DocRef pipelineRef = pipelineStore.createDocument("12345");

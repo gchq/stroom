@@ -237,12 +237,13 @@ public class FeedStoreImpl implements FeedStore {
                 if (!allVolumeGroups.contains(volumeGroup)) {
                     LOGGER.debug("Volume group '{}' in imported feed {} is not a valid volume group",
                             volumeGroup, docRef);
+                    final FeedDoc.Builder builder = feedDoc.copy();
                     fsVolumeGroupService.getDefaultVolumeGroup()
                             .ifPresentOrElse(
-                                    feedDoc::setVolumeGroup,
-                                    () -> feedDoc.setVolumeGroup(null));
+                                    builder::volumeGroup,
+                                    () -> builder.volumeGroup(null));
 
-                    effectiveDataMap = serialiser.write(feedDoc);
+                    effectiveDataMap = serialiser.write(builder.build());
                 }
             }
         } catch (final IOException e) {

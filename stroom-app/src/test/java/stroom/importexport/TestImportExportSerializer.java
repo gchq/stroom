@@ -112,8 +112,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 FileSystemTestUtil.getUniqueTestString(),
                 null,
                 null);
-        FeedDoc eventFeed = feedStore.readDocument(testNode.getDocRef());
-        eventFeed.setDescription("Original Description");
+        FeedDoc eventFeed = feedStore.readDocument(testNode.getDocRef())
+                .copy().description("Original Description").build();
         feedStore.writeDocument(eventFeed);
 
         commonTestControl.createRequiredXMLSchemas();
@@ -147,8 +147,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         assertThat(map.get(testNode.getDocRef()).getState()).isEqualTo(State.EQUAL);
 
-        eventFeed = feedStore.readDocument(testNode.getDocRef());
-        eventFeed.setDescription("New Description");
+        eventFeed = feedStore.readDocument(testNode.getDocRef())
+                .copy().description("New Description").build();
         feedStore.writeDocument(eventFeed);
 
         List<DocRef> allSchemas = xmlSchemaStore.list();
@@ -204,8 +204,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 FileSystemTestUtil.getUniqueTestString(),
                 null,
                 null);
-        FeedDoc eventFeed = feedStore.readDocument(testNode.getDocRef());
-        eventFeed.setDescription("Original Description");
+        FeedDoc eventFeed = feedStore.readDocument(testNode.getDocRef())
+                .copy().description("Original Description").build();
         feedStore.writeDocument(eventFeed);
 
         commonTestControl.createRequiredXMLSchemas();
@@ -238,8 +238,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         assertThat(map.get(testNode.getDocRef()).getState()).isEqualTo(State.EQUAL);
 
-        eventFeed = feedStore.readDocument(testNode.getDocRef());
-        eventFeed.setDescription("New Description");
+        eventFeed = feedStore.readDocument(testNode.getDocRef())
+                .copy().description("New Description").build();
         feedStore.writeDocument(eventFeed);
 
         List<DocRef> allSchemas = xmlSchemaStore.list();

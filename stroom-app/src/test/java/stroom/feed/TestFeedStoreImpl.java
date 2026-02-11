@@ -50,8 +50,7 @@ class TestFeedStoreImpl extends AbstractCoreIntegrationTest {
     void test1() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
         final DocRef feedRef = feedStore.createDocument(feedName);
-        FeedDoc feedDoc = feedStore.readDocument(feedRef);
-        feedDoc.setStreamType(StreamTypeNames.RAW_EVENTS);
+        FeedDoc feedDoc = feedStore.readDocument(feedRef).copy().streamType(StreamTypeNames.RAW_EVENTS).build();
         feedDoc = feedStore.writeDocument(feedDoc);
         feedStore.writeDocument(feedDoc);
 

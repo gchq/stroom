@@ -369,7 +369,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
         FeedDoc feedDoc = feedStore.readDocument(feedDocRef);
         // Set up the feed doc using the information in the data feed key
-        configureFeed(feedDoc, attributeMap, userRef);
+        feedDoc = configureFeed(feedDoc, attributeMap, userRef);
         feedDoc = feedStore.writeDocument(feedDoc);
 
         LOGGER.info("Granting READ permission on {} and {}", destFolderRef, feedDocRef);
@@ -390,9 +390,10 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         return feedDocRef;
     }
 
-    private void configureFeed(final FeedDoc feedDoc,
+    private FeedDoc configureFeed(final FeedDoc feedDoc,
                                final AttributeMap attributeMap,
                                final UserRef userRef) {
+        final FeedDoc.Builder builder = feedDoc.copy();
         if (NullSafe.hasEntries(attributeMap)) {
             final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
 
@@ -400,29 +401,30 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
             // so we can just use that.
             consumeAttrVal(attributeMap, StandardHeaderArguments.TYPE, type -> {
                 if (NullSafe.set(receiveDataConfig.getMetaTypes()).contains(type)) {
-                    feedDoc.setStreamType(type);
+                    builder.streamType(type);
                 }
             });
 
             if (userRef != null) {
-                feedDoc.setDescription("Auto-created for user '" + userRef.toDisplayString() + "'");
+                builder.description("Auto-created for user '" + userRef.toDisplayString() + "'");
             } else {
-                feedDoc.setDescription("Auto-created");
+                builder.description("Auto-created");
             }
-            feedDoc.setStatus(FeedStatus.RECEIVE);
+            builder.status(FeedStatus.RECEIVE);
 
             consumeAttrVal(attributeMap, StandardHeaderArguments.ENCODING, val ->
-                    feedDoc.setEncoding(getEncoding(val, feedDoc)));
+                    builder.encoding(getEncoding(val, feedDoc)));
             consumeAttrVal(attributeMap, StandardHeaderArguments.CONTEXT_ENCODING, val ->
-                    feedDoc.setContextEncoding(getEncoding(val, feedDoc)));
-            consumeAttrVal(attributeMap, StandardHeaderArguments.CLASSIFICATION, feedDoc::setClassification);
+                    builder.contextEncoding(getEncoding(val, feedDoc)));
+            consumeAttrVal(attributeMap, StandardHeaderArguments.CLASSIFICATION, builder::classification);
             consumeAttrVal(attributeMap, StandardHeaderArguments.FORMAT, val ->
-                    feedDoc.setDataFormat(getFormat(val, feedDoc)));
+                    builder.dataFormat(getFormat(val, feedDoc)));
             consumeAttrVal(attributeMap, StandardHeaderArguments.CONTEXT_FORMAT, val ->
-                    feedDoc.setContextFormat(getFormat(val, feedDoc)));
-            consumeAttrVal(attributeMap, StandardHeaderArguments.SCHEMA, feedDoc::setSchema);
-            consumeAttrVal(attributeMap, StandardHeaderArguments.SCHEMA_VERSION, feedDoc::setSchemaVersion);
+                    builder.contextFormat(getFormat(val, feedDoc)));
+            consumeAttrVal(attributeMap, StandardHeaderArguments.SCHEMA, builder::schema);
+            consumeAttrVal(attributeMap, StandardHeaderArguments.SCHEMA_VERSION, builder::schemaVersion);
         }
+        return builder.build();
     }
 
     private String getFormat(final String value, final FeedDoc feedDoc) {

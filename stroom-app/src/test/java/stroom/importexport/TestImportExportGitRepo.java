@@ -219,8 +219,8 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "FEED",
                 folder1,
                 null);
-        final FeedDoc feedDoc = feedStore.readDocument(feedNode.getDocRef());
-        feedDoc.setDescription("Feed Description");
+        final FeedDoc feedDoc = feedStore.readDocument(feedNode.getDocRef())
+                .copy().description("Feed Description").build();
         feedStore.writeDocument(feedDoc);
 
         System.err.println("Showing structure that will be exported: ");
@@ -344,8 +344,8 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "FEED",
                 folder1,
                 null);
-        final FeedDoc feedDoc = feedStore.readDocument(feedNode.getDocRef());
-        feedDoc.setDescription("Feed Description");
+        final FeedDoc feedDoc = feedStore.readDocument(feedNode.getDocRef())
+                .copy().description("Feed Description").build();
         feedStore.writeDocument(feedDoc);
 
         System.err.println("Structure that is being exported:");

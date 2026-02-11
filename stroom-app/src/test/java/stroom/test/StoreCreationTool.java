@@ -226,10 +226,11 @@ public final class StoreCreationTool {
             // Setup the feeds in mock feed configuration manager.
             docRef = createFeed(feedName);
 //            docRef = feedStore.createDocument(feedName);
-            final FeedDoc feedDoc = feedStore.readDocument(docRef);
-            feedDoc.setReference(true);
-            feedDoc.setDescription("Description " + feedName);
-            feedDoc.setStatus(FeedStatus.RECEIVE);
+            final FeedDoc feedDoc = feedStore.readDocument(docRef)
+                    .copy()
+                    .reference(true).description("Description " + feedName)
+                    .status(FeedStatus.RECEIVE)
+                    .build();
             feedStore.writeDocument(feedDoc);
 
             // Setup the pipeline.
@@ -461,15 +462,17 @@ public final class StoreCreationTool {
 
         final DocRef docRef;
         final List<DocRef> docRefs = feedStore.findByName(feedName);
-        if (docRefs.size() > 0) {
-            docRef = docRefs.get(0);
+        if (!docRefs.isEmpty()) {
+            docRef = docRefs.getFirst();
         } else {
             // Setup the feeds in mock feed configuration manager.
 //            docRef = feedStore.createDocument(feedName);
             docRef = createFeed(feedName);
-            final FeedDoc feedDoc = feedStore.readDocument(docRef);
-            feedDoc.setDescription("Description " + feedName);
-            feedDoc.setStatus(FeedStatus.RECEIVE);
+            final FeedDoc feedDoc = feedStore.readDocument(docRef)
+                    .copy()
+                    .description("Description " + feedName)
+                    .status(FeedStatus.RECEIVE)
+                    .build();
             feedStore.writeDocument(feedDoc);
         }
         return docRef;

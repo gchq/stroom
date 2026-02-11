@@ -25,10 +25,10 @@ import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PrimitiveValueConverter;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -74,31 +74,31 @@ public class FeedDoc extends AbstractDoc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.FEED_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private String classification;
+    private final String classification;
     @JsonProperty
-    private String encoding;
+    private final String encoding;
     @JsonProperty
-    private String contextEncoding;
+    private final String contextEncoding;
     @JsonProperty
-    private Integer retentionDayAge;
+    private final Integer retentionDayAge;
     @JsonProperty
-    private boolean reference;
+    private final boolean reference;
     @JsonProperty
-    private String streamType;
+    private final String streamType;
     @JsonProperty
-    private String dataFormat;
+    private final String dataFormat;
     @JsonProperty
-    private String contextFormat;
+    private final String contextFormat;
     @JsonProperty
-    private String schema;
+    private final String schema;
     @JsonProperty
-    private String schemaVersion;
+    private final String schemaVersion;
     @JsonProperty
-    private FeedStatus status;
+    private final FeedStatus status;
     @JsonProperty
-    private String volumeGroup;
+    private final String volumeGroup;
 
     @JsonCreator
     public FeedDoc(@JsonProperty("uuid") final String uuid,
@@ -128,8 +128,11 @@ public class FeedDoc extends AbstractDoc {
         this.contextEncoding = contextEncoding;
         this.retentionDayAge = retentionDayAge;
         this.reference = reference;
-        this.streamType = streamType;
-        this.status = status;
+        this.streamType = NullSafe.requireNonNullElse(streamType,
+                reference
+                        ? StreamTypeNames.RAW_REFERENCE
+                        : StreamTypeNames.RAW_EVENTS);
+        this.status = NullSafe.requireNonNullElse(status, FeedStatus.RECEIVE);
         this.dataFormat = dataFormat;
         this.contextFormat = contextFormat;
         this.schema = schema;
@@ -157,121 +160,52 @@ public class FeedDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public String getStreamType() {
-        if (streamType == null) {
-            if (reference) {
-                streamType = StreamTypeNames.RAW_REFERENCE;
-            } else {
-                streamType = StreamTypeNames.RAW_EVENTS;
-            }
-        }
-
         return streamType;
-    }
-
-    public void setStreamType(final String streamType) {
-        this.streamType = streamType;
     }
 
     public String getClassification() {
         return classification;
     }
 
-    public void setClassification(final String classification) {
-        this.classification = classification;
-    }
-
     public String getEncoding() {
         return encoding;
     }
 
-    public void setEncoding(final String encoding) {
-        this.encoding = encoding;
-    }
-
     public FeedStatus getStatus() {
-        if (status == null) {
-            return FeedStatus.RECEIVE;
-        }
-
         return status;
-    }
-
-    public void setStatus(final FeedStatus feedStatus) {
-        this.status = feedStatus;
-    }
-
-    @JsonIgnore
-    public boolean isReceive() {
-        return !FeedStatus.REJECT.equals(getStatus());
     }
 
     public String getContextEncoding() {
         return contextEncoding;
     }
 
-    public void setContextEncoding(final String contextEncoding) {
-        this.contextEncoding = contextEncoding;
-    }
-
     public Integer getRetentionDayAge() {
         return retentionDayAge;
-    }
-
-    public void setRetentionDayAge(final Integer retentionDayAge) {
-        this.retentionDayAge = retentionDayAge;
     }
 
     public boolean isReference() {
         return reference;
     }
 
-    public void setReference(final boolean reference) {
-        this.reference = reference;
-    }
-
     public String getDataFormat() {
         return dataFormat;
-    }
-
-    public void setDataFormat(final String dataFormat) {
-        this.dataFormat = dataFormat;
     }
 
     public String getContextFormat() {
         return contextFormat;
     }
 
-    public void setContextFormat(final String contextFormat) {
-        this.contextFormat = contextFormat;
-    }
-
     public String getSchema() {
         return schema;
-    }
-
-    public void setSchema(final String schema) {
-        this.schema = schema;
     }
 
     public String getSchemaVersion() {
         return schemaVersion;
     }
 
-    public void setSchemaVersion(final String schemaVersion) {
-        this.schemaVersion = schemaVersion;
-    }
-
     public String getVolumeGroup() {
         return volumeGroup;
-    }
-
-    public void setVolumeGroup(final String volumeGroup) {
-        this.volumeGroup = volumeGroup;
     }
 
     public enum FeedStatus implements HasDisplayValue, HasPrimitiveValue {
