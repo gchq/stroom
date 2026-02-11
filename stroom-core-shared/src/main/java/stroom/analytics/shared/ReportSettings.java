@@ -41,9 +41,9 @@ public class ReportSettings {
 
     @JsonCreator
     public ReportSettings(@JsonProperty("fileType") final DownloadSearchResultFileType fileType,
-                          @JsonProperty("sendEmptyReports") final boolean sendEmptyReports) {
+                          @JsonProperty("sendEmptyReports") final Boolean sendEmptyReports) {
         this.fileType = NullSafe.requireNonNullElse(fileType, DEFAULT_FILE_TYPE);
-        this.sendEmptyReports = sendEmptyReports;
+        this.sendEmptyReports = sendEmptyReports == null || sendEmptyReports;
     }
 
     public DownloadSearchResultFileType getFileType() {
@@ -91,7 +91,7 @@ public class ReportSettings {
     public static class Builder extends AbstractBuilder<ReportSettings, Builder> {
 
         private DownloadSearchResultFileType fileType;
-        private boolean sendEmptyReports;
+        private boolean sendEmptyReports = true;
 
         public Builder() {
         }
