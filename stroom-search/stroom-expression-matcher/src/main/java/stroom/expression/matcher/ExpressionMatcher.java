@@ -389,16 +389,18 @@ public class ExpressionMatcher {
                                final QueryField field,
                                final Object attribute) {
         if (FieldType.DOC_REF.equals(field.getFldType())) {
-            final String type = field.getDocRefType();
-            if (type != null && collectionService != null) {
-                final Set<DocRef> descendants = collectionService.getDescendants(docRef, type);
-                if (descendants != null && descendants.size() > 0) {
-                    if (attribute instanceof DocRef) {
-                        final String uuid = ((DocRef) attribute).getUuid();
-                        if (uuid != null) {
-                            for (final DocRef descendant : descendants) {
-                                if (uuid.equals(descendant.getUuid())) {
-                                    return true;
+            final List<String> types = field.getDocRefType();
+            for(final String type : types) {
+                if (type != null && collectionService != null) {
+                    final Set<DocRef> descendants = collectionService.getDescendants(docRef, type);
+                    if (descendants != null && descendants.size() > 0) {
+                        if (attribute instanceof DocRef) {
+                            final String uuid = ((DocRef) attribute).getUuid();
+                            if (uuid != null) {
+                                for (final DocRef descendant : descendants) {
+                                    if (uuid.equals(descendant.getUuid())) {
+                                        return true;
+                                    }
                                 }
                             }
                         }

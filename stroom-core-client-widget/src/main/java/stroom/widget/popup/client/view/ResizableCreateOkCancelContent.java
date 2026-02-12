@@ -64,7 +64,7 @@ public class ResizableCreateOkCancelContent extends Composite implements DialogB
     @Override
     public void onDialogAction(final DialogAction action) {
         setEnabled(false);
-        if (action == DialogAction.OK) {
+        if (action.getType() == DialogActionType.OK) {
             ok.setLoading(true);
         } else {
             cancel.setLoading(true);
@@ -78,17 +78,17 @@ public class ResizableCreateOkCancelContent extends Composite implements DialogB
 
     @UiHandler("ok")
     public void onOkClick(final ClickEvent event) {
-        onDialogAction(DialogAction.OK);
+        onDialogAction(DialogAction.builder().type(DialogActionType.OK).build());
     }
 
     @UiHandler("cancel")
     public void onCancelClick(final ClickEvent event) {
-        onDialogAction(DialogAction.CANCEL);
+        onDialogAction(DialogAction.builder().type(DialogActionType.CANCEL).build());
     }
 
     @UiHandler("create")
     public void onCreateClick(final ClickEvent event) {
-        onDialogAction(DialogAction.CREATE);
+        onDialogAction(DialogAction.builder().type(DialogActionType.CREATE).build());
     }
 
     @Override

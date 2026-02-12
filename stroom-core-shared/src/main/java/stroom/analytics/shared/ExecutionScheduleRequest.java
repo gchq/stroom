@@ -19,9 +19,6 @@ package stroom.analytics.shared;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.ExpressionOperator;
-import stroom.security.shared.FindApiKeyCriteria;
-import stroom.security.shared.FindApiKeyCriteria.Builder;
-import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 
@@ -100,7 +97,10 @@ public class ExecutionScheduleRequest extends ExpressionCriteria {
     @Override
     public String toString() {
         return "ExecutionScheduleRequest{" +
-               "ownerDocRef=" + ownerDocRef +
+               "pageRequest=" + getPageRequest() +
+               ", sortList=" + getSortList() +
+               ", expression=" + getExpression() +
+               ", ownerDocRef=" + ownerDocRef +
                ", nodeName=" + nodeName +
                ", enabled=" + enabled +
                '}';
@@ -114,8 +114,8 @@ public class ExecutionScheduleRequest extends ExpressionCriteria {
         return new Builder();
     }
 
-    public static class Builder extends AbstractBuilder<ExecutionScheduleRequest, ExecutionScheduleRequest.Builder> {
-
+    public static class Builder extends ExpressionCriteriaBuilder<ExecutionScheduleRequest, ExecutionScheduleRequest.Builder>
+    {
         private DocRef ownerDocRef;
         private String nodeName;
         private Boolean enabled;
@@ -124,7 +124,10 @@ public class ExecutionScheduleRequest extends ExpressionCriteria {
         }
 
         private Builder(final ExecutionScheduleRequest request) {
-            super(request);
+            super();
+            this.pageRequest = request.getPageRequest();
+            this.sortList = request.getSortList();
+            this.expression = request.getExpression();
             this.ownerDocRef = request.ownerDocRef;
             this.nodeName = request.nodeName;
             this.enabled = request.enabled;
