@@ -13,6 +13,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.10.20] - 2026-02-12
+
+* Bug **#5391** : Fix folder DocRef NPE.
+
+* Bug **#5392** : Fix PlanB segfault.
+
+* Bug **#5300** : Fix path `millis` parameter.
+
+
 ## [v7.10.19] - 2026-01-28
 
 * Bug **#5311** : Fix documentation markdown edit bug.
@@ -1820,7 +1829,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.19...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.10.20...HEAD
+[v7.10.20]: https://github.com/gchq/stroom/compare/v7.10.19...v7.10.20
 [v7.10.19]: https://github.com/gchq/stroom/compare/v7.10.18...v7.10.19
 [v7.10.18]: https://github.com/gchq/stroom/compare/v7.10.17...v7.10.18
 [v7.10.17]: https://github.com/gchq/stroom/compare/v7.10.16...v7.10.17
