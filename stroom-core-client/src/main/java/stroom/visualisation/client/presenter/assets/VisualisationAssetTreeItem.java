@@ -1,7 +1,10 @@
 package stroom.visualisation.client.presenter.assets;
 
+import stroom.svg.shared.SvgImage;
 import stroom.visualisation.shared.VisualisationAsset;
 
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.TreeItem;
 
 import java.util.HashMap;
@@ -14,37 +17,37 @@ import java.util.UUID;
  */
 public class VisualisationAssetTreeItem extends TreeItem {
 
-    /**
-     * The unique ID for this node.
-     */
+    /** Additional style to use when nothing else matches */
+    private static final SvgImage DEFAULT_ICON = SvgImage.FILE;
+
+    /** Additional style to use when this is a folder */
+    private static final SvgImage FOLDER_ICON = SvgImage.FOLDER;
+
+    /** Map of extension to CSS class name */
+    private static final Map<String, SvgImage> ICONS = new HashMap<>();
+
+    /** The unique ID for this node */
     private final String id;
 
     /** Whether this is a leaf (file) or not (folder / directory) */
     private final boolean isLeaf;
 
-    /** Additional style to use when nothing else matches */
-    private static final String DEFAULT_TYPE_STYLE = "visualisation-asset-type-default";
-
-    /** Additional style to use when this is a folder */
-    private static final String FOLDER_TYPE_STYLE = "visualisation-asset-type-folder";
-
-    /** Map of extension to CSS class name */
-    private static final Map<String, String> TYPE_STYLES = new HashMap<>();
+    /** The label of this item. Use this instead of getText()! */
+    private final String label;
 
     /*
      * Initialise the map of extension to CSS class name. The class name determines the icon.
      */
     static {
-        TYPE_STYLES.put("png",  "visualisation-asset-type-image");
-        TYPE_STYLES.put("jpg",  "visualisation-asset-type-image");
-        TYPE_STYLES.put("jpeg", "visualisation-asset-type-image");
-        TYPE_STYLES.put("gif",  "visualisation-asset-type-image");
-        TYPE_STYLES.put("webp", "visualisation-asset-type-image");
-        TYPE_STYLES.put("svg",  "visualisation-asset-type-image");
-        TYPE_STYLES.put("css",  "visualisation-asset-type-css");
-        TYPE_STYLES.put("htm",  "visualisation-asset-type-html");
-        TYPE_STYLES.put("html", "visualisation-asset-type-html");
-        TYPE_STYLES.put("js",   "visualisation-asset-type-javascript");
+        ICONS.put("png",  SvgImage.FILE_IMAGE);
+        ICONS.put("jpg",  SvgImage.FILE_IMAGE);
+        ICONS.put("gif",  SvgImage.FILE_IMAGE);
+        ICONS.put("webp", SvgImage.FILE_IMAGE);
+        ICONS.put("svg",  SvgImage.FILE_IMAGE);
+        ICONS.put("css",  SvgImage.FILE_RAW);
+        ICONS.put("htm",  SvgImage.FILE_FORMATTED);
+        ICONS.put("html", SvgImage.FILE_FORMATTED);
+        ICONS.put("js",   SvgImage.FILE_SCRIPT);
     }
 
     /**
@@ -54,16 +57,6 @@ public class VisualisationAssetTreeItem extends TreeItem {
      */
     public static VisualisationAssetTreeItem createNewFolderItem(final String text) {
         return new VisualisationAssetTreeItem(UUID.randomUUID().toString(), text, false);
-    }
-
-    /**
-     * Returns a tree node that is a new file node, so it has a new ID.
-     * @param text The name of the file.
-     */
-    public static VisualisationAssetTreeItem createNewFileItem(final String text) {
-        return new VisualisationAssetTreeItem(UUID.randomUUID().toString(),
-                text,
-                true);
     }
 
     /**
@@ -77,49 +70,39 @@ public class VisualisationAssetTreeItem extends TreeItem {
         return new VisualisationAssetTreeItem(asset.getId(), text, !asset.isFolder());
     }
 
-    /**
-     * Constructor
-     */
     private VisualisationAssetTreeItem(final String id,
                                        final String text,
                                        final boolean isLeaf) {
-        super.setText(text);
+
         this.id = id;
         this.isLeaf = isLeaf;
-        setStyle();
+        this.label = text;
         setState(false);
-    }
 
-    /**
-     * Called from constructor to set the style (icon) applied to this item.
-     */
-    private void setStyle() {
-        final String label = this.getText();
-        final String styleNameToAdd;
-
+        SvgImage icon;
         if (isLeaf) {
-            final int dotIndex = label.lastIndexOf('.');
+            final int dotIndex = text.lastIndexOf('.');
             if (dotIndex != -1) {
                 // Got an extension - look it up
-                final String extension = label.substring(dotIndex + 1);
-                final String style = TYPE_STYLES.get(extension);
-                if (style != null) {
-                    styleNameToAdd = style;
-                } else {
+                final String extension = text.substring(dotIndex + 1);
+                icon = ICONS.get(extension);
+                if (icon == null) {
                     // Default - extension not recognised
-                    styleNameToAdd = DEFAULT_TYPE_STYLE;
+                    icon = DEFAULT_ICON;
                 }
             } else {
                 // No extension - use default
-                styleNameToAdd = DEFAULT_TYPE_STYLE;
+                icon = DEFAULT_ICON;
             }
         } else {
             // Not a leaf so is a folder
-            styleNameToAdd = FOLDER_TYPE_STYLE;
+            icon = FOLDER_ICON;
         }
 
-        // Set the style in the HTML
-        addStyleName(styleNameToAdd);
+        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+        builder.append(SafeHtmlUtils.fromTrustedString(icon.getSvg()));
+        builder.appendEscaped(text);
+        super.setHTML(builder.toSafeHtml());
     }
 
     /**
@@ -127,13 +110,6 @@ public class VisualisationAssetTreeItem extends TreeItem {
      */
     public String getId() {
         return id;
-    }
-
-    /**
-     * Returns whether this item has children.
-     */
-    public boolean hasChildren() {
-        return getChildCount() > 0;
     }
 
     /**
@@ -165,7 +141,7 @@ public class VisualisationAssetTreeItem extends TreeItem {
         for (int i = 0; i < super.getChildCount(); ++i) {
             final VisualisationAssetTreeItem assetTreeItem = (VisualisationAssetTreeItem) super.getChild(i);
             if (!Objects.equals(assetTreeItem.getId(), itemId)
-                && Objects.equals(itemText, assetTreeItem.getText())) {
+                && Objects.equals(itemText, assetTreeItem.getLabel())) {
                 return true;
             }
         }
@@ -177,6 +153,13 @@ public class VisualisationAssetTreeItem extends TreeItem {
      */
     public boolean isLeaf() {
         return isLeaf;
+    }
+
+    /**
+     * Returns the label of this item.
+     */
+    public String getLabel() {
+        return label;
     }
 
     /**

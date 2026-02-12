@@ -62,19 +62,20 @@ public class VisualisationAssetsPresenterUtils {
                     final boolean isLast = iPath == pathItems.length - 1;
 
                     // Search for anything existing that matches this pathItem
-                    TreeItem existingTreeItem = null;
+                    VisualisationAssetTreeItem existingTreeItem = null;
                     if (treeItem == null) {
                         for (int iChild = 0; iChild < tree.getItemCount(); ++iChild) {
-                            final TreeItem item = tree.getItem(iChild);
-                            if (pathItem.equals(item.getText())) {
+                            final VisualisationAssetTreeItem item = (VisualisationAssetTreeItem) tree.getItem(iChild);
+                            if (pathItem.equals(item.getLabel())) {
                                 existingTreeItem = item;
                                 break;
                             }
                         }
                     } else {
                         for (int iChild = 0; iChild < treeItem.getChildCount(); ++iChild) {
-                            final TreeItem item = treeItem.getChild(iChild);
-                            if (pathItem.equals(item.getText())) {
+                            final VisualisationAssetTreeItem item =
+                                    (VisualisationAssetTreeItem) treeItem.getChild(iChild);
+                            if (pathItem.equals(item.getLabel())) {
                                 existingTreeItem = item;
                                 break;
                             }
@@ -124,13 +125,13 @@ public class VisualisationAssetsPresenterUtils {
      * Recurses down the TreeItems, storing the open/closed state in treeItemPathToOpenState.
      * @param assetTreeItem The item to recurse.
      */
-    private static void recurseStoreOpenClosedState(final TreeItem assetTreeItem,
+    private static void recurseStoreOpenClosedState(final VisualisationAssetTreeItem assetTreeItem,
                                                     final Set<String> treeItemPathToOpenState) {
         if (assetTreeItem.getState()) {
             // Item is open so store its state and everything under it
             treeItemPathToOpenState.add(getItemPath(assetTreeItem));
             for (int i = 0; i < assetTreeItem.getChildCount(); ++i) {
-                final TreeItem child = assetTreeItem.getChild(i);
+                final VisualisationAssetTreeItem child = (VisualisationAssetTreeItem) assetTreeItem.getChild(i);
                 recurseStoreOpenClosedState(child, treeItemPathToOpenState);
             }
         }
@@ -152,12 +153,13 @@ public class VisualisationAssetsPresenterUtils {
      * treeItemPathToOpenState.
      * @param treeItem The item to recurse.
      */
-    private static void recurseRestoreOpenClosedState(final TreeItem treeItem, final Set<String> treeItemPathToOpenState) {
+    private static void recurseRestoreOpenClosedState(final VisualisationAssetTreeItem treeItem,
+                                                      final Set<String> treeItemPathToOpenState) {
         final String itemPath = getItemPath(treeItem);
         if (treeItemPathToOpenState.contains(itemPath)) {
             treeItem.setState(true);
             for (int i = 0; i < treeItem.getChildCount(); ++i) {
-                final TreeItem child = treeItem.getChild(i);
+                final VisualisationAssetTreeItem child = (VisualisationAssetTreeItem) treeItem.getChild(i);
                 recurseRestoreOpenClosedState(child, treeItemPathToOpenState);
             }
         }
@@ -168,7 +170,8 @@ public class VisualisationAssetsPresenterUtils {
      * @param treeItem The tree item that needs to be open
      * @param treeItemPathToOpenState Where to store the state
      */
-    public static void markOpenClosedStateOpen(final TreeItem treeItem, final Set<String> treeItemPathToOpenState) {
+    public static void markOpenClosedStateOpen(final VisualisationAssetTreeItem treeItem,
+                                               final Set<String> treeItemPathToOpenState) {
         treeItemPathToOpenState.add(getItemPath(treeItem));
     }
 
@@ -224,12 +227,12 @@ public class VisualisationAssetsPresenterUtils {
      * @param item The item to find the path to. Can be null if this is the root path.
      * @return The path as a String, with / separators.
      */
-    static String getItemPath(final TreeItem item) {
+    static String getItemPath(final VisualisationAssetTreeItem item) {
         final List<String> pathList = new ArrayList<>();
-        TreeItem currentItem = item;
+        VisualisationAssetTreeItem currentItem = item;
         while (currentItem != null) {
-            pathList.add(currentItem.getText());
-            currentItem = currentItem.getParentItem();
+            pathList.add(currentItem.getLabel());
+            currentItem = (VisualisationAssetTreeItem) currentItem.getParentItem();
         }
         Collections.reverse(pathList);
 
@@ -242,7 +245,7 @@ public class VisualisationAssetsPresenterUtils {
      * @param newItemLabel The label of the new item
      * @return A string for the path to the new item.
      */
-    static String getNewItemPath(final TreeItem parent, final String newItemLabel) {
+    static String getNewItemPath(final VisualisationAssetTreeItem parent, final String newItemLabel) {
         final String parentPath = getItemPath(parent);
         if (parentPath.equals(SLASH)) {
             return newItemLabel;
@@ -276,7 +279,7 @@ public class VisualisationAssetsPresenterUtils {
         for (int i = 0; i < tree.getItemCount(); ++i) {
             final VisualisationAssetTreeItem assetTreeItem = (VisualisationAssetTreeItem) tree.getItem(i);
             if (!Objects.equals(assetTreeItem.getId(), itemId)
-                && Objects.equals(assetTreeItem.getText(), itemLabel)) {
+                && Objects.equals(assetTreeItem.getLabel(), itemLabel)) {
                 return true;
             }
         }
@@ -317,7 +320,7 @@ public class VisualisationAssetsPresenterUtils {
                 return 1;
             } else {
                 // Sort on label
-                return treeItem1.getText().compareTo(treeItem2.getText());
+                return treeItem1.getLabel().compareTo(treeItem2.getLabel());
             }
         }
     }

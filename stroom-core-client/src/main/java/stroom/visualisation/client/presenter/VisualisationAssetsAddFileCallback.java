@@ -3,8 +3,6 @@ package stroom.visualisation.client.presenter;
 import stroom.util.shared.ResourceKey;
 import stroom.visualisation.client.presenter.assets.VisualisationAssetTreeItem;
 
-import com.google.gwt.user.client.ui.TreeItem;
-
 /**
  * Callback interface, so that the Add File dialog can record what it has done back
  * into the VisualisationAssetsAddDialogPresenter.
@@ -17,7 +15,7 @@ public interface VisualisationAssetsAddFileCallback {
      * @param fileName The name of the file that was uploaded.
      * @param resourceKey The resource key of the file, so that the server can find it later.
      */
-    void addUploadedFile(TreeItem parentFolderItem,
+    void addUploadedFile(VisualisationAssetTreeItem parentFolderItem,
                          String fileName,
                          ResourceKey resourceKey);
 

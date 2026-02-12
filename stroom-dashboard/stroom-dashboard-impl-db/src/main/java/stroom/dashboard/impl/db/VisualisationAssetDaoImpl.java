@@ -44,6 +44,23 @@ import java.util.UUID;
 
 /**
  * DB implementation of the DAO.
+ * The DB has three tables:
+ * <ol>
+ *     <li>The main 'live' table, where assets are permanently stored for retrieval via the servlet</li>
+ *     <li>The draft table, where assets are stored when they are being edited by the user
+ *     and before they are 'saved'</li>
+ *     <li>The update_delete table. If there is a bug in the UI it might be possible for
+ *     assets to be 'saved' twice. The first will copy the assets from the draft table to the live
+ *     table, then delete everything in the draft table. The second call will delete the assets in the live
+ *     table and copy the now empty draft table into the live table. The effect is that users will lose
+ *     their assets permanently.</li>
+ *     <p>The only situation that should result in an empty draft table that should be copied into live
+ *     is when the last operation was a DELETE. Thus the update_delete table gets an entry when the last
+ *     operation was a delete and therefore an empty draft table can be saved to live. </p>
+ *     <p>While this situation should not occur, it would upset the user if it did, thus relying
+ *     on perfect GWT and JavaScript seems inadvisable.</p>
+ * </ol>
+ *
  */
 public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
 
@@ -123,6 +140,104 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
         return in;
     }
 
+    /**
+     * Adds an entry into the VISUALISATION_ASSETS_UPDATE_DELETE table
+     * to indicate that the last operation was a delete, and thus it is safe
+     * to wipe all changes if the user wants to save draft to live when draft is empty.
+     * @param userUuid The user ID we're operating under
+     * @param ownerDocId The ID of the doc that owns these resources.
+     * @param txnContext The transaction context for the query.
+     */
+    private void markUpdateAsDelete(final String userUuid,
+                                    final String ownerDocId,
+                                    final DSLContext txnContext) {
+
+        // Record the fact that something was deleted so we can allow saveDraftToLive
+        final int rowsInserted = txnContext.insertInto(Tables.VISUALISATION_ASSETS_UPDATE_DELETE)
+                .columns(Tables.VISUALISATION_ASSETS_UPDATE_DELETE.DRAFT_USER_UUID,
+                        Tables.VISUALISATION_ASSETS_UPDATE_DELETE.OWNER_DOC_UUID)
+                .values(userUuid, ownerDocId)
+                .onDuplicateKeyIgnore()
+                .execute();
+        LOGGER.info("markUpdateAsDelete: created {} record to flag last operation was delete", rowsInserted);
+    }
+
+    /**
+     * Deletes entries from the VISUALISATION_ASSETS_UPDATE_DELETE table
+     * to indicate that the last operation was not a delete, and thus it is not safe
+     * to wipe all changes if the user wants to save draft to live when draft is empty.
+     * @param userUuid The user ID we're operating under
+     * @param ownerDocId The ID of the doc that owns these resources.
+     * @param txnContext The transaction context for the query.
+     */
+    private void markUpdateAsNotDelete(final String userUuid,
+                                       final String ownerDocId,
+                                       final DSLContext txnContext) {
+        final int rowsDeleted = txnContext.deleteFrom(Tables.VISUALISATION_ASSETS_UPDATE_DELETE)
+                .where(Tables.VISUALISATION_ASSETS_UPDATE_DELETE.DRAFT_USER_UUID.eq(userUuid)
+                        .and(Tables.VISUALISATION_ASSETS_UPDATE_DELETE.OWNER_DOC_UUID.eq(ownerDocId)))
+                .execute();
+        LOGGER.info("markUpdateAsNotDelete: deleted {} records to flag that the last operation was not delete",
+                rowsDeleted);
+    }
+
+    /**
+     * Returns whether the last operation was a delete.
+     * @param userUuid The user ID we're operating under
+     * @param ownerDocId The ID of the doc that owns these resources.
+     * @param txnContext The transaction context for the query.
+     */
+    private boolean isLastUpdateDelete(final String userUuid,
+                                       final String ownerDocId,
+                                       final DSLContext txnContext) {
+        final Result<Record1<Integer>> resultLastUpdateDelete = txnContext
+                .selectCount()
+                .from(Tables.VISUALISATION_ASSETS_UPDATE_DELETE)
+                .where(Tables.VISUALISATION_ASSETS_UPDATE_DELETE.DRAFT_USER_UUID.eq(userUuid)
+                        .and(Tables.VISUALISATION_ASSETS_UPDATE_DELETE.OWNER_DOC_UUID.eq(ownerDocId)))
+                .fetch();
+
+        final int count = resultLastUpdateDelete.getFirst().value1();
+        LOGGER.info("isLastUpdateDelete: is last update delete? Found {} records", count);
+        return count > 0;
+    }
+
+    /**
+     * Utility to populate the draft table from the live table, if necessary.
+     * @param userUuid The user ID we're operating under
+     * @param ownerDocId The ID of the doc that owns these resources.
+     * @param txnContext The transaction context for the query.
+     */
+    private void populateDraft(final String userUuid,
+                               final String ownerDocId,
+                               final DSLContext txnContext) {
+
+        txnContext.insertInto(Tables.VISUALISATION_ASSETS_DRAFT)
+                .columns(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID,
+                        Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID,
+                        Tables.VISUALISATION_ASSETS_DRAFT.ASSET_UUID,
+                        Tables.VISUALISATION_ASSETS_DRAFT.PATH,
+                        Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH,
+                        Tables.VISUALISATION_ASSETS_DRAFT.IS_FOLDER,
+                        Tables.VISUALISATION_ASSETS_DRAFT.DATA)
+                .select(txnContext.select(DSL.val(userUuid),
+                                Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID,
+                                Tables.VISUALISATION_ASSETS.ASSET_UUID,
+                                Tables.VISUALISATION_ASSETS.PATH,
+                                Tables.VISUALISATION_ASSETS.PATH_HASH,
+                                Tables.VISUALISATION_ASSETS.IS_FOLDER,
+                                Tables.VISUALISATION_ASSETS.DATA)
+                        .from(Tables.VISUALISATION_ASSETS)
+                        .whereNotExists(
+                                txnContext.selectOne()
+                                        .from(Tables.VISUALISATION_ASSETS_DRAFT)
+                                        .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
+                                                .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId))
+                                        )
+                        )
+                ).execute();
+    }
+
     @Override
     public VisualisationAssets fetchDraftAssets(final String userUuid,
                                                 final String ownerDocId) throws IOException {
@@ -169,42 +284,6 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
         }
     }
 
-    /**
-     * Utility to populate the draft table from the live table, if necessary.
-     * @param userUuid The user ID we're operating under
-     * @param ownerDocId The ID of the doc that owns these resources.
-     * @param txnContext The context for the query.
-     */
-    private void populateDraft(final String userUuid,
-                               final String ownerDocId,
-                               final DSLContext txnContext) {
-
-        txnContext.insertInto(Tables.VISUALISATION_ASSETS_DRAFT)
-                .columns(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID,
-                        Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID,
-                        Tables.VISUALISATION_ASSETS_DRAFT.ASSET_UUID,
-                        Tables.VISUALISATION_ASSETS_DRAFT.PATH,
-                        Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH,
-                        Tables.VISUALISATION_ASSETS_DRAFT.IS_FOLDER,
-                        Tables.VISUALISATION_ASSETS_DRAFT.DATA)
-                .select(txnContext.select(DSL.val(userUuid),
-                                Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID,
-                                Tables.VISUALISATION_ASSETS.ASSET_UUID,
-                                Tables.VISUALISATION_ASSETS.PATH,
-                                Tables.VISUALISATION_ASSETS.PATH_HASH,
-                                Tables.VISUALISATION_ASSETS.IS_FOLDER,
-                                Tables.VISUALISATION_ASSETS.DATA)
-                        .from(Tables.VISUALISATION_ASSETS)
-                        .whereNotExists(
-                                txnContext.selectOne()
-                                        .from(Tables.VISUALISATION_ASSETS_DRAFT)
-                                        .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
-                                                .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId))
-                                        )
-                        )
-                ).execute();
-    }
-
     @Override
     public void updateNewFolder(final String userUuid,
                                 final String ownerDocId,
@@ -244,6 +323,8 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                                               + recordPath + "' but "
                                               + rowsInserted + " rows were inserted");
             }
+
+            markUpdateAsNotDelete(userUuid, ownerDocId, txnContext);
         });
     }
 
@@ -286,6 +367,8 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                                               + recordPath + "' but "
                                               + rowsInserted + " rows were inserted");
             }
+
+            markUpdateAsNotDelete(userUuid, ownerDocId, txnContext);
         });
     }
 
@@ -333,6 +416,8 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                     }
                 }
             });
+
+            markUpdateAsNotDelete(userUuid, ownerDocId, txnContext);
         });
     }
 
@@ -354,7 +439,7 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
 
         // This could all be run in one query using variables or Common Table Expressions.
         // However, the resulting Jooq would be completely incomprehensible, even if the underlying
-        // SQL is readable. So in the interests of maintainability, this uses multiple queries.
+        // SQL is readable. So, in the interests of maintainability, this uses multiple queries.
         // Renames won't be common and will only affect a few files
         // so maximum efficiency isn't required here.
         JooqUtil.transaction(connProvider, txnContext -> {
@@ -391,6 +476,8 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                     }
                 }
             }
+
+            markUpdateAsNotDelete(userUuid, ownerDocId, txnContext);
         });
     }
 
@@ -424,14 +511,7 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                                               + "' but " + rowsDeleted + " rows were deleted.");
             }
 
-            // Record the fact that something was deleted so we can allow saveDraftToLive
-            final int rowsInserted = txnContext.insertInto(Tables.VISUALISATION_ASSETS_UPDATE_DELETE)
-                    .columns(Tables.VISUALISATION_ASSETS_UPDATE_DELETE.DRAFT_USER_UUID,
-                            Tables.VISUALISATION_ASSETS_UPDATE_DELETE.OWNER_DOC_UUID)
-                    .values(userUuid, ownerDocId)
-                    .onDuplicateKeyIgnore()
-                    .execute();
-            LOGGER.info("updateDelete: created {} record to flag last operation was delete", rowsInserted);
+            markUpdateAsDelete(userUuid, ownerDocId, txnContext);
         });
     }
 
@@ -460,6 +540,8 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
             if (rowsUpdated != 1) {
                 throw new DataAccessException("1 row should have been updated: " + rowsUpdated);
             }
+
+            markUpdateAsNotDelete(userUuid, ownerDocId, txnContext);
         });
     }
 
@@ -532,11 +614,11 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
     }
 
     @Override
-    public void saveDraftToLive(final String userUuid, final String documentId) throws IOException {
-        LOGGER.info("saveDraftToLive({}, {})", userUuid, documentId);
+    public void saveDraftToLive(final String userUuid, final String ownerDocId) throws IOException {
+        LOGGER.info("saveDraftToLive({}, {})", userUuid, ownerDocId);
 
         Objects.requireNonNull(userUuid);
-        Objects.requireNonNull(documentId);
+        Objects.requireNonNull(ownerDocId);
 
         // Timestamp
         final long timestamp = Instant.now().toEpochMilli();
@@ -551,27 +633,16 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                 // If the user somehow manages to send saveDraftToLive() twice they can delete
                 // all their data. So we only allow copying if either the draft table has some records
                 // or if the last operation was a delete.
-                boolean canCopyDraftToLive = false;
+                boolean canCopyDraftToLive = isLastUpdateDelete(userUuid, ownerDocId, txnContext);
 
-                final Result<Record1<Integer>> resultLastUpdateDelete = txnContext
-                        .selectCount()
-                        .from(Tables.VISUALISATION_ASSETS_UPDATE_DELETE)
-                        .where(Tables.VISUALISATION_ASSETS_UPDATE_DELETE.DRAFT_USER_UUID.eq(userUuid)
-                                .and(Tables.VISUALISATION_ASSETS_UPDATE_DELETE.OWNER_DOC_UUID.eq(documentId)))
-                        .fetch();
-                // Check result is > 0
-                final int draftRecordCount = resultLastUpdateDelete.getFirst().value1();
-                if (draftRecordCount > 0) {
-                    LOGGER.info("Can copy draft table to live table; {} draft records exist", draftRecordCount);
-                    canCopyDraftToLive = true;
-                } else {
+                if (!canCopyDraftToLive) {
+                    // Last operation wasn't delete, so check if there is data in draft to copy to live
                     final Result<Record1<Integer>> result = txnContext
                             .selectCount()
                             .from(Tables.VISUALISATION_ASSETS_DRAFT)
                             .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
-                                    .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(documentId)))
+                                    .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId)))
                             .fetch();
-                    // Check result is > 0
                     final int updateDeleteRecordCount = result.getFirst().value1();
                     if (updateDeleteRecordCount > 0) {
                         LOGGER.info("Can copy draft table to live table: {} updateDelete records exist",
@@ -588,7 +659,7 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                     // Delete all existing live content for the owning document ID
                     int recordCount = txnContext
                             .deleteFrom(Tables.VISUALISATION_ASSETS)
-                            .where(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(documentId))
+                            .where(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(ownerDocId))
                             .execute();
                     LOGGER.info("{} records deleted in live", recordCount);
 
@@ -613,7 +684,7 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                                             Tables.VISUALISATION_ASSETS_DRAFT.DATA)
                                     .from(Tables.VISUALISATION_ASSETS_DRAFT)
                                     .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
-                                            .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(documentId))))
+                                            .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId))))
                             .execute();
                     LOGGER.info("Copied {} records from draft into Live", recordCount);
 
@@ -621,39 +692,37 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                     recordCount = txnContext
                             .deleteFrom(Tables.VISUALISATION_ASSETS_DRAFT)
                             .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
-                                    .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(documentId)))
+                                    .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId)))
                             .execute();
                     LOGGER.info("Deleted {} records in the draft table", recordCount);
 
-                    // Delete the record that indicates last update was a delete, if it exists
-                    recordCount = txnContext
-                            .deleteFrom(Tables.VISUALISATION_ASSETS_UPDATE_DELETE)
-                            .where(Tables.VISUALISATION_ASSETS_UPDATE_DELETE.DRAFT_USER_UUID.eq(userUuid)
-                                    .and(Tables.VISUALISATION_ASSETS_UPDATE_DELETE.OWNER_DOC_UUID.eq(documentId)))
-                            .execute();
-                    LOGGER.info("Deleted {} records in the update_delete table", recordCount);
+                    markUpdateAsNotDelete(userUuid, ownerDocId, txnContext);
                 }
             });
         } catch (final DataAccessException e) {
             LOGGER.error("Error saving draft assets to live for user {}, doc {}: {}",
-                    userUuid, documentId, e.getMessage(), e);
+                    userUuid, ownerDocId, e.getMessage(), e);
             throw new IOException("Error saving draft assets to live: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public void revertDraftFromLive(final String userUuid, final String documentId) throws IOException {
+    public void revertDraftFromLive(final String userUuid, final String ownerDocId) throws IOException {
 
         Objects.requireNonNull(userUuid);
-        Objects.requireNonNull(documentId);
+        Objects.requireNonNull(ownerDocId);
 
         LOGGER.info("revertDraftFromLive()");
         try {
-            JooqUtil.context(connProvider, context -> context
-                    .deleteFrom(Tables.VISUALISATION_ASSETS_DRAFT)
-                    .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
-                            .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(documentId)))
-                    .execute());
+            JooqUtil.transaction(connProvider, txnContext -> {
+                txnContext
+                        .deleteFrom(Tables.VISUALISATION_ASSETS_DRAFT)
+                        .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
+                                .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId)))
+                        .execute();
+
+                markUpdateAsNotDelete(userUuid, ownerDocId, txnContext);
+            });
         } catch (final DataAccessException e) {
             LOGGER.error("Error reverting draft from live: {}", e.getMessage(), e);
             throw new IOException("Error reverting draft: " + e.getMessage(), e);
@@ -661,33 +730,33 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
     }
 
     @Override
-    public List<ImportExportAsset> getAssetsForExport(final String documentId) throws IOException {
-        Objects.requireNonNull(documentId);
+    public List<ImportExportAsset> getAssetsForExport(final String ownerDocId) throws IOException {
+        Objects.requireNonNull(ownerDocId);
 
-        LOGGER.info("Getting export assets for document {}", documentId);
+        LOGGER.info("Getting export assets for document {}", ownerDocId);
         try {
             final Result<Record2<String, byte[]>> result =
                     JooqUtil.contextResult(connProvider, context -> context
                             .select(Tables.VISUALISATION_ASSETS.PATH,
                                     Tables.VISUALISATION_ASSETS.DATA)
                             .from(Tables.VISUALISATION_ASSETS)
-                            .where(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(documentId))
+                            .where(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(ownerDocId))
                             .fetch());
             return resultToImportExportAssets(result);
         } catch (final DataAccessException e) {
             LOGGER.error("Error getting export assets for document '{}': {}",
-                    documentId, e.getMessage(), e);
+                    ownerDocId, e.getMessage(), e);
             throw new IOException("Error getting export assets for document: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public void setAssetsFromImport(final String documentId, final Collection<ImportExportAsset> pathAssets)
+    public void setAssetsFromImport(final String ownerDocId, final Collection<ImportExportAsset> pathAssets)
             throws IOException {
-        Objects.requireNonNull(documentId);
+        Objects.requireNonNull(ownerDocId);
         Objects.requireNonNull(pathAssets);
 
-        LOGGER.info("Setting import assets for document {}", documentId);
+        LOGGER.info("Setting import assets for document {}", ownerDocId);
 
         final long timestamp = Instant.now().toEpochMilli();
 
@@ -697,7 +766,7 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                     // Delete all existing live content for the owning document ID
                     final int recordCount = txnContext
                             .deleteFrom(Tables.VISUALISATION_ASSETS)
-                            .where(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(documentId))
+                            .where(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(ownerDocId))
                             .execute();
                     LOGGER.info("{} records deleted in live before import", recordCount);
 
@@ -718,7 +787,7 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                                         Tables.VISUALISATION_ASSETS.DATA,
                                         Tables.VISUALISATION_ASSETS.IS_FOLDER)
                                 .values(timestamp,
-                                        documentId,
+                                        ownerDocId,
                                         assetUuid,
                                         path,
                                         pathHash,
@@ -734,7 +803,7 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
             });
         } catch (final DataAccessException e) {
             LOGGER.error("Error setting import assets for document '{}': {}",
-                    documentId, e.getMessage(), e);
+                    ownerDocId, e.getMessage(), e);
             throw new IOException("Error setting import assets for document: " + e.getMessage(), e);
         }
     }

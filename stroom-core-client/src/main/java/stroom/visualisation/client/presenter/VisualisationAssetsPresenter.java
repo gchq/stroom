@@ -54,7 +54,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Tree;
-import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -165,7 +164,7 @@ public class VisualisationAssetsPresenter
      * @param resourceKey The resource key of the file, so that the server can find it later.
      */
     @Override
-    public void addUploadedFile(final TreeItem parentFolderItem,
+    public void addUploadedFile(final VisualisationAssetTreeItem parentFolderItem,
                                 final String fileName,
                                 final ResourceKey resourceKey) {
 
@@ -495,33 +494,42 @@ public class VisualisationAssetsPresenter
      * Scheduler calls here shouldn't be necessary.
      */
     private void onRevertButtonClick() {
-        Scheduler.get().scheduleFinally(() -> {
-            restFactory.create(VISUALISATION_ASSET_RESOURCE)
-                    .method(r -> r.revertDraftFromLive(document.getUuid()))
-                    .onSuccess(result -> {
-                        clearEditor();
-                        if (result) {
-                            // It worked - data reverted
-                            Scheduler.get().scheduleFinally(() -> {
-                                final DocRef docRef = document.asDocRef();
-                                document = null; // Make sure doc is reloaded on refresh
-                                RefreshDocumentEvent.fire(VisualisationAssetsPresenter.this, docRef);
-                            });
-                        } else {
-                            AlertEvent.fireError(this,
-                                    "Error reverting to live version",
-                                    null);
-                        }
-                    })
-                    .onFailure(error -> {
-                        clearEditor();
-                        AlertEvent.fireError(this,
-                                "Error reverting to live version: " + error.getMessage(),
-                                null);
-                    })
-                    .taskMonitorFactory(this)
-                    .exec();
-        });
+
+        final String message = "Are you sure you want to lose all your changes?";
+        ConfirmEvent.fire(VisualisationAssetsPresenter.this, message,
+                result -> {
+                    if (result) {
+                        Scheduler.get().scheduleFinally(() -> {
+                            restFactory.create(VISUALISATION_ASSET_RESOURCE)
+                                    .method(r -> r.revertDraftFromLive(document.getUuid()))
+                                    .onSuccess(revertResult -> {
+                                        clearEditor();
+                                        if (revertResult) {
+                                            // It worked - data reverted
+                                            Scheduler.get().scheduleFinally(() -> {
+                                                final DocRef docRef = document.asDocRef();
+                                                document = null; // Make sure doc is reloaded on refresh
+                                                RefreshDocumentEvent.fire(
+                                                        VisualisationAssetsPresenter.this,
+                                                        docRef);
+                                            });
+                                        } else {
+                                            AlertEvent.fireError(this,
+                                                    "Error reverting to live version",
+                                                    null);
+                                        }
+                                    })
+                                    .onFailure(error -> {
+                                        clearEditor();
+                                        AlertEvent.fireError(this,
+                                                "Error reverting to live version: " + error.getMessage(),
+                                                null);
+                                    })
+                                    .taskMonitorFactory(this)
+                                    .exec();
+                        });
+                    }
+                });
     }
 
     /**
@@ -612,7 +620,7 @@ public class VisualisationAssetsPresenter
      * Opens a new Browser window (tab) pointing to the asset via the Servlet.
      */
     public void onViewAsset() {
-        final TreeItem selectedItem = tree.getSelectedItem();
+        final VisualisationAssetTreeItem selectedItem = (VisualisationAssetTreeItem) tree.getSelectedItem();
         if (selectedItem != null)  {
             // Find the document ID
             if (document != null) {
@@ -949,11 +957,14 @@ public class VisualisationAssetsPresenter
     private void updateState() {
 
         if (readOnly) {
+            revertButton.setEnabled(false);
             addButton.setEnabled(false);
             deleteButton.setEnabled(false);
             editButton.setEnabled(false);
             viewButton.setEnabled(false);
         } else {
+            revertButton.setEnabled(isDirty());
+
             final VisualisationAssetTreeItem item = (VisualisationAssetTreeItem) tree.getSelectedItem();
             if (item == null) {
                 // Assume the root item is selected so enable 'add'
@@ -979,13 +990,14 @@ public class VisualisationAssetsPresenter
     private static class AssetTreeResources implements Tree.Resources {
 
         /** Height and width of the image in pixels */
-        private static final int DIM = 16;
+        private static final int HEIGHT = 12;
+        private static final int WIDTH = 16;
         private static final VisualisationAssetsImageResource CLOSED =
-                new VisualisationAssetsImageResource(DIM, DIM, "/ui/background-images/arrow-right.png");
+                new VisualisationAssetsImageResource(HEIGHT, WIDTH, "/ui/background-images/arrow-right.png");
         private static final VisualisationAssetsImageResource OPEN =
-                new VisualisationAssetsImageResource(DIM, DIM, "/ui/background-images/arrow-down.png");
+                new VisualisationAssetsImageResource(HEIGHT, WIDTH, "/ui/background-images/arrow-down.png");
         private static final VisualisationAssetsImageResource TRANSPARENT =
-                new VisualisationAssetsImageResource(DIM, DIM, "/ui/background-images/transparent-16x16.png");
+                new VisualisationAssetsImageResource(HEIGHT, WIDTH, "/ui/background-images/transparent-16x16.png");
 
         @Override
         public ImageResource treeClosed() {
