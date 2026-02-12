@@ -22,9 +22,14 @@ import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionTracker;
 import stroom.analytics.shared.ScheduleBounds;
+import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.api.OutputStreamProvider;
+import stroom.data.store.api.Store;
+import stroom.data.store.api.Target;
 import stroom.datagen.shared.DataGenDoc;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.meta.api.MetaProperties;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -52,6 +57,7 @@ import stroom.util.shared.scheduler.Schedule;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +78,7 @@ public class ScheduledDataGenExecutor implements HasUserDependencies {
     private final SecurityContext securityContext;
     private final Provider<DocRefInfoService> docRefInfoServiceProvider;
     private final String processType;
-
+    private final Store streamStore;
 
     @Inject
     ScheduledDataGenExecutor(final DataGenStore dataGenStore,
@@ -81,7 +87,8 @@ public class ScheduledDataGenExecutor implements HasUserDependencies {
                              final NodeInfo nodeInfo,
                              final SecurityContext securityContext,
                              final ExecutionScheduleDao executionScheduleDao,
-                             final Provider<DocRefInfoService> docRefInfoServiceProvider) {
+                             final Provider<DocRefInfoService> docRefInfoServiceProvider,
+                             final Store streamStore) {
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.nodeInfo = nodeInfo;
@@ -90,6 +97,7 @@ public class ScheduledDataGenExecutor implements HasUserDependencies {
         this.docRefInfoServiceProvider = docRefInfoServiceProvider;
         this.processType = "bob";
         this.dataGenStore = dataGenStore;
+        this.streamStore = streamStore;
     }
 
     boolean process(final DataGenDoc dataGenDoc,
@@ -107,6 +115,19 @@ public class ScheduledDataGenExecutor implements HasUserDependencies {
 
         try {
             // TODO Write code to run data generation
+            final DocRef outputFeed = dataGenDoc.getFeed();
+
+            final MetaProperties metaProperties = MetaProperties.builder()
+                    .feedName(outputFeed.getName())
+                    .typeName(StreamTypeNames.RAW_EVENTS)
+                    .effectiveMs(effectiveExecutionTime.toEpochMilli())
+                    .build();
+
+            try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
+                try (final OutputStreamProvider outputStreamProvider = streamTarget.next()) {
+                    outputStreamProvider.get().write(dataGenDoc.getTemplate().getBytes(StandardCharsets.UTF_8));
+                }
+            }
 
             // Remember last successful execution time and compute next execution time.
             final Instant now = Instant.now();
@@ -143,8 +164,7 @@ public class ScheduledDataGenExecutor implements HasUserDependencies {
             }
 
             // Disable future execution if the error was not an interrupted exception.
-            if (!(e instanceof InterruptedException) &&
-                !(e instanceof UncheckedInterruptedException)) {
+            if (!(e instanceof UncheckedInterruptedException)) {
                 // Disable future execution.
                 LOGGER.info(() -> LogUtil.message("Disabling: {}", getDataGeneratorIdentity(dataGenDoc)));
                 executionScheduleDao.updateExecutionSchedule(executionSchedule.copy().enabled(false).build());
@@ -186,10 +206,6 @@ public class ScheduledDataGenExecutor implements HasUserDependencies {
         }
         return currentDataGenerators;
     }
-
-
-    // --------------------------------------------------------------------------------
-
 
     public void exec() {
         final TaskContext taskContext = taskContextFactory.current();
@@ -319,7 +335,7 @@ public class ScheduledDataGenExecutor implements HasUserDependencies {
                         taskContext)).get();
     }
 
-    public String getDataGeneratorIdentity(DataGenDoc doc) {
+    public String getDataGeneratorIdentity(final DataGenDoc doc) {
         return NullSafe.get(doc, d -> d.getName() + " (" + d.getUuid() + ")");
     }
 
