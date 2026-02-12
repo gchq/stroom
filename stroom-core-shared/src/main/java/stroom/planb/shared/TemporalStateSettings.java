@@ -21,7 +21,9 @@ import java.util.Objects;
         "valueSchema"
 })
 @JsonInclude(Include.NON_NULL)
-public final class TemporalStateSettings extends AbstractPlanBSettings {
+public final class TemporalStateSettings
+        extends AbstractPlanBSettings
+        implements HasCondenseSettings {
 
     @JsonProperty
     private final DurationSetting condense;
@@ -45,6 +47,7 @@ public final class TemporalStateSettings extends AbstractPlanBSettings {
         this.valueSchema = NullSafe.requireNonNullElse(valueSchema, new StateValueSchema.Builder().build());
     }
 
+    @Override
     public DurationSetting getCondense() {
         return condense;
     }
