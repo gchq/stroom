@@ -350,18 +350,16 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
         Condition condition = field.in(Collections.emptyList());
 
         if (FieldType.DOC_REF.equals(dataSourceField.getFldType())) {
-            final List<String> types = dataSourceField.getDocRefType();
-            for(final String type : types) {
-                if (type != null && collectionServiceProvider != null) {
-                    final Set<DocRef> descendants = collectionServiceProvider.get().getDescendants(docRef, type);
-                    if (descendants != null && !descendants.isEmpty()) {
-                        final List<String> values = descendants.stream()
-                                .map(descendant ->
-                                        getDocValue(term, descendant))
-                                .toList();
-                        final Set<T> set = new HashSet<>(converter.apply(values));
-                        condition = field.in(set);
-                    }
+            final String type = dataSourceField.getDocRefType();
+            if (type != null && collectionServiceProvider != null) {
+                final Set<DocRef> descendants = collectionServiceProvider.get().getDescendants(docRef, type);
+                if (descendants != null && !descendants.isEmpty()) {
+                    final List<String> values = descendants.stream()
+                            .map(descendant ->
+                                    getDocValue(term, descendant))
+                            .toList();
+                    final Set<T> set = new HashSet<>(converter.apply(values));
+                    condition = field.in(set);
                 }
             }
         }

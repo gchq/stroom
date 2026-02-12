@@ -57,7 +57,7 @@ public class ExecutionScheduleFields {
     public static final QueryField FIELD_RUN_AS_USER = QueryField.createUserRef(RUN_AS_USER);
     public static final QueryField FIELD_START_TIME = QueryField.createDate(START_TIME);
     public static final QueryField FIELD_END_TIME = QueryField.createDate(END_TIME);
-    public static final QueryField FIELD_PARENT_DOC = QueryField.createDocRefByUniqueName(Arrays.asList(AnalyticRuleDoc.TYPE, ReportDoc.TYPE), PARENT_DOC);
+    public static final QueryField FIELD_PARENT_DOC = QueryField.createDocRefByUniqueName(AnalyticRuleDoc.TYPE, PARENT_DOC);
     public static final QueryField FIELD_PARENT_DOC_TYPE = QueryField.createScheduleParentDocTypeSelect(PARENT_DOC_TYPE);
 
     static {
