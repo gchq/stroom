@@ -102,27 +102,35 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
         expressionMapper.map(ExecutionScheduleFields.FIELD_END_TIME, EXECUTION_SCHEDULE.END_TIME_MS, Long::valueOf);
         // Get 0-many uuids for a pipe name (partial/wild-carded)
         expressionMapper.multiMap(
-                ExecutionScheduleFields.FIELD_PARENT_DOC, EXECUTION_SCHEDULE.DOC_UUID, this::getParentUuidsByName, true);
+                ExecutionScheduleFields.FIELD_PARENT_RULE, EXECUTION_SCHEDULE.DOC_UUID, this::getRuleUuidsByName, true);
+        expressionMapper.multiMap(
+                ExecutionScheduleFields.FIELD_PARENT_REPORT, EXECUTION_SCHEDULE.DOC_UUID, this::getReportUuidsByName, true);
         expressionMapper.map(ExecutionScheduleFields.FIELD_PARENT_DOC_TYPE, EXECUTION_SCHEDULE.DOC_TYPE, String::valueOf);
 
 
     }
+    private List<String> getRuleUuidsByName(final List<String> names) {
+        //May be able to join with reports but would likely require a breaking change to QueryField.
 
-    private List<String> getParentUuidsByName(final List<String> names) {
         // Can't cache this in a simple map due to pipes being renamed, but
         // docRefInfoService should cache most of this anyway.
-        final List<String> ruleUuids = docRefInfoService
+        return docRefInfoService
                 .findByNames(AnalyticRuleDoc.TYPE, names, true)
                 .stream()
                 .map(DocRef::getUuid)
                 .toList();
-        final List<String> reportUuids = docRefInfoService
+    }
+
+    private List<String> getReportUuidsByName(final List<String> names) {
+        //May be able to join with Rules but would likely require a breaking change to QueryField.
+
+        // Can't cache this in a simple map due to pipes being renamed, but
+        // docRefInfoService should cache most of this anyway.
+        return docRefInfoService
                 .findByNames(ReportDoc.TYPE, names, true)
                 .stream()
                 .map(DocRef::getUuid)
                 .toList();
-        return Stream.concat(ruleUuids.stream(), reportUuids.stream())
-                .collect(Collectors.toList());
     }
 
     @Override

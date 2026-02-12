@@ -37,6 +37,8 @@ public class ExecutionScheduleFields {
     public static final String ID = "Id";
     public static final String NAME = "Name";
     public static final String PARENT_DOC = "Parent Document";
+    public static final String PARENT_RULE = "Parent Rule";
+    public static final String PARENT_REPORT = "Parent Report";
     public static final String PARENT_DOC_TYPE = "Parent Document Type";
     public static final String SCHEDULE_NAME = "Schedule Name";
     public static final String ENABLED = "Enabled";
@@ -57,7 +59,8 @@ public class ExecutionScheduleFields {
     public static final QueryField FIELD_RUN_AS_USER = QueryField.createUserRef(RUN_AS_USER);
     public static final QueryField FIELD_START_TIME = QueryField.createDate(START_TIME);
     public static final QueryField FIELD_END_TIME = QueryField.createDate(END_TIME);
-    public static final QueryField FIELD_PARENT_DOC = QueryField.createDocRefByUniqueName(AnalyticRuleDoc.TYPE, PARENT_DOC);
+    public static final QueryField FIELD_PARENT_RULE = QueryField.createDocRefByUniqueName(AnalyticRuleDoc.TYPE, PARENT_RULE);
+    public static final QueryField FIELD_PARENT_REPORT = QueryField.createDocRefByUniqueName(ReportDoc.TYPE, PARENT_REPORT);
     public static final QueryField FIELD_PARENT_DOC_TYPE = QueryField.createScheduleParentDocTypeSelect(PARENT_DOC_TYPE);
 
     static {
@@ -70,7 +73,8 @@ public class ExecutionScheduleFields {
         FIELDS.add(FIELD_START_TIME);
         FIELDS.add(FIELD_END_TIME);
         FIELDS.add(FIELD_RUN_AS_USER);
-        FIELDS.add(FIELD_PARENT_DOC);
+        FIELDS.add(FIELD_PARENT_RULE);
+        FIELDS.add(FIELD_PARENT_REPORT);
         FIELDS.add(FIELD_PARENT_DOC_TYPE);
     }
 
