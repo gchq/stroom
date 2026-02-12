@@ -22990,6 +22990,9 @@
           "fileType" : {
             "type" : "string",
             "enum" : [ "EXCEL", "CSV", "TSV" ]
+          },
+          "sendEmptyReports" : {
+            "type" : "boolean"
           }
         }
       },
