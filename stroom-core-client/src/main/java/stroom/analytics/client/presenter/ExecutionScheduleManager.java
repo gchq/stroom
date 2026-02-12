@@ -89,7 +89,7 @@ public class ExecutionScheduleManager
     private final MultiSelectionModelImpl<ExecutionSchedule> selectionModel;
     private RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>> dataProvider;
     private final RestFactory restFactory;
-    private ExecutionScheduleRequest request;
+    private final ExecutionScheduleRequest request;
     private final ScheduledProcessEditPresenter scheduledProcessEditPresenter;
     private final BatchExecutionScheduleEditPresenter batchExecutionScheduleEditPresenter;
     private final ExecutionScheduleRunNowPresenter executionScheduleRunNowPresenter;
@@ -415,11 +415,11 @@ public class ExecutionScheduleManager
                         CriteriaUtil.setRange(request, range);
                         CriteriaUtil.setSortList(request, dataGrid.getColumnSortList());
                         final ExpressionOperator expression = (ExpressionOperator) formatISOExpressions(request.getExpression());
-                        final ExecutionScheduleRequest request2 = request.copy().expression(expression).build();
+                        final ExecutionScheduleRequest formattedRequest = request.copy().expression(expression).build();
 
                         restFactory
                                 .create(EXECUTION_SCHEDULE_RESOURCE)
-                                .method(res -> res.fetchExecutionSchedule(request2))
+                                .method(res -> res.fetchExecutionSchedule(formattedRequest))
                                 .onSuccess(dataConsumer)
                                 .onFailure(errorHandler)
                                 .taskMonitorFactory(getView())
@@ -518,8 +518,6 @@ public class ExecutionScheduleManager
                 return;
             }
 
-            final ArrayList<ExecutionSchedule> executionSchedules = new ArrayList<ExecutionSchedule>();
-
             if(applyToFiltered) {
                 restFactory
                     .create(EXECUTION_SCHEDULE_RESOURCE)
@@ -528,7 +526,6 @@ public class ExecutionScheduleManager
                     .onFailure(e -> AlertEvent.fireError(this, e.getMessage(), null))
                     .taskMonitorFactory(getView())
                     .exec();
-
             }
             else {
                 checkBatchEdit(selectionModel.getSelectedItems(), false);
@@ -559,7 +556,7 @@ public class ExecutionScheduleManager
 
     private void confirmBatchEdit(final List<ExecutionSchedule> executionSchedules)
     {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         sb.append("You are about to edit ");
         sb.append(executionSchedules.size());
         sb.append(executionSchedules.size() > 1 ? " schedules.\n" : " schedule.\n");
@@ -590,7 +587,7 @@ public class ExecutionScheduleManager
                     ))
                     .onSuccess(result -> {
                         if(selectionModel.isSelected(executionSchedule)) {
-                            newSchedules.add(executionSchedule);
+                            newSchedules.add(result);
                         }
                         if (successCount.incrementAndGet() == scheduleCount) {
                             selectionModel.setSelectedItems(newSchedules);
@@ -601,12 +598,12 @@ public class ExecutionScheduleManager
                                     null);
                         }
                     })
-                    .onFailure(cause -> {
+                    .onFailure(cause ->
                         AlertEvent.fireError(
                                 this,
-                                "Failed to change.",
-                                null);
-                    })
+                                "Failed to change. " + cause.getMessage(),
+                                null)
+                    )
                     .taskMonitorFactory(this)
                     .exec();
         });
@@ -774,26 +771,25 @@ public class ExecutionScheduleManager
     }
 
     private ExpressionItem formatISOExpressions(final ExpressionItem item) {
-        if(item == null) {
-            return null;
-        }
-        if(item instanceof final ExpressionTerm term)
-        {
-            if (term.getField().equals(ExecutionScheduleFields.FIELD_START_TIME.getFldName())
-                || term.getField().equals(ExecutionScheduleFields.FIELD_END_TIME.getFldName())) {
-                return term.copy().value(ClientDateUtil.fromISOString(term.getValue()).toString()).build();
+        switch (item) {
+            case final ExpressionTerm term -> {
+                if (term.getField().equals(ExecutionScheduleFields.FIELD_START_TIME.getFldName())
+                    || term.getField().equals(ExecutionScheduleFields.FIELD_END_TIME.getFldName())) {
+                    return term.copy().value(ClientDateUtil.fromISOString(term.getValue()).toString()).build();
+                }
+                return term;
             }
-            return term;
-        }
-        if(item instanceof final ExpressionOperator operator)
-        {
-            final ArrayList<ExpressionItem> newChildren = new ArrayList<>();
-            for(final ExpressionItem child : operator.getChildren()) {
-                newChildren.add(formatISOExpressions(child));
+            case final ExpressionOperator operator -> {
+                final ArrayList<ExpressionItem> newChildren = new ArrayList<>();
+                for (final ExpressionItem child : operator.getChildren()) {
+                    newChildren.add(formatISOExpressions(child));
+                }
+                return operator.copy().children(newChildren).build();
             }
-            return operator.copy().children(newChildren).build();
+            default -> {
+                return null;
+            }
         }
-        return null;
     }
 
     @Override

@@ -27,6 +27,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -59,7 +61,7 @@ public class QueryField implements Field, HasDisplayValue {
     @JsonProperty
     private final ConditionSet conditionSet;
     @JsonProperty
-    private final String docRefType;
+    private final List<String> docRefType;
     @JsonProperty
     private final Boolean queryable;
 
@@ -69,7 +71,7 @@ public class QueryField implements Field, HasDisplayValue {
                       @JsonProperty("fldName") final String fldName,
                       @JsonProperty("fldType") final FieldType fldType,
                       @JsonProperty("conditionSet") final ConditionSet conditionSet,
-                      @JsonProperty("docRefType") final String docRefType,
+                      @JsonProperty("docRefType") final List<String> docRefType,
                       @JsonProperty("queryable") final Boolean queryable) {
         // Don't use NullSafe as this breaks some tests
         this.fldName = fldName != null
@@ -287,7 +289,7 @@ public class QueryField implements Field, HasDisplayValue {
      * A {@link QueryField} for a {@link stroom.docref.DocRef} type whose names are unique, allowing
      * the name to be used as the value in expression terms.
      */
-    public static QueryField createDocRefByUniqueName(final String docRefType,
+    public static QueryField createDocRefByUniqueName(final List<String> docRefType,
                                                       final String name) {
         return builder()
                 .fldName(name)
@@ -298,12 +300,17 @@ public class QueryField implements Field, HasDisplayValue {
                 .build();
     }
 
+    public static QueryField createDocRefByUniqueName(final String docRefType,
+                                                      final String name) {
+        return createDocRefByUniqueName(Collections.singletonList(docRefType), name);
+    }
+
     /**
      * A {@link QueryField} for a {@link stroom.docref.DocRef} type whose names are NOT unique.
      * The {@link stroom.docref.DocRef} name is used as the value in expression terms, accepting
      * that name=x may match >1 docrefs.
      */
-    public static QueryField createDocRefByNonUniqueName(final String docRefType,
+    public static QueryField createDocRefByNonUniqueName(final List<String> docRefType,
                                                          final String name) {
         return builder()
                 .fldName(name)
@@ -314,13 +321,18 @@ public class QueryField implements Field, HasDisplayValue {
                 .build();
     }
 
+    public static QueryField createDocRefByNonUniqueName(final String docRefType,
+                                                      final String name) {
+        return createDocRefByNonUniqueName(Collections.singletonList(docRefType), name);
+    }
+
     /**
      * A {@link QueryField} for a {@link stroom.docref.DocRef} type whose names are NOT unique.
      * The {@link stroom.docref.DocRef} uuid is used as the value in expression terms for a unique
      * match. Other conditions are not supported as that would require the user to enter uuids,
      * and it is not clear in the UI whether they are dealing in UUIDs or names.
      */
-    public static QueryField createDocRefByUuid(final String docRefType,
+    public static QueryField createDocRefByUuid(final List<String> docRefType,
                                                 final String name) {
         return builder()
                 .fldName(name)
@@ -329,6 +341,11 @@ public class QueryField implements Field, HasDisplayValue {
                 .docRefType(docRefType)
                 .queryable(Boolean.TRUE)
                 .build();
+    }
+
+    public static QueryField createDocRefByUuid(final String docRefType,
+                                                         final String name) {
+        return createDocRefByUuid(Collections.singletonList(docRefType), name);
     }
 
     /**
@@ -375,7 +392,7 @@ public class QueryField implements Field, HasDisplayValue {
         }
     }
 
-    public String getDocRefType() {
+    public List<String> getDocRefType() {
         return docRefType;
     }
 
@@ -449,7 +466,7 @@ public class QueryField implements Field, HasDisplayValue {
         private String fldName;
         private FieldType fldType;
         private ConditionSet conditionSet;
-        private String docRefType;
+        private List<String> docRefType;
         private Boolean queryable;
 
         private Builder() {
@@ -478,8 +495,13 @@ public class QueryField implements Field, HasDisplayValue {
             return this;
         }
 
-        public Builder docRefType(final String docRefType) {
+        public Builder docRefType(final List<String> docRefType) {
             this.docRefType = docRefType;
+            return this;
+        }
+
+        public Builder docRefType(final String docRefType) {
+            this.docRefType = Collections.singletonList(docRefType);
             return this;
         }
 
