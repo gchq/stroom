@@ -30,16 +30,16 @@ public class DocumentEditTabProvider2<D>
         extends HandlerContainerImpl
         implements TabProvider<D> {
 
-    private final Provider<DocumentEditPresenter2<?, D>> presenterWidgetProvider;
+    private final Provider<DocPresenter<?, D>> presenterWidgetProvider;
 
-    private DocumentEditPresenter2<?, D> widget;
+    private DocPresenter<?, D> widget;
 
-    public DocumentEditTabProvider2(final Provider<DocumentEditPresenter2<?, D>> presenterWidgetProvider) {
+    public DocumentEditTabProvider2(final Provider<DocPresenter<?, D>> presenterWidgetProvider) {
         this.presenterWidgetProvider = presenterWidgetProvider;
     }
 
     @Override
-    public DocumentEditPresenter2<?, D> getPresenter() {
+    public DocPresenter<?, D> getPresenter() {
         if (widget == null) {
             widget = presenterWidgetProvider.get();
         }

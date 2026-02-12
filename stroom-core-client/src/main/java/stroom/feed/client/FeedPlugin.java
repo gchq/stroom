@@ -23,7 +23,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocumentEditPresenter2;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.event.ExplorerTaskMonitorFactory;
 import stroom.feed.client.presenter.FeedPresenter;
 import stroom.feed.shared.FeedDoc;
@@ -89,7 +89,7 @@ public class FeedPlugin extends DocumentPlugin<FeedDoc> {
     }
 
     @Override
-    protected DocumentEditPresenter2<?, ?> createEditor() {
+    protected DocPresenter<?, ?> createEditor() {
         return editorProvider.get();
     }
 

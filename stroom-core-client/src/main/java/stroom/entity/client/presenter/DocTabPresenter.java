@@ -23,7 +23,6 @@ import stroom.docref.DocRef;
 import stroom.docref.HasType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.document.client.DocumentTabData;
-import stroom.document.client.event.ChangeEvent;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.SaveDocumentEvent;
@@ -49,8 +48,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public abstract class DocumentEditTabPresenter2<V extends LinkTabPanelView, D>
-        extends DocumentEditPresenter2<V, D>
+public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
+        extends DocPresenter<V, D>
         implements DocumentTabData, Refreshable, HasType, HasSave {
 
     private final ButtonView saveButton;
@@ -64,8 +63,8 @@ public abstract class DocumentEditTabPresenter2<V extends LinkTabPanelView, D>
     private final TabContentProvider<D> tabContentProvider;
     private final Map<CommonDocLinkTab, TabData> commonTabsMap;
 
-    public DocumentEditTabPresenter2(final EventBus eventBus,
-                                     final V view) {
+    public DocTabPresenter(final EventBus eventBus,
+                           final V view) {
         super(eventBus, view);
         saveButton = SvgButton.create(SvgPresets.SAVE);
         saveAsButton = SvgButton.create(SvgPresets.SAVE_AS);
@@ -120,13 +119,13 @@ public abstract class DocumentEditTabPresenter2<V extends LinkTabPanelView, D>
     @Override
     public void save() {
         if (saveButton.isEnabled()) {
-            SaveDocumentEvent.fire(DocumentEditTabPresenter2.this, DocumentEditTabPresenter2.this);
+            SaveDocumentEvent.fire(DocTabPresenter.this, DocTabPresenter.this);
         }
     }
 
     private void saveAs() {
         if (saveAsButton.isEnabled()) {
-            SaveAsDocumentEvent.fire(DocumentEditTabPresenter2.this, DocumentEditTabPresenter2.this);
+            SaveAsDocumentEvent.fire(DocTabPresenter.this, DocTabPresenter.this);
         }
     }
 
@@ -265,7 +264,7 @@ public abstract class DocumentEditTabPresenter2<V extends LinkTabPanelView, D>
     }
 
     @Override
-    public void onDirty(final boolean dirty) {
+    public void updateLabel() {
         // Only fire tab refresh if the tab has changed.
         if (lastLabel == null || !lastLabel.equals(getLabel())) {
             lastLabel = getLabel();

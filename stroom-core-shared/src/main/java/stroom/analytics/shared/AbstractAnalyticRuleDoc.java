@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.query.api.Param;
 import stroom.query.api.TimeRange;
+import stroom.query.api.TimeRanges;
 import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -91,11 +92,11 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                                    @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
                                    @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
-        this.description = description;
-        this.languageVersion = languageVersion;
+        this.description = NullSafe.string(description);
+        this.languageVersion = NullSafe.requireNonNullElse(languageVersion, QueryLanguageVersion.STROOM_QL_VERSION_0_1);
         this.parameters = parameters;
-        this.timeRange = timeRange;
-        this.query = query;
+        this.timeRange = NullSafe.requireNonNullElse(timeRange, TimeRanges.ALL_TIME);
+        this.query = NullSafe.string(query);
         this.analyticProcessType = analyticProcessType;
         this.analyticProcessConfig = analyticProcessConfig;
         this.analyticNotificationConfig = null;
@@ -176,6 +177,23 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
             return false;
         }
         final AbstractAnalyticRuleDoc that = (AbstractAnalyticRuleDoc) o;
+
+
+        boolean b1 = rememberNotifications == that.rememberNotifications;
+        boolean b2 = suppressDuplicateNotifications == that.suppressDuplicateNotifications;
+        boolean b3 = Objects.equals(description, that.description);
+        boolean b4 = languageVersion == that.languageVersion;
+        boolean b5 = Objects.equals(parameters, that.parameters);
+        boolean b6 = Objects.equals(timeRange, that.timeRange);
+        boolean b7 = Objects.equals(query, that.query);
+        boolean b8 = analyticProcessType == that.analyticProcessType;
+        boolean b9 = Objects.equals(analyticProcessConfig, that.analyticProcessConfig);
+        boolean b10 = Objects.equals(analyticNotificationConfig, that.analyticNotificationConfig);
+        boolean b11 = Objects.equals(notifications, that.notifications);
+        boolean b12 = Objects.equals(errorFeed, that.errorFeed);
+        boolean b13 = Objects.equals(duplicateNotificationConfig, that.duplicateNotificationConfig);
+
+
         return rememberNotifications == that.rememberNotifications &&
                suppressDuplicateNotifications == that.suppressDuplicateNotifications &&
                Objects.equals(description, that.description) &&
@@ -239,11 +257,13 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
         String query;
         AnalyticProcessType analyticProcessType;
         AnalyticProcessConfig analyticProcessConfig;
-        List<NotificationConfig> notifications = new ArrayList<>();
+        List<NotificationConfig> notifications;
         DocRef errorFeed;
         DuplicateNotificationConfig duplicateNotificationConfig;
 
         public AbstractAnalyticRuleDocBuilder() {
+            languageVersion = QueryLanguageVersion.STROOM_QL_VERSION_0_1;
+            notifications = new ArrayList<>();
         }
 
         public AbstractAnalyticRuleDocBuilder(final AbstractAnalyticRuleDoc doc) {

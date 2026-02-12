@@ -21,7 +21,7 @@ import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter2;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.client.FeedClient;
 import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class FeedSettingsPresenter
-        extends DocumentEditPresenter2<FeedSettingsView, FeedDoc> {
+        extends DocPresenter<FeedSettingsView, FeedDoc> {
 
     @SuppressWarnings("SimplifyStreamApiCallChains") // Cos GWT
     private static final List<String> FORMATS = DataFormatNames.ALL_HARD_CODED_FORMAT_NAMES.stream()

@@ -47,6 +47,8 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
@@ -67,7 +69,7 @@ import javax.inject.Provider;
 
 public class QueryEditPresenter
         extends MyPresenterWidget<QueryEditView>
-        implements HasDirtyHandlers, HasToolbar, HasHandlers {
+        implements HasDirtyHandlers, HasToolbar, HasHandlers, HasValueChangeHandlers<String> {
 
     private static final int DEBOUNCE_DELAY_MS = 400;
     private static final TabData TABLE = new TabDataImpl("Table");
@@ -464,6 +466,11 @@ public class QueryEditPresenter
 
     public void onContentTabVisible(final boolean visible) {
         queryResultPresenter.onContentTabVisible(visible);
+    }
+
+    @Override
+    public com.google.gwt.event.shared.HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
+        return editorPresenter.addValueChangeHandler(handler);
     }
 
     // --------------------------------------------------------------------------------

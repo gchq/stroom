@@ -17,6 +17,7 @@
 package stroom.entity.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -27,22 +28,24 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
 
-public abstract class DocumentEditPresenter2<V extends View, D>
+public abstract class DocPresenter<V extends View, D>
         extends AbstractDocPresenter<V, D>
-        implements HasDocumentRead<D>, HasDocumentWrite<D>, HasDirtyHandlers, HasClose {
+        implements HasDocumentRead<D>, HasDocumentWrite<D>, HasDirtyHandlers, HasClose, ChangeUiHandlers {
 
     private D entity;
     private boolean readOnly = true;
     private boolean dirty;
 
-    public DocumentEditPresenter2(final EventBus eventBus, final V view) {
+    public DocPresenter(final EventBus eventBus, final V view) {
         super(eventBus, view);
     }
 
+    @Override
     public final void onChange() {
         if (!isReadOnly()) {
-            final D updated = write(entity);
-            final boolean dirty = !Objects.equals(entity, updated);
+            final D original = entity;
+            final D updated = write(original);
+            final boolean dirty = !Objects.equals(original, updated);
             setDirty(dirty);
         }
     }
@@ -50,7 +53,7 @@ public abstract class DocumentEditPresenter2<V extends View, D>
     private void setDirty(final boolean dirty) {
         if (this.dirty != dirty) {
             this.dirty = dirty;
-            onDirty(dirty);
+            updateLabel();
             DirtyEvent.fire(this, dirty);
         }
     }
@@ -59,7 +62,8 @@ public abstract class DocumentEditPresenter2<V extends View, D>
         return dirty;
     }
 
-    void onDirty(final boolean dirty) {
+    void updateLabel() {
+
     }
 
     @Override

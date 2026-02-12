@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.analytics.client.presenter;
+package stroom.document.client.event;
 
-import stroom.document.client.event.ChangeUiHandlers;
+import com.gwtplatform.mvp.client.UiHandlers;
 
-public interface AnalyticProcessingUiHandlers extends ChangeUiHandlers {
+public interface ChangeUiHandlers extends UiHandlers {
 
-    void onProcessingTypeChange();
+    void onChange();
 }

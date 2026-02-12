@@ -23,7 +23,7 @@ import stroom.query.api.ParamValues;
 import stroom.query.api.TimeRange;
 import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
 import stroom.query.client.view.QueryButtons;
-import stroom.query.client.view.TimeRanges;
+import stroom.query.api.TimeRanges;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.ErrorMessages;
 import stroom.util.shared.Severity;

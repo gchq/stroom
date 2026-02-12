@@ -17,7 +17,7 @@
 package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AbstractNotificationPresenter.AnalyticNotificationView;
-import stroom.document.client.event.DirtyUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
@@ -32,7 +32,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class AnalyticNotificationViewImpl
-        extends ViewWithUiHandlers<DirtyUiHandlers>
+        extends ViewWithUiHandlers<ChangeUiHandlers>
         implements AnalyticNotificationView {
 
     private final Widget widget;
@@ -83,7 +83,7 @@ public class AnalyticNotificationViewImpl
 
     @UiHandler("includeRuleDocumentation")
     public void onIncludeRuleDocumentation(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     public interface Binder extends UiBinder<Widget, AnalyticNotificationViewImpl> {

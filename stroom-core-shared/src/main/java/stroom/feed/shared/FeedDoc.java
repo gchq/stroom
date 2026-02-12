@@ -122,22 +122,22 @@ public class FeedDoc extends AbstractDoc {
                    @JsonProperty("status") final FeedStatus status,
                    @JsonProperty("volumeGroup") final String volumeGroup) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
-        this.description = description;
-        this.classification = classification;
-        this.encoding = encoding;
-        this.contextEncoding = contextEncoding;
+        this.description = NullSafe.string(description);
+        this.classification = NullSafe.string(classification);
+        this.encoding = NullSafe.requireNonNullElse(encoding, "UTF-8");
+        this.contextEncoding = NullSafe.requireNonNullElse(contextEncoding, "UTF-8");
         this.retentionDayAge = retentionDayAge;
         this.reference = reference;
         this.streamType = NullSafe.requireNonNullElse(streamType,
                 reference
                         ? StreamTypeNames.RAW_REFERENCE
                         : StreamTypeNames.RAW_EVENTS);
+        this.dataFormat = NullSafe.string(dataFormat);
+        this.contextFormat = NullSafe.string(contextFormat);
+        this.schema = NullSafe.string(schema);
+        this.schemaVersion = NullSafe.string(schemaVersion);
         this.status = NullSafe.requireNonNullElse(status, FeedStatus.RECEIVE);
-        this.dataFormat = dataFormat;
-        this.contextFormat = contextFormat;
-        this.schema = schema;
-        this.schemaVersion = schemaVersion;
-        this.volumeGroup = volumeGroup;
+        this.volumeGroup = NullSafe.string(volumeGroup);
     }
 
     /**

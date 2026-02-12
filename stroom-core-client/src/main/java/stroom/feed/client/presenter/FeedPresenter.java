@@ -20,7 +20,7 @@ import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.AbstractTabProvider;
-import stroom.entity.client.presenter.DocumentEditTabPresenter2;
+import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocumentEditTabProvider2;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
@@ -37,7 +37,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-public class FeedPresenter extends DocumentEditTabPresenter2<LinkTabPanelView, FeedDoc> {
+public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData DATA = new TabDataImpl("Data");
