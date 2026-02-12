@@ -21,6 +21,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasToolbar;
@@ -500,10 +501,11 @@ public class VisualisationAssetsPresenter
                     .onSuccess(result -> {
                         clearEditor();
                         if (result) {
-                            Console.info("onRevertButtonClick(); onSuccess(); isDirty()==" + isDirty());
                             // It worked - data reverted
                             Scheduler.get().scheduleFinally(() -> {
-                                fetchDraftAssets(document);
+                                final DocRef docRef = document.asDocRef();
+                                document = null; // Make sure doc is reloaded on refresh
+                                RefreshDocumentEvent.fire(VisualisationAssetsPresenter.this, docRef);
                             });
                         } else {
                             AlertEvent.fireError(this,
