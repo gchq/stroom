@@ -93,6 +93,20 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
     }
 
     @Override
+    public void create(final String documentName,
+                         final Consumer<XsltDoc> resultConsumer,
+                         final RestErrorHandler errorHandler,
+                         final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(XSLT_RESOURCE)
+                .method(res -> res.create(documentName))
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public String getType() {
         return XsltDoc.TYPE;
     }

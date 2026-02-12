@@ -40,7 +40,6 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineProperty;
-import stroom.pipeline.shared.data.PipelineProperty.Builder;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.CreateProcessFilterRequest;
@@ -665,7 +664,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
                         final DocRef newPropEntity = remappings.get(propEntity);
                         if (newPropEntity != null) {
-                            final PipelineProperty newPipelineProperty = new Builder(parentAddedProperty)
+                            final PipelineProperty newPipelineProperty = PipelineProperty.builder(parentAddedProperty)
                                     .value(new PipelinePropertyValue(newPropEntity))
                                     .build();
                             pipelineDataBuilder.addProperty(newPipelineProperty);

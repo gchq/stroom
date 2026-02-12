@@ -517,7 +517,7 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
             final Map<String, PipelineProperty> map = combinedData.getProperties().get(element.getId());
             if (map != null) {
                 for (final PipelineProperty property : map.values()) {
-                    final PipelineProperty newProperty = new PipelineProperty.Builder(property).build();
+                    final PipelineProperty newProperty = PipelineProperty.builder(property).build();
                     properties.add(newProperty);
                 }
             }

@@ -17,6 +17,7 @@
 package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
+import stroom.docref.EmbeddedDocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
@@ -877,7 +878,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                 }
 
                 // Add explorer node
-                if (ImportSettings.ok(importSettings, importState)) {
+                if (ImportSettings.ok(importSettings, importState) && !(importedDocRef instanceof EmbeddedDocRef)) {
                     LOGGER.debug("{}ImportSettings.ok()", indent(importDocRefPath));
 
                     // Create a non-DB ExplorerNode
