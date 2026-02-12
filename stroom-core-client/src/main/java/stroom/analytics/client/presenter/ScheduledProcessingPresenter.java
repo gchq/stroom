@@ -176,8 +176,11 @@ public class ScheduledProcessingPresenter
         }
     }
 
-    public interface ScheduledProcessingView extends View {
 
+    // --------------------------------------------------------------------------------
+
+
+    public interface ScheduledProcessingView extends View {
 
         void setScheduleList(View view);
 
