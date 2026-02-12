@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Bug **#5391** : Fix folder DocRef NPE.
+
+* Bug **#5392** : Fix PlanB segfault.
+
+* Bug **#5300** : Fix path `millis` parameter.
+
+
 ## [v7.11-beta.23] - 2026-02-09
 
 * Feature **#5313** : Allow users to prevent empty reports from being sent on a per report basis.
