@@ -771,26 +771,25 @@ public class ExecutionScheduleManager
     }
 
     private ExpressionItem formatISOExpressions(final ExpressionItem item) {
-        if(item == null) {
-            return null;
-        }
-        if(item instanceof final ExpressionTerm term)
-        {
-            if (term.getField().equals(ExecutionScheduleFields.FIELD_START_TIME.getFldName())
-                || term.getField().equals(ExecutionScheduleFields.FIELD_END_TIME.getFldName())) {
-                return term.copy().value(ClientDateUtil.fromISOString(term.getValue()).toString()).build();
+        switch (item) {
+            case final ExpressionTerm term -> {
+                if (term.getField().equals(ExecutionScheduleFields.FIELD_START_TIME.getFldName())
+                    || term.getField().equals(ExecutionScheduleFields.FIELD_END_TIME.getFldName())) {
+                    return term.copy().value(ClientDateUtil.fromISOString(term.getValue()).toString()).build();
+                }
+                return term;
             }
-            return term;
-        }
-        if(item instanceof final ExpressionOperator operator)
-        {
-            final ArrayList<ExpressionItem> newChildren = new ArrayList<>();
-            for(final ExpressionItem child : operator.getChildren()) {
-                newChildren.add(formatISOExpressions(child));
+            case final ExpressionOperator operator -> {
+                final ArrayList<ExpressionItem> newChildren = new ArrayList<>();
+                for (final ExpressionItem child : operator.getChildren()) {
+                    newChildren.add(formatISOExpressions(child));
+                }
+                return operator.copy().children(newChildren).build();
             }
-            return operator.copy().children(newChildren).build();
+            default -> {
+                return null;
+            }
         }
-        return null;
     }
 
     @Override
