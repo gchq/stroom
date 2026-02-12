@@ -36,7 +36,7 @@ public interface VisualisationAssetDao {
     void updateNewFolder(String userUuid,
                          String ownerDocId,
                          String path)
-        throws IOException;
+            throws IOException;
 
     /**
      * Creates a new file.
@@ -49,7 +49,7 @@ public interface VisualisationAssetDao {
     void updateNewFile(String userUuid,
                        String ownerDocId,
                        String path)
-        throws IOException;
+            throws IOException;
 
     /**
      * Creates a new file from a file upload.
@@ -65,7 +65,7 @@ public interface VisualisationAssetDao {
                                String ownerDocId,
                                String path,
                                InputStream uploadStream)
-        throws IOException;
+            throws IOException;
 
     /**
      * Deletes a folder or file.
@@ -80,7 +80,7 @@ public interface VisualisationAssetDao {
                       String ownerDocId,
                       String path,
                       boolean isFolder)
-        throws IOException;
+            throws IOException;
 
     /**
      * Renames a file or folder.
@@ -97,7 +97,7 @@ public interface VisualisationAssetDao {
                       String oldPath,
                       String newPath,
                       boolean isFolder)
-        throws IOException;
+            throws IOException;
 
     /**
      * Updates the content in a file.
@@ -112,7 +112,21 @@ public interface VisualisationAssetDao {
                        String ownerDocId,
                        String path,
                        byte[] content)
-        throws IOException;
+            throws IOException;
+
+    /**
+     * Returns the draft content of a text file as a String for editing
+     * in the UI.
+     * @param userUuid The user ID that is doing the update
+     * @param ownerDocId The document that owns the assets
+     * @param path The path to the file, including the file name and extension.
+     * @return The text content, or null if the file isn't text.
+     * @throws IOException if something goes wrong.
+     */
+    String getDraftContent(String userUuid,
+                           String ownerDocId,
+                           String path)
+            throws IOException;
 
     /**
      * Copies all draft information into the main storage so it is live.

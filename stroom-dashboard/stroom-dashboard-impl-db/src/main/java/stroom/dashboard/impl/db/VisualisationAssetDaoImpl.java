@@ -13,6 +13,8 @@ import stroom.dashboard.impl.db.jooq.Tables;
 import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
 import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.Record3;
 import org.jooq.Result;
@@ -21,6 +23,12 @@ import org.jooq.impl.DSL;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CoderResult;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,6 +60,9 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
 
     /** First character in a SQL SUBSTRING function */
     private static final int START_OF_SUBSTRING = 1;
+
+    /** Maximum length of content that users can edit = 128KiB */
+    private static final int MAX_EDITABLE_CONTENT_LENGTH = 1024 * 128;
 
     /** Bootstraps connection */
     private final VisualisationAssetDbConnProvider connProvider;
@@ -412,6 +423,15 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                                               + deletedPath
                                               + "' but " + rowsDeleted + " rows were deleted.");
             }
+
+            // Record the fact that something was deleted so we can allow saveDraftToLive
+            final int rowsInserted = txnContext.insertInto(Tables.VISUALISATION_ASSETS_UPDATE_DELETE)
+                    .columns(Tables.VISUALISATION_ASSETS_UPDATE_DELETE.DRAFT_USER_UUID,
+                            Tables.VISUALISATION_ASSETS_UPDATE_DELETE.OWNER_DOC_UUID)
+                    .values(userUuid, ownerDocId)
+                    .onDuplicateKeyIgnore()
+                    .execute();
+            LOGGER.info("updateDelete: created {} record to flag last operation was delete", rowsInserted);
         });
     }
 
@@ -444,6 +464,74 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
     }
 
     @Override
+    public String getDraftContent(final String userUuid,
+                                  final String ownerDocId,
+                                  final String path) throws IOException {
+        Objects.requireNonNull(userUuid);
+        Objects.requireNonNull(ownerDocId);
+        Objects.requireNonNull(path);
+
+        final String slashedPath = slashPath(path, false);
+        final byte[] pathHash = Hashing.sha256().hashString(slashedPath, StandardCharsets.UTF_8).asBytes();
+        final String[] content = new String[1];
+
+        JooqUtil.transaction(connProvider, txnContext -> {
+            populateDraft(userUuid, ownerDocId, txnContext);
+
+            final Field<Integer> dataLength = DSL.field(
+                    "LENGTH({0})",
+                    Integer.class,
+                    Tables.VISUALISATION_ASSETS_DRAFT.DATA);
+            final Result<Record1<byte[]>> result = txnContext.select(Tables.VISUALISATION_ASSETS_DRAFT.DATA)
+                    .from(Tables.VISUALISATION_ASSETS_DRAFT)
+                    .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
+                            .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId))
+                            .and(Tables.VISUALISATION_ASSETS_DRAFT.PATH.eq(slashedPath))
+                            .and(Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH.eq(pathHash))
+                            .and(dataLength.lt(MAX_EDITABLE_CONTENT_LENGTH)))
+                    .fetch();
+            if (result.isEmpty()) {
+                LOGGER.info("No results for getting draft content for {}", path);
+                content[0] = null;
+            } else {
+                try {
+                    content[0] = decodeToUtf8String(result.getFirst().value1());
+                } catch (final CharacterCodingException e) {
+                    // We expect errors here as things like PNG cannot be converted to UTF-8 Strings.
+                    LOGGER.info("Cannot convert asset data '{}' to UTF-8: {}", path, e.getMessage());
+                    content[0] = null;
+                }
+            }
+        });
+
+        return content[0];
+    }
+
+    /**
+     * Method to try to convert the given byte array to UTF-8 String, throwing an error if
+     * the string cannot be converted.
+     * @param input The byte array to convert.
+     * @return The input as a String
+     * @throws CharacterCodingException if the data cannot be converted to UTF-8 string.
+     */
+    private String decodeToUtf8String(final byte[] input)
+    throws CharacterCodingException {
+
+        final CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
+        decoder.onMalformedInput(CodingErrorAction.REPORT);
+        decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+
+        final CharBuffer buf = CharBuffer.allocate(input.length);
+        final CoderResult result = decoder.decode(ByteBuffer.wrap(input), buf, true);
+        if (result.isError()) {
+            result.throwException();
+        }
+        decoder.flush(buf);
+        buf.flip(); // Set positions for reading
+        return buf.toString();
+    }
+
+    @Override
     public void saveDraftToLive(final String userUuid, final String documentId) throws IOException {
         LOGGER.info("saveDraftToLive({}, {})", userUuid, documentId);
 
@@ -459,46 +547,92 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
         try {
             // Do everything in one transaction
             JooqUtil.transaction(connProvider, txnContext -> {
-                LOGGER.info("Deleting existing live assets");
-                // Delete all existing live content for the owning document ID
-                int recordCount = txnContext
-                        .deleteFrom(Tables.VISUALISATION_ASSETS)
-                        .where(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(documentId))
-                        .execute();
-                LOGGER.info("{} records deleted in live", recordCount);
 
-                LOGGER.info("Copying data into Live");
-                // Copy all relevant data from the user draft table into the live table
-                recordCount = txnContext
-                        .insertInto(Tables.VISUALISATION_ASSETS,
-                                Tables.VISUALISATION_ASSETS.MODIFIED,
-                                Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID,
-                                Tables.VISUALISATION_ASSETS.ASSET_UUID,
-                                Tables.VISUALISATION_ASSETS.PATH,
-                                Tables.VISUALISATION_ASSETS.PATH_HASH,
-                                Tables.VISUALISATION_ASSETS.IS_FOLDER,
-                                Tables.VISUALISATION_ASSETS.DATA)
-                        .select(txnContext.select(
-                                        DSL.val(timestamp),
-                                        Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID,
-                                        Tables.VISUALISATION_ASSETS_DRAFT.ASSET_UUID,
-                                        Tables.VISUALISATION_ASSETS_DRAFT.PATH,
-                                        Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH,
-                                        Tables.VISUALISATION_ASSETS_DRAFT.IS_FOLDER,
-                                        Tables.VISUALISATION_ASSETS_DRAFT.DATA)
-                                .from(Tables.VISUALISATION_ASSETS_DRAFT)
-                                .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
-                                        .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(documentId))))
-                        .execute();
-                LOGGER.info("Copied {} records from draft into Live", recordCount);
+                // If the user somehow manages to send saveDraftToLive() twice they can delete
+                // all their data. So we only allow copying if either the draft table has some records
+                // or if the last operation was a delete.
+                boolean canCopyDraftToLive = false;
 
-                // Delete everything in the draft table so next time we'll get clean live data
-                recordCount = txnContext
-                        .deleteFrom(Tables.VISUALISATION_ASSETS_DRAFT)
-                        .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
-                                .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(documentId)))
-                        .execute();
-                LOGGER.info("Deleted {} records in the draft table", recordCount);
+                final Result<Record1<Integer>> resultLastUpdateDelete = txnContext
+                        .selectCount()
+                        .from(Tables.VISUALISATION_ASSETS_UPDATE_DELETE)
+                        .where(Tables.VISUALISATION_ASSETS_UPDATE_DELETE.DRAFT_USER_UUID.eq(userUuid)
+                                .and(Tables.VISUALISATION_ASSETS_UPDATE_DELETE.OWNER_DOC_UUID.eq(documentId)))
+                        .fetch();
+                // Check result is > 0
+                final int draftRecordCount = resultLastUpdateDelete.getFirst().value1();
+                if (draftRecordCount > 0) {
+                    LOGGER.info("Can copy draft table to live table; {} draft records exist", draftRecordCount);
+                    canCopyDraftToLive = true;
+                } else {
+                    final Result<Record1<Integer>> result = txnContext
+                            .selectCount()
+                            .from(Tables.VISUALISATION_ASSETS_DRAFT)
+                            .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
+                                    .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(documentId)))
+                            .fetch();
+                    // Check result is > 0
+                    final int updateDeleteRecordCount = result.getFirst().value1();
+                    if (updateDeleteRecordCount > 0) {
+                        LOGGER.info("Can copy draft table to live table: {} updateDelete records exist",
+                                updateDeleteRecordCount);
+                        canCopyDraftToLive = true;
+                    } else {
+                        LOGGER.info("Cannot copy draft table to live table; no draft records exist "
+                        + "and the last update was not a delete.");
+                    }
+                }
+
+                if (canCopyDraftToLive) {
+                    LOGGER.info("Deleting existing live assets");
+                    // Delete all existing live content for the owning document ID
+                    int recordCount = txnContext
+                            .deleteFrom(Tables.VISUALISATION_ASSETS)
+                            .where(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(documentId))
+                            .execute();
+                    LOGGER.info("{} records deleted in live", recordCount);
+
+                    LOGGER.info("Copying data into Live");
+                    // Copy all relevant data from the user draft table into the live table
+                    recordCount = txnContext
+                            .insertInto(Tables.VISUALISATION_ASSETS,
+                                    Tables.VISUALISATION_ASSETS.MODIFIED,
+                                    Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID,
+                                    Tables.VISUALISATION_ASSETS.ASSET_UUID,
+                                    Tables.VISUALISATION_ASSETS.PATH,
+                                    Tables.VISUALISATION_ASSETS.PATH_HASH,
+                                    Tables.VISUALISATION_ASSETS.IS_FOLDER,
+                                    Tables.VISUALISATION_ASSETS.DATA)
+                            .select(txnContext.select(
+                                            DSL.val(timestamp),
+                                            Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID,
+                                            Tables.VISUALISATION_ASSETS_DRAFT.ASSET_UUID,
+                                            Tables.VISUALISATION_ASSETS_DRAFT.PATH,
+                                            Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH,
+                                            Tables.VISUALISATION_ASSETS_DRAFT.IS_FOLDER,
+                                            Tables.VISUALISATION_ASSETS_DRAFT.DATA)
+                                    .from(Tables.VISUALISATION_ASSETS_DRAFT)
+                                    .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
+                                            .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(documentId))))
+                            .execute();
+                    LOGGER.info("Copied {} records from draft into Live", recordCount);
+
+                    // Delete everything in the draft table so next time we'll get clean live data
+                    recordCount = txnContext
+                            .deleteFrom(Tables.VISUALISATION_ASSETS_DRAFT)
+                            .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
+                                    .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(documentId)))
+                            .execute();
+                    LOGGER.info("Deleted {} records in the draft table", recordCount);
+
+                    // Delete the record that indicates last update was a delete, if it exists
+                    recordCount = txnContext
+                            .deleteFrom(Tables.VISUALISATION_ASSETS_UPDATE_DELETE)
+                            .where(Tables.VISUALISATION_ASSETS_UPDATE_DELETE.DRAFT_USER_UUID.eq(userUuid)
+                                    .and(Tables.VISUALISATION_ASSETS_UPDATE_DELETE.OWNER_DOC_UUID.eq(documentId)))
+                            .execute();
+                    LOGGER.info("Deleted {} records in the update_delete table", recordCount);
+                }
             });
         } catch (final DataAccessException e) {
             LOGGER.error("Error saving draft assets to live for user {}, doc {}: {}",

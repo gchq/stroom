@@ -13,6 +13,7 @@ import org.jooq.impl.SchemaImpl;
 
 import stroom.dashboard.impl.db.jooq.tables.VisualisationAssets;
 import stroom.dashboard.impl.db.jooq.tables.VisualisationAssetsDraft;
+import stroom.dashboard.impl.db.jooq.tables.VisualisationAssetsUpdateDelete;
 
 
 /**
@@ -39,6 +40,11 @@ public class Stroom extends SchemaImpl {
     public final VisualisationAssetsDraft VISUALISATION_ASSETS_DRAFT = VisualisationAssetsDraft.VISUALISATION_ASSETS_DRAFT;
 
     /**
+     * The table <code>stroom.visualisation_assets_update_delete</code>.
+     */
+    public final VisualisationAssetsUpdateDelete VISUALISATION_ASSETS_UPDATE_DELETE = VisualisationAssetsUpdateDelete.VISUALISATION_ASSETS_UPDATE_DELETE;
+
+    /**
      * No further instances allowed
      */
     private Stroom() {
@@ -55,7 +61,8 @@ public class Stroom extends SchemaImpl {
     public final List<Table<?>> getTables() {
         return Arrays.asList(
             VisualisationAssets.VISUALISATION_ASSETS,
-            VisualisationAssetsDraft.VISUALISATION_ASSETS_DRAFT
+            VisualisationAssetsDraft.VISUALISATION_ASSETS_DRAFT,
+            VisualisationAssetsUpdateDelete.VISUALISATION_ASSETS_UPDATE_DELETE
         );
     }
 }

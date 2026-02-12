@@ -229,6 +229,31 @@ public class VisualisationAssetService {
     }
 
     /**
+     * Returns the content of a text file for editing in the UI.
+     * Will not return anything if the file isn't a text file.
+     * @param ownerDocId Document that owns the assets. Must not be null.
+     * @param path Location of the document to update the content for.
+     * @return The content and mimetype, or null if the content cannot be viewed.
+     */
+    String getDraftContent(final String ownerDocId,
+                           final String path)
+            throws IOException {
+
+        Objects.requireNonNull(ownerDocId);
+        Objects.requireNonNull(path);
+
+        final DocRef docRef = new DocRef(VisualisationDoc.TYPE, ownerDocId);
+        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+            return dao.getDraftContent(securityContext.getUserRef().getUuid(),
+                    ownerDocId,
+                    path);
+        } else {
+            LOGGER.info("User does not have permission to view the content of an item");
+            return null;
+        }
+    }
+
+    /**
      * Copies all draft information into the main storage so it is live.
      * @param ownerDocId The document that owns these assets.
      * @throws IOException If something goes wrong.

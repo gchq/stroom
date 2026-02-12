@@ -11,6 +11,7 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
@@ -85,6 +86,15 @@ public interface VisualisationAssetResource extends RestResource, DirectRestServ
     Boolean updateContent(@PathParam("ownerDocId") String ownerDocId,
                           @Parameter(description="Path and Content", required = true)
                           VisualisationAssetUpdateContent update);
+
+    @GET
+    @Path("/getContent/{ownerDocId}")
+    @Operation(
+            summary = "Gets the content of an asset for editing",
+            operationId = "getContent"
+    )
+    VisualisationAssetContent getDraftContent(@PathParam("ownerDocId") String ownerDocId,
+                                              @QueryParam("path") String path);
 
     @PUT
     @Path("/saveDraftToLive/{ownerDocId}")

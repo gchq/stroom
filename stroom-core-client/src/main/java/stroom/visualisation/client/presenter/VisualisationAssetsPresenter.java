@@ -16,14 +16,13 @@
 
 package stroom.visualisation.client.presenter;
 
+import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
@@ -58,11 +57,9 @@ import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -74,8 +71,8 @@ import javax.inject.Provider;
  * Shows the Assets - images, css etc - associated with the Visualisation.
  */
 public class VisualisationAssetsPresenter
-        extends MyPresenterWidget<VisualisationAssetsView>
-        implements HasDirtyHandlers, HasToolbar, VisualisationAssetsAddFileCallback {
+        extends DocumentEditPresenter<VisualisationAssetsView, VisualisationDoc>
+        implements HasToolbar, VisualisationAssetsAddFileCallback {
 
     /** Illegal asset name characters - not allowed in any file or folder name */
     private final static String ILLEGAL_ASSET_NAME_CHARACTERS = "/:";
@@ -132,8 +129,8 @@ public class VisualisationAssetsPresenter
     /** True if the UI is readonly, false if read-write */
     private boolean readOnly = false;
 
-    /** Whether this document is dirty - readonly changed by event handler */
-    private boolean dirty = false;
+    /** State of content edited in editor */
+    private final VisualisationAssetState assetDirtyState = new VisualisationAssetState();
 
     @Inject
     public VisualisationAssetsPresenter(final EventBus eventBus,
@@ -157,20 +154,7 @@ public class VisualisationAssetsPresenter
         });
         this.getView().setTreeAndEditor(tree, editorPresenter);
 
-        // Ensure that this class knows whether the data is dirty
-        this.addDirtyHandler(this::onDirty);
 
-        // TODO register handler for ValueChangeHandler -> dirty
-        // TODO register handler for FormatHandler -> dirty
-
-    }
-
-    /**
-     * Dirty mechanism across the tabs.
-     */
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
     /**
@@ -266,8 +250,13 @@ public class VisualisationAssetsPresenter
 
     @Override
     protected void onBind() {
-        // Add listeners for dirty events.
         super.onBind();
+
+        // Hook up the dirty events on the editor
+        editorPresenter.addValueChangeHandler(
+                event -> this.onEditorContentChanged());
+        editorPresenter.addFormatHandler(
+                event -> this.onEditorContentChanged());
 
         // Create the Add menu
         menuItems.add(new IconMenuItem.Builder()
@@ -303,6 +292,67 @@ public class VisualisationAssetsPresenter
                     .allowCloseOnMoveLeft()
                     .fire(this);
         });
+    }
+
+    /**
+     * Called by VisualisationPresenter when the document is loaded.
+     * @param docRef Document reference
+     * @param document Document
+     * @param readOnly Whether this doc is readonly
+     */
+    @Override
+    protected void onRead(@SuppressWarnings("unused") final DocRef docRef,
+                          final VisualisationDoc document,
+                          final boolean readOnly) {
+        Console.info("onRead()");
+
+        // Is this the first time this tab has been loaded?
+        final boolean firstLoad = this.document == null || !this.document.getUuid().equals(document.getUuid());
+        Console.info("onRead(): first load = " + firstLoad);
+
+        this.document = document;
+
+        // Set the readonly flag
+        this.readOnly = readOnly;
+
+        // Update UI state
+        updateState();
+
+        // Get the assets associated with the document (async)
+        // but only if this is the first time this has been loaded
+        // Otherwise we get into trouble with async operations clashing
+        if (firstLoad) {
+            this.fetchDraftAssets(document);
+        }
+
+        Console.info("onRead() complete");
+    }
+
+    /**
+     * Called by VisualisationPresenter so this tab gets a chance to write any changes
+     * to the document before it is saved.
+     * Requests the server to copy data from the draft area to the live area of the database.
+     * @param document Document to store stuff in
+     * @return The updated document.
+     */
+    @Override
+    protected VisualisationDoc onWrite(final VisualisationDoc document) {
+        Console.info("onWrite(); isDirty()==" + isDirty());
+
+        // Run this section after the main document has been saved to the server
+        Scheduler.get().scheduleFinally(() -> {
+
+            if (assetDirtyState.isDirtyAndNeedsSaveToDraft()) {
+                doUpdateContent(assetDirtyState.getPathToEditItem(),
+                        editorPresenter.getText().getBytes(StandardCharsets.UTF_8),
+                        this::doOnWrite,
+                        this::doSelectionChangeAfterUpdateContentFailed);
+            } else {
+                doOnWrite();
+            }
+        });
+
+        return document;
     }
 
     /**
@@ -382,9 +432,10 @@ public class VisualisationAssetsPresenter
     /**
      * Gets dirty events to update the class member variable.
      */
-    private void onDirty(final DirtyEvent dirtyEvent) {
-        Console.info("onDirty(" + dirtyEvent.isDirty() + ")");
-        dirty = dirtyEvent.isDirty();
+    @Override
+    public void onDirty(final boolean dirty) {
+        super.onDirty(dirty);
+        Console.info("VisualisationAssetsPresenter.onDirty(" + dirty + ")");
         updateState();
     }
 
@@ -430,78 +481,112 @@ public class VisualisationAssetsPresenter
     }
 
     /**
-     * Called by VisualisationPresenter when the document is loaded.
-     * @param docRef Document reference
-     * @param document Document
-     * @param readOnly Whether this doc is readonly
+     * Called when the editor is dirty and needs a save.
      */
-    public void onRead(@SuppressWarnings("unused") final DocRef docRef,
-                       final VisualisationDoc document,
-                       final boolean readOnly) {
-        Console.info("onRead()");
-
-        // Is this the first time this tab has been loaded?
-        final boolean firstLoad = this.document == null || !this.document.getUuid().equals(document.getUuid());
-        Console.info("onRead(): first load = " + firstLoad);
-
-        this.document = document;
-
-        // Set the readonly flag
-        this.readOnly = readOnly;
-
-        // Update UI state
-        updateState();
-
-        // Get the assets associated with the document (async)
-        // but only if this is the first time this has been loaded
-        // Otherwise we get into trouble with async operations clashing
-        if (firstLoad) {
-            this.fetchDraftAssets(document);
-        }
-
-        Console.info("onRead() complete");
+    private void onEditorContentChanged() {
+        assetDirtyState.onAssetContentChanged();
+        setDirty(true);
     }
 
     /**
      * Called when the Revert button is clicked.
      * Gets rid of draft changes and goes back to the live version of the assets.
+     * Scheduler calls here shouldn't be necessary.
      */
     private void onRevertButtonClick() {
-        restFactory.create(VISUALISATION_ASSET_RESOURCE)
-                .method(r -> r.revertDraftFromLive(document.getUuid()))
-                .onSuccess(result -> {
-                    if (result) {
-                        // It worked - data reverted
-                        fetchDraftAssets(document);
-                    } else {
+        Scheduler.get().scheduleFinally(() -> {
+            restFactory.create(VISUALISATION_ASSET_RESOURCE)
+                    .method(r -> r.revertDraftFromLive(document.getUuid()))
+                    .onSuccess(result -> {
+                        clearEditor();
+                        if (result) {
+                            Console.info("onRevertButtonClick(); onSuccess(); isDirty()==" + isDirty());
+                            // It worked - data reverted
+                            Scheduler.get().scheduleFinally(() -> {
+                                fetchDraftAssets(document);
+                            });
+                        } else {
+                            AlertEvent.fireError(this,
+                                    "Error reverting to live version",
+                                    null);
+                        }
+                    })
+                    .onFailure(error -> {
+                        clearEditor();
                         AlertEvent.fireError(this,
-                                "Error reverting to live version",
+                                "Error reverting to live version: " + error.getMessage(),
                                 null);
-                    }
-                })
-                .onFailure(error -> {
-                    AlertEvent.fireError(this,
-                            "Error reverting to live version: " + error.getMessage(),
-                            null);
-                })
-                .taskMonitorFactory(this)
-                .exec();
+                    })
+                    .taskMonitorFactory(this)
+                    .exec();
+        });
     }
 
     /**
      * Called when the selection changes.
      */
     private void onSelectionChange() {
-        final VisualisationAssetTreeItem selectedItem = (VisualisationAssetTreeItem) tree.getSelectedItem();
-        final String label = selectedItem.getText();
-        if (label.endsWith(".html")) {
-            editorPresenter.setText("<html><body></body></html>");
-            editorPresenter.setMode(AceEditorMode.HTML);
-            editorPresenter.setReadOnly(readOnly);
-        } else {
-            editorPresenter.setText("");
-            editorPresenter.setReadOnly(true);
+        Console.info("onSelectionChange");
+        if (!readOnly) {
+            if (assetDirtyState.isDirtyAndNeedsSaveToDraft()) {
+                Console.info("0 onSelectionChange - saving " + assetDirtyState);
+                doUpdateContent(assetDirtyState.getPathToEditItem(),
+                        editorPresenter.getText().getBytes(StandardCharsets.UTF_8),
+                        this::doSelectionChangeAfterUpdateContentSuccess,
+                        this::doSelectionChangeAfterUpdateContentFailed);
+            } else {
+                Console.info("0 No previous item to save");
+                doSelectionChangeAfterUpdateContentSuccess();
+            }
         }
+    }
+
+    /**
+     * Called after onSelectionChange() when the saving of existing content fails.
+     * Select back to previous item.
+     */
+    private void doSelectionChangeAfterUpdateContentFailed() {
+        tree.setSelectedItem(assetDirtyState.getEditItem(), false);
+    }
+
+    /**
+     * Called after the current editor contents has been saved.
+     * Loads up the new editor contents.
+     */
+    private void doSelectionChangeAfterUpdateContentSuccess() {
+        Console.info("1b doSelectItemAfterUpdateContent");
+        assetDirtyState.onUpdateContentSuccess();
+
+        final VisualisationAssetTreeItem selectedItem = (VisualisationAssetTreeItem) tree.getSelectedItem();
+
+        if (selectedItem != null && selectedItem.isLeaf()) {
+            Console.info("Item is selected and is leaf");
+            final String selectedItemPath = VisualisationAssetsPresenterUtils.getItemPath(selectedItem);
+            assetDirtyState.onSelectNewItemAfterSaveOldItem(selectedItem, selectedItemPath);
+            fetchDraftContent(document,
+                    selectedItemPath,
+                    this::doSelectionChangeAfterFetchDraftContentSuccess,
+                    this::doSelectItemFetchDraftContentFailed);
+        } else {
+            Console.info("Nothing selected or not leaf");
+            doSelectItemFetchDraftContentFailed();
+        }
+    }
+
+    /**
+     * Called after doSelectItemAfterUpdateContent() to handle failures.
+     */
+    private void doSelectItemFetchDraftContentFailed() {
+        Console.info("2a doSelectItemFetchDraftContentFailed");
+        clearEditor();
+    }
+
+    /**
+     * Called after the new editor contents has been loaded.
+     */
+    private void doSelectionChangeAfterFetchDraftContentSuccess() {
+        Console.info("2b doSelectItemAfterFetchDraftContent");
+        editorPresenter.setReadOnly(readOnly);
         updateState();
     }
 
@@ -539,44 +624,32 @@ public class VisualisationAssetsPresenter
     }
 
     /**
-     * Called by VisualisationPresenter so this tab gets a chance to write any changes
-     * to the document before it is saved.
-     * Requests the server to copy data from the draft area to the live area of the database.
-     * @param document Document to store stuff in
-     * @return The updated document.
+     * Called from onWrite() after any saving of content has happened, if that is necessary.
      */
-    public VisualisationDoc onWrite(final VisualisationDoc document) {
-        Console.info("onWrite(); isDirty()==" + isDirty());
-
-        // Run this section after the main document has been saved to the server
-        Scheduler.get().scheduleFinally(() -> {
-
-            // Transfer draft saves to live
-            restFactory.create(VISUALISATION_ASSET_RESOURCE)
-                    .method(r -> r.saveDraftToLive(document.getUuid()))
-                    .onSuccess(result -> {
-                        if (result) {
-                            Console.info("onWrite(); onSuccess(); isDirty()==" + isDirty());
-                            Scheduler.get().scheduleFinally(() -> {
-                                // Reload doc via chain, once this chain is complete
-                                fetchDraftAssets(document);
-                            });
-                        } else {
-                            AlertEvent.fireError(this,
-                                    "Error saving assets",
-                                    null);
-                        }
-                    })
-                    .onFailure(error -> {
+    private void doOnWrite() {
+        // Transfer draft saves to live
+        restFactory.create(VISUALISATION_ASSET_RESOURCE)
+                .method(r -> r.saveDraftToLive(document.getUuid()))
+                .onSuccess(result -> {
+                    if (result) {
+                        Console.info("doOnWrite(); onSuccess(); isDirty()==" + isDirty());
+                        Scheduler.get().scheduleFinally(() -> {
+                            // Reload doc via chain, once this chain is complete
+                            fetchDraftAssets(document);
+                        });
+                    } else {
                         AlertEvent.fireError(this,
-                                "Error saving assets: " + error.getMessage(),
+                                "Error saving assets",
                                 null);
-                    })
-                    .taskMonitorFactory(this)
-                    .exec();
-        });
-
-        return document;
+                    }
+                })
+                .onFailure(error -> {
+                    AlertEvent.fireError(this,
+                            "Error saving assets: " + error.getMessage(),
+                            null);
+                })
+                .taskMonitorFactory(this)
+                .exec();
     }
 
     /**
@@ -745,30 +818,78 @@ public class VisualisationAssetsPresenter
      * Does the REST update for the content of a file.
      * @param path The path to the file.
      * @param content The new content for a file. Must not be null but can be empty.
+     * @param successCallback Method to call on success
+     * @param failureCallback Method to call on failure, after showing the alert dialog.
      */
     private void doUpdateContent(final String path,
-                                 final byte[] content) {
+                                 final byte[] content,
+                                 final Runnable successCallback,
+                                 final AlertCallback failureCallback) {
         Objects.requireNonNull(path);
         Objects.requireNonNull(content);
 
-        final VisualisationAssetUpdateContent update = new VisualisationAssetUpdateContent(path, content);
+        final VisualisationAssetUpdateContent update =
+                new VisualisationAssetUpdateContent(path, content);
         restFactory.create(VISUALISATION_ASSET_RESOURCE)
                 .method(r ->
                         r.updateContent(document.getUuid(), update))
                 .onSuccess(result -> {
                     if (result) {
-                        // OK - get the assets again
-                        fetchDraftAssets(document);
+                        // Next link in chain
+                        successCallback.run();
                     } else {
                         AlertEvent.fireError(this,
                                 "There was an error updating content",
-                                null);
+                                failureCallback);
                     }
                 })
                 .onFailure(error -> {
                     AlertEvent.fireError(this,
                             "There was an error updating content: " + error.getMessage(),
-                            null);
+                            failureCallback);
+                })
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    /**
+     * Called to clear-down the editor.
+     */
+    private void clearEditor() {
+        Console.info("======== ClearEditor =======");
+        editorPresenter.setText("");
+        editorPresenter.setReadOnly(true);
+        Console.info("======== Editor cleared =======");
+    }
+
+    /**
+     * Fetches the content for the asset at the given path.
+     * @param document The document that owns the assets.
+     * @param path The path of the asset. Must be a leaf node path.
+     */
+    private void fetchDraftContent(final VisualisationDoc document,
+                                   final String path,
+                                   final Runnable successCallback,
+                                   final AlertCallback failureCallback) {
+        Objects.requireNonNull(document);
+        Objects.requireNonNull(path);
+
+        restFactory.create(VISUALISATION_ASSET_RESOURCE)
+                .method(r -> r.getDraftContent(document.getUuid(), path))
+                .onSuccess(result -> {
+                    final String content = result.getContent();
+                    if (content == null) {
+                        failureCallback.onClose();
+                    } else {
+                        editorPresenter.setText(result.getContent());
+                        successCallback.run();
+                    }
+                })
+                .onFailure(error -> {
+                    AlertEvent.fireError(this,
+                            "There was an error getting content for '"
+                            + path + "':" + error.getMessage(),
+                            failureCallback);
                 })
                 .taskMonitorFactory(this)
                 .exec();
@@ -792,11 +913,14 @@ public class VisualisationAssetsPresenter
                     // Clear any existing content from the tree
                     tree.clear();
 
-                    // Put the new content in
+                    // Put the new tree in
                     Console.info("fetchDraftAssets: got " + assets.getAssets().size() + " assets to add to the tree");
                     VisualisationAssetsPresenterUtils.addPathsToTree(tree, assets.getAssets());
 
-                    // Set dirty state
+                    // Mark the editor content as clean
+                    assetDirtyState.onFetchDraftAssets();
+
+                    // Set dirty state from the state of the DB
                     Console.info("fetchDraftAssets: dirty=" + assets.isDirty());
                     setDirty(assets.isDirty());
 
@@ -844,25 +968,6 @@ public class VisualisationAssetsPresenter
                 viewButton.setEnabled(!isDirty() && item.isLeaf());
             }
         }
-    }
-
-    /**
-     * Call to mark the document as dirty and needing saving.
-     * Saves everything to Draft storage so everything is on the server.
-     */
-    private void setDirty(final boolean dirty) {
-        Console.info("Setting dirty to: " + dirty);
-        // Try firing later to avoid issues
-        Scheduler.get().scheduleFinally(() -> {
-            DirtyEvent.fire(this, dirty);
-        });
-    }
-
-    /**
-     * Method to find out whether this document is dirty.
-     */
-    boolean isDirty() {
-        return dirty;
     }
 
     // --------------------------------------------------------------------------------

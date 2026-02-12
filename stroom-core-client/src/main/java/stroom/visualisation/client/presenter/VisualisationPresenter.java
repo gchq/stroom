@@ -50,21 +50,7 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
         super(eventBus, view);
 
         addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
-        addTab(ASSETS, new VisualisationAssetsProvider<>(eventBus, assetsPresenterProvider) {
-            @Override
-            public void onRead(final VisualisationAssetsPresenter presenter,
-                               final DocRef docRef,
-                               final VisualisationDoc document,
-                               final boolean readOnly) {
-                presenter.onRead(docRef, document, readOnly);
-            }
-
-            @Override
-            public VisualisationDoc onWrite(final VisualisationAssetsPresenter presenter,
-                                            final VisualisationDoc document) {
-                return presenter.onWrite(document);
-            }
-        });
+        addTab(ASSETS, new DocumentEditTabProvider<>(assetsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,

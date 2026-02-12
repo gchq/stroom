@@ -11,8 +11,10 @@ import org.jooq.impl.Internal;
 
 import stroom.dashboard.impl.db.jooq.tables.VisualisationAssets;
 import stroom.dashboard.impl.db.jooq.tables.VisualisationAssetsDraft;
+import stroom.dashboard.impl.db.jooq.tables.VisualisationAssetsUpdateDelete;
 import stroom.dashboard.impl.db.jooq.tables.records.VisualisationAssetsDraftRecord;
 import stroom.dashboard.impl.db.jooq.tables.records.VisualisationAssetsRecord;
+import stroom.dashboard.impl.db.jooq.tables.records.VisualisationAssetsUpdateDeleteRecord;
 
 
 /**
@@ -27,7 +29,11 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final UniqueKey<VisualisationAssetsRecord> KEY_VISUALISATION_ASSETS_K_ASSET_UUID = Internal.createUniqueKey(VisualisationAssets.VISUALISATION_ASSETS, DSL.name("KEY_visualisation_assets_k_asset_uuid"), new TableField[] { VisualisationAssets.VISUALISATION_ASSETS.ASSET_UUID }, true);
+    public static final UniqueKey<VisualisationAssetsRecord> KEY_VISUALISATION_ASSETS_K_VISUALISATION_ASSETS = Internal.createUniqueKey(VisualisationAssets.VISUALISATION_ASSETS, DSL.name("KEY_visualisation_assets_k_visualisation_assets"), new TableField[] { VisualisationAssets.VISUALISATION_ASSETS.OWNER_DOC_UUID, VisualisationAssets.VISUALISATION_ASSETS.PATH_HASH }, true);
     public static final UniqueKey<VisualisationAssetsRecord> KEY_VISUALISATION_ASSETS_PRIMARY = Internal.createUniqueKey(VisualisationAssets.VISUALISATION_ASSETS, DSL.name("KEY_visualisation_assets_PRIMARY"), new TableField[] { VisualisationAssets.VISUALISATION_ASSETS.ID }, true);
     public static final UniqueKey<VisualisationAssetsDraftRecord> KEY_VISUALISATION_ASSETS_DRAFT_K_ASSET_UUID = Internal.createUniqueKey(VisualisationAssetsDraft.VISUALISATION_ASSETS_DRAFT, DSL.name("KEY_visualisation_assets_draft_k_asset_uuid"), new TableField[] { VisualisationAssetsDraft.VISUALISATION_ASSETS_DRAFT.ASSET_UUID }, true);
+    public static final UniqueKey<VisualisationAssetsDraftRecord> KEY_VISUALISATION_ASSETS_DRAFT_K_VISUALISATION_ASSETS_DRAFT = Internal.createUniqueKey(VisualisationAssetsDraft.VISUALISATION_ASSETS_DRAFT, DSL.name("KEY_visualisation_assets_draft_k_visualisation_assets_draft"), new TableField[] { VisualisationAssetsDraft.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID, VisualisationAssetsDraft.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID, VisualisationAssetsDraft.VISUALISATION_ASSETS_DRAFT.PATH_HASH }, true);
     public static final UniqueKey<VisualisationAssetsDraftRecord> KEY_VISUALISATION_ASSETS_DRAFT_PRIMARY = Internal.createUniqueKey(VisualisationAssetsDraft.VISUALISATION_ASSETS_DRAFT, DSL.name("KEY_visualisation_assets_draft_PRIMARY"), new TableField[] { VisualisationAssetsDraft.VISUALISATION_ASSETS_DRAFT.ID }, true);
+    public static final UniqueKey<VisualisationAssetsUpdateDeleteRecord> KEY_VISUALISATION_ASSETS_UPDATE_DELETE_K_VISUALISATION_ASSETS_DRAFT = Internal.createUniqueKey(VisualisationAssetsUpdateDelete.VISUALISATION_ASSETS_UPDATE_DELETE, DSL.name("KEY_visualisation_assets_update_delete_k_visualisation_assets_draft"), new TableField[] { VisualisationAssetsUpdateDelete.VISUALISATION_ASSETS_UPDATE_DELETE.DRAFT_USER_UUID, VisualisationAssetsUpdateDelete.VISUALISATION_ASSETS_UPDATE_DELETE.OWNER_DOC_UUID }, true);
+    public static final UniqueKey<VisualisationAssetsUpdateDeleteRecord> KEY_VISUALISATION_ASSETS_UPDATE_DELETE_PRIMARY = Internal.createUniqueKey(VisualisationAssetsUpdateDelete.VISUALISATION_ASSETS_UPDATE_DELETE, DSL.name("KEY_visualisation_assets_update_delete_PRIMARY"), new TableField[] { VisualisationAssetsUpdateDelete.VISUALISATION_ASSETS_UPDATE_DELETE.ID }, true);
 }

@@ -3,6 +3,7 @@ package stroom.dashboard.impl.visualisation;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.visualisation.shared.VisualisationAssetContent;
 import stroom.visualisation.shared.VisualisationAssetResource;
 import stroom.visualisation.shared.VisualisationAssetUpdateContent;
 import stroom.visualisation.shared.VisualisationAssetUpdateDelete;
@@ -154,6 +155,21 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
         }
 
         return Boolean.TRUE;
+    }
+
+    @Override
+    public VisualisationAssetContent getDraftContent(final String ownerDocId, final String path) {
+        LOGGER.info("getDraftContent({}, {})", ownerDocId, path);
+        // TODO Sort mimetype for editor mode
+        try {
+            final String content = serviceProvider.get().getDraftContent(ownerDocId, path);
+            return new VisualisationAssetContent(content);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        } catch (final Throwable t) {
+            LOGGER.error("Error in getDraftContent: {}", t.getMessage(), t);
+            throw t;
+        }
     }
 
     @Override
