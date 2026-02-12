@@ -130,9 +130,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler, ImportExport
     public DocRefInfo info(final DocRef docRef) {
         final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(docRef.getUuid());
         if (explorerTreeNode == null) {
-            throw new DocumentNotFoundException(DocRef.builder()
-                    .uuid(docRef.getUuid())
-                    .build());
+            throw new DocumentNotFoundException(docRef);
         }
 
         if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
@@ -142,11 +140,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler, ImportExport
 
         return DocRefInfo
                 .builder()
-                .docRef(DocRef.builder()
-                        .type(explorerTreeNode.getType())
-                        .uuid(explorerTreeNode.getUuid())
-                        .name(explorerTreeNode.getName())
-                        .build())
+                .docRef(explorerTreeNode.getDocRef())
                 .otherInfo("DB ID: " + explorerTreeNode.getId())
                 .build();
     }
