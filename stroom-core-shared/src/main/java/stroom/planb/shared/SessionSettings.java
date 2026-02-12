@@ -20,7 +20,9 @@ import java.util.Objects;
         "keySchema"
 })
 @JsonInclude(Include.NON_NULL)
-public final class SessionSettings extends AbstractPlanBSettings {
+public final class SessionSettings
+        extends AbstractPlanBSettings
+        implements HasCondenseSettings {
 
     @JsonProperty
     private final DurationSetting condense;
@@ -40,6 +42,7 @@ public final class SessionSettings extends AbstractPlanBSettings {
         this.keySchema = NullSafe.requireNonNullElse(keySchema, new SessionKeySchema.Builder().build());
     }
 
+    @Override
     public DurationSetting getCondense() {
         return condense;
     }

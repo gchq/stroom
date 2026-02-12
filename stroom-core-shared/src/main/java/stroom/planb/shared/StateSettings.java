@@ -20,7 +20,8 @@ import java.util.Objects;
         "valueSchema"
 })
 @JsonInclude(Include.NON_NULL)
-public final class StateSettings extends AbstractPlanBSettings {
+public final class StateSettings
+        extends AbstractPlanBSettings {
 
     @JsonProperty
     private final StateKeySchema keySchema;

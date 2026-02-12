@@ -8,14 +8,10 @@ import stroom.planb.impl.db.PlanBDb;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.DurationSetting;
+import stroom.planb.shared.HasCondenseSettings;
 import stroom.planb.shared.PlanBDoc;
-import stroom.planb.shared.RangeStateSettings;
 import stroom.planb.shared.RetentionSettings;
-import stroom.planb.shared.SessionSettings;
 import stroom.planb.shared.SnapshotSettings;
-import stroom.planb.shared.StateSettings;
-import stroom.planb.shared.TemporalRangeStateSettings;
-import stroom.planb.shared.TemporalStateSettings;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -168,14 +164,7 @@ class StoreShard implements Shard {
     }
 
     private RetentionSettings getRetentionSettings(final PlanBDoc doc) {
-        return switch (doc.getSettings()) {
-            case final StateSettings s -> s.getRetention();
-            case final TemporalStateSettings s -> s.getRetention();
-            case final RangeStateSettings s -> s.getRetention();
-            case final TemporalRangeStateSettings s -> s.getRetention();
-            case final SessionSettings s -> s.getRetention();
-            default -> null;
-        };
+        return NullSafe.get(doc, PlanBDoc::getSettings, AbstractPlanBSettings::getRetention);
     }
 
     @Override
@@ -215,12 +204,10 @@ class StoreShard implements Shard {
     }
 
     private static DurationSetting getCondenseDuration(final PlanBDoc doc) {
-        return switch (doc.getSettings()) {
-            case final TemporalStateSettings s -> s.getCondense();
-            case final TemporalRangeStateSettings s -> s.getCondense();
-            case final SessionSettings s -> s.getCondense();
-            default -> null;
-        };
+        if (doc.getSettings() instanceof final HasCondenseSettings hasCondenseSettings) {
+            return hasCondenseSettings.getCondense();
+        }
+        return null;
     }
 
     @Override

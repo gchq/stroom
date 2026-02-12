@@ -20,7 +20,8 @@ import java.util.Objects;
         "valueSchema"
 })
 @JsonInclude(Include.NON_NULL)
-public final class MetricSettings extends AbstractPlanBSettings {
+public final class MetricSettings
+        extends AbstractPlanBSettings {
 
     @JsonProperty
     private final MetricKeySchema keySchema;
