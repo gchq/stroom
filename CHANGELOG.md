@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.24] - 2026-02-12
+
 * Bug **#5391** : Fix folder DocRef NPE.
 
 * Bug **#5392** : Fix PlanB segfault.
@@ -2007,7 +2009,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.23...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.24...HEAD
+[v7.11-beta.24]: https://github.com/gchq/stroom/compare/v7.11-beta.23...v7.11-beta.24
 [v7.11-beta.23]: https://github.com/gchq/stroom/compare/v7.11-beta.22...v7.11-beta.23
 [v7.11-beta.22]: https://github.com/gchq/stroom/compare/v7.11-beta.21...v7.11-beta.22
 [v7.11-beta.21]: https://github.com/gchq/stroom/compare/v7.11-beta.20...v7.11-beta.21
