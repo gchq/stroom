@@ -55,7 +55,7 @@ class TestTermHandler {
     private static final Field<String> TEXT_DB_FIELD = DSL.field(TEXT_FIELD.getFldName(), String.class);
     private static final Field<Long> ID_DB_FIELD = DSL.field(ID_FIELD.getFldName(), Long.class);
     private static final DocRef A_DOC_REF = DocRef.builder()
-            .type(DOC_REF_FIELD.getDocRefType().get(0))
+            .type(DOC_REF_FIELD.getDocRefType())
             .uuid("MyUUID")
             .name("MyName")
             .build();
