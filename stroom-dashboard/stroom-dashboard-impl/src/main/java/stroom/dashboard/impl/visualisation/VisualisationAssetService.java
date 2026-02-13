@@ -1,7 +1,6 @@
 package stroom.dashboard.impl.visualisation;
 
 import stroom.docref.DocRef;
-import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportAsset;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
@@ -10,21 +9,19 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceKey;
-import stroom.visualisation.shared.VisualisationAsset;
 import stroom.visualisation.shared.VisualisationAssets;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import com.google.inject.Inject;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 /**
  * Intermediates between VisualisationAssetResource and VisualisationAssetDao.
@@ -63,12 +60,13 @@ public class VisualisationAssetService {
      * @param ownerId The ID of the document that owns these assets.
      * @return An object that holds all the metadata about the assets. Note that
      *         getUploadedFiles() will always return an empty map.
+     *         This will be the draft assets for the user logged in.
      * @throws IOException if something goes wrong.
      */
-    VisualisationAssets fetchAssets(final String ownerId) throws IOException {
+    VisualisationAssets fetchDraftAssets(final String ownerId) throws IOException {
         final DocRef docRef = new DocRef(VisualisationDoc.TYPE, ownerId);
         if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
-            return dao.fetchAssets(ownerId);
+            return dao.fetchDraftAssets(securityContext.getUserRef().getUuid(), ownerId);
         } else {
             // No permission so return empty assets
             LOGGER.info("User does not have permission to see assets");
@@ -77,123 +75,243 @@ public class VisualisationAssetService {
     }
 
     /**
-     * Called from the UI to put assets into the system.
-     * @param ownerDocId   The ID of the document that owns these assets.
-     * @param assets       The object wrapping all the assets that we need to update in the system.
-     * @throws IOException If something goes wrong. The method will try to do as much as
-     *                     possible, throwing an error at the end of the update with a message
-     *                     covering all the issues found.
+     * Creates a new folder at the given path.
+     * @param ownerDocId Document that owns the assets. Must not be null.
+     * @param path Path and name of the new file. Must not be null.
+     * @throws IOException If something goes wrong.
      */
-    void updateAssets(final String ownerDocId,
-                      final VisualisationAssets assets) throws IOException {
+    void updateNewFolder(final String ownerDocId, final String path) throws IOException {
+        Objects.requireNonNull(ownerDocId);
+        Objects.requireNonNull(path);
 
         final DocRef docRef = new DocRef(VisualisationDoc.TYPE, ownerDocId);
         if (securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
+            dao.updateNewFolder(
+                    securityContext.getUserRef().getUuid(),
+                    ownerDocId,
+                    path);
+        } else {
+            LOGGER.info("User does not have permission to create a new folder '{}'", path);
+        }
 
-            // Store errors so we can throw one exception at the end
-            final Map<String, Path> uploadsThatDoNotExist = new HashMap<>();
-            final StringBuilder exceptionBuf = new StringBuilder();
-            final Map<String, VisualisationAsset> assetLookup = new HashMap<>();
-            for (final VisualisationAsset asset : assets.getAssets()) {
-                assetLookup.put(asset.getId(), asset);
+    }
+
+    /**
+     * Creates a new file at the given path.
+     * @param ownerDocId Document that owns the assets. Must not be null.
+     * @param path Path and name of the new file. Must not be null.
+     * @throws IOException If something goes wrong.
+     */
+    void updateNewFile(final String ownerDocId,
+                       final String path) throws IOException {
+        Objects.requireNonNull(ownerDocId);
+        Objects.requireNonNull(path);
+
+        final DocRef docRef = new DocRef(VisualisationDoc.TYPE, ownerDocId);
+        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
+            dao.updateNewFile(
+                    securityContext.getUserRef().getUuid(),
+                    ownerDocId,
+                    path);
+        } else {
+            LOGGER.info("User does not have permission to create a new file '{}'", path);
+        }
+    }
+
+    /**
+     * Creates a new file at the given path from a file upload.
+     * @param ownerDocId Document that owns the assets. Must not be null.
+     * @param path Path and name of the new file. Must not be null.
+     * @param resourceKey The resourceKey associated with the upload. Must not be null.
+     * @throws IOException If something goes wrong.
+     */
+    void updateNewUploadedFile(final String ownerDocId,
+                               final String path,
+                               final ResourceKey resourceKey) throws IOException {
+        Objects.requireNonNull(ownerDocId);
+        Objects.requireNonNull(path);
+        Objects.requireNonNull(resourceKey);
+
+        final DocRef docRef = new DocRef(VisualisationDoc.TYPE, ownerDocId);
+        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
+            final Path uploadPath = resourceStore.getTempFile(resourceKey);
+            if (!uploadPath.toFile().exists()) {
+                throw new IOException("The uploaded file does not exist");
             }
-
-            // First store the assets - the paths and metadata
-            try {
-                dao.storeAssets(ownerDocId, assets);
-            } catch (final IOException e) {
-                exceptionBuf.append("\nError storing assets: ");
-                exceptionBuf.append(e.getMessage());
-            }
-
-            // Now store the uploaded files
-            final Map<String, ResourceKey> uploadedFiles = assets.getUploadedFiles();
-            for (final Map.Entry<String, ResourceKey> uploadedFileEntry : uploadedFiles.entrySet()) {
-
-                final Path uploadedPath = resourceStore.getTempFile(uploadedFileEntry.getValue());
-                if (!uploadedPath.toFile().exists()) {
-                    // File does not exist - maybe it has been deleted already
-                    uploadsThatDoNotExist.put(uploadedFileEntry.getKey(), uploadedPath);
-                } else {
-                    try {
-                        // Read the data in and store it in the DB
-                        // Note that file could be deleted between checking it exists and copying it.
-                        // TODO Should stream this data into the DB
-                        final byte[] data = Files.readAllBytes(uploadedPath);
-                        dao.storeData(uploadedFileEntry.getKey(), data);
-                    } catch (final IOException e) {
-                        exceptionBuf.append("\nError copying '");
-                        final VisualisationAsset asset = assetLookup.get(uploadedFileEntry.getKey());
-                        final String path = asset == null
-                                ? "unknown"
-                                : asset.getPath();
-                        exceptionBuf.append(path);
-                        exceptionBuf.append("': ");
-                        exceptionBuf.append(e.getMessage());
-                    }
-                }
-            }
-
-            // Did anything go wrong?
-            if (!uploadsThatDoNotExist.isEmpty()) {
-                exceptionBuf.append("\nThese files no longer exist; please upload them again:");
-                for (final Map.Entry<String, Path> notExistEntry : uploadsThatDoNotExist.entrySet()) {
-                    final VisualisationAsset asset = assetLookup.get(notExistEntry.getKey());
-                    exceptionBuf.append("\n");
-                    final String path = asset == null
-                            ? "unknown"
-                            : asset.getPath();
-                    exceptionBuf.append(path);
-                }
-            }
-
-            // If anything went wrong then throw an overall exception here
-            if (!exceptionBuf.isEmpty()) {
-                throw new IOException(exceptionBuf.toString());
+            // Stream the data into the database from the temp file
+            try (final InputStream uploadStream = new BufferedInputStream(new FileInputStream(uploadPath.toFile()))) {
+                dao.updateNewUploadedFile(
+                        securityContext.getUserRef().getUuid(),
+                        ownerDocId,
+                        path,
+                        uploadStream);
+                resourceStore.deleteTempFile(resourceKey);
             }
         } else {
-            LOGGER.info("User does not have permission to update the assets");
+            LOGGER.info("User does not have permission to create a new file from an upload: '{}'", path);
+        }
+    }
+
+    /**
+     * Deletes a file or folder at the given path, and everything underneath that path.
+     * @param ownerDocId Document that owns the assets. Must not be null.
+     * @param path Path and name of the file or folder to delete. Must not be null.
+     * @param isFolder Whether the thing to delete is a file or folder.
+     */
+    void updateDelete(final String ownerDocId,
+                      final String path,
+                      final boolean isFolder) throws IOException {
+        Objects.requireNonNull(ownerDocId);
+        Objects.requireNonNull(path);
+
+        final DocRef docRef = new DocRef(VisualisationDoc.TYPE, ownerDocId);
+        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
+            dao.updateDelete(
+                    securityContext.getUserRef().getUuid(),
+                    ownerDocId,
+                    path,
+                    isFolder);
+        } else {
+            LOGGER.info("User does not have permission to delete an item '{}'", path);
+        }
+    }
+
+    /**
+     * Renames a file or folder at the oldPath.
+     * @param ownerDocId Document that owns the assets. Must not be null.
+     * @param oldPath Where the thing used to be.
+     * @param newPath Where the thing needs to be.
+     * @param isFolder true if the thing is a folder, false if it is a file.
+     */
+    void updateRename(final String ownerDocId,
+                      final String oldPath,
+                      final String newPath,
+                      final boolean isFolder) throws IOException {
+        Objects.requireNonNull(ownerDocId);
+        Objects.requireNonNull(oldPath);
+        Objects.requireNonNull(newPath);
+
+        final DocRef docRef = new DocRef(VisualisationDoc.TYPE, ownerDocId);
+        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
+            dao.updateRename(
+                    securityContext.getUserRef().getUuid(),
+                    ownerDocId,
+                    oldPath,
+                    newPath,
+                    isFolder);
+        } else {
+            LOGGER.info("User does not have permission to rename an item '{}'", oldPath);
+        }
+    }
+
+    /**
+     * Updates the content in a file.
+     * @param ownerDocId Document that owns the assets. Must not be null.
+     * @param path Location of the document to update the content for.
+     *
+     */
+    void updateContent(final String ownerDocId,
+                       final String path,
+                       final byte[] content) throws IOException {
+        Objects.requireNonNull(ownerDocId);
+        Objects.requireNonNull(path);
+
+        final DocRef docRef = new DocRef(VisualisationDoc.TYPE, ownerDocId);
+        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
+            dao.updateContent(
+                    securityContext.getUserRef().getUuid(),
+                    ownerDocId,
+                    path,
+                    content);
+        } else {
+            LOGGER.info("User does not have permission to update the content of an item '{}'", path);
+        }
+    }
+
+    /**
+     * Returns the content of a text file for editing in the UI.
+     * Will not return anything if the file isn't a text file.
+     * @param ownerDocId Document that owns the assets. Must not be null.
+     * @param path Location of the document to update the content for.
+     * @return The content and mimetype, or null if the content cannot be viewed.
+     */
+    String getDraftContent(final String ownerDocId,
+                           final String path)
+            throws IOException {
+
+        Objects.requireNonNull(ownerDocId);
+        Objects.requireNonNull(path);
+
+        final DocRef docRef = new DocRef(VisualisationDoc.TYPE, ownerDocId);
+        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+            return dao.getDraftContent(securityContext.getUserRef().getUuid(),
+                    ownerDocId,
+                    path);
+        } else {
+            LOGGER.info("User does not have permission to view the content of an item");
+            return null;
+        }
+    }
+
+    /**
+     * Copies all draft information into the main storage so it is live.
+     * @param ownerDocId The document that owns these assets.
+     * @throws IOException If something goes wrong.
+     */
+    public void saveDraftToLive(final String ownerDocId) throws IOException {
+        final DocRef docRef = new DocRef(VisualisationDoc.TYPE, ownerDocId);
+        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
+            dao.saveDraftToLive(securityContext.getUserRef().getUuid(), ownerDocId);
+        }
+    }
+
+    /**
+     * Empties the draft data so fetchDraftAssets() will return the Live data again.
+     * @param ownerDocId The document that owns these assets.
+     * @throws IOException If something goes wrong.
+     */
+    public void revertDraftFromLive(final String ownerDocId) throws IOException {
+        final DocRef docRef = new DocRef(VisualisationDoc.TYPE, ownerDocId);
+        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
+            dao.revertDraftFromLive(securityContext.getUserRef().getUuid(), ownerDocId);
         }
     }
 
     /**
      * Gets the data for a given asset. Called from the Servlet to get the asset for a given
      * document and path.
-     * <br>TODO This data should be streamed rather than held in a byte[] in memory.
-     * @param documentId The ID of the document that owns the asset.
-     * @param assetPath The path of the visualisation asset we want the data for.
-     * @return The data for the asset, or null if the asset is not found.
-     * @throws IOException If something goes wrong with the IO, DB etc.
-     * @throws PermissionException If the user doesn't have view permissions for these assets.
+     * @param tempFilePrefix The prefix for the temporary file we'll create.
+     *                       Needed so temporary files can be cleaned up if necessary.
+     * @param tempFileSuffix The suffix for the temporary file we'll create.
+     *                       Needed so temporary files can be cleaned up if necessary.
+     * @param ownerDocId The ID of the owner document we want the data for.
+     * @param assetPath The path of the asset within the tree.
+     * @param cacheTimestamp The timestamp of the file in the cache. We're only
+     *                       interested in files that are later than this.
+     * @param cachedPath The path to the file that we want in the
+     *                   VisualisationAssetServlet cache. This method will write
+     *                   the file content to the cached path, if the data in the
+     *                   database is after the cacheTimestamp.
+     * @return If the file is written then returns the latest DB timestamp.
+     *         Otherwise, returns null.
+     * @throws IOException if something goes wrong.
      */
-    byte[] getData(final String documentId, final String assetPath)
+    Instant writeLiveToServletCache(final String tempFilePrefix,
+                                    final String tempFileSuffix,
+                                    final String ownerDocId,
+                                    final String assetPath,
+                                    final Instant cacheTimestamp,
+                                    final Path cachedPath)
             throws IOException, PermissionException {
-        LOGGER.info("Returning asset for {}, {}", documentId, assetPath);
-        final DocRef docRef = new DocRef(VisualisationDoc.TYPE, documentId);
+        LOGGER.info("Returning asset for {}, {}", ownerDocId, assetPath);
+        final DocRef docRef = new DocRef(VisualisationDoc.TYPE, ownerDocId);
         if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
-            return dao.getData(documentId, assetPath);
-        } else {
-            // Catch this higher up and return a 401.
-            throw new PermissionException(securityContext.getUserRef(),
-                    "You do not have permission to view this asset");
-        }
-    }
-
-    /**
-     * Returns the timestamp when the given asset was modified. Called from the Servlet
-     * so we know if we need to invalidate the cache.
-     * @param documentId The ID of the document that owns the asset.
-     *      * @param assetPath The path of the visualisation asset we want the data for.
-     *      * @return The data for the asset, or null if the asset is not found.
-     *      * @throws IOException If something goes wrong with the IO, DB etc.
-     *      * @throws PermissionException If the user doesn't have view permissions for these assets.
-     */
-    Instant getModifiedTimestamp(final String documentId, final String assetPath)
-        throws IOException, PermissionException {
-        LOGGER.info("Returning asset timestamp for {}, {}", documentId, assetPath);
-        final DocRef docRef = new DocRef(VisualisationDoc.TYPE, documentId);
-        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
-            return dao.getModifiedTimestamp(documentId, assetPath);
+            return dao.writeLiveToServletCache(tempFilePrefix,
+                    tempFileSuffix,
+                    ownerDocId,
+                    assetPath,
+                    cacheTimestamp,
+                    cachedPath);
         } else {
             // Catch this higher up and return a 401.
             throw new PermissionException(securityContext.getUserRef(),
@@ -203,22 +321,40 @@ public class VisualisationAssetService {
 
     /**
      * Returns the assets in a form suitable for exporting.
-     * @param documentId The ID of the owning document
+     * @param docRef The ref of the owning document
      * @return Assets to export. Never null.
      * @throws IOException If something goes wrong
      * @throws PermissionException If the user doesn't have permission
      */
-    Collection<ImportExportAsset> getAssetsForExport(final String documentId)
+    Collection<ImportExportAsset> getAssetsForExport(final DocRef docRef)
             throws IOException, PermissionException {
-
-        LOGGER.info("Returning assets for export for {}", documentId);
-        final List<ImportExportAsset> importExportAssets = new ArrayList<>();
-        final VisualisationAssets assets = this.fetchAssets(documentId);
-        for (final VisualisationAsset asset : assets.getAssets()) {
-            final byte[] data = this.getData(documentId, asset.getPath());
-            importExportAssets.add(new ByteArrayImportExportAsset(asset.getPath(), data));
+        LOGGER.info("Returning assets for export for {}", docRef);
+        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+            return dao.getAssetsForExport(docRef.getUuid());
+        } else {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to view this asset");
         }
-        return importExportAssets;
+    }
+
+    /**
+     * Sets assets for this visualisation during import.
+     * @param docRef The document that owns these assets.
+     * @param pathAssets The assets associated with the doc.
+     * @throws IOException If something goes wrong.
+     * @throws PermissionException If the user doesn't have EDIT permission.
+     */
+    void setAssetsFromImport(final DocRef docRef,
+                             final Collection<ImportExportAsset> pathAssets)
+        throws IOException, PermissionException {
+
+        LOGGER.info("Setting assets from import for {}", docRef);
+        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
+            dao.setAssetsFromImport(docRef.getUuid(), pathAssets);
+        } else {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to import these assets");
+        }
     }
 
 }

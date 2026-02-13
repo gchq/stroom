@@ -2777,89 +2777,16 @@ button.main-menu svg {
     padding-left: 2px;
     padding-right: 1px;
 }
-.visualisation-asset-type-default .gwt-TreeItem::before {
-    content: url('/ui/background-images/file.png') / "File";
+
+.visualisation-asset-tree .gwt-TreeItem svg {
     width: 16px;
     height: 16px;
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 8px;
 }
-.visualisation-asset-type-folder .gwt-TreeItem::before {
-    content: url('/ui/background-images/folder.png') / "Folder";
-    width: 16px;
-    height: 16px;
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 8px;
-}
-.visualisation-asset-type-image .gwt-TreeItem::before {
-    content: url('/ui/background-images/file-image.png') / "Image file";
-    width: 16px;
-    height: 16px;
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 8px;
-}
-.visualisation-asset-type-css .gwt-TreeItem::before {
-    content: url('/ui/background-images/file-raw.png') / "CSS file";
-    width: 16px;
-    height: 16px;
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 8px;
-}
-.visualisation-asset-type-html .gwt-TreeItem::before {
-    content: url('/ui/background-images/file-formatted.png') / "HTML file";
-    width: 16px;
-    height: 16px;
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 8px;
-}
-.visualisation-asset-type-javascript .gwt-TreeItem::before {
-    content: url('/ui/background-images/file-script.png') / "Javascript file";
-    width: 16px;
-    height: 16px;
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 8px;
+
+.visualisation-asset-tree td img {
+    margin-top: 4px;
 }
 
 .visualisation-asset-tree .gwt-TreeItem-selected {
     background-color: var(--row__background-color--selected);
-}
-
-.visualisation-asset-tree item-image {
-    padding-top: 3px;
-    margin-right: 5px;
-}
-
-.visualisation-asset-tree item-value {
-    margin-left: 8px;
-}
-
-.visualisation-assets-icon {
-    display: inline;
-}
-
-.visualisation-assets-icon svg {
-    height: 16px;
-    width: 16px;
-}
-
-.visualisation-assets-icon-wrapper {
-    margin-top:-9px;
-    position:absolute;
-    top:50%;
-    line-height:0px;
-}
-
-.visualisation-assets-icon-wrapper + div {
-    margin-left: 20px;
-}
-
-/* Hide the 'Empty' message in the empty asset tree */
-.visualisation-asset-tree-empty-message {
-    visibility: hidden;
 }

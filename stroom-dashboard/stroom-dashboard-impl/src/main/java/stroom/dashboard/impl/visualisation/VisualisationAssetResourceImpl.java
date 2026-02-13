@@ -3,7 +3,12 @@ package stroom.dashboard.impl.visualisation;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.visualisation.shared.VisualisationAssetContent;
 import stroom.visualisation.shared.VisualisationAssetResource;
+import stroom.visualisation.shared.VisualisationAssetUpdateContent;
+import stroom.visualisation.shared.VisualisationAssetUpdateDelete;
+import stroom.visualisation.shared.VisualisationAssetUpdateNewFile;
+import stroom.visualisation.shared.VisualisationAssetUpdateRename;
 import stroom.visualisation.shared.VisualisationAssets;
 
 import jakarta.inject.Inject;
@@ -20,15 +25,11 @@ import static stroom.event.logging.rs.api.AutoLogged.OperationType.UNLOGGED;
 @AutoLogged(UNLOGGED)
 public class VisualisationAssetResourceImpl implements VisualisationAssetResource {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(VisualisationAssetResourceImpl.class);
+
     /** Service that backs the resource */
     private final Provider<VisualisationAssetService> serviceProvider;
 
-    /** Logger */
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(VisualisationAssetResourceImpl.class);
-
-    /**
-     * Injected constructor.
-     */
     @SuppressWarnings("unused")
     @Inject
     VisualisationAssetResourceImpl(final Provider<VisualisationAssetService> serviceProvider) {
@@ -36,31 +37,163 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
     }
 
     @Override
-    public VisualisationAssets fetchAssets(final String ownerId) throws RuntimeException {
+    public VisualisationAssets fetchDraftAssets(final String ownerId) throws RuntimeException {
         LOGGER.info("ResourceImpl: fetchAssets with ownerId {}", ownerId);
         try {
-            return serviceProvider.get().fetchAssets(ownerId);
+            return serviceProvider.get().fetchDraftAssets(ownerId);
         } catch (final IOException e) {
             throw new RuntimeException(e);
+        } catch (final Throwable t) {
+            LOGGER.error("Error in fetchDraftAssets: {}", t.getMessage(), t);
+            throw t;
         }
     }
 
-    /**
-     * To upload files into Stroom, files are first uploaded to the ImportUtil.getImportFileURL().
-     * This puts the file into stroom.resource.api.ResourceStore and returns a ResourceKey.
-     * When the client is ready to keep the file somewhere we call ResourceStore.getTempFile()
-     * to get the file's path, then copy the file to its final destination.
-     * @param assets The assets sent from the client.
-     * @return TRUE if everything works, FALSE if not.
-     */
     @Override
-    public Boolean updateAssets(final String ownerId,
-                                final VisualisationAssets assets)
+    public Boolean updateNewFolder(final String ownerDocId, final String path)
             throws RuntimeException {
+
+        LOGGER.info("updateNewFolder: {}", path);
         try {
-            serviceProvider.get().updateAssets(ownerId, assets);
+            serviceProvider.get().updateNewFolder(ownerDocId, path);
         } catch (final IOException e) {
             throw new RuntimeException(e);
+        } catch (final Throwable t) {
+            LOGGER.error("Error in updateNewFolder: {}", t.getMessage(), t);
+            throw t;
+        }
+
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean updateNewFile(final String ownerDocId, final VisualisationAssetUpdateNewFile update)
+            throws RuntimeException {
+        LOGGER.info("updateNewFile: {}", update.getPath());
+        try {
+            serviceProvider.get().updateNewFile(ownerDocId, update.getPath());
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        } catch (final Throwable t) {
+            LOGGER.error("Error in updateNewFile: {}", t.getMessage(), t);
+            throw t;
+        }
+
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean updateNewUploadedFile(final String ownerDocId,
+                                         final VisualisationAssetUpdateNewFile update)
+            throws RuntimeException {
+        LOGGER.info("updateNewUploadedFile: {}", update.getPath());
+        try {
+            serviceProvider.get().updateNewUploadedFile(
+                    ownerDocId,
+                    update.getPath(),
+                    update.getResourceKey());
+
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        } catch (final Throwable t) {
+            LOGGER.error("Error in updateNewUploadedFile: {}", t.getMessage(), t);
+            throw t;
+        }
+
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean updateDelete(final String ownerDocId, final VisualisationAssetUpdateDelete update)
+            throws RuntimeException {
+        LOGGER.info("updateDelete: {}", update.getPath());
+        try {
+            serviceProvider.get().updateDelete(ownerDocId, update.getPath(), update.isFolder());
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        } catch (final Throwable t) {
+            LOGGER.error("Error in updateDelete: {}", t.getMessage(), t);
+            throw t;
+        }
+
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean updateRename(final String ownerDocId,
+                                final VisualisationAssetUpdateRename update)
+            throws RuntimeException {
+        LOGGER.info("updateRename: '{}' -> '{}'", update.getOldPath(), update.getNewPath());
+        try {
+            serviceProvider.get().updateRename(
+                    ownerDocId,
+                    update.getOldPath(),
+                    update.getNewPath(),
+                    update.isFolder());
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        } catch (final Throwable t) {
+            LOGGER.error("Error in updateRename: {}", t.getMessage(), t);
+            throw t;
+        }
+
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean updateContent(final String ownerDocId,
+                                 final VisualisationAssetUpdateContent update)
+            throws RuntimeException {
+        LOGGER.info("updateContent: {}", update.getPath());
+        try {
+            serviceProvider.get().updateContent(ownerDocId, update.getPath(), update.getContent());
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        } catch (final Throwable t) {
+            LOGGER.error("Error in updateContent: {}", t.getMessage(), t);
+            throw t;
+        }
+
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public VisualisationAssetContent getDraftContent(final String ownerDocId, final String path) {
+        LOGGER.info("getDraftContent({}, {})", ownerDocId, path);
+        // TODO Sort mimetype for editor mode
+        try {
+            final String content = serviceProvider.get().getDraftContent(ownerDocId, path);
+            return new VisualisationAssetContent(content);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        } catch (final Throwable t) {
+            LOGGER.error("Error in getDraftContent: {}", t.getMessage(), t);
+            throw t;
+        }
+    }
+
+    @Override
+    public Boolean saveDraftToLive(final String ownerDocId) throws RuntimeException {
+        try {
+            serviceProvider.get().saveDraftToLive(ownerDocId);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        } catch (final Throwable t) {
+            LOGGER.error("Error in saveDraftToLive: {}", t.getMessage(), t);
+            throw t;
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean revertDraftFromLive(final String ownerDocId) throws RuntimeException {
+        try {
+            serviceProvider.get().revertDraftFromLive(ownerDocId);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        } catch (final Throwable t) {
+            LOGGER.error("Error in revertDraftFromLive: {}", t.getMessage(), t);
+            throw t;
         }
         return Boolean.TRUE;
     }

@@ -16,13 +16,14 @@
 
 package stroom.visualisation.client.presenter;
 
+import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.RefreshDocumentEvent;
+import stroom.editor.client.presenter.EditorPresenter;
+import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
@@ -32,9 +33,11 @@ import stroom.visualisation.client.presenter.VisualisationAssetsAddItemDialogPre
 import stroom.visualisation.client.presenter.VisualisationAssetsPresenter.VisualisationAssetsView;
 import stroom.visualisation.client.presenter.assets.VisualisationAssetTreeItem;
 import stroom.visualisation.client.presenter.assets.VisualisationAssetsImageResource;
-import stroom.visualisation.shared.VisualisationAsset;
 import stroom.visualisation.shared.VisualisationAssetResource;
-import stroom.visualisation.shared.VisualisationAssets;
+import stroom.visualisation.shared.VisualisationAssetUpdateContent;
+import stroom.visualisation.shared.VisualisationAssetUpdateDelete;
+import stroom.visualisation.shared.VisualisationAssetUpdateNewFile;
+import stroom.visualisation.shared.VisualisationAssetUpdateRename;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.InlineSvgButton;
@@ -47,45 +50,48 @@ import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.util.client.Rect;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Tree;
-import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import javax.inject.Provider;
 
 /**
  * Shows the Assets - images, css etc - associated with the Visualisation.
  */
 public class VisualisationAssetsPresenter
-        extends MyPresenterWidget<VisualisationAssetsView>
-        implements HasDirtyHandlers, HasToolbar, VisualisationAssetsAddFileCallback {
+        extends DocumentEditPresenter<VisualisationAssetsView, VisualisationDoc>
+        implements HasToolbar, VisualisationAssetsAddFileCallback {
 
-    /** Current document - may be null */
-    private VisualisationDoc document;
+    /** Illegal asset name characters - not allowed in any file or folder name */
+    private final static String ILLEGAL_ASSET_NAME_CHARACTERS = "/:";
+
+    /** Servlet path - start of the URL for the asset as retrieved via the Servlet */
+    private final static String ASSET_SERVLET_PATH_PREFIX = "/assets/";
+
+    /** REST interface */
+    private final static VisualisationAssetResource VISUALISATION_ASSET_RESOURCE =
+            GWT.create(VisualisationAssetResource.class);
 
     /** Rest factory to trigger storing file uploads */
     private final RestFactory restFactory;
 
-    /** Tree */
-    Tree tree = new Tree(new AssetTreeResources(), true);
+    /** Tree representing file assets and folders */
+    private final Tree tree = new Tree(new AssetTreeResources(), true);
 
-    /** True if the UI is readonly, false if read-write */
-    private boolean readOnly = false;
+    /** Button to revert any changes and go back to live version */
+    private final InlineSvgButton revertButton = new InlineSvgButton();
 
     /** Button to add stuff to the tree */
     private final InlineSvgButton addButton = new InlineSvgButton();
@@ -108,61 +114,149 @@ public class VisualisationAssetsPresenter
     /** Dialog that appears when user wants to edit the tree item */
     private final VisualisationAssetsEditAssetDialogPresenter editAssetDialog;
 
-    /** List of any resource keys for files that need to be saved */
-    private final Map<String, ResourceKey> uploadedFileResourceKeys = new HashMap<>();
+    /** Editor widget */
+    private final EditorPresenter editorPresenter;
 
-    /** Set of the node IDs that are open when the document is saved */
+    /** Set of the node paths that are open when the document is saved */
     private final Set<String> treeItemPathToOpenState = new HashSet<>();
 
     /** Items in the context menu */
     private final List<Item> menuItems = new ArrayList<>();
 
-    /** Slash / character */
-    private final static String SLASH = "/";
+    /** Current document - may be null */
+    private VisualisationDoc document;
 
-    /** Illegal asset name characters - not allowed in any file or folder name */
-    private final static String ILLEGAL_ASSET_NAME_CHARACTERS = "/:";
+    /** True if the UI is readonly, false if read-write */
+    private boolean readOnly = false;
 
-    /** Servlet path - start of the URL for the asset as retrieved via the Servlet */
-    private final static String ASSET_SERVLET_PATH_PREFIX = "/assets/";
+    /** State of content edited in editor */
+    private final VisualisationAssetState assetDirtyState = new VisualisationAssetState();
 
-    /** REST interface */
-    private final static VisualisationAssetResource VISUALISATION_ASSET_RESOURCE =
-            GWT.create(VisualisationAssetResource.class);
-
-    /**
-     * Injected constructor.
-     */
     @Inject
     public VisualisationAssetsPresenter(final EventBus eventBus,
                                         final VisualisationAssetsView view,
                                         final RestFactory restFactory,
                                         final VisualisationAssetsUploadFileDialogPresenter uploadFileDialog,
                                         final VisualisationAssetsAddItemDialogPresenter addItemDialog,
-                                        final VisualisationAssetsEditAssetDialogPresenter editAssetDialog) {
+                                        final VisualisationAssetsEditAssetDialogPresenter editAssetDialog,
+                                        final Provider<EditorPresenter> editorPresenterProvider) {
         super(eventBus, view);
 
         this.restFactory = restFactory;
         this.uploadFileDialog = uploadFileDialog;
         this.addItemDialog = addItemDialog;
         this.editAssetDialog = editAssetDialog;
+        this.editorPresenter = editorPresenterProvider.get();
 
         tree.setStylePrimaryName("visualisation-asset-tree");
         tree.addSelectionHandler(event -> {
             VisualisationAssetsPresenter.this.onSelectionChange();
         });
-        this.getView().setTree(tree);
+        this.getView().setTreeAndEditor(tree, editorPresenter);
+
 
     }
 
-    public boolean isReadOnly() {
-        return readOnly;
+    /**
+     * Callback from the Add dialog that adds a file that has been uploaded.
+     * @param parentFolderItem The node that the file has been added to.
+     * @param fileName The name of the file that was uploaded.
+     * @param resourceKey The resource key of the file, so that the server can find it later.
+     */
+    @Override
+    public void addUploadedFile(final VisualisationAssetTreeItem parentFolderItem,
+                                final String fileName,
+                                final ResourceKey resourceKey) {
+
+        final String path = VisualisationAssetsPresenterUtils.getNewItemPath(parentFolderItem, fileName);
+        VisualisationAssetsPresenterUtils.markOpenClosedStateOpen(parentFolderItem, treeItemPathToOpenState);
+        doUpdateNewUploadedFile(path, resourceKey);
+    }
+
+    /**
+     * Generates a label that doesn't clash with other files/folders in the same directory.
+     * Adds an integer to the end, incrementing until an integer is found that doesn't
+     * clash with anything else.
+     * @param assetParentItem The tree item that holds the directory.
+     * @param label The label that we're trying to put into the directory.
+     * @param itemId The ID of the item with this label. Can be null if this is a new item with no ID yet.
+     * @return A label that doesn't clash with anything else.
+     */
+    @Override
+    public String getNonClashingLabel(final VisualisationAssetTreeItem assetParentItem,
+                                      final String label,
+                                      final String itemId) {
+        String nonClashingLabel = label;
+
+        if (assetParentItem != null) {
+            int i = 1;
+            while (assetParentItem.labelExists(nonClashingLabel, itemId)) {
+                nonClashingLabel = VisualisationAssetsPresenterUtils.generateNonClashingLabel(label, i);
+                i++;
+            }
+        } else {
+            // Parent is the Tree itself
+            int i = 1;
+            while (VisualisationAssetsPresenterUtils.labelClashesInTreeRoot(tree, nonClashingLabel, itemId)) {
+                nonClashingLabel = VisualisationAssetsPresenterUtils.generateNonClashingLabel(label, i);
+                i++;
+            }
+        }
+
+        return nonClashingLabel;
+    }
+
+    /**
+     * Sets up the toolbar for the tab.
+     */
+    @Override
+    public List<Widget> getToolbars() {
+        revertButton.setSvg(SvgImage.REFRESH);
+        revertButton.setTitle("Revert changes");
+        revertButton.setVisible(true);
+        revertButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onRevertButtonClick());
+
+        addButton.setSvg(SvgImage.ADD);
+        addButton.setTitle("Add file");
+        addButton.setVisible(true);
+
+        deleteButton.setSvg(SvgImage.DELETE);
+        deleteButton.setTitle("Delete");
+        deleteButton.setVisible(true);
+        deleteButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onDeleteButtonClick());
+
+        editButton.setSvg(SvgImage.EDIT);
+        editButton.setTitle("Rename");
+        editButton.setVisible(true);
+        editButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onEditFilename());
+
+        viewButton.setSvg(SvgImage.EYE);
+        viewButton.setTitle("View in browser");
+        viewButton.setVisible(true);
+        viewButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onViewAsset());
+
+        final ButtonPanel toolbar = new ButtonPanel();
+        toolbar.addButton(revertButton);
+        toolbar.addButton(addButton);
+        toolbar.addButton(deleteButton);
+        toolbar.addButton(editButton);
+        toolbar.addButton(viewButton);
+
+        // Ensure state is set correctly
+        updateState();
+
+        return List.of(toolbar);
     }
 
     @Override
     protected void onBind() {
-        // Add listeners for dirty events.
         super.onBind();
+
+        // Hook up the dirty events on the editor
+        editorPresenter.addValueChangeHandler(
+                event -> this.onEditorContentChanged());
+        editorPresenter.addFormatHandler(
+                event -> this.onEditorContentChanged());
 
         // Create the Add menu
         menuItems.add(new IconMenuItem.Builder()
@@ -170,7 +264,7 @@ public class VisualisationAssetsPresenter
                 .icon(SvgImage.FOLDER)
                 .iconColour(IconColour.BLUE)
                 .text("Add New Folder")
-                .command(() -> {this.onCreateNewItem(false);})
+                .command(() -> this.onCreateNewItem(false))
                 .enabled(true)
                 .build());
         menuItems.add(new IconMenuItem.Builder()
@@ -198,15 +292,6 @@ public class VisualisationAssetsPresenter
                     .allowCloseOnMoveLeft()
                     .fire(this);
         });
-
-    }
-
-    /**
-     * Dirty mechanism across the tabs.
-     */
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
     /**
@@ -215,9 +300,15 @@ public class VisualisationAssetsPresenter
      * @param document Document
      * @param readOnly Whether this doc is readonly
      */
-    public void onRead(final DocRef docRef,
-                       final VisualisationDoc document,
-                       final boolean readOnly) {
+    @Override
+    protected void onRead(@SuppressWarnings("unused") final DocRef docRef,
+                          final VisualisationDoc document,
+                          final boolean readOnly) {
+        Console.info("onRead()");
+
+        // Is this the first time this tab has been loaded?
+        final boolean firstLoad = this.document == null || !this.document.getUuid().equals(document.getUuid());
+        Console.info("onRead(): first load = " + firstLoad);
 
         this.document = document;
 
@@ -228,291 +319,40 @@ public class VisualisationAssetsPresenter
         updateState();
 
         // Get the assets associated with the document (async)
-        this.fetchAssets(document);
-    }
-
-    /**
-     * Convert the paths in the VisualisationAssets into the tree model.
-     * @param assets The list of assets from the server. Might be null.
-     */
-    private void addPathsToTree(final List<VisualisationAsset> assets) {
-        if (assets != null) {
-            // Convert list of paths into a tree
-            for (final VisualisationAsset asset : assets) {
-                String path = asset.getPath();
-                // Ignore leading slash
-                if (path.startsWith("/")) {
-                    path = path.substring(1);
-                }
-                final String[] pathItems = path.split(SLASH);
-                TreeItem treeItem = null;
-
-                for (int iPath = 0; iPath < pathItems.length; ++iPath) {
-                    final String pathItem = pathItems[iPath];
-                    final boolean isLast = iPath == pathItems.length - 1;
-
-                    // Search for anything existing that matches this pathItem
-                    TreeItem existingTreeItem = null;
-                    if (treeItem == null) {
-                        for (int iChild = 0; iChild < tree.getItemCount(); ++iChild) {
-                            final TreeItem item = tree.getItem(iChild);
-                            if (pathItem.equals(item.getText())) {
-                                existingTreeItem = item;
-                                break;
-                            }
-                        }
-                    } else {
-                        for (int iChild = 0; iChild < treeItem.getChildCount(); ++iChild) {
-                            final TreeItem item = treeItem.getChild(iChild);
-                            if (pathItem.equals(item.getText())) {
-                                existingTreeItem = item;
-                                break;
-                            }
-                        }
-                    }
-
-                    final TreeItem newChildItem;
-                    if (existingTreeItem == null) {
-                        if (isLast) {
-                            // Last item so set whether it is a folder or not
-                            // The last item takes the ID of the asset too.
-                            newChildItem = VisualisationAssetTreeItem.createItemFromAsset(asset, pathItem);
-                        } else {
-                            // Not last item so must be a folder
-                            // Its ID isn't important at this stage so it gets a new ID
-                            newChildItem = VisualisationAssetTreeItem.createNewFolderItem(pathItem);
-                        }
-                        if (treeItem == null) {
-                            tree.addItem(newChildItem);
-                        } else {
-                            treeItem.addItem(newChildItem);
-                        }
-                    } else {
-                        newChildItem = existingTreeItem;
-                    }
-
-                    treeItem = newChildItem;
-                }
-            }
-            sortTree();
+        // but only if this is the first time this has been loaded
+        // Otherwise we get into trouble with async operations clashing
+        if (firstLoad) {
+            this.fetchDraftAssets(document);
         }
 
+        Console.info("onRead() complete");
     }
 
     /**
-     * Called by VisualisationPresenter when the document is saved.
+     * Called by VisualisationPresenter so this tab gets a chance to write any changes
+     * to the document before it is saved.
+     * Requests the server to copy data from the draft area to the live area of the database.
      * @param document Document to store stuff in
      * @return The updated document.
      */
-    public VisualisationDoc onWrite(final VisualisationDoc document) {
+    @Override
+    protected VisualisationDoc onWrite(final VisualisationDoc document) {
+        Console.info("onWrite(); isDirty()==" + isDirty());
 
-        // Kick off storing the uploads and assets
-        storeAssets(document);
+        // Run this section after the main document has been saved to the server
+        Scheduler.get().scheduleFinally(() -> {
+
+            if (assetDirtyState.isDirtyAndNeedsSaveToDraft()) {
+                doUpdateContent(assetDirtyState.getPathToEditItem(),
+                        editorPresenter.getText().getBytes(StandardCharsets.UTF_8),
+                        this::doOnWrite,
+                        this::doSelectionChangeAfterUpdateContentFailed);
+            } else {
+                doOnWrite();
+            }
+        });
 
         return document;
-    }
-
-    /**
-     * Called from onRead() to pull down the assets from the server.
-     * Uses REST to grab the assets and display them within the tree control.
-     * Async.
-     * @param document The document received from the server.
-     */
-    private void fetchAssets(final VisualisationDoc document) {
-        final String ownerId = document.getUuid();
-        restFactory.create(VISUALISATION_ASSET_RESOURCE)
-                .method(r -> r.fetchAssets(ownerId))
-                .onSuccess(assets -> {
-                    // Clear any existing content from the tree
-                    tree.clear();
-
-                    // Put the new content in
-                    addPathsToTree(assets.getAssets());
-
-                    // Restore the open/closed state of the tree
-                    restoreOpenClosedState();
-
-                    // Make sure UI state is correct
-                    updateState();
-                })
-                .onFailure(error -> {
-                    AlertEvent.fireError(this,
-                            "Error downloading assets for this visualisation: " + error.getMessage(),
-                            null);
-                })
-                .taskMonitorFactory(this)
-                .exec();
-    }
-
-    /**
-     * Called from onWrite() to register all the uploaded documents
-     * and move them from their temporary storage into permanent storage.
-     */
-    private void storeAssets(final VisualisationDoc document) {
-
-        final VisualisationAssets assets = new VisualisationAssets(document.getUuid(), uploadedFileResourceKeys);
-        treeToAssets(assets);
-        storeOpenClosedState();
-
-        restFactory.create(VISUALISATION_ASSET_RESOURCE)
-                .method(r -> r.updateAssets(document.getUuid(), assets))
-                .onSuccess(result -> {
-                    if (result) {
-                        // Great it worked - clear the list of uploaded files
-                        uploadedFileResourceKeys.clear();
-                    } else {
-                        AlertEvent.fireError(this,
-                                "Error storing assets",
-                                null);
-                    }
-                })
-                .onFailure(error -> {
-                    AlertEvent.fireError(this,
-                            "Error storing assets: " + error.getMessage(),
-                            null);
-                })
-                .taskMonitorFactory(this)
-                .exec();
-    }
-
-    /**
-     * Stores the state of the tree in the variable treeItemPathToOpenState.
-     */
-    private void storeOpenClosedState() {
-        Console.info("Storing open/closed state");
-        treeItemPathToOpenState.clear();
-
-        for (int i = 0; i < tree.getItemCount(); ++i) {
-            final VisualisationAssetTreeItem treeItem = (VisualisationAssetTreeItem) tree.getItem(i);
-            recurseStoreOpenClosedState(treeItem);
-        }
-    }
-
-    /**
-     * Recurses down the TreeItems, storing the open/closed state in treeItemPathToOpenState.
-     * @param assetTreeItem The item to recurse.
-     */
-    private void recurseStoreOpenClosedState(final TreeItem assetTreeItem) {
-        if (assetTreeItem.getState()) {
-            // Item is open so store its state and everything under it
-            treeItemPathToOpenState.add(getItemPath(assetTreeItem));
-            for (int i = 0; i < assetTreeItem.getChildCount(); ++i) {
-                final TreeItem child = assetTreeItem.getChild(i);
-                recurseStoreOpenClosedState(child);
-            }
-        }
-    }
-
-    /**
-     * Sets the state of the tree from the variable treeItemIdToOpenState.
-     */
-    private void restoreOpenClosedState() {
-        for (int i = 0; i < tree.getItemCount(); ++i) {
-            final VisualisationAssetTreeItem treeItem = (VisualisationAssetTreeItem) tree.getItem(i);
-            recurseRestoreOpenClosedState(treeItem);
-        }
-    }
-
-    /**
-     * Recurses down the TreeItems, restoring the open/closed state from
-     * treeItemPathToOpenState.
-     * @param treeItem The item to recurse.
-     */
-    private void recurseRestoreOpenClosedState(final TreeItem treeItem) {
-        final String itemPath = getItemPath(treeItem);
-        if (treeItemPathToOpenState.contains(itemPath)) {
-            treeItem.setState(true);
-            for (int i = 0; i < treeItem.getChildCount(); ++i) {
-                final TreeItem child = treeItem.getChild(i);
-                recurseRestoreOpenClosedState(child);
-            }
-        }
-    }
-
-    /**
-     * Convert the tree into a list of assets. Also stores the open state of the tree,
-     * so that it can be restored if necessary.
-     * @param assets Where to put the assets
-     */
-    private void treeToAssets(final VisualisationAssets assets) {
-
-        for (int i = 0; i < tree.getItemCount(); ++i) {
-            final VisualisationAssetTreeItem treeItem = (VisualisationAssetTreeItem) tree.getItem(i);
-            recurseTreeToAssets(treeItem, assets);
-        }
-    }
-
-    /**
-     * Recursive function called from treeToAssets().
-     */
-    private void recurseTreeToAssets(final TreeItem treeItem,
-                                     final VisualisationAssets assets) {
-
-        if (treeItem instanceof final VisualisationAssetTreeItem assetTreeItem) {
-
-            // Store anything without children.
-            // So we store folders if they don't have any children, and we store files.
-            if (!assetTreeItem.hasChildren()) {
-                // No more nodes so store path
-                final String path = getItemPath(assetTreeItem);
-
-                final VisualisationAsset asset = new VisualisationAsset(
-                        assetTreeItem.getId(),
-                        path,
-                        !assetTreeItem.isLeaf());
-                assets.addAsset(asset);
-            } else {
-                // More nodes so recurse
-                for (int i = 0; i < assetTreeItem.getChildCount(); ++i) {
-                    recurseTreeToAssets(assetTreeItem.getChild(i), assets);
-                }
-            }
-        } else {
-            Console.error("Tree node is not a VisualisationAssetTreeNode");
-        }
-    }
-
-    /**
-     * Sets up the toolbar for the tab.
-     */
-    @Override
-    public List<Widget> getToolbars() {
-        addButton.setSvg(SvgImage.ADD);
-        addButton.setTitle("Add file");
-        addButton.setVisible(true);
-
-        deleteButton.setSvg(SvgImage.DELETE);
-        deleteButton.setTitle("Delete");
-        deleteButton.setVisible(true);
-        deleteButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onDeleteButtonClick());
-
-        editButton.setSvg(SvgImage.EDIT);
-        editButton.setTitle("Rename");
-        editButton.setVisible(true);
-        editButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onEditFilename());
-
-        viewButton.setSvg(SvgImage.EYE);
-        viewButton.setTitle("View in browser");
-        viewButton.setVisible(true);
-        viewButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onViewAsset());
-
-        final ButtonPanel toolbar = new ButtonPanel();
-        toolbar.addButton(addButton);
-        toolbar.addButton(deleteButton);
-        toolbar.addButton(editButton);
-        toolbar.addButton(viewButton);
-
-        // Ensure state is set correctly
-        updateState();
-
-        return List.of(toolbar);
-    }
-
-    /**
-     * Called when the selection changes.
-     */
-    private void onSelectionChange() {
-        updateState();
     }
 
     /**
@@ -521,8 +361,11 @@ public class VisualisationAssetsPresenter
      */
     private void onCreateNewItem(final boolean addFile) {
         if (!readOnly) {
-            final TreeItem parentItem = findFolderForSelectedItem();
-            final String path = getItemPath(parentItem);
+            final VisualisationAssetTreeItem parentItem =
+                    VisualisationAssetsPresenterUtils.findFolderForSelectedItem(
+                            (VisualisationAssetTreeItem) tree.getSelectedItem());
+
+            final String path = VisualisationAssetsPresenterUtils.getItemPath(parentItem);
             final ShowPopupEvent.Builder popupEventBuilder = new ShowPopupEvent.Builder(addItemDialog);
             final DialogType dialogType = addFile ? DialogType.FILE_DIALOG : DialogType.FOLDER_DIALOG;
             addItemDialog.setupPopup(popupEventBuilder, path, ILLEGAL_ASSET_NAME_CHARACTERS, dialogType);
@@ -531,23 +374,19 @@ public class VisualisationAssetsPresenter
                                 if (event.isOk()) {
                                     // Ok pressed
                                     if (addItemDialog.isValid()) {
-                                        final String itemName = getNonClashingLabel(
-                                                (VisualisationAssetTreeItem) parentItem,
+                                        final String itemName = getNonClashingLabel(parentItem,
                                                 addItemDialog.getView().getName(),
                                                 null);
-                                        final VisualisationAssetTreeItem newNode;
+                                        VisualisationAssetsPresenterUtils.
+                                                markOpenClosedStateOpen(parentItem, treeItemPathToOpenState);
+                                        final String newItemPath =
+                                                VisualisationAssetsPresenterUtils.getNewItemPath(parentItem, itemName);
+                                        final VisualisationAssetUpdateNewFile update;
                                         if (addFile) {
-                                            newNode = VisualisationAssetTreeItem.createNewFileItem(itemName);
+                                            doUpdateNewFile(newItemPath);
                                         } else {
-                                            newNode = VisualisationAssetTreeItem.createNewFolderItem(itemName);
+                                            doUpdateNewFolder(newItemPath);
                                         }
-                                        if (parentItem == null) {
-                                            tree.addItem(newNode);
-                                        } else {
-                                            parentItem.addItem(newNode);
-                                        }
-                                        recurseSortTree((VisualisationAssetTreeItem) parentItem);
-                                        setDirty();
                                         event.hide();
                                     } else {
                                         AlertEvent.fireWarn(this, "Item name not set", event::reset);
@@ -564,189 +403,40 @@ public class VisualisationAssetsPresenter
     }
 
     /**
-     * Sorts the whole tree, from root to leaf.
+     * Called when the Delete button is clicked.
+     * Deletes the currently selected item.
      */
-    private void sortTree() {
-        recurseSortTree(null);
-    }
-
-    /**
-     * Called from sortTree() to recurse down the tree, sorting it.
-     * @param assetTreeItem The node to sort and recurse. If null then will start at the root of the tree.
-     */
-    private void recurseSortTree(final VisualisationAssetTreeItem assetTreeItem) {
-        if (assetTreeItem == null) {
-            // We're at the root of the tree so look at the tree widget
-            final List<VisualisationAssetTreeItem> childItems = new ArrayList<>();
-            for (int i = 0; i < tree.getItemCount(); ++i) {
-                childItems.add((VisualisationAssetTreeItem) tree.getItem(i));
-            }
-            childItems.sort(new TreeItemComparator());
-            tree.removeItems();
-            for (final VisualisationAssetTreeItem treeItem : childItems) {
-                if (!treeItem.isLeaf()) {
-                    recurseSortTree(treeItem);
-                }
-                tree.addItem(treeItem);
-            }
-        } else {
-            // Not at the root so look at the item
-            final List<VisualisationAssetTreeItem> childItems = new ArrayList<>();
-            for (int i = 0; i < assetTreeItem.getChildCount(); ++i) {
-                childItems.add((VisualisationAssetTreeItem) assetTreeItem.getChild(i));
-            }
-            childItems.sort(new TreeItemComparator());
-            assetTreeItem.removeItems();
-            for (final VisualisationAssetTreeItem childTreeItem : childItems) {
-                if (!childTreeItem.isLeaf()) {
-                    recurseSortTree(childTreeItem);
-                }
-                assetTreeItem.addItem(childTreeItem);
-            }
-        }
-    }
-
-    /**
-     * Comparator for sorting tree items.
-     */
-    private static class TreeItemComparator implements Comparator<VisualisationAssetTreeItem> {
-
-        @Override
-        public int compare(final VisualisationAssetTreeItem treeItem1, final VisualisationAssetTreeItem treeItem2) {
-            if (!treeItem1.isLeaf() && treeItem2.isLeaf()) {
-                // 1 is folder, 2 is file so 1 comes first
-                return -1;
-            } else if (treeItem1.isLeaf() && !treeItem2.isLeaf()) {
-                // 1 is file, 2 is folder so 2 comes first
-                return 1;
-            } else {
-                // Sort on label
-                return treeItem1.getText().compareTo(treeItem2.getText());
-            }
-        }
-    }
-
-    /**
-     * Generates a label that doesn't clash with other files/folders in the same directory.
-     * Adds an integer to the end, incrementing until an integer is found that doesn't
-     * clash with anything else.
-     * @param assetParentItem The tree item that holds the directory.
-     * @param label The label that we're trying to put into the directory.
-     * @param itemId The ID of the item with this label. Can be null if this is a new item with no ID yet.
-     * @return A label that doesn't clash with anything else.
-     */
-    @Override
-    public String getNonClashingLabel(final VisualisationAssetTreeItem assetParentItem,
-                                      final String label,
-                                      final String itemId) {
-        String nonClashingLabel = label;
-
-        if (assetParentItem != null) {
-            int i = 1;
-            while (assetParentItem.labelExists(nonClashingLabel, itemId)) {
-                nonClashingLabel = generateNonClashingLabel(label, i);
-                i++;
-            }
-        } else {
-            // Parent is the Tree itself
-            int i = 1;
-            while (labelClashesInTreeRoot(nonClashingLabel, itemId)) {
-                nonClashingLabel = generateNonClashingLabel(label, i);
-                i++;
-            }
-        }
-
-        return nonClashingLabel;
-    }
-
-    /**
-     * Generates a potentially non-classing label for an asset. Called from getNonClashingLabel().
-     */
-    private String generateNonClashingLabel(final String label, final int i) {
-        final int iDot = label.lastIndexOf('.');
-        String namePart = label;
-        String extPart = "";
-        if (iDot != -1) {
-            namePart = label.substring(0, iDot);
-            extPart = label.substring(iDot);
-        }
-
-        return namePart + "-" + i + extPart;
-    }
-
-    /**
-     * Returns true if the given label clashes in the tree root.
-     * @param itemLabel The label to test.
-     * @param itemId The ID of the item with the label. Ensures the label doesn't clash with itself.
-     * @return true if there is a clash, false if not.
-     */
-    private boolean labelClashesInTreeRoot(final String itemLabel, final String itemId) {
-        for (int i = 0; i < tree.getItemCount(); ++i) {
-            final VisualisationAssetTreeItem assetTreeItem = (VisualisationAssetTreeItem) tree.getItem(i);
-            if (!Objects.equals(assetTreeItem.getId(), itemId)
-                && Objects.equals(assetTreeItem.getText(), itemLabel)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Finds the treeItem that we're going to add things to. Either the selected folder,
-     * or the parent of the selected file (can't add things to a file).
-     * @return The node that we're going to add things to. Null if we're adding to the root item.
-     */
-    private TreeItem findFolderForSelectedItem() {
-        final TreeItem selectedTreeItem = tree.getSelectedItem();
-        if (selectedTreeItem != null) {
-            if (selectedTreeItem instanceof final VisualisationAssetTreeItem assetTreeItem) {
-                if (assetTreeItem.isLeaf()) {
-                    // File so we want the parent folder
-                    return assetTreeItem.getParentItem();
-                } else {
-                    // Folder selected so return it
-                    return assetTreeItem;
-                }
-            }
-        }
-
-        return selectedTreeItem;
-    }
-
-    /**
-     * Called when Add Button / Upload File is clicked.
-     * Inserts a new item within the currently selected folder.
-     */
-    private void onUploadFile() {
+    private void onDeleteButtonClick() {
         if (!readOnly) {
-            final TreeItem folderItem = findFolderForSelectedItem();
-            final String path = getItemPath(folderItem);
-            uploadFileDialog.fireShowPopup(this, folderItem, path, ILLEGAL_ASSET_NAME_CHARACTERS);
+            final VisualisationAssetTreeItem assetTreeItem = (VisualisationAssetTreeItem) tree.getSelectedItem();
+            if (assetTreeItem != null) {
+                final String message;
+                if (assetTreeItem.isLeaf()) {
+                    message = "Are you sure you want to delete the selected file?";
+                } else {
+                    message = "Are you sure you want to delete the selected folder and all its descendants?";
+                }
+
+                ConfirmEvent.fire(VisualisationAssetsPresenter.this, message,
+                        result -> {
+                            if (result) {
+                                final String path = VisualisationAssetsPresenterUtils.getItemPath(assetTreeItem);
+                                doUpdateDelete(path, !assetTreeItem.isLeaf());
+                            }
+                        });
+            }
+
         }
     }
 
     /**
-     * Callback from the Add dialog that adds a file that has been uploaded.
-     * @param parentFolderItem The node that the file has been added to.
-     * @param fileName The name of the file that was uploaded.
-     * @param resourceKey The resource key of the file, so that the server can find it later.
+     * Gets dirty events to update the class member variable.
      */
     @Override
-    public void addUploadedFile(final TreeItem parentFolderItem,
-                                final String fileName,
-                                final ResourceKey resourceKey) {
-
-        final VisualisationAssetTreeItem newFileNode = VisualisationAssetTreeItem.createNewFileItem(fileName);
-        if (parentFolderItem == null) {
-            tree.addItem(newFileNode);
-        } else {
-            parentFolderItem.addItem(newFileNode);
-        }
-
-        recurseSortTree((VisualisationAssetTreeItem) parentFolderItem);
-        uploadedFileResourceKeys.put(newFileNode.getId(), resourceKey);
-
-        setDirty();
+    public void onDirty(final boolean dirty) {
+        super.onDirty(dirty);
+        Console.info("VisualisationAssetsPresenter.onDirty(" + dirty + ")");
+        updateState();
     }
 
     /**
@@ -757,21 +447,22 @@ public class VisualisationAssetsPresenter
         if (!readOnly) {
             final VisualisationAssetTreeItem selectedItem = (VisualisationAssetTreeItem) tree.getSelectedItem();
             if (selectedItem != null) {
-                Console.info("Editing item " + selectedItem.getText());
                 final ShowPopupEvent.Builder popupEventBuilder = new ShowPopupEvent.Builder(editAssetDialog);
                 editAssetDialog.setupPopup(popupEventBuilder, selectedItem, ILLEGAL_ASSET_NAME_CHARACTERS);
                 popupEventBuilder
                         .onHideRequest(event -> {
                                     if (event.isOk()) {
                                         if (editAssetDialog.isValid()) {
+                                            final String oldPath =
+                                                    VisualisationAssetsPresenterUtils.getItemPath(selectedItem);
                                             final VisualisationAssetTreeItem parentItem =
                                                     (VisualisationAssetTreeItem) selectedItem.getParentItem();
                                             final String text = getNonClashingLabel(parentItem,
                                                     editAssetDialog.getView().getText(),
                                                     editAssetDialog.getView().getId());
-                                            selectedItem.setText(text);
-                                            recurseSortTree(parentItem);
-                                            setDirty();
+                                            final String newPath =
+                                                    VisualisationAssetsPresenterUtils.getNewItemPath(parentItem, text);
+                                            doUpdateRename(oldPath, newPath, !selectedItem.isLeaf());
                                             event.hide();
                                         } else {
                                             AlertEvent.fireWarn(this,
@@ -790,101 +481,474 @@ public class VisualisationAssetsPresenter
     }
 
     /**
+     * Called when the editor is dirty and needs a save.
+     */
+    private void onEditorContentChanged() {
+        assetDirtyState.onAssetContentChanged();
+        setDirty(true);
+    }
+
+    /**
+     * Called when the Revert button is clicked.
+     * Gets rid of draft changes and goes back to the live version of the assets.
+     * Scheduler calls here shouldn't be necessary.
+     */
+    private void onRevertButtonClick() {
+
+        final String message = "Are you sure you want to lose all your changes?";
+        ConfirmEvent.fire(VisualisationAssetsPresenter.this, message,
+                result -> {
+                    if (result) {
+                        Scheduler.get().scheduleFinally(() -> {
+                            restFactory.create(VISUALISATION_ASSET_RESOURCE)
+                                    .method(r -> r.revertDraftFromLive(document.getUuid()))
+                                    .onSuccess(revertResult -> {
+                                        clearEditor();
+                                        if (revertResult) {
+                                            // It worked - data reverted
+                                            Scheduler.get().scheduleFinally(() -> {
+                                                final DocRef docRef = document.asDocRef();
+                                                document = null; // Make sure doc is reloaded on refresh
+                                                RefreshDocumentEvent.fire(
+                                                        VisualisationAssetsPresenter.this,
+                                                        docRef);
+                                            });
+                                        } else {
+                                            AlertEvent.fireError(this,
+                                                    "Error reverting to live version",
+                                                    null);
+                                        }
+                                    })
+                                    .onFailure(error -> {
+                                        clearEditor();
+                                        AlertEvent.fireError(this,
+                                                "Error reverting to live version: " + error.getMessage(),
+                                                null);
+                                    })
+                                    .taskMonitorFactory(this)
+                                    .exec();
+                        });
+                    }
+                });
+    }
+
+    /**
+     * Called when the selection changes.
+     */
+    private void onSelectionChange() {
+        Console.info("onSelectionChange");
+        if (!readOnly) {
+            if (assetDirtyState.isDirtyAndNeedsSaveToDraft()) {
+                Console.info("0 onSelectionChange - saving " + assetDirtyState);
+                doUpdateContent(assetDirtyState.getPathToEditItem(),
+                        editorPresenter.getText().getBytes(StandardCharsets.UTF_8),
+                        this::doSelectionChangeAfterUpdateContentSuccess,
+                        this::doSelectionChangeAfterUpdateContentFailed);
+            } else {
+                Console.info("0 No previous item to save");
+                doSelectionChangeAfterUpdateContentSuccess();
+            }
+        }
+    }
+
+    /**
+     * Called after onSelectionChange() when the saving of existing content fails.
+     * Select back to previous item.
+     */
+    private void doSelectionChangeAfterUpdateContentFailed() {
+        tree.setSelectedItem(assetDirtyState.getEditItem(), false);
+    }
+
+    /**
+     * Called after the current editor contents has been saved.
+     * Loads up the new editor contents.
+     */
+    private void doSelectionChangeAfterUpdateContentSuccess() {
+        Console.info("1b doSelectItemAfterUpdateContent");
+        assetDirtyState.onUpdateContentSuccess();
+
+        final VisualisationAssetTreeItem selectedItem = (VisualisationAssetTreeItem) tree.getSelectedItem();
+
+        if (selectedItem != null && selectedItem.isLeaf()) {
+            Console.info("Item is selected and is leaf");
+            final String selectedItemPath = VisualisationAssetsPresenterUtils.getItemPath(selectedItem);
+            assetDirtyState.onSelectNewItemAfterSaveOldItem(selectedItem, selectedItemPath);
+            fetchDraftContent(document,
+                    selectedItemPath,
+                    this::doSelectionChangeAfterFetchDraftContentSuccess,
+                    this::doSelectItemFetchDraftContentFailed);
+        } else {
+            Console.info("Nothing selected or not leaf");
+            doSelectItemFetchDraftContentFailed();
+        }
+    }
+
+    /**
+     * Called after doSelectItemAfterUpdateContent() to handle failures.
+     */
+    private void doSelectItemFetchDraftContentFailed() {
+        Console.info("2a doSelectItemFetchDraftContentFailed");
+        clearEditor();
+    }
+
+    /**
+     * Called after the new editor contents has been loaded.
+     */
+    private void doSelectionChangeAfterFetchDraftContentSuccess() {
+        Console.info("2b doSelectItemAfterFetchDraftContent");
+        editorPresenter.setReadOnly(readOnly);
+        updateState();
+    }
+
+    /**
+     * Called when Add Button / Upload File is clicked.
+     * Shows the uploadFileDialog. The dialog calls back into this object via the
+     * VisualisationAssetsAddFileCallback interface.
+     */
+    private void onUploadFile() {
+        if (!readOnly) {
+            final VisualisationAssetTreeItem folderItem =
+                    VisualisationAssetsPresenterUtils.findFolderForSelectedItem(
+                            (VisualisationAssetTreeItem) tree.getSelectedItem());
+            final String path = VisualisationAssetsPresenterUtils.getItemPath(folderItem);
+            uploadFileDialog.fireShowPopup(this, folderItem, path, ILLEGAL_ASSET_NAME_CHARACTERS);
+        }
+    }
+
+    /**
      * Called when the user wants to view an asset.
      * Opens a new Browser window (tab) pointing to the asset via the Servlet.
      */
     public void onViewAsset() {
-        final TreeItem selectedItem = tree.getSelectedItem();
+        final VisualisationAssetTreeItem selectedItem = (VisualisationAssetTreeItem) tree.getSelectedItem();
         if (selectedItem != null)  {
             // Find the document ID
             if (document != null) {
                 final String docId = document.getUuid();
-                final String relativePath = ASSET_SERVLET_PATH_PREFIX + docId + getItemPath(selectedItem);
+                final String relativePath = ASSET_SERVLET_PATH_PREFIX
+                                            + docId
+                                            + VisualisationAssetsPresenterUtils.getItemPath(selectedItem);
                 Window.open(relativePath, "_blank", null);
             }
         }
     }
 
     /**
-     * Call to mark the document as dirty and needing saving.
-     * Also sorts the tree, as this is called when a tree node is edited.
+     * Called from onWrite() after any saving of content has happened, if that is necessary.
      */
-    private void setDirty() {
-        sortTree();
-        DirtyEvent.fire(this, true);
-    }
-
-    /**
-     * Returns the path to the given item.
-     * @param item The item to find the path to. Can be null if this is the root path.
-     * @return The path as a String, with / separators.
-     */
-    private String getItemPath(final TreeItem item) {
-        final List<String> pathList = new ArrayList<>();
-        TreeItem currentItem = item;
-        while (currentItem != null) {
-            pathList.add(currentItem.getText());
-            currentItem = currentItem.getParentItem();
-        }
-        Collections.reverse(pathList);
-
-        return SLASH + String.join(SLASH, pathList);
-    }
-
-    /**
-     * Called when the Delete button is clicked.
-     * Deletes the currently selected item.
-     */
-    private void onDeleteButtonClick() {
-        if (!readOnly) {
-            final TreeItem item = tree.getSelectedItem();
-            if (item != null) {
-                if (item instanceof final VisualisationAssetTreeItem assetTreeItem) {
-                    final String message;
-                    if (assetTreeItem.isLeaf()) {
-                        message = "Are you sure you want to delete the selected file?";
+    private void doOnWrite() {
+        // Transfer draft saves to live
+        restFactory.create(VISUALISATION_ASSET_RESOURCE)
+                .method(r -> r.saveDraftToLive(document.getUuid()))
+                .onSuccess(result -> {
+                    if (result) {
+                        Console.info("doOnWrite(); onSuccess(); isDirty()==" + isDirty());
+                        Scheduler.get().scheduleFinally(() -> {
+                            // Reload doc via chain, once this chain is complete
+                            fetchDraftAssets(document);
+                        });
                     } else {
-                        message = "Are you sure you want to delete the selected folder and all its descendants?";
+                        AlertEvent.fireError(this,
+                                "Error saving assets",
+                                null);
                     }
-
-                    ConfirmEvent.fire(VisualisationAssetsPresenter.this, message,
-                            result -> {
-                                if (result) {
-                                    final TreeItem parentItem = assetTreeItem.getParentItem();
-                                    if (parentItem == null) {
-                                        tree.removeItem(assetTreeItem);
-                                    } else {
-                                        parentItem.removeItem(assetTreeItem);
-                                    }
-
-                                    recurseRemoveUploadedFiles(assetTreeItem);
-
-                                    setDirty();
-                                }
-                            });
-                } else {
-                    Console.error("Unknown tree node type: " + item.getClass());
-                }
-            }
-
-        }
+                })
+                .onFailure(error -> {
+                    AlertEvent.fireError(this,
+                            "Error saving assets: " + error.getMessage(),
+                            null);
+                })
+                .taskMonitorFactory(this)
+                .exec();
     }
 
     /**
-     * Recurses down the tree, removing all nodes from the uploadedFileResourceKeys map.
-     * Called from onDeleteButtonClick().
-     * @param assetTreeItem The root node. Remove uploaded files underneath this node.
+     * Does the REST call to the server to create a new folder.
+     * Then calls fetchDraftAssets() to reload the tree.
+     * @param path Where the folder must be created.
      */
-    private void recurseRemoveUploadedFiles(final VisualisationAssetTreeItem assetTreeItem) {
-        uploadedFileResourceKeys.remove(assetTreeItem.getId());
-        for (int i = 0; i < assetTreeItem.getChildCount(); ++i) {
-            final TreeItem childTreeItem = assetTreeItem.getChild(i);
-            if (childTreeItem instanceof final VisualisationAssetTreeItem childAssetTreeItem) {
-                recurseRemoveUploadedFiles(childAssetTreeItem);
-            } else {
-                Console.error("Unknown tree node type: " + childTreeItem.getClass());
-            }
-        }
+    private void doUpdateNewFolder(final String path) {
+        Objects.requireNonNull(path);
+
+        restFactory.create(VISUALISATION_ASSET_RESOURCE)
+                .method(r -> r.updateNewFolder(document.getUuid(), path))
+                .onSuccess(result -> {
+                    if (result) {
+                        // OK - get the assets again
+                        fetchDraftAssets(document);
+                    } else {
+                        AlertEvent.fireError(this,
+                                "There was an error creating a new folder",
+                                null);
+                    }
+                })
+                .onFailure(error -> {
+                    AlertEvent.fireError(this,
+                            "There was an error creating a new folder: " + error.getMessage(),
+                            null);
+                })
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    /**
+     * Does the REST call to create a new file.
+     * @param path The path and name of the file.
+     */
+    private void doUpdateNewFile(final String path) {
+        Objects.requireNonNull(path);
+
+        final VisualisationAssetUpdateNewFile update =
+                new VisualisationAssetUpdateNewFile(path, null);
+
+        restFactory.create(VISUALISATION_ASSET_RESOURCE)
+                .method(r -> r.updateNewFile(document.getUuid(), update))
+                .onSuccess(result -> {
+                    if (result) {
+                        // OK - get the assets again
+                        fetchDraftAssets(document);
+                    } else {
+                        AlertEvent.fireError(this,
+                                "There was an error creating a new file",
+                                null);
+                    }
+                })
+                .onFailure(error -> {
+                    AlertEvent.fireError(this,
+                            "There was an error creating a new file: " + error.getMessage(),
+                            null);
+                })
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    /**
+     * Does the REST call to create a new file, where the user has uploaded a file.
+     * @param path Where to put the file
+     * @param resourceKey The resource key associated with the upload
+     */
+    private void doUpdateNewUploadedFile(final String path,
+                                         final ResourceKey resourceKey) {
+        Objects.requireNonNull(path);
+        Objects.requireNonNull(resourceKey);
+
+        final VisualisationAssetUpdateNewFile update =
+                new VisualisationAssetUpdateNewFile(path, resourceKey);
+
+        restFactory.create(VISUALISATION_ASSET_RESOURCE)
+                .method(r ->
+                        r.updateNewUploadedFile(document.getUuid(), update))
+                .onSuccess(result -> {
+                    if (result) {
+                        // OK - get the assets again
+                        fetchDraftAssets(document);
+                    } else {
+                        AlertEvent.fireError(this,
+                                "There was an error uploading a new file",
+                                null);
+                    }
+                })
+                .onFailure(error -> {
+                    AlertEvent.fireError(this,
+                            "There was an error uploading a new file: " + error.getMessage(),
+                            null);
+                })
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    /**
+     * Does the REST call to delete a file or folder
+     * @param path The path to delete. The terminal name in the path will be deleted.
+     * @param isFolder Whether the path refers to a folder or a file.
+     */
+    private void doUpdateDelete(final String path,
+                                final boolean isFolder) {
+        Objects.requireNonNull(path);
+
+        final VisualisationAssetUpdateDelete update = new VisualisationAssetUpdateDelete(path, isFolder);
+
+        restFactory.create(VISUALISATION_ASSET_RESOURCE)
+                .method(r ->
+                        r.updateDelete(document.getUuid(), update))
+                .onSuccess(result -> {
+                    if (result) {
+                        // OK - get the assets again
+                        fetchDraftAssets(document);
+                    } else {
+                        AlertEvent.fireError(this,
+                                "There was an error deleting an item",
+                                null);
+                    }
+                })
+                .onFailure(error -> {
+                    AlertEvent.fireError(this,
+                            "There was an error deleting an item: " + error.getMessage(),
+                            null);
+                })
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    /**
+     * Does the REST call to rename a file or folder.
+     * @param oldPath The thing we want to rename
+     * @param newPath The new path to replace the old path
+     * @param isFolder Whether the thing being renamed is a folder.
+     */
+    private void doUpdateRename(final String oldPath,
+                                final String newPath,
+                                final boolean isFolder) {
+        Objects.requireNonNull(oldPath);
+        Objects.requireNonNull(newPath);
+        final VisualisationAssetUpdateRename update = new VisualisationAssetUpdateRename(oldPath, newPath, isFolder);
+        restFactory.create(VISUALISATION_ASSET_RESOURCE)
+                .method(r ->
+                        r.updateRename(document.getUuid(), update))
+                .onSuccess(result -> {
+                    if (result) {
+                        // OK - get the assets again
+                        fetchDraftAssets(document);
+                    } else {
+                        AlertEvent.fireError(this,
+                                "There was an error renaming an item",
+                                null);
+                    }
+                })
+                .onFailure(error -> {
+                    AlertEvent.fireError(this,
+                            "There was an error renaming an item: " + error.getMessage(),
+                            null);
+                })
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    /**
+     * Does the REST update for the content of a file.
+     * @param path The path to the file.
+     * @param content The new content for a file. Must not be null but can be empty.
+     * @param successCallback Method to call on success
+     * @param failureCallback Method to call on failure, after showing the alert dialog.
+     */
+    private void doUpdateContent(final String path,
+                                 final byte[] content,
+                                 final Runnable successCallback,
+                                 final AlertCallback failureCallback) {
+        Objects.requireNonNull(path);
+        Objects.requireNonNull(content);
+
+        final VisualisationAssetUpdateContent update =
+                new VisualisationAssetUpdateContent(path, content);
+        restFactory.create(VISUALISATION_ASSET_RESOURCE)
+                .method(r ->
+                        r.updateContent(document.getUuid(), update))
+                .onSuccess(result -> {
+                    if (result) {
+                        // Next link in chain
+                        successCallback.run();
+                    } else {
+                        AlertEvent.fireError(this,
+                                "There was an error updating content",
+                                failureCallback);
+                    }
+                })
+                .onFailure(error -> {
+                    AlertEvent.fireError(this,
+                            "There was an error updating content: " + error.getMessage(),
+                            failureCallback);
+                })
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    /**
+     * Called to clear-down the editor.
+     */
+    private void clearEditor() {
+        Console.info("======== ClearEditor =======");
+        editorPresenter.setText("");
+        editorPresenter.setReadOnly(true);
+        Console.info("======== Editor cleared =======");
+    }
+
+    /**
+     * Fetches the content for the asset at the given path.
+     * @param document The document that owns the assets.
+     * @param path The path of the asset. Must be a leaf node path.
+     */
+    private void fetchDraftContent(final VisualisationDoc document,
+                                   final String path,
+                                   final Runnable successCallback,
+                                   final AlertCallback failureCallback) {
+        Objects.requireNonNull(document);
+        Objects.requireNonNull(path);
+
+        restFactory.create(VISUALISATION_ASSET_RESOURCE)
+                .method(r -> r.getDraftContent(document.getUuid(), path))
+                .onSuccess(result -> {
+                    final String content = result.getContent();
+                    if (content == null) {
+                        failureCallback.onClose();
+                    } else {
+                        editorPresenter.setText(result.getContent());
+                        successCallback.run();
+                    }
+                })
+                .onFailure(error -> {
+                    AlertEvent.fireError(this,
+                            "There was an error getting content for '"
+                            + path + "':" + error.getMessage(),
+                            failureCallback);
+                })
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    /**
+     * Called from onRead() to pull down the assets from the server.
+     * Uses REST to grab the assets and display them within the tree control.
+     * Async.
+     * @param document The document received from the server.
+     */
+    private void fetchDraftAssets(final VisualisationDoc document) {
+        Console.info("fetchDraftAssets() start");
+        final String ownerId = document.getUuid();
+        VisualisationAssetsPresenterUtils.storeOpenClosedState(tree, treeItemPathToOpenState);
+
+        restFactory.create(VISUALISATION_ASSET_RESOURCE)
+                .method(r -> r.fetchDraftAssets(ownerId))
+                .onSuccess(assets -> {
+                    Console.info("fetchDraftAssets() - onSuccess");
+                    // Clear any existing content from the tree
+                    tree.clear();
+
+                    // Put the new tree in
+                    Console.info("fetchDraftAssets: got " + assets.getAssets().size() + " assets to add to the tree");
+                    VisualisationAssetsPresenterUtils.addPathsToTree(tree, assets.getAssets());
+
+                    // Mark the editor content as clean
+                    assetDirtyState.onFetchDraftAssets();
+
+                    // Set dirty state from the state of the DB
+                    Console.info("fetchDraftAssets: dirty=" + assets.isDirty());
+                    setDirty(assets.isDirty());
+
+                    // Restore the open/closed state of the tree
+                    VisualisationAssetsPresenterUtils.restoreOpenClosedState(tree, treeItemPathToOpenState);
+
+                    // Make sure UI state is correct
+                    updateState();
+                    Console.info("fetchDraftAssets() - onSuccess end");
+                })
+                .onFailure(error -> {
+                    AlertEvent.fireError(this,
+                            "Error downloading assets for this visualisation: " + error.getMessage(),
+                            null);
+                })
+                .taskMonitorFactory(this)
+                .exec();
+        Console.info("fetchDraftAssets() end");
     }
 
     /**
@@ -893,11 +957,14 @@ public class VisualisationAssetsPresenter
     private void updateState() {
 
         if (readOnly) {
+            revertButton.setEnabled(false);
             addButton.setEnabled(false);
             deleteButton.setEnabled(false);
             editButton.setEnabled(false);
             viewButton.setEnabled(false);
         } else {
+            revertButton.setEnabled(isDirty());
+
             final VisualisationAssetTreeItem item = (VisualisationAssetTreeItem) tree.getSelectedItem();
             if (item == null) {
                 // Assume the root item is selected so enable 'add'
@@ -909,11 +976,9 @@ public class VisualisationAssetsPresenter
                 addButton.setEnabled(true);
                 deleteButton.setEnabled(true);
                 editButton.setEnabled(true);
-                // Only enable this button if the file has been uploaded to the server
+                // Only enable this button if tree isn't dirty (otherwise the item might not be on the server)
                 // and the thing isn't a folder
-                viewButton.setEnabled(
-                        !uploadedFileResourceKeys.containsKey(item.getId())
-                        && item.isLeaf());
+                viewButton.setEnabled(!isDirty() && item.isLeaf());
             }
         }
     }
@@ -925,13 +990,14 @@ public class VisualisationAssetsPresenter
     private static class AssetTreeResources implements Tree.Resources {
 
         /** Height and width of the image in pixels */
-        private static final int DIM = 16;
+        private static final int HEIGHT = 12;
+        private static final int WIDTH = 16;
         private static final VisualisationAssetsImageResource CLOSED =
-                new VisualisationAssetsImageResource(DIM, DIM, "/ui/background-images/arrow-right.png");
+                new VisualisationAssetsImageResource(HEIGHT, WIDTH, "/ui/background-images/arrow-right.png");
         private static final VisualisationAssetsImageResource OPEN =
-                new VisualisationAssetsImageResource(DIM, DIM, "/ui/background-images/arrow-down.png");
+                new VisualisationAssetsImageResource(HEIGHT, WIDTH, "/ui/background-images/arrow-down.png");
         private static final VisualisationAssetsImageResource TRANSPARENT =
-                new VisualisationAssetsImageResource(DIM, DIM, "/ui/background-images/transparent-16x16.png");
+                new VisualisationAssetsImageResource(HEIGHT, WIDTH, "/ui/background-images/transparent-16x16.png");
 
         @Override
         public ImageResource treeClosed() {
@@ -959,6 +1025,6 @@ public class VisualisationAssetsPresenter
         /**
          * Sets the cell tree within the view.
          */
-        void setTree(final Tree cellTree);
+        void setTreeAndEditor(final Tree cellTree, final EditorPresenter editor);
     }
 }

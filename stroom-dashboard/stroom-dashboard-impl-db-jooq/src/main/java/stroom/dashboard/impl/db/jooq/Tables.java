@@ -5,6 +5,8 @@ package stroom.dashboard.impl.db.jooq;
 
 
 import stroom.dashboard.impl.db.jooq.tables.VisualisationAssets;
+import stroom.dashboard.impl.db.jooq.tables.VisualisationAssetsDraft;
+import stroom.dashboard.impl.db.jooq.tables.VisualisationAssetsUpdateDelete;
 
 
 /**
@@ -17,4 +19,14 @@ public class Tables {
      * The table <code>stroom.visualisation_assets</code>.
      */
     public static final VisualisationAssets VISUALISATION_ASSETS = VisualisationAssets.VISUALISATION_ASSETS;
+
+    /**
+     * The table <code>stroom.visualisation_assets_draft</code>.
+     */
+    public static final VisualisationAssetsDraft VISUALISATION_ASSETS_DRAFT = VisualisationAssetsDraft.VISUALISATION_ASSETS_DRAFT;
+
+    /**
+     * The table <code>stroom.visualisation_assets_update_delete</code>.
+     */
+    public static final VisualisationAssetsUpdateDelete VISUALISATION_ASSETS_UPDATE_DELETE = VisualisationAssetsUpdateDelete.VISUALISATION_ASSETS_UPDATE_DELETE;
 }

@@ -23,11 +23,10 @@ import java.util.Map;
  */
 public class VisualisationAssetConfig extends AbstractConfig {
 
-    /** Map of filename extension to mimetype */
-    private final Map<String, String> mimetypes = new HashMap<>();
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(VisualisationAssetConfig.class);
 
-    /** Mimetype to use if nothing in the map matches */
-    private final String defaultMimetype;
+    /** Default location where assets will be cached */
+    private static final String DEFAULT_ASSET_CACHE_DIR = "asset_cache";
 
     /** Default mimetype map */
     private static final Map<String, String> DEFAULT_MIMETYPES = new HashMap<>();
@@ -35,18 +34,14 @@ public class VisualisationAssetConfig extends AbstractConfig {
     /** Mimetype if nothing else matches */
     private static final String DEFAULT_MIMETYPE = "application/octet-stream";
 
-    /**
-     * Default location where assets will be cached
-     */
-    static final String DEFAULT_ASSET_CACHE_DIR = "asset_cache";
-
-    /**
-     * Where assets will be cached
-     */
+    /** Where assets will be cached */
     private final String assetCacheDir;
 
-    /** Logger */
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(VisualisationAssetConfig.class);
+    /** Map of filename extension to mimetype */
+    private final Map<String, String> mimetypes = new HashMap<>();
+
+    /** Mimetype to use if nothing in the map matches */
+    private final String defaultMimetype;
 
     /*
      * Initialise mimetype map.
@@ -80,9 +75,6 @@ public class VisualisationAssetConfig extends AbstractConfig {
         this.assetCacheDir = DEFAULT_ASSET_CACHE_DIR;
     }
 
-    /**
-     * Injected constructor.
-     */
     @SuppressWarnings("unused")
     @JsonCreator
     public VisualisationAssetConfig(@JsonProperty("mimetypes") final Map<String, String> mimetypes,
@@ -131,9 +123,6 @@ public class VisualisationAssetConfig extends AbstractConfig {
         return assetCacheDir;
     }
 
-    /**
-     * DB configuration.
-     */
     @BootStrapConfig
     public static class VisualisationAssetDbConfig extends AbstractDbConfig {
         public VisualisationAssetDbConfig() {

@@ -16,7 +16,6 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
-import com.google.gwt.user.client.ui.TreeItem;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -33,7 +32,7 @@ public class VisualisationAssetsUploadFileDialogPresenter
     private VisualisationAssetsAddFileCallback addFileCallback;
 
     /** Where this file is being added */
-    private TreeItem parentFolderItem;
+    private VisualisationAssetTreeItem parentFolderItem;
 
     /** Characters that are illegal in filenames */
     private String illegalAssetNameCharacters;
@@ -64,7 +63,7 @@ public class VisualisationAssetsUploadFileDialogPresenter
                 protected void onSuccess(final ResourceKey resourceKey) {
                     final String fileName =
                             addFileCallback.getNonClashingLabel(
-                                    (VisualisationAssetTreeItem) parentFolderItem,
+                                    parentFolderItem,
                                     parseFakeFilename(getView().getFileUpload().getFilename()),
                                     null);
 
@@ -105,7 +104,7 @@ public class VisualisationAssetsUploadFileDialogPresenter
      * @param illegalAssetNameCharacters Characters that we don't accept in the filename.
      */
     public void fireShowPopup(final VisualisationAssetsAddFileCallback addFileCallback,
-                              final TreeItem parentFolderItem,
+                              final VisualisationAssetTreeItem parentFolderItem,
                               final String path,
                               final String illegalAssetNameCharacters) {
 

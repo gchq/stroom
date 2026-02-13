@@ -23,6 +23,7 @@ import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.importexport.api.ImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
@@ -32,6 +33,8 @@ import stroom.visualisation.shared.VisualisationDoc;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,10 +45,14 @@ class VisualisationStoreImpl implements VisualisationStore {
 
     private final Store<VisualisationDoc> store;
 
+    private final VisualisationAssetService visualisationAssetService;
+
     @Inject
     VisualisationStoreImpl(final StoreFactory storeFactory,
-                           final VisualisationSerialiser serialiser) {
+                           final VisualisationSerialiser serialiser,
+                           final VisualisationAssetService assetService) {
         this.store = storeFactory.createStore(serialiser, VisualisationDoc.TYPE, VisualisationDoc::builder);
+        this.visualisationAssetService = assetService;
     }
 
     // //////////////////////////////////////////////////////////////////////
@@ -151,17 +158,40 @@ class VisualisationStoreImpl implements VisualisationStore {
                                  final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        return store.importDocument(docRef, importExportDocument, importState, importSettings);
+
+        final DocRef storeDocRef = store.importDocument(docRef, importExportDocument, importState, importSettings);
+
+        // Import the path assets
+        try {
+            visualisationAssetService.setAssetsFromImport(docRef, importExportDocument.getPathAssets());
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+        return storeDocRef;
     }
 
     @Override
     public ImportExportDocument exportDocument(final DocRef docRef,
                                                final boolean omitAuditFields,
                                                final List<Message> messageList) {
+
+        final ImportExportDocument importExportDocument;
         if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
+            importExportDocument = store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
+        } else {
+            importExportDocument = store.exportDocument(docRef, messageList, d -> d);
         }
-        return store.exportDocument(docRef, messageList, d -> d);
+
+        // Get all the assets to be exported to sub-paths
+        try {
+            final Collection<ImportExportAsset> assets = visualisationAssetService.getAssetsForExport(docRef);
+            for (final ImportExportAsset asset : assets) {
+                importExportDocument.addPathAsset(asset);
+            }
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+        return importExportDocument;
     }
 
     @Override

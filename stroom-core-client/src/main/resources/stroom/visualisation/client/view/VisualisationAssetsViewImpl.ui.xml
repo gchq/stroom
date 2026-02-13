@@ -3,6 +3,8 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:c="urn:import:com.google.gwt.user.cellview.client">
     <g:FlowPanel ui:field="rootPanel" styleName="max form-padding form visualisation-assets">
+        <g:ThinSplitLayoutPanel ui:field="splitLayoutPanel" styleName="max">
 
+        </g:ThinSplitLayoutPanel>
     </g:FlowPanel>
 </ui:UiBinder>

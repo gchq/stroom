@@ -41,7 +41,7 @@ jooq {
                         outputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
-                        includes = 'visualisation_assets'
+                        includes = 'visualisation_assets.*'
                         // We don't want to include flyway versioning
                         excludes = 'visualisation_assets_schema_history'
                         // Specify 'version' for use in optimistic concurrency control

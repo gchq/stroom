@@ -16,12 +16,14 @@
 
 package stroom.visualisation.client.view;
 
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.visualisation.client.presenter.VisualisationAssetsPresenter.VisualisationAssetsView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -34,6 +36,12 @@ public class VisualisationAssetsViewImpl extends ViewImpl
 
     @UiField
     FlowPanel rootPanel;
+
+    @UiField
+    ThinSplitLayoutPanel splitLayoutPanel;
+
+    /** Size of tree panel */
+    private static final double TREE_SIZE = 128;
 
     @Inject
     public VisualisationAssetsViewImpl(final Binder binder) {
@@ -51,8 +59,10 @@ public class VisualisationAssetsViewImpl extends ViewImpl
     }
 
     @Override
-    public void setTree(final Tree tree) {
-        rootPanel.add(tree);
+    public void setTreeAndEditor(final Tree tree, final EditorPresenter editorPresenter) {
+        // Note that .add() must be called last
+        splitLayoutPanel.addWest(tree, TREE_SIZE);
+        splitLayoutPanel.add(editorPresenter.getWidget());
     }
 
     // --------------------------------------------------------------------------------

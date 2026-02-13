@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
+import org.jooq.Identity;
 import org.jooq.Name;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
@@ -52,6 +53,11 @@ public class VisualisationAssets extends TableImpl<VisualisationAssetsRecord> {
     }
 
     /**
+     * The column <code>stroom.visualisation_assets.id</code>.
+     */
+    public final TableField<VisualisationAssetsRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+
+    /**
      * The column <code>stroom.visualisation_assets.modified</code>.
      */
     public final TableField<VisualisationAssetsRecord, Long> MODIFIED = createField(DSL.name("modified"), SQLDataType.BIGINT.nullable(false), this, "");
@@ -70,6 +76,11 @@ public class VisualisationAssets extends TableImpl<VisualisationAssetsRecord> {
      * The column <code>stroom.visualisation_assets.path</code>.
      */
     public final TableField<VisualisationAssetsRecord, String> PATH = createField(DSL.name("path"), SQLDataType.VARCHAR(512).nullable(false), this, "");
+
+    /**
+     * The column <code>stroom.visualisation_assets.path_hash</code>.
+     */
+    public final TableField<VisualisationAssetsRecord, byte[]> PATH_HASH = createField(DSL.name("path_hash"), SQLDataType.BINARY(32).nullable(false), this, "");
 
     /**
      * The column <code>stroom.visualisation_assets.is_folder</code>.
@@ -118,13 +129,18 @@ public class VisualisationAssets extends TableImpl<VisualisationAssetsRecord> {
     }
 
     @Override
+    public Identity<VisualisationAssetsRecord, Integer> getIdentity() {
+        return (Identity<VisualisationAssetsRecord, Integer>) super.getIdentity();
+    }
+
+    @Override
     public UniqueKey<VisualisationAssetsRecord> getPrimaryKey() {
         return Keys.KEY_VISUALISATION_ASSETS_PRIMARY;
     }
 
     @Override
     public List<UniqueKey<VisualisationAssetsRecord>> getUniqueKeys() {
-        return Arrays.asList(Keys.KEY_VISUALISATION_ASSETS_K_ASSET_UUID);
+        return Arrays.asList(Keys.KEY_VISUALISATION_ASSETS_K_VISUALISATION_ASSETS, Keys.KEY_VISUALISATION_ASSETS_K_ASSET_UUID);
     }
 
     @Override

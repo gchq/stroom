@@ -20,17 +20,13 @@ import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.importexport.api.ByteArrayImportExportAsset;
-import stroom.importexport.api.ImportExportAsset;
 import stroom.importexport.api.ImportExportDocument;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.string.EncodingUtil;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Collection;
 
 public class VisualisationSerialiser implements DocumentSerialiser2<VisualisationDoc> {
 
@@ -38,16 +34,9 @@ public class VisualisationSerialiser implements DocumentSerialiser2<Visualisatio
 
     private final Serialiser2<VisualisationDoc> delegate;
 
-    private final VisualisationAssetService visualisationAssetService;
-
-    private static final LambdaLogger LOGGER =
-                LambdaLoggerFactory.getLogger(VisualisationSerialiser.class);
-
     @Inject
-    public VisualisationSerialiser(final Serialiser2Factory serialiser2Factory,
-                                   final VisualisationAssetService visualisationAssetService) {
+    public VisualisationSerialiser(final Serialiser2Factory serialiser2Factory) {
         this.delegate = serialiser2Factory.createSerialiser(VisualisationDoc.class);
-        this.visualisationAssetService = visualisationAssetService;
     }
 
     @Override
@@ -73,12 +62,6 @@ public class VisualisationSerialiser implements DocumentSerialiser2<Visualisatio
             document.setSettings(settings);
         }
 
-        // Get all the assets to be exported to sub-paths
-        final Collection<ImportExportAsset> assets = visualisationAssetService.getAssetsForExport(document.getUuid());
-        for (final ImportExportAsset asset : assets) {
-            LOGGER.info("Exporting asset {}", asset);
-            importExportDocument.addPathAsset(asset);
-        }
         return importExportDocument;
     }
 }

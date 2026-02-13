@@ -25,6 +25,7 @@ import java.util.Map;
 )
 @JsonPropertyOrder({
         "ownerId",
+        "dirty",
         "assets",
         "uploadedFiles"
 })
@@ -33,6 +34,9 @@ public class VisualisationAssets {
 
     @JsonProperty
     private final String ownerId;
+
+    @JsonProperty
+    private final Boolean dirty;
 
     @JsonProperty
     private final List<VisualisationAsset> assets = new ArrayList<>();
@@ -55,21 +59,24 @@ public class VisualisationAssets {
      */
     public VisualisationAssets(final String ownerId,
                                final Map<String, ResourceKey> uploadedFiles) {
-        this(ownerId, uploadedFiles, null);
+        this(ownerId, false, uploadedFiles, null);
     }
 
     /**
      * Constructor used for serialisation.
-     * @param ownerId   Document that owns these assets. Must not be null.
+     * @param ownerId       Document that owns these assets. Must not be null.
+     * @param dirty         Whether the data is dirty and needs saving.
      * @param uploadedFiles Files that have been uploaded since last save. Can be null.
      * @param assets        List of all assets. Can be null.
      */
     @SuppressWarnings("unused")
     @JsonCreator
     public VisualisationAssets(@JsonProperty("ownerId") final String ownerId,
+                               @JsonProperty("dirty") final boolean dirty,
                                @JsonProperty("uploadedFiles") final Map<String, ResourceKey> uploadedFiles,
                                @JsonProperty("assets") final Collection<VisualisationAsset> assets) {
         this.ownerId = ownerId;
+        this.dirty = dirty;
         if (uploadedFiles != null) {
             this.uploadedFiles.putAll(uploadedFiles);
         }
@@ -83,6 +90,16 @@ public class VisualisationAssets {
      */
     public String getOwnerId() {
         return ownerId;
+    }
+
+    /**
+     * Note that the server stores 'draft' data for the visualisation assets in a separate table.
+     * Thus, when the server returns the data to the client it may be dirty and need saving.
+     * Saving it means copying from the draft table to the live table.
+     * @return true if the data is dirty and needs saving. False if everything is up to date.
+     */
+    public boolean isDirty() {
+        return dirty;
     }
 
     /**
@@ -119,6 +136,7 @@ public class VisualisationAssets {
     public String toString() {
         return "VisualisationAssets{" +
                "\nownerId=" + ownerId +
+               ", \ndirty=" + dirty +
                ", \nassets=" + assets +
                ", \nuploadedFiles=" + uploadedFiles +
                "\n}";

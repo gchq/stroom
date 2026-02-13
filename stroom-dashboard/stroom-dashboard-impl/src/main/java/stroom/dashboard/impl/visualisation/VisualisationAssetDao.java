@@ -1,9 +1,14 @@
 package stroom.dashboard.impl.visualisation;
 
+import stroom.importexport.api.ImportExportAsset;
 import stroom.visualisation.shared.VisualisationAssets;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Provides a way to store visualisation assets within the database.
@@ -12,40 +17,173 @@ public interface VisualisationAssetDao {
 
     /**
      * Returns all the assets for a given docRef.
-     * @param ownerId The owner of the assets
+     * @param userUuid The user ID that we want draft info for
+     * @param ownerId The document that owns the assets
      * @return Assets to display in UI.
+     * @throws IOException If something goes wrong.
      */
-    VisualisationAssets fetchAssets(String ownerId) throws IOException;
+    VisualisationAssets fetchDraftAssets(String userUuid,
+                                         String ownerId) throws IOException;
 
     /**
-     * Stores all assets for a given DocRef.
-     * @param ownerDocId The document which owns the assets.
-     * @param visAssets  The assets that need to be stored.
+     * Creates a new folder.
+     * The updates are stored in the Draft table and made live by calling saveDraftToLive().
+     * @param userUuid The user ID that is doing the update
+     * @param ownerDocId The document that owns the assets
+     * @param path The path to the folder, including the folder name.
+     * @throws IOException If something goes wrong.
      */
-    void storeAssets(String ownerDocId, VisualisationAssets visAssets) throws IOException;
+    void updateNewFolder(String userUuid,
+                         String ownerDocId,
+                         String path)
+            throws IOException;
 
     /**
-     * Stores the given data in the database.
-     * @param assetId The ID of the visualisation asset we're storing data for.
-     * @param data The data to store.
+     * Creates a new file.
+     * The updates are stored in the Draft table and made live by calling saveDraftToLive().
+     * @param userUuid The user ID that is doing the update
+     * @param ownerDocId The document that owns the assets
+     * @param path The path to the file, including the file name and extension.
+     * @throws IOException If something goes wrong.
      */
-    void storeData(String assetId,  byte[] data) throws IOException;
+    void updateNewFile(String userUuid,
+                       String ownerDocId,
+                       String path)
+            throws IOException;
+
+    /**
+     * Creates a new file from a file upload.
+     * The updates are stored in the Draft table and made live by calling saveDraftToLive().
+     * @param userUuid The user ID that is doing the update
+     * @param ownerDocId The document that owns the assets
+     * @param path The path to the file, including the file name and extension.
+     * @param uploadStream The stream to read the file contents from.
+     *                     Must not be null.
+     * @throws IOException If something goes wrong.
+     */
+    void updateNewUploadedFile(String userUuid,
+                               String ownerDocId,
+                               String path,
+                               InputStream uploadStream)
+            throws IOException;
+
+    /**
+     * Deletes a folder or file.
+     * The updates are stored in the Draft table and made live by calling saveDraftToLive().
+     * @param userUuid The user ID that is doing the update
+     * @param ownerDocId The document that owns the assets
+     * @param path The path to the folder or file to be deleted, including the item name.
+     * @param isFolder Whether the thing being deleted is a file or folder.
+     * @throws IOException If something goes wrong.
+     */
+    void updateDelete(String userUuid,
+                      String ownerDocId,
+                      String path,
+                      boolean isFolder)
+            throws IOException;
+
+    /**
+     * Renames a file or folder.
+     * The updates are stored in the Draft table and made live by calling saveDraftToLive().
+     * @param userUuid The user ID that is doing the update
+     * @param ownerDocId The document that owns the assets
+     * @param oldPath The existing path to the folder or file, including the item name.
+     * @param newPath What the path needs to be changed to.
+     * @param isFolder true if the thing being renamed is a folder, false if it is a file.
+     * @throws IOException If something goes wrong.
+     */
+    void updateRename(String userUuid,
+                      String ownerDocId,
+                      String oldPath,
+                      String newPath,
+                      boolean isFolder)
+            throws IOException;
+
+    /**
+     * Updates the content in a file.
+     * The updates are stored in the Draft table and made live by calling saveDraftToLive().
+     * @param userUuid The user ID that is doing the update
+     * @param ownerDocId The document that owns the assets
+     * @param path The path to the file, including the file name and extension.
+     * @param content The new content for the file.
+     * @throws IOException If something goes wrong.
+     */
+    void updateContent(String userUuid,
+                       String ownerDocId,
+                       String path,
+                       byte[] content)
+            throws IOException;
+
+    /**
+     * Returns the draft content of a text file as a String for editing
+     * in the UI.
+     * @param userUuid The user ID that is doing the update
+     * @param ownerDocId The document that owns the assets
+     * @param path The path to the file, including the file name and extension.
+     * @return The text content, or null if the file isn't text.
+     * @throws IOException if something goes wrong.
+     */
+    String getDraftContent(String userUuid,
+                           String ownerDocId,
+                           String path)
+            throws IOException;
+
+    /**
+     * Copies all draft information into the main storage so it is live.
+     * @param userUuid The user to copy draft information for.
+     * @param documentId The document ID that owns the draft information.
+     * @throws IOException If something goes wrong.
+     */
+    void saveDraftToLive(String userUuid, String documentId) throws IOException;
+
+    /**
+     * Empties the draft data so fetchDraftAssets() will return the Live data again.
+     * @param userUuid Username to revert draft data for.
+     * @param documentId The document ID that owns the draft information.
+     * @throws IOException If something goes wrong.
+     */
+    void revertDraftFromLive(String userUuid, String documentId) throws IOException;
+
+    /**
+     * Returns live assets for serialising the assets for a document ID.
+     * @param ownerId The document that owns the assets
+     * @return ImportExportAssets holding the relevant Import/Export data.
+     * @throws IOException If something goes wrong.
+     */
+    List<ImportExportAsset> getAssetsForExport(String ownerId) throws IOException;
+
+    /**
+     * Imports live assets during import. Called from VisualisationStoreImpl.
+     * @param ownerId The ID of the document that owns these assets.
+     * @param pathAssets The assets that are stored under paths during import/export.
+     * @throws IOException If something goes wrong.
+     */
+    void setAssetsFromImport(String ownerId, Collection<ImportExportAsset> pathAssets) throws IOException;
 
     /**
      * Gets the data for a given asset.
-     * @param documentId The ID of the owner document we want the data for.
+     * @param tempFilePrefix The prefix for the temporary file we'll create.
+     *                       Needed so temporary files can be cleaned up if necessary.
+     * @param tempFileSuffix The suffix for the temporary file we'll create.
+     *                       Needed so temporary files can be cleaned up if necessary.
+     * @param ownerDocId The ID of the owner document we want the data for.
      * @param assetPath The path of the asset within the tree.
-     * @return The data for the asset. Returns null if the asset is not found.
+     * @param cacheTimestamp The timestamp of the file in the cache. We're only
+     *                       interested in files that are later than this.
+     * @param cachedPath The path to the file that we want in the
+     *                   VisualisationAssetServlet cache. This method will write
+     *                   the file content to the cached path, if the data in the
+     *                   database is after the cacheTimestamp.
+     * @return If the file is written then returns the latest DB timestamp.
+     *         Otherwise, returns null.
+     * @throws IOException if something goes wrong.
      */
-    byte[] getData(String documentId, String assetPath) throws IOException;
-
-    /**
-     * Gets the timestamp for the entry for the asset. Returns null if the asset isn't found.
-     * @param documentId The ID of the owner document we want the data for.
-     * @param assetPath The path of the asset within the tree.
-     * @return The timestamp for the asset. Returns null if the asset isn't found.
-     * @throws IOException If something goes wrong.
-     */
-    Instant getModifiedTimestamp(String documentId, String assetPath) throws IOException;
+    Instant writeLiveToServletCache(
+            String tempFilePrefix,
+            String tempFileSuffix,
+            String ownerDocId,
+            String assetPath,
+            Instant cacheTimestamp,
+            Path cachedPath) throws IOException;
 
 }

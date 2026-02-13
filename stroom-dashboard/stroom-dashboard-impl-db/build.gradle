@@ -5,7 +5,7 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dashboard:stroom-dashboard-impl')
     implementation project(':stroom-dashboard:stroom-dashboard-impl-db-jooq')
-
+    implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-db-util')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
