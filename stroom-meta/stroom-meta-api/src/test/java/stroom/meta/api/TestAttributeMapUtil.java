@@ -17,6 +17,7 @@
 package stroom.meta.api;
 
 import stroom.test.common.TestUtil;
+import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.concurrent.UniqueId;
@@ -33,6 +34,7 @@ import io.vavr.Tuple2;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -43,6 +45,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,6 +58,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -119,9 +123,9 @@ class TestAttributeMapUtil {
                 .addCase(" foo : 123 ", attributeMap1)
                 .addCase(" FOO : 123 ", attributeMap1)
                 .addCase("""
-
+                        
                          FOO : 123
-
+                        
                         """, attributeMap1)
                 .addCase("""
                          foo:123
@@ -137,10 +141,10 @@ class TestAttributeMapUtil {
                           BAR : 456
                         foo:123""", attributeMap2) // dup key
                 .addCase("""
-
+                        
                         FOO:123
                         BAR:456
-
+                        
                         """, attributeMap2) // empty lines
                 .addCase("""
                         files:/some/path/file1,/some/path/file2,/some/path/file3
@@ -187,7 +191,7 @@ class TestAttributeMapUtil {
     Stream<DynamicTest> testReadKeys() {
         final String data1 = """
                 three:four
-
+                
                  Foo:Bar \s
                   FeEd: MY_FEED   \s
                  BAR:FOO \s
@@ -222,7 +226,7 @@ class TestAttributeMapUtil {
     void testRead_path(@TempDir final Path tempDir) throws IOException {
         final String data = """
                 three:four
-
+                
                  Foo:Bar \s
                   FeEd: MY_FEED   \s
                  BAR:FOO \s
@@ -250,7 +254,7 @@ class TestAttributeMapUtil {
     void testRead_inputStream(@TempDir final Path tempDir) throws IOException {
         final String data = """
                 three:four
-
+                
                  Foo:Bar \s
                   FeEd: MY_FEED   \s
                  BAR:FOO \s
@@ -280,7 +284,7 @@ class TestAttributeMapUtil {
     void testRead_string() {
         final String data = """
                 three:four
-
+                
                  Foo:Bar \s
                   FeEd: MY_FEED   \s
                  BAR:FOO \s
@@ -693,5 +697,231 @@ class TestAttributeMapUtil {
         assertThat(attributeMap.get(StandardHeaderArguments.RECEIVED_TIME_HISTORY))
                 .isEqualTo(String.join(",",
                         DateUtil.createNormalDateTimeString(time1), DateUtil.createNormalDateTimeString(time2)));
+    }
+
+    @Test
+    void readKeys2(@TempDir final Path tempDir) throws IOException {
+        final AttributeMap attributeMap = new AttributeMap(Map.of(
+                "Animal", "Horse",
+                "Animals", "Tiger,Badger,Toad",
+                "Tree", "Beech",
+                "Food", "Artichoke",
+                "Name", "Brian"));
+
+        final Path tempFile = tempDir.resolve("tempFile");
+        AttributeMapUtil.write(attributeMap, tempFile);
+
+        LOGGER.debug("tempFile content:\n{}", Files.readString(tempFile));
+
+        List<String> values = AttributeMapUtil.readKeys(tempFile, List.of("food", "tree"));
+        assertThat(values)
+                .containsExactly("Artichoke", "Beech");
+
+        values = AttributeMapUtil.readKeys(tempFile, List.of("animals"));
+        assertThat(values)
+                .containsExactly("Tiger,Badger,Toad");
+
+        values = AttributeMapUtil.readKeys(tempFile, List.of("animal"));
+        assertThat(values)
+                .containsExactly("Horse");
+    }
+
+    @Test
+    void readKeys_emptyMap(@TempDir final Path tempDir) throws IOException {
+        final AttributeMap attributeMap = new AttributeMap();
+
+        final Path tempFile = tempDir.resolve("tempFile");
+        AttributeMapUtil.write(attributeMap, tempFile);
+
+        LOGGER.debug("tempFile content:\n{}", Files.readString(tempFile));
+
+        List<String> values = AttributeMapUtil.readKeys(tempFile, List.of("food", "tree", "animals"));
+        assertThat(values)
+                .containsExactly(null, null, null);
+
+        values = AttributeMapUtil.readKeys(tempFile, List.of());
+        assertThat(values)
+                .isEmpty();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testReadKeys(@TempDir final Path tempDir) throws IOException {
+        final Map<String, String> map = new HashMap<>();
+        map.put("key1", "value1");
+        map.put("key11", "value11");
+        map.put("key111", "value111");
+        map.put("key2", "");
+        map.put("key3", null);
+        final AttributeMap attributeMap = new AttributeMap(map);
+        final Path tempFile = tempDir.resolve("tempFile");
+        AttributeMapUtil.write(attributeMap, tempFile);
+
+        LOGGER.debug("tempFile content:\n{}", Files.readString(tempFile));
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withWrappedOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withTestFunction(testCase -> {
+                    try {
+                        return AttributeMapUtil.readKeys(tempFile, testCase.getInput());
+                    } catch (final IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(List.of(), List.of())
+                .addCase(List.of("key11"), List.of("value11"))
+                .addCase(List.of("KEY11"), List.of("value11"))
+                .addCase(List.of("Key11"), List.of("value11"))
+                .addCase(List.of("key1", "key11", "key111"), List.of("value1", "value11", "value111"))
+                .addCase(List.of("key111", "key11", "key1"), List.of("value111", "value11", "value1"))
+                .addCase(List.of("key2", "key3"), Arrays.asList("", null))
+                .addCase(List.of("key1", "unknown", "key11"), Arrays.asList("value1", null, "value11"))
+                .addThrowsCase(List.of("key1", "key1", "key1"), IllegalArgumentException.class)
+                .addThrowsCase(List.of("key1", "KEY1"), IllegalArgumentException.class)
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testReadKeysFromString() throws IOException {
+        final String data = """
+                key1:value1
+                 key11 : value11 \s
+                key111:   value111  \s
+                key2:         \s
+                key3""";
+
+        LOGGER.debug("tempFile content:\n{}", data);
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<String>>() {
+                })
+                .withWrappedOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withTestFunction(testCase -> {
+                    try {
+                        return AttributeMapUtil.readKeys(data, testCase.getInput());
+                    } catch (final IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .withSimpleEqualityAssertion()
+                .addCase(List.of(), List.of())
+                .addCase(List.of("key11"), List.of("value11"))
+                .addCase(List.of("KEY11"), List.of("value11"))
+                .addCase(List.of("Key11"), List.of("value11"))
+                .addCase(List.of("key1", "key11", "key111"), List.of("value1", "value11", "value111"))
+                .addCase(List.of("key111", "key11", "key1"), List.of("value111", "value11", "value1"))
+                .addCase(List.of("key2", "key3"), Arrays.asList("", null))
+                .addCase(List.of("key1", "unknown", "key11"), Arrays.asList("value1", null, "value11"))
+                .addThrowsCase(List.of("key1", "key1", "key1"), IllegalArgumentException.class)
+                .addThrowsCase(List.of("key1", "KEY1"), IllegalArgumentException.class)
+                .build();
+    }
+
+    @Disabled
+    @Test
+    void testReadKeysPerformance(@TempDir final Path tempDir) throws IOException {
+        final String data = """
+                Animal:Horse
+                Mood:Apathetic
+                Animals:Tiger,Badger,Toad
+                Tree:Beech
+                Food:Artichoke
+                Feed:MY_FEED
+                Name:Brian
+                Colour:Teal
+                Weather:Miserable
+                Temperature:Hot
+                Drink:Coffee
+                Car:Model T
+                Date:Fri 13 Feb 12:37:53 GMT 2026
+                Type:Events""";
+        final Path tempFile = tempDir.resolve("tempFile");
+        Files.writeString(tempFile, data);
+
+        final int totalIterations = 100_000;
+        final List<String> keysList = List.of("feed", "type");
+        TestUtil.comparePerformance(
+                5,
+                totalIterations,
+                LOGGER::info,
+                TimedCase.of(
+                        "read",
+                        (round, iterations) -> {
+                            for (int i = 0; i < iterations; i++) {
+                                final AttributeMap attributeMap = new AttributeMap();
+                                AttributeMapUtil.read(data, attributeMap);
+                                final String feed = attributeMap.get("feed");
+                                if (!"MY_FEED".equals(feed)) {
+                                    throw new RuntimeException("Unexpected feed: " + feed);
+                                }
+                                final String type = attributeMap.get("type");
+                                if (!"Events".equals(type)) {
+                                    throw new RuntimeException("Unexpected type: " + type);
+                                }
+                            }
+                        }),
+                TimedCase.of(
+                        "read (file)",
+                        (round, iterations) -> {
+                            for (int i = 0; i < iterations; i++) {
+                                final AttributeMap attributeMap = new AttributeMap();
+                                try {
+                                    AttributeMapUtil.read(tempFile, attributeMap);
+                                    final String feed = attributeMap.get("feed");
+                                    if (!"MY_FEED".equals(feed)) {
+                                        throw new RuntimeException("Unexpected feed: " + feed);
+                                    }
+                                    final String type = attributeMap.get("type");
+                                    if (!"Events".equals(type)) {
+                                        throw new RuntimeException("Unexpected type: " + type);
+                                    }
+                                } catch (final IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
+                        }),
+                TimedCase.of(
+                        "readKeys",
+                        (round, iterations) -> {
+                            for (int i = 0; i < iterations; i++) {
+                                try {
+                                    final List<String> values = AttributeMapUtil.readKeys(data, keysList);
+                                    final String feed = values.get(0);
+                                    if (!"MY_FEED".equals(feed)) {
+                                        throw new RuntimeException("Unexpected feed: " + feed);
+                                    }
+                                    final String type = values.get(1);
+                                    if (!"Events".equals(type)) {
+                                        throw new RuntimeException("Unexpected type: " + type);
+                                    }
+                                } catch (final IOException e) {
+                                    throw new UncheckedIOException(e);
+                                }
+                            }
+                        }),
+                TimedCase.of(
+                        "readKeys (file)",
+                        (round, iterations) -> {
+                            for (int i = 0; i < iterations; i++) {
+                                try {
+                                    final List<String> values = AttributeMapUtil.readKeys(tempFile, keysList);
+                                    final String feed = values.get(0);
+                                    if (!"MY_FEED".equals(feed)) {
+                                        throw new RuntimeException("Unexpected feed: " + feed);
+                                    }
+                                    final String type = values.get(1);
+                                    if (!"Events".equals(type)) {
+                                        throw new RuntimeException("Unexpected type: " + type);
+                                    }
+                                } catch (final IOException e) {
+                                    throw new UncheckedIOException(e);
+                                }
+                            }
+                        })
+        );
     }
 }
