@@ -36,8 +36,7 @@ import stroom.util.shared.http.HttpAuthConfig;
 import stroom.util.shared.http.HttpClientConfig;
 import stroom.util.shared.http.HttpProxyConfig;
 import stroom.util.shared.http.HttpTlsConfig;
-import stroom.util.shared.time.SimpleDuration;
-import stroom.util.time.StroomDuration;
+import stroom.util.time.SimpleDurationUtil;
 
 import dev.langchain4j.http.client.HttpClientBuilder;
 import dev.langchain4j.model.chat.ChatModel;
@@ -288,18 +287,20 @@ public class OpenAIServiceImpl implements OpenAIService {
 
         return HttpClientConfiguration
                 .builder()
-                .timeout(convert(config.getTimeout()))
-                .connectionTimeout(convert(config.getConnectionTimeout()))
-                .connectionRequestTimeout(convert(config.getConnectionRequestTimeout()))
-                .timeToLive(convert(config.getTimeToLive()))
+                .timeout(SimpleDurationUtil.convertToStroomDuration(config.getTimeout()))
+                .connectionTimeout(SimpleDurationUtil.convertToStroomDuration(config.getConnectionTimeout()))
+                .connectionRequestTimeout(
+                        SimpleDurationUtil.convertToStroomDuration(config.getConnectionRequestTimeout()))
+                .timeToLive(SimpleDurationUtil.convertToStroomDuration(config.getTimeToLive()))
                 .cookiesEnabled(config.isCookiesEnabled())
                 .maxConnections(config.getMaxConnections())
                 .maxConnectionsPerRoute(config.getMaxConnectionsPerRoute())
-                .keepAlive(convert(config.getKeepAlive()))
+                .keepAlive(SimpleDurationUtil.convertToStroomDuration(config.getKeepAlive()))
                 .retries(config.getRetries())
                 .userAgent(config.getUserAgent())
                 .proxyConfiguration(convert(config.getProxy()))
-                .validateAfterInactivityPeriod(convert(config.getValidateAfterInactivityPeriod()))
+                .validateAfterInactivityPeriod(
+                        SimpleDurationUtil.convertToStroomDuration(config.getValidateAfterInactivityPeriod()))
                 .tlsConfiguration(convert(config.getTls()))
                 .build();
     }
@@ -369,23 +370,5 @@ public class OpenAIServiceImpl implements OpenAIService {
                 .supportedCiphers(config.getSupportedCiphers())
                 .certAlias(config.getCertAlias())
                 .build();
-    }
-
-    private StroomDuration convert(final SimpleDuration duration) {
-        if (duration == null || duration.getTimeUnit() == null) {
-            return null;
-        }
-
-        return switch (duration.getTimeUnit()) {
-            case NANOSECONDS -> StroomDuration.ofNanos(duration.getTime());
-            case MILLISECONDS -> StroomDuration.ofMillis(duration.getTime());
-            case SECONDS -> StroomDuration.ofSeconds(duration.getTime());
-            case MINUTES -> StroomDuration.ofMinutes(duration.getTime());
-            case HOURS -> StroomDuration.ofHours(duration.getTime());
-            case DAYS -> StroomDuration.ofDays(duration.getTime());
-            case WEEKS -> StroomDuration.ofDays(duration.getTime() * 7);
-            case MONTHS -> StroomDuration.ofDays(duration.getTime() * 31);
-            case YEARS -> StroomDuration.ofDays(duration.getTime() * 365);
-        };
     }
 }

@@ -19,8 +19,6 @@ package stroom.annotation.impl.db;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
-import stroom.db.util.JooqUtil;
-import stroom.db.util.JooqUtil.BooleanOperator;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
 import stroom.util.string.PatternUtil;
@@ -28,7 +26,6 @@ import stroom.util.string.PatternUtil;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.jooq.Condition;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,31 +34,45 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static stroom.annotation.impl.db.jooq.tables.AnnotationFeed.ANNOTATION_FEED;
-
+/**
+ * Cache for mapping annotation feed names to ids.
+ * <p>
+ * This cache uses async execution to avoid thread-local connection conflicts
+ * when accessed from within existing database transaction contexts.
+ */
 @Singleton
 class AnnotationFeedNameToIdCache implements Clearable {
 
     private static final String CACHE_NAME = "Annotation Feed Name To Id Cache";
 
     private final StroomCache<String, Optional<Integer>> cache;
-    private final AnnotationDbConnProvider connectionProvider;
+    private final AnnotationFeedDao annotationFeedDao;
 
     @Inject
-    AnnotationFeedNameToIdCache(final AnnotationDbConnProvider connectionProvider,
+    AnnotationFeedNameToIdCache(final AnnotationFeedDao annotationFeedDao,
                                 final CacheManager cacheManager,
                                 final Provider<AnnotationConfig> annotationConfigProvider) {
-        this.connectionProvider = connectionProvider;
+        this.annotationFeedDao = annotationFeedDao;
         cache = cacheManager.create(
                 CACHE_NAME,
                 () -> annotationConfigProvider.get().getAnnotationFeedCache());
     }
 
     public Integer getOrCreateId(final String name) {
-        if (name != null) {
-            return cache.get(name, k -> Optional.of(load(k))).orElse(null);
+        if (name == null) {
+            return null;
         }
-        return null;
+
+        final Optional<Integer> optional = cache.get(name, k -> Optional.of(loadOrCreate(k)));
+        if (optional.isPresent()) {
+            return optional.get();
+        }
+
+        // If the cache gave us an empty optional then the cache must have already been asked for an id without allowing
+        // create. Assuming this is the case then invalidate the cache and create.
+        final int id = loadOrCreate(name);
+        cache.invalidate(name);
+        return id;
     }
 
     public List<Integer> getIds(final List<String> wildCardedTypeNames) {
@@ -90,60 +101,31 @@ class AnnotationFeedNameToIdCache implements Clearable {
             }
         }
 
-        ids.addAll(fetchWithWildCards(namesNotInCache));
+        ids.addAll(annotationFeedDao.fetchWithWildCards(namesNotInCache));
         return ids.stream().toList();
     }
 
-    private Set<Integer> fetchWithWildCards(final List<String> wildCardedTypeNames) {
-        final Condition condition = JooqUtil.createWildCardedStringsCondition(
-                ANNOTATION_FEED.NAME, wildCardedTypeNames, true, BooleanOperator.OR);
-
-        return JooqUtil.contextResult(connectionProvider, context -> context
-                .select(ANNOTATION_FEED.NAME, ANNOTATION_FEED.ID)
-                .from(ANNOTATION_FEED)
-                .where(condition)
-                .fetchSet(ANNOTATION_FEED.ID));
-    }
-
     public Optional<Integer> getId(final String name) {
-        if (name != null) {
-            return cache.get(name, this::fetch);
+        if (name == null) {
+            return Optional.empty();
         }
-        return Optional.empty();
+        return cache.get(name, this::load);
     }
 
-    private Integer load(final String name) {
-        // Try and get the existing id from the DB.
-        return fetch(name)
-                .or(() -> {
-                    // The id isn't in the DB so create it.
-                    return create(name)
-                            .or(() -> {
-                                // If the id is still null then this may be because the create method failed
-                                // due to the name having been inserted into the DB by another thread prior
-                                // to us calling create and the DB preventing duplicate names.
-                                // Assuming this is the case, try and get the id from the DB one last time.
-                                return fetch(name);
-                            });
-                })
-                .orElseThrow();
+    /**
+     * Load feed name from database asynchronously to avoid connection conflicts.
+     */
+    private Optional<Integer> load(final String name) {
+        return AnnotationFeedDao.async(() -> annotationFeedDao.fetchByName(name));
     }
 
-    private Optional<Integer> fetch(final String name) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
-                .select(ANNOTATION_FEED.ID)
-                .from(ANNOTATION_FEED)
-                .where(ANNOTATION_FEED.NAME.eq(name))
-                .fetchOptional(ANNOTATION_FEED.ID));
-    }
-
-    private Optional<Integer> create(final String name) {
-        return JooqUtil.onDuplicateKeyIgnore(() ->
-                JooqUtil.contextResult(connectionProvider, context -> context
-                        .insertInto(ANNOTATION_FEED, ANNOTATION_FEED.NAME)
-                        .values(name)
-                        .returning(ANNOTATION_FEED.ID)
-                        .fetchOptional(ANNOTATION_FEED.ID)));
+    /**
+     * Load or create feed name from database asynchronously to avoid connection conflicts.
+     */
+    private int loadOrCreate(final String name) {
+        // Try and get the existing id from the DB or else create one.
+        return AnnotationFeedDao.async(() ->
+                annotationFeedDao.fetchByName(name).orElse(annotationFeedDao.create(name)));
     }
 
     @Override

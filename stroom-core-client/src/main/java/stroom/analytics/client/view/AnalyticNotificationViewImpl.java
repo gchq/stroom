@@ -18,6 +18,7 @@ package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AbstractNotificationPresenter.AnalyticNotificationView;
 import stroom.document.client.event.DirtyUiHandlers;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -41,6 +42,8 @@ public class AnalyticNotificationViewImpl
     @UiField
     SimplePanel table;
     @UiField
+    FormGroup includeRuleDocumentationFormGroup;
+    @UiField
     CustomCheckBox includeRuleDocumentation;
 
     @Inject
@@ -59,12 +62,17 @@ public class AnalyticNotificationViewImpl
     }
 
     @Override
-    public Boolean isIncludeRuleDocumentation() {
+    public void setIncludeRuleDocumentationVisible(final boolean visible) {
+        includeRuleDocumentationFormGroup.setVisible(visible);
+    }
+
+    @Override
+    public boolean isIncludeRuleDocumentation() {
         return this.includeRuleDocumentation.getValue();
     }
 
     @Override
-    public void setIncludeRuleDocumentation(final Boolean includeRuleDocumentation) {
+    public void setIncludeRuleDocumentation(final boolean includeRuleDocumentation) {
         this.includeRuleDocumentation.setValue(includeRuleDocumentation);
     }
 

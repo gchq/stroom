@@ -13,6 +13,61 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11-beta.23] - 2026-02-09
+
+* Feature **#5313** : Allow users to prevent empty reports from being sent on a per report basis.
+
+
+## [v7.11-beta.22] - 2026-02-07
+
+* Feature **#5314** : Add `rowCount`, `fileType` (EXCEL|CSV|TSV), `fileName` to the templating context when generating email reports.
+
+* Feature **#5313** : Allow users to prevent empty reports from being sent on a per report basis.
+
+* Feature : Add enabled/disabled styling to table rows in the Report screens.
+
+* Feature : Add column header tool tips to tables in the Report screens.
+
+* Feature : Change the Report > Notifications _Max_ column to be right aligned.
+
+* Feature : Add red/green sytling to the Report > Notifications _Status_ column (Complete/Error).
+
+* Bug : Fix Reports not respecting the start date during execution. It was executing from the last tracker time rather than from the start date, if the start date is later.
+
+
+## [v7.11-beta.21] - 2026-02-04
+
+* Bug **#5384** : Improvements to annotations database code.
+
+
+## [v7.11-beta.20] - 2026-01-28
+
+* Bug **#5360** : Fix NPE when annotation data retention fires change events.
+
+* Bug **#5361** : Fix invalid SQL error when annotation data retention runs.
+
+* Bug : Fix 'Data source already in use' errors when using annotations.
+
+* Bug : Add missing cluster lock protection for annotation data retention job.
+
+* Bug **#5359** : Fix 'Data source already in use' errors in the _Data Delete_ job.
+
+* Bug **#5185** : Fix dashboard maximise NPE.
+
+* Bug **#5370** : Hide rule notification doc checkbox on reports as it is not applicable.
+
+* Bug **#5311** : Fix documentation markdown edit bug.
+
+* Bug **#5234** : Fix spaces in `createAnnotation()` function link text.
+
+* Bug **#5364** : Change PlanB snapshots to prevent closure when in use.
+
+
+## [v7.11-beta.19] - 2026-01-14
+
+* Issue **#5355** : Fix HttpClient being closed by cache while in use.
+
+
 ## [v7.11-beta.18] - 2026-01-13
 
 * Issue **#5303** : Add debug to index dense vector retrieval.
@@ -1945,7 +2000,12 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.18...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.23...HEAD
+[v7.11-beta.23]: https://github.com/gchq/stroom/compare/v7.11-beta.22...v7.11-beta.23
+[v7.11-beta.22]: https://github.com/gchq/stroom/compare/v7.11-beta.21...v7.11-beta.22
+[v7.11-beta.21]: https://github.com/gchq/stroom/compare/v7.11-beta.20...v7.11-beta.21
+[v7.11-beta.20]: https://github.com/gchq/stroom/compare/v7.11-beta.19...v7.11-beta.20
+[v7.11-beta.19]: https://github.com/gchq/stroom/compare/v7.11-beta.18...v7.11-beta.19
 [v7.11-beta.18]: https://github.com/gchq/stroom/compare/v7.11-beta.17...v7.11-beta.18
 [v7.11-beta.17]: https://github.com/gchq/stroom/compare/v7.11-beta.16...v7.11-beta.17
 [v7.11-beta.16]: https://github.com/gchq/stroom/compare/v7.11-beta.15...v7.11-beta.16

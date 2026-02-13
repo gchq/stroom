@@ -45,6 +45,18 @@ import java.util.stream.Stream;
  *     <li>Generate {@link SvgImage} enum containing all the SVGs as string values for use
  *     with inline SVGs in HTML.</li>
  * </ul>
+ * <p>
+ * In addition to generating the modified svg files and the {@link SvgImage} enum, it also produces
+ * {@code colour-swatces.html} and {@code themedIcons.html} and provides command to serve them
+ * with the python simple web server. These contact sheets can be used for checking how icons look
+ * on different backgrounds.
+ * </p>
+ * <ul>
+ * {@code themedIcons.html} - This shows icons against both a light and dark background.
+ * </ul>
+ * <ul>
+ * {@code colour-swatches.html} - This shows icons grouped by their fill colour.
+ * </ul>
  */
 public class GenerateSvgImages {
 
@@ -184,7 +196,7 @@ public class GenerateSvgImages {
 
                         final String enumFieldName = pathToEnumFieldName(relSourcePath);
                         final String className = "svg-image__"
-                                + enumFieldName.toLowerCase().replace('_', '-');
+                                                 + enumFieldName.toLowerCase().replace('_', '-');
                         final boolean isNewName = enumFieldNameSet.add(enumFieldName);
                         if (!isNewName) {
                             System.err.println("Enum field name clash: " + enumFieldName);

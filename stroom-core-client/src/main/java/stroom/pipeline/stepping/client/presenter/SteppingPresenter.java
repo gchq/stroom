@@ -24,6 +24,7 @@ import stroom.data.client.presenter.ExpressionValidator;
 import stroom.data.client.presenter.SourcePresenter;
 import stroom.data.client.presenter.SteppingMetaListPresenter;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -788,11 +789,21 @@ public class SteppingPresenter
         pipelineChangeHandlers.forEach(handler -> handler.accept(pipelineModel));
     }
 
-    public void save() {
-        // Tell all editors to save.
+    public void save(final List<DocRef> docsToSave) {
+        // Tell editors to save if they are in the list.
         for (final Entry<ElementId, ElementPresenter> entry : elementPresenterMap.entrySet()) {
-            entry.getValue().save();
+            final ElementPresenter elementPresenter = entry.getValue();
+            if (docsToSave.contains(elementPresenter.getDocRef())) {
+                elementPresenter.save();
+            }
         }
+    }
+
+    public List<DocRef> getDirtyDocs() {
+        return elementPresenterMap.values().stream()
+                .filter(ElementPresenter::isDirty)
+                .map(ElementPresenter::getDocRef)
+                .collect(Collectors.toList());
     }
 
     private void step(final StepType stepType,
@@ -832,7 +843,7 @@ public class SteppingPresenter
             // Set dirty code on action.
             final Map<String, String> codeMap = new HashMap<>();
             for (final ElementPresenter editorPresenter : elementPresenterMap.values()) {
-                if (editorPresenter.isDirtyCode()) {
+                if (editorPresenter.isDirty()) {
                     final String elementId = editorPresenter.getElement().getId();
                     final String code = editorPresenter.getCode();
                     codeMap.put(elementId, code);

@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
+import java.util.Objects;
 
 @Description(
         "Defines an analytic rule which can be run to alert on events meeting a criteria.\n" +
@@ -44,6 +45,11 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
 
     public static final String TYPE = "AnalyticRule";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ANALYTIC_RULE_DOCUMENT_TYPE;
+
+    private static final boolean INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE = true;
+
+    @JsonProperty
+    private final boolean includeRuleDocumentation;
 
     @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
@@ -76,7 +82,6 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                 createUser,
                 updateUser,
                 description,
-                includeRuleDocumentation,
                 languageVersion,
                 parameters,
                 timeRange,
@@ -89,6 +94,19 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                 rememberNotifications,
                 suppressDuplicateNotifications,
                 duplicateNotificationConfig);
+        this.includeRuleDocumentation = includeRuleDocumentation == null
+                ? INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE
+                : includeRuleDocumentation;
+    }
+
+    /**
+     * The includeRuleDocumentation field determines whether a rule's documentation
+     * will be included in any detections that it produces.
+     *
+     * @return boolean value of includeRuleDocumentation
+     */
+    public boolean isIncludeRuleDocumentation() {
+        return includeRuleDocumentation;
     }
 
     /**
@@ -96,6 +114,30 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
      */
     public static DocRef.TypedBuilder buildDocRef() {
         return DocRef.builder(TYPE);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        final AnalyticRuleDoc that = (AnalyticRuleDoc) o;
+        return includeRuleDocumentation == that.includeRuleDocumentation;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), includeRuleDocumentation);
+    }
+
+    @Override
+    public String toString() {
+        return "AnalyticRuleDoc{" +
+               "includeRuleDocumentation=" + includeRuleDocumentation +
+               '}';
     }
 
     public Builder copy() {
@@ -108,11 +150,19 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
 
     public static class Builder extends AbstractAnalyticRuleDocBuilder<AnalyticRuleDoc, Builder> {
 
+        boolean includeRuleDocumentation = INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE;
+
         public Builder() {
         }
 
         public Builder(final AnalyticRuleDoc doc) {
             super(doc);
+            this.includeRuleDocumentation = doc.includeRuleDocumentation;
+        }
+
+        public Builder includeRuleDocumentation(final boolean includeRuleDocumentation) {
+            this.includeRuleDocumentation = includeRuleDocumentation;
+            return self();
         }
 
         @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.data.store.impl.fs;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.PhysicalDelete;
 import stroom.meta.shared.SimpleMeta;
@@ -104,10 +105,10 @@ public class PhysicalDeleteExecutor {
     }
 
     public void exec() {
-        LOGGER.debug(() -> TASK_NAME + " - Trying lock " + LOCK_NAME);
+        LOGGER.debug("{} - Trying lock {}", TASK_NAME, LOCK_NAME);
         clusterLockService.tryLock(LOCK_NAME, () -> {
             try {
-                LOGGER.debug(() -> TASK_NAME + " - Acquired lock " + LOCK_NAME);
+                LOGGER.debug("{} - Acquired lock {}", TASK_NAME, LOCK_NAME);
                 if (!Thread.currentThread().isInterrupted()) {
                     final DataStoreServiceConfig dataStoreServiceConfig = dataStoreServiceConfigProvider.get();
                     // Monitors all the totals for the whole run
@@ -118,12 +119,12 @@ public class PhysicalDeleteExecutor {
                     progress.logSummaryToInfo("Finished. Summary:");
                 }
             } catch (final RuntimeException e) {
-                LOGGER.error(TASK_NAME + " - " + e.getClass().getSimpleName() + " - " + e.getMessage(), e);
+                LOGGER.error("{} - {} - {}", TASK_NAME, e.getClass().getSimpleName(), e.getMessage(), e);
             }
         });
     }
 
-    public void delete(final Instant deleteThreshold, final Progress progress) {
+    void delete(final Instant deleteThreshold, final Progress progress) {
         if (!Thread.currentThread().isInterrupted()) {
             final DataStoreServiceConfig dataStoreServiceConfig = dataStoreServiceConfigProvider.get();
             final int deleteBatchSize = dataStoreServiceConfig.getDeleteBatchSize();
@@ -132,7 +133,7 @@ public class PhysicalDeleteExecutor {
                     TASK_NAME, deleteThreshold, deleteBatchSize));
 
             Instant slidingDeleteThreshold = deleteThreshold;
-            Instant lastSlidingDeleteThreshold = null;
+            Instant lastSlidingDeleteThreshold;
 
             long count;
             long total = 0;
@@ -143,6 +144,7 @@ public class PhysicalDeleteExecutor {
                 do {
                     // Final copy for lambdas
                     final Instant slidingDeleteThresholdCopy = slidingDeleteThreshold;
+                    final long slidingDeleteThresholdMs = slidingDeleteThreshold.toEpochMilli();
                     if (Thread.currentThread().isInterrupted()) {
                         LOGGER.debug("{} - Thread interrupted", TASK_NAME);
                         break;
@@ -209,17 +211,19 @@ public class PhysicalDeleteExecutor {
                                 TASK_NAME, slidingDeleteThreshold, lastSlidingDeleteThreshold);
 
                         if (NullSafe.hasItems(failedMetaIds)) {
-                            LOGGER.error("{} - Failed to delete files for {} meta records. " +
+                            LOGGER.error("{} - Failed to delete files for {} meta records, sample: {}. " +
                                          "Check logs for error messages.",
-                                    TASK_NAME, failedMetaIds.size());
-                            if (slidingDeleteThreshold != null) {
+                                    TASK_NAME,
+                                    failedMetaIds.size(),
+                                    LogUtil.getSample(failedMetaIds, 20));
 
+                            if (slidingDeleteThreshold != null) {
                                 // As our next batch will be anything <= the new slidingDeleteThreshold, we need
                                 // to exclude any metas that have the same status time as the new threshold
                                 // else they will get picked up again.
                                 final Set<Long> newMetaIdExcludeSet = failedMetaIds.stream()
                                         .filter(failedMeta -> Objects.equals(
-                                                slidingDeleteThresholdCopy,
+                                                slidingDeleteThresholdMs,
                                                 failedMeta.getStatusMs()))
                                         .map(SimpleMeta::getId)
                                         .collect(Collectors.toSet());
@@ -301,9 +305,7 @@ public class PhysicalDeleteExecutor {
                 LOGGER.debug("{} - Aborting as failure threshold breached", TASK_NAME);
             }
         } catch (final InterruptedException e) {
-            LOGGER.debug("{} - {}", TASK_NAME, e.getMessage(), e);
-
-            LOGGER.trace(e::getMessage, e);
+            LOGGER.debug(() -> LogUtil.message("{} - {}", TASK_NAME, LogUtil.exceptionMessage(e)), e);
             // Keep interrupting this thread.
             Thread.currentThread().interrupt();
         }
@@ -433,10 +435,11 @@ public class PhysicalDeleteExecutor {
                             final DataVolume dataVolume = dataVolumeDao.findDataVolume(simpleMeta.getId());
                             final boolean isSuccessful;
                             if (dataVolume == null) {
-                                LOGGER.warn(() -> TASK_NAME + " - Unable to find any volume for " + simpleMeta);
+                                LOGGER.warn("{} - Unable to find any volume for {}", TASK_NAME, simpleMeta);
                                 isSuccessful = true;
                             } else {
-                                switch (dataVolume.getVolume().getVolumeType()) {
+                                final FsVolumeType volumeType = dataVolume.getVolume().getVolumeType();
+                                switch (volumeType) {
                                     case STANDARD -> {
                                         final Path volumePath = pathCreator.toAppPath(dataVolume.getVolume().getPath());
                                         final Path file = fileSystemStreamPathHelper.getRootPath(
@@ -454,20 +457,25 @@ public class PhysicalDeleteExecutor {
                                             dirToVolPathMap.put(dir, volumePath);
                                         } else {
                                             isSuccessful = true;
-                                            LOGGER.warn(TASK_NAME + " - Directory does not exist '" +
-                                                        FileUtil.getCanonicalPath(dir) +
-                                                        "'");
+                                            LOGGER.warn(() -> LogUtil.message(
+                                                    "{} - Directory '{}' does not exist for meta {}",
+                                                    TASK_NAME, FileUtil.getCanonicalPath(dir), simpleMeta));
                                         }
                                     }
                                     case S3 -> {
                                         // FIXME: Add something.
+                                        LOGGER.warn("{} - S3 physical delete currently not implemented. " +
+                                                    "Cannot physically delete simpleMeta: {}",
+                                                TASK_NAME, simpleMeta);
                                         isSuccessful = false;
                                     }
                                     default -> {
+                                        LOGGER.warn(
+                                                "{} - Unknown volume type {}, Cannot physically delete simpleMeta: {}",
+                                                TASK_NAME, volumeType, simpleMeta);
                                         isSuccessful = false;
                                     }
                                 }
-
                             }
 
                             if (isSuccessful) {

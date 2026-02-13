@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,15 +122,15 @@ class TestJsonSerialisation {
 //                        IllegalAccessException e) {
 //                    System.err.println(e.getMessage());
 //                }
-////                AnnotationInfo routeAnnotationInfo = routeClassInfo.getAnnotationInfo(routeAnnotation);
-////                List<AnnotationParameterValue> routeParamVals = routeAnnotationInfo.getParameterValues();
-////                // @com.xyz.Route has one required parameter
-////                String route = (String) routeParamVals.get(0).getValue();
-////                System.out.println(routeClassInfo.getName() + " is annotated with route " + route);
+
+    /// /                AnnotationInfo routeAnnotationInfo = routeClassInfo.getAnnotationInfo(routeAnnotation);
+    /// /                List<AnnotationParameterValue> routeParamVals = routeAnnotationInfo.getParameterValues();
+    /// /                // @com.xyz.Route has one required parameter
+    /// /                String route = (String) routeParamVals.get(0).getValue();
+    /// /                System.out.println(routeClassInfo.getName() + " is annotated with route " + route);
 //            }
 //        }
 //    }
-
     @BeforeAll
     static void setup() {
         RESOURCE_RELATED_CLASSES = getResourceRelatedClasses();
@@ -287,8 +287,12 @@ class TestJsonSerialisation {
                 final Field[] fields = clazz.getDeclaredFields();
                 for (final Field field : fields) {
                     // Don't care about static as they are not serialised.
+                    // Don't care about transient as they are not serialised.
+                    // Don't care about @JsonIgnore as they are not serialised.
                     if (Map.class.isAssignableFrom(field.getType())
-                        && !Modifier.isStatic(field.getModifiers())) {
+                        && !Modifier.isStatic(field.getModifiers())
+                        && !Modifier.isTransient(field.getModifiers())
+                        && !field.isAnnotationPresent(JsonIgnore.class)) {
                         final ParameterizedType parameterizedType = (ParameterizedType) field.getGenericType();
                         final Type keyType = parameterizedType.getActualTypeArguments()[0];
                         if (!(keyType instanceof Class && ((Class<?>) keyType).isEnum())) {

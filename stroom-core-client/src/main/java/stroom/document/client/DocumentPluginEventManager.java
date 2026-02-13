@@ -315,9 +315,9 @@ public class DocumentPluginEventManager extends Plugin {
             }
         }));
 
-        //////////////////////////////
+        // ---------------------------------------------------------------------
         // START EXPLORER EVENTS
-        ///////////////////////////////
+        // ---------------------------------------------------------------------/
 
         // 1. Handle entity creation events.
         registerHandler(getEventBus().addHandler(CreateDocumentEvent.getType(), event ->
@@ -444,9 +444,9 @@ public class DocumentPluginEventManager extends Plugin {
             setAsFavourite(event.getDocRef(), event.getSetFavourite(), explorerListener);
         }));
 
-        //////////////////////////////
+        // ---------------------------------------------------------------------
         // END EXPLORER EVENTS
-        ///////////////////////////////
+        // ---------------------------------------------------------------------/
 
 
         // Handle the display of the `New` item menu

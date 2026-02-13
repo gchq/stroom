@@ -17,6 +17,7 @@
 package stroom.util.scheduler;
 
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 
 import java.time.Instant;
 
@@ -29,8 +30,8 @@ public class FrequencyTrigger implements Trigger {
     }
 
     public FrequencyTrigger(final String frequency) {
-        if (frequency == null || frequency.trim().length() == 0) {
-            throw new NumberFormatException("Frequency expression cannot be null");
+        if (NullSafe.isBlankString(frequency)) {
+            throw new NumberFormatException("Frequency expression cannot be null/blank");
         }
 
         final Long duration = ModelStringUtil.parseDurationString(frequency);

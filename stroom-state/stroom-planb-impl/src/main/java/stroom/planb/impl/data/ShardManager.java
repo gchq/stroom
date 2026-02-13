@@ -24,7 +24,9 @@ import stroom.node.api.NodeInfo;
 import stroom.planb.impl.PlanBConfig;
 import stroom.planb.impl.PlanBDocCache;
 import stroom.planb.impl.PlanBDocStore;
+import stroom.planb.impl.data.SnapshotShard.DbFactory;
 import stroom.planb.impl.db.Db;
+import stroom.planb.impl.db.PlanBDb;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDoc;
 import stroom.task.api.TaskContext;
@@ -57,6 +59,8 @@ public class ShardManager {
 
     public static final String CLEANUP_TASK_NAME = "Plan B Cleanup";
     public static final String SNAPSHOT_CREATOR_TASK_NAME = "Plan B Snapshot Creator";
+
+    private static final DbFactory DB_FACTORY = PlanBDb::open;
 
     private final ByteBuffers byteBuffers;
     private final ByteBufferFactory byteBufferFactory;
@@ -278,7 +282,8 @@ public class ShardManager {
                     configProvider,
                     statePaths,
                     fileTransferClient,
-                    doc);
+                    doc,
+                    DB_FACTORY);
         }
         return new StoreShard(
                 byteBuffers,

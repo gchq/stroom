@@ -2800,7 +2800,7 @@ paths:
       summary: Update an Elasticsearch index doc
       tags:
       - Elastic Indices
-  /entityEvent/v1/{nodeName}:
+  /entityEvent/v1/fireEvent/{nodeName}:
     put:
       operationId: fireEntityEvent
       parameters:
@@ -2824,6 +2824,32 @@ paths:
                 type: boolean
           description: default response
       summary: Sends an entity event
+      tags:
+      - Entity Events
+  /entityEvent/v1/fireEvents/{nodeName}:
+    put:
+      operationId: fireEntityEventBatch
+      parameters:
+      - in: path
+        name: nodeName
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EntityEventBatch"
+        description: entityevents
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Sends a batch of entity events
       tags:
       - Entity Events
   /executionSchedule/v1/createExecutionSchedule:
@@ -12132,6 +12158,15 @@ components:
           $ref: "#/components/schemas/DocRef"
         oldDocRef:
           $ref: "#/components/schemas/DocRef"
+    EntityEventBatch:
+      type: object
+      properties:
+        entityEvents:
+          type: array
+          items:
+            $ref: "#/components/schemas/EntityEvent"
+        homogeneousBatch:
+          type: boolean
     Entry:
       type: object
       properties:
@@ -16921,8 +16956,6 @@ components:
           $ref: "#/components/schemas/DuplicateNotificationConfig"
         errorFeed:
           $ref: "#/components/schemas/DocRef"
-        includeRuleDocumentation:
-          type: boolean
         languageVersion:
           type: string
           enum:

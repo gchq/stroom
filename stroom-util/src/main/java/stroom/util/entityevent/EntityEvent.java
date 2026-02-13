@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -92,15 +93,29 @@ public class EntityEvent {
         return oldDocRef;
     }
 
+    /**
+     * Gets the type of {@link EntityEvent#getDocRef()}.
+     *
+     * @return The docRef type
+     */
+    @JsonIgnore
+    public String getType() {
+        return docRef.getType();
+    }
+
     public EntityAction getAction() {
         return action;
+    }
+
+    public EntityEventKey asEntityEventKey() {
+        return new EntityEventKey(this);
     }
 
     @Override
     public String toString() {
         return action + " "
-                + docRef
-                + (oldDocRef != null
+               + docRef
+               + (oldDocRef != null
                 ? " (oldDocRef: " + oldDocRef + ")"
                 : "");
     }
@@ -114,8 +129,9 @@ public class EntityEvent {
             return false;
         }
         final EntityEvent that = (EntityEvent) o;
-        return Objects.equals(docRef, that.docRef) && Objects.equals(oldDocRef,
-                that.oldDocRef) && action == that.action;
+        return Objects.equals(docRef, that.docRef)
+               && Objects.equals(oldDocRef, that.oldDocRef)
+               && action == that.action;
     }
 
     @Override

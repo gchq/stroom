@@ -5,14 +5,11 @@ buildscript {
     }
     dependencies {
         classpath libs.mysql.connector.java
-        //classpath 'org.reflections:reflections:0.9.12'
     }
 }
 
 plugins {
-//    id "com.benjaminsproule.swagger" version "1.0.14"
-    //id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.1"
-    id "io.swagger.core.v3.swagger-gradle-plugin" version "2.2.19"
+    alias libs.plugins.swagger.gradle.plugin
     id "java"
 }
 

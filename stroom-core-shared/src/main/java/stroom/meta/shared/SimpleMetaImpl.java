@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class SimpleMetaImpl implements SimpleMeta {
         return createMs;
     }
 
-//    @Override
+    //    @Override
 //    @JsonIgnore
 //    public Instant getCreateTime() {
 //        return Instant.ofEpochMilli(createMs);
@@ -83,7 +83,7 @@ public class SimpleMetaImpl implements SimpleMeta {
         return statusMs;
     }
 
-//    @Override
+    //    @Override
 //    @JsonIgnore
 //    public Optional<Instant> getStatusTime() {
 //        return Optional.ofNullable(statusMs)
@@ -109,7 +109,7 @@ public class SimpleMetaImpl implements SimpleMeta {
 
     @Override
     public String toString() {
-        return String.join(":", feedName, typeName, Long.toString(id));
+        return String.join(":", Long.toString(id), feedName, typeName);
     }
 
     public static Builder builder() {

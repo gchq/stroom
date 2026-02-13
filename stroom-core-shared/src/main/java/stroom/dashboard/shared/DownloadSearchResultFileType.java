@@ -18,21 +18,24 @@ package stroom.dashboard.shared;
 
 import stroom.docref.HasDisplayValue;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
 public enum DownloadSearchResultFileType implements HasDisplayValue {
     EXCEL("Excel", "xlsx"),
     CSV("CSV", "csv"),
-    TSV("TSV", "tsv");
+    TSV("TSV", "tsv"),
+    ;
 
-    private final String name;
+    private final String displayValue;
     private final String extension;
 
-    DownloadSearchResultFileType(final String name, final String extension) {
-        this.name = name;
-        this.extension = extension;
-    }
-
-    public String getName() {
-        return name;
+    DownloadSearchResultFileType(final String displayValue, final String extension) {
+        this.displayValue = Objects.requireNonNull(displayValue);
+        this.extension = Objects.requireNonNull(extension);
     }
 
     public String getExtension() {
@@ -41,6 +44,17 @@ public enum DownloadSearchResultFileType implements HasDisplayValue {
 
     @Override
     public String getDisplayValue() {
-        return name;
+        return displayValue;
+    }
+
+    /**
+     * @return A list of the {@link DownloadSearchResultFileType} values sorted
+     * in natural order by their displayValue.
+     */
+    public static List<DownloadSearchResultFileType> asSortedList() {
+        //noinspection SimplifyStreamApiCallChains // Cos GWT
+        return Arrays.stream(DownloadSearchResultFileType.values())
+                .sorted(Comparator.comparing(DownloadSearchResultFileType::getDisplayValue))
+                .collect(Collectors.toUnmodifiableList());
     }
 }

@@ -80,7 +80,7 @@ public class Hyperlink {
                     }
                     final String target = nextToken(value, index, '<', '>');
                     hyperlink = new Builder()
-                            .text(text)
+                            .text(decode(text))
                             .href(decode(href))
                             .type(type)
                             .target(target)
@@ -125,20 +125,9 @@ public class Hyperlink {
         return null;
     }
 
-//    private static void throwException(final String value,
-//                                       final int pos,
-//                                       final char startChar,
-//                                       final char endChar) throws MalformedLinkException {
-//        throw new MalformedLinkException("Invalid required token in value '" + value
-//                                         + "', pos: " + pos
-//                                         + ", startChar: '" + startChar
-//                                         + "' endChar: '" + endChar + "'");
-//    }
-
     public String getText() {
         // Why are we decoding the plain text part?
         return text;
-//        return text;
     }
 
     public String getHref() {
@@ -213,7 +202,7 @@ public class Hyperlink {
         final StringBuilder sb = new StringBuilder();
         if (text != null) {
             sb.append("[");
-            sb.append(text);
+            sb.append(encode(text));
             sb.append("]");
         }
         if (href != null) {

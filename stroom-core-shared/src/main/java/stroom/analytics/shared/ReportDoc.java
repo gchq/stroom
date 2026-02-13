@@ -22,6 +22,7 @@ import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.Param;
 import stroom.query.api.TimeRange;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -45,31 +46,31 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
     @JsonProperty
     private final ReportSettings reportSettings;
 
-    @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
-    public ReportDoc(@JsonProperty("uuid") final String uuid,
-                     @JsonProperty("name") final String name,
-                     @JsonProperty("version") final String version,
-                     @JsonProperty("createTimeMs") final Long createTimeMs,
-                     @JsonProperty("updateTimeMs") final Long updateTimeMs,
-                     @JsonProperty("createUser") final String createUser,
-                     @JsonProperty("updateUser") final String updateUser,
-                     @JsonProperty("description") final String description,
-                     @JsonProperty("includeRuleDocumentation") final Boolean includeRuleDocumentation,
-                     @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
-                     @JsonProperty("parameters") final List<Param> parameters,
-                     @JsonProperty("timeRange") final TimeRange timeRange,
-                     @JsonProperty("query") final String query,
-                     @JsonProperty("analyticProcessType") final AnalyticProcessType analyticProcessType,
-                     @JsonProperty("analyticProcessConfig") final AnalyticProcessConfig analyticProcessConfig,
-                     @Deprecated @JsonProperty("analyticNotificationConfig") final NotificationConfig analyticNotificationConfig,
-                     @JsonProperty("notifications") final List<NotificationConfig> notifications,
-                     @JsonProperty("errorFeed") final DocRef errorFeed,
-                     @JsonProperty("rememberNotifications") final boolean rememberNotifications,
-                     @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
-                     @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
-                     @JsonProperty("reportSettings") final ReportSettings reportSettings) {
-        super(TYPE, uuid,
+    public ReportDoc(
+            @JsonProperty("uuid") final String uuid,
+            @JsonProperty("name") final String name,
+            @JsonProperty("version") final String version,
+            @JsonProperty("createTimeMs") final Long createTimeMs,
+            @JsonProperty("updateTimeMs") final Long updateTimeMs,
+            @JsonProperty("createUser") final String createUser,
+            @JsonProperty("updateUser") final String updateUser,
+            @JsonProperty("description") final String description,
+            @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
+            @JsonProperty("parameters") final List<Param> parameters,
+            @JsonProperty("timeRange") final TimeRange timeRange,
+            @JsonProperty("query") final String query,
+            @JsonProperty("analyticProcessType") final AnalyticProcessType analyticProcessType,
+            @JsonProperty("analyticProcessConfig") final AnalyticProcessConfig analyticProcessConfig,
+            @Deprecated @JsonProperty("analyticNotificationConfig") final NotificationConfig analyticNotificationConfig,
+            @JsonProperty("notifications") final List<NotificationConfig> notifications,
+            @JsonProperty("errorFeed") final DocRef errorFeed,
+            @JsonProperty("rememberNotifications") final boolean rememberNotifications,
+            @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
+            @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
+            @JsonProperty("reportSettings") final ReportSettings reportSettings) {
+        super(TYPE,
+                uuid,
                 name,
                 version,
                 createTimeMs,
@@ -77,7 +78,6 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                 createUser,
                 updateUser,
                 description,
-                includeRuleDocumentation,
                 languageVersion,
                 parameters,
                 timeRange,
@@ -90,7 +90,10 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                 rememberNotifications,
                 suppressDuplicateNotifications,
                 duplicateNotificationConfig);
-        this.reportSettings = reportSettings;
+
+        this.reportSettings = NullSafe.requireNonNullElseGet(
+                reportSettings,
+                () -> ReportSettings.builder().build());
     }
 
     /**
@@ -106,9 +109,6 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
@@ -139,6 +139,10 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
         return new Builder();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Builder extends AbstractAnalyticRuleDocBuilder<ReportDoc, Builder> {
 
         private ReportSettings reportSettings;
@@ -152,7 +156,7 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
         }
 
         public Builder reportSettings(final ReportSettings reportSettings) {
-            this.reportSettings = reportSettings;
+            this.reportSettings = Objects.requireNonNull(reportSettings);
             return self();
         }
 
@@ -172,7 +176,6 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                     createUser,
                     updateUser,
                     description,
-                    includeRuleDocumentation,
                     languageVersion,
                     parameters,
                     timeRange,

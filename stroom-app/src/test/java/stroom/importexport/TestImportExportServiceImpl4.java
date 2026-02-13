@@ -16,7 +16,6 @@
 
 package stroom.importexport;
 
-
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
@@ -93,9 +92,9 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
                 "DATA_SPLITTER-EVENTS",
                 builder);
 
-        /////////////////////////////////////////////////
+        // ---------------------------------------------------------------------
         // CHECK RENAME
-        /////////////////////////////////////////////////
+        // ---------------------------------------------------------------------
 
         // Rename doc.
         final DocRef renamedPipelineDocRef = new DocRef(
@@ -121,9 +120,9 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
                 "DATA_SPLITTER-EVENTS",
                 builder);
 
-        /////////////////////////////////////////////////
+        // ---------------------------------------------------------------------
         // CHECK FOLDER MOVE
-        /////////////////////////////////////////////////
+        // ---------------------------------------------------------------------
 
         builder.useImportNames(false);
         builder.useImportFolders(false);
@@ -166,9 +165,9 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
                 "DATA_SPLITTER-EVENTS",
                 builder);
 
-        /////////////////////////////////////////////////
+        // ---------------------------------------------------------------------
         // CHECK NEW
-        /////////////////////////////////////////////////
+        // ---------------------------------------------------------------------
         explorerNodeService.renameNode(renamedPipelineDocRef);
         explorerNodeService.moveNode(PIPELINE_DOC_REF, destFolder, PermissionInheritance.DESTINATION);
         builder.useImportNames(false);
@@ -187,9 +186,9 @@ class TestImportExportServiceImpl4 extends AbstractCoreIntegrationTest {
                 "DATA_SPLITTER-EVENTS",
                 builder);
 
-        /////////////////////////////////////////////////
+        // ---------------------------------------------------------------------
         // CHECK NEW ROOT
-        /////////////////////////////////////////////////
+        // ---------------------------------------------------------------------
         final DocRef rootDocRef =
                 new DocRef(ExplorerConstants.FOLDER_TYPE, UUID.randomUUID().toString(), "New Root");
         explorerNodeService.createNode(rootDocRef, rootNode.getDocRef(), PermissionInheritance.DESTINATION);
