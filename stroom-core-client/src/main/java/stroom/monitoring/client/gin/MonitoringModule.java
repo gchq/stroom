@@ -37,7 +37,6 @@ import stroom.monitoring.client.ExecutionScheduleManagerPlugin;
 import stroom.monitoring.client.JobListPlugin;
 import stroom.monitoring.client.NodeGroupsPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
-import stroom.monitoring.client.ExecutionScheduleManagerPlugin;
 import stroom.monitoring.client.ProcessorProfilePlugin;
 import stroom.node.client.ManageGlobalPropertiesPlugin;
 import stroom.node.client.presenter.NodeGroupEditPresenter;
