@@ -137,21 +137,18 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     }
 
     @Override
-    public void addInfoLabel(final HTML label)
-    {
+    public void addInfoLabel(final HTML label) {
         toolbarWidgets.add(label);
     }
 
     @Override
-    public HTML getInfoLabel(final int index)
-    {
+    public HTML getInfoLabel(final int index) {
         int countSeen = 0;
-        for(final Widget widget : toolbarWidgets) {
-            if(widget instanceof HTML) {
-                if(countSeen == index) {
+        for (final Widget widget : toolbarWidgets) {
+            if (widget instanceof HTML) {
+                if (countSeen == index) {
                     return (HTML) widget;
-                }
-                else {
+                } else {
                     countSeen++;
                 }
             }

@@ -42,8 +42,8 @@ public final class ExplorerConstants {
             .docRef(FAVOURITES_DOC_REF)
             .rootNodeUuid(FAVOURITES_DOC_REF.getUuid())
             .build();
-    
     public static final ArrayList<String> FOLDER_LIKE = new ArrayList<>();
+
     static {
         FOLDER_LIKE.add("Folder");
         FOLDER_LIKE.add("GitRepo");

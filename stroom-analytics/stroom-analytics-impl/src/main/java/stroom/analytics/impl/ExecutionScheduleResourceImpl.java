@@ -113,20 +113,21 @@ class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
             final List<ExecutionSchedule> analyticRuleSchedules = new ArrayList<>();
             final List<ExecutionSchedule> reportSchedules = new ArrayList<>();
             for (final ExecutionSchedule schedule : schedules) {
-                switch(schedule.getOwningDoc().getType()) {
+                switch (schedule.getOwningDoc().getType()) {
                     case AnalyticRuleDoc.TYPE -> analyticRuleSchedules.add(schedule);
                     case ReportDoc.TYPE -> reportSchedules.add(schedule);
-                    default -> throw new UnsupportedOperationException("Unsupported execution schedule type: " + schedule.getOwningDoc().getType());
+                    default -> throw new UnsupportedOperationException(
+                            "Unsupported execution schedule type: " + schedule.getOwningDoc().getType()
+                    );
                 }
             }
-            if(!analyticRuleSchedules.isEmpty()) {
+            if (!analyticRuleSchedules.isEmpty()) {
                 scheduledQueryAnalyticExecutor.execFromSchedules(analyticRuleSchedules);
             }
-            if(!reportSchedules.isEmpty()) {
+            if (!reportSchedules.isEmpty()) {
                 reportExecutor.execFromSchedules(reportSchedules);
             }
-        }
-        catch (final RuntimeException e) {
+        } catch (final RuntimeException e) {
             LOGGER.error(() ->
                     LogUtil.message("Error during forced schedule processing: {}", e.getMessage()), e);
             return false;
