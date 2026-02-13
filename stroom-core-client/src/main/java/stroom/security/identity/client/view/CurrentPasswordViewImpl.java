@@ -95,11 +95,13 @@ public class CurrentPasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHan
 
     private void onKeyDown(final KeyDownEvent e) {
         if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-            getUiHandlers().hideRequest(new HideRequest(DialogAction.builder().type(DialogActionType.OK).build(), () -> {
-            }));
+            getUiHandlers().hideRequest(
+                    new HideRequest(DialogAction.builder().type(DialogActionType.OK).build(), () -> {})
+            );
         } else if (e.getNativeKeyCode() == KeyCodes.KEY_ESCAPE) {
-            getUiHandlers().hideRequest(new HideRequest(DialogAction.builder().type(DialogActionType.CANCEL).build(), () -> {
-            }));
+            getUiHandlers().hideRequest(
+                    new HideRequest(DialogAction.builder().type(DialogActionType.CANCEL).build(), () -> {})
+            );
         }
     }
 

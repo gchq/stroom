@@ -63,10 +63,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static org.jooq.impl.DSL.field;
 import static stroom.analytics.impl.db.jooq.tables.ExecutionHistory.EXECUTION_HISTORY;
 import static stroom.analytics.impl.db.jooq.tables.ExecutionSchedule.EXECUTION_SCHEDULE;
 import static stroom.analytics.impl.db.jooq.tables.ExecutionTracker.EXECUTION_TRACKER;
@@ -96,19 +93,38 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
         expressionMapper.map(ExecutionScheduleFields.FIELD_ENABLED, EXECUTION_SCHEDULE.ENABLED, Boolean::valueOf);
         expressionMapper.map(ExecutionScheduleFields.FIELD_NODE_NAME, EXECUTION_SCHEDULE.NODE_NAME, String::valueOf);
         expressionMapper.map(ExecutionScheduleFields.FIELD_SCHEDULE, EXECUTION_SCHEDULE.EXPRESSION, String::valueOf);
-        expressionMapper.map(ExecutionScheduleFields.FIELD_SCHEDULE_TYPE, EXECUTION_SCHEDULE.SCHEDULE_TYPE, String::valueOf);
-        expressionMapper.map(ExecutionScheduleFields.FIELD_RUN_AS_USER, EXECUTION_SCHEDULE.RUN_AS_USER_UUID, String::valueOf);
+        expressionMapper.map(
+                ExecutionScheduleFields.FIELD_SCHEDULE_TYPE,
+                EXECUTION_SCHEDULE.SCHEDULE_TYPE,
+                String::valueOf
+        );
+        expressionMapper.map(
+                ExecutionScheduleFields.FIELD_RUN_AS_USER,
+                EXECUTION_SCHEDULE.RUN_AS_USER_UUID,
+                String::valueOf
+        );
         expressionMapper.map(ExecutionScheduleFields.FIELD_START_TIME, EXECUTION_SCHEDULE.START_TIME_MS, Long::valueOf);
         expressionMapper.map(ExecutionScheduleFields.FIELD_END_TIME, EXECUTION_SCHEDULE.END_TIME_MS, Long::valueOf);
         // Get 0-many uuids for a pipe name (partial/wild-carded)
         expressionMapper.multiMap(
-                ExecutionScheduleFields.FIELD_PARENT_RULE, EXECUTION_SCHEDULE.DOC_UUID, this::getRuleUuidsByName, true);
+                ExecutionScheduleFields.FIELD_PARENT_RULE,
+                EXECUTION_SCHEDULE.DOC_UUID,
+                this::getRuleUuidsByName,
+                true
+        );
         expressionMapper.multiMap(
-                ExecutionScheduleFields.FIELD_PARENT_REPORT, EXECUTION_SCHEDULE.DOC_UUID, this::getReportUuidsByName, true);
-        expressionMapper.map(ExecutionScheduleFields.FIELD_PARENT_DOC_TYPE, EXECUTION_SCHEDULE.DOC_TYPE, String::valueOf);
-
-
+                ExecutionScheduleFields.FIELD_PARENT_REPORT,
+                EXECUTION_SCHEDULE.DOC_UUID,
+                this::getReportUuidsByName,
+                true
+        );
+        expressionMapper.map(
+                ExecutionScheduleFields.FIELD_PARENT_DOC_TYPE,
+                EXECUTION_SCHEDULE.DOC_TYPE,
+                String::valueOf
+        );
     }
+
     private List<String> getRuleUuidsByName(final List<String> names) {
         //May be able to join with reports but would likely require a breaking change to QueryField.
 
@@ -152,13 +168,13 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
     @Override
     public ResultPage<ExecutionSchedule> fetchExecutionSchedule(final ExecutionScheduleRequest request) {
         //Move to a software sort if non-table columns are part of the sort
-        if(request.getSortList() != null && !request.getSortList().isEmpty()) {
-            for(final CriteriaFieldSort sort : request.getSortList()) {
-                if(ExecutionScheduleFields.PARENT_DOC.equals(sort.getId())
-                   || ExecutionScheduleFields.SCHEDULE.equals(sort.getId())
-                   || ExecutionScheduleFields.RUN_AS_USER.equals(sort.getId())
-                   || UserFields.DISPLAY_NAME.getFldName().equals(sort.getId())
-                   || ExecutionScheduleFields.PARENT_DOC_TYPE.equals(sort.getId())) {
+        if (request.getSortList() != null && !request.getSortList().isEmpty()) {
+            for (final CriteriaFieldSort sort : request.getSortList()) {
+                if (ExecutionScheduleFields.PARENT_DOC.equals(sort.getId())
+                    || ExecutionScheduleFields.SCHEDULE.equals(sort.getId())
+                    || ExecutionScheduleFields.RUN_AS_USER.equals(sort.getId())
+                    || UserFields.DISPLAY_NAME.getFldName().equals(sort.getId())
+                    || ExecutionScheduleFields.PARENT_DOC_TYPE.equals(sort.getId())) {
                     return getSoftwareSortedSchedules(request);
                 }
             }
@@ -205,7 +221,8 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
 
     //Handles retrieval of rules when you can't just sort based on database columns.
     //Currently includes RULE_NAME, RUN_AS_USER, and SCHEDULE.
-    //TODO 8192 Is support for multiple sorts necessary? Currently does not support the other sort types so cannot combine all sorts.
+    //TODO 8192 Is support for multiple sorts necessary?
+    // Currently does not support the other sort types so cannot combine all sorts.
     private ResultPage<ExecutionSchedule> getSoftwareSortedSchedules(final ExecutionScheduleRequest request) {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 Optional.ofNullable(request.getOwnerDocRef())
@@ -242,14 +259,14 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                 .map(this::recordToExecutionSchedule);
 
         request.getSortList().forEach(sort -> {
-            if(ExecutionScheduleFields.PARENT_DOC.equals(sort.getId())) {
+            if (ExecutionScheduleFields.PARENT_DOC.equals(sort.getId())) {
                 list.sort((a, b) -> {
                     final String aName = docRefInfoService.name(a.getOwningDoc()).orElse("");
                     final String bName = docRefInfoService.name(b.getOwningDoc()).orElse("");
                     return sort.isDesc() ? -aName.compareToIgnoreCase(bName) : aName.compareToIgnoreCase(bName);
                 });
             }
-            if(ExecutionScheduleFields.PARENT_DOC_TYPE.equals(sort.getId())) {
+            if (ExecutionScheduleFields.PARENT_DOC_TYPE.equals(sort.getId())) {
                 list.sort((a, b) -> {
                     final Optional<DocRefInfo> aInfo = docRefInfoService.info(a.getOwningDoc());
                     final Optional<DocRefInfo> bInfo = docRefInfoService.info(b.getOwningDoc());
@@ -260,27 +277,29 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                     return sort.isDesc() ? -aType.compareToIgnoreCase(bType) : aType.compareToIgnoreCase(bType);
                 });
             }
-            if(ExecutionScheduleFields.SCHEDULE.equals(sort.getId())) {
+            if (ExecutionScheduleFields.SCHEDULE.equals(sort.getId())) {
                 list.sort((a, b) -> {
                     final Schedule aSchedule = a.getSchedule();
                     final Schedule bSchedule = b.getSchedule();
                     //Split the two types
-                    if(!aSchedule.getType().equals(bSchedule.getType())) {
-                        return sort.isDesc() ? -aSchedule.getType().compareTo(bSchedule.getType()) : aSchedule.getType().compareTo(bSchedule.getType());
+                    if (!aSchedule.getType().equals(bSchedule.getType())) {
+                        return sort.isDesc()
+                                ? -aSchedule.getType().compareTo(bSchedule.getType())
+                                : aSchedule.getType().compareTo(bSchedule.getType());
                     }
                     //Sort by simple frequency
-                    if(aSchedule.getType() == ScheduleType.FREQUENCY) {
+                    if (aSchedule.getType() == ScheduleType.FREQUENCY) {
                         final Long aFreq = ModelStringUtil.parseDurationString(aSchedule.getExpression());
                         final Long bFreq = ModelStringUtil.parseDurationString(bSchedule.getExpression());
                         return sort.isDesc() ? -aFreq.compareTo(bFreq) : aFreq.compareTo(bFreq);
-                    }
-                    //Sort by frequency then by time offset from zero.
-                    //Treats <0 0 0 0 0> as the earliest, and <59 23 31 12 7> as the latest.
-                    else if (aSchedule.getType() == ScheduleType.CRON) {
+                    } else if (aSchedule.getType() == ScheduleType.CRON) {
+                        //Sort by frequency then by time offset from zero.
+                        //Treats <0 0 0 0 0> as the earliest, and <59 23 31 12 7> as the latest.
                         final CronTrigger aTrigger = new CronTrigger(aSchedule.getExpression());
                         final CronTrigger bTrigger = new CronTrigger(bSchedule.getExpression());
 
-                        //Use -1 instead of zero so that schedules like <0 0 * * *> get correctly sorted to before <0 1 * * *>.
+                        //Use -1 instead of zero so that schedules like <0 0 * * *>
+                        //get correctly sorted to before <0 1 * * *>.
                         final Instant baseEpoch = Instant.ofEpochMilli(-1);
 
                         final Instant aInst1 = aTrigger.getNextExecutionTimeAfter(baseEpoch);
@@ -291,7 +310,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
 
                         final int durationComparison = aInst1.until(aInst2).compareTo(bInst1.until(bInst2));
                         //No duration difference, so sort by offset
-                        if(durationComparison == 0) {
+                        if (durationComparison == 0) {
                             final int offsetComparison = aInst1.compareTo(bInst1);
                             return sort.isDesc() ? -offsetComparison : offsetComparison;
                         }
@@ -300,8 +319,8 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                     return 0;
                 });
             }
-            if(UserFields.DISPLAY_NAME.getFldName().equals(sort.getId())
-               || ExecutionScheduleFields.RUN_AS_USER.equals(sort.getId())) {
+            if (UserFields.DISPLAY_NAME.getFldName().equals(sort.getId())
+                || ExecutionScheduleFields.RUN_AS_USER.equals(sort.getId())) {
                 list.sort((a, b) -> {
                     final String aName = a.getRunAsUser().getDisplayName();
                     final String bName = b.getRunAsUser().getDisplayName();
@@ -468,9 +487,9 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
 
     @Override
     public Boolean deleteExecutionSchedules(final List<ExecutionSchedule> executionSchedules) {
-        for(final ExecutionSchedule executionSchedule : executionSchedules) {
+        for (final ExecutionSchedule executionSchedule : executionSchedules) {
             final Boolean result = deleteExecutionSchedule(executionSchedule);
-            if(!result) {
+            if (!result) {
                 return false;
             }
         }

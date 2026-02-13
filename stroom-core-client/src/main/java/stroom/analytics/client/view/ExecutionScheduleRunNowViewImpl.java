@@ -49,7 +49,8 @@ public final class ExecutionScheduleRunNowViewImpl
 
     @Override
     public void focus() {
-        setText("The chosen set of execution schedules will be run now, executing according to frequency until up to date.");
+        setText("The chosen set of execution schedules will be run now, "
+                + "executing according to frequency until up to date.");
     }
 
     @Override

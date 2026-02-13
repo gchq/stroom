@@ -33,6 +33,7 @@ import stroom.job.client.presenter.JobPresenter;
 import stroom.job.client.presenter.JobPresenter.JobView;
 import stroom.job.client.view.JobViewImpl;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
+import stroom.monitoring.client.ExecutionScheduleManagerPlugin;
 import stroom.monitoring.client.JobListPlugin;
 import stroom.monitoring.client.NodeGroupsPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;

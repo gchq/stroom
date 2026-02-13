@@ -114,8 +114,8 @@ public class ExecutionScheduleRequest extends ExpressionCriteria {
         return new Builder();
     }
 
-    public static class Builder extends ExpressionCriteriaBuilder<ExecutionScheduleRequest, ExecutionScheduleRequest.Builder>
-    {
+    public static class Builder
+            extends ExpressionCriteriaBuilder<ExecutionScheduleRequest, ExecutionScheduleRequest.Builder> {
         private DocRef ownerDocRef;
         private String nodeName;
         private Boolean enabled;

@@ -21,6 +21,7 @@ import stroom.analytics.shared.ReportDoc;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.item.client.BaseSelectionBox;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.ExpressionTerm.Condition;
@@ -57,7 +58,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static stroom.explorer.shared.ExplorerConstants.FOLDER_LIKE;
 
 public class TermEditor extends Composite {
 
@@ -393,8 +393,7 @@ public class TermEditor extends Composite {
     private void enterTextOrDateOrBooleanMode(final FieldType indexFieldType) {
         if (FieldType.BOOLEAN.equals(indexFieldType)) {
             enterBooleanMode();
-        }
-        else if (FieldType.DATE.equals(indexFieldType)) {
+        } else if (FieldType.DATE.equals(indexFieldType)) {
             enterDateMode();
         } else {
             enterTextMode();
@@ -461,7 +460,7 @@ public class TermEditor extends Composite {
             if (Condition.IN_DICTIONARY.equals(condition)) {
                 docSelectionBoxPresenter.setIncludedTypes("Dictionary");
             } else if (Condition.IN_FOLDER.equals(condition) || Condition.OF_DOC_REF.equals(condition)) {
-                docSelectionBoxPresenter.setIncludedTypes(FOLDER_LIKE);
+                docSelectionBoxPresenter.setIncludedTypes(ExplorerConstants.FOLDER_LIKE);
                 docSelectionBoxPresenter.setAllowFolderSelection(true);
             } else if (FieldType.DOC_REF.equals(field.getFldType())) {
                 if (field.getDocRefType() != null) {
