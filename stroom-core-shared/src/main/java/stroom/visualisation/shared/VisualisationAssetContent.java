@@ -28,13 +28,13 @@ import java.util.Objects;
 
 /**
  * Returns content from VisualisationAssetResource.getDraftContent().
- * Cannot return a String unless the String happens to be valid JSON.
  */
 @Description(
         "Returns content from VisualisationAssetResource.getDraftContent()"
 )
 @JsonPropertyOrder({
-        "content"
+        "content",
+        "editorMode"
 })
 @JsonInclude(Include.NON_NULL)
 public class VisualisationAssetContent {
@@ -42,13 +42,22 @@ public class VisualisationAssetContent {
     @JsonProperty
     private final String content;
 
+    @JsonProperty
+    private final String editorMode;
+
     @JsonCreator
-    public VisualisationAssetContent(@JsonProperty("content") final String content) {
+    public VisualisationAssetContent(@JsonProperty("content") final String content,
+                                     @JsonProperty("editorMode") final String editorMode) {
         this.content = content;
+        this.editorMode = editorMode;
     }
 
     public String getContent() {
         return content;
+    }
+
+    public String getEditorMode() {
+        return editorMode;
     }
 
     @Override
@@ -57,18 +66,19 @@ public class VisualisationAssetContent {
             return false;
         }
         final VisualisationAssetContent that = (VisualisationAssetContent) o;
-        return Objects.equals(content, that.content);
+        return Objects.equals(content, that.content) && Objects.equals(editorMode, that.editorMode);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(content);
+        return Objects.hash(content, editorMode);
     }
 
     @Override
     public String toString() {
         return "VisualisationAssetContent{" +
                "content='" + content + '\'' +
+               ", editorMode='" + editorMode + '\'' +
                '}';
     }
 }

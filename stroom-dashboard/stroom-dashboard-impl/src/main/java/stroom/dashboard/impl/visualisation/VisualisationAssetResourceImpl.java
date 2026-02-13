@@ -11,6 +11,7 @@ import stroom.visualisation.shared.VisualisationAssetUpdateNewFile;
 import stroom.visualisation.shared.VisualisationAssetUpdateRename;
 import stroom.visualisation.shared.VisualisationAssets;
 
+import com.google.common.io.Files;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
@@ -30,10 +31,15 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
     /** Service that backs the resource */
     private final Provider<VisualisationAssetService> serviceProvider;
 
+    /** Configuration */
+    private final Provider<VisualisationAssetConfig> configProvider;
+
     @SuppressWarnings("unused")
     @Inject
-    VisualisationAssetResourceImpl(final Provider<VisualisationAssetService> serviceProvider) {
+    VisualisationAssetResourceImpl(final Provider<VisualisationAssetService> serviceProvider,
+                                   final Provider<VisualisationAssetConfig> configProvider ) {
         this.serviceProvider = serviceProvider;
+        this.configProvider = configProvider;
     }
 
     @Override
@@ -160,10 +166,15 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
     @Override
     public VisualisationAssetContent getDraftContent(final String ownerDocId, final String path) {
         LOGGER.info("getDraftContent({}, {})", ownerDocId, path);
-        // TODO Sort mimetype for editor mode
         try {
             final String content = serviceProvider.get().getDraftContent(ownerDocId, path);
-            return new VisualisationAssetContent(content);
+            final String extension = Files.getFileExtension(path);
+            final VisualisationAssetConfig config = configProvider.get();
+            final String editorMode =
+                    config.getAceEditorModes().getOrDefault(extension, config.getDefaultAceEditorMode());
+
+            LOGGER.info("Content '{}' has extension '{}' -> editor mode '{}'", path, extension, editorMode);
+            return new VisualisationAssetContent(content, editorMode);
         } catch (final IOException e) {
             throw new RuntimeException(e);
         } catch (final Throwable t) {
@@ -197,4 +208,5 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
         }
         return Boolean.TRUE;
     }
+
 }

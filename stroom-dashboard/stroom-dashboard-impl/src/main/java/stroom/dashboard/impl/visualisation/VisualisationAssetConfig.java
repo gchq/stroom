@@ -34,6 +34,11 @@ public class VisualisationAssetConfig extends AbstractConfig {
     /** Mimetype if nothing else matches */
     private static final String DEFAULT_MIMETYPE = "application/octet-stream";
 
+    /** Default mapping from filename extension to ACE Editor mode */
+    private static final Map<String, String> DEFAULT_EDITOR_MODES = new HashMap<>();
+
+    private static final String DEFAULT_ACE_EDITOR_MODE = "TEXT";
+
     /** Where assets will be cached */
     private final String assetCacheDir;
 
@@ -42,6 +47,12 @@ public class VisualisationAssetConfig extends AbstractConfig {
 
     /** Mimetype to use if nothing in the map matches */
     private final String defaultMimetype;
+
+    /** Map of filename extension to ACE editor mode */
+    private final Map<String, String> aceEditorModes = new HashMap<>();
+
+    /** Default ACE editor mode */
+    private final String defaultAceEditorMode;
 
     /*
      * Initialise mimetype map.
@@ -64,6 +75,14 @@ public class VisualisationAssetConfig extends AbstractConfig {
         DEFAULT_MIMETYPES.put("txt", "text/plain");
         DEFAULT_MIMETYPES.put("webp", "image/webp");
         DEFAULT_MIMETYPES.put("xml", "application/xml");
+
+        DEFAULT_EDITOR_MODES.put("css",  "CSS");
+        DEFAULT_EDITOR_MODES.put("html", "HTML");
+        DEFAULT_EDITOR_MODES.put("htm",  "HTML");
+        DEFAULT_EDITOR_MODES.put("js",   "JAVASCRIPT");
+        DEFAULT_EDITOR_MODES.put("svg",  "SVG");
+        DEFAULT_EDITOR_MODES.put("txt",  "TEXT");
+        DEFAULT_EDITOR_MODES.put("xml",  "XML");
     }
 
     /**
@@ -73,15 +92,21 @@ public class VisualisationAssetConfig extends AbstractConfig {
         this.mimetypes.putAll(DEFAULT_MIMETYPES);
         this.defaultMimetype = DEFAULT_MIMETYPE;
         this.assetCacheDir = DEFAULT_ASSET_CACHE_DIR;
+        this.aceEditorModes.putAll(DEFAULT_EDITOR_MODES);
+        this.defaultAceEditorMode = DEFAULT_ACE_EDITOR_MODE;
     }
 
     @SuppressWarnings("unused")
     @JsonCreator
     public VisualisationAssetConfig(@JsonProperty("mimetypes") final Map<String, String> mimetypes,
                                     @JsonProperty("default") final String defaultMimetype,
-                                    @JsonProperty("assetCacheDir") final String assetCacheDir) {
+                                    @JsonProperty("assetCacheDir") final String assetCacheDir,
+                                    @JsonProperty("aceEditorModes") final Map<String, String> aceEditorModes,
+                                    @JsonProperty("defaultAceEditorMode") final String defaultAceEditorMode) {
+
         if (mimetypes == null || mimetypes.isEmpty()) {
             LOGGER.info("No mimetypes supplied in the configuration file; using default values");
+            this.mimetypes.putAll(DEFAULT_MIMETYPES);
         } else {
             this.mimetypes.putAll(mimetypes);
         }
@@ -98,6 +123,20 @@ public class VisualisationAssetConfig extends AbstractConfig {
             this.assetCacheDir = DEFAULT_ASSET_CACHE_DIR;
         } else {
             this.assetCacheDir = assetCacheDir;
+        }
+
+        if (aceEditorModes == null || aceEditorModes.isEmpty()) {
+            LOGGER.info("No editor modes supplied in the configuration file; using default values");
+            this.aceEditorModes.putAll(DEFAULT_EDITOR_MODES);
+        } else {
+            this.aceEditorModes.putAll(aceEditorModes);
+        }
+
+        if (defaultAceEditorMode == null || defaultAceEditorMode.isEmpty()) {
+            LOGGER.info("No default editor mode supplied in the configuration file; using default value");
+            this.defaultAceEditorMode = DEFAULT_ACE_EDITOR_MODE;
+        } else {
+            this.defaultAceEditorMode = defaultAceEditorMode;
         }
     }
 
@@ -121,6 +160,20 @@ public class VisualisationAssetConfig extends AbstractConfig {
     @JsonProperty("assetCacheDir")
     public String getAssetCacheDir() {
         return assetCacheDir;
+    }
+
+    @RequiresRestart(RestartScope.SYSTEM)
+    @JsonPropertyDescription("The editor mode map from extension to mode name for the asset manager")
+    @JsonProperty("aceEditorModes")
+    public Map<String, String> getAceEditorModes() {
+        return aceEditorModes;
+    }
+
+    @RequiresRestart(RestartScope.SYSTEM)
+    @JsonPropertyDescription("The default editor mode if nothing else matches")
+    @JsonProperty("defaultAceEditorMode")
+    public String getDefaultAceEditorMode() {
+        return defaultAceEditorMode;
     }
 
     @BootStrapConfig
