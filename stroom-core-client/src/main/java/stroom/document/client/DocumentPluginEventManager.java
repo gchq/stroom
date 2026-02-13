@@ -244,6 +244,11 @@ public class DocumentPluginEventManager extends Plugin {
                     if (!event.getSelectionType().isRightClick() && !event.getSelectionType().isMultiSelect()) {
                         final ExplorerNode explorerNode = event.getSelectionModel().getSelected();
                         if (explorerNode != null) {
+                            // Dont try to open the doc if we have a tab with the same docref already selected
+                            if (selectedTab instanceof final DocumentTabData documentTabData
+                                && documentTabData.getDocRef().equals(explorerNode.getDocRef())) {
+                                return;
+                            }
                             final DocumentPlugin<?> plugin = documentPluginRegistry.get(explorerNode.getType());
                             if (plugin != null) {
                                 plugin.open(
@@ -343,6 +348,7 @@ public class DocumentPluginEventManager extends Plugin {
                         event.isFullScreen(),
                         event.getSelectedTab().orElse(null),
                         event.getCallbackOnOpen(),
+                        event.isDuplicate(),
                         explorerListener)));
 
         registerHandler(getEventBus().addHandler(CloseSelectedDocumentEvent.getType(), event -> {
@@ -505,6 +511,11 @@ public class DocumentPluginEventManager extends Plugin {
             menuItems.add(createCloseAllMenuItem(++priority, event.getTabData()));
             menuItems.add(createCloseLeftMenu(++priority, event.getTabData(), event.getTabList()));
             menuItems.add(createCloseRightMenu(++priority, event.getTabData(), event.getTabList()));
+
+            if (event.getTabData() instanceof HasMultipleInstances) {
+                menuItems.add(new Separator(++priority));
+                menuItems.add(createDuplicateTabMenu(++priority, event.getTabData()));
+            }
 
             menuItems.add(new Separator(++priority));
 
@@ -764,6 +775,7 @@ public class DocumentPluginEventManager extends Plugin {
                      final boolean fullScreen,
                      final CommonDocLinkTab selectedLinkTab,
                      final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                     final boolean duplicate,
                      final TaskMonitorFactory taskMonitorFactory) {
         if (docRef != null && docRef.getType() != null) {
             final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
@@ -785,8 +797,11 @@ public class DocumentPluginEventManager extends Plugin {
                                         fullScreen,
                                         selectedLinkTab,
                                         callbackOnOpen,
+                                        duplicate,
                                         new DefaultTaskMonitorFactory(this));
-                                highlight(decoratedDocRef, explorerListener);
+                                if (!duplicate) {
+                                    highlight(decoratedDocRef, explorerListener);
+                                }
                             }
                         })
                         .onFailure(error -> {
@@ -1261,6 +1276,17 @@ public class DocumentPluginEventManager extends Plugin {
                 .text("Move Last")
                 .enabled(isTabItemSelected(selectedTab) && !isLastTab)
                 .command(() -> RequestMoveTabEvent.fire(DocumentPluginEventManager.this, selectedTab, tabs.size() - 1))
+                .build();
+    }
+
+    private MenuItem createDuplicateTabMenu(final int priority, final TabData selectedTab) {
+        final DocRef docRef = getSelectedDoc(selectedTab);
+
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.COPY)
+                .text("Duplicate Tab")
+                .command(() -> OpenDocumentEvent.fire(DocumentPluginEventManager.this, docRef, true, false, null, true))
                 .build();
     }
 
