@@ -773,7 +773,10 @@ public class VisualisationAssetsPresenter
                         r.updateDelete(document.getUuid(), update))
                 .onSuccess(result -> {
                     if (result) {
-                        // OK - get the assets again
+                        // Clear the editor - the thing we're editing has disappeared
+                        clearEditor();
+
+                        // Get the assets again
                         fetchDraftAssets(document);
                     } else {
                         AlertEvent.fireError(this,
