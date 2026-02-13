@@ -36,30 +36,35 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
     private final boolean fullScreen;
     private final CommonDocLinkTab selectedTab;
     private final Consumer<MyPresenterWidget<?>> callbackOnOpen;
+    private final boolean duplicate;
 
     private OpenDocumentEvent(final DocRef docRef,
                               final boolean forceOpen,
                               final boolean fullScreen,
                               final CommonDocLinkTab selectedTab,
-                              final Consumer<MyPresenterWidget<?>> callbackOnOpen) {
+                              final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                              final boolean duplicate) {
         this.docRef = docRef;
         this.forceOpen = forceOpen;
         this.fullScreen = fullScreen;
         this.selectedTab = selectedTab;
         this.callbackOnOpen = callbackOnOpen;
+        this.duplicate = duplicate;
     }
 
     public static void fire(final HasHandlers handlers,
                             final DocRef docRef,
                             final boolean forceOpen) {
-        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, false, null, null));
+        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, false, null, null,
+                false));
     }
 
     public static void fire(final HasHandlers handlers,
                             final DocRef docRef,
                             final boolean forceOpen,
                             final boolean fullScreen) {
-        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, null, null));
+        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, null, null,
+                false));
     }
 
     public static void fire(final HasHandlers handlers,
@@ -67,7 +72,17 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
                             final boolean forceOpen,
                             final boolean fullScreen,
                             final CommonDocLinkTab selectedTab) {
-        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, selectedTab, null));
+        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, selectedTab, null,
+                false));
+    }
+
+    public static void fire(final HasHandlers handlers,
+                            final DocRef docRef,
+                            final boolean forceOpen,
+                            final boolean fullScreen,
+                            final CommonDocLinkTab selectedTab,
+                            final boolean duplicate) {
+        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, selectedTab, null, duplicate));
     }
 
     public static Type<Handler> getType() {
@@ -107,6 +122,10 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
         return callbackOnOpen;
     }
 
+    public boolean isDuplicate() {
+        return duplicate;
+    }
+
     public static Builder builder(final HasHandlers handlers, final DocRef docRef) {
         return new Builder(handlers, docRef);
     }
@@ -144,6 +163,7 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
         private boolean fullScreen = false;
         private CommonDocLinkTab selectedTab = null;
         private Consumer<MyPresenterWidget<?>> callbackOnOpen;
+        private boolean duplicate;
 
         private Builder(final HasHandlers hasHandlers, final DocRef docRef) {
             this.hasHandlers = Objects.requireNonNull(hasHandlers);
@@ -173,8 +193,14 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
             return this;
         }
 
+        public Builder duplicate(final boolean duplicate) {
+            this.duplicate = duplicate;
+            return this;
+        }
+
         public void fire() {
-            hasHandlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, selectedTab, callbackOnOpen));
+            hasHandlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, selectedTab, callbackOnOpen,
+                    duplicate));
         }
     }
 
