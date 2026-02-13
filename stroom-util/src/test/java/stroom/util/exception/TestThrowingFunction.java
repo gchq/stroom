@@ -43,18 +43,19 @@ class TestThrowingFunction {
 
     @Test
     void unchecked_throws() {
-        Assertions.assertThatThrownBy(() ->
-                        Stream.of(0)
+        Assertions.assertThatThrownBy(
+                        () -> Stream.of(0)
                                 .map(ThrowingFunction.unchecked(this::addTen))
-                                .collect(Collectors.toList()))
+                                .toList())
                 .isInstanceOf(RuntimeException.class);
     }
 
     @Test
     void unchecked_throwsChecked() {
-        Assertions.assertThatThrownBy(() -> {
-                    ThrowingFunction.unchecked(this::throwChecked).apply(null);
-                })
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            ThrowingFunction.unchecked(this::throwChecked).apply(null);
+                        })
                 .isInstanceOf(RuntimeException.class)
                 .cause()
                 .isInstanceOf(MyCheckedException.class);
@@ -62,9 +63,10 @@ class TestThrowingFunction {
 
     @Test
     void unchecked_throwsIOException() {
-        Assertions.assertThatThrownBy(() -> {
-                    ThrowingFunction.unchecked(this::throwIoException).apply(null);
-                })
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            ThrowingFunction.unchecked(this::throwIoException).apply(null);
+                        })
                 .isInstanceOf(UncheckedIOException.class)
                 .cause()
                 .isInstanceOf(IOException.class);
@@ -72,17 +74,19 @@ class TestThrowingFunction {
 
     @Test
     void unchecked_throwsRuntimeException() {
-        Assertions.assertThatThrownBy(() -> {
-                    ThrowingFunction.unchecked(this::throwRuntimeException).apply(null);
-                })
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            ThrowingFunction.unchecked(this::throwRuntimeException).apply(null);
+                        })
                 .isInstanceOf(MyRuntimeException.class);
     }
 
     @Test
     void unchecked_throwsIllegalArgumentException() {
-        Assertions.assertThatThrownBy(() -> {
-                    ThrowingFunction.unchecked(this::throwIllegalArgumentException).apply(null);
-                })
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            ThrowingFunction.unchecked(this::throwIllegalArgumentException).apply(null);
+                        })
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

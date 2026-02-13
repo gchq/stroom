@@ -123,13 +123,13 @@ class TestAttributeMapUtil {
                 .addCase(" foo : 123 ", attributeMap1)
                 .addCase(" FOO : 123 ", attributeMap1)
                 .addCase("""
-                        
+                        \s
                          FOO : 123
-                        
+                        \s
                         """, attributeMap1)
                 .addCase("""
                          foo:123
-                        FOO :   123  """, attributeMap1) // dup key, same val
+                        FOO :   123  \s""", attributeMap1) // dup key, same val
                 .addCase("""
                         foo:999
                         FOO:123""", attributeMap1) // dup key, diff val
@@ -141,10 +141,10 @@ class TestAttributeMapUtil {
                           BAR : 456
                         foo:123""", attributeMap2) // dup key
                 .addCase("""
-                        
+                        \s
                         FOO:123
                         BAR:456
-                        
+                        \s
                         """, attributeMap2) // empty lines
                 .addCase("""
                         files:/some/path/file1,/some/path/file2,/some/path/file3
@@ -191,7 +191,7 @@ class TestAttributeMapUtil {
     Stream<DynamicTest> testReadKeys() {
         final String data1 = """
                 three:four
-                
+                \s
                  Foo:Bar \s
                   FeEd: MY_FEED   \s
                  BAR:FOO \s
@@ -226,7 +226,7 @@ class TestAttributeMapUtil {
     void testRead_path(@TempDir final Path tempDir) throws IOException {
         final String data = """
                 three:four
-                
+                \s
                  Foo:Bar \s
                   FeEd: MY_FEED   \s
                  BAR:FOO \s
@@ -254,7 +254,7 @@ class TestAttributeMapUtil {
     void testRead_inputStream(@TempDir final Path tempDir) throws IOException {
         final String data = """
                 three:four
-                
+                \s
                  Foo:Bar \s
                   FeEd: MY_FEED   \s
                  BAR:FOO \s
@@ -284,7 +284,7 @@ class TestAttributeMapUtil {
     void testRead_string() {
         final String data = """
                 three:four
-                
+                \s
                  Foo:Bar \s
                   FeEd: MY_FEED   \s
                  BAR:FOO \s
