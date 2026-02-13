@@ -16,11 +16,11 @@
 
 package stroom.monitoring.client;
 
+import stroom.analytics.client.presenter.ExecutionScheduleManager;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.analytics.client.presenter.ExecutionScheduleManager;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;

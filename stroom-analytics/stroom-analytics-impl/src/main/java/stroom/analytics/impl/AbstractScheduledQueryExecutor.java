@@ -55,6 +55,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -141,17 +142,19 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
             info(() -> "Starting scheduled " + processType + " processing from schedules");
 
             // Group by rules.
-            final HashMap<T, List<ExecutionSchedule>> docScheduleMap = new HashMap<>();
+            final Map<T, List<ExecutionSchedule>> docScheduleMap = new HashMap<>();
             for (final ExecutionSchedule executionSchedule : executionSchedules) {
                 final T doc = load(executionSchedule.getOwningDoc());
-                if(!docScheduleMap.containsKey(doc)) {
+                if (!docScheduleMap.containsKey(doc)) {
                     docScheduleMap.put(doc, new ArrayList<>());
                 }
                 docScheduleMap.get(doc).add(executionSchedule);
             }
 
-            info(() -> "Processing " + LogUtil.namedCount("scheduled " + processType, NullSafe.size(docScheduleMap.keySet()))
-                        + " across " + LogUtil.namedCount("schedule", NullSafe.size(executionSchedules)));
+            info(() -> "Processing "
+                       + LogUtil.namedCount("scheduled " + processType, NullSafe.size(docScheduleMap.keySet()))
+                       + " across "
+                       + LogUtil.namedCount("schedule", NullSafe.size(executionSchedules)));
 
             final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
             for (final T doc : docScheduleMap.keySet()) {
@@ -211,8 +214,7 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
     }
 
     private Runnable createRunnable(final T doc,
-                                    final TaskContext parentTaskContext)
-    {
+                                    final TaskContext parentTaskContext) {
         final DocRef docRef = doc.asDocRef();
 
         // Load schedules for the rule. Do this as the processing user as permission is required to load associated

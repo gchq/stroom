@@ -95,7 +95,8 @@ public class BatchExecutionScheduleEditPresenter
                         "Error",
                         throwable.getMessage(),
                         null),
-        this);
+            this
+        );
 
     }
 
@@ -122,8 +123,7 @@ public class BatchExecutionScheduleEditPresenter
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.SELECTED_AND_FILTERED_DIALOG)
                 .popupSize(popupSize)
-                .onShow(e ->
-                {
+                .onShow(e -> {
                     getView().focus();
 //                    selectedAndFilteredConfirmationDialog.temp_test();
                 })

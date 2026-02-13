@@ -324,8 +324,11 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                     .pageRequest(PageRequest.unlimited())
                     .ownerDocRef(docRef)
                     .build();
-            final List<ExecutionSchedule> executionSchedules = executionScheduleDaoProvider.get().fetchExecutionSchedule(request).getValues();
-            for(final ExecutionSchedule executionSchedule : executionSchedules) {
+            final List<ExecutionSchedule> executionSchedules = executionScheduleDaoProvider
+                    .get()
+                    .fetchExecutionSchedule(request)
+                    .getValues();
+            for (final ExecutionSchedule executionSchedule : executionSchedules) {
                 executionScheduleDaoProvider.get().deleteExecutionSchedule(executionSchedule);
             }
         } catch (final RuntimeException e) {

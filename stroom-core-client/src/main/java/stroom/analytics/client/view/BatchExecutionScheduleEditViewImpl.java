@@ -109,27 +109,13 @@ public final class BatchExecutionScheduleEditViewImpl
         setRunAsUserView();
         endTimeBox.setOptional(true);
 
-        nameEnable.addValueChangeHandler(event -> {
-            update();
-        });
-        enabledEnable.addValueChangeHandler(event -> {
-            update();
-        });
-        nodeEnable.addValueChangeHandler(event -> {
-            update();
-        });
-        scheduleEnable.addValueChangeHandler(event -> {
-            update();
-        });
-        startTimeEnable.addValueChangeHandler(event -> {
-            update();
-        });
-        endTimeEnable.addValueChangeHandler(event -> {
-            update();
-        });
-        runAsUserEnable.addValueChangeHandler(event -> {
-            update();
-        });
+        nameEnable.addValueChangeHandler(event -> update());
+        enabledEnable.addValueChangeHandler(event -> update());
+        nodeEnable.addValueChangeHandler(event -> update());
+        scheduleEnable.addValueChangeHandler(event -> update());
+        startTimeEnable.addValueChangeHandler(event -> update());
+        endTimeEnable.addValueChangeHandler(event -> update());
+        runAsUserEnable.addValueChangeHandler(event -> update());
 
         update();
     }
@@ -142,25 +128,25 @@ public final class BatchExecutionScheduleEditViewImpl
 
     @Override
     public void focus() {
-        if(!nameEnable.getValue()) {
+        if (!nameEnable.getValue()) {
             nameBox.setValue("");
         }
-        if(!enabledEnable.getValue()) {
+        if (!enabledEnable.getValue()) {
             enabledBox.setValue(false);
         }
-        if(!nodeEnable.getValue()) {
+        if (!nodeEnable.getValue()) {
             nodeBox.setValue(this.nodeBox.getItems().get(0));
         }
-        if(!scheduleEnable.getValue()) {
+        if (!scheduleEnable.getValue()) {
             scheduleBox.setValue(new Schedule(ScheduleType.CRON, ""));
         }
-        if(!startTimeEnable.getValue()) {
+        if (!startTimeEnable.getValue()) {
             startTimeBox.setValue(null);
         }
-        if(!endTimeEnable.getValue()) {
+        if (!endTimeEnable.getValue()) {
             endTimeBox.setValue(null);
         }
-        if(!runAsUserEnable.getValue()) {
+        if (!runAsUserEnable.getValue()) {
             userRefSelectionBoxPresenter.setSelected(null);
         }
     }
@@ -175,8 +161,12 @@ public final class BatchExecutionScheduleEditViewImpl
         final Schedule schedule  = scheduleEnable.getValue() ? scheduleBox.getValue() : executionSchedule.getSchedule();
         final boolean contiguous = executionSchedule.isContiguous();
 
-        final Long startTime = startTimeEnable.getValue() ? startTimeBox.getValue() : executionSchedule.getScheduleBounds().getStartTimeMs();
-        final Long endTime = endTimeEnable.getValue() ? endTimeBox.getValue() : executionSchedule.getScheduleBounds().getEndTimeMs();
+        final Long startTime = startTimeEnable.getValue()
+                ? startTimeBox.getValue()
+                : executionSchedule.getScheduleBounds().getStartTimeMs();
+        final Long endTime = endTimeEnable.getValue()
+                ? endTimeBox.getValue()
+                : executionSchedule.getScheduleBounds().getEndTimeMs();
         final ScheduleBounds scheduleBounds = new ScheduleBounds(startTime, endTime);
         final UserRef runAsUser = runAsUserEnable.getValue()
                 ? userRefSelectionBoxPresenter.getSelected()
@@ -282,14 +272,13 @@ public final class BatchExecutionScheduleEditViewImpl
 
     @Override
     public void setRunAsUserView() {
-        View view = this.userRefSelectionBoxPresenter.getView();
+        final View view = this.userRefSelectionBoxPresenter.getView();
         this.runAsUserBox.setWidget(view.asWidget());
         view.asWidget().addStyleName("w-100");
 
     }
 
-    public boolean isAnyBoxEnabled()
-    {
+    public boolean isAnyBoxEnabled() {
         return nameEnable.getValue()
                || enabledEnable.getValue()
                || nodeEnable.getValue()
@@ -300,47 +289,39 @@ public final class BatchExecutionScheduleEditViewImpl
     }
 
     //Formats the contents of all enabled boxes into a multiline String for the edit summary confirmation window
-    public String getEditSummary()
-    {
-        StringBuilder sb = new StringBuilder();
-        if(nameEnable.getValue())
-        {
+    public String getEditSummary() {
+        final StringBuilder sb = new StringBuilder();
+        if (nameEnable.getValue()) {
             sb.append("Name to '");
             sb.append(nameBox.getValue());
             sb.append("'\n");
         }
-        if(enabledEnable.getValue())
-        {
+        if (enabledEnable.getValue()) {
             sb.append("Enabled to ");
             sb.append(enabledBox.getValue() ? "'true'" : "'false'");
             sb.append("\n");
         }
-        if(nodeEnable.getValue())
-        {
+        if (nodeEnable.getValue()) {
             sb.append("Processing Node to '");
             sb.append(nodeBox.getValue());
             sb.append("'\n");
         }
-        if(scheduleEnable.getValue())
-        {
+        if (scheduleEnable.getValue()) {
             sb.append("Schedule to '");
             sb.append(scheduleBox.getValue());
             sb.append("'\n");
         }
-        if(startTimeEnable.getValue())
-        {
+        if (startTimeEnable.getValue()) {
             sb.append("Start Time to '");
             sb.append(ClientDateUtil.toISOString(startTimeBox.getValue()));
             sb.append("'\n");
         }
-        if(endTimeEnable.getValue())
-        {
+        if (endTimeEnable.getValue()) {
             sb.append("End Time to '");
             sb.append(ClientDateUtil.toISOString(endTimeBox.getValue()));
             sb.append("'\n");
         }
-        if(runAsUserEnable.getValue())
-        {
+        if (runAsUserEnable.getValue()) {
             sb.append("Run As User to '");
             sb.append(userRefSelectionBoxPresenter.getSelected());
             sb.append("'\n");

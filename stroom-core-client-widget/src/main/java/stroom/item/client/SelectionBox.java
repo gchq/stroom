@@ -73,8 +73,8 @@ public class SelectionBox<T> extends BaseSelectionBox<T, SimpleSelectionItemWrap
     }
 
     public List<T> getItems() {
-        ArrayList<T> items = new ArrayList<>();
-        for(SimpleSelectionItemWrapper<T> item : model.items) {
+        final ArrayList<T> items = new ArrayList<>();
+        for (final SimpleSelectionItemWrapper<T> item : model.items) {
             items.add(item.getItem());
         }
         return items;

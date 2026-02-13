@@ -21,8 +21,8 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleFields;
-import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ExecutionScheduleRequest;
+import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ScheduleBounds;
 import stroom.cell.info.client.SvgCell;
 import stroom.content.client.presenter.ContentTabPresenter;
@@ -128,7 +128,8 @@ public class ExecutionScheduleManager
 
         dataGrid = new MyDataGrid<>(this);
         selectionModel = new MultiSelectionModelImpl<>();
-        final DataGridSelectionEventManager<ExecutionSchedule> selectionEventManager = new DataGridSelectionEventManager<>(
+        final DataGridSelectionEventManager<ExecutionSchedule> selectionEventManager
+            = new DataGridSelectionEventManager<>(
                 dataGrid,
                 selectionModel,
                 true);
@@ -174,8 +175,7 @@ public class ExecutionScheduleManager
     }
 
 
-    private void createButtons()
-    {
+    private void createButtons() {
         singleEditButton = this.getView().addButton(new Preset(
                 SvgImage.EDIT,
                 "Edit Selected Schedule",
@@ -239,8 +239,7 @@ public class ExecutionScheduleManager
         setButtonState();
     }
 
-    private void createIconColumn()
-    {
+    private void createIconColumn() {
         dataGrid.addColumn(
             new OrderByColumn<ExecutionSchedule, Preset>(
                 new SvgCell(),
@@ -256,8 +255,7 @@ public class ExecutionScheduleManager
         );
     }
 
-    private void createParentNameColumn()
-    {
+    private void createParentNameColumn() {
         dataGrid.addResizableColumn(
             new OrderByColumn<ExecutionSchedule, String>(
                 new TextCell(),
@@ -271,8 +269,7 @@ public class ExecutionScheduleManager
         );
     }
 
-    private void createScheduleNameColumn()
-    {
+    private void createScheduleNameColumn() {
         dataGrid.addResizableColumn(
             new OrderByColumn<ExecutionSchedule, String>(
                 new TextCell(),
@@ -286,8 +283,7 @@ public class ExecutionScheduleManager
         );
     }
 
-    private void createEnabledColumn()
-    {
+    private void createEnabledColumn() {
 
         final OrderByColumn<ExecutionSchedule, Preset> enabledColumn = new OrderByColumn<ExecutionSchedule, Preset>(
             new SvgCell(false),
@@ -297,7 +293,7 @@ public class ExecutionScheduleManager
             public Preset getValue(final ExecutionSchedule row) {
                 if (row.isEnabled()) {
                     return new Preset(SvgImage.TICK, "Enabled", true);
-                } else{
+                } else {
                     return new Preset(SvgImage.CLOSE, "Disabled", true);
                 }
             }
@@ -305,8 +301,7 @@ public class ExecutionScheduleManager
         dataGrid.addResizableColumn(enabledColumn, ExecutionScheduleFields.ENABLED, ColumnSizeConstants.SMALL_COL);
     }
 
-    private void createNodeNameColumn()
-    {
+    private void createNodeNameColumn() {
 
 
         dataGrid.addResizableColumn(
@@ -322,8 +317,7 @@ public class ExecutionScheduleManager
         );
     }
 
-    private void createScheduleColumn()
-    {
+    private void createScheduleColumn() {
         dataGrid.addResizableColumn(
             new OrderByColumn<ExecutionSchedule, String>(
                 new TextCell(),
@@ -337,8 +331,7 @@ public class ExecutionScheduleManager
         );
     }
 
-    private void createBoundsColumn(final DateTimeFormatter dateTimeFormatter)
-    {
+    private void createBoundsColumn(final DateTimeFormatter dateTimeFormatter) {
         dataGrid.addAutoResizableColumn(
             new OrderByColumn<ExecutionSchedule, String>(
                 new TextCell(),
@@ -373,8 +366,7 @@ public class ExecutionScheduleManager
         dataGrid.addEndColumn(new EndColumn<>());
     }
 
-    private void createRunAsColumn(final ClientSecurityContext securityContext)
-    {
+    private void createRunAsColumn(final ClientSecurityContext securityContext) {
         final Column<ExecutionSchedule, ExecutionSchedule> runAsCol = DataGridUtil
             .userRefColumnBuilder(
                 ExecutionSchedule::getRunAsUser,
@@ -410,11 +402,11 @@ public class ExecutionScheduleManager
                 protected void exec(final Range range,
                                     final Consumer<ResultPage<ExecutionSchedule>> dataConsumer,
                                     final RestErrorHandler errorHandler) {
-
                     if (request != null) {
                         CriteriaUtil.setRange(request, range);
                         CriteriaUtil.setSortList(request, dataGrid.getColumnSortList());
-                        final ExpressionOperator expression = (ExpressionOperator) formatISOExpressions(request.getExpression());
+                        final ExpressionOperator expression
+                                = (ExpressionOperator) formatISOExpressions(request.getExpression());
                         final ExecutionScheduleRequest formattedRequest = request.copy().expression(expression).build();
 
                         restFactory
@@ -444,30 +436,31 @@ public class ExecutionScheduleManager
     }
 
 
-    private void setButtonState()
-    {
+    private void setButtonState() {
         singleEditButton.setEnabled(selectionModel.getSelectedCount() == 1);
         deleteButton.setEnabled(selectionModel.getSelectedCount() > 0);
 
-        if(request != null && request.getExpression() != null && request.getExpression().hasChildren()) {
+        if (request != null && request.getExpression() != null && request.getExpression().hasChildren()) {
             clearFilterButton.setEnabled(true);
-        }
-        else {
+        } else {
             clearFilterButton.setEnabled(false);
         }
     }
 
 
-    private void flushNonexistentSelections()
-    {
+    private void flushNonexistentSelections() {
         restFactory
             .create(EXECUTION_SCHEDULE_RESOURCE)
-            .method(res -> res.fetchExecutionSchedule(ExecutionScheduleRequest.builder().pageRequest(PageRequest.unlimited()).build()))
-            .onSuccess(executionScheduleResultPage ->
-            {
+            .method(res -> res.fetchExecutionSchedule(
+                    ExecutionScheduleRequest
+                            .builder()
+                            .pageRequest(PageRequest.unlimited())
+                            .build())
+            )
+            .onSuccess(executionScheduleResultPage -> {
                 final List<ExecutionSchedule> executionSchedules = executionScheduleResultPage.getValues();
-                for(final ExecutionSchedule selectedSchedule : selectionModel.getSelectedItems()) {
-                    if(!executionSchedules.contains(selectedSchedule)) {
+                for (final ExecutionSchedule selectedSchedule : selectionModel.getSelectedItems()) {
+                    if (!executionSchedules.contains(selectedSchedule)) {
                         selectionModel.setSelected(selectedSchedule, false);
                     }
                 }
@@ -479,8 +472,7 @@ public class ExecutionScheduleManager
     }
 
 
-    private void updateSelectionCountLabel()
-    {
+    private void updateSelectionCountLabel() {
         this.getView().getInfoLabel(0).setText(
                 selectionModel.getSelectedCount()
                 + " schedule"
@@ -489,8 +481,7 @@ public class ExecutionScheduleManager
         );
     }
 
-    private void onSingleEdit()
-    {
+    private void onSingleEdit() {
         final ExecutionSchedule selected = selectionModel.getSelected();
         if (selected != null) {
             scheduledProcessEditPresenter.setTaskMonitorFactory(this);
@@ -514,27 +505,31 @@ public class ExecutionScheduleManager
     private void onBatchEdit() {
         batchExecutionScheduleEditPresenter.setTaskMonitorFactory(this);
         batchExecutionScheduleEditPresenter.show(applyToFiltered -> {
-            if(applyToFiltered == null) {
+            if (applyToFiltered == null) {
                 return;
             }
-
-            if(applyToFiltered) {
+            if (applyToFiltered) {
                 restFactory
                     .create(EXECUTION_SCHEDULE_RESOURCE)
-                    .method(res -> res.fetchExecutionSchedule(request.copy().pageRequest(PageRequest.unlimited()).build()))
+                    .method(res -> res.fetchExecutionSchedule(
+                            request
+                                    .copy()
+                                    .pageRequest(PageRequest.unlimited())
+                                    .build()
+                            )
+                    )
                     .onSuccess(result -> checkBatchEdit(result.getValues(), true))
                     .onFailure(e -> AlertEvent.fireError(this, e.getMessage(), null))
                     .taskMonitorFactory(getView())
                     .exec();
-            }
-            else {
+            } else {
                 checkBatchEdit(selectionModel.getSelectedItems(), false);
             }
         });
     }
 
     private void checkBatchEdit(final List<ExecutionSchedule> executionSchedules, final boolean isApplyToAll) {
-        if(executionSchedules.isEmpty()) {
+        if (executionSchedules.isEmpty()) {
             AlertEvent.fireWarn(
                     this,
                     isApplyToAll ? "No schedules filtered." : "No schedules selected.",
@@ -542,8 +537,7 @@ public class ExecutionScheduleManager
             );
             return;
         }
-        if(!batchExecutionScheduleEditPresenter.getView().isAnyBoxEnabled())
-        {
+        if (!batchExecutionScheduleEditPresenter.getView().isAnyBoxEnabled()) {
             AlertEvent.fireWarn(
                     this,
                     "No changes selected.",
@@ -554,8 +548,7 @@ public class ExecutionScheduleManager
         confirmBatchEdit(executionSchedules);
     }
 
-    private void confirmBatchEdit(final List<ExecutionSchedule> executionSchedules)
-    {
+    private void confirmBatchEdit(final List<ExecutionSchedule> executionSchedules) {
         final StringBuilder sb = new StringBuilder();
         sb.append("You are about to edit ");
         sb.append(executionSchedules.size());
@@ -586,7 +579,7 @@ public class ExecutionScheduleManager
                             batchExecutionScheduleEditPresenter.getView().getUpdatedExecutionSchedule(executionSchedule)
                     ))
                     .onSuccess(result -> {
-                        if(selectionModel.isSelected(executionSchedule)) {
+                        if (selectionModel.isSelected(executionSchedule)) {
                             newSchedules.add(result);
                         }
                         if (successCount.incrementAndGet() == scheduleCount) {
@@ -655,7 +648,7 @@ public class ExecutionScheduleManager
 
     private void onRunNow() {
         executionScheduleRunNowPresenter.show(applyFiltered -> {
-            if(applyFiltered) {
+            if (applyFiltered) {
                 final ExecutionScheduleRequest requestAll = request.copy().pageRequest(PageRequest.unlimited()).build();
                 restFactory.create(EXECUTION_SCHEDULE_RESOURCE)
                         .method(resource -> resource.fetchExecutionSchedule(requestAll))
@@ -663,15 +656,14 @@ public class ExecutionScheduleManager
                         .onFailure(cause -> AlertEvent.fireError(this, cause.getMessage(), null))
                         .taskMonitorFactory(this)
                         .exec();
-            }
-            else {
+            } else {
                 checkRunNow(selectionModel.getSelectedItems(), false);
             }
         });
     }
 
     private void checkRunNow(final List<ExecutionSchedule> executionSchedules, final boolean isApplyToFiltered) {
-        if(executionSchedules.isEmpty()) {
+        if (executionSchedules.isEmpty()) {
             AlertEvent.fireWarn(
                     this,
                     isApplyToFiltered ? "No schedules filtered." : "No schedules selected.",
@@ -681,34 +673,34 @@ public class ExecutionScheduleManager
         }
         final List<ExecutionSchedule> enabledSchedules = new ArrayList<>();
         int disabledCount = 0;
-        for(final ExecutionSchedule schedule : executionSchedules) {
-            if(schedule.isEnabled()) {
+        for (final ExecutionSchedule schedule : executionSchedules) {
+            if (schedule.isEnabled()) {
                 enabledSchedules.add(schedule);
-            }
-            else {
+            } else {
                 disabledCount++;
             }
         }
 
-        if(enabledSchedules.isEmpty()) {
+        if (enabledSchedules.isEmpty()) {
             AlertEvent.fireError(
                     this,
-                    isApplyToFiltered ? "None of the filtered schedules are enabled." : "None of the selected schedules are enabled.",
+                    isApplyToFiltered
+                            ? "None of the filtered schedules are enabled."
+                            : "None of the selected schedules are enabled.",
                     null);
-        }
-        else if(disabledCount > 0) {
+        } else if (disabledCount > 0) {
             AlertEvent.fireWarn(
                     this,
-                    isApplyToFiltered ?  "Some of the filtered schedules are disabled and will not be run." : "Some of the selected schedules are disabled and will not be run.",
+                    isApplyToFiltered
+                            ? "Some of the filtered schedules are disabled and will not be run."
+                            : "Some of the selected schedules are disabled and will not be run.",
                     () -> confirmRunNow(enabledSchedules));
-        }
-        else {
+        } else {
             confirmRunNow(enabledSchedules);
         }
     }
 
-    private void confirmRunNow(final List<ExecutionSchedule> executionSchedules)
-    {
+    private void confirmRunNow(final List<ExecutionSchedule> executionSchedules) {
         final String warningMessage = "You are about to force "
                                       + executionSchedules.size()
                                       + " execution schedule"
@@ -718,7 +710,7 @@ public class ExecutionScheduleManager
                                       + "which may take some time for large selections."
                                       + "\n\nAre you sure?";
         ConfirmEvent.fire(this, warningMessage, result -> {
-            if(result) {
+            if (result) {
                 doRunNow(executionSchedules);
             }
         });
@@ -742,7 +734,7 @@ public class ExecutionScheduleManager
                 + (selectionModel.getSelectedCount() > 1 ? "s" : "")
                 + ".\n\nAre you sure?",
                 result -> {
-                    if(result) {
+                    if (result) {
                         doDelete();
                     }
                 }
@@ -771,21 +763,19 @@ public class ExecutionScheduleManager
     }
 
     private ExpressionItem formatISOExpressions(final ExpressionItem item) {
-        if(item == null) {
+        if (item == null) {
             return null;
         }
-        if(item instanceof final ExpressionTerm term)
-        {
+        if (item instanceof final ExpressionTerm term) {
             if (term.getField().equals(ExecutionScheduleFields.FIELD_START_TIME.getFldName())
                 || term.getField().equals(ExecutionScheduleFields.FIELD_END_TIME.getFldName())) {
                 return term.copy().value(ClientDateUtil.fromISOString(term.getValue()).toString()).build();
             }
             return term;
         }
-        if(item instanceof final ExpressionOperator operator)
-        {
+        if (item instanceof final ExpressionOperator operator) {
             final ArrayList<ExpressionItem> newChildren = new ArrayList<>();
-            for(final ExpressionItem child : operator.getChildren()) {
+            for (final ExpressionItem child : operator.getChildren()) {
                 newChildren.add(formatISOExpressions(child));
             }
             return operator.copy().children(newChildren).build();
