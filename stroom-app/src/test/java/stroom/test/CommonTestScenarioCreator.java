@@ -103,13 +103,16 @@ public class CommonTestScenarioCreator {
     public DocRef createIndex(final String name, final List<LuceneIndexField> indexFields, final int maxDocsPerShard) {
         // Create a test index.
         final DocRef indexRef = indexStore.createDocument(name);
-        final LuceneIndexDoc index = indexStore.readDocument(indexRef);
+        LuceneIndexDoc index = indexStore.readDocument(indexRef);
 
         // Update the index
-        index.setMaxDocsPerShard(maxDocsPerShard);
-        index.setFields(indexFields);
-        index.setVolumeGroupName(VolumeCreator.DEFAULT_VOLUME_GROUP);
-        index.setPartitionBy(PartitionBy.YEAR);
+        index = index
+                .copy()
+                .maxDocsPerShard(maxDocsPerShard)
+                .fields(indexFields)
+                .volumeGroupName(VolumeCreator.DEFAULT_VOLUME_GROUP)
+                .partitionBy(PartitionBy.YEAR)
+                .build();
         indexStore.writeDocument(index);
         assertThat(index).isNotNull();
         return indexRef;
@@ -156,12 +159,12 @@ public class CommonTestScenarioCreator {
                 .build();
 
         final String data = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                + "<Events xpath-default-namespace=\"records:2\" "
-                + "xmlns:stroom=\"stroom\" "
-                + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
-                + "xmlns=\"event-logging:3\" "
-                + "xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\" "
-                + "Version=\"3.0.0\"/>";
+                            + "<Events xpath-default-namespace=\"records:2\" "
+                            + "xmlns:stroom=\"stroom\" "
+                            + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
+                            + "xmlns=\"event-logging:3\" "
+                            + "xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\" "
+                            + "Version=\"3.0.0\"/>";
 
         try (final Target target = streamStore.openTarget(metaProperties)) {
             TargetUtil.write(target, data);

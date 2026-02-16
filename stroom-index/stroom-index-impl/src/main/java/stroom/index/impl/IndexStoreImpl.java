@@ -176,6 +176,7 @@ public class IndexStoreImpl implements IndexStore {
         try {
             boolean altered = false;
             final LuceneIndexDoc doc = serialiser.read(dataMap);
+            final LuceneIndexDoc.Builder builder = doc.copy();
 
             // If the imported feed's vol grp doesn't exist in this env use our default
             // or null it out
@@ -188,8 +189,8 @@ public class IndexStoreImpl implements IndexStore {
                             volumeGroup, docRef);
                     fsVolumeGroupService.getDefaultVolumeGroup()
                             .ifPresentOrElse(
-                                    doc::setVolumeGroupName,
-                                    () -> doc.setVolumeGroupName(null));
+                                    builder::volumeGroupName,
+                                    () -> builder.volumeGroupName(null));
                     altered = true;
                 }
             }
@@ -197,18 +198,17 @@ public class IndexStoreImpl implements IndexStore {
             // Transfer fields to the database.
             if (NullSafe.hasItems(doc.getFields())) {
                 // Make sure we transfer all fields to the DB and remove them from the doc.
-                final List<IndexField> fields = doc
-                        .getFields()
+                final List<IndexField> fields = doc.getFields()
                         .stream()
                         .map(field -> (IndexField) field)
                         .toList();
                 indexFieldServiceProvider.get().addFields(doc.asDocRef(), fields);
-                doc.setFields(null);
+                builder.fields(null);
                 altered = true;
             }
 
             if (altered) {
-                effectiveDataMap = serialiser.write(doc);
+                effectiveDataMap = serialiser.write(builder.build());
             }
 
         } catch (final IOException e) {
@@ -225,10 +225,7 @@ public class IndexStoreImpl implements IndexStore {
                                               final List<Message> messageList) {
         // Get the first 1000 fields.
         final List<LuceneIndexField> fields = getFieldsForExport(docRef);
-        return store.exportDocument(docRef, omitAuditFields, messageList, d -> {
-            d.setFields(fields);
-            return d;
-        });
+        return store.exportDocument(docRef, omitAuditFields, messageList, d -> d.copy().fields(fields).build());
     }
 
     private List<LuceneIndexField> getFieldsForExport(final DocRef docRef) {

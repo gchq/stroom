@@ -17,6 +17,7 @@
 package stroom.index.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -60,8 +61,8 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, L
             addTab(SHARDS, new DocumentEditTabProvider<LuceneIndexDoc>(indexShardPresenterProvider::get));
         }
 
-        addTab(FIELDS, new DocumentEditTabProvider<LuceneIndexDoc>(indexFieldListPresenterProvider::get));
-        addTab(SETTINGS, new DocumentEditTabProvider<LuceneIndexDoc>(indexSettingsPresenterProvider::get));
+        addTab(FIELDS, new DocTabProvider<LuceneIndexDoc>(indexFieldListPresenterProvider::get));
+        addTab(SETTINGS, new DocTabProvider<LuceneIndexDoc>(indexSettingsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<LuceneIndexDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -75,8 +76,7 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, L
             @Override
             public LuceneIndexDoc onWrite(final MarkdownEditPresenter presenter,
                                           final LuceneIndexDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

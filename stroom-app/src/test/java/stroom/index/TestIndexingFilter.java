@@ -58,6 +58,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.in;
 
 class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
@@ -210,8 +211,7 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
         return pipelineScopeRunnable.scopeResult(() -> {
             // Setup the index.
             final DocRef indexRef = indexStore.createDocument("Test index");
-            LuceneIndexDoc index = indexStore.readDocument(indexRef);
-            index.setFields(indexFields);
+            LuceneIndexDoc index = indexStore.readDocument(indexRef).copy().fields(indexFields).build();
             index = indexStore.writeDocument(index);
 
             // Setup the error handler.

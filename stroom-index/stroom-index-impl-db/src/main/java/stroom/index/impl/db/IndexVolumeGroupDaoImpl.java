@@ -146,10 +146,10 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
             if (indexStore != null) {
                 final List<DocRef> indexes = indexStore.list();
                 for (final DocRef docRef : indexes) {
-                    final LuceneIndexDoc indexDoc = indexStore.readDocument(docRef);
+                    LuceneIndexDoc indexDoc = indexStore.readDocument(docRef);
                     if (indexDoc.getVolumeGroupName() != null &&
                         indexDoc.getVolumeGroupName().equals(currentGroupName)) {
-                        indexDoc.setVolumeGroupName(saved.getName());
+                        indexDoc = indexDoc.copy().volumeGroupName(saved.getName()).build();
                         LOGGER.info("Updating index {} ({}) to change volume group name from {} to {}",
                                 indexDoc.getName(),
                                 indexDoc.getUuid(),

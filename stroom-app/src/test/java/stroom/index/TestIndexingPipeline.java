@@ -120,8 +120,7 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
 
             // Setup the target index
             final DocRef indexRef = indexStore.createDocument("Test index");
-            LuceneIndexDoc index = indexStore.readDocument(indexRef);
-            index.setFields(indexFields);
+            LuceneIndexDoc index = indexStore.readDocument(indexRef).copy().fields(indexFields).build();
             index = indexStore.writeDocument(index);
 
             errorReceiverProvider.get().setErrorReceiver(new FatalErrorReceiver());
