@@ -628,6 +628,12 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
     public abstract String getType();
 
+    public void create(final String documentName,
+                         final Consumer<D> resultConsumer,
+                         final RestErrorHandler errorHandler,
+                         final TaskMonitorFactory taskMonitorFactory) {
+        throw new RuntimeException("Not yet implemented");
+    }
 
     // --------------------------------------------------------------------------------
 

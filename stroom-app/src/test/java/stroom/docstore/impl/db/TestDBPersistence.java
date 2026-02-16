@@ -81,4 +81,57 @@ class TestDBPersistence extends AbstractCoreIntegrationTest {
         // Delete
         persistence.delete(docRef);
     }
+
+    @Test
+    void findDocRefsEmbeddedIn() throws Exception {
+        final String uuid1 = UUID.randomUUID().toString();
+        final String uuid2 = UUID.randomUUID().toString();
+        final DocRef docRef1 = new DocRef("test-type1", uuid1, "test-name1");
+        final DocRef docRef2 = new DocRef("test-type2", uuid2, "test-name2");
+
+        persistence.delete(docRef1);
+        persistence.delete(docRef2);
+
+        final String metaJson1 = """
+                {
+                  "type": "XSLT",
+                  "uuid": "%s",
+                  "name": "EMBEDDED XSLT (translationFilter)",
+                  "version": "ba97a81f-c8e6-4d34-8ea8-a9808e89ced4",
+                  "createTimeMs": 1769686495941,
+                  "updateTimeMs": 1769686587789,
+                  "createUser": "admin",
+                  "updateUser": "admin",
+                  "embeddedIn": {
+                    "type": "Pipeline",
+                    "uuid": "%s",
+                    "name": "my pipeline"
+                  }
+                }""";
+
+        final String metaJson2 = """
+                {
+                  "type": "Pipeline",
+                  "uuid": "%s",
+                  "name": "Pipeline",
+                  "version": "ba97a81f-c8e6-4d34-8ea8-a9808e89ced4",
+                  "createTimeMs": 1769686495941,
+                  "updateTimeMs": 1769686587789,
+                  "createUser": "admin",
+                  "updateUser": "admin"
+                }""";
+
+        // Create
+        final Map<String, byte[]> data1 = new HashMap<>();
+        data1.put("meta", String.format(metaJson1, uuid1, uuid2).getBytes(CHARSET));
+        persistence.write(docRef1, false, data1);
+
+        final Map<String, byte[]> data2 = new HashMap<>();
+        data2.put("meta", String.format(metaJson2, uuid2).getBytes(CHARSET));
+        persistence.write(docRef2, false, data2);
+
+        final List<DocRef> docRefs = persistence.findDocRefsEmbeddedIn(docRef2);
+        assertThat(docRefs.size()).isEqualTo(1);
+        assertThat(docRefs.get(0)).isEqualTo(docRef1);
+    }
 }

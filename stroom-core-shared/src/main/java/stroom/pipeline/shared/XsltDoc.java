@@ -19,6 +19,7 @@ package stroom.pipeline.shared;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
+import stroom.docstore.shared.AbstractEmbeddableDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasData;
@@ -46,9 +47,10 @@ import java.util.Objects;
         "createUser",
         "updateUser",
         "description",
-        "data"})
+        "data",
+        "embeddedIn"})
 @JsonInclude(Include.NON_NULL)
-public class XsltDoc extends AbstractDoc implements HasData {
+public class XsltDoc extends AbstractEmbeddableDoc implements HasData {
 
     public static final String TYPE = "XSLT";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.XSLT_DOCUMENT_TYPE;
@@ -67,8 +69,9 @@ public class XsltDoc extends AbstractDoc implements HasData {
                    @JsonProperty("createUser") final String createUser,
                    @JsonProperty("updateUser") final String updateUser,
                    @JsonProperty("description") final String description,
-                   @JsonProperty("data") final String data) {
-        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+                   @JsonProperty("data") final String data,
+                   @JsonProperty("embeddedIn") final DocRef embeddedIn) {
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser, embeddedIn);
         this.description = description;
         this.data = data;
     }
@@ -140,6 +143,7 @@ public class XsltDoc extends AbstractDoc implements HasData {
 
         private String description;
         private String data;
+        private DocRef embeddedIn;
 
         private Builder() {
         }
@@ -148,6 +152,7 @@ public class XsltDoc extends AbstractDoc implements HasData {
             super(xsltDoc);
             this.description = xsltDoc.description;
             this.data = xsltDoc.data;
+            this.embeddedIn = xsltDoc.getEmbeddedIn();
         }
 
         public Builder description(final String description) {
@@ -157,6 +162,11 @@ public class XsltDoc extends AbstractDoc implements HasData {
 
         public Builder data(final String data) {
             this.data = data;
+            return self();
+        }
+
+        public Builder embeddedIn(final DocRef embeddedIn) {
+            this.embeddedIn = embeddedIn;
             return self();
         }
 
@@ -175,7 +185,8 @@ public class XsltDoc extends AbstractDoc implements HasData {
                     createUser,
                     updateUser,
                     description,
-                    data);
+                    data,
+                    embeddedIn);
         }
     }
 }
