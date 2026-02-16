@@ -75,7 +75,7 @@ class DictionaryResourceImpl implements DictionaryResource, FetchWithUuid<Dictio
                     .stream()
                     .map(importDocRef -> docRefInfoService.decorate(importDocRef, true))
                     .toList();
-            dictionaryDoc.setImports(decoratedImports);
+            return dictionaryDoc.copy().imports(decoratedImports).build();
         }
         return dictionaryDoc;
     }

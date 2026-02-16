@@ -314,8 +314,7 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
     @Test
     void dictionaryTest1() {
         final DocRef docRef = dictionaryStore.createDocument("users");
-        final DictionaryDoc dic = dictionaryStore.readDocument(docRef);
-        dic.setData("user1\nuser2\nuser5");
+        final DictionaryDoc dic = dictionaryStore.readDocument(docRef).copy().data("user1\nuser2\nuser5").build();
         dictionaryStore.writeDocument(dic);
 
         final ExpressionOperator.Builder and = ExpressionOperator.builder();
@@ -332,13 +331,11 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
     @Test
     void dictionaryTest2() {
         final DocRef docRef1 = dictionaryStore.createDocument("users");
-        final DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1);
-        dic1.setData("user1\nuser2\nuser5");
+        final DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1).copy().data("user1\nuser2\nuser5").build();
         dictionaryStore.writeDocument(dic1);
 
         final DocRef docRef2 = dictionaryStore.createDocument("command");
-        final DictionaryDoc dic2 = dictionaryStore.readDocument(docRef2);
-        dic2.setData("msg");
+        final DictionaryDoc dic2 = dictionaryStore.readDocument(docRef2).copy().data("msg").build();
         dictionaryStore.writeDocument(dic2);
 
         final ExpressionOperator.Builder and = ExpressionOperator.builder();
@@ -357,13 +354,11 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
     @Test
     void dictionaryTest3() {
         final DocRef docRef1 = dictionaryStore.createDocument("users");
-        final DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1);
-        dic1.setData("user1\nuser2\nuser5");
+        final DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1).copy().data("user1\nuser2\nuser5").build();
         dictionaryStore.writeDocument(dic1);
 
         final DocRef docRef2 = dictionaryStore.createDocument("command");
-        final DictionaryDoc dic2 = dictionaryStore.readDocument(docRef2);
-        dic2.setData("msg foo bar");
+        final DictionaryDoc dic2 = dictionaryStore.readDocument(docRef2).copy().data("msg foo bar").build();
         dictionaryStore.writeDocument(dic2);
 
         final ExpressionOperator.Builder and = ExpressionOperator.builder();
@@ -455,7 +450,7 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
                 .as("Check indexStore is not empty")
                 .isNotEmpty();
 
-        final DocRef indexRef = indexStore.list().get(0);
+        final DocRef indexRef = indexStore.list().getFirst();
         assertThat(indexRef).as("Index is null").isNotNull();
 
         final QueryKey key = new QueryKey(UUID.randomUUID().toString());
