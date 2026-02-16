@@ -192,8 +192,8 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "GitRepo",
                 systemNode,
                 null);
-        final GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(gitRepoNode.getDocRef());
-        gitRepoDoc.setDescription("Original Description");
+        final GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(gitRepoNode.getDocRef())
+                .copy().description("Original Description").build();
         gitRepoStore.writeDocument(gitRepoDoc);
 
         final ExplorerNode folder1 = explorerService.create(ExplorerConstants.FOLDER_TYPE,
@@ -316,8 +316,8 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "GitRepo",
                 systemNode,
                 null);
-        final GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(gitRepoNode.getDocRef());
-        gitRepoDoc.setDescription("GitRepo Description");
+        final GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(gitRepoNode.getDocRef())
+                .copy().description("GitRepo Description").build();
         gitRepoStore.writeDocument(gitRepoDoc);
 
         final ExplorerNode folder1 = explorerService.create(ExplorerConstants.FOLDER_TYPE,
@@ -407,8 +407,8 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "GitRepo",
                 systemNode,
                 null);
-        final GitRepoDoc gitRepoDoc2 = gitRepoStore.readDocument(gitRepoNode2.getDocRef());
-        gitRepoDoc2.setDescription("GitRepo Description");
+        final GitRepoDoc gitRepoDoc2 = gitRepoStore.readDocument(gitRepoNode2.getDocRef())
+                .copy().description("GitRepo Description").build();
         gitRepoStore.writeDocument(gitRepoDoc2);
 
         final List<ImportState> importStates = new ArrayList<>();
