@@ -16,14 +16,14 @@
 
 package stroom.planb.client.view;
 
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
 import stroom.query.api.UserTimeZone;
 
 import com.gwtplatform.mvp.client.HasUiHandlers;
 
 public interface TimeZoneView extends ReadOnlyChangeHandler,
-        HasUiHandlers<PlanBSettingsUiHandlers> {
+        HasUiHandlers<ChangeUiHandlers> {
 
     UserTimeZone.Use getTimeZoneUse();
 
