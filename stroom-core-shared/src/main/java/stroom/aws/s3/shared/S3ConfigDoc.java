@@ -52,10 +52,10 @@ public class S3ConfigDoc extends AbstractDoc implements HasData {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.S3_CONFIG_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description = "";
+    private final String description;
 
     @JsonProperty
-    private String data = "";
+    private final String data;
 
     @JsonCreator
     public S3ConfigDoc(@JsonProperty("uuid") final String uuid,
@@ -92,19 +92,9 @@ public class S3ConfigDoc extends AbstractDoc implements HasData {
         return description;
     }
 
-    @SuppressWarnings("unused")
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     @Override
     public String getData() {
         return data;
-    }
-
-    @Override
-    public void setData(final String data) {
-        this.data = data;
     }
 
     @Override
@@ -130,6 +120,11 @@ public class S3ConfigDoc extends AbstractDoc implements HasData {
 
     public Builder copy() {
         return new Builder(this);
+    }
+
+    @Override
+    public HasData copyWithData(final String data) {
+        return copy().data(data).build();
     }
 
     public static Builder builder() {

@@ -55,11 +55,11 @@ public class ScriptDoc extends AbstractDoc implements HasData {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.SCRIPT_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private List<DocRef> dependencies;
+    private final List<DocRef> dependencies;
     @JsonProperty
-    private String data;
+    private final String data;
 
     @JsonCreator
     public ScriptDoc(@JsonProperty("uuid") final String uuid,
@@ -98,26 +98,13 @@ public class ScriptDoc extends AbstractDoc implements HasData {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public List<DocRef> getDependencies() {
         return dependencies;
-    }
-
-    public void setDependencies(final List<DocRef> dependencies) {
-        this.dependencies = dependencies;
     }
 
     @Override
     public String getData() {
         return data;
-    }
-
-    @Override
-    public void setData(final String data) {
-        this.data = data;
     }
 
     @Override
@@ -144,6 +131,11 @@ public class ScriptDoc extends AbstractDoc implements HasData {
 
     public Builder copy() {
         return new Builder(this);
+    }
+
+    @Override
+    public HasData copyWithData(final String data) {
+        return copy().data(data).build();
     }
 
     public static Builder builder() {

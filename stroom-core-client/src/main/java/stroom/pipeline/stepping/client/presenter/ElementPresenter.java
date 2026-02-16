@@ -288,7 +288,7 @@ public class ElementPresenter
     }
 
     private void write() {
-        hasData.setData(getCode());
+        hasData = hasData.copyWithData(getCode());
     }
 
     public String getCode() {

@@ -101,8 +101,10 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
         pipelineScopeRunnable.scopeRunnable(() -> {
             // Setup the XSLT.
             final DocRef xsltRef = xsltStore.createDocument("Indexing XSLT");
-            final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
-            xsltDoc.setData(StreamUtil.streamToString(StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_XSLT)));
+            final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef)
+                    .copy()
+                    .data(StreamUtil.streamToString(StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_XSLT)))
+                    .build();
             xsltStore.writeDocument(xsltDoc);
 
             final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();

@@ -748,10 +748,12 @@ public final class StoreCreationTool {
         if (data != null) {
 //            final DocRef textConverterRef = textConverterStore.createDocument(name);
             final DocRef textConverterRef = createTextConverter(name);
-            final TextConverterDoc textConverter = textConverterStore.readDocument(textConverterRef);
-            textConverter.setDescription("Description " + name);
-            textConverter.setConverterType(textConverterType);
-            textConverter.setData(data);
+            final TextConverterDoc textConverter = textConverterStore.readDocument(textConverterRef)
+                    .copy()
+                    .description("Description " + name)
+                    .converterType(textConverterType)
+                    .data(data)
+                    .build();
             textConverterStore.writeDocument(textConverter);
             return textConverterRef;
         }
@@ -782,9 +784,11 @@ public final class StoreCreationTool {
         if (data != null) {
             final DocRef docRef = createXslt(name);
 //            final DocRef docRef = xsltStore.createDocument(name);
-            final XsltDoc document = xsltStore.readDocument(docRef);
-            document.setDescription("Description " + name);
-            document.setData(data);
+            final XsltDoc document = xsltStore.readDocument(docRef)
+                    .copy()
+                    .description("Description " + name)
+                    .data(data)
+                    .build();
             xsltStore.writeDocument(document);
             return docRef;
         }

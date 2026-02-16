@@ -40,22 +40,16 @@ public class DocumentationSerialiser implements DocumentSerialiser2<Documentatio
 
     @Override
     public DocumentationDoc read(final Map<String, byte[]> data) throws IOException {
-        final DocumentationDoc document = delegate.read(data);
-        document.setData(EncodingUtil.asString(data.get(TEXT)));
-        return document;
+        return delegate.read(data).copy().data(EncodingUtil.asString(data.get(TEXT))).build();
     }
 
     @Override
     public Map<String, byte[]> write(final DocumentationDoc document) throws IOException {
         final String text = document.getData();
-        document.setData(null);
-
-        final Map<String, byte[]> data = delegate.write(document);
+        final Map<String, byte[]> data = delegate.write(document.copy().data(null).build());
         if (text != null) {
             data.put(TEXT, EncodingUtil.asBytes(text));
-            document.setData(text);
         }
-
         return data;
     }
 }

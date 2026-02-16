@@ -96,8 +96,7 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
 
             @Override
             public KafkaConfigDoc onWrite(final EditorPresenter presenter, final KafkaConfigDoc document) {
-                document.setData(presenter.getText());
-                return document;
+                return document.copy().data(presenter.getText()).build();
             }
         });
         addTab(DOCUMENTATION, new MarkdownTabProvider<KafkaConfigDoc>(eventBus, markdownEditPresenterProvider) {
@@ -113,8 +112,7 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
             @Override
             public KafkaConfigDoc onWrite(final MarkdownEditPresenter presenter,
                                           final KafkaConfigDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

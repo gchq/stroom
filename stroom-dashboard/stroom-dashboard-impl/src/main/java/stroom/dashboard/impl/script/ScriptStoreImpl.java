@@ -18,9 +18,7 @@ package stroom.dashboard.impl.script;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapFunction;
-import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -38,7 +36,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 class ScriptStoreImpl implements ScriptStore {
@@ -123,10 +120,10 @@ class ScriptStoreImpl implements ScriptStore {
     private DependencyRemapFunction<ScriptDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
             if (doc.getDependencies() != null) {
-                doc.setDependencies(doc.getDependencies()
+                return doc.copy().dependencies(doc.getDependencies()
                         .stream()
                         .map(dependencyRemapper::remap)
-                        .toList());
+                        .toList()).build();
             }
             return doc;
         };

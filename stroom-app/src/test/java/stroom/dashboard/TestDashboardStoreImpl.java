@@ -117,8 +117,7 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
 
     private VisComponentSettings getVisSettings() {
         final DocRef scriptRef = scriptStore.createDocument("Test");
-        final ScriptDoc script = scriptStore.readDocument(scriptRef);
-        script.setData("Test");
+        final ScriptDoc script = scriptStore.readDocument(scriptRef).copy().data("Test").build();
         scriptStore.writeDocument(script);
 
         final DocRef visRef = visualisationStore.createDocument("Test");

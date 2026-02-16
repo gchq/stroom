@@ -19,8 +19,8 @@ package stroom.pipeline.client.presenter;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.AbstractTabProvider;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -38,7 +38,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import javax.inject.Provider;
 
-public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPanelView, TextConverterDoc> {
+public class TextConverterPresenter extends DocTabPresenter<LinkTabPanelView, TextConverterDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData CONVERSION = new TabDataImpl("Conversion");
@@ -88,20 +88,17 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
 
             @Override
             public TextConverterDoc onWrite(final EditorPresenter presenter, final TextConverterDoc document) {
-                document.setData(presenter.getText());
-                return document;
+                return document.copy().data(presenter.getText()).build();
             }
         });
 
-        addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
+        addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<TextConverterDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
                                final TextConverterDoc document,
                                final boolean readOnly) {
-
-
                 presenter.setText(document.getDescription());
                 presenter.setReadOnly(readOnly);
             }
@@ -109,8 +106,7 @@ public class TextConverterPresenter extends DocumentEditTabPresenter<LinkTabPane
             @Override
             public TextConverterDoc onWrite(final MarkdownEditPresenter presenter,
                                             final TextConverterDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

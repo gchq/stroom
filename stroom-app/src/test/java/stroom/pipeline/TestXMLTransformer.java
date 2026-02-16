@@ -144,9 +144,11 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
         // Create a record for the TextConverter.
         final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(FRAGMENT_WRAPPER);
         final DocRef docRef = textConverterStore.createDocument("Test Text Converter");
-        final TextConverterDoc textConverter = textConverterStore.readDocument(docRef);
-        textConverter.setConverterType(TextConverterType.XML_FRAGMENT);
-        textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
+        final TextConverterDoc textConverter = textConverterStore.readDocument(docRef)
+                .copy()
+                .converterType(TextConverterType.XML_FRAGMENT)
+                .data(StreamUtil.streamToString(textConverterInputStream))
+                .build();
         textConverterStore.writeDocument(textConverter);
 
         // Get the pipeline config.
@@ -166,8 +168,8 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
         // Create a record for the XSLT.
         final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(XSLT_PATH);
         final DocRef xsltRef = xsltStore.createDocument("Test XSLT");
-        final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
-        xsltDoc.setData(StreamUtil.streamToString(xsltInputStream));
+        final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef)
+                .copy().data(StreamUtil.streamToString(xsltInputStream)).build();
         xsltStore.writeDocument(xsltDoc);
 
         // Get the pipeline config.

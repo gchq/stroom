@@ -145,9 +145,11 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
         // Create a record for the TextConverter.
         final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(textConverterFile);
         final DocRef docRef = textConverterStore.createDocument(name);
-        final TextConverterDoc doc = textConverterStore.readDocument(docRef);
-        doc.setConverterType(textConverterType);
-        doc.setData(StreamUtil.streamToString(textConverterInputStream));
+        final TextConverterDoc doc = textConverterStore.readDocument(docRef)
+                .copy()
+                .converterType(textConverterType)
+                .data(StreamUtil.streamToString(textConverterInputStream))
+                .build();
         textConverterStore.writeDocument(doc);
         return docRef;
     }
@@ -156,8 +158,8 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
         // Create a record for the XSLT.
         final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(xsltPath);
         final DocRef docRef = xsltStore.createDocument(name);
-        final XsltDoc doc = xsltStore.readDocument(docRef);
-        doc.setData(StreamUtil.streamToString(xsltInputStream));
+        final XsltDoc doc = xsltStore.readDocument(docRef)
+                .copy().data(StreamUtil.streamToString(xsltInputStream)).build();
         xsltStore.writeDocument(doc);
         return docRef;
     }

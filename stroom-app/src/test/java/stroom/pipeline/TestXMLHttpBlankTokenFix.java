@@ -97,16 +97,20 @@ class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
             // Setup the text converter.
             final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(FORMAT);
             final DocRef textConverterRef = textConverterStore.createDocument("Test Text Converter");
-            final TextConverterDoc textConverter = textConverterStore.readDocument(textConverterRef);
-            textConverter.setConverterType(TextConverterType.DATA_SPLITTER);
-            textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
+            final TextConverterDoc textConverter = textConverterStore.readDocument(textConverterRef)
+                    .copy()
+                    .converterType(TextConverterType.DATA_SPLITTER)
+                    .data(StreamUtil.streamToString(textConverterInputStream))
+                    .build();
             textConverterStore.writeDocument(textConverter);
 
             // Setup the XSLT.
             final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(XSLT_LOCATION);
             final DocRef xsltRef = xsltStore.createDocument("Test");
-            final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
-            xsltDoc.setData(StreamUtil.streamToString(xsltInputStream));
+            final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef)
+                    .copy()
+                    .data(StreamUtil.streamToString(xsltInputStream))
+                    .build();
             xsltStore.writeDocument(xsltDoc);
 
             final Path testDir = getCurrentTestDir();

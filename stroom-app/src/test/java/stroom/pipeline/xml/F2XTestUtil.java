@@ -131,15 +131,17 @@ public class F2XTestUtil {
 
         // Persist the text converter.
         final DocRef textConverterRef = textConverterStore.createDocument("TEST_TRANSLATION");
-        final TextConverterDoc textConverterDoc = textConverterStore.readDocument(textConverterRef);
-        textConverterDoc.setConverterType(textConverterType);
-        textConverterDoc.setData(StroomPipelineTestFileUtil.getString(textConverterLocation));
+        final TextConverterDoc textConverterDoc = textConverterStore.readDocument(textConverterRef)
+                .copy()
+                .converterType(textConverterType)
+                .data(StroomPipelineTestFileUtil.getString(textConverterLocation))
+                .build();
         textConverterStore.writeDocument(textConverterDoc);
 
         // Persist the XSLT.
         final DocRef xsltRef = xsltStore.createDocument("TEST_TRANSLATION");
-        final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
-        xsltDoc.setData(StroomPipelineTestFileUtil.getString(xsltLocation));
+        final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef)
+                .copy().data(StroomPipelineTestFileUtil.getString(xsltLocation)).build();
         xsltStore.writeDocument(xsltDoc);
 
         // Setup the error receiver.
@@ -219,9 +221,9 @@ public class F2XTestUtil {
         return taskContextFactory.contextResult("F2XTestUtil", taskContext -> {
             // Persist the text converter.
             final DocRef docRef = textConverterStore.createDocument("TEST_TRANSLATION");
-            final TextConverterDoc textConverter = textConverterStore.readDocument(docRef);
-            textConverter.setConverterType(textConverterType);
-            textConverter.setData(StroomPipelineTestFileUtil.getString(textConverterLocation));
+            final TextConverterDoc textConverter = textConverterStore.readDocument(docRef)
+                    .copy().converterType(textConverterType).data(StroomPipelineTestFileUtil.getString(
+                            textConverterLocation)).build();
             textConverterStore.writeDocument(textConverter);
 
             // Setup the error receiver.

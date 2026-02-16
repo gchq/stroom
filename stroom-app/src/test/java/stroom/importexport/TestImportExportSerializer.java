@@ -153,8 +153,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         List<DocRef> allSchemas = xmlSchemaStore.list();
         for (final DocRef ref : allSchemas) {
-            final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(ref);
-            xmlSchema.setData("XML");
+            final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(ref).copy().data("XML").build();
             xmlSchemaStore.writeDocument(xmlSchema);
         }
 
@@ -244,8 +243,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         List<DocRef> allSchemas = xmlSchemaStore.list();
         for (final DocRef ref : allSchemas) {
-            final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(ref);
-            xmlSchema.setData("XML");
+            final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(ref).copy().data("XML").build();
             xmlSchemaStore.writeDocument(xmlSchema);
         }
 

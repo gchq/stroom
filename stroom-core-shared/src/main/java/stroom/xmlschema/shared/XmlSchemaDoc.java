@@ -70,17 +70,17 @@ public class XmlSchemaDoc extends AbstractDoc implements HasData {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.XML_SCHEMA_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private String namespaceURI;
+    private final String namespaceURI;
     @JsonProperty
-    private String systemId;
+    private final String systemId;
     @JsonProperty
-    private String data;
+    private final String data;
     @JsonProperty
-    private boolean deprecated;
+    private final boolean deprecated;
     @JsonProperty
-    private String schemaGroup;
+    private final String schemaGroup;
 
     @JsonCreator
     public XmlSchemaDoc(@JsonProperty("uuid") final String uuid,
@@ -125,24 +125,12 @@ public class XmlSchemaDoc extends AbstractDoc implements HasData {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public String getNamespaceURI() {
         return namespaceURI;
     }
 
-    public void setNamespaceURI(final String namespaceURI) {
-        this.namespaceURI = namespaceURI;
-    }
-
     public String getSystemId() {
         return systemId;
-    }
-
-    public void setSystemId(final String systemId) {
-        this.systemId = systemId;
     }
 
     @Override
@@ -150,25 +138,12 @@ public class XmlSchemaDoc extends AbstractDoc implements HasData {
         return data;
     }
 
-    @Override
-    public void setData(final String data) {
-        this.data = data;
-    }
-
     public boolean isDeprecated() {
         return deprecated;
     }
 
-    public void setDeprecated(final boolean deprecated) {
-        this.deprecated = deprecated;
-    }
-
     public String getSchemaGroup() {
         return schemaGroup;
-    }
-
-    public void setSchemaGroup(final String schemaGroup) {
-        this.schemaGroup = schemaGroup;
     }
 
     @Override
@@ -198,6 +173,11 @@ public class XmlSchemaDoc extends AbstractDoc implements HasData {
 
     public Builder copy() {
         return new Builder(this);
+    }
+
+    @Override
+    public HasData copyWithData(final String data) {
+        return copy().data(data).build();
     }
 
     public static Builder builder() {
