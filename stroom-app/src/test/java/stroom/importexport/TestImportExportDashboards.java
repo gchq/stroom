@@ -229,16 +229,15 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         components.add(visualisation);
 
         // Create dashboard.
-        final DashboardConfig dashboardData = new DashboardConfig();
-        dashboardData.setComponents(components);
+        final DashboardConfig dashboardConfig = DashboardConfig.builder().components(components).build();
 
         final ExplorerNode dashboardNode = explorerService.create(
                 DashboardDoc.TYPE,
                 "Test Dashboard",
                 folder1,
                 null);
-        DashboardDoc dashboard = dashboardStore.readDocument(dashboardNode.getDocRef());
-        dashboard.setDashboardConfig(dashboardData);
+        DashboardDoc dashboard = dashboardStore.readDocument(dashboardNode.getDocRef())
+                .copy().dashboardConfig(dashboardConfig).build();
         dashboard = dashboardStore.writeDocument(dashboard);
         assertThat(dashboardStore.list().size()).isEqualTo(1);
 

@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.flexlayout;
+package stroom.document.client.event;
 
-public interface FlexLayoutChangeHandler {
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
 
-    void removeTab(MutableTabLayoutConfig tabLayoutConfig, MutableTabConfig tab);
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
-    void removeTabPanel(MutableTabLayoutConfig tabLayoutConfig);
+public interface HasChangeHandlers extends HasHandlers {
 
-    void onChange();
+    HandlerRegistration addChangeHandler(ChangeHandler handler);
 }

@@ -62,7 +62,7 @@ public abstract class DocPresenter<V extends View, D>
         return dirty;
     }
 
-    void updateLabel() {
+    protected void updateLabel() {
 
     }
 

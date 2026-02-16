@@ -47,11 +47,11 @@ public class ChangeEvent extends GwtEvent<ChangeHandler> {
 
     @Override
     protected void dispatch(final ChangeHandler handler) {
-        handler.onChange(this);
+        handler.onChange();
     }
 
     public interface ChangeHandler extends EventHandler {
 
-        void onChange(ChangeEvent event);
+        void onChange();
     }
 }

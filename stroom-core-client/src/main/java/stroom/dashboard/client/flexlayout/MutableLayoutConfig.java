@@ -16,11 +16,17 @@
 
 package stroom.dashboard.client.flexlayout;
 
-public interface FlexLayoutChangeHandler {
+public abstract sealed class MutableLayoutConfig permits MutableSplitLayoutConfig, MutableTabLayoutConfig {
 
-    void removeTab(MutableTabLayoutConfig tabLayoutConfig, MutableTabConfig tab);
+    private MutableSplitLayoutConfig parent;
 
-    void removeTabPanel(MutableTabLayoutConfig tabLayoutConfig);
+    public abstract MutableSize getPreferredSize();
 
-    void onChange();
+    public MutableSplitLayoutConfig getParent() {
+        return parent;
+    }
+
+    public void setParent(final MutableSplitLayoutConfig parent) {
+        this.parent = parent;
+    }
 }

@@ -26,7 +26,7 @@ import com.gwtplatform.mvp.client.HandlerContainerImpl;
 
 import javax.inject.Provider;
 
-public class DocumentEditTabProvider2<D>
+public class DocTabProvider<D>
         extends HandlerContainerImpl
         implements TabProvider<D> {
 
@@ -34,7 +34,7 @@ public class DocumentEditTabProvider2<D>
 
     private DocPresenter<?, D> widget;
 
-    public DocumentEditTabProvider2(final Provider<DocPresenter<?, D>> presenterWidgetProvider) {
+    public DocTabProvider(final Provider<DocPresenter<?, D>> presenterWidgetProvider) {
         this.presenterWidgetProvider = presenterWidgetProvider;
     }
 

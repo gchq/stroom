@@ -224,7 +224,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                 columns.add(destIndex, column);
             }
 
-            tablePresenter.setDirty(true);
+            tablePresenter.onChange();
         }
     }
 
@@ -233,7 +233,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         final Column column = getColumn(colIndex);
         if (column != null) {
             replaceColumn(column, column.copy().width(size).build());
-            tablePresenter.setDirty(true);
+            tablePresenter.onChange();
         }
     }
 
@@ -272,7 +272,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         }
 
         if (change) {
-            tablePresenter.setDirty(true);
+            tablePresenter.onChange();
             tablePresenter.updateColumns();
             tablePresenter.refresh();
         }
@@ -304,7 +304,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     public void showRename(final Column column) {
         renameColumnPresenterProvider.get().show(tablePresenter, column, (oldField, newField) -> {
             replaceColumn(oldField, newField);
-            tablePresenter.setDirty(true);
+            tablePresenter.onChange();
             tablePresenter.updateColumns();
         });
     }
@@ -312,7 +312,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     public void showExpression(final Column column) {
         expressionPresenterProvider.get().show(tablePresenter, column, (oldField, newField) -> {
             replaceColumn(oldField, newField);
-            tablePresenter.setDirty(true);
+            tablePresenter.onChange();
             tablePresenter.refresh();
         });
     }
@@ -320,7 +320,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
     public void showFormat(final Column column) {
         formatPresenter.show(column, (oldField, newField) -> {
             replaceColumn(oldField, newField);
-            tablePresenter.setDirty(true);
+            tablePresenter.onChange();
             tablePresenter.refresh();
         });
     }
@@ -336,7 +336,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
                 }
             }
 
-            tablePresenter.setDirty(true);
+            tablePresenter.onChange();
             tablePresenter.updateColumns();
             tablePresenter.onColumnFilterChange();
         });
@@ -357,7 +357,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         columns.add(index, newColumn);
         updateColumns(columns);
 
-        tablePresenter.setDirty(true);
+        tablePresenter.onChange();
         tablePresenter.updateColumns();
         tablePresenter.refresh();
     }
@@ -373,7 +373,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         columns.remove(column);
         columns.add(0, column);
         updateColumns(columns);
-        tablePresenter.setDirty(true);
+        tablePresenter.onChange();
         tablePresenter.updateColumns();
     }
 
@@ -382,7 +382,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         columns.remove(column);
         columns.add(column);
         updateColumns(columns);
-        tablePresenter.setDirty(true);
+        tablePresenter.onChange();
         tablePresenter.updateColumns();
     }
 
@@ -408,7 +408,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         } else {
             replaceColumn(column, null);
 
-            tablePresenter.setDirty(true);
+            tablePresenter.onChange();
             tablePresenter.updateColumns();
             tablePresenter.refresh();
         }
@@ -444,7 +444,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
             replaceColumn(column, column.copy().columnFilter(columnFilter).build());
             tablePresenter.setFocused(false);
-            tablePresenter.setDirty(true);
+            tablePresenter.onChange();
             tablePresenter.onColumnFilterChange();
         }
     }
@@ -458,7 +458,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
             replaceColumn(column, column.copy().columnValueSelection(columnValueSelection).build());
             tablePresenter.setFocused(false);
-            tablePresenter.setDirty(true);
+            tablePresenter.onChange();
             tablePresenter.updateColumns();
             tablePresenter.onColumnFilterChange();
         }
@@ -481,7 +481,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
 
     private void showColumn(final Column column) {
         replaceColumn(column, column.copy().visible(true).build());
-        tablePresenter.setDirty(true);
+        tablePresenter.onChange();
         tablePresenter.updateColumns();
     }
 
@@ -490,7 +490,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
             AlertEvent.fireError(tablePresenter, "You cannot remove or hide all columns", null);
         } else {
             replaceColumn(column, column.copy().visible(false).build());
-            tablePresenter.setDirty(true);
+            tablePresenter.onChange();
             tablePresenter.updateColumns();
         }
     }
@@ -672,7 +672,7 @@ public class ColumnsManager implements HeadingListener, FilterCellManager, HasHa
         if (!Objects.equals(column.getGroup(), group)) {
             replaceColumn(column, column.copy().group(group).build());
             fixGroups(getColumns());
-            tablePresenter.setDirty(true);
+            tablePresenter.onChange();
             tablePresenter.updateColumns();
             tablePresenter.refresh();
         }

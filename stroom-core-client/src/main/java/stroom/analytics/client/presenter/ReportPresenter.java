@@ -19,7 +19,7 @@ package stroom.analytics.client.presenter;
 import stroom.analytics.shared.ReportDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider2;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -62,10 +62,10 @@ public class ReportPresenter
         final ReportProcessingPresenter analyticProcessingPresenter = processPresenterProvider.get();
         analyticProcessingPresenter.setDocumentEditPresenter(this);
 
-        addTab(QUERY, new DocumentEditTabProvider2<>(() -> reportQueryEditPresenter));
-        addTab(SETTINGS, new DocumentEditTabProvider2<>(reportSettingsPresenterProvider::get));
-        addTab(NOTIFICATIONS, new DocumentEditTabProvider2<>(notificationPresenterProvider::get));
-        addTab(EXECUTION, new DocumentEditTabProvider2<>(() -> analyticProcessingPresenter));
+        addTab(QUERY, new DocTabProvider<>(() -> reportQueryEditPresenter));
+        addTab(SETTINGS, new DocTabProvider<>(reportSettingsPresenterProvider::get));
+        addTab(NOTIFICATIONS, new DocTabProvider<>(notificationPresenterProvider::get));
+        addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
         addTab(DOCUMENTATION, new MarkdownTabProvider<ReportDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,

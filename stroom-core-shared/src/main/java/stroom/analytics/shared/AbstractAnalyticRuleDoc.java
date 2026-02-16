@@ -177,23 +177,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
             return false;
         }
         final AbstractAnalyticRuleDoc that = (AbstractAnalyticRuleDoc) o;
-
-
-        boolean b1 = rememberNotifications == that.rememberNotifications;
-        boolean b2 = suppressDuplicateNotifications == that.suppressDuplicateNotifications;
-        boolean b3 = Objects.equals(description, that.description);
-        boolean b4 = languageVersion == that.languageVersion;
-        boolean b5 = Objects.equals(parameters, that.parameters);
-        boolean b6 = Objects.equals(timeRange, that.timeRange);
-        boolean b7 = Objects.equals(query, that.query);
-        boolean b8 = analyticProcessType == that.analyticProcessType;
-        boolean b9 = Objects.equals(analyticProcessConfig, that.analyticProcessConfig);
-        boolean b10 = Objects.equals(analyticNotificationConfig, that.analyticNotificationConfig);
-        boolean b11 = Objects.equals(notifications, that.notifications);
-        boolean b12 = Objects.equals(errorFeed, that.errorFeed);
-        boolean b13 = Objects.equals(duplicateNotificationConfig, that.duplicateNotificationConfig);
-
-
         return rememberNotifications == that.rememberNotifications &&
                suppressDuplicateNotifications == that.suppressDuplicateNotifications &&
                Objects.equals(description, that.description) &&

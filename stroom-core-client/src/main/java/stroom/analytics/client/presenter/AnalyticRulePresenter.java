@@ -20,7 +20,7 @@ import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider2;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -68,11 +68,11 @@ public class AnalyticRulePresenter
         analyticProcessingPresenter.addChangeDataHandler(e ->
                 setRuleType(analyticProcessingPresenter.getView().getProcessingType()));
 
-        addTab(QUERY, new DocumentEditTabProvider2<>(() -> analyticQueryEditPresenter));
-        addTab(NOTIFICATIONS, new DocumentEditTabProvider2<>(notificationPresenterProvider::get));
-        addTab(EXECUTION, new DocumentEditTabProvider2<>(() -> analyticProcessingPresenter));
-        addTab(SHARDS, new DocumentEditTabProvider2<>(analyticDataShardsPresenterProvider::get));
-        addTab(DUPLICATE_MANAGEMENT, new DocumentEditTabProvider2<>(duplicateManagementPresenterProvider::get));
+        addTab(QUERY, new DocTabProvider<>(() -> analyticQueryEditPresenter));
+        addTab(NOTIFICATIONS, new DocTabProvider<>(notificationPresenterProvider::get));
+        addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
+        addTab(SHARDS, new DocTabProvider<>(analyticDataShardsPresenterProvider::get));
+        addTab(DUPLICATE_MANAGEMENT, new DocTabProvider<>(duplicateManagementPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<AnalyticRuleDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,

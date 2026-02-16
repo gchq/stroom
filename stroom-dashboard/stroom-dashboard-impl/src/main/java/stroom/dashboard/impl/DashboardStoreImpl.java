@@ -83,10 +83,11 @@ class DashboardStoreImpl implements DashboardStore {
             try (final InputStream is = getClass().getResourceAsStream(TEMPLATE_FILE)) {
                 if (is != null) {
                     final byte[] bytes = is.readAllBytes();
-                    final DashboardConfig config = serialiser.getDashboardConfigFromJson(bytes);
-                    config.setModelVersion(VERSION_7_2_0);
-                    config.setDesignMode(true);
-                    template = config;
+                    template = serialiser.getDashboardConfigFromJson(bytes)
+                            .copy()
+                            .modelVersion(VERSION_7_2_0)
+                            .designMode(true)
+                            .build();
                 } else {
                     LOGGER.error("Error reading dashboard template as template not found: " + TEMPLATE_FILE);
                 }
@@ -110,8 +111,7 @@ class DashboardStoreImpl implements DashboardStore {
         // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
         // them until after they are created in the store.
         securityContext.asProcessingUser(() -> {
-            final DashboardDoc dashboardDoc = store.readDocument(docRef);
-            dashboardDoc.setDashboardConfig(getTemplate());
+            final DashboardDoc dashboardDoc = store.readDocument(docRef).copy().dashboardConfig(getTemplate()).build();
             store.writeDocument(dashboardDoc);
         });
         return docRef;
@@ -172,36 +172,30 @@ class DashboardStoreImpl implements DashboardStore {
 
     private DependencyRemapFunction<DashboardDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
-            if (doc.getDashboardConfig() != null) {
-                final List<ComponentConfig> components = doc.getDashboardConfig().getComponents();
-                if (components != null && components.size() > 0) {
+            DashboardDoc updated = doc;
+            if (updated.getDashboardConfig() != null) {
+                final List<ComponentConfig> components = updated.getDashboardConfig().getComponents();
+                if (!NullSafe.isEmptyCollection(components)) {
                     final List<ComponentConfig> newComponents = new ArrayList<>();
 
                     components.forEach(componentConfig -> {
                         ComponentSettings componentSettings = componentConfig.getSettings();
                         if (componentSettings != null) {
-                            if (componentSettings instanceof QueryComponentSettings) {
-                                final QueryComponentSettings queryComponentSettings =
-                                        (QueryComponentSettings) componentSettings;
-                                componentSettings = remapQueryComponentSettings(queryComponentSettings,
-                                        dependencyRemapper);
-
-                            } else if (componentSettings instanceof TableComponentSettings) {
-                                final TableComponentSettings tableComponentSettings =
-                                        (TableComponentSettings) componentSettings;
-                                componentSettings = remapTableComponentSettings(tableComponentSettings,
-                                        dependencyRemapper);
-
-                            } else if (componentSettings instanceof VisComponentSettings) {
-                                final VisComponentSettings visComponentSettings =
-                                        (VisComponentSettings) componentSettings;
-                                componentSettings = remapVisComponentSettings(visComponentSettings, dependencyRemapper);
-
-                            } else if (componentSettings instanceof TextComponentSettings) {
-                                final TextComponentSettings textComponentSettings =
-                                        (TextComponentSettings) componentSettings;
-                                componentSettings = remapTextComponentSettings(textComponentSettings,
-                                        dependencyRemapper);
+                            switch (componentSettings) {
+                                case final QueryComponentSettings queryComponentSettings ->
+                                        componentSettings = remapQueryComponentSettings(queryComponentSettings,
+                                                dependencyRemapper);
+                                case final TableComponentSettings tableComponentSettings ->
+                                        componentSettings = remapTableComponentSettings(tableComponentSettings,
+                                                dependencyRemapper);
+                                case final VisComponentSettings visComponentSettings ->
+                                        componentSettings = remapVisComponentSettings(visComponentSettings,
+                                                dependencyRemapper);
+                                case final TextComponentSettings textComponentSettings ->
+                                        componentSettings = remapTextComponentSettings(textComponentSettings,
+                                                dependencyRemapper);
+                                default -> {
+                                }
                             }
                         }
 
@@ -212,10 +206,17 @@ class DashboardStoreImpl implements DashboardStore {
                         newComponents.add(newConfig);
                     });
 
-                    doc.getDashboardConfig().setComponents(newComponents);
+                    updated = updated
+                            .copy()
+                            .dashboardConfig(doc
+                                    .getDashboardConfig()
+                                    .copy()
+                                    .components(newComponents)
+                                    .build())
+                            .build();
                 }
             }
-            return doc;
+            return updated;
         };
     }
 
