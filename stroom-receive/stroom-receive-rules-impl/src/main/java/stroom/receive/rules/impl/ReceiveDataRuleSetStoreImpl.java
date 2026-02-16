@@ -138,8 +138,7 @@ public class ReceiveDataRuleSetStoreImpl implements ReceiveDataRuleSetStore {
                     .filter(Objects::nonNull)
                     .toList();
 
-            receiveDataRules.setFields(fields);
-            store.writeDocument(receiveDataRules);
+            store.writeDocument(receiveDataRules.copy().fields(fields).build());
             LOGGER.info("Created document {}", docRef);
         } else {
             docRef = getFirst(docRefs);

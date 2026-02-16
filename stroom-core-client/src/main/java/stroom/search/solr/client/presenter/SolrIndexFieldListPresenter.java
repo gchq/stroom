@@ -24,7 +24,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.search.solr.client.presenter.SolrIndexFieldListPresenter.SolrIndexFieldListView;
 import stroom.search.solr.shared.SolrIndexDoc;
@@ -32,6 +32,7 @@ import stroom.search.solr.shared.SolrIndexField;
 import stroom.search.solr.shared.SolrIndexResource;
 import stroom.search.solr.shared.SolrSynchState;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -51,7 +52,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndexFieldListView, SolrIndexDoc> {
+public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldListView, SolrIndexDoc> {
 
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
 
@@ -66,6 +67,7 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
     private final ButtonView removeButton;
     private SolrIndexDoc index;
     private List<SolrIndexField> fields;
+    private List<SolrIndexField> deletedFields;
     private SolrIndexFieldDataProvider<SolrIndexField> dataProvider;
 
     @Inject
@@ -294,10 +296,10 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
                 if (result) {
                     fields.removeAll(list);
 
-                    if (index.getDeletedFields() == null) {
-                        index.setDeletedFields(new ArrayList<>());
+                    if (deletedFields == null) {
+                        deletedFields = new ArrayList<>();
                     }
-                    index.getDeletedFields().addAll(list);
+                    deletedFields.addAll(list);
 
                     selectionModel.clear();
                     refresh();
@@ -326,6 +328,7 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
             fields = document.getFields().stream()
                     .sorted(Comparator.comparing(SolrIndexField::getFldName, String.CASE_INSENSITIVE_ORDER))
                     .collect(Collectors.toList());
+            deletedFields = new ArrayList<>(NullSafe.list(document.getDeletedFields()));
 
             final SolrSynchState state = document.getSolrSynchState();
             final StringBuilder sb = new StringBuilder();
@@ -348,8 +351,7 @@ public class SolrIndexFieldListPresenter extends DocumentEditPresenter<SolrIndex
 
     @Override
     protected SolrIndexDoc onWrite(final SolrIndexDoc document) {
-        document.setFields(fields);
-        return document;
+        return document.copy().fields(fields).deletedFields(deletedFields).build();
     }
 
     public interface SolrIndexFieldListView extends View {

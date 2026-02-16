@@ -146,8 +146,11 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
                 .onSuccess(result -> {
                     receiveDataRules = result;
                     // Make sure the rules and lists are in mutable lists so we can mutate the doc
-                    receiveDataRules.setRules(NullSafe.mutableList(receiveDataRules.getRules()));
-                    receiveDataRules.setFields(NullSafe.mutableList(receiveDataRules.getFields()));
+                    receiveDataRules = receiveDataRules
+                            .copy()
+                            .rules(NullSafe.mutableList(receiveDataRules.getRules()))
+                            .fields(NullSafe.mutableList(receiveDataRules.getFields()))
+                            .build();
 
                     ruleSetSettingsPresenter.read(receiveDataRules.asDocRef(), receiveDataRules, false);
                     lazyFieldListPresenter.consumeIfInitialised(this::setFieldsOnPresenter);

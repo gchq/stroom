@@ -17,6 +17,8 @@
 package stroom.state.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -32,7 +34,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-public class ScyllaDbPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ScyllaDbDoc> {
+public class ScyllaDbPresenter extends DocTabPresenter<LinkTabPanelView, ScyllaDbDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
@@ -47,7 +49,7 @@ public class ScyllaDbPresenter extends DocumentEditTabPresenter<LinkTabPanelView
             final DocumentUserPermissionsTabProvider<ScyllaDbDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        addTab(SETTINGS, new DocumentEditTabProvider<>(clusterSettingsPresenterProvider::get));
+        addTab(SETTINGS, new DocTabProvider<>(clusterSettingsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<ScyllaDbDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -61,8 +63,7 @@ public class ScyllaDbPresenter extends DocumentEditTabPresenter<LinkTabPanelView
             @Override
             public ScyllaDbDoc onWrite(final MarkdownEditPresenter presenter,
                                        final ScyllaDbDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

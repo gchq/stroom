@@ -19,7 +19,7 @@ package stroom.state.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.state.client.presenter.ScyllaDbSettingsPresenter.ScyllaDbSettingsView;
 import stroom.state.shared.ScyllaDbDoc;
@@ -35,7 +35,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.UUID;
 
 public class ScyllaDbSettingsPresenter
-        extends DocumentEditPresenter<ScyllaDbSettingsView, ScyllaDbDoc>
+        extends DocPresenter<ScyllaDbSettingsView, ScyllaDbDoc>
         implements ScyllaDbSettingsUiHandlers {
 
     private static final ScyllaDbDocResource SCYLLA_DB_RESOURCE = GWT.create(ScyllaDbDocResource.class);
@@ -52,15 +52,6 @@ public class ScyllaDbSettingsPresenter
         this.restFactory = restFactory;
 
         view.setUiHandlers(this);
-    }
-
-    @Override
-    protected void onBind() {
-    }
-
-    @Override
-    public void onChange() {
-        setDirty(true);
     }
 
     @Override
@@ -91,10 +82,12 @@ public class ScyllaDbSettingsPresenter
 
     @Override
     protected ScyllaDbDoc onWrite(final ScyllaDbDoc doc) {
-        doc.setConnection(getView().getConnectionConfig());
-        doc.setKeyspace(getView().getKeyspace());
-        doc.setKeyspaceCql(getView().getKeyspaceCql());
-        return doc;
+        return doc
+                .copy()
+                .connection(getView().getConnectionConfig())
+                .keyspace(getView().getKeyspace())
+                .keyspaceCql(getView().getKeyspaceCql())
+                .build();
     }
 
     public interface ScyllaDbSettingsView

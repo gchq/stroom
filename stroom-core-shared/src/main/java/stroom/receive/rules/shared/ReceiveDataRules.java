@@ -55,11 +55,11 @@ public class ReceiveDataRules extends AbstractDoc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.RECEIVE_DATA_RULESET_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private List<QueryField> fields;
+    private final List<QueryField> fields;
     @JsonProperty
-    private List<ReceiveDataRule> rules;
+    private final List<ReceiveDataRule> rules;
 
     @JsonCreator
     public ReceiveDataRules(@JsonProperty("uuid") final String uuid,
@@ -98,16 +98,8 @@ public class ReceiveDataRules extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public List<QueryField> getFields() {
         return fields;
-    }
-
-    public void setFields(final List<QueryField> fields) {
-        this.fields = fields;
     }
 
     public List<ReceiveDataRule> getRules() {
@@ -119,10 +111,6 @@ public class ReceiveDataRules extends AbstractDoc {
         return NullSafe.stream(rules)
                 .filter(ReceiveDataRule::isEnabled)
                 .collect(Collectors.toList());
-    }
-
-    public void setRules(final List<ReceiveDataRule> rules) {
-        this.rules = rules;
     }
 
     @Override

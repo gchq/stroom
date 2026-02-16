@@ -142,6 +142,7 @@ class QueryStoreImpl implements QueryStore {
 
     private DependencyRemapFunction<QueryDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
+            final QueryDoc.Builder builder = doc.copy();
             try {
                 if (doc.getQuery() != null) {
                     searchRequestFactory.extractDataSourceOnly(doc.getQuery(), docRef -> {
@@ -168,7 +169,7 @@ class QueryStoreImpl implements QueryStore {
                                             !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
                                             query = query.replaceFirst(docRef.getUuid(), remapped.getUuid());
                                         }
-                                        doc.setQuery(query);
+                                        builder.query(query);
                                     }
                                 });
                             }
@@ -180,7 +181,7 @@ class QueryStoreImpl implements QueryStore {
             } catch (final RuntimeException e) {
                 LOGGER.debug(e::getMessage, e);
             }
-            return doc;
+            return builder.build();
         };
     }
 

@@ -379,7 +379,6 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
 
     @Override
     protected ReceiveDataRules onWrite(final ReceiveDataRules document) {
-        document.setFields(fields);
-        return document;
+        return document.copy().fields(fields).build();
     }
 }

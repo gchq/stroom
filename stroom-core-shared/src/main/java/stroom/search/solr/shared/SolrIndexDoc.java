@@ -22,6 +22,7 @@ import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.ExpressionOperator;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -70,26 +71,26 @@ public class SolrIndexDoc extends AbstractDoc {
     private static final String DEFAULT_TIME_FIELD = "EventTime";
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private String collection;
+    private final String collection;
     @JsonProperty
-    private SolrConnectionConfig solrConnectionConfig;
+    private final SolrConnectionConfig solrConnectionConfig;
 
     @JsonProperty
-    private List<SolrIndexField> fields;
+    private final List<SolrIndexField> fields;
     @JsonProperty
-    private String timeField;
+    private final String timeField;
 
     @JsonProperty
-    private DocRef defaultExtractionPipeline;
+    private final DocRef defaultExtractionPipeline;
     @JsonProperty
-    private List<SolrIndexField> deletedFields;
+    private final List<SolrIndexField> deletedFields;
     @JsonProperty
-    private SolrSynchState solrSynchState;
+    private final SolrSynchState solrSynchState;
 
     @JsonProperty
-    private ExpressionOperator retentionExpression;
+    private final ExpressionOperator retentionExpression;
 
     @JsonCreator
     public SolrIndexDoc(@JsonProperty("uuid") final String uuid,
@@ -110,24 +111,26 @@ public class SolrIndexDoc extends AbstractDoc {
                         @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
-        this.collection = collection;
-        this.solrConnectionConfig = solrConnectionConfig;
-        this.fields = fields;
+        if (collection == null || collection.trim().length() == 0) {
+            this.collection = null;
+        } else {
+            this.collection = collection;
+        }
+        this.solrConnectionConfig = NullSafe.requireNonNullElse(
+                solrConnectionConfig,
+                SolrConnectionConfig.builder().build());
+        this.fields = NullSafe.requireNonNullElseGet(fields, () -> {
+            final List<SolrIndexField> list = new ArrayList<>();
+            // Always add standard id fields for now.
+            list.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
+            list.add(SolrIndexField.createIdField(SolrIndexConstants.EVENT_ID));
+            return list;
+        });
         this.timeField = timeField;
         this.defaultExtractionPipeline = defaultExtractionPipeline;
         this.deletedFields = deletedFields;
         this.solrSynchState = solrSynchState;
         this.retentionExpression = retentionExpression;
-
-        if (this.solrConnectionConfig == null) {
-            this.solrConnectionConfig = new SolrConnectionConfig();
-        }
-        if (this.fields == null) {
-            this.fields = new ArrayList<>();
-            // Always add standard id fields for now.
-            this.fields.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
-            this.fields.add(SolrIndexField.createIdField(SolrIndexConstants.EVENT_ID));
-        }
     }
 
     /**
@@ -150,75 +153,36 @@ public class SolrIndexDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public String getCollection() {
-        if (collection == null || collection.trim().length() == 0) {
-            return null;
-        }
         return collection;
-    }
-
-    public void setCollection(final String collection) {
-        this.collection = collection;
     }
 
     public SolrConnectionConfig getSolrConnectionConfig() {
         return solrConnectionConfig;
     }
 
-    public void setSolrConnectionConfig(final SolrConnectionConfig solrConnectionConfig) {
-        this.solrConnectionConfig = solrConnectionConfig;
-    }
-
     public List<SolrIndexField> getFields() {
         return fields;
-    }
-
-    public void setFields(final List<SolrIndexField> fields) {
-        this.fields = fields;
     }
 
     public String getTimeField() {
         return timeField;
     }
 
-    public void setTimeField(final String timeField) {
-        this.timeField = timeField;
-    }
-
     public DocRef getDefaultExtractionPipeline() {
         return defaultExtractionPipeline;
-    }
-
-    public void setDefaultExtractionPipeline(final DocRef defaultExtractionPipeline) {
-        this.defaultExtractionPipeline = defaultExtractionPipeline;
     }
 
     public List<SolrIndexField> getDeletedFields() {
         return deletedFields;
     }
 
-    public void setDeletedFields(final List<SolrIndexField> deletedFields) {
-        this.deletedFields = deletedFields;
-    }
-
     public SolrSynchState getSolrSynchState() {
         return solrSynchState;
     }
 
-    public void setSolrSynchState(final SolrSynchState solrSynchState) {
-        this.solrSynchState = solrSynchState;
-    }
-
     public ExpressionOperator getRetentionExpression() {
         return retentionExpression;
-    }
-
-    public void setRetentionExpression(final ExpressionOperator retentionExpression) {
-        this.retentionExpression = retentionExpression;
     }
 
     @Override
@@ -277,7 +241,7 @@ public class SolrIndexDoc extends AbstractDoc {
 
         private String description;
         private String collection;
-        private SolrConnectionConfig solrConnectionConfig = new SolrConnectionConfig();
+        private SolrConnectionConfig solrConnectionConfig = SolrConnectionConfig.builder().build();
         private List<SolrIndexField> fields = new ArrayList<>();
         private String timeField = DEFAULT_TIME_FIELD;
         private DocRef defaultExtractionPipeline;

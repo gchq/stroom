@@ -429,8 +429,7 @@ public class RuleSetSettingsPresenter
 
     @Override
     protected ReceiveDataRules onWrite(final ReceiveDataRules document) {
-        document.setRules(this.rules);
-        return document;
+        return document.copy().rules(this.rules).build();
     }
 
     private void update() {

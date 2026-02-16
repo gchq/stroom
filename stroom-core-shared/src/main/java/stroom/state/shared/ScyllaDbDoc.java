@@ -53,13 +53,13 @@ public class ScyllaDbDoc extends AbstractDoc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.SCYLLA_DB_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private String connection;
+    private final String connection;
     @JsonProperty
-    private String keyspace;
+    private final String keyspace;
     @JsonProperty
-    private String keyspaceCql;
+    private final String keyspaceCql;
 
     @JsonCreator
     public ScyllaDbDoc(@JsonProperty("uuid") final String uuid,
@@ -100,32 +100,16 @@ public class ScyllaDbDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public String getConnection() {
         return connection;
-    }
-
-    public void setConnection(final String connection) {
-        this.connection = connection;
     }
 
     public String getKeyspace() {
         return keyspace;
     }
 
-    public void setKeyspace(final String keyspace) {
-        this.keyspace = keyspace;
-    }
-
     public String getKeyspaceCql() {
         return keyspaceCql;
-    }
-
-    public void setKeyspaceCql(final String keyspaceCql) {
-        this.keyspaceCql = keyspaceCql;
     }
 
     @Override

@@ -24,7 +24,6 @@ import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.TimeRange;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -59,13 +58,13 @@ public class QueryDoc extends AbstractDoc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.QUERY_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private TimeRange timeRange;
+    private final TimeRange timeRange;
     @JsonProperty
-    private String query;
+    private final String query;
     @JsonProperty
-    private QueryTablePreferences queryTablePreferences;
+    private final QueryTablePreferences queryTablePreferences;
 
     @JsonCreator
     public QueryDoc(@JsonProperty("uuid") final String uuid,
@@ -106,52 +105,46 @@ public class QueryDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public TimeRange getTimeRange() {
         return timeRange;
-    }
-
-    public void setTimeRange(final TimeRange timeRange) {
-        this.timeRange = timeRange;
     }
 
     public String getQuery() {
         return query;
     }
 
-    public void setQuery(final String query) {
-        this.query = query;
-    }
-
     public QueryTablePreferences getQueryTablePreferences() {
         return queryTablePreferences;
     }
 
-    public void setQueryTablePreferences(final QueryTablePreferences queryTablePreferences) {
-        this.queryTablePreferences = queryTablePreferences;
-    }
-
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
         if (!super.equals(o)) {
             return false;
         }
-        final QueryDoc that = (QueryDoc) o;
-        return Objects.equals(query, that.query);
+        final QueryDoc queryDoc = (QueryDoc) o;
+        return Objects.equals(description, queryDoc.description) &&
+               Objects.equals(timeRange, queryDoc.timeRange) &&
+               Objects.equals(query, queryDoc.query) &&
+               Objects.equals(queryTablePreferences, queryDoc.queryTablePreferences);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), query);
+        return Objects.hash(super.hashCode(), description, timeRange, query, queryTablePreferences);
+    }
+
+    @Override
+    public String toString() {
+        return "QueryDoc{" +
+               "description='" + description + '\'' +
+               ", timeRange=" + timeRange +
+               ", query='" + query + '\'' +
+               ", queryTablePreferences=" + queryTablePreferences +
+               '}';
     }
 
     public Builder copy() {

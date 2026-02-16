@@ -32,7 +32,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
@@ -61,7 +61,7 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 
 public class QueryDocEditPresenter
-        extends DocumentEditPresenter<QueryEditView, QueryDoc>
+        extends DocPresenter<QueryEditView, QueryDoc>
         implements HasToolbar {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
@@ -115,7 +115,7 @@ public class QueryDocEditPresenter
         super.onBind();
         registerHandler(queryEditPresenter.addDirtyHandler(event -> {
             if (event.isDirty()) {
-                setDirty(true);
+                onChange();
             }
         }));
         registerHandler(createRuleButton.addClickHandler(event -> createRule()));
@@ -508,10 +508,12 @@ public class QueryDocEditPresenter
 
     @Override
     protected QueryDoc onWrite(final QueryDoc entity) {
-        entity.setTimeRange(queryEditPresenter.getTimeRange());
-        entity.setQuery(queryEditPresenter.getQuery());
-        entity.setQueryTablePreferences(queryEditPresenter.write());
-        return entity;
+        return entity
+                .copy()
+                .timeRange(queryEditPresenter.getTimeRange())
+                .query(queryEditPresenter.getQuery())
+                .queryTablePreferences(queryEditPresenter.write())
+                .build();
     }
 
     @Override
