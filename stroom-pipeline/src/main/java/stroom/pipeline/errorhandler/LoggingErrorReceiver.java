@@ -203,4 +203,8 @@ public class LoggingErrorReceiver implements ErrorReceiver, ErrorStatistics {
             storedErrorStats.reset();
         }
     }
+
+    public void clear() {
+        statsMap.clear();
+    }
 }
