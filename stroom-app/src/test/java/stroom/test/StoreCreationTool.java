@@ -327,7 +327,7 @@ public final class StoreCreationTool {
         final Tuple2<DocRef, PipelineDoc> pipelineRefAndDoc = duplicatePipeline(
                 new DocRef(PipelineDoc.TYPE, REFERENCE_DATA_PIPELINE_UUID),
                 feedRef.getName());
-        final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
+        PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
         PipelineData pipelineData = pipelineDoc.getPipelineData();
         final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
 
@@ -351,7 +351,7 @@ public final class StoreCreationTool {
                 StreamTypeNames.REFERENCE));
 
         pipelineData = builder.build();
-        pipelineDoc.setPipelineData(pipelineData);
+        pipelineDoc = pipelineDoc.copy().pipelineData(pipelineData).build();
 
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRefAndDoc._1();
@@ -569,7 +569,7 @@ public final class StoreCreationTool {
         final Tuple2<DocRef, PipelineDoc> pipelineRefAndDoc = duplicatePipeline(
                 new DocRef(PipelineDoc.TYPE, CONTEXT_DATA_PIPELINE_UUID),
                 feedName + "_CONTEXT");
-        final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
+        PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
         final PipelineData pipelineData = pipelineDoc.getPipelineData();
         final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
 
@@ -584,7 +584,7 @@ public final class StoreCreationTool {
                     contextXSLT));
         }
 
-        pipelineDoc.setPipelineData(builder.build());
+        pipelineDoc = pipelineDoc.copy().pipelineData(builder.build()).build();
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRefAndDoc._1();
     }
@@ -603,7 +603,7 @@ public final class StoreCreationTool {
                                     final Path flatteningXsltLocation,
                                     final List<PipelineReference> pipelineReferences) {
         final DocRef pipelineRef = getPipeline(feedRef.getName(), EVENT_DATA_PIPELINE);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
         final PipelineData pipelineData = pipelineDoc.getPipelineData();
         final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
 
@@ -675,7 +675,7 @@ public final class StoreCreationTool {
         //
         // pipeline.setMeta(data);
 
-        pipelineDoc.setPipelineData(builder.build());
+        pipelineDoc = pipelineDoc.copy().pipelineData(builder.build()).build();
         pipelineStore.writeDocument(pipelineDoc);
 
 //        return pipelineRefAndDoc._1();
@@ -690,7 +690,7 @@ public final class StoreCreationTool {
         final Tuple2<DocRef, PipelineDoc> pipelineRefAndDoc = duplicatePipeline(
                 new DocRef(PipelineDoc.TYPE, INDEXING_PIPELINE_UUID),
                 indexRef.getName());
-        final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
+        PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
         final PipelineData pipelineData = pipelineDoc.getPipelineData();
         final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
 
@@ -718,7 +718,7 @@ public final class StoreCreationTool {
         //
         // pipeline.setMeta(data);
 
-        pipelineDoc.setPipelineData(builder.build());
+        pipelineDoc = pipelineDoc.copy().pipelineData(builder.build()).build();
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRefAndDoc._1();
     }
@@ -858,16 +858,17 @@ public final class StoreCreationTool {
                 ? newNode.getDocRef()
                 : pipelineStore.createDocument(newName);
         final PipelineDoc newPipeline = pipelineStore.readDocument(newDocRef);
+        final PipelineDoc.Builder builder = newPipeline.copy();
 
-        newPipeline.setName(newName);
+        builder.name(newName);
         if (newDescription != null) {
-            newPipeline.setDescription(newDescription);
+            builder.description(newDescription);
         }
 
         // copy the data part
-        newPipeline.setPipelineData(sourcePipeline.getPipelineData());
+        builder.pipelineData(sourcePipeline.getPipelineData());
 
-        pipelineStore.writeDocument(newPipeline);
+        pipelineStore.writeDocument(builder.build());
         return newDocRef;
     }
 
@@ -968,7 +969,7 @@ public final class StoreCreationTool {
         final Tuple2<DocRef, PipelineDoc> pipelineRefAndDoc = duplicatePipeline(
                 new DocRef(PipelineDoc.TYPE, SEARCH_EXTRACTION_PIPELINE_UUID),
                 name);
-        final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
+        PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
 
         // Setup the xslt.
         final DocRef xslt = getXSLT(name, xsltLocation);
@@ -991,7 +992,7 @@ public final class StoreCreationTool {
         //
         // pipeline.setMeta(data);
 
-        pipelineDoc.setPipelineData(builder.build());
+        pipelineDoc = pipelineDoc.copy().pipelineData(builder.build()).build();
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRefAndDoc._1();
     }
@@ -1001,7 +1002,7 @@ public final class StoreCreationTool {
                                    final Path xsltLocation,
                                    final DocRef indexDocRef) {
         final DocRef pipelineRef = getPipeline(name, pipelineLocation);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
 
         // Setup the xslt.
         final DocRef xslt = getXSLT(name, xsltLocation);
@@ -1016,14 +1017,14 @@ public final class StoreCreationTool {
             builder.addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexDocRef));
         }
 
-        pipelineDoc.setPipelineData(builder.build());
+        pipelineDoc = pipelineDoc.copy().pipelineData(builder.build()).build();
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
     }
 
     public DocRef getSearchResultPipeline(final String name, final Path pipelineLocation, final Path xsltLocation) {
         final DocRef pipelineRef = getPipeline(name, pipelineLocation);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
 
         // Setup the xslt.
         final DocRef xslt = getXSLT(name, xsltLocation);
@@ -1035,7 +1036,7 @@ public final class StoreCreationTool {
             builder.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xslt));
         }
 
-        pipelineDoc.setPipelineData(builder.build());
+        pipelineDoc = pipelineDoc.copy().pipelineData(builder.build()).build();
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
     }

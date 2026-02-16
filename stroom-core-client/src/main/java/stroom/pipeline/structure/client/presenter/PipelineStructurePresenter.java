@@ -239,20 +239,22 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
     @Override
     public PipelineDoc onWrite(final PipelineDoc document) {
+        final PipelineDoc.Builder builder = document.copy();
+
         // Only write if we have been revealed and therefore created a pipeline model.
         if (pipelineModel != null) {
             try {
                 // Set the parent pipeline.
-                document.setParentPipeline(getParentPipeline());
+                builder.parentPipeline(getParentPipeline());
 
                 // Diff base and combined to create fresh pipeline data.
                 final PipelineData pipelineData = pipelineModel.diff();
-                document.setPipelineData(pipelineData);
+                builder.pipelineData(pipelineData);
             } catch (final RuntimeException e) {
                 AlertEvent.fireError(this, e.getMessage(), null);
             }
         }
-        return document;
+        return builder.build();
     }
 
     @Override
@@ -632,7 +634,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         }
 
         this.parentPipeline = parentPipeline;
-        this.pipelineDoc.setParentPipeline(parentPipeline);
+        this.pipelineDoc = pipelineDoc.copy().parentPipeline(parentPipeline).build();
 
         if (parentPipeline == null) {
             pipelineModel.setBaseStack(null);

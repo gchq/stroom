@@ -443,8 +443,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 "Child",
                 folder,
                 null);
-        final PipelineDoc childPipeline = pipelineStore.readDocument(childPipelineNode.getDocRef());
-        childPipeline.setParentPipeline(parentPipelineNode.getDocRef());
+        final PipelineDoc childPipeline = pipelineStore.readDocument(childPipelineNode.getDocRef())
+                .copy().parentPipeline(parentPipelineNode.getDocRef()).build();
         pipelineStore.writeDocument(childPipeline);
 
         assertThat(pipelineStore.list().size()).isEqualTo(2);
@@ -498,8 +498,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 "Child",
                 folder,
                 null);
-        final PipelineDoc childPipeline = pipelineStore.readDocument(childPipelineNode.getDocRef());
-        childPipeline.setParentPipeline(parentPipelineNode.getDocRef());
+        final PipelineDoc childPipeline = pipelineStore.readDocument(childPipelineNode.getDocRef())
+                .copy().parentPipeline(parentPipelineNode.getDocRef()).build();
         pipelineStore.writeDocument(childPipeline);
 
         dumpNodeStructure(explorerNodeService.getRoot(), 0);

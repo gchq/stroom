@@ -154,12 +154,12 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
         // Get the pipeline config.
         final String data = StroomPipelineTestFileUtil.getString(FRAGMENT_PIPELINE);
         final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
         final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineDoc.getPipelineData());
         builder.addProperty(
                 PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", docRef));
-        pipelineDoc.setPipelineData(builder.build());
-        pipelineDoc.setParentPipeline(createTransformerPipeline());
+        pipelineDoc = pipelineDoc
+                .copy().pipelineData(builder.build()).parentPipeline(createTransformerPipeline()).build();
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
     }
@@ -175,10 +175,10 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
         // Get the pipeline config.
         final String data = StroomPipelineTestFileUtil.getString(TRANSFORMER_PIPELINE);
         final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
         final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineDoc.getPipelineData());
         builder.addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
-        pipelineDoc.setPipelineData(builder.build());
+        pipelineDoc = pipelineDoc.copy().pipelineData(builder.build()).build();
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
     }

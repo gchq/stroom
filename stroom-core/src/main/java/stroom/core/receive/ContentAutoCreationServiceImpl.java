@@ -391,8 +391,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
     }
 
     private FeedDoc configureFeed(final FeedDoc feedDoc,
-                               final AttributeMap attributeMap,
-                               final UserRef userRef) {
+                                  final AttributeMap attributeMap,
+                                  final UserRef userRef) {
         final FeedDoc.Builder builder = feedDoc.copy();
         if (NullSafe.hasEntries(attributeMap)) {
             final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
@@ -627,8 +627,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
             // Update the new pipe so it inherits from the parent
             final String newPipelineUuid = newPipelineNode.getUuid();
-            final PipelineDoc newPipelineDoc = pipelineService.fetch(newPipelineUuid);
-            newPipelineDoc.setParentPipeline(parentPipeDocRef);
+            PipelineDoc newPipelineDoc = pipelineService.fetch(newPipelineUuid);
+            newPipelineDoc = newPipelineDoc.copy().parentPipeline(parentPipeDocRef).build();
 
             if (contentTemplate.isCopyElementDependencies()) {
                 final Set<PipelineProperty> directEntityDependencies = getDirectEntityDependencies(parentPipelineDoc);
@@ -673,7 +673,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                             pipelineDataBuilder.addProperty(newPipelineProperty);
                         }
                     }
-                    newPipelineDoc.setPipelineData(pipelineDataBuilder.build());
+                    newPipelineDoc = newPipelineDoc.copy().pipelineData(pipelineDataBuilder.build()).build();
                 }
             }
             pipelineService.update(newPipelineUuid, newPipelineDoc);

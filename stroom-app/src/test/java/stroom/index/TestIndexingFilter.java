@@ -58,7 +58,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.in;
 
 class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
@@ -221,12 +220,12 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
             // Create the pipeline.
             final String data = StroomPipelineTestFileUtil.getString(PIPELINE);
             final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
-            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+            PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
             final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineDoc.getPipelineData());
             builder.addProperty(PipelineDataUtil.createProperty("indexingFilter",
                     "index",
                     indexRef));
-            pipelineDoc.setPipelineData(builder.build());
+            pipelineDoc = pipelineDoc.copy().pipelineData(builder.build()).build();
             pipelineStore.writeDocument(pipelineDoc);
 
             // Create the parser.

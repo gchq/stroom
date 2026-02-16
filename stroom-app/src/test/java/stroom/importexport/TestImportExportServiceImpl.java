@@ -92,17 +92,16 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
                 FileSystemTestUtil.getUniqueTestString(),
                 folder1,
                 null);
-        final PipelineDoc tran1 = pipelineStore.readDocument(tran1Ref.getDocRef());
-        tran1.setDescription("Description");
+        final PipelineDoc tran1 = pipelineStore.readDocument(tran1Ref.getDocRef())
+                .copy().description("Description").build();
         pipelineStore.writeDocument(tran1);
 
         final ExplorerNode tran2Ref = explorerService.create(PipelineDoc.TYPE,
                 FileSystemTestUtil.getUniqueTestString(),
                 folder2,
                 null);
-        PipelineDoc tran2 = pipelineStore.readDocument(tran2Ref.getDocRef());
-        tran2.setDescription("Description");
-        tran2.setParentPipeline(tran1Ref.getDocRef());
+        PipelineDoc tran2 = pipelineStore.readDocument(tran2Ref.getDocRef())
+                .copy().description("Description").parentPipeline(tran1Ref.getDocRef()).build();
         tran2 = pipelineStore.writeDocument(tran2);
 
         final ExplorerNode referenceFeedRef = explorerService.create(FeedDoc.TYPE,

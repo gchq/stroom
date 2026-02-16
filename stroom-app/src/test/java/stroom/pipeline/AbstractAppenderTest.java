@@ -116,7 +116,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         // Load the pipeline config.
         final String data = StroomPipelineTestFileUtil.getString(pipelineFile);
         final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
         final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineDoc.getPipelineData());
 
         if (textConverterRef != null) {
@@ -128,7 +128,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
                     PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
         }
 
-        pipelineDoc.setPipelineData(builder.build());
+        pipelineDoc = pipelineDoc.copy().pipelineData(builder.build()).build();
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
     }

@@ -47,7 +47,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 public class PipelineStoreImpl implements PipelineStore {
@@ -141,8 +140,9 @@ public class PipelineStoreImpl implements PipelineStore {
 
     private DependencyRemapFunction<PipelineDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
+            final PipelineDoc.Builder copy = doc.copy();
             if (doc.getParentPipeline() != null) {
-                doc.setParentPipeline(dependencyRemapper.remap(doc.getParentPipeline()));
+                copy.parentPipeline(dependencyRemapper.remap(doc.getParentPipeline()));
             }
 
             final PipelineData pipelineData = doc.getPipelineData();
@@ -166,9 +166,9 @@ public class PipelineStoreImpl implements PipelineStore {
                         pipelineData.getRemovedPipelineReferences(),
                         builder.getReferences().getRemoveList(), dependencyRemapper);
 
-                doc.setPipelineData(builder.build());
+                copy.pipelineData(builder.build());
             }
-            return doc;
+            return copy.build();
         };
     }
 

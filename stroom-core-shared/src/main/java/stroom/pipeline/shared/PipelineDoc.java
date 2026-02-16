@@ -67,11 +67,11 @@ public class PipelineDoc extends AbstractDoc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.PIPELINE_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private DocRef parentPipeline;
+    private final DocRef parentPipeline;
     @JsonProperty
-    private PipelineData pipelineData;
+    private final PipelineData pipelineData;
 
     @JsonCreator
     public PipelineDoc(@JsonProperty("uuid") final String uuid,
@@ -110,24 +110,12 @@ public class PipelineDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public DocRef getParentPipeline() {
         return parentPipeline;
     }
 
-    public void setParentPipeline(final DocRef parentPipeline) {
-        this.parentPipeline = parentPipeline;
-    }
-
     public PipelineData getPipelineData() {
         return pipelineData;
-    }
-
-    public void setPipelineData(final PipelineData pipelineData) {
-        this.pipelineData = pipelineData;
     }
 
     @Override

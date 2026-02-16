@@ -129,13 +129,13 @@ class TestXMLWithErrorsInTransform extends AbstractProcessIntegrationTest {
             // Create the parser.
             final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore,
                     StroomPipelineTestFileUtil.getString(PIPELINE));
-            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+            PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
             final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineDoc.getPipelineData());
             builder.addProperty(
                     PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverterRef));
             builder.addProperty(
                     PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
-            pipelineDoc.setPipelineData(builder.build());
+            pipelineDoc = pipelineDoc.copy().pipelineData(builder.build()).build();
             pipelineStore.writeDocument(pipelineDoc);
 
             final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);

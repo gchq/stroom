@@ -211,8 +211,8 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "Pipeline",
                 folder2,
                 null);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineNode.getDocRef());
-        pipelineDoc.setDescription("Pipeline Description");
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineNode.getDocRef())
+                .copy().description("Pipeline Description").build();
         pipelineStore.writeDocument(pipelineDoc);
 
         final ExplorerNode feedNode = explorerService.create(FeedDoc.TYPE,
@@ -335,8 +335,8 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "Pipeline",
                 folder2,
                 null);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineNode.getDocRef());
-        pipelineDoc.setDescription("Pipeline Description");
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineNode.getDocRef())
+                .copy().description("Pipeline Description").build();
         pipelineStore.writeDocument(pipelineDoc);
 
         // Something under the GitRepo to export
