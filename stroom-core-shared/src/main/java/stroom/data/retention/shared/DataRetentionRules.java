@@ -55,7 +55,7 @@ public class DataRetentionRules extends AbstractDoc {
             SvgImage.DOCUMENT_RECEIVE_DATA_RULE_SET);
 
     @JsonProperty
-    private List<DataRetentionRule> rules;
+    private final List<DataRetentionRule> rules;
 
     @JsonCreator
     public DataRetentionRules(@JsonProperty("uuid") final String uuid,
@@ -95,10 +95,6 @@ public class DataRetentionRules extends AbstractDoc {
         return NullSafe.stream(rules)
                 .filter(DataRetentionRule::isEnabled)
                 .collect(Collectors.toList());
-    }
-
-    public void setRules(final List<DataRetentionRule> rules) {
-        this.rules = rules;
     }
 
     @Override

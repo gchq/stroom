@@ -132,7 +132,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 .onSuccess(result -> {
                     policy = result;
                     if (policy.getRules() == null) {
-                        policy.setRules(new ArrayList<>());
+                        policy = policy.copy().rules(new ArrayList<>()).build();
                     }
                     setVisibleRules(policy.getRules());
                     update();
@@ -448,7 +448,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     private void addSaveButtonHandler() {
         registerHandler(saveButton.addClickHandler(event -> {
             // Get the user's rules without our default one
-            policy.setRules(getUserRules());
+            policy = policy.copy().rules(getUserRules()).build();
 
             restFactory
                     .create(DATA_RETENTION_RULES_RESOURCE)
@@ -555,7 +555,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
             }
             listPresenter.setData(visibleRules);
             // Update the policy so the impact tab can see the unsaved changes
-            policy.setRules(getUserRules());
+            policy = policy.copy().rules(getUserRules()).build();
         }
         updateButtons();
     }

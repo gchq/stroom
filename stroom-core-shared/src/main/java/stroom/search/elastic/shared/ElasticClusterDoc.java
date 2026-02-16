@@ -51,10 +51,10 @@ public class ElasticClusterDoc extends AbstractDoc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ELASTIC_CLUSTER_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
 
     @JsonProperty
-    private ElasticConnectionConfig connection;
+    private final ElasticConnectionConfig connection;
 
     @JsonCreator
     public ElasticClusterDoc(
@@ -83,16 +83,8 @@ public class ElasticClusterDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public ElasticConnectionConfig getConnection() {
         return connection;
-    }
-
-    public void setConnection(final ElasticConnectionConfig connection) {
-        this.connection = connection;
     }
 
     @Override
