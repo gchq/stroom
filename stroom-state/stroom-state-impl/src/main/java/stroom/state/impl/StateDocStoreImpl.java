@@ -85,9 +85,8 @@ public class StateDocStoreImpl implements StateDocStore {
         }
 
         // Set the default keyspace.
-        final StateDoc doc = store.readDocument(created);
-        doc.setStateType(StateType.TEMPORAL_STATE);
-        doc.setRetainForever(true);
+        final StateDoc doc = store.readDocument(created)
+                .copy().stateType(StateType.TEMPORAL_STATE).retainForever(true).build();
         store.writeDocument(doc);
 
         return created;

@@ -62,23 +62,23 @@ public class StateDoc extends AbstractDoc {
      * Reference to the `scyllaDb` containing common connection properties
      */
     @JsonProperty
-    private DocRef scyllaDbRef;
+    private final DocRef scyllaDbRef;
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private StateType stateType;
+    private final StateType stateType;
     @JsonProperty
-    private boolean condense;
+    private final boolean condense;
     @JsonProperty
-    private int condenseAge;
+    private final int condenseAge;
     @JsonProperty
-    private TimeUnit condenseTimeUnit;
+    private final TimeUnit condenseTimeUnit;
     @JsonProperty
-    private boolean retainForever;
+    private final boolean retainForever;
     @JsonProperty
-    private int retainAge;
+    private final int retainAge;
     @JsonProperty
-    private TimeUnit retainTimeUnit;
+    private final TimeUnit retainTimeUnit;
 
     @JsonCreator
     public StateDoc(
@@ -130,72 +130,36 @@ public class StateDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public DocRef getScyllaDbRef() {
         return scyllaDbRef;
-    }
-
-    public void setScyllaDbRef(final DocRef scyllaDbRef) {
-        this.scyllaDbRef = scyllaDbRef;
     }
 
     public StateType getStateType() {
         return stateType;
     }
 
-    public void setStateType(final StateType stateType) {
-        this.stateType = stateType;
-    }
-
     public boolean isCondense() {
         return condense;
-    }
-
-    public void setCondense(final boolean condense) {
-        this.condense = condense;
     }
 
     public int getCondenseAge() {
         return condenseAge;
     }
 
-    public void setCondenseAge(final int condenseAge) {
-        this.condenseAge = condenseAge;
-    }
-
     public TimeUnit getCondenseTimeUnit() {
         return condenseTimeUnit;
-    }
-
-    public void setCondenseTimeUnit(final TimeUnit condenseTimeUnit) {
-        this.condenseTimeUnit = condenseTimeUnit;
     }
 
     public boolean isRetainForever() {
         return retainForever;
     }
 
-    public void setRetainForever(final boolean retainForever) {
-        this.retainForever = retainForever;
-    }
-
     public int getRetainAge() {
         return retainAge;
     }
 
-    public void setRetainAge(final int retainAge) {
-        this.retainAge = retainAge;
-    }
-
     public TimeUnit getRetainTimeUnit() {
         return retainTimeUnit;
-    }
-
-    public void setRetainTimeUnit(final TimeUnit retainTimeUnit) {
-        this.retainTimeUnit = retainTimeUnit;
     }
 
     @Override

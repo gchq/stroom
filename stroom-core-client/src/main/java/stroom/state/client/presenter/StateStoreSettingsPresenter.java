@@ -17,6 +17,7 @@
 package stroom.state.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
@@ -33,7 +34,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 public class StateStoreSettingsPresenter
-        extends DocumentEditPresenter<StateStoreSettingsView, StateDoc>
+        extends DocPresenter<StateStoreSettingsView, StateDoc>
         implements StateStoreSettingsUiHandlers {
 
     private final DocSelectionBoxPresenter clusterPresenter;
@@ -56,12 +57,7 @@ public class StateStoreSettingsPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(clusterPresenter.addDataSelectionHandler(event -> setDirty(true)));
-    }
-
-    @Override
-    public void onChange() {
-        setDirty(true);
+        registerHandler(clusterPresenter.addDataSelectionHandler(event -> onChange()));
     }
 
     @Override
@@ -80,15 +76,17 @@ public class StateStoreSettingsPresenter
 
     @Override
     protected StateDoc onWrite(final StateDoc doc) {
-        doc.setScyllaDbRef(clusterPresenter.getSelectedEntityReference());
-        doc.setStateType(getView().getStateType());
-        doc.setCondense(getView().isCondense());
-        doc.setCondenseAge(getView().getCondenseAge());
-        doc.setCondenseTimeUnit(getView().getCondenseTimeUnit());
-        doc.setRetainForever(getView().isRetainForever());
-        doc.setRetainAge(getView().getRetainAge());
-        doc.setRetainTimeUnit(getView().getRetainTimeUnit());
-        return doc;
+        return doc
+                .copy()
+                .scyllaDbRef(clusterPresenter.getSelectedEntityReference())
+                .stateType(getView().getStateType())
+                .condense(getView().isCondense())
+                .condenseAge(getView().getCondenseAge())
+                .condenseTimeUnit(getView().getCondenseTimeUnit())
+                .retainForever(getView().isRetainForever())
+                .retainAge(getView().getRetainAge())
+                .retainTimeUnit(getView().getRetainTimeUnit())
+                .build();
     }
 
 

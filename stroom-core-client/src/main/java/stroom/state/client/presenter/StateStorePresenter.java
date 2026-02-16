@@ -17,8 +17,8 @@
 package stroom.state.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -47,7 +47,7 @@ public class StateStorePresenter extends DocumentEditTabPresenter<LinkTabPanelVi
             final DocumentUserPermissionsTabProvider<StateDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        addTab(SETTINGS, new DocumentEditTabProvider<>(indexSettingsPresenterProvider::get));
+        addTab(SETTINGS, new DocTabProvider<>(indexSettingsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<StateDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -61,8 +61,7 @@ public class StateStorePresenter extends DocumentEditTabPresenter<LinkTabPanelVi
             @Override
             public StateDoc onWrite(final MarkdownEditPresenter presenter,
                                     final StateDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
