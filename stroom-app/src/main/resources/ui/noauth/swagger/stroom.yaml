@@ -2892,6 +2892,48 @@ paths:
       summary: Delete Execution Schedule
       tags:
       - ExecutionSchedule
+  /executionSchedule/v1/deleteExecutionSchedules:
+    post:
+      operationId: deleteExecutionSchedules
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/ExecutionSchedule"
+        description: executionSchedules
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete Execution Schedules
+      tags:
+      - ExecutionSchedule
+  /executionSchedule/v1/executeSchedulesNow:
+    post:
+      operationId: executeSchedulesNow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/ExecutionSchedule"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Execute schedules now
+      tags:
+      - ExecutionSchedule
   /executionSchedule/v1/fetchExecutionHistory:
     post:
       operationId: fetchExecutionHistory
@@ -12342,6 +12384,8 @@ components:
       properties:
         enabled:
           type: boolean
+        expression:
+          $ref: "#/components/schemas/ExpressionOperator"
         nodeName:
           type: string
         ownerDocRef:
@@ -12649,7 +12693,9 @@ components:
             - IN_DICTIONARY
             - IN_FOLDER
             - IS_DOC_REF
+            - IS_NOT_DOC_REF
             - IS_USER_REF
+            - IS_NOT_USER_REF
             - IS_NULL
             - IS_NOT_NULL
             - MATCHES_REGEX
@@ -12660,6 +12706,10 @@ components:
             - STARTS_WITH_CASE_SENSITIVE
             - ENDS_WITH_CASE_SENSITIVE
             - MATCHES_REGEX_CASE_SENSITIVE
+            - IS_SCHEDULE_TYPE
+            - IS_NOT_SCHEDULE_TYPE
+            - IS_PARENT_DOC_TYPE
+            - IS_NOT_PARENT_DOC_TYPE
             - OF_DOC_REF
             - USER_HAS_PERM
             - USER_HAS_OWNER
@@ -16457,9 +16507,11 @@ components:
           - "'=', '!=', 'in', 'in dictionary'"
           - "'is', 'in folder'"
           - "'=', '!=', 'in', 'in dictionary'"
-          - "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
+          - "'is', 'is not', 'in folder', '=', '!=', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary'"
           - "'=', '!=', '==', '!==', 'in', 'in dictionary'"
+          - "'is', 'is not'"
+          - "'is', 'is not'"
           - "'==', '!==', 'between', 'in', 'in dictionary'"
           - "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains',\
             \ 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches\
@@ -16494,7 +16546,7 @@ components:
           - '''of'''
           - "'has permissions', 'has owner permission', 'has delete permission', 'has\
             \ edit permission', 'has view permission', 'has use permission'"
-          - '''is'''
+          - "'is', 'is not'"
         docRefType:
           type: string
         fldName:
@@ -19895,7 +19947,9 @@ components:
           - IN_DICTIONARY
           - IN_FOLDER
           - IS_DOC_REF
+          - IS_NOT_DOC_REF
           - IS_USER_REF
+          - IS_NOT_USER_REF
           - IS_NULL
           - IS_NOT_NULL
           - MATCHES_REGEX
@@ -19906,6 +19960,10 @@ components:
           - STARTS_WITH_CASE_SENSITIVE
           - ENDS_WITH_CASE_SENSITIVE
           - MATCHES_REGEX_CASE_SENSITIVE
+          - IS_SCHEDULE_TYPE
+          - IS_NOT_SCHEDULE_TYPE
+          - IS_PARENT_DOC_TYPE
+          - IS_NOT_PARENT_DOC_TYPE
           - OF_DOC_REF
           - USER_HAS_PERM
           - USER_HAS_OWNER
