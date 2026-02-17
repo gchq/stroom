@@ -83,11 +83,13 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                                      final boolean fullScreen,
                                      final CommonDocLinkTab selectedLinkTab,
                                      final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                     final boolean duplicate,
                                      final TaskMonitorFactory taskMonitorFactory) {
         if (docRef.getType().equals(getType())) {
             currentUuid = docRef.getUuid();
         }
-        return super.open(docRef, forceOpen, fullScreen, selectedLinkTab, callbackOnOpen, taskMonitorFactory);
+        return super.open(docRef, forceOpen, fullScreen, selectedLinkTab, callbackOnOpen, duplicate,
+                taskMonitorFactory);
     }
 
     private void openParameterisedDashboard(final Object context, final String href) {
@@ -129,7 +131,6 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                     presenter,
                     closeHandler,
                     presenter,
-                    false,
                     new DefaultTaskMonitorFactory(this));
         }
     }
@@ -185,7 +186,6 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                         presenter,
                         closeHandler,
                         presenter,
-                        false,
                         new DefaultTaskMonitorFactory(this));
             }
         }
