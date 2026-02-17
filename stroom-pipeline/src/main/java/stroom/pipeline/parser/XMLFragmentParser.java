@@ -180,7 +180,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
     @PipelineProperty(
             description = "The XML fragment wrapper that should be used to wrap the input XML.",
             displayPriority = 1)
-    @PipelinePropertyDocRef(types = TextConverterDoc.TYPE)
+    @PipelinePropertyDocRef(types = TextConverterDoc.TYPE, canEmbed = true)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }

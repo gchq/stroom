@@ -32,4 +32,13 @@ public class DocumentPluginRegistry {
     public DocumentPlugin<?> get(final String type) {
         return pluginMap.get(type);
     }
+
+    /**
+     * Get a plugin for a specific document type with type safety.
+     * The caller must provide the document class to ensure type safety.
+     */
+    @SuppressWarnings("unchecked")
+    public <D> DocumentPlugin<D> get(final String type, final Class<D> documentClass) {
+        return (DocumentPlugin<D>) pluginMap.get(type);
+    }
 }

@@ -122,6 +122,21 @@ public class DBPersistence implements Persistence {
               data)
             VALUES (?, ?, ?, ?, ?)""";
 
+    private static final String FIND_BY_EMBEDDED_IN = """
+            SELECT d.uuid, d.type, d.name
+            FROM doc d
+            CROSS JOIN JSON_TABLE(
+                CAST(data AS CHAR),
+                '$' COLUMNS(
+                    parent_uuid VARCHAR(50) PATH '$.embeddedIn.uuid'
+                )
+            ) AS jt
+            WHERE data IS NOT NULL
+              AND LENGTH(data) > 0
+              AND JSON_VALID(CAST(data AS CHAR)) = 1
+              and ext = 'meta'
+              and parent_uuid = ?""";
+
     private final DataSource dataSource;
 
     @Inject
@@ -390,5 +405,29 @@ public class DBPersistence implements Persistence {
             LOGGER.debug(e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    public List<DocRef> findDocRefsEmbeddedIn(final DocRef parent) {
+        final List<DocRef> list = new ArrayList<>();
+
+        try (final Connection connection = dataSource.getConnection()) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_EMBEDDED_IN)) {
+                preparedStatement.setString(1, parent.getUuid());
+
+                try (final ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        final String uuid = resultSet.getString(1);
+                        final String type = resultSet.getString(2);
+                        final String name = resultSet.getString(3);
+                        list.add(new DocRef(type, uuid, name));
+                    }
+                }
+            }
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
+
+        return list;
     }
 }

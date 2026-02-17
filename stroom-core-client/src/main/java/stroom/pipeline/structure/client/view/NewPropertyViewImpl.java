@@ -87,6 +87,11 @@ public class NewPropertyViewImpl
     }
 
     @Override
+    public void addSource(final Source source) {
+        this.source.addItem(source);
+    }
+
+    @Override
     public void setDescription(final String description) {
         this.description.setText(description);
     }
