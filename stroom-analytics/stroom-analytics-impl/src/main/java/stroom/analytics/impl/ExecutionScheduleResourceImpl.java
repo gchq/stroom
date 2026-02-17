@@ -24,9 +24,6 @@ import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ExecutionTracker;
 import stroom.analytics.shared.ReportDoc;
-import stroom.docstore.api.DocumentNotFoundException;
-import stroom.docstore.shared.DocumentType;
-import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
@@ -35,7 +32,6 @@ import stroom.security.user.api.UserRefLookup;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.DocumentOwnerException;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -55,20 +51,20 @@ class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
     private final Provider<ExecutionScheduleDao> executionScheduleDaoProvider;
     private final Provider<SecurityContext> securityContextProvider;
     private final Provider<UserRefLookup> userRefLookupProvider;
-    private final ScheduledQueryAnalyticExecutor scheduledQueryAnalyticExecutor;
-    private final ReportExecutor reportExecutor;
+    private final Provider<ScheduledQueryAnalyticExecutor> scheduledQueryAnalyticExecutorProvider;
+    private final Provider<ReportExecutor> reportExecutorProvider;
 
     @Inject
     ExecutionScheduleResourceImpl(final Provider<ExecutionScheduleDao> executionScheduleDaoProvider,
                                   final Provider<SecurityContext> securityContextProvider,
                                   final Provider<UserRefLookup> userRefLookupProvider,
-                                  final ScheduledQueryAnalyticExecutor scheduledQueryAnalyticExecutor,
-                                  final ReportExecutor reportExecutor) {
+                                  final Provider<ScheduledQueryAnalyticExecutor> scheduledQueryAnalyticExecutorProvider,
+                                  final Provider<ReportExecutor> reportExecutorProvider) {
         this.executionScheduleDaoProvider = executionScheduleDaoProvider;
         this.securityContextProvider = securityContextProvider;
         this.userRefLookupProvider = userRefLookupProvider;
-        this.scheduledQueryAnalyticExecutor = scheduledQueryAnalyticExecutor;
-        this.reportExecutor = reportExecutor;
+        this.scheduledQueryAnalyticExecutorProvider = scheduledQueryAnalyticExecutorProvider;
+        this.reportExecutorProvider = reportExecutorProvider;
     }
 
     @Override
@@ -122,10 +118,10 @@ class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
                 }
             }
             if (!analyticRuleSchedules.isEmpty()) {
-                scheduledQueryAnalyticExecutor.execFromSchedules(analyticRuleSchedules);
+                scheduledQueryAnalyticExecutorProvider.get().execFromSchedules(analyticRuleSchedules);
             }
             if (!reportSchedules.isEmpty()) {
-                reportExecutor.execFromSchedules(reportSchedules);
+                reportExecutorProvider.get().execFromSchedules(reportSchedules);
             }
         } catch (final RuntimeException e) {
             LOGGER.error(() ->
