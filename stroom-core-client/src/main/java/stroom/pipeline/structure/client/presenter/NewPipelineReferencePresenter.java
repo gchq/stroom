@@ -53,7 +53,6 @@ public class NewPipelineReferencePresenter
     private final RestFactory restFactory;
     private final UiConfigCache uiConfigCache;
     private final SelectionBox<String> dataTypeWidget;
-    private boolean dirty;
     private boolean initialised;
     private PipelineReference currentPipelineReference;
 
@@ -116,7 +115,7 @@ public class NewPipelineReferencePresenter
             if (initialised) {
                 final DocRef selection = pipelinePresenter.getSelectedEntityReference();
                 if (!Objects.equals(pipelineReference.getPipeline(), selection)) {
-                    setDirty(true);
+                    onChange();
                 }
             }
         });
@@ -124,7 +123,7 @@ public class NewPipelineReferencePresenter
             if (initialised) {
                 final DocRef selection = feedPresenter.getSelectedEntityReference();
                 if (!Objects.equals(pipelineReference.getFeed(), selection)) {
-                    setDirty(true);
+                    onChange();
                 }
             }
         });
@@ -132,10 +131,14 @@ public class NewPipelineReferencePresenter
             if (initialised) {
                 final String selection = dataTypeWidget.getValue();
                 if (!Objects.equals(pipelineReference.getStreamType(), selection)) {
-                    setDirty(true);
+                    onChange();
                 }
             }
         });
+    }
+
+    private void onChange() {
+
     }
 
     public PipelineReference write() {
@@ -165,14 +168,6 @@ public class NewPipelineReferencePresenter
                 })
                 .taskMonitorFactory(this)
                 .exec();
-    }
-
-    public boolean isDirty() {
-        return dirty;
-    }
-
-    private void setDirty(final boolean dirty) {
-        this.dirty = dirty;
     }
 
     public interface NewPipelineReferenceView extends View {

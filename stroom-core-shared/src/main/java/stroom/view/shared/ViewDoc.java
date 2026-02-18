@@ -57,13 +57,13 @@ public class ViewDoc extends AbstractDoc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.VIEW_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private DocRef dataSource;
+    private final DocRef dataSource;
     @JsonProperty
-    private ExpressionOperator filter;
+    private final ExpressionOperator filter;
     @JsonProperty
-    private DocRef pipeline;
+    private final DocRef pipeline;
 
     @JsonCreator
     public ViewDoc(@JsonProperty("uuid") final String uuid,
@@ -104,32 +104,16 @@ public class ViewDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public DocRef getDataSource() {
         return dataSource;
-    }
-
-    public void setDataSource(final DocRef dataSource) {
-        this.dataSource = dataSource;
     }
 
     public ExpressionOperator getFilter() {
         return filter;
     }
 
-    public void setFilter(final ExpressionOperator filter) {
-        this.filter = filter;
-    }
-
     public DocRef getPipeline() {
         return pipeline;
-    }
-
-    public void setPipeline(final DocRef pipeline) {
-        this.pipeline = pipeline;
     }
 
     @Override

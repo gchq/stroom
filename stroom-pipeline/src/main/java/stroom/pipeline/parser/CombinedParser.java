@@ -76,7 +76,7 @@ import javax.xml.parsers.SAXParserFactory;
                 flexibility than the source format-specific parsers such as dsParser.
                 It effectively combines a BOMRemovalFilterInput, an InvalidCharFilterReader and Parser (based on \
                 the `type` property.
-                
+
                 {{% warning %}}
                 It is strongly recommended to instead use a combination of Readers and one of the type \
                 specific Parsers.
@@ -142,15 +142,13 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
 
     @Override
     protected XMLReader createReader() throws SAXException {
-        final XMLReader xmlReader = switch (getMode()) {
+        return switch (getMode()) {
             case XML -> createXMLReader();
             case XML_FRAGMENT, DATA_SPLITTER -> createTextConverter();
             case JSON -> createJSONReader();
             case UNKNOWN -> throw ProcessException.create("Unknown parser type '" + type + "'");
             default -> throw ProcessException.create("Unexpected combined parser mode: " + getMode());
         };
-
-        return xmlReader;
     }
 
     public Mode getMode() {

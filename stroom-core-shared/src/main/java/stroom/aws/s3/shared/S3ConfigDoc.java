@@ -53,7 +53,6 @@ public class S3ConfigDoc extends AbstractDoc implements HasData {
 
     @JsonProperty
     private final String description;
-
     @JsonProperty
     private final String data;
 

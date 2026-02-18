@@ -53,7 +53,7 @@ public abstract class DocPresenter<V extends View, D>
     private void setDirty(final boolean dirty) {
         if (this.dirty != dirty) {
             this.dirty = dirty;
-            updateLabel();
+            onDirty();
             DirtyEvent.fire(this, dirty);
         }
     }
@@ -62,7 +62,7 @@ public abstract class DocPresenter<V extends View, D>
         return dirty;
     }
 
-    protected void updateLabel() {
+    protected void onDirty() {
 
     }
 

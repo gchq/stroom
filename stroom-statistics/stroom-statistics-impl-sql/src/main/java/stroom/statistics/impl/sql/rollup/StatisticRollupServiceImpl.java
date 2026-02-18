@@ -16,6 +16,7 @@
 
 package stroom.statistics.impl.sql.rollup;
 
+import stroom.statistics.impl.sql.search.StatisticStoreDocUtil;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.CustomRollUpMaskFields;
 import stroom.statistics.impl.sql.shared.StatisticField;
@@ -26,6 +27,7 @@ import jakarta.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,20 +61,27 @@ public class StatisticRollupServiceImpl implements StatisticRollupService {
     @Override
     public StatisticsDataSourceData fieldChange(final StatisticsDataSourceData oldStatisticsDataSourceData,
                                                 final StatisticsDataSourceData newStatisticsDataSourceData) {
-        final StatisticsDataSourceData copy = newStatisticsDataSourceData.deepCopy();
-
+        final StatisticsDataSourceData.Builder builder = newStatisticsDataSourceData.copy();
         if (!oldStatisticsDataSourceData.getFields()
                 .equals(newStatisticsDataSourceData.getFields())) {
             final Map<Integer, Integer> newToOldFieldPositionMap = new HashMap<>();
 
             int pos = 0;
+            final Map<String, Integer> oldFieldPos = StatisticStoreDocUtil
+                    .createFieldPositionMap(oldStatisticsDataSourceData);
             for (final StatisticField newField : newStatisticsDataSourceData.getFields()) {
                 // old position may be null if this is a new field
-                newToOldFieldPositionMap.put(pos++,
-                        oldStatisticsDataSourceData.getFieldPositionInList(newField.getFieldName()));
+                newToOldFieldPositionMap.put(pos++, oldFieldPos.get(newField.getFieldName()));
             }
 
-            copy.clearCustomRollUpMask();
+            Set<CustomRollUpMask> customRollUpMasks = newStatisticsDataSourceData.getCustomRollUpMasks();
+            if (customRollUpMasks == null) {
+                customRollUpMasks = new HashSet<>();
+            } else {
+                customRollUpMasks = new HashSet<>(customRollUpMasks);
+            }
+
+            customRollUpMasks.clear();
 
             for (final CustomRollUpMask oldCustomRollUpMask : oldStatisticsDataSourceData.getCustomRollUpMasks()) {
                 final RollUpBitMask oldRollUpBitMask = RollUpBitMask
@@ -80,11 +89,12 @@ public class StatisticRollupServiceImpl implements StatisticRollupService {
 
                 final RollUpBitMask newRollUpBitMask = oldRollUpBitMask.convert(newToOldFieldPositionMap);
 
-                copy.addCustomRollUpMask(new CustomRollUpMask(newRollUpBitMask.getTagPositionsAsList()));
+                customRollUpMasks.add(new CustomRollUpMask(newRollUpBitMask.getTagPositionsAsList()));
             }
+            builder.customRollUpMasks(customRollUpMasks);
         }
 
-        return copy;
+        return builder.build();
     }
 
 }

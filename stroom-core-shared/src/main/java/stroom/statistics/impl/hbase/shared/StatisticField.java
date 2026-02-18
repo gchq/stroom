@@ -25,15 +25,14 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder({"fieldName"})
 @JsonInclude(Include.NON_NULL)
 public class StatisticField implements HasDisplayValue, Comparable<StatisticField> {
 
     @JsonProperty
-    private String fieldName;
-
-    public StatisticField() {
-    }
+    private final String fieldName;
 
     @JsonCreator
     public StatisticField(@JsonProperty("fieldName") final String fieldName) {
@@ -42,10 +41,6 @@ public class StatisticField implements HasDisplayValue, Comparable<StatisticFiel
 
     public String getFieldName() {
         return fieldName;
-    }
-
-    public void setFieldName(final String fieldName) {
-        this.fieldName = fieldName;
     }
 
     @Override
@@ -60,41 +55,50 @@ public class StatisticField implements HasDisplayValue, Comparable<StatisticFiel
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((fieldName == null)
-                ? 0
-                : fieldName.hashCode());
-        return result;
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final StatisticField that = (StatisticField) o;
+        return Objects.equals(fieldName, that.fieldName);
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final StatisticField other = (StatisticField) obj;
-        if (fieldName == null) {
-            return other.fieldName == null;
-        } else {
-            return fieldName.equals(other.fieldName);
-        }
+    public int hashCode() {
+        return Objects.hashCode(fieldName);
     }
 
     @Override
     public String toString() {
-        return "StatisticField [fieldName=" + fieldName + "]";
+        return fieldName;
     }
 
-    public StatisticField deepCopy() {
-        return new StatisticField(fieldName);
+    public static Builder builder() {
+        return new Builder();
     }
 
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
+        private String fieldName;
+
+        private Builder() {
+        }
+
+        private Builder(final StatisticField statisticField) {
+            this.fieldName = statisticField.fieldName;
+        }
+
+        public Builder fieldName(final String fieldName) {
+            this.fieldName = fieldName;
+            return this;
+        }
+
+        public StatisticField build() {
+            return new StatisticField(fieldName);
+        }
+    }
 }

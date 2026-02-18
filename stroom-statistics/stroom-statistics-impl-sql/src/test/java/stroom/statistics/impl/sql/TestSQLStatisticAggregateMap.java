@@ -507,16 +507,13 @@ class TestSQLStatisticAggregateMap extends StroomUnitTest {
     }
 
     private StatisticStoreDoc buildStatisticDataSource(final StatisticRollUpType statisticRollUpType) {
-        final StatisticsDataSourceData statisticFields = new StatisticsDataSourceData();
-
         final List<StatisticField> fields = new ArrayList<>();
 
         fields.add(new StatisticField(TAG1_NAME));
         fields.add(new StatisticField(TAG2_NAME));
         fields.add(new StatisticField(TAG3_NAME));
 
-        statisticFields.setFields(fields);
-
+        final StatisticsDataSourceData statisticFields = StatisticsDataSourceData.builder().fields(fields).build();
         return StatisticStoreDoc.builder()
                 .uuid(UUID.randomUUID().toString())
                 .config(statisticFields)

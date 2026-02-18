@@ -26,7 +26,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.entity.client.presenter.AbstractDocPresenter;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourcePresenter;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
@@ -35,7 +35,9 @@ import stroom.statistics.impl.sql.shared.StatisticResource;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
+import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -80,7 +82,7 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
 
 
     @Override
-    protected DocumentEditPresenter<?, ?> createEditor() {
+    protected DocPresenter<?, ?> createEditor() {
         return editorProvider.get();
     }
 
@@ -112,10 +114,18 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
         final StatisticType prevType = entityFromDb.getStatisticType();
         final StatisticRollUpType prevRollUpType = entityFromDb.getRollUpType();
         final Long prevInterval = entityFromDb.getPrecision();
-        final List<StatisticField> prevFieldList = entityFromDb.getStatisticFields();
-        final Set<CustomRollUpMask> prevMaskSet = entityFromDb.getCustomRollUpMasks();
+        final StatisticsDataSourceData dbConfig = NullSafe.getOrElse(
+                entityFromDb,
+                StatisticStoreDoc::getConfig,
+                StatisticsDataSourceData.builder().build());
+        final List<StatisticField> prevFieldList = dbConfig.getFields();
+        final Set<CustomRollUpMask> prevMaskSet = dbConfig.getCustomRollUpMasks();
 
         final StatisticStoreDoc writtenEntity = presenter.write(entity);
+        final StatisticsDataSourceData writtenConfig = NullSafe.getOrElse(
+                writtenEntity,
+                StatisticStoreDoc::getConfig,
+                StatisticsDataSourceData.builder().build());
 
         // if one of a select list of attributes has changed then warn the user
         // only need a null check on the engine name as the rest will never be
@@ -123,8 +133,8 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
         if (!prevType.equals(writtenEntity.getStatisticType())
             || !prevRollUpType.equals(writtenEntity.getRollUpType())
             || !prevInterval.equals(writtenEntity.getPrecision())
-            || !prevFieldList.equals(writtenEntity.getStatisticFields())
-            || !prevMaskSet.equals(writtenEntity.getCustomRollUpMasks())) {
+            || !prevFieldList.equals(writtenConfig.getFields())
+            || !prevMaskSet.equals(writtenConfig.getCustomRollUpMasks())) {
             ConfirmEvent.fireWarn(
                     this,
                     SafeHtmlUtils.fromTrustedString("Changes to the following attributes of a statistic data " +

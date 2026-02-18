@@ -940,7 +940,7 @@ public class DashboardPresenter
     }
 
     @Override
-    protected void updateLabel() {
+    protected void onDirty() {
         // Only fire tab refresh if the tab has changed.
         if (lastLabel == null || !lastLabel.equals(getLabel())) {
             lastLabel = getLabel();

@@ -56,7 +56,7 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
                         <xsl:apply-templates/>
                     </referenceData>
                 </xsl:template>
-            
+
                 <xsl:template match="record">
                     <reference>
                         <map>FILENO_TO_LOCATION_MAP</map>

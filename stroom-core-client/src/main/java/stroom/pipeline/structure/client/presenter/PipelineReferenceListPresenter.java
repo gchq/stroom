@@ -26,9 +26,9 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.DisplayType;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
@@ -72,8 +72,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
-        implements HasDirtyHandlers {
+public class PipelineReferenceListPresenter
+        extends MyPresenterWidget<PagerView>
+        implements HasChangeHandlers {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final String ADDED = "pipelineStructureViewImpl-property-added";
@@ -370,7 +371,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
 
                         setPipelineData(builder.build());
 
-                        setDirty(isNew || editor.isDirty());
+                        onChange();
                         refresh();
                         e.hide();
                     }
@@ -422,7 +423,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
             }
 
             setPipelineData(builder.build());
-            setDirty(true);
+            onChange();
             refresh();
         }
     }
@@ -555,15 +556,13 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         }
     }
 
-    protected void setDirty(final boolean dirty) {
-        if (dirty) {
-            DirtyEvent.fire(this, dirty);
-        }
+    private void onChange() {
+        ChangeEvent.fire(this);
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
     private enum State {

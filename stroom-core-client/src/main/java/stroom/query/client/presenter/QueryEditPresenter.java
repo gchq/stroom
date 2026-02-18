@@ -20,9 +20,9 @@ import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.query.QueryInfo;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.view.IndicatorLines;
 import stroom.editor.client.view.Marker;
@@ -69,7 +69,7 @@ import javax.inject.Provider;
 
 public class QueryEditPresenter
         extends MyPresenterWidget<QueryEditView>
-        implements HasDirtyHandlers, HasToolbar, HasHandlers, HasValueChangeHandlers<String> {
+        implements HasChangeHandlers, HasToolbar, HasHandlers, HasValueChangeHandlers<String> {
 
     private static final int DEBOUNCE_DELAY_MS = 400;
     private static final TabData TABLE = new TabDataImpl("Table");
@@ -79,9 +79,6 @@ public class QueryEditPresenter
     private final QueryToolbarPresenter queryToolbarPresenter;
     private final EditorPresenter editorPresenter;
     private final QueryResultTableSplitPresenter queryResultPresenter;
-    private boolean dirty;
-    private boolean reading;
-    private boolean readOnly = true;
     private final QueryModel queryModel;
     private final QueryResultTabsView linkTabsLayoutView;
     private final QueryInfo queryInfo;
@@ -288,13 +285,13 @@ public class QueryEditPresenter
         registerHandler(editorPresenter.addValueChangeHandler(event -> {
             final String query = editorPresenter.getText();
             updateQuery(query);
-            setDirty(true);
+            onChange();
         }));
-        registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
+        registerHandler(editorPresenter.addFormatHandler(event -> onChange()));
         registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> toggleStart()));
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> {
             run(true, true);
-            setDirty(true);
+            onChange();
         }));
         queryHelpPresenter.linkToEditor(editorPresenter);
 
@@ -304,7 +301,7 @@ public class QueryEditPresenter
         }));
         registerHandler(linkTabsLayoutView.getTabBar().addSelectionHandler(e ->
                 selectTab(e.getSelectedItem())));
-        registerHandler(queryResultPresenter.addDirtyHandler(e -> setDirty(true)));
+        registerHandler(queryResultPresenter.addChangeHandler(this::onChange));
     }
 
     public void updateQuery(final String query) {
@@ -340,17 +337,6 @@ public class QueryEditPresenter
             linkTabsLayoutView.getTabBar().selectTab(tabData);
             linkTabsLayoutView.getLayerContainer().show(currentVisPresenter);
         }
-    }
-
-    private void setDirty(final boolean dirty) {
-        if (!reading && this.dirty != dirty) {
-            this.dirty = dirty;
-            DirtyEvent.fire(this, dirty);
-        }
-    }
-
-    public boolean isDirty() {
-        return !readOnly && dirty;
     }
 
     public void onClose() {
@@ -418,23 +404,17 @@ public class QueryEditPresenter
     }
 
     public void setQuery(final DocRef docRef, final String query, final boolean readOnly) {
-        this.readOnly = readOnly;
-
         queryModel.init(docRef);
         if (query != null) {
-            reading = true;
             if (NullSafe.isBlankString(editorPresenter.getText())
                 || !Objects.equals(editorPresenter.getText(), query)) {
                 editorPresenter.setText(query);
                 updateQuery(query);
             }
-            reading = false;
         }
 
         editorPresenter.setReadOnly(readOnly);
         editorPresenter.getFormatAction().setAvailable(!readOnly);
-
-        dirty = false;
         focus();
     }
 
@@ -442,9 +422,13 @@ public class QueryEditPresenter
         return editorPresenter.getText();
     }
 
+    private void onChange() {
+        ChangeEvent.fire(this);
+    }
+
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
     @Override
@@ -469,7 +453,8 @@ public class QueryEditPresenter
     }
 
     @Override
-    public com.google.gwt.event.shared.HandlerRegistration addValueChangeHandler(final ValueChangeHandler<String> handler) {
+    public com.google.gwt.event.shared.HandlerRegistration addValueChangeHandler(
+            final ValueChangeHandler<String> handler) {
         return editorPresenter.addValueChangeHandler(handler);
     }
 

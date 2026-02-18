@@ -84,7 +84,11 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
                     final TabLayoutConfig tabLayoutConfig = TabLayoutConfig.builder().tabs(tabConfigList).build();
                     down2List.add(tabLayoutConfig);
                 }
-                final SplitLayoutConfig down2 = SplitLayoutConfig.builder().dimension(Dimension.Y).children(down2List).build();
+                final SplitLayoutConfig down2 = SplitLayoutConfig
+                        .builder()
+                        .dimension(Dimension.Y)
+                        .children(down2List)
+                        .build();
                 acrossList.add(down2);
             }
             final SplitLayoutConfig across = SplitLayoutConfig
@@ -121,8 +125,10 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
         scriptStore.writeDocument(script);
 
         final DocRef visRef = visualisationStore.createDocument("Test");
-        final VisualisationDoc vis = visualisationStore.readDocument(visRef);
-        vis.setScriptRef(scriptRef);
+        final VisualisationDoc vis = visualisationStore.readDocument(visRef)
+                .copy()
+                .scriptRef(scriptRef)
+                .build();
         visualisationStore.writeDocument(vis);
 
         return VisComponentSettings.builder()

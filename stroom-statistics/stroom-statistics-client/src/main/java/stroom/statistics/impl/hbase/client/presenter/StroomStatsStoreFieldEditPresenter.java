@@ -16,7 +16,6 @@
 
 package stroom.statistics.impl.hbase.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.statistics.impl.hbase.shared.StatisticField;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -67,28 +66,27 @@ public class StroomStatsStoreFieldEditPresenter
 
     }
 
-    public boolean write(final StatisticField field) {
+    public StatisticField write(final StatisticField field) {
         String name = getView().getFieldName();
         name = name.trim();
 
-        field.setFieldName(name);
+        final StatisticField updated = field.copy().fieldName(name).build();
 
         if (name.length() == 0) {
-            AlertEvent.fireWarn(this, "An index field must have a name", null);
-            return false;
+            throw new RuntimeException("An index field must have a name");
         }
-        if (otherFields.contains(field)) {
-            AlertEvent.fireWarn(this, "Another field with this name already exists", null);
-            return false;
+        if (otherFields.contains(updated)) {
+            throw new RuntimeException("Another field with this name already exists");
         }
         if (fieldNamePattern != null && !fieldNamePattern.isEmpty()) {
             if (!name.matches(fieldNamePattern)) {
-                AlertEvent.fireWarn(this,
-                        "Invalid name \"" + name + "\" (valid name pattern: " + fieldNamePattern + ")", null);
-                return false;
+                throw new RuntimeException("Invalid name \"" +
+                                           name +
+                                           "\" (valid name pattern: " +
+                                           fieldNamePattern + ")");
             }
         }
-        return true;
+        return updated;
     }
 
     void show(final String caption, final HidePopupRequestEvent.Handler handler) {

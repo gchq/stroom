@@ -21,18 +21,15 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @Description(
         "The Stroom-Stats Store Document is deprecated and should not be used."
@@ -61,17 +58,17 @@ public class StroomStatsStoreDoc extends AbstractDoc {
     private static final EventStoreTimeIntervalEnum DEFAULT_PRECISION_INTERVAL = EventStoreTimeIntervalEnum.HOUR;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private StatisticType statisticType;
+    private final StatisticType statisticType;
     @JsonProperty
-    private StatisticRollUpType rollUpType;
+    private final StatisticRollUpType rollUpType;
     @JsonProperty
-    private EventStoreTimeIntervalEnum precision;
+    private final EventStoreTimeIntervalEnum precision;
     @JsonProperty
-    private boolean enabled;
+    private final boolean enabled;
     @JsonProperty
-    private StroomStatsStoreEntityData config;
+    private final StroomStatsStoreEntityData config;
 
     @JsonCreator
     public StroomStatsStoreDoc(@JsonProperty("uuid") final String uuid,
@@ -89,21 +86,11 @@ public class StroomStatsStoreDoc extends AbstractDoc {
                                @JsonProperty("config") final StroomStatsStoreEntityData config) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
-        this.statisticType = statisticType;
-        this.rollUpType = rollUpType;
-        this.precision = precision;
+        this.statisticType = NullSafe.requireNonNullElse(statisticType, StatisticType.COUNT);
+        this.rollUpType = NullSafe.requireNonNullElse(rollUpType, StatisticRollUpType.NONE);
+        this.precision = NullSafe.requireNonNullElse(precision, DEFAULT_PRECISION_INTERVAL);
         this.enabled = enabled;
         this.config = config;
-
-        if (this.statisticType == null) {
-            this.statisticType = StatisticType.COUNT;
-        }
-        if (this.rollUpType == null) {
-            this.rollUpType = StatisticRollUpType.NONE;
-        }
-        if (this.precision == null) {
-            this.precision = DEFAULT_PRECISION_INTERVAL;
-        }
     }
 
     /**
@@ -126,80 +113,28 @@ public class StroomStatsStoreDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public StatisticType getStatisticType() {
         return statisticType;
-    }
-
-    public void setStatisticType(final StatisticType statisticType) {
-        this.statisticType = statisticType;
     }
 
     public StatisticRollUpType getRollUpType() {
         return rollUpType;
     }
 
-    public void setRollUpType(final StatisticRollUpType rollUpType) {
-        this.rollUpType = rollUpType;
-    }
-
     public EventStoreTimeIntervalEnum getPrecision() {
         return precision;
-    }
-
-    public void setPrecision(final EventStoreTimeIntervalEnum precision) {
-        this.precision = precision;
     }
 
     public boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
-    }
-
     public StroomStatsStoreEntityData getConfig() {
         return config;
     }
 
-    public void setConfig(final StroomStatsStoreEntityData statisticDataSourceDataObject) {
-        this.config = statisticDataSourceDataObject;
-    }
-
-    @JsonIgnore
-    public int getStatisticFieldCount() {
-        return config == null
-                ? 0
-                : config.getFields().size();
-    }
-
-    @JsonIgnore
-    public List<StatisticField> getStatisticFields() {
-        if (config != null) {
-            return config.getFields();
-        } else {
-            return Collections.emptyList();
-        }
-    }
-
-    @JsonIgnore
-    public Set<CustomRollUpMask> getCustomRollUpMasks() {
-        if (config != null) {
-            return config.getCustomRollUpMasks();
-        } else {
-            return Collections.emptySet();
-        }
-    }
-
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
@@ -207,11 +142,11 @@ public class StroomStatsStoreDoc extends AbstractDoc {
             return false;
         }
         final StroomStatsStoreDoc that = (StroomStatsStoreDoc) o;
-        return Objects.equals(description, that.description) &&
+        return enabled == that.enabled &&
+               Objects.equals(description, that.description) &&
                statisticType == that.statisticType &&
                rollUpType == that.rollUpType &&
                precision == that.precision &&
-               Objects.equals(enabled, that.enabled) &&
                Objects.equals(config, that.config);
     }
 

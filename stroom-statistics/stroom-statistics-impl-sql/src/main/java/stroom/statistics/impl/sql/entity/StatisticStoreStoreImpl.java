@@ -96,11 +96,7 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
 
     @Override
     public StatisticStoreDoc readDocument(final DocRef docRef) {
-        final StatisticStoreDoc statisticStoreDoc = store.readDocument(docRef);
-        if (statisticStoreDoc != null && statisticStoreDoc.getConfig() != null) {
-            statisticStoreDoc.getConfig().reOrderStatisticFields();
-        }
-        return statisticStoreDoc;
+        return store.readDocument(docRef);
     }
 
     @Override

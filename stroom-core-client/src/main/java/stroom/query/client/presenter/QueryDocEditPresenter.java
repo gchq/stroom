@@ -113,11 +113,7 @@ public class QueryDocEditPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(queryEditPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                onChange();
-            }
-        }));
+        registerHandler(queryEditPresenter.addChangeHandler(this::onChange));
         registerHandler(createRuleButton.addClickHandler(event -> createRule()));
         registerHandler(createReportButton.addClickHandler(event -> createReport()));
     }
@@ -151,9 +147,8 @@ public class QueryDocEditPresenter
                                     createRule(analyticUiDefaultConfig, query, timeRange, analyticProcessType);
                                 }
                             })
-                            .onFailure(restError -> {
-                                AlertEvent.fireErrorFromException(this, restError.getException(), null);
-                            })
+                            .onFailure(restError ->
+                                    AlertEvent.fireErrorFromException(this, restError.getException(), null))
                             .taskMonitorFactory(this)
                             .exec();
                 }
@@ -346,9 +341,8 @@ public class QueryDocEditPresenter
                                             AnalyticProcessType.SCHEDULED_QUERY);
                                 }
                             })
-                            .onFailure(restError -> {
-                                AlertEvent.fireErrorFromException(this, restError.getException(), null);
-                            })
+                            .onFailure(restError ->
+                                    AlertEvent.fireErrorFromException(this, restError.getException(), null))
                             .taskMonitorFactory(this)
                             .exec();
                 }

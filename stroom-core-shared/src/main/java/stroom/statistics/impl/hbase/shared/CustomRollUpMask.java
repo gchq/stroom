@@ -16,10 +16,9 @@
 
 package stroom.statistics.impl.hbase.shared;
 
-import stroom.docref.HasDisplayValue;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -28,10 +27,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @JsonPropertyOrder({"rolledUpTagPosition"})
 @JsonInclude(Include.NON_NULL)
-public class CustomRollUpMask implements HasDisplayValue {
+public class CustomRollUpMask {
 
     /**
      * Holds a list of the positions of tags that are rolled up, zero based. The
@@ -44,18 +44,11 @@ public class CustomRollUpMask implements HasDisplayValue {
     @JsonProperty
     private final List<Integer> rolledUpTagPosition;
 
-    public CustomRollUpMask() {
-        rolledUpTagPosition = new ArrayList<>();
-    }
-
     @JsonCreator
     public CustomRollUpMask(@JsonProperty("rolledUpTagPosition") final List<Integer> rolledUpTagPosition) {
-        if (rolledUpTagPosition != null) {
-            this.rolledUpTagPosition = new ArrayList<>(rolledUpTagPosition);
-            Collections.sort(this.rolledUpTagPosition);
-        } else {
-            this.rolledUpTagPosition = new ArrayList<>();
-        }
+        final List<Integer> sorted = new ArrayList<>(NullSafe.list(rolledUpTagPosition));
+        sorted.sort(Integer::compareTo);
+        this.rolledUpTagPosition = Collections.unmodifiableList(sorted);
     }
 
     public List<Integer> getRolledUpTagPosition() {
@@ -66,56 +59,18 @@ public class CustomRollUpMask implements HasDisplayValue {
         return rolledUpTagPosition.contains(position);
     }
 
-    public void setRollUpState(final Integer position, final boolean isRolledUp) {
-        if (isRolledUp) {
-            if (!rolledUpTagPosition.contains(position)) {
-                rolledUpTagPosition.add(position);
-                Collections.sort(this.rolledUpTagPosition);
-            }
-        } else {
-            // no need to re-sort on remove as already in order
-            rolledUpTagPosition.remove(position);
-        }
-
-    }
-
     @Override
-    @JsonIgnore
-    public String getDisplayValue() {
-        return null;
-    }
-
-    public CustomRollUpMask deepCopy() {
-        return new CustomRollUpMask(new ArrayList<>(rolledUpTagPosition));
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final CustomRollUpMask that = (CustomRollUpMask) o;
+        return Objects.equals(rolledUpTagPosition, that.rolledUpTagPosition);
     }
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((rolledUpTagPosition == null)
-                ? 0
-                : rolledUpTagPosition.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final CustomRollUpMask other = (CustomRollUpMask) obj;
-        if (rolledUpTagPosition == null) {
-            return other.rolledUpTagPosition == null;
-        } else {
-            return rolledUpTagPosition.equals(other.rolledUpTagPosition);
-        }
+        return Objects.hashCode(rolledUpTagPosition);
     }
 
     @Override

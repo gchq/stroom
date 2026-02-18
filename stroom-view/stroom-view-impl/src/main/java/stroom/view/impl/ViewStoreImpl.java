@@ -19,7 +19,6 @@ package stroom.view.impl;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DependencyRemapFunction;
-import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -36,7 +35,6 @@ import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 class ViewStoreImpl implements ViewStore {
@@ -130,13 +128,14 @@ class ViewStoreImpl implements ViewStore {
 
     private DependencyRemapFunction<ViewDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
+            final ViewDoc.Builder builder = doc.copy();
             if (doc.getDataSource() != null) {
-                doc.setDataSource(dependencyRemapper.remap(doc.getDataSource()));
+                builder.dataSource(dependencyRemapper.remap(doc.getDataSource()));
             }
             if (doc.getPipeline() != null) {
-                doc.setPipeline(dependencyRemapper.remap(doc.getPipeline()));
+                builder.pipeline(dependencyRemapper.remap(doc.getPipeline()));
             }
-            return doc;
+            return builder.build();
         };
     }
 

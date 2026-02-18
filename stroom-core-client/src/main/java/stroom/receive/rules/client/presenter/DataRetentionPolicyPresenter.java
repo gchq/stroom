@@ -587,10 +587,6 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                                   && index < visibleRules.size() - 2);
     }
 
-    boolean isDirty() {
-        return dirty;
-    }
-
     private void setDirty(final boolean dirty) {
         if (this.dirty != dirty) {
             this.dirty = dirty;

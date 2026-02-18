@@ -25,14 +25,14 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticRollupResource;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
-import stroom.statistics.impl.sql.shared.StatisticsDataSourceFieldChangeRequest;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -48,11 +48,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<PagerView, StatisticStoreDoc> {
+public class StatisticsCustomMaskListPresenter
+        extends DocPresenter<PagerView, StatisticStoreDoc> {
 
-    private static final StatisticRollupResource STATISTIC_ROLLUP_RESOURCE = GWT.create(StatisticRollupResource.class);
+    private static final StatisticRollupResource STATISTIC_ROLLUP_RESOURCE =
+            GWT.create(StatisticRollupResource.class);
 
     private final MyDataGrid<MaskHolder> dataGrid;
     private final MultiSelectionModelImpl<MaskHolder> selectionModel;
@@ -62,8 +66,8 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
     private final ButtonView autoGenerateButton;
     private final List<Column<MaskHolder, ?>> columns = new ArrayList<>();
     private final RestFactory restFactory;
-    private StatisticStoreDoc statisticsDataSource;
-    private MaskHolderList maskList = new MaskHolderList();
+    private final List<StatisticField> fields = new ArrayList<>();
+    private final MaskHolderList maskList = new MaskHolderList();
 
     @Inject
     public StatisticsCustomMaskListPresenter(final EventBus eventBus,
@@ -78,8 +82,6 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
         newButton = view.addButton(SvgPresets.NEW_ITEM);
         autoGenerateButton = view.addButton(SvgPresets.GENERATE);
         removeButton = view.addButton(SvgPresets.REMOVE);
-
-        maskList = new MaskHolderList();
 
         this.restFactory = restFactory;
         refreshModel();
@@ -115,13 +117,8 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
         newButton.setEnabled(!isReadOnly());
         autoGenerateButton.setEnabled(!isReadOnly());
 
-        if (maskList != null && maskList.size() > 0) {
-            final MaskHolder selectedElement = selectionModel.getSelected();
-            removeButton.setEnabled(!isReadOnly() && selectedElement != null);
-
-        } else {
-            removeButton.setEnabled(false);
-        }
+        final MaskHolder selectedElement = selectionModel.getSelected();
+        removeButton.setEnabled(!isReadOnly() && selectedElement != null);
 
         if (isReadOnly()) {
             newButton.setTitle("New roll-up permutation disabled as read only");
@@ -135,15 +132,11 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
     }
 
     private void addColumns() {
-        int fieldPos = 0;
-        for (final StatisticField statisticField : statisticsDataSource.getStatisticFields()) {
-            addStatFieldColumn(fieldPos++, statisticField.getFieldName());
+        for (final StatisticField statisticField : fields) {
+            addStatFieldColumn(statisticField);
         }
-
         final EndColumn<MaskHolder> endColumn = new EndColumn<>();
-
         dataGrid.addEndColumn(endColumn);
-
         columns.add(endColumn);
     }
 
@@ -153,27 +146,30 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
         }
     }
 
-    private void addStatFieldColumn(final int fieldPositionNumber, final String fieldname) {
+    private void addStatFieldColumn(final StatisticField statisticField) {
         // Enabled.
         final Column<MaskHolder, TickBoxState> rolledUpColumn = new Column<MaskHolder, TickBoxState>(
                 TickBoxCell.create(false, true)) {
             @Override
             public TickBoxState getValue(final MaskHolder row) {
-                return TickBoxState.fromBoolean(row.getMask().isTagRolledUp(fieldPositionNumber));
+                return TickBoxState.fromBoolean(row.getMask().contains(statisticField));
             }
         };
         rolledUpColumn.setFieldUpdater((index, row, value) -> {
-            row.getMask().setRollUpState(fieldPositionNumber, value.toBoolean());
-
+            if (value.toBoolean()) {
+                row.getMask().add(statisticField);
+            } else {
+                row.getMask().remove(statisticField);
+            }
             DirtyEvent.fire(StatisticsCustomMaskListPresenter.this, true);
         });
 
-        dataGrid.addResizableColumn(rolledUpColumn, fieldname, 100);
+        dataGrid.addResizableColumn(rolledUpColumn, statisticField.getFieldName(), 100);
         columns.add(rolledUpColumn);
     }
 
     private void onAdd(final ClickEvent event) {
-        this.maskList.addMask(new CustomRollUpMask());
+        this.maskList.addMask(new HashSet<>());
 
         // dataProvider.refresh();
         refreshModel();
@@ -185,14 +181,15 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
 
         ConfirmEvent.fire(this,
                 "Are you sure you want to clear the existing roll-ups and generate all possible " +
-                        "permutations for the field list?",
+                "permutations for the field list?",
                 result -> {
                     if (result) {
+                        final List<StatisticField> fields = new ArrayList<>(this.fields);
                         restFactory
                                 .create(STATISTIC_ROLLUP_RESOURCE)
-                                .method(res -> res.bitMaskPermGeneration(statisticsDataSource.getStatisticFieldCount()))
+                                .method(res -> res.bitMaskPermGeneration(fields.size()))
                                 .onSuccess(res -> {
-                                    updateState(new HashSet<>(res));
+                                    updateState(convertRollups(fields, res));
                                     DirtyEvent.fire(thisInstance, true);
                                 })
                                 .taskMonitorFactory(getView())
@@ -203,7 +200,7 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
 
     private void onRemove(final ClickEvent event) {
         final List<MaskHolder> list = selectionModel.getSelectedItems();
-        if (maskList != null && list != null && list.size() > 0) {
+        if (list != null && list.size() > 0) {
             maskList.removeAll(list);
 
             selectionModel.clear();
@@ -214,20 +211,10 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
         }
     }
 
-    private void refreshFromEntity(final StatisticStoreDoc statisticsDataSource) {
-        maskList.clear();
-        maskList.addMasks(statisticsDataSource.getCustomRollUpMasks());
-
-        addNoRollUpPerm();
-
-        refreshModel();
-    }
-
     private void addNoRollUpPerm() {
         // add a line with no rollups as a starting point
-        if (statisticsDataSource.getCustomRollUpMasks().size() == 0
-                && statisticsDataSource.getStatisticFieldCount() > 0) {
-            maskList.addMask(new CustomRollUpMask(Collections.emptyList()));
+        if (maskList.size() == 0) {
+            maskList.addMask(new HashSet<>());
         }
     }
 
@@ -237,26 +224,61 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final StatisticStoreDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef,
+                          final StatisticStoreDoc document,
+                          final boolean readOnly) {
+        fields.clear();
         enableButtons();
 
-        // initialise the columns and hold the statDataSource on first time
-        // or if we are passed a different object
-        if (this.statisticsDataSource == null || this.statisticsDataSource != document) {
-            this.statisticsDataSource = document;
-
-            removeAllColumns();
-            addColumns();
+        List<Set<StatisticField>> customRollUpMasks = Collections.emptyList();
+        if (document != null) {
+            final StatisticsDataSourceData config = document.getConfig();
+            if (config != null) {
+                final List<StatisticField> fields = NullSafe.list(config.getFields());
+                this.fields.addAll(fields);
+                customRollUpMasks = convertRollups(fields, NullSafe.collection(config.getCustomRollUpMasks()));
+            }
         }
 
-        refreshFromEntity(document);
+        updateState(customRollUpMasks);
+    }
+
+    private List<Set<StatisticField>> convertRollups(final List<StatisticField> fields,
+                                                     final Collection<CustomRollUpMask> customRollUpMasks) {
+        return customRollUpMasks
+                .stream()
+                .map(customRollUpMask -> {
+                    final Set<StatisticField> rollup = new HashSet<>();
+                    for (int i = 0; i < fields.size(); i++) {
+                        if (customRollUpMask.isTagRolledUp(i)) {
+                            if (fields.size() > i) {
+                                final StatisticField statisticField = fields.get(i);
+                                if (statisticField != null) {
+                                    rollup.add(statisticField);
+                                }
+                            }
+                        }
+                    }
+                    return rollup;
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
     protected StatisticStoreDoc onWrite(final StatisticStoreDoc document) {
-        document.getConfig()
-                .setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
-        return document;
+        final Set<CustomRollUpMask> masks = maskList.getMasks().stream().map(mask ->
+                        new CustomRollUpMask(mask
+                                .stream()
+                                .map(fields::indexOf)
+                                .collect(Collectors.toList())))
+                .collect(Collectors.toSet());
+        final StatisticsDataSourceData config = NullSafe.getOrElse(
+                        document,
+                        StatisticStoreDoc::getConfig,
+                        StatisticsDataSourceData::copy,
+                        StatisticsDataSourceData.builder())
+                .customRollUpMasks(masks).build();
+        return document.copy().config(config).build();
     }
 
     /**
@@ -265,7 +287,7 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
      *
      * @param customRollUpMasks The rollup masks as updated by another tab
      */
-    public void updateState(final Set<CustomRollUpMask> customRollUpMasks) {
+    private void updateState(final Collection<Set<StatisticField>> customRollUpMasks) {
         maskList.clear();
         maskList.addMasks(customRollUpMasks);
 
@@ -273,25 +295,14 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
 
         removeAllColumns();
         addColumns();
-
         refreshModel();
     }
 
-    public void reComputeRollUpBitMask(final StatisticsDataSourceData oldStatisticsDataSourceData,
-                                       final StatisticsDataSourceData newStatisticsDataSourceData) {
-        // grab the mask list from this presenter
-        oldStatisticsDataSourceData.setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
-        restFactory
-                .create(STATISTIC_ROLLUP_RESOURCE)
-                .method(res -> res.fieldChange(new StatisticsDataSourceFieldChangeRequest(oldStatisticsDataSourceData,
-                        newStatisticsDataSourceData)))
-                .onSuccess(result -> {
-                    newStatisticsDataSourceData.setCustomRollUpMasks(result.getCustomRollUpMasks());
-
-                    updateState(result.getCustomRollUpMasks());
-                })
-                .taskMonitorFactory(getView())
-                .exec();
+    public void refresh(final List<StatisticField> fields,
+                        final Set<Set<StatisticField>> customRollUpMasks) {
+        this.fields.clear();
+        this.fields.addAll(fields);
+        updateState(customRollUpMasks);
     }
 
     /**
@@ -301,42 +312,29 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
     public static class MaskHolder {
 
         private final int id;
-        private final CustomRollUpMask mask;
+        private final Set<StatisticField> mask;
 
-        public MaskHolder(final int id, final CustomRollUpMask mask) {
+        public MaskHolder(final int id, final Set<StatisticField> mask) {
             this.id = id;
             this.mask = mask;
         }
 
-        public int getId() {
-            return id;
-        }
-
-        public CustomRollUpMask getMask() {
+        public Set<StatisticField> getMask() {
             return mask;
         }
 
         @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + id;
-            return result;
+        public boolean equals(final Object o) {
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final MaskHolder that = (MaskHolder) o;
+            return id == that.id;
         }
 
         @Override
-        public boolean equals(final Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            final MaskHolder other = (MaskHolder) obj;
-            return id == other.id;
+        public int hashCode() {
+            return Objects.hashCode(id);
         }
     }
 
@@ -346,28 +344,24 @@ public class StatisticsCustomMaskListPresenter extends DocumentEditPresenter<Pag
      */
     public static class MaskHolderList extends ArrayList<MaskHolder> {
 
-        private static final long serialVersionUID = 4981870664808232963L;
-
         private int idCounter = 0;
 
-        public boolean addMask(final CustomRollUpMask mask) {
+        public boolean addMask(final Set<StatisticField> mask) {
             final MaskHolder holder = new MaskHolder(idCounter++, mask);
-
             return super.add(holder);
         }
 
-        public boolean addMasks(final Collection<CustomRollUpMask> masks) {
+        public boolean addMasks(final Collection<Set<StatisticField>> masks) {
             final List<MaskHolder> list = new ArrayList<>();
-
-            for (final CustomRollUpMask mask : masks) {
+            for (final Set<StatisticField> mask : masks) {
                 final MaskHolder holder = new MaskHolder(idCounter++, mask);
                 list.add(holder);
             }
             return super.addAll(list);
         }
 
-        public List<CustomRollUpMask> getMasks() {
-            final List<CustomRollUpMask> list = new ArrayList<>();
+        public List<Set<StatisticField>> getMasks() {
+            final List<Set<StatisticField>> list = new ArrayList<>();
             for (final MaskHolder holder : this) {
                 list.add(holder.getMask());
             }

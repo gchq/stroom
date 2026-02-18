@@ -18,9 +18,9 @@ package stroom.data.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
@@ -47,7 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPresenter.EditExpressionView>
-        implements HasDirtyHandlers, Focus {
+        implements HasChangeHandlers, Focus {
 
     private final ExpressionTreePresenter expressionPresenter;
 
@@ -68,8 +68,8 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
         expressionPresenter.setUiHandlers(new ExpressionUiHandlers() {
             @Override
-            public void fireDirty() {
-                setDirty(true);
+            public void onChange() {
+                EditExpressionPresenter.this.onChange();
             }
 
             @Override
@@ -241,15 +241,13 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
                 .fire(this);
     }
 
-    public void setDirty(final boolean dirty) {
-        if (dirty) {
-            DirtyEvent.fire(this, dirty);
-        }
+    private void onChange() {
+        ChangeEvent.fire(this);
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
 

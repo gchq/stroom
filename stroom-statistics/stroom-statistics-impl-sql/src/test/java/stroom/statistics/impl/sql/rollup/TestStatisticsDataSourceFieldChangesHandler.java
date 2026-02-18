@@ -60,13 +60,13 @@ class TestStatisticsDataSourceFieldChangesHandler extends StroomUnitTest {
 
         final List<StatisticField> newFields = new ArrayList<>(Arrays.asList(fieldA, fieldB, fieldD));
 
-        final StatisticsDataSourceData newData = new StatisticsDataSourceData(newFields);
+        final StatisticsDataSourceData newData = StatisticsDataSourceData.builder().fields(newFields).build();
 
         final StatisticsDataSourceFieldChangeRequest request = new StatisticsDataSourceFieldChangeRequest(oldData,
                 newData);
 
         final StatisticRollupResource resource =
-                new StatisticRollupResourceImpl(() -> new StatisticRollupServiceImpl());
+                new StatisticRollupResourceImpl(StatisticRollupServiceImpl::new);
 
         final StatisticsDataSourceData result = resource.fieldChange(request);
 

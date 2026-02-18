@@ -264,7 +264,7 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     }
 
     @Override
-    public void updateLabel() {
+    public void onDirty() {
         // Only fire tab refresh if the tab has changed.
         if (lastLabel == null || !lastLabel.equals(getLabel())) {
             lastLabel = getLabel();

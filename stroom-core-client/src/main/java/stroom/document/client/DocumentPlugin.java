@@ -32,7 +32,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.entity.client.presenter.AbstractDocPresenter;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.LinkTabPanelPresenter;
 import stroom.explorer.shared.ExplorerNode;
@@ -145,8 +145,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
                 if (selectedLinkTab != null) {
                     GWT.log("existing - " + existing.getClass().getName());
-                    if (existing instanceof DocumentEditTabPresenter<?, ?>) {
-                        ((DocumentEditTabPresenter<?, ?>) existing).selectCommonTab(selectedLinkTab);
+                    if (existing instanceof DocTabPresenter<?, ?>) {
+                        ((DocTabPresenter<?, ?>) existing).selectCommonTab(selectedLinkTab);
                     } else if (existing instanceof LinkTabPanelPresenter) {
                         ((LinkTabPanelPresenter) existing).selectCommonTab(selectedLinkTab);
                     }
@@ -225,8 +225,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                 AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, null);
             } else {
                 if (selectedTab != null) {
-                    if (myPresenterWidget instanceof DocumentEditTabPresenter<?, ?>) {
-                        ((DocumentEditTabPresenter<?, ?>) myPresenterWidget).selectCommonTab(selectedTab);
+                    if (myPresenterWidget instanceof DocTabPresenter<?, ?>) {
+                        ((DocTabPresenter<?, ?>) myPresenterWidget).selectCommonTab(selectedTab);
                     } else if (myPresenterWidget instanceof LinkTabPanelPresenter) {
                         ((LinkTabPanelPresenter) myPresenterWidget).selectCommonTab(selectedTab);
                     }

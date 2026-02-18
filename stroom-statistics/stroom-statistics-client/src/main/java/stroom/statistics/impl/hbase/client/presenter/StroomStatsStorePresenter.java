@@ -17,13 +17,14 @@
 package stroom.statistics.impl.hbase.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
+import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -32,7 +33,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabPanelView, StroomStatsStoreDoc> {
+public class StroomStatsStorePresenter extends DocTabPresenter<LinkTabPanelView, StroomStatsStoreDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData FIELDS = new TabDataImpl("Fields");
@@ -55,9 +56,9 @@ public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabP
         // changes in one affect the other
         stroomStatsStoreFieldListPresenter.setCustomMaskListPresenter(stroomStatsStoreCustomMaskListPresenter);
 
-        addTab(SETTINGS, new DocumentEditTabProvider<>(stroomStatsStoreSettingsPresenterProvider::get));
-        addTab(FIELDS, new DocumentEditTabProvider<>(() -> stroomStatsStoreFieldListPresenter));
-        addTab(CUSTOM_ROLLUPS, new DocumentEditTabProvider<>(() -> stroomStatsStoreCustomMaskListPresenter));
+        addTab(SETTINGS, new DocTabProvider<>(stroomStatsStoreSettingsPresenterProvider::get));
+        addTab(FIELDS, new DocTabProvider<>(() -> stroomStatsStoreFieldListPresenter));
+        addTab(CUSTOM_ROLLUPS, new DocTabProvider<>(() -> stroomStatsStoreCustomMaskListPresenter));
         addTab(DOCUMENTATION, new MarkdownTabProvider<StroomStatsStoreDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -71,12 +72,21 @@ public class StroomStatsStorePresenter extends DocumentEditTabPresenter<LinkTabP
             @Override
             public StroomStatsStoreDoc onWrite(final MarkdownEditPresenter presenter,
                                                final StroomStatsStoreDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         selectTab(SETTINGS);
+    }
+
+
+    @Override
+    public void onRead(final DocRef docRef, final StroomStatsStoreDoc doc, final boolean readOnly) {
+        if (doc.getConfig() == null) {
+            super.onRead(docRef, doc.copy().config(StroomStatsStoreEntityData.builder().build()).build(), readOnly);
+        } else {
+            super.onRead(docRef, doc, readOnly);
+        }
     }
 
     @Override

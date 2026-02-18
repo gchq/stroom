@@ -25,14 +25,14 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.statistics.impl.hbase.shared.CustomRollUpMask;
 import stroom.statistics.impl.hbase.shared.StatisticField;
 import stroom.statistics.impl.hbase.shared.StatsStoreRollupResource;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
-import stroom.statistics.impl.hbase.shared.StroomStatsStoreFieldChangeRequest;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -48,25 +48,26 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class StroomStatsStoreCustomMaskListPresenter
-        extends DocumentEditPresenter<PagerView, StroomStatsStoreDoc> {
+        extends DocPresenter<PagerView, StroomStatsStoreDoc> {
 
     private static final StatsStoreRollupResource STATS_STORE_ROLLUP_RESOURCE =
             GWT.create(StatsStoreRollupResource.class);
 
-    private final MyDataGrid<StroomStatsStoreCustomMaskListPresenter.MaskHolder> dataGrid;
-    private final MultiSelectionModelImpl<StroomStatsStoreCustomMaskListPresenter.MaskHolder> selectionModel;
+    private final MyDataGrid<MaskHolder> dataGrid;
+    private final MultiSelectionModelImpl<MaskHolder> selectionModel;
 
     private final ButtonView newButton;
     private final ButtonView removeButton;
     private final ButtonView autoGenerateButton;
     private final List<Column<MaskHolder, ?>> columns = new ArrayList<>();
     private final RestFactory restFactory;
-    private MaskHolder selectedElement;
-    private StroomStatsStoreDoc stroomStatsStoreEntity;
-    private final MaskHolderList maskList;
+    private final List<StatisticField> fields = new ArrayList<>();
+    private final MaskHolderList maskList = new MaskHolderList();
 
     @Inject
     public StroomStatsStoreCustomMaskListPresenter(final EventBus eventBus,
@@ -78,14 +79,11 @@ public class StroomStatsStoreCustomMaskListPresenter
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
-        this.restFactory = restFactory;
-
         newButton = view.addButton(SvgPresets.NEW_ITEM);
         autoGenerateButton = view.addButton(SvgPresets.GENERATE);
         removeButton = view.addButton(SvgPresets.REMOVE);
 
-        maskList = new MaskHolderList();
-
+        this.restFactory = restFactory;
         refreshModel();
         enableButtons();
     }
@@ -119,13 +117,8 @@ public class StroomStatsStoreCustomMaskListPresenter
         newButton.setEnabled(!isReadOnly());
         autoGenerateButton.setEnabled(!isReadOnly());
 
-        if (maskList != null && maskList.size() > 0) {
-            selectedElement = selectionModel.getSelected();
-            removeButton.setEnabled(!isReadOnly() && selectedElement != null);
-
-        } else {
-            removeButton.setEnabled(false);
-        }
+        final MaskHolder selectedElement = selectionModel.getSelected();
+        removeButton.setEnabled(!isReadOnly() && selectedElement != null);
 
         if (isReadOnly()) {
             newButton.setTitle("New roll-up permutation disabled as read only");
@@ -139,15 +132,11 @@ public class StroomStatsStoreCustomMaskListPresenter
     }
 
     private void addColumns() {
-        int fieldPos = 0;
-        for (final StatisticField statisticField : stroomStatsStoreEntity.getStatisticFields()) {
-            addStatFieldColumn(fieldPos++, statisticField.getFieldName());
+        for (final StatisticField statisticField : fields) {
+            addStatFieldColumn(statisticField);
         }
-
         final EndColumn<MaskHolder> endColumn = new EndColumn<>();
-
         dataGrid.addEndColumn(endColumn);
-
         columns.add(endColumn);
     }
 
@@ -157,27 +146,30 @@ public class StroomStatsStoreCustomMaskListPresenter
         }
     }
 
-    private void addStatFieldColumn(final int fieldPositionNumber, final String fieldname) {
+    private void addStatFieldColumn(final StatisticField statisticField) {
         // Enabled.
         final Column<MaskHolder, TickBoxState> rolledUpColumn = new Column<MaskHolder, TickBoxState>(
                 TickBoxCell.create(false, true)) {
             @Override
             public TickBoxState getValue(final MaskHolder row) {
-                return TickBoxState.fromBoolean(row.getMask().isTagRolledUp(fieldPositionNumber));
+                return TickBoxState.fromBoolean(row.getMask().contains(statisticField));
             }
         };
         rolledUpColumn.setFieldUpdater((index, row, value) -> {
-            row.getMask().setRollUpState(fieldPositionNumber, value.toBoolean());
-
+            if (value.toBoolean()) {
+                row.getMask().add(statisticField);
+            } else {
+                row.getMask().remove(statisticField);
+            }
             DirtyEvent.fire(StroomStatsStoreCustomMaskListPresenter.this, true);
         });
 
-        dataGrid.addResizableColumn(rolledUpColumn, fieldname, 100);
+        dataGrid.addResizableColumn(rolledUpColumn, statisticField.getFieldName(), 100);
         columns.add(rolledUpColumn);
     }
 
     private void onAdd(final ClickEvent event) {
-        this.maskList.addMask(new CustomRollUpMask());
+        this.maskList.addMask(new HashSet<>());
 
         // dataProvider.refresh();
         refreshModel();
@@ -189,20 +181,18 @@ public class StroomStatsStoreCustomMaskListPresenter
 
         ConfirmEvent.fire(this,
                 "Are you sure you want to clear the existing roll-ups and generate all possible " +
-                        "permutations for the field list?",
+                "permutations for the field list?",
                 result -> {
                     if (result) {
+                        final List<StatisticField> fields = new ArrayList<>(this.fields);
                         restFactory
                                 .create(STATS_STORE_ROLLUP_RESOURCE)
-                                .method(res ->
-                                        res.bitMaskPermGeneration(stroomStatsStoreEntity.getStatisticFieldCount()))
-//                        restFactory
-//                                .forResultPage(CustomRollUpMask.class)
+                                .method(res -> res.bitMaskPermGeneration(fields.size()))
                                 .onSuccess(res -> {
-                                    updateState(new HashSet<>(res.getValues()));
+                                    updateState(convertRollups(fields, res.getValues()));
                                     DirtyEvent.fire(thisInstance, true);
                                 })
-                                .taskMonitorFactory(this)
+                                .taskMonitorFactory(getView())
                                 .exec();
                     }
                 });
@@ -221,49 +211,74 @@ public class StroomStatsStoreCustomMaskListPresenter
         }
     }
 
-    private void refreshFromEntity(final StroomStatsStoreDoc stroomStatsStoreEntity) {
-        maskList.clear();
-        maskList.addMasks(stroomStatsStoreEntity.getCustomRollUpMasks());
-
-        addNoRollUpPerm();
-
-        refreshModel();
-    }
-
     private void addNoRollUpPerm() {
         // add a line with no rollups as a starting point
-        if (stroomStatsStoreEntity.getCustomRollUpMasks().size() == 0
-                && stroomStatsStoreEntity.getStatisticFieldCount() > 0) {
-            maskList.addMask(new CustomRollUpMask(Collections.emptyList()));
+        if (maskList.size() == 0) {
+            maskList.addMask(new HashSet<>());
         }
     }
 
-    private void refreshModel() {
+    public void refreshModel() {
         dataGrid.setRowData(0, maskList);
         dataGrid.setRowCount(maskList.size(), true);
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final StroomStatsStoreDoc document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef,
+                          final StroomStatsStoreDoc document,
+                          final boolean readOnly) {
+        fields.clear();
         enableButtons();
 
-        // initialise the columns and hold the statDataSource on first time
-        // or if we are passed a different object
-        if (this.stroomStatsStoreEntity == null || this.stroomStatsStoreEntity != document) {
-            this.stroomStatsStoreEntity = document;
-
-            removeAllColumns();
-            addColumns();
+        List<Set<StatisticField>> customRollUpMasks = Collections.emptyList();
+        if (document != null) {
+            final StroomStatsStoreEntityData config = document.getConfig();
+            if (config != null) {
+                final List<StatisticField> fields = NullSafe.list(config.getFields());
+                this.fields.addAll(fields);
+                customRollUpMasks = convertRollups(fields, NullSafe.collection(config.getCustomRollUpMasks()));
+            }
         }
 
-        refreshFromEntity(document);
+        updateState(customRollUpMasks);
+    }
+
+    private List<Set<StatisticField>> convertRollups(final List<StatisticField> fields,
+                                                     final Collection<CustomRollUpMask> customRollUpMasks) {
+        return customRollUpMasks
+                .stream()
+                .map(customRollUpMask -> {
+                    final Set<StatisticField> rollup = new HashSet<>();
+                    for (int i = 0; i < fields.size(); i++) {
+                        if (customRollUpMask.isTagRolledUp(i)) {
+                            if (fields.size() > i) {
+                                final StatisticField statisticField = fields.get(i);
+                                if (statisticField != null) {
+                                    rollup.add(statisticField);
+                                }
+                            }
+                        }
+                    }
+                    return rollup;
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
     protected StroomStatsStoreDoc onWrite(final StroomStatsStoreDoc document) {
-        document.getConfig().setCustomRollUpMasks(
-                new HashSet<>(maskList.getMasks()));
-        return document;
+        final Set<CustomRollUpMask> masks = maskList.getMasks().stream().map(mask ->
+                        new CustomRollUpMask(mask
+                                .stream()
+                                .map(fields::indexOf)
+                                .collect(Collectors.toList())))
+                .collect(Collectors.toSet());
+        final StroomStatsStoreEntityData config = NullSafe.getOrElse(
+                        document,
+                        StroomStatsStoreDoc::getConfig,
+                        StroomStatsStoreEntityData::copy,
+                        StroomStatsStoreEntityData.builder())
+                .customRollUpMasks(masks).build();
+        return document.copy().config(config).build();
     }
 
     /**
@@ -272,7 +287,7 @@ public class StroomStatsStoreCustomMaskListPresenter
      *
      * @param customRollUpMasks The rollup masks as updated by another tab
      */
-    public void updateState(final Set<CustomRollUpMask> customRollUpMasks) {
+    private void updateState(final Collection<Set<StatisticField>> customRollUpMasks) {
         maskList.clear();
         maskList.addMasks(customRollUpMasks);
 
@@ -280,24 +295,14 @@ public class StroomStatsStoreCustomMaskListPresenter
 
         removeAllColumns();
         addColumns();
-
         refreshModel();
     }
 
-    public void reComputeRollUpBitMask(final StroomStatsStoreEntityData oldEntityData,
-                                       final StroomStatsStoreEntityData newEntityData) {
-        // grab the mask list from this presenter
-        oldEntityData.setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
-        restFactory
-                .create(STATS_STORE_ROLLUP_RESOURCE)
-                .method(res -> res.fieldChange(new StroomStatsStoreFieldChangeRequest(oldEntityData, newEntityData)))
-                .onSuccess(result -> {
-                    newEntityData.setCustomRollUpMasks(result.getCustomRollUpMasks());
-
-                    updateState(result.getCustomRollUpMasks());
-                })
-                .taskMonitorFactory(this)
-                .exec();
+    public void refresh(final List<StatisticField> fields,
+                        final Set<Set<StatisticField>> customRollUpMasks) {
+        this.fields.clear();
+        this.fields.addAll(fields);
+        updateState(customRollUpMasks);
     }
 
     /**
@@ -307,42 +312,29 @@ public class StroomStatsStoreCustomMaskListPresenter
     public static class MaskHolder {
 
         private final int id;
-        private final CustomRollUpMask mask;
+        private final Set<StatisticField> mask;
 
-        public MaskHolder(final int id, final CustomRollUpMask mask) {
+        public MaskHolder(final int id, final Set<StatisticField> mask) {
             this.id = id;
             this.mask = mask;
         }
 
-        public int getId() {
-            return id;
-        }
-
-        public CustomRollUpMask getMask() {
+        public Set<StatisticField> getMask() {
             return mask;
         }
 
         @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + id;
-            return result;
+        public boolean equals(final Object o) {
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final MaskHolder that = (MaskHolder) o;
+            return id == that.id;
         }
 
         @Override
-        public boolean equals(final Object obj) {
-            if (this == obj) {
-                return true;
-            }
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
-                return false;
-            }
-            final MaskHolder other = (MaskHolder) obj;
-            return id == other.id;
+        public int hashCode() {
+            return Objects.hashCode(id);
         }
     }
 
@@ -352,28 +344,24 @@ public class StroomStatsStoreCustomMaskListPresenter
      */
     public static class MaskHolderList extends ArrayList<MaskHolder> {
 
-        private static final long serialVersionUID = 4981870664808232963L;
-
         private int idCounter = 0;
 
-        public boolean addMask(final CustomRollUpMask mask) {
+        public boolean addMask(final Set<StatisticField> mask) {
             final MaskHolder holder = new MaskHolder(idCounter++, mask);
-
             return super.add(holder);
         }
 
-        public boolean addMasks(final Collection<CustomRollUpMask> masks) {
+        public boolean addMasks(final Collection<Set<StatisticField>> masks) {
             final List<MaskHolder> list = new ArrayList<>();
-
-            for (final CustomRollUpMask mask : masks) {
+            for (final Set<StatisticField> mask : masks) {
                 final MaskHolder holder = new MaskHolder(idCounter++, mask);
                 list.add(holder);
             }
             return super.addAll(list);
         }
 
-        public List<CustomRollUpMask> getMasks() {
-            final List<CustomRollUpMask> list = new ArrayList<>();
+        public List<Set<StatisticField>> getMasks() {
+            final List<Set<StatisticField>> list = new ArrayList<>();
             for (final MaskHolder holder : this) {
                 list.add(holder.getMask());
             }

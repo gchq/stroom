@@ -17,8 +17,7 @@
 package stroom.statistics.impl.hbase.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.statistics.impl.hbase.client.presenter.StroomStatsStoreSettingsPresenter.StroomStatsStoreSettingsView;
 import stroom.statistics.impl.hbase.shared.EventStoreTimeIntervalEnum;
@@ -33,7 +32,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 public class StroomStatsStoreSettingsPresenter
-        extends DocumentEditPresenter<StroomStatsStoreSettingsView, StroomStatsStoreDoc>
+        extends DocPresenter<StroomStatsStoreSettingsView, StroomStatsStoreDoc>
         implements
         StroomStatsStoreSettingsUiHandlers {
 
@@ -47,30 +46,23 @@ public class StroomStatsStoreSettingsPresenter
     }
 
     @Override
-    public void onChange() {
-        DirtyEvent.fire(StroomStatsStoreSettingsPresenter.this, true);
-    }
-
-    @Override
     protected void onRead(final DocRef docRef, final StroomStatsStoreDoc document, final boolean readOnly) {
         getView().onReadOnly(readOnly);
-        if (document != null) {
-            getView().setStatisticType(document.getStatisticType());
-            getView().getEnabled().setValue(document.isEnabled());
-            getView().setPrecision(document.getPrecision());
-            getView().setRollUpType(document.getRollUpType());
-        }
+        getView().setStatisticType(document.getStatisticType());
+        getView().getEnabled().setValue(document.isEnabled());
+        getView().setPrecision(document.getPrecision());
+        getView().setRollUpType(document.getRollUpType());
     }
 
     @Override
     protected StroomStatsStoreDoc onWrite(final StroomStatsStoreDoc document) {
-        if (document != null) {
-            document.setStatisticType(getView().getStatisticType());
-            document.setEnabled(getView().getEnabled().getValue());
-            document.setPrecision(getView().getPrecision());
-            document.setRollUpType(getView().getRollUpType());
-        }
-        return document;
+        return document
+                .copy()
+                .statisticType(getView().getStatisticType())
+                .enabled(getView().getEnabled().getValue())
+                .precision(getView().getPrecision())
+                .rollUpType(getView().getRollUpType())
+                .build();
     }
 
     public interface StroomStatsStoreSettingsView

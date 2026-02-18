@@ -468,7 +468,7 @@ public class EmbeddedQueryPresenter
             currentTablePresenter.setQueryModel(queryModel);
             currentTablePresenter.setTaskMonitorFactory(this);
             currentTablePresenter.updateQueryTablePreferences();
-            tableHandlerRegistrations.add(currentTablePresenter.addDirtyHandler(e -> onChange()));
+            tableHandlerRegistrations.add(currentTablePresenter.addChangeHandler(this::onChange));
             tableHandlerRegistrations.add(currentTablePresenter.getSelectionModel()
                     .addSelectionHandler(event ->
                             getDashboardContext().fireComponentChangeEvent(this)));

@@ -17,8 +17,8 @@
 package stroom.state.client.presenter;
 
 import stroom.docref.DocRef;
+import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -32,7 +32,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-public class StateStorePresenter extends DocumentEditTabPresenter<LinkTabPanelView, StateDoc> {
+public class StateStorePresenter extends DocTabPresenter<LinkTabPanelView, StateDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");

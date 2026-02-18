@@ -47,7 +47,7 @@ import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.data.client.presenter.ShowDataEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
@@ -100,7 +100,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public class AnnotationEditPresenter
-        extends DocumentEditPresenter<AnnotationEditView, Annotation>
+        extends DocPresenter<AnnotationEditView, Annotation>
         implements AnnotationEditUiHandlers {
 
     private static final String EMPTY_VALUE = "'  '";

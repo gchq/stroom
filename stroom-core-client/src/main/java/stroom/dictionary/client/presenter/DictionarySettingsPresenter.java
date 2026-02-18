@@ -20,7 +20,6 @@ import stroom.dictionary.client.presenter.DictionarySettingsPresenter.Dictionary
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
-import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.util.shared.NullSafe;
 
 import com.google.inject.Inject;

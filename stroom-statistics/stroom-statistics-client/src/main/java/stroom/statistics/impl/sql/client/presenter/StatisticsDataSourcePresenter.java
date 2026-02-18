@@ -17,8 +17,8 @@
 package stroom.statistics.impl.sql.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -33,7 +33,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<LinkTabPanelView, StatisticStoreDoc> {
+public class StatisticsDataSourcePresenter extends DocTabPresenter<LinkTabPanelView, StatisticStoreDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData FIELDS = new TabDataImpl("Fields");
@@ -56,9 +56,9 @@ public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<Link
         // changes in one affect the other
         statisticsFieldListPresenter.setCustomMaskListPresenter(statisticsCustomMaskListPresenter);
 
-        addTab(SETTINGS, new DocumentEditTabProvider<>(statisticsDataSourceSettingsPresenterProvider::get));
-        addTab(FIELDS, new DocumentEditTabProvider<>(() -> statisticsFieldListPresenter));
-        addTab(CUSTOM_ROLLUPS, new DocumentEditTabProvider<>(() -> statisticsCustomMaskListPresenter));
+        addTab(SETTINGS, new DocTabProvider<>(statisticsDataSourceSettingsPresenterProvider::get));
+        addTab(FIELDS, new DocTabProvider<>(() -> statisticsFieldListPresenter));
+        addTab(CUSTOM_ROLLUPS, new DocTabProvider<>(() -> statisticsCustomMaskListPresenter));
         addTab(DOCUMENTATION, new MarkdownTabProvider<StatisticStoreDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -72,8 +72,7 @@ public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<Link
             @Override
             public StatisticStoreDoc onWrite(final MarkdownEditPresenter presenter,
                                              final StatisticStoreDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
@@ -84,9 +83,10 @@ public class StatisticsDataSourcePresenter extends DocumentEditTabPresenter<Link
     @Override
     public void onRead(final DocRef docRef, final StatisticStoreDoc doc, final boolean readOnly) {
         if (doc.getConfig() == null) {
-            doc.setConfig(new StatisticsDataSourceData());
+            super.onRead(docRef, doc.copy().config(StatisticsDataSourceData.builder().build()).build(), readOnly);
+        } else {
+            super.onRead(docRef, doc, readOnly);
         }
-        super.onRead(docRef, doc, readOnly);
     }
 
     @Override

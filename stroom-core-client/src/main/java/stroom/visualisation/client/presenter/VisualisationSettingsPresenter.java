@@ -19,7 +19,7 @@ package stroom.visualisation.client.presenter;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.shared.DocumentPermission;
@@ -34,7 +34,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
-public class VisualisationSettingsPresenter extends DocumentEditPresenter<VisualisationSettingsView, VisualisationDoc> {
+public class VisualisationSettingsPresenter extends DocPresenter<VisualisationSettingsView, VisualisationDoc> {
 
     private final DocSelectionBoxPresenter scriptPresenter;
     private final EditorPresenter editorPresenter;
@@ -63,13 +63,13 @@ public class VisualisationSettingsPresenter extends DocumentEditPresenter<Visual
         final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {
             @Override
             public void onDirty(final KeyDownEvent event) {
-                setDirty(true);
+                onChange();
             }
         };
         registerHandler(getView().getFunctionName().addKeyDownHandler(keyDownHander));
-        registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
-        registerHandler(scriptPresenter.addDataSelectionHandler(event -> setDirty(true)));
-        registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
+        registerHandler(editorPresenter.addValueChangeHandler(event -> onChange()));
+        registerHandler(scriptPresenter.addDataSelectionHandler(event -> onChange()));
+        registerHandler(editorPresenter.addFormatHandler(event -> onChange()));
     }
 
     @Override
@@ -85,10 +85,12 @@ public class VisualisationSettingsPresenter extends DocumentEditPresenter<Visual
 
     @Override
     protected VisualisationDoc onWrite(final VisualisationDoc visualisation) {
-        visualisation.setFunctionName(getView().getFunctionName().getText().trim());
-        visualisation.setScriptRef(scriptPresenter.getSelectedEntityReference());
-        visualisation.setSettings(editorPresenter.getText().trim());
-        return visualisation;
+        return visualisation
+                .copy()
+                .functionName(getView().getFunctionName().getText().trim())
+                .scriptRef(scriptPresenter.getSelectedEntityReference())
+                .settings(editorPresenter.getText().trim())
+                .build();
     }
 
 

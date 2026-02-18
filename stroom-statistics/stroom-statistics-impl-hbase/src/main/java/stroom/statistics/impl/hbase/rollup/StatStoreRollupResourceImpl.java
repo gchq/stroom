@@ -29,6 +29,7 @@ import stroom.util.shared.ResultPage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,85 +70,40 @@ class StatStoreRollupResourceImpl implements StatsStoreRollupResource {
     public StroomStatsStoreEntityData fieldChange(final StroomStatsStoreFieldChangeRequest request) {
         final StroomStatsStoreEntityData oldStatisticsDataSourceData = request.getOldEntityData();
         final StroomStatsStoreEntityData newStatisticsDataSourceData = request.getNewEntityData();
-        final StroomStatsStoreEntityData copy = newStatisticsDataSourceData.deepCopy();
+        final StroomStatsStoreEntityData.Builder builder = newStatisticsDataSourceData.copy();
 
         if (!oldStatisticsDataSourceData.getFields()
                 .equals(newStatisticsDataSourceData.getFields())) {
             final Map<Integer, Integer> newToOldFieldPositionMap = new HashMap<>();
 
+            final Map<String, Integer> oldFieldPositions = createFieldPositionMap(oldStatisticsDataSourceData);
+
             int pos = 0;
             for (final StatisticField newField : newStatisticsDataSourceData.getFields()) {
                 // old position may be null if this is a new field
-                newToOldFieldPositionMap.put(pos++,
-                        oldStatisticsDataSourceData.getFieldPositionInList(newField.getFieldName()));
+                newToOldFieldPositionMap.put(pos++, oldFieldPositions.get(newField.getFieldName()));
             }
 
-            copy.clearCustomRollUpMask();
-
+            final Set<CustomRollUpMask> customRollUpMasks = new HashSet<>();
             for (final CustomRollUpMask oldCustomRollUpMask : oldStatisticsDataSourceData.getCustomRollUpMasks()) {
                 final RollUpBitMask oldRollUpBitMask = RollUpBitMask
                         .fromTagPositions(oldCustomRollUpMask.getRolledUpTagPosition());
-
                 final RollUpBitMask newRollUpBitMask = oldRollUpBitMask.convert(newToOldFieldPositionMap);
+                customRollUpMasks.add(new CustomRollUpMask(newRollUpBitMask.getTagPositionsAsList()));
+            }
+            builder.customRollUpMasks(customRollUpMasks);
+        }
+        return builder.build();
+    }
 
-                copy.addCustomRollUpMask(new CustomRollUpMask(newRollUpBitMask.getTagPositionsAsList()));
+    public static Map<String, Integer> createFieldPositionMap(final StroomStatsStoreEntityData data) {
+        final Map<String, Integer> fieldPositionMap = new HashMap<>();
+        int i = 0;
+        if (data != null && data.getFields() != null) {
+            for (final StatisticField field : data.getFields()) {
+                fieldPositionMap.put(field.getFieldName(), i++);
             }
         }
-
-        return copy;
+        return fieldPositionMap;
     }
-    //    @Override
-//    public List<CustomRollUpMask> bitMaskPermGeneration(final int fieldCount) {
-//        final Set<List<Integer>> perms = RollUpBitMask.getRollUpPermutationsAsPositions(fieldCount);
-//        final List<CustomRollUpMask> masks = new ArrayList<>();
-//        for (final List<Integer> perm : perms) {
-//            masks.add(new CustomRollUpMask(perm));
-//        }
-//        return masks;
-//    }
-//
-//    @Override
-//    public List<CustomRollUpMaskFields> bitMaskConversion(final List<Short> maskValues) {
-//        final List<CustomRollUpMaskFields> customRollUpMaskFieldsList = new ArrayList<>();
-//
-//        int id = 0;
-//        for (final Short maskValue : maskValues) {
-//            final Set<Integer> tagPositions = RollUpBitMask.fromShort(maskValue).getTagPositions();
-//            customRollUpMaskFieldsList.add(new CustomRollUpMaskFields(id++, maskValue, tagPositions));
-//        }
-//        Collections.sort(customRollUpMaskFieldsList);
-//        return customRollUpMaskFieldsList;
-//    }
-//
-//    @Override
-//    public StatisticsDataSourceData fieldChange(final StatisticsDataSourceFieldChangeRequest request) {
-//        final StatisticsDataSourceData oldStatisticsDataSourceData = request.getOldStatisticsDataSourceData();
-//        final StatisticsDataSourceData newStatisticsDataSourceData = request.getNewStatisticsDataSourceData();
-//        final StatisticsDataSourceData copy = newStatisticsDataSourceData.deepCopy();
-//
-//        if (!oldStatisticsDataSourceData.getStatisticFields()
-//                .equals(newStatisticsDataSourceData.getStatisticFields())) {
-//            final Map<Integer, Integer> newToOldFieldPositionMap = new HashMap<>();
-//
-//            int pos = 0;
-//            for (final StatisticField newField : newStatisticsDataSourceData.getStatisticFields()) {
-//                // old position may be null if this is a new field
-//                newToOldFieldPositionMap.put(pos++,
-//                        oldStatisticsDataSourceData.getFieldPositionInList(newField.getFieldName()));
-//            }
-//
-//            copy.clearCustomRollUpMask();
-//
-//            for (final CustomRollUpMask oldCustomRollUpMask : oldStatisticsDataSourceData.getCustomRollUpMasks()) {
-//                final RollUpBitMask oldRollUpBitMask = RollUpBitMask
-//                        .fromTagPositions(oldCustomRollUpMask.getRolledUpTagPositions());
-//
-//                final RollUpBitMask newRollUpBitMask = oldRollUpBitMask.convert(newToOldFieldPositionMap);
-//
-//                copy.addCustomRollUpMask(new CustomRollUpMask(newRollUpBitMask.getTagPositionsAsList()));
-//            }
-//        }
-//
-//        return copy;
-//    }
 }

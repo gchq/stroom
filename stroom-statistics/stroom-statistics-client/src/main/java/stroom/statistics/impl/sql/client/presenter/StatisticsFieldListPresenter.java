@@ -16,16 +16,18 @@
 
 package stroom.statistics.impl.sql.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -36,9 +38,11 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-public class StatisticsFieldListPresenter extends DocumentEditPresenter<PagerView, StatisticStoreDoc> {
+public class StatisticsFieldListPresenter extends DocPresenter<PagerView, StatisticStoreDoc> {
 
     private final MyDataGrid<StatisticField> dataGrid;
     private final MultiSelectionModelImpl<StatisticField> selectionModel;
@@ -47,7 +51,8 @@ public class StatisticsFieldListPresenter extends DocumentEditPresenter<PagerVie
     private final ButtonView newButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
-    private StatisticsDataSourceData statisticsDataSourceData;
+    private final List<StatisticField> fields = new ArrayList<>();
+    private final Set<Set<StatisticField>> customRollUpMasks = new HashSet<>();
 
     private StatisticsCustomMaskListPresenter customMaskListPresenter;
 
@@ -103,15 +108,10 @@ public class StatisticsFieldListPresenter extends DocumentEditPresenter<PagerVie
 
     private void enableButtons() {
         newButton.setEnabled(!isReadOnly());
-        if (statisticsDataSourceData != null && statisticsDataSourceData.getFields() != null) {
-            final StatisticField selected = selectionModel.getSelected();
-            final boolean enabled = !isReadOnly() && selected != null;
-            editButton.setEnabled(enabled);
-            removeButton.setEnabled(enabled);
-        } else {
-            editButton.setEnabled(false);
-            removeButton.setEnabled(false);
-        }
+        final StatisticField selected = selectionModel.getSelected();
+        final boolean enabled = !isReadOnly() && selected != null;
+        editButton.setEnabled(enabled);
+        removeButton.setEnabled(enabled);
 
         if (isReadOnly()) {
             newButton.setTitle("New field disabled as fields are read only");
@@ -140,21 +140,21 @@ public class StatisticsFieldListPresenter extends DocumentEditPresenter<PagerVie
 
     private void onAdd() {
         if (!isReadOnly()) {
-            final StatisticField statisticField = new StatisticField();
-            final StatisticsDataSourceData oldStatisticsDataSourceData = statisticsDataSourceData.deepCopy();
-            final List<StatisticField> otherFields = statisticsDataSourceData.getFields();
+            final StatisticField statisticField = StatisticField.builder().build();
+            final List<StatisticField> otherFields = new ArrayList<>(this.fields);
 
             statisticsFieldEditPresenter.read(statisticField, otherFields);
             statisticsFieldEditPresenter.show("New Field", e -> {
                 if (e.isOk()) {
-                    if (statisticsFieldEditPresenter.write(statisticField)) {
-                        statisticsDataSourceData.addStatisticField(statisticField);
-                        reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
+                    try {
+                        final StatisticField updated = statisticsFieldEditPresenter.write(statisticField);
+                        fields.add(updated);
+                        fields.sort(StatisticField::compareTo);
                         refresh();
                         e.hide();
                         DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
-                    } else {
-                        e.reset();
+                    } catch (final RuntimeException ex) {
+                        AlertEvent.fireError(this, ex.getMessage(), e::reset);
                     }
                 } else {
                     e.hide();
@@ -167,26 +167,31 @@ public class StatisticsFieldListPresenter extends DocumentEditPresenter<PagerVie
         if (!isReadOnly()) {
             final StatisticField statisticField = selectionModel.getSelected();
             if (statisticField != null) {
-                final StatisticsDataSourceData oldStatisticsDataSourceData = statisticsDataSourceData.deepCopy();
-
                 // make a copy of the list of stat fields and remove the one we are
                 // editing so we can check the new value
                 // is not already in the list
-                final List<StatisticField> otherFields = new ArrayList<>(
-                        statisticsDataSourceData.getFields());
+                final List<StatisticField> otherFields = new ArrayList<>(this.fields);
                 otherFields.remove(statisticField);
 
                 statisticsFieldEditPresenter.read(statisticField, otherFields);
                 statisticsFieldEditPresenter.show("Edit Field", e -> {
                     if (e.isOk()) {
-                        if (statisticsFieldEditPresenter.write(statisticField)) {
-                            statisticsDataSourceData.reOrderStatisticFields();
-                            reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
+                        try {
+                            final StatisticField updated = statisticsFieldEditPresenter.write(statisticField);
+                            final int index = fields.indexOf(statisticField);
+                            fields.set(index, updated);
+                            fields.sort(StatisticField::compareTo);
+                            customRollUpMasks.forEach(mask -> {
+                                if (mask.contains(statisticField)) {
+                                    mask.remove(statisticField);
+                                    mask.add(updated);
+                                }
+                            });
                             refresh();
                             e.hide();
                             DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
-                        } else {
-                            e.reset();
+                        } catch (final RuntimeException ex) {
+                            AlertEvent.fireError(this, ex.getMessage(), e::reset);
                         }
                     } else {
                         e.hide();
@@ -199,52 +204,67 @@ public class StatisticsFieldListPresenter extends DocumentEditPresenter<PagerVie
     private void onRemove() {
         if (!isReadOnly()) {
             final List<StatisticField> list = selectionModel.getSelectedItems();
-            if (list != null && list.size() > 0) {
-                final StatisticsDataSourceData oldStatisticsDataSourceData = statisticsDataSourceData.deepCopy();
-
-                statisticsDataSourceData.getFields().removeAll(list);
+            if (!NullSafe.isEmptyCollection(list)) {
+                fields.removeAll(list);
                 selectionModel.clear();
-                reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
                 refresh();
                 DirtyEvent.fire(StatisticsFieldListPresenter.this, true);
             }
         }
     }
 
-    private void reComputeRollUpBitMask(final StatisticsDataSourceData oldStatisticsDataSourceData,
-                                        final StatisticsDataSourceData newStatisticsDataSourceData) {
-        if (customMaskListPresenter != null) {
-            customMaskListPresenter.reComputeRollUpBitMask(oldStatisticsDataSourceData, newStatisticsDataSourceData);
-        }
+    public void refresh() {
+        dataGrid.setRowData(0, fields);
+        dataGrid.setRowCount(fields.size(), true);
+        updateMasks();
     }
 
-    public void refresh() {
-        if (statisticsDataSourceData == null) {
-            statisticsDataSourceData = new StatisticsDataSourceData(new ArrayList<>());
+    private void updateMasks() {
+        if (customMaskListPresenter != null) {
+            customMaskListPresenter.refresh(fields, customRollUpMasks);
         }
-
-        dataGrid.setRowData(0, new ArrayList<>(statisticsDataSourceData.getFields()));
-        dataGrid.setRowCount(statisticsDataSourceData.getFields().size(), true);
     }
 
     @Override
     protected void onRead(final DocRef docRef, final StatisticStoreDoc document, final boolean readOnly) {
+        fields.clear();
+        customRollUpMasks.clear();
         enableButtons();
 
         if (document != null) {
-            statisticsDataSourceData = document.getConfig();
+            final StatisticsDataSourceData config = document.getConfig();
+            if (config != null) {
+                final List<StatisticField> fields = NullSafe.list(config.getFields());
+                this.fields.addAll(fields);
 
-            if (customMaskListPresenter != null) {
-                customMaskListPresenter.read(docRef, document, readOnly);
+                NullSafe.collection(config.getCustomRollUpMasks()).forEach(customRollUpMask -> {
+                    final Set<StatisticField> rollup = new HashSet<>();
+                    for (int i = 0; i < fields.size(); i++) {
+                        if (customRollUpMask.isTagRolledUp(i)) {
+                            final StatisticField statisticField = fields.get(i);
+                            rollup.add(statisticField);
+                        }
+                    }
+                    customRollUpMasks.add(rollup);
+                });
+
+                if (customMaskListPresenter != null) {
+                    customMaskListPresenter.read(docRef, document, readOnly);
+                }
             }
-            refresh();
         }
+        refresh();
     }
 
     @Override
     protected StatisticStoreDoc onWrite(final StatisticStoreDoc document) {
-        document.setConfig(statisticsDataSourceData);
-        return document;
+        final StatisticsDataSourceData config = NullSafe.getOrElse(
+                        document,
+                        StatisticStoreDoc::getConfig,
+                        StatisticsDataSourceData::copy,
+                        StatisticsDataSourceData.builder())
+                .fields(fields).build();
+        return document.copy().config(config).build();
     }
 
     public void setCustomMaskListPresenter(final StatisticsCustomMaskListPresenter customMaskListPresenter) {

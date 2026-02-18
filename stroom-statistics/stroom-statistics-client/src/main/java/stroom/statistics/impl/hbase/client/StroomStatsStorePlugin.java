@@ -26,7 +26,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.entity.client.presenter.AbstractDocPresenter;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.statistics.impl.hbase.client.presenter.StroomStatsStorePresenter;
 import stroom.statistics.impl.hbase.shared.CustomRollUpMask;
@@ -36,7 +36,9 @@ import stroom.statistics.impl.hbase.shared.StatisticRollUpType;
 import stroom.statistics.impl.hbase.shared.StatisticType;
 import stroom.statistics.impl.hbase.shared.StatsStoreResource;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
+import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -44,6 +46,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -80,7 +83,7 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
     }
 
     @Override
-    protected DocumentEditPresenter<?, ?> createEditor() {
+    protected DocPresenter<?, ?> createEditor() {
         return editorProvider.get();
     }
 
@@ -112,8 +115,26 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
         final StatisticType prevType = entityFromDb.getStatisticType();
         final StatisticRollUpType prevRollUpType = entityFromDb.getRollUpType();
         final EventStoreTimeIntervalEnum prevInterval = entityFromDb.getPrecision();
-        final List<StatisticField> prevFieldList = entityFromDb.getStatisticFields();
-        final Set<CustomRollUpMask> prevMaskSet = entityFromDb.getCustomRollUpMasks();
+        final List<StatisticField> prevFieldList = NullSafe.getOrElse(
+                entityFromDb,
+                StroomStatsStoreDoc::getConfig,
+                StroomStatsStoreEntityData::getFields,
+                Collections.emptyList());
+        final Set<CustomRollUpMask> prevMaskSet = NullSafe.getOrElse(
+                entityFromDb,
+                StroomStatsStoreDoc::getConfig,
+                StroomStatsStoreEntityData::getCustomRollUpMasks,
+                Collections.emptySet());
+        final List<StatisticField> newFieldList = NullSafe.getOrElse(
+                entity,
+                StroomStatsStoreDoc::getConfig,
+                StroomStatsStoreEntityData::getFields,
+                Collections.emptyList());
+        final Set<CustomRollUpMask> newMaskSet = NullSafe.getOrElse(
+                entity,
+                StroomStatsStoreDoc::getConfig,
+                StroomStatsStoreEntityData::getCustomRollUpMasks,
+                Collections.emptySet());
 
         presenter.write(entity);
 
@@ -123,8 +144,8 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
         if (!prevType.equals(entity.getStatisticType()) ||
             !prevRollUpType.equals(entity.getRollUpType()) ||
             !prevInterval.equals(entity.getPrecision()) ||
-            !prevFieldList.equals(entity.getStatisticFields()) ||
-            !prevMaskSet.equals(entity.getCustomRollUpMasks())) {
+            !prevFieldList.equals(newFieldList) ||
+            !prevMaskSet.equals(newMaskSet)) {
             ConfirmEvent.fireWarn(
                     this,
                     SafeHtmlUtils.fromTrustedString("Changes to the following attributes of a statistic data " +

@@ -65,12 +65,17 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
                 "StatName1",
                 null,
                 null);
-        final StroomStatsStoreDoc entity = stroomStatsStoreStore.readDocument(statNode.getDocRef());
-        entity.setDescription("My Description");
-        entity.setStatisticType(StatisticType.COUNT);
-        entity.setConfig(new StroomStatsStoreEntityData());
-        entity.getConfig().addStatisticField(new StatisticField("tag1"));
-        entity.getConfig().addStatisticField(new StatisticField("tag2"));
+        final StroomStatsStoreDoc entity = stroomStatsStoreStore.readDocument(statNode.getDocRef())
+                .copy()
+                .description("My Description")
+                .statisticType(StatisticType.COUNT)
+                .config(StroomStatsStoreEntityData
+                        .builder()
+                        .fields(List.of(
+                                new StatisticField("tag1"),
+                                new StatisticField("tag2")))
+                        .build())
+                .build();
         stroomStatsStoreStore.writeDocument(entity);
 
         assertThat(stroomStatsStoreStore.list().size()).isEqualTo(1);
@@ -104,7 +109,7 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
 
         assertThat(dataSources.size()).isEqualTo(1);
 
-        final StroomStatsStoreDoc importedDataSource = stroomStatsStoreStore.readDocument(dataSources.get(0));
+        final StroomStatsStoreDoc importedDataSource = stroomStatsStoreStore.readDocument(dataSources.getFirst());
 
         assertThat(importedDataSource.getName()).isEqualTo(entity.getName());
         assertThat(importedDataSource.getStatisticType()).isEqualTo(entity.getStatisticType());
@@ -124,12 +129,17 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
                 "StatName1",
                 null,
                 null);
-        final StroomStatsStoreDoc entity = stroomStatsStoreStore.readDocument(statNode.getDocRef());
-        entity.setDescription("My Description");
-        entity.setStatisticType(StatisticType.COUNT);
-        entity.setConfig(new StroomStatsStoreEntityData());
-        entity.getConfig().addStatisticField(new StatisticField("tag1"));
-        entity.getConfig().addStatisticField(new StatisticField("tag2"));
+        final StroomStatsStoreDoc entity = stroomStatsStoreStore.readDocument(statNode.getDocRef())
+                .copy()
+                .description("My Description")
+                .statisticType(StatisticType.COUNT)
+                .config(StroomStatsStoreEntityData
+                        .builder()
+                        .fields(List.of(
+                                new StatisticField("tag1"),
+                                new StatisticField("tag2")))
+                        .build())
+                .build();
         stroomStatsStoreStore.writeDocument(entity);
 
         assertThat(stroomStatsStoreStore.list().size()).isEqualTo(1);
@@ -163,7 +173,7 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
 
         assertThat(dataSources.size()).isEqualTo(1);
 
-        final StroomStatsStoreDoc importedDataSource = stroomStatsStoreStore.readDocument(dataSources.get(0));
+        final StroomStatsStoreDoc importedDataSource = stroomStatsStoreStore.readDocument(dataSources.getFirst());
 
         assertThat(importedDataSource.getName()).isEqualTo(entity.getName());
         assertThat(importedDataSource.getStatisticType()).isEqualTo(entity.getStatisticType());

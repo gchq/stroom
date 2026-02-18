@@ -176,8 +176,8 @@ public class QueryPresenter
 
         expressionPresenter.setUiHandlers(new ExpressionUiHandlers() {
             @Override
-            public void fireDirty() {
-                onChange();
+            public void onChange() {
+                QueryPresenter.this.onChange();
             }
 
             @Override

@@ -112,10 +112,8 @@ class VisualisationStoreImpl implements VisualisationStore {
     }
 
     private DependencyRemapFunction<VisualisationDoc> createMapper() {
-        return (doc, dependencyRemapper) -> {
-            doc.setScriptRef(dependencyRemapper.remap(doc.getScriptRef()));
-            return doc;
-        };
+        return (doc, dependencyRemapper) ->
+                doc.copy().scriptRef(dependencyRemapper.remap(doc.getScriptRef())).build();
     }
 
     // ---------------------------------------------------------------------

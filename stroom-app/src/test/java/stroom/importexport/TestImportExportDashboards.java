@@ -152,8 +152,10 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
                     "Test Vis",
                     folder2,
                     null);
-            final VisualisationDoc vis = visualisationStore.readDocument(visNode.getDocRef());
-            vis.setScriptRef(scriptNode.getDocRef());
+            final VisualisationDoc vis = visualisationStore.readDocument(visNode.getDocRef())
+                    .copy()
+                    .scriptRef(scriptNode.getDocRef())
+                    .build();
             visualisationStore.writeDocument(vis);
             assertThat(visualisationStore.list().size()).isEqualTo(1);
         }
