@@ -42,19 +42,19 @@ public abstract class AbstractDoc implements Document {
     @JsonProperty
     private final String type;
     @JsonProperty
-    private String uuid;
+    private final String uuid;
     @JsonProperty
-    private String name;
+    private final String name;
     @JsonProperty
-    private String version;
+    private final String version;
     @JsonProperty
-    private Long createTimeMs;
+    private final Long createTimeMs;
     @JsonProperty
-    private Long updateTimeMs;
+    private final Long updateTimeMs;
     @JsonProperty
-    private String createUser;
+    private final String createUser;
     @JsonProperty
-    private String updateUser;
+    private final String updateUser;
 
     @JsonCreator
     public AbstractDoc(@JsonProperty("type") final String type,
@@ -87,24 +87,12 @@ public abstract class AbstractDoc implements Document {
         return uuid;
     }
 
-    public void setUuid(final String uuid) {
-        this.uuid = uuid;
-    }
-
     public String getName() {
         return name;
     }
 
-    public void setName(final String name) {
-        this.name = name;
-    }
-
     public String getVersion() {
         return version;
-    }
-
-    public void setVersion(final String version) {
-        this.version = version;
     }
 
     @Override
@@ -113,18 +101,8 @@ public abstract class AbstractDoc implements Document {
     }
 
     @Override
-    public void setCreateTimeMs(final Long createTime) {
-        this.createTimeMs = createTime;
-    }
-
-    @Override
     public Long getUpdateTimeMs() {
         return updateTimeMs;
-    }
-
-    @Override
-    public void setUpdateTimeMs(final Long updateTime) {
-        this.updateTimeMs = updateTime;
     }
 
     @Override
@@ -133,37 +111,24 @@ public abstract class AbstractDoc implements Document {
     }
 
     @Override
-    public void setCreateUser(final String createUser) {
-        this.createUser = createUser;
-    }
-
-    @Override
     public String getUpdateUser() {
         return updateUser;
     }
 
     @Override
-    public void setUpdateUser(final String updateUser) {
-        this.updateUser = updateUser;
-    }
-
-    @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof AbstractDoc)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final AbstractDoc doc = (AbstractDoc) o;
-        return Objects.equals(type, type) &&
-               Objects.equals(uuid, doc.uuid) &&
-               Objects.equals(name, doc.name) &&
-               Objects.equals(version, doc.version) &&
-               Objects.equals(createTimeMs, doc.createTimeMs) &&
-               Objects.equals(updateTimeMs, doc.updateTimeMs) &&
-               Objects.equals(createUser, doc.createUser) &&
-               Objects.equals(updateUser, doc.updateUser);
+        final AbstractDoc that = (AbstractDoc) o;
+        return Objects.equals(type, that.type) &&
+               Objects.equals(uuid, that.uuid) &&
+               Objects.equals(name, that.name) &&
+               Objects.equals(version, that.version) &&
+               Objects.equals(createTimeMs, that.createTimeMs) &&
+               Objects.equals(updateTimeMs, that.updateTimeMs) &&
+               Objects.equals(createUser, that.createUser) &&
+               Objects.equals(updateUser, that.updateUser);
     }
 
     @Override

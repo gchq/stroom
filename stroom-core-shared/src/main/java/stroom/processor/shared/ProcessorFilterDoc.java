@@ -28,11 +28,7 @@ public class ProcessorFilterDoc implements Document {
     public static final String TYPE = ProcessorFilter.ENTITY_TYPE;
 
     private final ProcessorFilter processorFilter;
-    private String name = null;
-
-    public ProcessorFilterDoc(final ProcessorFilter processorFilter) {
-        this.processorFilter = processorFilter;
-    }
+    private final String name;
 
     public ProcessorFilterDoc(final ProcessorFilter processorFilter,
                               final String name) {
@@ -47,10 +43,6 @@ public class ProcessorFilterDoc implements Document {
     @Override
     public String getName() {
         return name;
-    }
-
-    public void setName(final String name) {
-        this.name = name;
     }
 
     @Override
@@ -69,18 +61,8 @@ public class ProcessorFilterDoc implements Document {
     }
 
     @Override
-    public void setCreateTimeMs(final Long createTimeMs) {
-        processorFilter.setCreateTimeMs(createTimeMs);
-    }
-
-    @Override
     public String getCreateUser() {
         return processorFilter.getCreateUser();
-    }
-
-    @Override
-    public void setCreateUser(final String createUser) {
-        processorFilter.setCreateUser(createUser);
     }
 
     @Override
@@ -89,18 +71,8 @@ public class ProcessorFilterDoc implements Document {
     }
 
     @Override
-    public void setUpdateTimeMs(final Long updateTimeMs) {
-        processorFilter.setUpdateTimeMs(updateTimeMs);
-    }
-
-    @Override
     public String getUpdateUser() {
         return processorFilter.getUpdateUser();
-    }
-
-    @Override
-    public void setUpdateUser(final String updateUser) {
-        processorFilter.setUpdateUser(updateUser);
     }
 
     /**

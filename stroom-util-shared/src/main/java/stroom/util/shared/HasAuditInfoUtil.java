@@ -16,23 +16,15 @@
 
 package stroom.util.shared;
 
-public interface HasAuditInfoBuilder<T, B extends HasAuditInfoBuilder<T, ?>> extends Builder<T> {
+public class HasAuditInfoUtil {
 
-    B createTimeMs(Long createTimeMs);
-
-    B createUser(String createUser);
-
-    B updateTimeMs(Long updateTimeMs);
-
-    B updateUser(String updateUser);
-
-    default Builder<T> createAudit(final String user) {
-        final long now = System.currentTimeMillis();
-        return createTimeMs(now).updateTimeMs(now).createUser(user).updateUser(user);
+    private HasAuditInfoUtil() {
+        // Utility class
     }
 
-    default Builder<T> updateAudit(final String user) {
+    public static <T, B extends HasAuditInfoBuilder<T, ?>> Builder<T> set(final HasAuditInfoBuilder<T, B> builder,
+                                                                   final String user) {
         final long now = System.currentTimeMillis();
-        return updateTimeMs(now).updateUser(user);
+        return builder.createTimeMs(now).updateTimeMs(now).createUser(user).updateUser(user);
     }
 }

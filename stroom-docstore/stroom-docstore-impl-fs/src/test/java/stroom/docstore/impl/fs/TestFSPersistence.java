@@ -50,7 +50,7 @@ class TestFSPersistence {
             persistence.delete(docRef);
         }
 
-        final GenericDoc doc = new GenericDoc(
+        GenericDoc doc = new GenericDoc(
                 docRef.getUuid(),
                 docRef.getName(),
                 null,
@@ -76,13 +76,13 @@ class TestFSPersistence {
         // List
         List<DocRef> refs = persistence.list(docRef.getType());
         assertThat(refs.size()).isEqualTo(1);
-        assertThat(refs.get(0)).isEqualTo(docRef);
-        assertThat(refs.get(0).getType()).isEqualTo(docRef.getType());
-        assertThat(refs.get(0).getUuid()).isEqualTo(docRef.getUuid());
-        assertThat(refs.get(0).getName()).isEqualTo(docRef.getName());
+        assertThat(refs.getFirst()).isEqualTo(docRef);
+        assertThat(refs.getFirst().getType()).isEqualTo(docRef.getType());
+        assertThat(refs.getFirst().getUuid()).isEqualTo(docRef.getUuid());
+        assertThat(refs.getFirst().getName()).isEqualTo(docRef.getName());
 
         // Update
-        doc.setName("New Name");
+        doc = doc.copy().name("New Name").build();
         bytes = mapper.writeValueAsBytes(doc);
         data = new HashMap<>();
         data.put("meta", bytes);
@@ -95,10 +95,10 @@ class TestFSPersistence {
         // List
         refs = persistence.list(docRef.getType());
         assertThat(refs.size()).isEqualTo(1);
-        assertThat(refs.get(0)).isEqualTo(docRef);
-        assertThat(refs.get(0).getType()).isEqualTo(docRef.getType());
-        assertThat(refs.get(0).getUuid()).isEqualTo(docRef.getUuid());
-        assertThat(refs.get(0).getName()).isEqualTo("New Name");
+        assertThat(refs.getFirst()).isEqualTo(docRef);
+        assertThat(refs.getFirst().getType()).isEqualTo(docRef.getType());
+        assertThat(refs.getFirst().getUuid()).isEqualTo(docRef.getUuid());
+        assertThat(refs.getFirst().getName()).isEqualTo("New Name");
 
         // Delete
         persistence.delete(docRef);
@@ -114,6 +114,40 @@ class TestFSPersistence {
                           @JsonProperty("createUser") final String createUser,
                           @JsonProperty("updateUser") final String updateUser) {
             super("GenericDoc", uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        }
+
+        public Builder copy() {
+            return new Builder(this);
+        }
+
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        public static final class Builder extends AbstractDoc.AbstractBuilder<GenericDoc, GenericDoc.Builder> {
+
+            private Builder() {
+            }
+
+            private Builder(final GenericDoc genericDoc) {
+                super(genericDoc);
+            }
+
+            @Override
+            protected Builder self() {
+                return this;
+            }
+
+            public GenericDoc build() {
+                return new GenericDoc(
+                        uuid,
+                        name,
+                        version,
+                        createTimeMs,
+                        updateTimeMs,
+                        createUser,
+                        updateUser);
+            }
         }
     }
 }

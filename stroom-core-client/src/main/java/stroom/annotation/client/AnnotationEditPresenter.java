@@ -260,7 +260,7 @@ public class AnnotationEditPresenter
                     new ChangeTitle(selected));
             change(request);
 
-            getEntity().setName(selected);
+            read(getEntity().asDocRef(), getEntity().copy().name(selected).build(), isReadOnly());
             RefreshContentTabEvent.fire(this, parent);
         }
     }
