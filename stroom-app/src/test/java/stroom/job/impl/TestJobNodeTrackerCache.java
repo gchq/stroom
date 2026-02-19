@@ -90,7 +90,13 @@ class TestJobNodeTrackerCache extends StroomUnitTest {
             final String jobName = "MY_DISTRIBUTED_JOB";
             final String nodeName = "NODE_NAME";
             final String frequency = "10s";
-            final Job job = new Job(1, true, jobName, false);
+            final Job job = Job
+                    .builder()
+                    .id(1)
+                    .enabled(true)
+                    .description(jobName)
+                    .advanced(false)
+                    .build();
             final JobNode jobNode = JobNode
                     .builder()
                     .id(1)

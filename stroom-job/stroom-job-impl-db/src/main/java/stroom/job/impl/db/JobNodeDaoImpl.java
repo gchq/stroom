@@ -63,18 +63,17 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
             FindJobNodeCriteria.FIELD_ID_ENABLED, JOB_NODE.ENABLED,
             FindJobNodeCriteria.FIELD_ID_LAST_EXECUTED, JOB_NODE.UPDATE_TIME_MS);
 
-    private static final Function<Record, Job> RECORD_TO_JOB_MAPPER = record -> {
-        final Job job = new Job();
-        job.setId(record.get(JOB.ID));
-        job.setVersion(record.get(JOB.VERSION));
-        job.setCreateTimeMs(record.get(JOB.CREATE_TIME_MS));
-        job.setCreateUser(record.get(JOB.CREATE_USER));
-        job.setUpdateTimeMs(record.get(JOB.UPDATE_TIME_MS));
-        job.setUpdateUser(record.get(JOB.UPDATE_USER));
-        job.setName(record.get(JOB.NAME));
-        job.setEnabled(record.get(JOB.ENABLED));
-        return job;
-    };
+    private static final Function<Record, Job> RECORD_TO_JOB_MAPPER = record -> Job
+            .builder()
+            .id(record.get(JOB.ID))
+            .version(record.get(JOB.VERSION))
+            .createTimeMs(record.get(JOB.CREATE_TIME_MS))
+            .createUser(record.get(JOB.CREATE_USER))
+            .updateTimeMs(record.get(JOB.UPDATE_TIME_MS))
+            .updateUser(record.get(JOB.UPDATE_USER))
+            .name(record.get(JOB.NAME))
+            .enabled(record.get(JOB.ENABLED))
+            .build();
 
     private static final Function<Record, JobNode> RECORD_TO_JOB_NODE_MAPPER = record -> JobNode
             .builder()

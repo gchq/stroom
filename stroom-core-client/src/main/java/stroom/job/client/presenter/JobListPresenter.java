@@ -122,7 +122,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                 DataGridUtil.updatableTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(Job::isEnabled))
                         .withFieldUpdater(
                                 (rowIndex, job, tickBoxState) -> {
-                                    job.setEnabled(tickBoxState.toBoolean());
+//                                    job.setEnabled(tickBoxState.toBoolean());
                                     restFactory
                                             .create(JOB_RESOURCE)
                                             .call(res -> {

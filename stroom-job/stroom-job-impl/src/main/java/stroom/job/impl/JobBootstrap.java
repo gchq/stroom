@@ -24,7 +24,6 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
-import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -107,10 +106,10 @@ public class JobBootstrap {
                     }
                     validJobNames.add(scheduledJob.getName());
 
-                    final Job job = new Job();
-                    job.setName(scheduledJob.getName());
-                    setEnabledState(scheduledJob, job::setEnabled, jobSystemConfig);
-                    final Job persistedJob = getOrCreateJob(job, "scheduled");
+                    final Job.Builder jobBuilder = Job.builder();
+                    jobBuilder.name(scheduledJob.getName());
+                    setEnabledState(scheduledJob, jobBuilder::enabled, jobSystemConfig);
+                    final Job persistedJob = getOrCreateJob(jobBuilder.build(), "scheduled");
 
                     final JobNode.Builder newJobNodeBuilder = JobNode.builder()
                             .job(persistedJob)
@@ -170,10 +169,10 @@ public class JobBootstrap {
                 if (jobNode == null) {
                     final boolean enabled = jobSystemConfig.isEnableJobsOnBootstrap();
                     // Get or create the actual parent job record
-                    final Job job = new Job();
-                    job.setName(jobName);
-                    job.setEnabled(enabled);
-                    final Job persistedJob = getOrCreateJob(job, "distributed");
+                    final Job.Builder jobBuilder = Job.builder();
+                    jobBuilder.name(jobName);
+                    jobBuilder.enabled(enabled);
+                    final Job persistedJob = getOrCreateJob(jobBuilder.build(), "distributed");
 
                     // Now create the jobNode record for this node
                     final JobNode newJobNode = JobNode
@@ -228,8 +227,6 @@ public class JobBootstrap {
     }
 
     private Job getOrCreateJob(final Job job, final String type) {
-        Job result;
-
         // See if the job exists in the database.
         final FindJobCriteria criteria = new FindJobCriteria();
         // Should only match one job
@@ -238,22 +235,21 @@ public class JobBootstrap {
         // Add the job to the DB if it isn't there already.
         final ResultPage<Job> existingJobs = jobDao.find(criteria);
         if (NullSafe.hasItems(existingJobs)) {
-            result = existingJobs.getFirst();
+            final Job existing = existingJobs.getFirst();
 
             // Update the job description if we need to.
             final String jobDescription = job.getDescription();
-            if (jobDescription != null && !jobDescription.equals(result.getDescription())) {
-                result.setDescription(jobDescription);
-                LOGGER.info(() -> LogUtil.message("Updating {} Job     '{}'", type, job.getName()));
-                AuditUtil.stamp(securityContext, result);
-                result = jobDao.update(result);
+            if (jobDescription != null && !jobDescription.equals(job.getDescription())) {
+                LOGGER.info("Updating {} Job     '{}'", type, existing.getName());
+                final Job.Builder builder = existing.copy();
+                builder.description(jobDescription);
+                builder.stampAudit(securityContext);
+                return jobDao.update(builder.build());
             }
+            return existing;
         } else {
             LOGGER.info(() -> LogUtil.message("Adding   {} Job     '{}'", type, job.getName()));
-            AuditUtil.stamp(securityContext, job);
-            result = jobDao.create(job);
+            return jobDao.create(job.copy().stampAudit(securityContext).build());
         }
-
-        return result;
     }
 }

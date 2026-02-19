@@ -106,10 +106,11 @@ class JobNodeService {
                         final List<JobNode> list = jobNodeListResponse.getValues();
                         final List<JobNode> advancedList = new ArrayList<>();
                         final List<JobNode> nonAdvancedList = new ArrayList<>();
-                        for (final JobNode jobNode : list) {
-                            final Job job = jobNode.getJob();
+                        for (JobNode jobNode : list) {
+                            Job job = jobNode.getJob();
                             // Add the advanced state
-                            jobService.decorate(job);
+                            job = jobService.decorate(job);
+                            jobNode = jobNode.copy().job(job).build();
                             if (job.isAdvanced()) {
                                 advancedList.add(jobNode);
                             } else {

@@ -202,8 +202,7 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
                 Collections.emptyList(),
                 new StringCriteria(JobNames.DATA_PROCESSOR)));
         final Job job = jobs.getFirst();
-        job.setEnabled(true);
-        jobDao.update(job);
+        jobDao.update(job.copy().enabled(true).build());
 
         final JobNodeListResponse response = jobNodeDao.find(new FindJobNodeCriteria(
                 PageRequest.oneRow(),
