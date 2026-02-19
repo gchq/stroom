@@ -1028,6 +1028,30 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
         }
     }
 
+    @Override
+    public void deleteAssetsForDoc(final String ownerDocId) throws IOException {
+        Objects.requireNonNull(ownerDocId);
+        try {
+            JooqUtil.transaction(connProvider, txnContext -> {
+                txnContext.deleteFrom(Tables.VISUALISATION_ASSETS)
+                        .where(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(ownerDocId))
+                        .execute();
+                txnContext.deleteFrom(Tables.VISUALISATION_ASSETS_DRAFT)
+                        .where(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId))
+                        .execute();
+            });
+        } catch (final DataAccessException e) {
+            LOGGER.error("Error deleting assets for document '{}': {}",
+                    ownerDocId, e.getMessage(), e);
+            throw new IOException("Error deleing assets for document '" + ownerDocId
+                                  + "': " + e.getMessage(), e);
+        } catch (final Throwable t) {
+            LOGGER.error("Error deleting assets for document '{}': {}",
+                    ownerDocId, t.getMessage(), t);
+            throw t;
+        }
+    }
+
     /**
      * Performs a safe write to file, so if the system crashes half-way through writing
      * we don't have a corrupted version of the file.

@@ -383,4 +383,16 @@ public class VisualisationAssetService {
         }
     }
 
+    void deleteAssetsForDoc(final DocRef docRef)
+        throws IOException, PermissionException {
+        LOGGER.info("Deleting assets for document {}", docRef);
+
+        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.DELETE)) {
+            dao.deleteAssetsForDoc(docRef.getUuid());
+        } else {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to delete these assets");
+        }
+    }
+
 }

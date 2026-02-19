@@ -92,6 +92,11 @@ class VisualisationStoreImpl implements VisualisationStore {
     @Override
     public void deleteDocument(final DocRef docRef) {
         store.deleteDocument(docRef);
+        try {
+            visualisationAssetService.deleteAssetsForDoc(docRef);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

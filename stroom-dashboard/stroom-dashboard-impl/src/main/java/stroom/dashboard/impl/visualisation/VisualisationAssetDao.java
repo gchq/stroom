@@ -195,4 +195,13 @@ public interface VisualisationAssetDao {
      */
     void copyLiveAssets(String fromDocId, String toDocId) throws IOException;
 
+    /**
+     * Deletes all the assets associated with the given document ID.
+     * Also deletes all the assets in the draft table to avoid orphaned rows. This will cause
+     * strange errors if another user is editing these assets.
+     * @param ownerDocId The document that owns the assets.
+     * @throws IOException If something goes wrong.
+     */
+    void deleteAssetsForDoc(String ownerDocId) throws IOException;
+
 }
