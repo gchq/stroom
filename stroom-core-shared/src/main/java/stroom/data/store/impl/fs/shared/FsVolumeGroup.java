@@ -16,7 +16,9 @@
 
 package stroom.data.store.impl.fs.shared;
 
-import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.HasAuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -27,25 +29,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class FsVolumeGroup implements HasAuditInfo, HasIntegerId {
+public class FsVolumeGroup implements HasAuditInfoGetters, HasIntegerId {
 
     @JsonProperty
-    private Integer id;
+    private final Integer id;
     @JsonProperty
-    private Integer version;
+    private final Integer version;
     @JsonProperty
-    private Long createTimeMs;
+    private final Long createTimeMs;
     @JsonProperty
-    private String createUser;
+    private final String createUser;
     @JsonProperty
-    private Long updateTimeMs;
+    private final Long updateTimeMs;
     @JsonProperty
-    private String updateUser;
+    private final String updateUser;
     @JsonProperty
-    private String name;
-
-    public FsVolumeGroup() {
-    }
+    private final String name;
 
     @JsonCreator
     public FsVolumeGroup(@JsonProperty("id") final Integer id,
@@ -69,16 +68,8 @@ public class FsVolumeGroup implements HasAuditInfo, HasIntegerId {
         return id;
     }
 
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
     public Integer getVersion() {
         return version;
-    }
-
-    public void setVersion(final Integer version) {
-        this.version = version;
     }
 
     @Override
@@ -86,17 +77,9 @@ public class FsVolumeGroup implements HasAuditInfo, HasIntegerId {
         return createTimeMs;
     }
 
-    public void setCreateTimeMs(final Long createTimeMs) {
-        this.createTimeMs = createTimeMs;
-    }
-
     @Override
     public String getCreateUser() {
         return createUser;
-    }
-
-    public void setCreateUser(final String createUser) {
-        this.createUser = createUser;
     }
 
     @Override
@@ -104,38 +87,26 @@ public class FsVolumeGroup implements HasAuditInfo, HasIntegerId {
         return updateTimeMs;
     }
 
-    public void setUpdateTimeMs(final Long updateTimeMs) {
-        this.updateTimeMs = updateTimeMs;
-    }
-
     @Override
     public String getUpdateUser() {
         return updateUser;
-    }
-
-    public void setUpdateUser(final String updateUser) {
-        this.updateUser = updateUser;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(final String name) {
-        this.name = name;
-    }
-
     @Override
     public String toString() {
         return "IndexVolumeGroup{" +
-                "id=" + id +
-                ", version=" + version +
-                ", createTimeMs=" + createTimeMs +
-                ", createUser='" + createUser + '\'' +
-                ", updateTimeMs=" + updateTimeMs +
-                ", updateUser='" + updateUser + '\'' +
-                ", name='" + name + '\'' +
-                '}';
+               "id=" + id +
+               ", version=" + version +
+               ", createTimeMs=" + createTimeMs +
+               ", createUser='" + createUser + '\'' +
+               ", updateTimeMs=" + updateTimeMs +
+               ", updateUser='" + updateUser + '\'' +
+               ", name='" + name + '\'' +
+               '}';
     }
 
     @Override
@@ -153,5 +124,99 @@ public class FsVolumeGroup implements HasAuditInfo, HasIntegerId {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class Builder
+            extends AbstractBuilder<FsVolumeGroup, Builder>
+            implements HasAuditInfoBuilder<FsVolumeGroup, Builder> {
+
+        private Integer id;
+        private Integer version;
+        private Long createTimeMs;
+        private String createUser;
+        private Long updateTimeMs;
+        private String updateUser;
+        private String name;
+
+        private Builder() {
+        }
+
+        private Builder(final FsVolumeGroup fsVolumeGroup) {
+            this.id = fsVolumeGroup.id;
+            this.version = fsVolumeGroup.version;
+            this.createTimeMs = fsVolumeGroup.createTimeMs;
+            this.createUser = fsVolumeGroup.createUser;
+            this.updateTimeMs = fsVolumeGroup.updateTimeMs;
+            this.updateUser = fsVolumeGroup.updateUser;
+            this.name = fsVolumeGroup.name;
+        }
+
+        public Builder id(final Integer id) {
+            this.id = id;
+            return self();
+        }
+
+        public Builder version(final Integer version) {
+            this.version = version;
+            return self();
+        }
+
+        @Override
+        public Builder createTimeMs(final Long createTimeMs) {
+            this.createTimeMs = createTimeMs;
+            return self();
+        }
+
+        @Override
+        public Builder createUser(final String createUser) {
+            this.createUser = createUser;
+            return self();
+        }
+
+        @Override
+        public Builder updateTimeMs(final Long updateTimeMs) {
+            this.updateTimeMs = updateTimeMs;
+            return self();
+        }
+
+        @Override
+        public Builder updateUser(final String updateUser) {
+            this.updateUser = updateUser;
+            return self();
+        }
+
+        public Builder name(final String name) {
+            this.name = name;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public FsVolumeGroup build() {
+            return new FsVolumeGroup(
+                    id,
+                    version,
+                    createTimeMs,
+                    createUser,
+                    updateTimeMs,
+                    updateUser,
+                    name);
+        }
     }
 }
