@@ -1,6 +1,7 @@
 package stroom.test.common.docs;
 
 import stroom.test.common.ProjectPathUtil;
+import stroom.util.concurrent.LazyValue;
 import stroom.util.io.DiffUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -39,6 +40,11 @@ public class StroomDocsUtil {
 
     private static final String MARKER_START_HTML = "<!-- #~#~#~#~#~# GENERATED CONTENT START #~#~#~#~#~#~# -->";
     private static final String MARKER_END_HTML = "<!-- #~#~#~#~#~# GENERATED CONTENT END #~#~#~#~#~#~# -->";
+
+    private static final LazyValue<Path> STROOM_DOCS_REPO_DIR = LazyValue.initialisedBy(
+            StroomDocsUtil::getStroomDocsRepoDir);
+
+//    private static volatile ClassInfoList classInfoList = null;
 
     private StroomDocsUtil() {
     }
@@ -161,6 +167,31 @@ public class StroomDocsUtil {
      * is a regular file.
      */
     public static Path resolveStroomDocsFile(final Path subPath) {
+        return resolveStroomDocsFile(subPath, true);
+    }
+
+    /**
+     * @param subPath A path to a file in the stroom-docs repo that is relative to the
+     *                stroom-docs repo root.
+     * @return An absolute path to the file which (if checkExists is true) has been
+     * tested to see if it exists and is a regular file
+     */
+    public static Path resolveStroomDocsFile(final Path subPath, final boolean checkExists) {
+        final Path stroomDocsRepoDir = STROOM_DOCS_REPO_DIR.getValueWithLocks();
+        final Path file = stroomDocsRepoDir.resolve(subPath)
+                .toAbsolutePath()
+                .normalize();
+
+
+        if (checkExists && !Files.isRegularFile(file)) {
+            throw new RuntimeException(LogUtil.message("stroom-docs file '{}' does not exist",
+                    stroomDocsRepoDir.toAbsolutePath()
+                            .normalize()));
+        }
+        return file;
+    }
+
+    private static Path getStroomDocsRepoDir() {
         final String stroomDocsRepoDirStr = System.getProperty(STROOM_DOCS_REPO_DIR_PROP_KEY);
         final Path stroomDocsRepoDir;
 
@@ -179,14 +210,7 @@ public class StroomDocsUtil {
                     stroomDocsRepoDir.toAbsolutePath().normalize(),
                     STROOM_DOCS_REPO_DIR_PROP_KEY));
         }
-
-        final Path file = stroomDocsRepoDir.resolve(subPath).toAbsolutePath().normalize();
-
-        if (!Files.isRegularFile(file)) {
-            throw new RuntimeException(LogUtil.message("stroom-docs file '{}' does not exist",
-                    stroomDocsRepoDir.toAbsolutePath().normalize()));
-        }
-        return file;
+        return stroomDocsRepoDir;
     }
 
     public static void doWithClassScanResult(final Consumer<ScanResult> scanResultConsumer) {
@@ -199,6 +223,24 @@ public class StroomDocsUtil {
             NullSafe.consume(scanResult, scanResultConsumer);
         }
     }
+
+//    public static ClassInfoList getAllStroomClasses() {
+//        if (classInfoList == null) {
+//            synchronized (StroomDocsUtil.class) {
+//                if (classInfoList == null) {
+//                    try (final ScanResult scanResult =
+//                            new ClassGraph()
+//                                    .enableAllInfo()   // Scan classes, methods, fields, annotations
+//                                    .acceptPackages(STROOM_PACKAGE_NAME)
+//                                    .scan()) {
+//                        classInfoList = scanResult.getAllClasses();
+//                    }
+//                    LOGGER.info("Found {} stroom classes", classInfoList.size());
+//                }
+//            }
+//        }
+//        return classInfoList;
+//    }
 
 
     // --------------------------------------------------------------------------------

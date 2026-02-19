@@ -38,6 +38,7 @@ class CidrToNumericIPRange extends StroomExtensionFunctionCall {
                 final long networkAddress = IpAddressUtil.toNumericIpAddress(cidrAddress) & subnetMask;
                 final long broadcastAddress = networkAddress | (~subnetMask);
 
+                // TODO can we return immutable lists, e.g. List.of(...) ?
                 return new SimpleArrayItem(new ArrayList<>(Arrays.asList(
                         StringValue.makeStringValue(Long.toString(networkAddress)),
                         StringValue.makeStringValue(Long.toString(broadcastAddress)))));

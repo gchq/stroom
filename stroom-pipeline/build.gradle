@@ -33,6 +33,7 @@ dependencies {
     implementation project(':stroom-job:stroom-job-api')
     implementation project(':stroom-search:stroom-searchable-api')
 
+    implementation libs.classgraph
     implementation libs.commons.compress
     implementation libs.commons.io
     implementation libs.commons.lang
@@ -80,9 +81,10 @@ dependencies {
     testImplementation project(':stroom-task:stroom-task-mock')
     testImplementation project(':stroom-test-common')
 
-    testImplementation libs.commons.io
-
     testImplementation libs.bundles.common.test.implementation
+    testImplementation libs.commons.io
+    testImplementation libs.guice.extension
+
     testRuntimeOnly libs.bundles.common.test.runtime
 }
 

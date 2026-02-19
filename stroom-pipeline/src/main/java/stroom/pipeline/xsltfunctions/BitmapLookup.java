@@ -41,6 +41,95 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+
+@XsltFunctionDef(
+        name = BitmapLookup.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                The bitmap-lookup() function looks up a bitmap key from reference or context data a value \
+                (which can be an XML node set) for each set bit position and adds it to the resultant XML.
+
+                If the look up fails no result will be returned.
+
+                The key is a bitmap expressed as either a decimal integer or a hexidecimal value, \
+                e.g. `14`/`0xE` is `1110` as a binary bitmap.
+                For each bit position that is set, (i.e. has a binary value of `1`) a lookup will be performed \
+                using that bit position as the key.
+                In this example, positions `1`, `2` & `3` are set so a lookup would be performed for these \
+                bit positions.
+                The result of each lookup for the bitmap are concatenated together in bit position order, \
+                separated by a space.
+
+                If `ignoreWarnings` is true then any lookup failures will be ignored and it will return the \
+                value(s) for the bit positions it was able to lookup.
+
+                This function can be useful when you have a set of values that can be represented as a bitmap \
+                and you need them to be converted back to individual values.
+                For example if you have a set of additive account permissions (e.g Admin, ManageUsers, \
+                PerformExport, etc.), each of which is associated with a bit position, then a user's \
+                permissions could be defined as a single decimal/hex bitmap value.
+                Thus a bitmap lookup with this value would return all the permissions held by the user.
+
+                For example the reference data store may contain:
+
+                | Key (Bit position) | Value          |
+                |--------------------|----------------|
+                | 0                  | Administrator  |
+                | 1                  | Manage_Users   |
+                | 2                  | Perform_Export |
+                | 3                  | View_Data      |
+                | 4                  | Manage_Jobs    |
+                | 5                  | Delete_Data    |
+                | 6                  | Manage_Volumes |
+
+                The following are example lookups using the above reference data:
+
+                | Lookup Key (decimal) | Lookup Key (Hex) | Bitmap    | Result                                  |
+                |----------------------|------------------|-----------|-----------------------------------------|
+                | `0`                  | `0x0`            | `0000000` | -                                       |
+                | `1`                  | `0x1`            | `0000001` | `Administrator`                         |
+                | `74`                 | `0x4A`           | `1001010` | `Manage_Users View_Data Manage_Volumes` |
+                | `2`                  | `0x2`            | `0000010` | `Manage_Users`                          |
+                | `96`                 | `0x60`           | `1100000` | `Delete_Data Manage_Volumes`            |
+                """,
+        commonReturnType = XsltDataType.SEQUENCE,
+        commonReturnDescription = "The hash of the value",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "map",
+                                        description = "The name of the map to perform the lookup in.",
+                                        argType = XsltDataType.STRING),
+                                @XsltFunctionArg(
+                                        name = "key",
+                                        description = "The key to lookup in the named map.",
+                                        argType = XsltDataType.STRING),
+                                @XsltFunctionArg(
+                                        name = "time",
+                                        description = """
+                                                Determines which set of reference data was effective at the \
+                                                requested time.
+                                                If no reference data exists with an effective time before the \
+                                                requested time then the lookup will fail.
+                                                Time is in the format `yyyy-MM-dd'T'HH:mm:ss.SSSXX`, e.g. \
+                                                `2010-01-01T00:00:00.000Z`.""",
+                                        isOptional = true,
+                                        argType = XsltDataType.STRING),
+                                @XsltFunctionArg(
+                                        name = "ignoreWarnings",
+                                        description = "If true, any lookup failures will be ignored, else they " +
+                                                      "will be reported as warnings.",
+                                        argType = XsltDataType.BOOLEAN,
+                                        isOptional = true),
+                                @XsltFunctionArg(
+                                        name = "trace",
+                                        description = "If true, additional trace information is output as " +
+                                                      "INFO messages.",
+                                        argType = XsltDataType.BOOLEAN,
+                                        isOptional = true),
+                        })
+        })
 class BitmapLookup extends AbstractLookup {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BitmapLookup.class);

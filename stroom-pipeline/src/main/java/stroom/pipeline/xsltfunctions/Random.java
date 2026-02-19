@@ -21,7 +21,20 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.DoubleValue;
 
+@XsltFunctionDef(
+        name = Random.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.VALUE,
+        commonDescription = "Generates a random number greater than 0.0 and less than 1.0.",
+        commonReturnType = XsltDataType.DECIMAL,
+        commonReturnDescription = "The random number.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {})
+        })
 class Random extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "random";
+
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         try {
