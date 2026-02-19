@@ -29,9 +29,6 @@ import stroom.docref.DocRef.DisplayType;
 import stroom.docref.HasDisplayValue;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginRegistry;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.document.client.event.ChangeEvent;
 import stroom.document.client.event.ChangeEvent.ChangeHandler;
 import stroom.document.client.event.HasChangeHandlers;
@@ -166,7 +163,7 @@ public class PropertyListPresenter
                 .eventBus(getEventBus())
                 .showIcon(true)
                 .canOpenFunction(property -> property.getValue() != null &&
-                                    !property.getValue().isEmbedded())
+                                             !property.getValue().isEmbedded())
                 .cssClassFunction(property1 -> getStateCssClass(property1, true))
                 .cellTextFunction(property -> {
                     if (property == null || property.getValue() == null || property.getValue().getEntity() == null) {
@@ -481,9 +478,9 @@ public class PropertyListPresenter
     }
 
     private void createEmbeddedDocument(final DocumentPlugin<Document> documentPlugin,
-                                            final String documentName,
-                                            final DocRef parentDocRef,
-                                            final Consumer<Document> callback) {
+                                        final String documentName,
+                                        final DocRef parentDocRef,
+                                        final Consumer<Document> callback) {
         final RestErrorHandler errorHandler = throwable -> AlertEvent.fireError(
                 this,
                 "Unable to create embedded document",
