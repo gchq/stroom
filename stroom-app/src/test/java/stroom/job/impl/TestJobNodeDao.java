@@ -69,13 +69,13 @@ class TestJobNodeDao extends AbstractCoreIntegrationTest {
         job.setEnabled(true);
         jobService.update(job);
 
-        JobNode jobNode = new JobNode();
-        jobNode.setJob(job);
-        jobNode.setNodeName(nodeInfo.getThisNodeName());
-
-        AuditUtil.stamp(() -> "test", jobNode);
+        JobNode jobNode = JobNode.builder()
+                .job(job)
+                .nodeName(nodeInfo.getThisNodeName())
+                .stampAudit("test")
+                .build();
         jobNode = jobNodeDao.create(jobNode);
-        jobNode.setEnabled(true);
+        jobNode = jobNode.copy().enabled(true).build();
 
         // Test update
         jobNode = jobNodeDao.update(jobNode);
@@ -89,9 +89,9 @@ class TestJobNodeDao extends AbstractCoreIntegrationTest {
         }).isInstanceOf(DataChangedException.class);
 
         // Test that job node service can continually update jobs.
-        jobNode.setEnabled(false);
+        jobNode = jobNode.copy().enabled(false).build();
         jobNodeService.update(jobNode);
-        jobNode.setEnabled(true);
+        jobNode = jobNode.copy().enabled(true).build();
         jobNodeService.update(jobNode);
     }
 }

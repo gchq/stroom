@@ -98,7 +98,6 @@ public class JobManagerImpl implements JobManager {
     @Override
     public Boolean setNodeEnabled(final String nodeName, final boolean enabled) {
         modifyNode(nodeName, enabled);
-
         return Boolean.TRUE;
     }
 
@@ -152,9 +151,7 @@ public class JobManagerImpl implements JobManager {
 
         final ResultPage<JobNode> jobNodes = jobNodeDao.find(criteria);
         for (final JobNode jobNode : jobNodes.getValues()) {
-            jobNode.setEnabled(enabled);
-            AuditUtil.stamp(securityContext, jobNode);
-            jobNodeDao.update(jobNode);
+            jobNodeDao.update(jobNode.copy().enabled(enabled).stampAudit(securityContext).build());
         }
     }
 
@@ -170,9 +167,7 @@ public class JobManagerImpl implements JobManager {
 
         final ResultPage<JobNode> jobNodes = jobNodeDao.find(criteria);
         for (final JobNode jobNode : jobNodes.getValues()) {
-            jobNode.setEnabled(enabled);
-            AuditUtil.stamp(securityContext, jobNode);
-            jobNodeDao.update(jobNode);
+            jobNodeDao.update(jobNode.copy().enabled(enabled).stampAudit(securityContext).build());
         }
     }
 }

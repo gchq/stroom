@@ -211,8 +211,7 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
                 new StringCriteria(JobNames.DATA_PROCESSOR),
                 null, null));
         final JobNode jobNode = response.getFirst();
-        jobNode.setEnabled(true);
-        jobNodeDao.update(jobNode);
+        jobNodeDao.update(jobNode.copy().enabled(true).build());
 
         final String feedName = "TEST-FEED";
         final DocRef feedRef = feedStore.createDocument(feedName);

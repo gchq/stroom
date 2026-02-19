@@ -76,8 +76,16 @@ class TestDistributedTaskFetcher extends StroomUnitTest {
             final String nodeName = "NODE_NAME";
             final String frequency = "10s";
             final Job job = new Job(1, true, jobName, false);
-            final JobNode jobNode =
-                    new JobNode(1, nodeName, job, 100, JobType.DISTRIBUTED, frequency, true);
+            final JobNode jobNode = JobNode
+                    .builder()
+                    .id(1)
+                    .nodeName(nodeName)
+                    .job(job)
+                    .taskLimit(100)
+                    .jobType(JobType.DISTRIBUTED)
+                    .schedule(frequency)
+                    .enabled(true)
+                    .build();
             final JobNodeTracker jobNodeTracker = new JobNodeTracker(jobNode);
             final SimpleScheduleExec scheduler = new SimpleScheduleExec(new FrequencyTrigger(frequency));
             final JobNodeTrackerCache jobNodeTrackerCache = () -> new JobNodeTrackers() {

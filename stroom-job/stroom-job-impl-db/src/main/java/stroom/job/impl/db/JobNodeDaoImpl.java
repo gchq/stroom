@@ -76,21 +76,20 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
         return job;
     };
 
-    private static final Function<Record, JobNode> RECORD_TO_JOB_NODE_MAPPER = record -> {
-        final JobNode jobNode = new JobNode();
-        jobNode.setId(record.get(JOB_NODE.ID));
-        jobNode.setVersion(record.get(JOB_NODE.VERSION));
-        jobNode.setCreateTimeMs(record.get(JOB_NODE.CREATE_TIME_MS));
-        jobNode.setCreateUser(record.get(JOB_NODE.CREATE_USER));
-        jobNode.setUpdateTimeMs(record.get(JOB_NODE.UPDATE_TIME_MS));
-        jobNode.setUpdateUser(record.get(JOB_NODE.UPDATE_USER));
-        jobNode.setJobType(JobType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(JOB_NODE.JOB_TYPE)));
-        jobNode.setNodeName(record.get(JOB_NODE.NODE_NAME));
-        jobNode.setTaskLimit(record.get(JOB_NODE.TASK_LIMIT));
-        jobNode.setSchedule(record.get(JOB_NODE.SCHEDULE));
-        jobNode.setEnabled(record.get(JOB_NODE.ENABLED));
-        return jobNode;
-    };
+    private static final Function<Record, JobNode> RECORD_TO_JOB_NODE_MAPPER = record -> JobNode
+            .builder()
+            .id(record.get(JOB_NODE.ID))
+            .version(record.get(JOB_NODE.VERSION))
+            .createTimeMs(record.get(JOB_NODE.CREATE_TIME_MS))
+            .createUser(record.get(JOB_NODE.CREATE_USER))
+            .updateTimeMs(record.get(JOB_NODE.UPDATE_TIME_MS))
+            .updateUser(record.get(JOB_NODE.UPDATE_USER))
+            .jobType(JobType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(JOB_NODE.JOB_TYPE)))
+            .nodeName(record.get(JOB_NODE.NODE_NAME))
+            .taskLimit(record.get(JOB_NODE.TASK_LIMIT))
+            .schedule(record.get(JOB_NODE.SCHEDULE))
+            .enabled(record.get(JOB_NODE.ENABLED))
+            .build();
 
     private static final BiFunction<JobNode, JobNodeRecord, JobNodeRecord> JOB_NODE_TO_RECORD_MAPPER =
             (jobNode, record) -> {
@@ -123,19 +122,14 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 
     @Override
     public JobNode create(@NotNull final JobNode jobNode) {
-        final JobNode result = genericDao.create(jobNode);
-        result.setJob(jobNode.getJob());
-        return result;
+        return genericDao.create(jobNode).copy().job(jobNode.getJob()).build();
     }
 
     @Override
     public JobNode update(@NotNull final JobNode jobNode) {
         Objects.requireNonNull(jobNode, "Null JobNode");
         Objects.requireNonNull(jobNode.getJob(), "Null JobNode Job");
-
-        final JobNode result = genericDao.update(jobNode);
-        result.setJob(jobNode.getJob());
-        return result;
+        return genericDao.update(jobNode).copy().job(jobNode.getJob()).build();
     }
 
     @Override
@@ -154,8 +148,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
                 .map(record -> {
                     final Job job = RECORD_TO_JOB_MAPPER.apply(record);
                     final JobNode jobNode = RECORD_TO_JOB_NODE_MAPPER.apply(record);
-                    jobNode.setJob(job);
-                    return jobNode;
+                    return jobNode.copy().job(job).build();
                 });
     }
 
@@ -180,8 +173,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
                 .map(record -> {
                     final Job job = RECORD_TO_JOB_MAPPER.apply(record);
                     final JobNode jobNode = RECORD_TO_JOB_NODE_MAPPER.apply(record);
-                    jobNode.setJob(job);
-                    return jobNode;
+                    return jobNode.copy().job(job).build();
                 });
         return JobNodeListResponse.createUnboundedJobNodeResponse(list);
     }
