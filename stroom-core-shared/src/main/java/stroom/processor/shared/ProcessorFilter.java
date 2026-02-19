@@ -20,8 +20,10 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
 import stroom.docref.HasUuid;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasAuditInfoBuilder;
+import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.UserRef;
 
@@ -525,6 +527,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
 
 
     public static class Builder
+            extends AbstractBuilder<ProcessorFilter, ProcessorFilter.Builder>
             implements HasAuditInfoBuilder<ProcessorFilter, ProcessorFilter.Builder> {
 
         private Integer id;
@@ -590,102 +593,102 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
 
         public Builder id(final Integer id) {
             this.id = id;
-            return this;
+            return self();
         }
 
         public Builder version(final Integer version) {
             this.version = version;
-            return this;
+            return self();
         }
 
         public Builder createTimeMs(final Long createTimeMs) {
             this.createTimeMs = createTimeMs;
-            return this;
+            return self();
         }
 
         public Builder createUser(final String createUser) {
             this.createUser = createUser;
-            return this;
+            return self();
         }
 
         public Builder updateTimeMs(final Long updateTimeMs) {
             this.updateTimeMs = updateTimeMs;
-            return this;
+            return self();
         }
 
         public Builder updateUser(final String updateUser) {
             this.updateUser = updateUser;
-            return this;
+            return self();
         }
 
         public Builder uuid(final String uuid) {
             this.uuid = uuid;
-            return this;
+            return self();
         }
 
         public Builder queryData(final QueryData queryData) {
             this.queryData = queryData;
-            return this;
+            return self();
         }
 
         public Builder processorType(final ProcessorType processorType) {
             this.processorType = processorType;
-            return this;
+            return self();
         }
 
         public Builder processorUuid(final String processorUuid) {
             this.processorUuid = processorUuid;
-            return this;
+            return self();
         }
 
         public Builder pipelineUuid(final String pipelineUuid) {
             this.pipelineUuid = pipelineUuid;
-            return this;
+            return self();
         }
 
         public Builder pipelineName(final String pipelineName) {
             this.pipelineName = pipelineName;
-            return this;
+            return self();
         }
 
         public Builder runAsUser(final UserRef runAsUser) {
             this.runAsUser = runAsUser;
-            return this;
+            return self();
         }
 
         public Builder processor(final Processor processor) {
             this.processor = processor;
-            return this;
+            return self();
         }
 
         public Builder processorFilterTracker(final ProcessorFilterTracker processorFilterTracker) {
             this.processorFilterTracker = processorFilterTracker;
-            return this;
+            return self();
         }
 
         public Builder priority(final int priority) {
             this.priority = priority;
-            return this;
+            return self();
         }
 
         public Builder maxProcessingTasks(final int maxProcessingTasks) {
             this.maxProcessingTasks = maxProcessingTasks;
-            return this;
+            return self();
         }
 
         public Builder reprocess(final boolean reprocess) {
             this.reprocess = reprocess;
-            return this;
+            return self();
         }
 
         public Builder enabled(final boolean enabled) {
             this.enabled = enabled;
-            return this;
+            return self();
         }
 
         public Builder deleted(final boolean deleted) {
             this.deleted = deleted;
-            return this;
+            return self();
         }
 
         /**
@@ -693,16 +696,37 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
          */
         public Builder export(final boolean export) {
             this.export = export;
-            return this;
+            return self();
         }
 
         public Builder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
             this.minMetaCreateTimeMs = minMetaCreateTimeMs;
-            return this;
+            return self();
         }
 
         public Builder maxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
             this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
+            return self();
+        }
+
+        public final Builder stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
+            return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
+        }
+
+        public final Builder stampAudit(final String user) {
+            final long now = System.currentTimeMillis();
+            if (createTimeMs == null) {
+                this.createTimeMs = now;
+            }
+            if (createUser == null) {
+                this.createUser = user;
+            }
+            updateTimeMs = now;
+            updateUser = user;
+            return self();
+        }
+
+        protected Builder self() {
             return this;
         }
 

@@ -18,6 +18,7 @@ package stroom.docstore.shared;
 
 import stroom.util.shared.Document;
 import stroom.util.shared.HasAuditInfoBuilder;
+import stroom.util.shared.HasAuditableUserIdentity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -149,7 +150,7 @@ public abstract class AbstractDoc implements Document {
     // --------------------------------------------------------------------------------
 
 
-    public abstract static class AbstractBuilder<T extends AbstractDoc, B extends AbstractBuilder<T, ?>>
+    public abstract static class AbstractDocBuilder<T extends AbstractDoc, B extends AbstractDocBuilder<T, ?>>
             implements HasAuditInfoBuilder<T, B> {
 
         protected String uuid;
@@ -160,10 +161,10 @@ public abstract class AbstractDoc implements Document {
         protected Long updateTimeMs;
         protected String updateUser;
 
-        public AbstractBuilder() {
+        public AbstractDocBuilder() {
         }
 
-        public AbstractBuilder(final AbstractDoc doc) {
+        public AbstractDocBuilder(final AbstractDoc doc) {
             this.uuid = doc.uuid;
             this.name = doc.name;
             this.version = doc.version;
@@ -205,6 +206,23 @@ public abstract class AbstractDoc implements Document {
 
         public B updateUser(final String updateUser) {
             this.updateUser = updateUser;
+            return self();
+        }
+
+        public final B stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
+            return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
+        }
+
+        public final B stampAudit(final String user) {
+            final long now = System.currentTimeMillis();
+            if (createTimeMs == null) {
+                this.createTimeMs = now;
+            }
+            if (createUser == null) {
+                this.createUser = user;
+            }
+            updateTimeMs = now;
+            updateUser = user;
             return self();
         }
 

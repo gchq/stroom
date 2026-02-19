@@ -16,6 +16,7 @@
 
 package stroom.util;
 
+import stroom.util.shared.AuditInfoBuilder;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasAuditInfoBuilder;
 import stroom.util.shared.HasAuditInfoGetters;
@@ -96,7 +97,7 @@ public final class AuditUtil {
      * @return The doc with audit fields removed.
      */
     public static <D, B extends HasAuditInfoBuilder<D, ?>> D removeAuditData(final Function<D, B> builderFunction,
-                                                                             final D doc) {
+                                                                          final D doc) {
         return builderFunction
                 .apply(doc)
                 .createTimeMs(null)

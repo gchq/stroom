@@ -70,7 +70,7 @@ public class ActivityServiceImpl implements ActivityService {
     public Activity create() {
         return securityContext.secureResult(() -> {
             final UserRef userRef = securityContext.getUserRef();
-            final Activity activity = Activity.builder().userRef(userRef).createAudit(securityContext).build();
+            final Activity activity = Activity.builder().userRef(userRef).stampAudit(securityContext).build();
             return dao.create(activity);
         });
     }
@@ -95,7 +95,7 @@ public class ActivityServiceImpl implements ActivityService {
             if (!securityContext.getUserRef().equals(activity.getUserRef())) {
                 throw new EntityServiceException("Attempt to update another persons activity");
             }
-            return dao.update(activity.copy().updateAudit(securityContext).build());
+            return dao.update(activity.copy().stampAudit(securityContext).build());
         });
     }
 
@@ -145,7 +145,7 @@ public class ActivityServiceImpl implements ActivityService {
                 filteredActivities = expressionPredicateFactory.filterAndSortStream(
                                 allActivities.stream(),
                                 filter, fieldProvider, valueFunctionFactories,
-                                Optional.of(Comparator.comparingInt((Activity activity) -> activity.getId())))
+                                Optional.of(Comparator.comparingInt(Activity::getId)))
                         .toList();
             } else {
                 filteredActivities = allActivities;

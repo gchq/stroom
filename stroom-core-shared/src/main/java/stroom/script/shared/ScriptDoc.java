@@ -142,7 +142,7 @@ public class ScriptDoc extends AbstractDoc implements HasData {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDoc.AbstractBuilder<ScriptDoc, ScriptDoc.Builder> {
+    public static final class Builder extends AbstractDocBuilder<ScriptDoc, Builder> {
 
         private String description;
         private List<DocRef> dependencies;

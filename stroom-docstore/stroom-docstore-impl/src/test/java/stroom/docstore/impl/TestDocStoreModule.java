@@ -100,7 +100,7 @@ class TestDocStoreModule {
             return new Builder();
         }
 
-        public static final class Builder extends AbstractDoc.AbstractBuilder<MyDoc, MyDoc.Builder> {
+        public static final class Builder extends AbstractDocBuilder<MyDoc, Builder> {
 
             private Builder() {
             }

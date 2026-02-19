@@ -173,7 +173,7 @@ class TestIndexShardDaoImpl {
                 .nodeName(nodeName)
                 .path(path)
                 .indexVolumeGroupId(indexVolumeGroup.getId())
-                .createAudit("test")
+                .stampAudit("test")
                 .build();
         return indexVolumeDao.create(indexVolume);
     }
@@ -182,7 +182,7 @@ class TestIndexShardDaoImpl {
         final IndexVolumeGroup indexVolumeGroup = IndexVolumeGroup
                 .builder()
                 .name(name)
-                .createAudit("test")
+                .stampAudit("test")
                 .build();
         return indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
     }

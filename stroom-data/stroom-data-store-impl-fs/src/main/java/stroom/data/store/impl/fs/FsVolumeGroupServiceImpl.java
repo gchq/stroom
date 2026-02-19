@@ -83,7 +83,7 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
         final FsVolumeGroup indexVolumeGroup = FsVolumeGroup
                 .builder()
                 .name(name)
-                .createAudit(securityContext)
+                .stampAudit(securityContext)
                 .build();
         final FsVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> volumeGroupDao.getOrCreate(indexVolumeGroup));
@@ -98,7 +98,7 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
         final FsVolumeGroup indexVolumeGroup = FsVolumeGroup
                 .builder()
                 .name(newName)
-                .createAudit(securityContext)
+                .stampAudit(securityContext)
                 .build();
         final FsVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> volumeGroupDao.getOrCreate(indexVolumeGroup));
@@ -110,7 +110,7 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
     public FsVolumeGroup update(final FsVolumeGroup indexVolumeGroup) {
         ensureDefaultVolumes();
         final FsVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
-                () -> volumeGroupDao.update(indexVolumeGroup.copy().updateAudit(securityContext).build()));
+                () -> volumeGroupDao.update(indexVolumeGroup.copy().stampAudit(securityContext).build()));
         fireChange(EntityAction.UPDATE);
         return result;
     }
@@ -166,7 +166,7 @@ public class FsVolumeGroupServiceImpl implements FsVolumeGroupService, Clearable
                         if (volumeConfig.getDefaultStreamVolumeGroupName() != null) {
                             final String groupName = volumeConfig.getDefaultStreamVolumeGroupName();
                             final FsVolumeGroup indexVolumeGroup = FsVolumeGroup
-                                    .builder().name(groupName).createAudit(securityContext).build();
+                                    .builder().name(groupName).stampAudit(securityContext).build();
                             LOGGER.info("Creating default volume group [{}]", groupName);
 //                            final FsVolumeGroup newGroup = volumeGroupDao.getOrCreate(indexVolumeGroup);
 

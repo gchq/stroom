@@ -237,7 +237,7 @@ public class SolrIndexDoc extends AbstractDoc {
     }
 
     public static final class Builder
-            extends AbstractDoc.AbstractBuilder<SolrIndexDoc, SolrIndexDoc.Builder> {
+            extends AbstractDocBuilder<SolrIndexDoc, Builder> {
 
         private String description;
         private String collection;

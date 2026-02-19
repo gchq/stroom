@@ -115,7 +115,7 @@ public class DocumentationDoc extends AbstractDoc implements HasData {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDoc.AbstractBuilder<DocumentationDoc, DocumentationDoc.Builder> {
+    public static final class Builder extends AbstractDocBuilder<DocumentationDoc, Builder> {
 
         private String documentation;
         private String data;

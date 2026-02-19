@@ -21,7 +21,6 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -140,7 +139,7 @@ public class PlanBDoc extends AbstractDoc {
         return new Builder();
     }
 
-    public static class Builder extends AbstractBuilder<PlanBDoc, PlanBDoc.Builder> {
+    public static class Builder extends AbstractDocBuilder<PlanBDoc, Builder> {
 
         private String description;
         private StateType stateType;

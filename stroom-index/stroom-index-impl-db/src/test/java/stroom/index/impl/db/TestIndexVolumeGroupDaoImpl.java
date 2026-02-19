@@ -151,7 +151,7 @@ class TestIndexVolumeGroupDaoImpl {
         final IndexVolumeGroup indexVolumeGroup = IndexVolumeGroup
                 .builder()
                 .name(name)
-                .createAudit(TestModule.TEST_USER)
+                .stampAudit(TestModule.TEST_USER)
                 .build();
         return indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
     }

@@ -155,7 +155,7 @@ public class QueryDoc extends AbstractDoc {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDoc.AbstractBuilder<QueryDoc, QueryDoc.Builder> {
+    public static final class Builder extends AbstractDocBuilder<QueryDoc, Builder> {
 
         private String description;
         private TimeRange timeRange;

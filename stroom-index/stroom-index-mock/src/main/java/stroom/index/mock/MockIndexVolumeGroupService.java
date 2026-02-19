@@ -45,7 +45,7 @@ public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
         final IndexVolumeGroup group = IndexVolumeGroup
                 .builder()
                 .name("New name")
-                .createAudit(TEST_USER)
+                .stampAudit(TEST_USER)
                 .build();
         groups.add(group);
         return group;
@@ -56,7 +56,7 @@ public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
         final IndexVolumeGroup group = IndexVolumeGroup
                 .builder()
                 .name(name)
-                .createAudit(TEST_USER)
+                .stampAudit(TEST_USER)
                 .build();
         groups.add(group);
         return group;

@@ -149,7 +149,7 @@ public class PipelineDoc extends AbstractDoc {
     }
 
     public static final class Builder
-            extends AbstractDoc.AbstractBuilder<PipelineDoc, PipelineDoc.Builder> {
+            extends AbstractDocBuilder<PipelineDoc, Builder> {
 
         private String description;
         private DocRef parentPipeline;

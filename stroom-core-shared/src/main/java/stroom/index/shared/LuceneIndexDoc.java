@@ -258,7 +258,7 @@ public class LuceneIndexDoc extends AbstractDoc {
     }
 
     public static final class Builder
-            extends AbstractDoc.AbstractBuilder<LuceneIndexDoc, LuceneIndexDoc.Builder> {
+            extends AbstractDocBuilder<LuceneIndexDoc, Builder> {
 
         private String description;
         private Integer maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;

@@ -138,7 +138,7 @@ public class DictionaryDoc extends AbstractDoc {
     }
 
     public static final class Builder
-            extends AbstractDoc.AbstractBuilder<DictionaryDoc, DictionaryDoc.Builder> {
+            extends AbstractDocBuilder<DictionaryDoc, Builder> {
 
         private String description;
         private String data;

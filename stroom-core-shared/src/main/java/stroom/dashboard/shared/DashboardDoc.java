@@ -144,7 +144,7 @@ public class DashboardDoc extends AbstractDoc {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDoc.AbstractBuilder<DashboardDoc, DashboardDoc.Builder> {
+    public static final class Builder extends AbstractDocBuilder<DashboardDoc, Builder> {
 
         private String description;
         private DashboardConfig dashboardConfig;

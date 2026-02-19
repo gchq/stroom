@@ -173,7 +173,7 @@ public class ContentTemplates extends AbstractDoc {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDoc.AbstractBuilder<ContentTemplates, ContentTemplates.Builder> {
+    public static final class Builder extends AbstractDocBuilder<ContentTemplates, Builder> {
 
         private List<ContentTemplate> contentTemplates;
 

@@ -19,6 +19,7 @@ package stroom.index.shared;
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.HasAuditInfoBuilder;
+import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.HasCapacity;
 import stroom.util.shared.HasCapacityInfo;
 import stroom.util.shared.HasIntegerId;
@@ -397,6 +398,23 @@ public class IndexVolume implements HasIntegerId, HasCapacity {
 
         public Builder indexVolumeGroupId(final Integer indexVolumeGroupId) {
             this.indexVolumeGroupId = indexVolumeGroupId;
+            return self();
+        }
+
+        public Builder stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
+            return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
+        }
+
+        public Builder stampAudit(final String user) {
+            final long now = System.currentTimeMillis();
+            if (createTimeMs == null) {
+                this.createTimeMs = now;
+            }
+            if (createUser == null) {
+                this.createUser = user;
+            }
+            updateTimeMs = now;
+            updateUser = user;
             return self();
         }
 

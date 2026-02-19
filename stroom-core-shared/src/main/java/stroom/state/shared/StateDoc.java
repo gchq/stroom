@@ -222,7 +222,7 @@ public class StateDoc extends AbstractDoc {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDoc.AbstractBuilder<StateDoc, StateDoc.Builder> {
+    public static final class Builder extends AbstractDocBuilder<StateDoc, Builder> {
 
         private DocRef scyllaDbRef;
         private String description;

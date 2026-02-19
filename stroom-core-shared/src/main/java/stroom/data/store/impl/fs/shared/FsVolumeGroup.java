@@ -19,6 +19,7 @@ package stroom.data.store.impl.fs.shared;
 import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.HasAuditInfoBuilder;
 import stroom.util.shared.HasAuditInfoGetters;
+import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -199,6 +200,23 @@ public class FsVolumeGroup implements HasAuditInfoGetters, HasIntegerId {
 
         public Builder name(final String name) {
             this.name = name;
+            return self();
+        }
+
+        public final Builder stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
+            return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
+        }
+
+        public final Builder stampAudit(final String user) {
+            final long now = System.currentTimeMillis();
+            if (createTimeMs == null) {
+                this.createTimeMs = now;
+            }
+            if (createUser == null) {
+                this.createUser = user;
+            }
+            updateTimeMs = now;
+            updateUser = user;
             return self();
         }
 

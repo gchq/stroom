@@ -336,7 +336,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                         ? null
                         : indexVolume.getPath())
                 .indexVolumeGroupId(indexVolume.getIndexVolumeGroupId())
-                .createAudit(securityContext)
+                .stampAudit(securityContext)
                 .build();
 
         final IndexVolume result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
@@ -363,7 +363,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                 .nodeName(indexVolume.getNodeName())
                 .bytesLimit(indexVolume.getBytesLimit())
                 .state(indexVolume.getState())
-                .updateAudit(securityContext)
+                .stampAudit(securityContext)
                 .build();
 
         final IndexVolume result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,

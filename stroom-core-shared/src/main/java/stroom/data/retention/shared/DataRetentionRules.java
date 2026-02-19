@@ -126,7 +126,7 @@ public class DataRetentionRules extends AbstractDoc {
     }
 
     public static final class Builder
-            extends AbstractDoc.AbstractBuilder<DataRetentionRules, DataRetentionRules.Builder> {
+            extends AbstractDocBuilder<DataRetentionRules, Builder> {
 
         private List<DataRetentionRule> rules;
 

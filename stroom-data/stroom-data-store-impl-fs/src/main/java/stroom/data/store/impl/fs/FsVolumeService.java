@@ -184,7 +184,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                     }
                 }
 
-                builder.createAudit(securityContext);
+                builder.stampAudit(securityContext);
                 builder = fsVolumeDao.create(builder.build()).copy();
                 builder.volumeState(fileVolumeState);
             } catch (final IOException e) {
@@ -210,7 +210,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     public FsVolume update(final FsVolume fileVolume) {
         return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> {
-            final FsVolume result = fsVolumeDao.update(fileVolume.copy().updateAudit(securityContext).build());
+            final FsVolume result = fsVolumeDao.update(fileVolume.copy().stampAudit(securityContext).build());
             fireChange(EntityAction.UPDATE);
             return result;
         });

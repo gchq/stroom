@@ -153,7 +153,7 @@ public class ReceiveDataRules extends AbstractDoc {
     }
 
     public static final class Builder
-            extends AbstractDoc.AbstractBuilder<ReceiveDataRules, ReceiveDataRules.Builder> {
+            extends AbstractDocBuilder<ReceiveDataRules, Builder> {
 
         private String description;
         private List<QueryField> fields;

@@ -19,6 +19,7 @@ package stroom.activity.shared;
 import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.HasAuditInfoBuilder;
 import stroom.util.shared.HasAuditInfoGetters;
+import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
@@ -149,6 +150,7 @@ public class Activity implements HasAuditInfoGetters, HasIntegerId {
 
 
     public static class Builder
+            extends AbstractBuilder<Activity, Activity.Builder>
             implements HasAuditInfoBuilder<Activity, Activity.Builder> {
 
         private Integer id;
@@ -177,45 +179,67 @@ public class Activity implements HasAuditInfoGetters, HasIntegerId {
 
         public Builder id(final Integer id) {
             this.id = id;
-            return this;
+            return self();
         }
 
         public Builder version(final Integer version) {
             this.version = version;
-            return this;
+            return self();
         }
 
         @Override
         public Builder createTimeMs(final Long createTimeMs) {
             this.createTimeMs = createTimeMs;
-            return this;
+            return self();
         }
 
         @Override
         public Builder createUser(final String createUser) {
             this.createUser = createUser;
-            return this;
+            return self();
         }
 
         @Override
         public Builder updateTimeMs(final Long updateTimeMs) {
             this.updateTimeMs = updateTimeMs;
-            return this;
+            return self();
         }
 
         @Override
         public Builder updateUser(final String updateUser) {
             this.updateUser = updateUser;
-            return this;
+            return self();
         }
 
         public Builder userRef(final UserRef userRef) {
             this.userRef = userRef;
-            return this;
+            return self();
         }
 
         public Builder details(final ActivityDetails details) {
             this.details = details;
+            return self();
+        }
+
+        public final Builder stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
+            return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
+        }
+
+        public final Builder stampAudit(final String user) {
+            final long now = System.currentTimeMillis();
+            if (createTimeMs == null) {
+                this.createTimeMs = now;
+            }
+            if (createUser == null) {
+                this.createUser = user;
+            }
+            updateTimeMs = now;
+            updateUser = user;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
             return this;
         }
 

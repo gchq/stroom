@@ -109,7 +109,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
         final IndexVolumeGroup indexVolumeGroup = IndexVolumeGroup
                 .builder()
                 .name(name)
-                .createAudit(securityContext)
+                .stampAudit(securityContext)
                 .build();
         final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
@@ -124,7 +124,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
         final IndexVolumeGroup indexVolumeGroup = IndexVolumeGroup
                 .builder()
                 .name(newName)
-                .createAudit(securityContext)
+                .stampAudit(securityContext)
                 .build();
         final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
@@ -136,7 +136,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     public IndexVolumeGroup update(final IndexVolumeGroup indexVolumeGroup) {
         ensureDefaultVolumes();
         final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
-                () -> indexVolumeGroupDao.update(indexVolumeGroup.copy().updateAudit(securityContext).build()));
+                () -> indexVolumeGroupDao.update(indexVolumeGroup.copy().stampAudit(securityContext).build()));
         fireChange(EntityAction.UPDATE);
         return result;
     }
@@ -194,7 +194,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
                             final UserIdentity processingUserIdentity = userIdentityFactory.getServiceUserIdentity();
                             final String groupName = volumeConfig.getDefaultIndexVolumeGroupName();
                             final IndexVolumeGroup indexVolumeGroup = IndexVolumeGroup
-                                    .builder().name(groupName).createAudit(processingUserIdentity).build();
+                                    .builder().name(groupName).stampAudit(processingUserIdentity).build();
 
                             LOGGER.info("Creating default index volume group [{}]", groupName);
                             final IndexVolumeGroup newGroup = indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
@@ -227,7 +227,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
                                                 .bytesLimit(byteLimitOption.orElse(0L))
                                                 .nodeName(nodeName)
                                                 .path(resolvedPath.toString())
-                                                .createAudit(processingUserIdentity)
+                                                .stampAudit(processingUserIdentity)
                                                 .build();
                                         indexVolumeDao.create(indexVolume);
                                     }

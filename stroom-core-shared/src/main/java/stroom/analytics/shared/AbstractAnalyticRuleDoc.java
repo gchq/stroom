@@ -231,7 +231,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
     public abstract static class AbstractAnalyticRuleDocBuilder
             <T extends AbstractAnalyticRuleDoc, B extends AbstractAnalyticRuleDocBuilder<T, ?>>
-            extends AbstractBuilder<T, B> {
+            extends AbstractDocBuilder<T, B> {
 
         String description;
         QueryLanguageVersion languageVersion;

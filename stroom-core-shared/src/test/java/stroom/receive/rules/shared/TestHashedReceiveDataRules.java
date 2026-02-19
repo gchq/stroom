@@ -82,7 +82,7 @@ class TestHashedReceiveDataRules {
                         Lemon
                         Apple
                         """)
-                .createAudit("user1")
+                .stampAudit("user1")
                 .build();
 
         final DictionaryDoc dict2 = DictionaryDoc.builder()
@@ -93,7 +93,7 @@ class TestHashedReceiveDataRules {
                         Badger
                         Cow
                         """)
-                .createAudit("user2")
+                .stampAudit("user2")
                 .build();
 
         final Map<String, DictionaryDoc> uuidToDictMap = DocRefUtil.toMapByUuid(dict1, dict2);

@@ -179,7 +179,7 @@ class TestIndexVolumeDaoImpl {
                 .nodeName(nodeName)
                 .path(path)
                 .indexVolumeGroupId(indexVolumeGroupId)
-                .createAudit("test")
+                .stampAudit("test")
                 .build();
         return indexVolumeDao.create(indexVolume);
     }
@@ -188,7 +188,7 @@ class TestIndexVolumeDaoImpl {
         final IndexVolumeGroup indexVolumeGroup = IndexVolumeGroup
                 .builder()
                 .name(name)
-                .createAudit("test")
+                .stampAudit("test")
                 .build();
         return indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
     }

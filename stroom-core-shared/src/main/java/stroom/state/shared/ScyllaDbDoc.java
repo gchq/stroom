@@ -153,7 +153,7 @@ public class ScyllaDbDoc extends AbstractDoc {
         return new Builder();
     }
 
-    public static class Builder extends AbstractBuilder<ScyllaDbDoc, ScyllaDbDoc.Builder> {
+    public static class Builder extends AbstractDocBuilder<ScyllaDbDoc, Builder> {
 
         private String description;
         private String connection;
