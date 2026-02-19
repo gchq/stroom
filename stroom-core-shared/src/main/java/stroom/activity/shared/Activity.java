@@ -16,9 +16,11 @@
 
 package stroom.activity.shared;
 
-import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.HasAuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -31,7 +33,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @JsonInclude(Include.NON_NULL)
-public class Activity implements HasAuditInfo, HasIntegerId {
+public class Activity implements HasAuditInfoGetters, HasIntegerId {
 
     public static final String ENTITY_TYPE = "Activity";
 
@@ -40,17 +42,17 @@ public class Activity implements HasAuditInfo, HasIntegerId {
     @JsonProperty
     private final Integer version;
     @JsonProperty
-    private Long createTimeMs;
+    private final Long createTimeMs;
     @JsonProperty
-    private String createUser;
+    private final String createUser;
     @JsonProperty
-    private Long updateTimeMs;
+    private final Long updateTimeMs;
     @JsonProperty
-    private String updateUser;
+    private final String updateUser;
     @JsonProperty
-    private UserRef userRef;
+    private final UserRef userRef;
     @JsonProperty
-    private ActivityDetails details;
+    private final ActivityDetails details;
 
     public Activity(final Integer id,
                     final Integer version,
@@ -88,18 +90,6 @@ public class Activity implements HasAuditInfo, HasIntegerId {
         this.details = details;
     }
 
-    public static Activity create() {
-        return new Activity(
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                new ActivityDetails(new ArrayList<>()));
-    }
-
     @Override
     public Integer getId() {
         return id;
@@ -114,17 +104,9 @@ public class Activity implements HasAuditInfo, HasIntegerId {
         return createTimeMs;
     }
 
-    public void setCreateTimeMs(final Long createTimeMs) {
-        this.createTimeMs = createTimeMs;
-    }
-
     @Override
     public String getCreateUser() {
         return createUser;
-    }
-
-    public void setCreateUser(final String createUser) {
-        this.createUser = createUser;
     }
 
     @Override
@@ -132,33 +114,17 @@ public class Activity implements HasAuditInfo, HasIntegerId {
         return updateTimeMs;
     }
 
-    public void setUpdateTimeMs(final Long updateTimeMs) {
-        this.updateTimeMs = updateTimeMs;
-    }
-
     @Override
     public String getUpdateUser() {
         return updateUser;
-    }
-
-    public void setUpdateUser(final String updateUser) {
-        this.updateUser = updateUser;
     }
 
     public UserRef getUserRef() {
         return userRef;
     }
 
-    public void setUserRef(final UserRef userRef) {
-        this.userRef = userRef;
-    }
-
     public ActivityDetails getDetails() {
         return details;
-    }
-
-    public void setDetails(final ActivityDetails details) {
-        this.details = details;
     }
 
     @Override
@@ -195,6 +161,7 @@ public class Activity implements HasAuditInfo, HasIntegerId {
         private ActivityDetails details;
 
         private Builder() {
+            details = new ActivityDetails(new ArrayList<>());
         }
 
         private Builder(final Activity activity) {
@@ -218,21 +185,25 @@ public class Activity implements HasAuditInfo, HasIntegerId {
             return this;
         }
 
+        @Override
         public Builder createTimeMs(final Long createTimeMs) {
             this.createTimeMs = createTimeMs;
             return this;
         }
 
+        @Override
         public Builder createUser(final String createUser) {
             this.createUser = createUser;
             return this;
         }
 
+        @Override
         public Builder updateTimeMs(final Long updateTimeMs) {
             this.updateTimeMs = updateTimeMs;
             return this;
         }
 
+        @Override
         public Builder updateUser(final String updateUser) {
             this.updateUser = updateUser;
             return this;
@@ -280,8 +251,7 @@ public class Activity implements HasAuditInfo, HasIntegerId {
             return properties;
         }
 
-        public void add(final Prop prop, final String value) {
-            prop.setValue(value);
+        public void add(final Prop prop) {
             properties.add(prop);
         }
 
@@ -303,7 +273,6 @@ public class Activity implements HasAuditInfo, HasIntegerId {
             return null;
         }
 
-
         @Override
         public String toString() {
             return properties.stream().map(prop -> prop.value).collect(Collectors.joining(" - "));
@@ -318,23 +287,23 @@ public class Activity implements HasAuditInfo, HasIntegerId {
     public static class Prop {
 
         @JsonProperty
-        private String id;
+        private final String id;
         @JsonProperty
-        private String name;
+        private final String name;
         @JsonProperty
-        private String validation;
+        private final String validation;
         @JsonProperty
-        private String validationMessage;
+        private final String validationMessage;
         @JsonProperty
-        private String value;
+        private final String value;
         @JsonProperty
-        private Boolean showInSelection;
+        private final Boolean showInSelection;
         @JsonProperty
-        private Boolean showInList;
+        private final Boolean showInList;
 
-        public Prop() {
-            setDefaultValues();
-        }
+//        public Prop() {
+//            setDefaultValues();
+//        }
 
         @JsonCreator
         public Prop(@JsonProperty("id") final String id,
@@ -349,75 +318,121 @@ public class Activity implements HasAuditInfo, HasIntegerId {
             this.validation = validation;
             this.validationMessage = validationMessage;
             this.value = value;
-            this.showInSelection = showInSelection;
-            this.showInList = showInList;
-
-            setDefaultValues();
+            this.showInSelection = NullSafe.requireNonNullElse(showInSelection, true);
+            this.showInList = NullSafe.requireNonNullElse(showInList, true);
         }
 
-        private void setDefaultValues() {
-            if (showInSelection == null) {
-                showInSelection = true;
-            }
-            if (showInList == null) {
-                showInList = true;
-            }
-        }
+//        private void setDefaultValues() {
+//            if (showInSelection == null) {
+//                showInSelection = true;
+//            }
+//            if (showInList == null) {
+//                showInList = true;
+//            }
+//        }
 
         public String getId() {
             return id;
-        }
-
-        public void setId(final String id) {
-            this.id = id;
         }
 
         public String getName() {
             return name;
         }
 
-        public void setName(final String name) {
-            this.name = name;
-        }
-
         public String getValidation() {
             return validation;
-        }
-
-        public void setValidation(final String validation) {
-            this.validation = validation;
         }
 
         public String getValidationMessage() {
             return validationMessage;
         }
 
-        public void setValidationMessage(final String validationMessage) {
-            this.validationMessage = validationMessage;
-        }
-
         public String getValue() {
             return value;
-        }
-
-        public void setValue(final String value) {
-            this.value = value;
         }
 
         public boolean isShowInSelection() {
             return showInSelection;
         }
 
-        public void setShowInSelection(final boolean showInSelection) {
-            this.showInSelection = showInSelection;
-        }
-
         public boolean isShowInList() {
             return showInList;
         }
 
-        public void setShowInList(final boolean showInList) {
-            this.showInList = showInList;
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        public Builder copy() {
+            return new Builder(this);
+        }
+
+        public static class Builder extends AbstractBuilder<Prop, Prop.Builder> {
+
+            private String id;
+            private String name;
+            private String validation;
+            private String validationMessage;
+            private String value;
+            private Boolean showInSelection;
+            private Boolean showInList;
+
+            private Builder() {
+            }
+
+            private Builder(final Prop prop) {
+                this.id = prop.id;
+                this.name = prop.name;
+                this.validation = prop.validation;
+                this.validationMessage = prop.validationMessage;
+                this.value = prop.value;
+                this.showInSelection = prop.showInSelection;
+                this.showInList = prop.showInList;
+            }
+
+            public Builder id(final String id) {
+                this.id = id;
+                return self();
+            }
+
+            public Builder name(final String name) {
+                this.name = name;
+                return self();
+            }
+
+            public Builder validation(final String validation) {
+                this.validation = validation;
+                return self();
+            }
+
+            public Builder validationMessage(final String validationMessage) {
+                this.validationMessage = validationMessage;
+                return self();
+            }
+
+            public Builder value(final String value) {
+                this.value = value;
+                return self();
+            }
+
+            public Builder showInSelection(final Boolean showInSelection) {
+                this.showInSelection = showInSelection;
+                return self();
+            }
+
+            public Builder showInList(final Boolean showInList) {
+                this.showInList = showInList;
+                return self();
+            }
+
+            @Override
+            protected Prop.Builder self() {
+                return this;
+            }
+
+            public Prop build() {
+                return new Prop(id, name, validation, validationMessage, value, showInSelection, showInList);
+            }
         }
     }
 }

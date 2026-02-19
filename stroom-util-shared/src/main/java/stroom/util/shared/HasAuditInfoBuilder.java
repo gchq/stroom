@@ -26,9 +26,17 @@ public interface HasAuditInfoBuilder<T, B extends HasAuditInfoBuilder<T, ?>> ext
 
     B updateUser(String updateUser);
 
+    default Builder<T> createAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
+        return createAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
+    }
+
     default Builder<T> createAudit(final String user) {
         final long now = System.currentTimeMillis();
         return createTimeMs(now).updateTimeMs(now).createUser(user).updateUser(user);
+    }
+
+    default Builder<T> updateAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
+        return updateAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
     }
 
     default Builder<T> updateAudit(final String user) {

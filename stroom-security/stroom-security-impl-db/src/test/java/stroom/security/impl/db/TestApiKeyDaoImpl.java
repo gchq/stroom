@@ -144,9 +144,7 @@ class TestApiKeyDaoImpl {
         assertThat(apiKey.getEnabled())
                 .isTrue();
 
-        final HashedApiKey apiKey2 = HashedApiKey.builder(apiKey)
-                .withEnabled(false)
-                .build();
+        final HashedApiKey apiKey2 = apiKey.copy().enabled(false).build();
 
         final HashedApiKey apiKey3 = apiKeyDao.update(apiKey2);
 
