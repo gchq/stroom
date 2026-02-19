@@ -76,7 +76,7 @@ class VisualisationStoreImpl implements VisualisationStore {
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
-        return store.copyDocument(docRef.getUuid(), newName);
+        return copyDocRef;
     }
 
     @Override

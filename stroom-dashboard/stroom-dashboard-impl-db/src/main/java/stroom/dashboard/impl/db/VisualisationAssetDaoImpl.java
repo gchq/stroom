@@ -593,7 +593,9 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                 populateDraft(userUuid, ownerDocId, txnContext);
                 final int rowsUpdated = txnContext.update(Tables.VISUALISATION_ASSETS_DRAFT)
                         .set(Tables.VISUALISATION_ASSETS_DRAFT.DATA, content)
-                        .where(Tables.VISUALISATION_ASSETS_DRAFT.PATH.eq(slashedPath)
+                        .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
+                                .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId))
+                                .and(Tables.VISUALISATION_ASSETS_DRAFT.PATH.eq(slashedPath))
                                 .and(Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH.eq(pathHash)))
                         .execute();
                 if (rowsUpdated != 1) {
