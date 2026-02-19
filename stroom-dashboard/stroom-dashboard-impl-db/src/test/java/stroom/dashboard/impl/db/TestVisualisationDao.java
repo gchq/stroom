@@ -106,6 +106,42 @@ public class TestVisualisationDao {
             Files.delete(tempFile);
         }
 
+    }
+
+    @Test
+    void testCopy() throws IOException {
+        final String fromDocUuid = "fromDocId";
+        final String fromUserUuid = "abcdef";
+        final String toDocUuid = "toDocId";
+
+        VisualisationAssets assets = assetDao.fetchDraftAssets(fromUserUuid, fromDocUuid);
+        assertThat(assets.getAssets().size()).isEqualTo(0);
+        assertThat(assets.isDirty()).isEqualTo(false);
+
+        assetDao.updateNewFolder(fromUserUuid, fromDocUuid, "/assetOne");
+        assets = assetDao.fetchDraftAssets(fromUserUuid, fromDocUuid);
+        assertThat(assets.getAssets().size()).isEqualTo(1);
+        assertThat(assets.isDirty()).isEqualTo(true);
+
+        assetDao.updateNewFile(fromUserUuid, fromDocUuid, "/assetTwo/NewFile.txt");
+        assets = assetDao.fetchDraftAssets(fromUserUuid, fromDocUuid);
+        assertThat(assets.getAssets().size()).isEqualTo(2);
+        assertThat(assets.isDirty()).isEqualTo(true);
+
+        assetDao.saveDraftToLive(fromUserUuid, fromDocUuid);
+        assetDao.copyLiveAssets(fromDocUuid, toDocUuid);
+
+        final VisualisationAssets copiedAssets = assetDao.fetchDraftAssets(fromUserUuid, toDocUuid);
+        assertThat(copiedAssets.getAssets().size()).isEqualTo(2);
+        assertThat(copiedAssets.isDirty()).isEqualTo(false);
+
+        // Try copying again - should blow up
+        try {
+            assetDao.copyLiveAssets(fromDocUuid, toDocUuid);
+            assertThat(false).isEqualTo(true);
+        } catch (final IOException e) {
+            // OK it worked as expected
+        }
 
     }
 }

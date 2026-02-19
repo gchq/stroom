@@ -70,6 +70,12 @@ class VisualisationStoreImpl implements VisualisationStore {
                                final boolean makeNameUnique,
                                final Set<String> existingNames) {
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
+        final DocRef copyDocRef = store.copyDocument(docRef.getUuid(), newName);
+        try {
+            visualisationAssetService.copyAssetsToDoc(docRef, copyDocRef);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
         return store.copyDocument(docRef.getUuid(), newName);
     }
 

@@ -357,4 +357,30 @@ public class VisualisationAssetService {
         }
     }
 
+    /**
+     * Copies assets from the source document into the destination document.
+     * Any assets already in the destination document won't be deleted.
+     * @param fromDocRef Where the assets are coming from.
+     * @param toDocRef Where the assets are going.
+     * @throws IOException If something goes wrong
+     * @throws PermissionException If the user doesn't have permission
+     */
+    void copyAssetsToDoc(final DocRef fromDocRef,
+                         final DocRef toDocRef)
+        throws IOException, PermissionException {
+        LOGGER.info("Copying assets from {} to {}", fromDocRef, toDocRef);
+
+        if (securityContext.hasDocumentPermission(fromDocRef, DocumentPermission.EDIT)) {
+            if (securityContext.hasDocumentPermission(toDocRef, DocumentPermission.EDIT)) {
+                dao.copyLiveAssets(fromDocRef.getUuid(), toDocRef.getUuid());
+            } else {
+                throw new PermissionException(securityContext.getUserRef(),
+                        "You do not have permission to copy to the destination document");
+            }
+        } else {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to copy the source document");
+        }
+    }
+
 }

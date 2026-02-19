@@ -186,4 +186,13 @@ public interface VisualisationAssetDao {
             Instant cacheTimestamp,
             Path cachedPath) throws IOException;
 
+    /**
+     * Copies assets from one docRef to another.
+     * Does not delete assets in the destination. Will throw an error if assets already exist.
+     * @param fromDocId Where the assets are copied from
+     * @param toDocId Where the assets are going to end up
+     * @throws IOException If something goes wrong.
+     */
+    void copyLiveAssets(String fromDocId, String toDocId) throws IOException;
+
 }
