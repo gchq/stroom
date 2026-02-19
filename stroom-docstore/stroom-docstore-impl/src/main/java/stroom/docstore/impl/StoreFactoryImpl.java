@@ -21,7 +21,7 @@ import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.shared.AbstractDoc;
-import stroom.docstore.shared.AbstractDoc.AbstractDocBuilder;
+import stroom.docstore.shared.AbstractDoc.AbstractBuilder;
 import stroom.security.api.SecurityContext;
 import stroom.util.entityevent.EntityEventBus;
 
@@ -50,7 +50,7 @@ public class StoreFactoryImpl implements StoreFactory {
     }
 
     @Override
-    public <D extends AbstractDoc, B extends AbstractDocBuilder<D, ?>> Store<D> createStore(
+    public <D extends AbstractDoc, B extends AbstractBuilder<D, ?>> Store<D> createStore(
             final DocumentSerialiser2<D> serialiser,
             final String type,
             final Supplier<B> builderSupplier,

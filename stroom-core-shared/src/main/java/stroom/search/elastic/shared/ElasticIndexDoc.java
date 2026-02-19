@@ -307,7 +307,7 @@ public class ElasticIndexDoc extends AbstractDoc {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDocBuilder<ElasticIndexDoc, Builder> {
+    public static final class Builder extends AbstractBuilder<ElasticIndexDoc, Builder> {
 
         private DocRef clusterRef;
         private String description;

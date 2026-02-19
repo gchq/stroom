@@ -184,7 +184,7 @@ public class StatisticStoreDoc extends AbstractDoc implements StatisticStore {
     }
 
     public static final class Builder
-            extends AbstractDocBuilder<StatisticStoreDoc, Builder> {
+            extends AbstractBuilder<StatisticStoreDoc, Builder> {
 
         private String description;
         private StatisticType statisticType = StatisticType.COUNT;

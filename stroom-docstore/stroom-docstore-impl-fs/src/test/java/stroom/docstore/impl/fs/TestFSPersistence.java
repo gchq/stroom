@@ -124,7 +124,7 @@ class TestFSPersistence {
             return new Builder();
         }
 
-        public static final class Builder extends AbstractDocBuilder<GenericDoc, Builder> {
+        public static final class Builder extends AbstractBuilder<GenericDoc, Builder> {
 
             private Builder() {
             }

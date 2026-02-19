@@ -170,7 +170,7 @@ public class OpenAIModelDoc extends AbstractDoc {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDocBuilder<OpenAIModelDoc, Builder> {
+    public static final class Builder extends AbstractBuilder<OpenAIModelDoc, Builder> {
 
         private String description;
         private String baseUrl;

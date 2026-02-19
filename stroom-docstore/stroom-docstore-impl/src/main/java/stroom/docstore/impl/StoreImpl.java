@@ -25,7 +25,7 @@ import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Store;
 import stroom.docstore.shared.AbstractDoc;
-import stroom.docstore.shared.AbstractDoc.AbstractDocBuilder;
+import stroom.docstore.shared.AbstractDoc.AbstractBuilder;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
@@ -64,7 +64,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class StoreImpl<D extends AbstractDoc, B extends AbstractDocBuilder<D, ?>> implements Store<D> {
+public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> implements Store<D> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StoreImpl.class);
 
@@ -106,7 +106,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractDocBuilder<D, ?>
         Objects.requireNonNull(name);
 
         // Get a doc builder.
-        final AbstractDocBuilder<D, ?> builder = builderSupplier.get();
+        final AbstractBuilder<D, ?> builder = builderSupplier.get();
 
         final D document = builder
                 .uuid(UUID.randomUUID().toString())
@@ -147,7 +147,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractDocBuilder<D, ?>
         final D document = read(originalUuid);
 
         // Copy and mutate the doc.
-        final AbstractDocBuilder<D, ?> builder = builderFunction
+        final AbstractBuilder<D, ?> builder = builderFunction
                 .apply(document)
                 .uuid(UUID.randomUUID().toString())
                 .name(newName)
@@ -185,7 +185,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractDocBuilder<D, ?>
         // Only update the document if the name has actually changed.
         if (!Objects.equals(document.getName(), name)) {
             // Copy and mutate the doc.
-            final AbstractDocBuilder<D, ?> builder = builderFunction
+            final AbstractBuilder<D, ?> builder = builderFunction
                     .apply(document)
                     .name(name);
             final D updated = update(builder.build(), oldDocRef);
@@ -400,7 +400,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractDocBuilder<D, ?>
                 final D newDocument = serialiser.read(convertedDataMap);
 
                 // Get a builder to mutate the doc.
-                final AbstractDocBuilder<D, ?> builder = builderFunction.apply(newDocument);
+                final AbstractBuilder<D, ?> builder = builderFunction.apply(newDocument);
 
                 // Copy create time and user from the existing document.
                 if (existingDocument != null) {
@@ -629,7 +629,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractDocBuilder<D, ?>
             // somebody else since we last read it.
             final String currentVersion = updatedDoc.getVersion();
             // Copy and mutate the doc.
-            final AbstractDocBuilder<D, ?> builder = builderFunction
+            final AbstractBuilder<D, ?> builder = builderFunction
                     .apply(updatedDoc)
                     .version(UUID.randomUUID().toString());
 

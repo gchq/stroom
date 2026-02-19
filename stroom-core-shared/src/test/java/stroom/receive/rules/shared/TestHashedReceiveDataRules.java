@@ -74,7 +74,7 @@ class TestHashedReceiveDataRules {
                                 .build()))
                 .build();
 
-        DictionaryDoc dict1 = DictionaryDoc.builder()
+        final DictionaryDoc dict1 = DictionaryDoc.builder()
                 .uuid(UUID.randomUUID().toString())
                 .name("dic1")
                 .data("""

@@ -609,8 +609,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 .findAny()
                 .orElse(osUsableSpace);
 
-        return volumeState.
-                copy()
+        return volumeState
+                .copy()
                 .bytesTotal(totalSpace)
                 .bytesFree(freeSpace)
                 .bytesUsed(usedSpace)

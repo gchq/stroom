@@ -941,189 +941,9 @@ paths:
       summary: Update an annotation tag
       tags:
       - Annotations
-  /apikey/v1:
-    delete:
-      deprecated: true
-      operationId: deleteAllApiKeys
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: integer
-                format: int32
-          description: default response
-      summary: Delete all API keys.
-      tags:
-      - Api Keys
-    post:
-      deprecated: true
-      operationId: createApiKey
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateApiKeyRequest"
-        description: CreateApiKeyRequest
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiKey"
-          description: default response
-      summary: Create a new API key.
-      tags:
-      - Api Keys
-  /apikey/v1/byData/{data}:
-    delete:
-      deprecated: true
-      operationId: deleteApiKeyByData
-      parameters:
-      - in: path
-        name: data
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: integer
-                format: int32
-          description: default response
-      summary: Delete an API key by the data itself.
-      tags:
-      - Api Keys
-    get:
-      deprecated: true
-      operationId: fetchApiKeyByData
-      parameters:
-      - in: path
-        name: data
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiKey"
-          description: default response
-      summary: Read a API key by the data itself.
-      tags:
-      - Api Keys
-  /apikey/v1/noauth/getDefaultApiKeyExpirySeconds:
-    get:
-      deprecated: true
-      operationId: getDefaultApiKeyExpirySeconds
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: integer
-                format: int64
-          description: default response
-      summary: Get the default time taken for API keys to expire
-      tags:
-      - Api Keys
-  /apikey/v1/search:
-    post:
-      deprecated: true
-      operationId: searchApiKeys
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SearchApiKeyRequest"
-        description: SearchRequest
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiKeyResultPage"
-          description: default response
-      summary: Submit a search request for API keys
-      tags:
-      - Api Keys
-  /apikey/v1/{id}:
-    delete:
-      deprecated: true
-      operationId: deleteApiKey
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: integer
-          format: int32
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: integer
-                format: int32
-          description: default response
-      summary: Delete a API key by ID.
-      tags:
-      - Api Keys
-    get:
-      deprecated: true
-      operationId: fetchApiKey
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: integer
-          format: int32
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiKey"
-          description: default response
-      summary: Read a API key by ID.
-      tags:
-      - Api Keys
-  /apikey/v1/{id}/enabled:
-    get:
-      deprecated: true
-      operationId: toggleApiKeyEnabled
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: integer
-          format: int32
-      - in: query
-        name: enabled
-        required: true
-        schema:
-          type: boolean
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: integer
-                format: int32
-          description: default response
-      summary: Enable or disable the state of an API key.
-      tags:
-      - Api Keys
   /apikey/v2:
     post:
-      operationId: createApiKey_1
+      operationId: createApiKey
       requestBody:
         content:
           application/json:
@@ -1143,7 +963,7 @@ paths:
       - API Key
   /apikey/v2/deleteBatch:
     delete:
-      operationId: deleteApiKey_2
+      operationId: deleteApiKey_1
       requestBody:
         content:
           application/json:
@@ -1207,7 +1027,7 @@ paths:
       - API Key
   /apikey/v2/{id}:
     delete:
-      operationId: deleteApiKey_1
+      operationId: deleteApiKey
       parameters:
       - in: path
         name: id
@@ -1226,7 +1046,7 @@ paths:
       tags:
       - API Key
     get:
-      operationId: fetchApiKey_1
+      operationId: fetchApiKey
       parameters:
       - in: path
         name: id
@@ -6851,32 +6671,6 @@ paths:
       summary: Destroy a search result store for a node
       tags:
       - ResultStore
-  /result-store/v1/exists/{nodeName}:
-    post:
-      operationId: resultStoreExists
-      parameters:
-      - in: path
-        name: nodeName
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/QueryKey"
-        description: queryKey
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Determines if the requested result store still exists
-      tags:
-      - ResultStore
   /result-store/v1/find/{nodeName}:
     post:
       operationId: findResultStores
@@ -9520,49 +9314,6 @@ components:
           $ref: "#/components/schemas/KeyValueList"
         stringValue:
           type: string
-    ApiKey:
-      type: object
-      properties:
-        comments:
-          type: string
-        createTimeMs:
-          type: integer
-          format: int64
-        createUser:
-          type: string
-        data:
-          type: string
-        enabled:
-          type: boolean
-        expiresOnMs:
-          type: integer
-          format: int64
-        id:
-          type: integer
-          format: int32
-        type:
-          type: string
-        updateTimeMs:
-          type: integer
-          format: int64
-        updateUser:
-          type: string
-        userEmail:
-          type: string
-        userId:
-          type: string
-        version:
-          type: integer
-          format: int32
-    ApiKeyResultPage:
-      type: object
-      properties:
-        pageResponse:
-          $ref: "#/components/schemas/PageResponse"
-        values:
-          type: array
-          items:
-            $ref: "#/components/schemas/ApiKey"
     AppPermissionSet:
       type: object
       discriminator:
@@ -10793,24 +10544,6 @@ components:
           - STATUS
           - LABEL
           - COLLECTION
-    CreateApiKeyRequest:
-      type: object
-      properties:
-        comments:
-          type: string
-        enabled:
-          type: boolean
-        expiresOnMs:
-          type: integer
-          format: int64
-        tokenType:
-          type: string
-          pattern: ^user$|^api$|^email_reset$
-        userId:
-          type: string
-      required:
-      - tokenType
-      - userId
     CreateHashedApiKeyRequest:
       type: object
       properties:
@@ -12106,10 +11839,6 @@ components:
             $ref: "#/components/schemas/Automate"
           embeddedQueryDoc:
             $ref: "#/components/schemas/QueryDoc"
-          lastQueryKey:
-            $ref: "#/components/schemas/QueryKey"
-          lastQueryNode:
-            type: string
           queryRef:
             $ref: "#/components/schemas/DocRef"
           queryTablePreferences:
@@ -16310,10 +16039,6 @@ components:
             $ref: "#/components/schemas/DocRef"
           expression:
             $ref: "#/components/schemas/ExpressionOperator"
-          lastQueryKey:
-            $ref: "#/components/schemas/QueryKey"
-          lastQueryNode:
-            type: string
           selectionHandlers:
             type: array
             items:
@@ -17001,6 +16726,8 @@ components:
           - EXCEL
           - CSV
           - TSV
+        sendEmptyReports:
+          type: boolean
     ReportUiDefaultConfig:
       type: object
       properties:
@@ -17821,20 +17548,6 @@ components:
           type: string
         timeRange:
           $ref: "#/components/schemas/TimeRange"
-    SearchApiKeyRequest:
-      type: object
-      properties:
-        pageRequest:
-          $ref: "#/components/schemas/PageRequest"
-        quickFilter:
-          type: string
-        sort:
-          type: string
-          writeOnly: true
-        sortList:
-          type: array
-          items:
-            $ref: "#/components/schemas/CriteriaFieldSort"
     SearchRequest:
       type: object
       description: A request for new search or a follow up request for more data for

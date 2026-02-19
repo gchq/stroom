@@ -237,7 +237,7 @@ class TestAbstractDocPool {
             return new Builder();
         }
 
-        public static final class Builder extends AbstractDocBuilder<MyDoc, Builder> {
+        public static final class Builder extends AbstractBuilder<MyDoc, Builder> {
 
             private String content = "";
 

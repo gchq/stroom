@@ -164,7 +164,7 @@ public class StroomStatsStoreDoc extends AbstractDoc {
     }
 
     public static final class Builder
-            extends AbstractDocBuilder<StroomStatsStoreDoc, Builder> {
+            extends AbstractBuilder<StroomStatsStoreDoc, Builder> {
 
         private String description;
         private StatisticType statisticType = StatisticType.COUNT;

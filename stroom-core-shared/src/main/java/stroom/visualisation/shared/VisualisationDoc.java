@@ -148,7 +148,7 @@ public class VisualisationDoc extends AbstractDoc {
     }
 
     public static final class Builder
-            extends AbstractDocBuilder<VisualisationDoc, Builder> {
+            extends AbstractBuilder<VisualisationDoc, Builder> {
 
         private String description;
         private String functionName;

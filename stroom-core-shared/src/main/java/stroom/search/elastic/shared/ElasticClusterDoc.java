@@ -125,7 +125,7 @@ public class ElasticClusterDoc extends AbstractDoc {
     }
 
     public static final class Builder
-            extends AbstractDocBuilder<ElasticClusterDoc, Builder> {
+            extends AbstractBuilder<ElasticClusterDoc, Builder> {
 
         private String description;
         private ElasticConnectionConfig connection = new ElasticConnectionConfig();

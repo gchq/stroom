@@ -303,7 +303,7 @@ public class FeedDoc extends AbstractDoc {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDocBuilder<FeedDoc, Builder> {
+    public static final class Builder extends AbstractBuilder<FeedDoc, Builder> {
 
         private String description;
         private String classification;

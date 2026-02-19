@@ -185,7 +185,7 @@ public class XmlSchemaDoc extends AbstractDoc implements HasData {
     }
 
     public static final class Builder
-            extends AbstractDocBuilder<XmlSchemaDoc, Builder> {
+            extends AbstractBuilder<XmlSchemaDoc, Builder> {
 
         private String description;
         private String namespaceURI;

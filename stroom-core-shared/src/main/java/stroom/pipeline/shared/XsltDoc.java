@@ -132,7 +132,7 @@ public class XsltDoc extends AbstractDoc implements HasData {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDocBuilder<XsltDoc, Builder> {
+    public static final class Builder extends AbstractBuilder<XsltDoc, Builder> {
 
         private String description;
         private String data;

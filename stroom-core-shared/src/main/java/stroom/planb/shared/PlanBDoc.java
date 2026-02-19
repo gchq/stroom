@@ -139,7 +139,7 @@ public class PlanBDoc extends AbstractDoc {
         return new Builder();
     }
 
-    public static class Builder extends AbstractDocBuilder<PlanBDoc, Builder> {
+    public static class Builder extends AbstractBuilder<PlanBDoc, Builder> {
 
         private String description;
         private StateType stateType;

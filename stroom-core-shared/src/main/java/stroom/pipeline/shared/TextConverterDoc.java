@@ -171,7 +171,7 @@ public class TextConverterDoc extends AbstractDoc implements HasData {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDocBuilder<TextConverterDoc, Builder> {
+    public static final class Builder extends AbstractBuilder<TextConverterDoc, Builder> {
 
         private String description;
         private String data;

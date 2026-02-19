@@ -222,7 +222,7 @@ public class PathwaysDoc extends AbstractDoc {
     }
 
     public static final class Builder
-            extends AbstractDocBuilder<PathwaysDoc, Builder> {
+            extends AbstractBuilder<PathwaysDoc, Builder> {
 
         private String description;
         private SimpleDuration temporalOrderingTolerance = new SimpleDuration(0, TimeUnit.NANOSECONDS);

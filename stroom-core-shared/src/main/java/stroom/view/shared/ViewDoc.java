@@ -147,7 +147,7 @@ public class ViewDoc extends AbstractDoc {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDocBuilder<ViewDoc, Builder> {
+    public static final class Builder extends AbstractBuilder<ViewDoc, Builder> {
 
         private String description;
         private DocRef dataSource;

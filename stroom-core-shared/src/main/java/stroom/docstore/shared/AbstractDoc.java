@@ -150,7 +150,7 @@ public abstract class AbstractDoc implements Document {
     // --------------------------------------------------------------------------------
 
 
-    public abstract static class AbstractDocBuilder<T extends AbstractDoc, B extends AbstractDocBuilder<T, ?>>
+    public abstract static class AbstractBuilder<T extends AbstractDoc, B extends AbstractBuilder<T, ?>>
             implements HasAuditInfoBuilder<T, B> {
 
         protected String uuid;
@@ -161,10 +161,10 @@ public abstract class AbstractDoc implements Document {
         protected Long updateTimeMs;
         protected String updateUser;
 
-        public AbstractDocBuilder() {
+        public AbstractBuilder() {
         }
 
-        public AbstractDocBuilder(final AbstractDoc doc) {
+        public AbstractBuilder(final AbstractDoc doc) {
             this.uuid = doc.uuid;
             this.name = doc.name;
             this.version = doc.version;

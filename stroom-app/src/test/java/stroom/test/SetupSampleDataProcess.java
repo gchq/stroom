@@ -636,11 +636,8 @@ public final class SetupSampleDataProcess {
                     .displayName(name)
                     .uuid(UUID.randomUUID().toString())
                     .group(true)
+                    .stampAudit("admin")
                     .build();
-            user.setCreateUser("admin");
-            user.setUpdateUser("admin");
-            user.setCreateTimeMs(System.currentTimeMillis());
-            user.setUpdateTimeMs(System.currentTimeMillis());
             return userDao.create(user);
         });
     }
@@ -653,11 +650,8 @@ public final class SetupSampleDataProcess {
                     .displayName(name)
                     .uuid(UUID.randomUUID().toString())
                     .group(false)
+                    .stampAudit("admin")
                     .build();
-            user.setCreateUser("admin");
-            user.setUpdateUser("admin");
-            user.setCreateTimeMs(System.currentTimeMillis());
-            user.setUpdateTimeMs(System.currentTimeMillis());
             return userDao.create(user);
         });
     }

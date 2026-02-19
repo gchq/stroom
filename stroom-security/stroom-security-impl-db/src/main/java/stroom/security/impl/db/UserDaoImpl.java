@@ -76,27 +76,28 @@ public class UserDaoImpl implements UserDao {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(UserDaoImpl.class);
 
     private static final Function<Record, User> RECORD_TO_USER_MAPPER = record -> {
-        final User user = new User();
-        // This is just the PK of the table.
-        user.setId(record.get(STROOM_USER.ID));
-        user.setVersion(record.get(STROOM_USER.VERSION));
-        user.setCreateTimeMs(record.get(STROOM_USER.CREATE_TIME_MS));
-        user.setCreateUser(record.get(STROOM_USER.CREATE_USER));
-        user.setUpdateTimeMs(record.get(STROOM_USER.UPDATE_TIME_MS));
-        user.setUpdateUser(record.get(STROOM_USER.UPDATE_USER));
-        // This is the unique 'sub'/'oid' when using OIDC
-        // or it is the username if using internal IDP
-        // or it is the group name.
-        user.setSubjectId(record.get(STROOM_USER.NAME));
-        // Our own UUID for the user, independent of any identity provider
-        user.setUuid(record.get(STROOM_USER.UUID));
-        user.setGroup(record.get(STROOM_USER.IS_GROUP));
-        // Optional
-        user.setDisplayName(record.get(STROOM_USER.DISPLAY_NAME));
-        // Optional
-        user.setFullName(record.get(STROOM_USER.FULL_NAME));
-        user.setEnabled(record.get(STROOM_USER.ENABLED));
-        return user;
+        return User
+                .builder()
+                // This is just the PK of the table.
+                .id(record.get(STROOM_USER.ID))
+                .version(record.get(STROOM_USER.VERSION))
+                .createTimeMs(record.get(STROOM_USER.CREATE_TIME_MS))
+                .createUser(record.get(STROOM_USER.CREATE_USER))
+                .updateTimeMs(record.get(STROOM_USER.UPDATE_TIME_MS))
+                .updateUser(record.get(STROOM_USER.UPDATE_USER))
+                // This is the unique 'sub'/'oid' when using OIDC
+                // or it is the username if using internal IDP
+                // or it is the group name.
+                .subjectId(record.get(STROOM_USER.NAME))
+                // Our own UUID for the user, independent of any identity provider
+                .uuid(record.get(STROOM_USER.UUID))
+                .group(record.get(STROOM_USER.IS_GROUP))
+                // Optional
+                .displayName(record.get(STROOM_USER.DISPLAY_NAME))
+                // Optional
+                .fullName(record.get(STROOM_USER.FULL_NAME))
+                .enabled(record.get(STROOM_USER.ENABLED))
+                .build();
     };
 
     private static final Map<String, Field<?>> SORT_FIELD_NAME_TO_FIELD_MAP = Map.of(
@@ -147,10 +148,13 @@ public class UserDaoImpl implements UserDao {
     }
 
     private User create(final DSLContext context, final User user) {
-        user.setVersion(1);
-        user.setUuid(UUID.randomUUID().toString());
-        // DB requires a display name so default to the subjectId if there isn't one
-        user.setDisplayName(getDisplayNameOrSubjectId(user));
+        User updated = user
+                .copy()
+                .version(1)
+                .uuid(UUID.randomUUID().toString())
+                // DB requires a display name so default to the subjectId if there isn't one
+                .displayName(getDisplayNameOrSubjectId(user))
+                .build();
         final Integer id = context
                 .insertInto(STROOM_USER)
                 .columns(STROOM_USER.VERSION,
@@ -164,24 +168,24 @@ public class UserDaoImpl implements UserDao {
                         STROOM_USER.ENABLED,
                         STROOM_USER.DISPLAY_NAME,
                         STROOM_USER.FULL_NAME)
-                .values(user.getVersion(),
-                        user.getCreateTimeMs(),
-                        user.getCreateUser(),
-                        user.getUpdateTimeMs(),
-                        user.getUpdateUser(),
-                        user.getSubjectId(),
-                        user.getUuid(),
-                        user.isGroup(),
-                        user.isEnabled(),
-                        user.getDisplayName(),
-                        user.getFullName())
+                .values(updated.getVersion(),
+                        updated.getCreateTimeMs(),
+                        updated.getCreateUser(),
+                        updated.getUpdateTimeMs(),
+                        updated.getUpdateUser(),
+                        updated.getSubjectId(),
+                        updated.getUuid(),
+                        updated.isGroup(),
+                        updated.isEnabled(),
+                        updated.getDisplayName(),
+                        updated.getFullName())
                 .returning(STROOM_USER.ID)
                 .fetchOne(STROOM_USER.ID);
         Objects.requireNonNull(id);
-        user.setId(id);
+        updated = updated.copy().id(id).build();
 
-        insertOrUpdateStroomUserArchiveRecord(context, user.getUuid());
-        return user;
+        insertOrUpdateStroomUserArchiveRecord(context, updated.getUuid());
+        return updated;
     }
 
     @Override

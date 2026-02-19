@@ -356,13 +356,14 @@ class TestAppPermissionDaoImpl {
     }
 
     private UserRef createUserOrGroup(final String name, final boolean group) {
-        final User user = User.builder()
+        final User user = User
+                .builder()
                 .subjectId(name)
                 .displayName(name)
                 .uuid(UUID.randomUUID().toString())
                 .group(group)
+                .stampAudit("test")
                 .build();
-        AuditUtil.stamp(() -> "test", user);
         return userDao.create(user).asRef();
     }
 }
