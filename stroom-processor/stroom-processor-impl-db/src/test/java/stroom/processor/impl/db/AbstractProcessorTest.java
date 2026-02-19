@@ -156,16 +156,18 @@ class AbstractProcessorTest {
     }
 
     protected Processor createProcessor() {
-        final Processor processor = new Processor(new DocRef(
-                PipelineDoc.TYPE,
-                UUID.randomUUID().toString()));
-        processor.setCreateTimeMs(System.currentTimeMillis());
-        processor.setCreateUser("jbloggs");
-        processor.setUpdateTimeMs(System.currentTimeMillis());
-        processor.setUpdateUser("jbloggs");
-        processor.setUuid(UUID.randomUUID().toString());
-        processor.setEnabled(true);
-        processor.setDeleted(false);
+        final Processor processor = Processor.builder()
+                .pipeline(new DocRef(
+                        PipelineDoc.TYPE,
+                        UUID.randomUUID().toString()))
+                .createTimeMs(System.currentTimeMillis())
+                .createUser("jbloggs")
+                .updateTimeMs(System.currentTimeMillis())
+                .updateUser("jbloggs")
+                .uuid(UUID.randomUUID().toString())
+                .enabled(true)
+                .deleted(false)
+                .build();
         return processorDao.create(processor);
     }
 

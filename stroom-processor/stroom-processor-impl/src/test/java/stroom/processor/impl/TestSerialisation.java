@@ -41,7 +41,7 @@ public class TestSerialisation {
         final ObjectMapper objectMapper = JsonUtil.getMapper();
 
         final List<ProcessorListRow> rows = new ArrayList<>();
-        rows.add(new ProcessorRow(new Expander(), new Processor()));
+        rows.add(new ProcessorRow(new Expander(), Processor.builder().build()));
         rows.add(new ProcessorFilterRow(new ProcessorFilter()));
 
         final ProcessorListRowResultPage resultPage1 = new ProcessorListRowResultPage(

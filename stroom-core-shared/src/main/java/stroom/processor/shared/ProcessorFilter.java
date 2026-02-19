@@ -18,6 +18,7 @@ package stroom.processor.shared;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
+import stroom.docref.DocRef.TypedBuilder;
 import stroom.docref.HasUuid;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.shared.AbstractBuilder;
@@ -310,7 +311,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     public void setPipelineUuid(final String pipelineUuid) {
         this.pipelineUuid = pipelineUuid;
         if (processor != null) {
-            processor.setPipelineUuid(pipelineUuid);
+            processor = processor.copy().pipelineUuid(pipelineUuid).build();
         }
     }
 
@@ -321,7 +322,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     public void setPipelineName(final String pipelineName) {
         this.pipelineName = pipelineName;
         if (processor != null) {
-            processor.setPipelineName(pipelineName);
+            processor = processor.copy().pipelineName(pipelineName).build();
         }
     }
 
@@ -510,7 +511,7 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     /**
      * @return A new builder for creating a {@link DocRef} for this document's type.
      */
-    public static DocRef.TypedBuilder buildDocRef() {
+    public static TypedBuilder buildDocRef() {
         return DocRef.builder(ENTITY_TYPE);
     }
 
@@ -527,8 +528,8 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
 
 
     public static class Builder
-            extends AbstractBuilder<ProcessorFilter, ProcessorFilter.Builder>
-            implements HasAuditInfoBuilder<ProcessorFilter, ProcessorFilter.Builder> {
+            extends AbstractBuilder<ProcessorFilter, Builder>
+            implements HasAuditInfoBuilder<ProcessorFilter, Builder> {
 
         private Integer id;
         private Integer version;

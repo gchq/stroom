@@ -372,10 +372,10 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                     return o1.getId().compareTo(o2.getId());
                 });
 
-                for (final Processor processor : sorted) {
+                for (Processor processor : sorted) {
                     final Expander processorExpander = new Expander(0, false, false);
 
-                    updatePipelineName(processor);
+                    processor = updatePipelineName(processor);
 
                     final ProcessorRow processorRow = new ProcessorRow(processorExpander,
                             processor);
@@ -403,12 +403,13 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
 
                                     if (processorFilter.getPipelineName() == null) {
                                         if (processor.getPipelineName() == null) {
-                                            updatePipelineName(processor);
+                                            processor = updatePipelineName(processor);
                                         }
                                         processorFilter.setPipelineName(processor.getPipelineName());
                                     }
 
                                     final ProcessorFilterRow processorFilterRow = getRow(processorFilter);
+                                    processorFilter.setProcessor(processor);
                                     values.add(processorFilterRow);
                                 }
                             }
@@ -426,12 +427,12 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         return new ProcessorFilterRow(processorFilter);
     }
 
-    private void updatePipelineName(final Processor processor) {
+    private Processor updatePipelineName(final Processor processor) {
         if (processor.getPipelineName() == null && processor.getPipelineUuid() != null) {
             final Optional<String> pipelineName = getPipelineName(
                     processor.getProcessorType(),
                     processor.getPipelineUuid());
-            processor.setPipelineName(pipelineName.orElseGet(() -> {
+            return processor.copy().pipelineName(pipelineName.orElseGet(() -> {
                 LOGGER.warn("Unable to find Pipeline " +
                             processor.getPipelineUuid() +
                             " associated with Processor " +
@@ -441,8 +442,9 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                             ")" +
                             " Has it been deleted?");
                 return null;
-            }));
+            })).build();
         }
+        return processor;
     }
 
     @Override

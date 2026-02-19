@@ -505,7 +505,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
 
                 } else if (row instanceof final ProcessorRow processorRow) {
                     final Processor processor = processorRow.getProcessor();
-                    processor.setEnabled(value.toBoolean());
+//                    processor.setEnabled(value.toBoolean());
 
                     processorEnabledSaveQueue.setValue(processor.getId(), value.toBoolean());
 //                    final Rest<Processor> rest = restFactory.create();

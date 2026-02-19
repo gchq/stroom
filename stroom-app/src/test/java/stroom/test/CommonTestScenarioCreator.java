@@ -84,9 +84,11 @@ public class CommonTestScenarioCreator {
     }
 
     public void createProcessor(final QueryData queryData) {
-        Processor processor = new Processor();
-        processor.setPipelineUuid(UUID.randomUUID().toString());
-        processor.setEnabled(true);
+        Processor processor = Processor
+                .builder()
+                .pipelineUuid(UUID.randomUUID().toString())
+                .enabled(true)
+                .build();
         processor = streamProcessorService.create(processor);
         processorFilterService.create(processor,
                 CreateProcessFilterRequest

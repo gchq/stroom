@@ -332,9 +332,8 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 // Un-delete the parent processor if needs be
                 Processor processor = processorFilter.getProcessor();
                 if (processor.isDeleted()) {
-                    processor.setDeleted(false);
                     processor = processorDaoImplProvider.get()
-                            .update(processor, txnContext);
+                            .update(processor.copy().deleted(false).build(), txnContext);
                     processorFilter.setProcessor(processor);
                 }
 
