@@ -21,10 +21,8 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRef.TypedBuilder;
 import stroom.docref.HasUuid;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.AuditInfoBuilder;
 import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasAuditInfoBuilder;
-import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.UserRef;
 
@@ -527,16 +525,10 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder
-            extends AbstractBuilder<ProcessorFilter, Builder>
-            implements HasAuditInfoBuilder<ProcessorFilter, Builder> {
+    public static class Builder extends AuditInfoBuilder<ProcessorFilter, Builder> {
 
         private Integer id;
         private Integer version;
-        private Long createTimeMs;
-        private String createUser;
-        private Long updateTimeMs;
-        private String updateUser;
         private String uuid;
         private QueryData queryData;
         private ProcessorType processorType;
@@ -599,26 +591,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
 
         public Builder version(final Integer version) {
             this.version = version;
-            return self();
-        }
-
-        public Builder createTimeMs(final Long createTimeMs) {
-            this.createTimeMs = createTimeMs;
-            return self();
-        }
-
-        public Builder createUser(final String createUser) {
-            this.createUser = createUser;
-            return self();
-        }
-
-        public Builder updateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
-            return self();
-        }
-
-        public Builder updateUser(final String updateUser) {
-            this.updateUser = updateUser;
             return self();
         }
 
@@ -707,23 +679,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, HasIntegerId {
 
         public Builder maxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
             this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
-            return self();
-        }
-
-        public final Builder stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
-            return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
-        }
-
-        public final Builder stampAudit(final String user) {
-            final long now = System.currentTimeMillis();
-            if (createTimeMs == null) {
-                this.createTimeMs = now;
-            }
-            if (createUser == null) {
-                this.createUser = user;
-            }
-            updateTimeMs = now;
-            updateUser = user;
             return self();
         }
 

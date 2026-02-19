@@ -28,37 +28,36 @@ public abstract class AuditInfoBuilder<T, B extends AuditInfoBuilder<T, ?>>
     protected AuditInfoBuilder() {
     }
 
-    protected AuditInfoBuilder(final HasAuditInfoGetters doc) {
-        this.createTimeMs = doc.getCreateTimeMs();
-        this.createUser = doc.getCreateUser();
-        this.updateUser = doc.getUpdateUser();
-        this.updateTimeMs = doc.getUpdateTimeMs();
-    }
-
+    @Override
     public final B createTimeMs(final Long createTimeMs) {
         this.createTimeMs = createTimeMs;
         return self();
     }
 
+    @Override
     public final B createUser(final String createUser) {
         this.createUser = createUser;
         return self();
     }
 
+    @Override
     public final B updateTimeMs(final Long updateTimeMs) {
         this.updateTimeMs = updateTimeMs;
         return self();
     }
 
+    @Override
     public final B updateUser(final String updateUser) {
         this.updateUser = updateUser;
         return self();
     }
 
+    @Override
     public final B stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
         return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
     }
 
+    @Override
     public final B stampAudit(final String user) {
         final long now = System.currentTimeMillis();
         if (createTimeMs == null) {
@@ -69,6 +68,15 @@ public abstract class AuditInfoBuilder<T, B extends AuditInfoBuilder<T, ?>>
         }
         updateTimeMs = now;
         updateUser = user;
+        return self();
+    }
+
+    @Override
+    public final B removeAudit() {
+        this.createTimeMs = null;
+        this.createUser = null;
+        updateTimeMs = null;
+        updateUser = null;
         return self();
     }
 }

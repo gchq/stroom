@@ -189,30 +189,36 @@ public abstract class AbstractDoc implements Document {
             return self();
         }
 
+        @Override
         public B createTimeMs(final Long createTimeMs) {
             this.createTimeMs = createTimeMs;
             return self();
         }
 
+        @Override
         public B createUser(final String createUser) {
             this.createUser = createUser;
             return self();
         }
 
+        @Override
         public B updateTimeMs(final Long updateTimeMs) {
             this.updateTimeMs = updateTimeMs;
             return self();
         }
 
+        @Override
         public B updateUser(final String updateUser) {
             this.updateUser = updateUser;
             return self();
         }
 
+        @Override
         public final B stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
             return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
         }
 
+        @Override
         public final B stampAudit(final String user) {
             final long now = System.currentTimeMillis();
             if (createTimeMs == null) {
@@ -223,6 +229,15 @@ public abstract class AbstractDoc implements Document {
             }
             updateTimeMs = now;
             updateUser = user;
+            return self();
+        }
+
+        @Override
+        public final B removeAudit() {
+            this.createTimeMs = null;
+            this.createUser = null;
+            updateTimeMs = null;
+            updateUser = null;
             return self();
         }
 

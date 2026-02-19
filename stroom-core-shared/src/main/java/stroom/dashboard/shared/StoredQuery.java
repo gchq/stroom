@@ -17,9 +17,7 @@
 package stroom.dashboard.shared;
 
 import stroom.query.api.Query;
-import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.HasAuditInfoBuilder;
-import stroom.util.shared.HasAuditableUserIdentity;
+import stroom.util.shared.AuditInfoBuilder;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.UserRef;
 
@@ -170,16 +168,10 @@ public class StoredQuery implements HasIntegerId {
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder
-            extends AbstractBuilder<StoredQuery, StoredQuery.Builder>
-            implements HasAuditInfoBuilder<StoredQuery, StoredQuery.Builder> {
+    public static class Builder extends AuditInfoBuilder<StoredQuery, Builder> {
 
         private Integer id;
         private Integer version;
-        private Long createTimeMs;
-        private String createUser;
-        private Long updateTimeMs;
-        private String updateUser;
         private String uuid;
         private String dashboardUuid;
         private String componentId;
@@ -217,26 +209,6 @@ public class StoredQuery implements HasIntegerId {
             return self();
         }
 
-        public Builder createTimeMs(final Long createTimeMs) {
-            this.createTimeMs = createTimeMs;
-            return self();
-        }
-
-        public Builder createUser(final String createUser) {
-            this.createUser = createUser;
-            return self();
-        }
-
-        public Builder updateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
-            return self();
-        }
-
-        public Builder updateUser(final String updateUser) {
-            this.updateUser = updateUser;
-            return self();
-        }
-
         public Builder uuid(final String uuid) {
             this.uuid = uuid;
             return self();
@@ -269,23 +241,6 @@ public class StoredQuery implements HasIntegerId {
 
         public Builder query(final Query query) {
             this.query = query;
-            return self();
-        }
-
-        public final Builder stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
-            return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
-        }
-
-        public final Builder stampAudit(final String user) {
-            final long now = System.currentTimeMillis();
-            if (createTimeMs == null) {
-                this.createTimeMs = now;
-            }
-            if (createUser == null) {
-                this.createUser = user;
-            }
-            updateTimeMs = now;
-            updateUser = user;
             return self();
         }
 

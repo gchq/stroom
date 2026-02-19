@@ -20,10 +20,8 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
 import stroom.docref.HasUuid;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.HasAuditInfoBuilder;
+import stroom.util.shared.AuditInfoBuilder;
 import stroom.util.shared.HasAuditInfoGetters;
-import stroom.util.shared.HasAuditableUserIdentity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -237,16 +235,10 @@ public class Processor implements HasAuditInfoGetters, HasUuid {
         return DocRef.builder(ENTITY_TYPE);
     }
 
-    public static final class Builder
-            extends AbstractBuilder<Processor, Builder>
-            implements HasAuditInfoBuilder<Processor, Builder> {
+    public static final class Builder extends AuditInfoBuilder<Processor, Builder> {
 
         private Integer id;
         private Integer version;
-        private Long createTimeMs;
-        private String createUser;
-        private Long updateTimeMs;
-        private String updateUser;
         private String uuid;
         private ProcessorType processorType = ProcessorType.PIPELINE;
         private String pipelineUuid;
@@ -279,30 +271,6 @@ public class Processor implements HasAuditInfoGetters, HasUuid {
 
         public Builder version(final Integer version) {
             this.version = version;
-            return self();
-        }
-
-        @Override
-        public Builder createTimeMs(final Long createTimeMs) {
-            this.createTimeMs = createTimeMs;
-            return self();
-        }
-
-        @Override
-        public Builder createUser(final String createUser) {
-            this.createUser = createUser;
-            return self();
-        }
-
-        @Override
-        public Builder updateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
-            return self();
-        }
-
-        @Override
-        public Builder updateUser(final String updateUser) {
-            this.updateUser = updateUser;
             return self();
         }
 
@@ -339,23 +307,6 @@ public class Processor implements HasAuditInfoGetters, HasUuid {
 
         public Builder deleted(final boolean deleted) {
             this.deleted = deleted;
-            return self();
-        }
-
-        public Builder stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
-            return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
-        }
-
-        public Builder stampAudit(final String user) {
-            final long now = System.currentTimeMillis();
-            if (createTimeMs == null) {
-                this.createTimeMs = now;
-            }
-            if (createUser == null) {
-                this.createUser = user;
-            }
-            updateTimeMs = now;
-            updateUser = user;
             return self();
         }
 

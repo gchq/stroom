@@ -16,10 +16,8 @@
 
 package stroom.data.store.impl.fs.shared;
 
-import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.HasAuditInfoBuilder;
+import stroom.util.shared.AuditInfoBuilder;
 import stroom.util.shared.HasAuditInfoGetters;
-import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -139,16 +137,10 @@ public class FsVolumeGroup implements HasAuditInfoGetters, HasIntegerId {
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder
-            extends AbstractBuilder<FsVolumeGroup, Builder>
-            implements HasAuditInfoBuilder<FsVolumeGroup, Builder> {
+    public static class Builder extends AuditInfoBuilder<FsVolumeGroup, Builder> {
 
         private Integer id;
         private Integer version;
-        private Long createTimeMs;
-        private String createUser;
-        private Long updateTimeMs;
-        private String updateUser;
         private String name;
 
         private Builder() {
@@ -174,49 +166,8 @@ public class FsVolumeGroup implements HasAuditInfoGetters, HasIntegerId {
             return self();
         }
 
-        @Override
-        public Builder createTimeMs(final Long createTimeMs) {
-            this.createTimeMs = createTimeMs;
-            return self();
-        }
-
-        @Override
-        public Builder createUser(final String createUser) {
-            this.createUser = createUser;
-            return self();
-        }
-
-        @Override
-        public Builder updateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
-            return self();
-        }
-
-        @Override
-        public Builder updateUser(final String updateUser) {
-            this.updateUser = updateUser;
-            return self();
-        }
-
         public Builder name(final String name) {
             this.name = name;
-            return self();
-        }
-
-        public final Builder stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
-            return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
-        }
-
-        public final Builder stampAudit(final String user) {
-            final long now = System.currentTimeMillis();
-            if (createTimeMs == null) {
-                this.createTimeMs = now;
-            }
-            if (createUser == null) {
-                this.createUser = user;
-            }
-            updateTimeMs = now;
-            updateUser = user;
             return self();
         }
 

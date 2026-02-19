@@ -17,9 +17,8 @@
 package stroom.activity.shared;
 
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.HasAuditInfoBuilder;
+import stroom.util.shared.AuditInfoBuilder;
 import stroom.util.shared.HasAuditInfoGetters;
-import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
@@ -149,16 +148,10 @@ public class Activity implements HasAuditInfoGetters, HasIntegerId {
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder
-            extends AbstractBuilder<Activity, Activity.Builder>
-            implements HasAuditInfoBuilder<Activity, Activity.Builder> {
+    public static class Builder extends AuditInfoBuilder<Activity, Builder> {
 
         private Integer id;
         private Integer version;
-        private Long createTimeMs;
-        private String createUser;
-        private Long updateTimeMs;
-        private String updateUser;
         private UserRef userRef;
         private ActivityDetails details;
 
@@ -187,30 +180,6 @@ public class Activity implements HasAuditInfoGetters, HasIntegerId {
             return self();
         }
 
-        @Override
-        public Builder createTimeMs(final Long createTimeMs) {
-            this.createTimeMs = createTimeMs;
-            return self();
-        }
-
-        @Override
-        public Builder createUser(final String createUser) {
-            this.createUser = createUser;
-            return self();
-        }
-
-        @Override
-        public Builder updateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
-            return self();
-        }
-
-        @Override
-        public Builder updateUser(final String updateUser) {
-            this.updateUser = updateUser;
-            return self();
-        }
-
         public Builder userRef(final UserRef userRef) {
             this.userRef = userRef;
             return self();
@@ -218,23 +187,6 @@ public class Activity implements HasAuditInfoGetters, HasIntegerId {
 
         public Builder details(final ActivityDetails details) {
             this.details = details;
-            return self();
-        }
-
-        public final Builder stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
-            return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
-        }
-
-        public final Builder stampAudit(final String user) {
-            final long now = System.currentTimeMillis();
-            if (createTimeMs == null) {
-                this.createTimeMs = now;
-            }
-            if (createUser == null) {
-                this.createUser = user;
-            }
-            updateTimeMs = now;
-            updateUser = user;
             return self();
         }
 

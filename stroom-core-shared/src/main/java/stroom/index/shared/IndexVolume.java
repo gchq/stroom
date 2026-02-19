@@ -17,9 +17,7 @@
 package stroom.index.shared;
 
 import stroom.docref.HasDisplayValue;
-import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.HasAuditInfoBuilder;
-import stroom.util.shared.HasAuditableUserIdentity;
+import stroom.util.shared.AuditInfoBuilder;
 import stroom.util.shared.HasCapacity;
 import stroom.util.shared.HasCapacityInfo;
 import stroom.util.shared.HasIntegerId;
@@ -281,16 +279,10 @@ public class IndexVolume implements HasIntegerId, HasCapacity {
         }
     }
 
-    public static final class Builder
-            extends AbstractBuilder<IndexVolume, IndexVolume.Builder>
-            implements HasAuditInfoBuilder<IndexVolume, IndexVolume.Builder> {
+    public static final class Builder extends AuditInfoBuilder<IndexVolume, Builder> {
 
         private Integer id;
         private Integer version;
-        private Long createTimeMs;
-        private String createUser;
-        private Long updateTimeMs;
-        private String updateUser;
         private String path;
         private String nodeName;
         private VolumeUseState state = VolumeUseState.ACTIVE;
@@ -329,30 +321,6 @@ public class IndexVolume implements HasIntegerId, HasCapacity {
 
         public Builder version(final Integer version) {
             this.version = version;
-            return self();
-        }
-
-        @Override
-        public Builder createTimeMs(final Long createTimeMs) {
-            this.createTimeMs = createTimeMs;
-            return self();
-        }
-
-        @Override
-        public Builder createUser(final String createUser) {
-            this.createUser = createUser;
-            return self();
-        }
-
-        @Override
-        public Builder updateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
-            return self();
-        }
-
-        @Override
-        public Builder updateUser(final String updateUser) {
-            this.updateUser = updateUser;
             return self();
         }
 
@@ -398,23 +366,6 @@ public class IndexVolume implements HasIntegerId, HasCapacity {
 
         public Builder indexVolumeGroupId(final Integer indexVolumeGroupId) {
             this.indexVolumeGroupId = indexVolumeGroupId;
-            return self();
-        }
-
-        public Builder stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
-            return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
-        }
-
-        public Builder stampAudit(final String user) {
-            final long now = System.currentTimeMillis();
-            if (createTimeMs == null) {
-                this.createTimeMs = now;
-            }
-            if (createUser == null) {
-                this.createUser = user;
-            }
-            updateTimeMs = now;
-            updateUser = user;
             return self();
         }
 

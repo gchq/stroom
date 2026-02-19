@@ -16,7 +16,6 @@
 
 package stroom.util;
 
-import stroom.util.shared.AuditInfoBuilder;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasAuditInfoBuilder;
 import stroom.util.shared.HasAuditInfoGetters;
@@ -89,15 +88,15 @@ public final class AuditUtil {
     /**
      * Remove audit data from docs.
      *
-     * @param builderFactory The builder factory that allows a builder to be created for the doc that can remove the
-     *                       fields.
-     * @param doc            The doc to alter.
-     * @param <D>            Doc type.
-     * @param <B>            Builder type.
+     * @param builderFunction The builder factory that allows a builder to be created for the doc that can remove the
+     *                        fields.
+     * @param doc             The doc to alter.
+     * @param <D>             Doc type.
+     * @param <B>             Builder type.
      * @return The doc with audit fields removed.
      */
     public static <D, B extends HasAuditInfoBuilder<D, ?>> D removeAuditData(final Function<D, B> builderFunction,
-                                                                          final D doc) {
+                                                                             final D doc) {
         return builderFunction
                 .apply(doc)
                 .createTimeMs(null)

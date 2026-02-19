@@ -29,4 +29,6 @@ public interface HasAuditInfoBuilder<T, B extends HasAuditInfoBuilder<T, ?>> ext
     B stampAudit(HasAuditableUserIdentity hasAuditableUserIdentity);
 
     B stampAudit(String user);
+
+    B removeAudit();
 }

@@ -16,10 +16,8 @@
 
 package stroom.config.global.shared;
 
-import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.AuditInfoBuilder;
 import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasAuditInfoBuilder;
-import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.PropertyPath;
 
@@ -556,16 +554,10 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
         return new Builder(copy);
     }
 
-    public static class Builder
-            extends AbstractBuilder<ConfigProperty, ConfigProperty.Builder>
-            implements HasAuditInfoBuilder<ConfigProperty, ConfigProperty.Builder> {
+    public static class Builder extends AuditInfoBuilder<ConfigProperty, ConfigProperty.Builder> {
 
         private Integer id;
         private Integer version;
-        private Long createTimeMs;
-        private String createUser;
-        private Long updateTimeMs;
-        private String updateUser;
         private PropertyPath name;
         private String defaultValue;
         private OverrideValue<String> databaseOverrideValue;
@@ -608,26 +600,6 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
 
         public Builder version(final Integer version) {
             this.version = version;
-            return self();
-        }
-
-        public Builder createTimeMs(final Long createTimeMs) {
-            this.createTimeMs = createTimeMs;
-            return self();
-        }
-
-        public Builder createUser(final String createUser) {
-            this.createUser = createUser;
-            return self();
-        }
-
-        public Builder updateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
-            return self();
-        }
-
-        public Builder updateUser(final String updateUser) {
-            this.updateUser = updateUser;
             return self();
         }
 
@@ -697,23 +669,6 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
 
         public Builder dataTypeName(final String dataTypeName) {
             this.dataTypeName = dataTypeName;
-            return self();
-        }
-
-        public final Builder stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
-            return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
-        }
-
-        public final Builder stampAudit(final String user) {
-            final long now = System.currentTimeMillis();
-            if (createTimeMs == null) {
-                this.createTimeMs = now;
-            }
-            if (createUser == null) {
-                this.createUser = user;
-            }
-            updateTimeMs = now;
-            updateUser = user;
             return self();
         }
 

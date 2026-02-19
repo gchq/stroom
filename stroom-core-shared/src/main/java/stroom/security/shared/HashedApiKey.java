@@ -16,10 +16,8 @@
 
 package stroom.security.shared;
 
-import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.HasAuditInfoBuilder;
+import stroom.util.shared.AuditInfoBuilder;
 import stroom.util.shared.HasAuditInfoGetters;
-import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.UserRef;
 
@@ -232,16 +230,10 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
     // --------------------------------------------------------------------------------
 
 
-    public static final class Builder
-            extends AbstractBuilder<HashedApiKey, HashedApiKey.Builder>
-            implements HasAuditInfoBuilder<HashedApiKey, HashedApiKey.Builder> {
+    public static final class Builder extends AuditInfoBuilder<HashedApiKey, Builder> {
 
         private Integer id;
         private int version;
-        private Long createTimeMs;
-        private String createUser;
-        private Long updateTimeMs;
-        private String updateUser;
         private UserRef owner;
         private String apiKeyHash;
         private String apiKeyPrefix;
@@ -278,30 +270,6 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
 
         public Builder version(final int version) {
             this.version = version;
-            return self();
-        }
-
-        @Override
-        public Builder createTimeMs(final Long createTimeMs) {
-            this.createTimeMs = createTimeMs;
-            return self();
-        }
-
-        @Override
-        public Builder createUser(final String createUser) {
-            this.createUser = createUser;
-            return self();
-        }
-
-        @Override
-        public Builder updateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
-            return self();
-        }
-
-        @Override
-        public Builder updateUser(final String updateUser) {
-            this.updateUser = updateUser;
             return self();
         }
 
@@ -342,23 +310,6 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
 
         public Builder hashAlgorithm(final HashAlgorithm hashAlgorithm) {
             this.hashAlgorithm = hashAlgorithm;
-            return self();
-        }
-
-        public Builder stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
-            return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
-        }
-
-        public Builder stampAudit(final String user) {
-            final long now = System.currentTimeMillis();
-            if (createTimeMs == null) {
-                this.createTimeMs = now;
-            }
-            if (createUser == null) {
-                this.createUser = user;
-            }
-            updateTimeMs = now;
-            updateUser = user;
             return self();
         }
 

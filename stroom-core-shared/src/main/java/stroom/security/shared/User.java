@@ -17,9 +17,7 @@
 package stroom.security.shared;
 
 
-import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.HasAuditInfoBuilder;
-import stroom.util.shared.HasAuditableUserIdentity;
+import stroom.util.shared.AuditInfoBuilder;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
@@ -276,16 +274,10 @@ public class User implements HasIntegerId, HasUserRef {
     // --------------------------------------------------------------------------------
 
 
-    public static final class Builder
-            extends AbstractBuilder<User, User.Builder>
-            implements HasAuditInfoBuilder<User, User.Builder> {
+    public static final class Builder extends AuditInfoBuilder<User, Builder> {
 
         private Integer id;
         private Integer version;
-        private Long createTimeMs;
-        private String createUser;
-        private Long updateTimeMs;
-        private String updateUser;
         private String subjectId;
         private String uuid;
         private boolean group;
@@ -319,30 +311,6 @@ public class User implements HasIntegerId, HasUserRef {
 
         public Builder version(final Integer version) {
             this.version = version;
-            return self();
-        }
-
-        @Override
-        public Builder createTimeMs(final Long createTimeMs) {
-            this.createTimeMs = createTimeMs;
-            return self();
-        }
-
-        @Override
-        public Builder createUser(final String createUser) {
-            this.createUser = createUser;
-            return self();
-        }
-
-        @Override
-        public Builder updateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
-            return self();
-        }
-
-        @Override
-        public Builder updateUser(final String updateUser) {
-            this.updateUser = updateUser;
             return self();
         }
 
@@ -384,23 +352,6 @@ public class User implements HasIntegerId, HasUserRef {
 
         public Builder enabled(final boolean value) {
             enabled = value;
-            return self();
-        }
-
-        public Builder stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
-            return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
-        }
-
-        public Builder stampAudit(final String user) {
-            final long now = System.currentTimeMillis();
-            if (createTimeMs == null) {
-                this.createTimeMs = now;
-            }
-            if (createUser == null) {
-                this.createUser = user;
-            }
-            updateTimeMs = now;
-            updateUser = user;
             return self();
         }
 

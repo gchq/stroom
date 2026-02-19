@@ -18,10 +18,8 @@ package stroom.data.store.impl.fs.shared;
 
 import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.docref.HasDisplayValue;
-import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.HasAuditInfoBuilder;
+import stroom.util.shared.AuditInfoBuilder;
 import stroom.util.shared.HasAuditInfoGetters;
-import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.HasCapacity;
 import stroom.util.shared.HasCapacityInfo;
 import stroom.util.shared.HasIntegerId;
@@ -287,16 +285,10 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
     // --------------------------------------------------------------------------------
 
 
-    public static class Builder
-            extends AbstractBuilder<FsVolume, Builder>
-            implements HasAuditInfoBuilder<FsVolume, Builder> {
+    public static class Builder extends AuditInfoBuilder<FsVolume, Builder> {
 
         private Integer id;
         private Integer version;
-        private Long createTimeMs;
-        private String createUser;
-        private Long updateTimeMs;
-        private String updateUser;
         private String path;
         private VolumeUseStatus status = VolumeUseStatus.ACTIVE;
         private Long byteLimit;
@@ -333,30 +325,6 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
 
         public Builder version(final Integer version) {
             this.version = version;
-            return self();
-        }
-
-        @Override
-        public Builder createTimeMs(final Long createTimeMs) {
-            this.createTimeMs = createTimeMs;
-            return self();
-        }
-
-        @Override
-        public Builder createUser(final String createUser) {
-            this.createUser = createUser;
-            return self();
-        }
-
-        @Override
-        public Builder updateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
-            return self();
-        }
-
-        @Override
-        public Builder updateUser(final String updateUser) {
-            this.updateUser = updateUser;
             return self();
         }
 
@@ -397,23 +365,6 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
 
         public Builder volumeGroupId(final Integer volumeGroupId) {
             this.volumeGroupId = volumeGroupId;
-            return self();
-        }
-
-        public final Builder stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
-            return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
-        }
-
-        public final Builder stampAudit(final String user) {
-            final long now = System.currentTimeMillis();
-            if (createTimeMs == null) {
-                this.createTimeMs = now;
-            }
-            if (createUser == null) {
-                this.createUser = user;
-            }
-            updateTimeMs = now;
-            updateUser = user;
             return self();
         }
 
