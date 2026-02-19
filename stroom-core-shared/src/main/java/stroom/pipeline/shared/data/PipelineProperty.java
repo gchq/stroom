@@ -90,6 +90,14 @@ public class PipelineProperty implements Comparable<PipelineProperty> {
     }
 
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static Builder builder(final PipelineProperty property) {
+        return new Builder(property);
+    }
+
     // --------------------------------------------------------------------------------
 
 
@@ -99,10 +107,10 @@ public class PipelineProperty implements Comparable<PipelineProperty> {
         private String name;
         private PipelinePropertyValue value;
 
-        public Builder() {
+        private Builder() {
         }
 
-        public Builder(final PipelineProperty property) {
+        private Builder(final PipelineProperty property) {
             if (property != null) {
                 this.element = property.element;
                 this.name = property.name;

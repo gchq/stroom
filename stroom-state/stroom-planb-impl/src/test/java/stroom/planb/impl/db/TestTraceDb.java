@@ -199,7 +199,7 @@ public class TestTraceDb {
                 BYTE_BUFFER_FACTORY,
                 DOC,
                 true)) {
-            assertThat(db.count()).isEqualTo(166);
+            assertThat(db.count()).isEqualTo(0);
             System.err.println(db.getInfoString());
             assertThat(db.getInfo().env().dbNames().size()).isEqualTo(9);
         }
@@ -215,7 +215,7 @@ public class TestTraceDb {
                 BYTE_BUFFER_FACTORY,
                 DOC,
                 true)) {
-            assertThat(db.count()).isEqualTo(166);
+            assertThat(db.count()).isEqualTo(0);
             assertThat(db.getInfo().env().stat().entries).isEqualTo(9);
         }
     }

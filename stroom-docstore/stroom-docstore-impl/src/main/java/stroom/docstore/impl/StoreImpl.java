@@ -18,6 +18,7 @@ package stroom.docstore.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docref.EmbeddedDocRef;
 import stroom.docrefinfo.api.DocRefDecorator;
 import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DependencyRemapper;
@@ -40,6 +41,7 @@ import stroom.util.entityevent.EntityEventBus;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.Embeddable;
 import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
@@ -379,7 +381,11 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                         }
                     }
 
-                    importDocument(docRef, existingDocument, uuid, dataMap);
+                    final D document = importDocument(docRef, existingDocument, uuid, dataMap);
+
+                    if (document instanceof final Embeddable embeddable && embeddable.getEmbeddedIn() != null) {
+                        docRef = new EmbeddedDocRef(docRef);
+                    }
                 }
 
             } catch (final RuntimeException e) {
@@ -390,11 +396,11 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
         return docRef;
     }
 
-    private void importDocument(final DocRef docRef,
-                                final D existingDocument,
-                                final String uuid,
-                                final Map<String, byte[]> convertedDataMap) {
-        persistence.getLockFactory().lock(uuid, () -> {
+    private D importDocument(final DocRef docRef,
+                             final D existingDocument,
+                             final String uuid,
+                             final Map<String, byte[]> convertedDataMap) {
+        return persistence.getLockFactory().lockResult(uuid, () -> {
             try {
                 // Turn the data map into a document.
                 final D newDocument = serialiser.read(convertedDataMap);
@@ -425,6 +431,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                     EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
                 }
 
+                return newDocument;
             } catch (final IOException e) {
                 LOGGER.error(e::getMessage, e);
                 throw new UncheckedIOException(e);
@@ -555,16 +562,26 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     private D read(final DocRef docRef) {
         final String uuid = NullSafe.requireNonNull(docRef, DocRef::getUuid, () -> "UUID required");
         checkType(docRef);
-        // Check that the user has permission to read this item.
-        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
-            throwPermissionException(LogUtil.message("You are not authorised to read {}",
-                    toDocRefDisplayString(docRef)));
-        }
 
         final Map<String, byte[]> data = readPersistence(docRef);
         if (data != null) {
             try {
-                return serialiser.read(data);
+                final D doc = serialiser.read(data);
+                if (doc instanceof final Embeddable embeddable) {
+                    final DocRef parentDocRef = embeddable.getEmbeddedIn();
+                    if (parentDocRef != null) {
+                        if (!securityContext.hasDocumentPermission(parentDocRef, DocumentPermission.VIEW)) {
+                            throwPermissionException(LogUtil.message("You are not authorised to read {}",
+                                    toDocRefDisplayString(parentDocRef)));
+                        }
+                    } else {
+                        if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+                            throwPermissionException(LogUtil.message("You are not authorised to read {}",
+                                    toDocRefDisplayString(docRef)));
+                        }
+                    }
+                }
+                return doc;
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
                 throw new UncheckedIOException(
@@ -679,6 +696,11 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                 .stream()
                 .filter(this::canRead)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<DocRef> findDocRefsEmbeddedIn(final DocRef parent) {
+        return persistence.findDocRefsEmbeddedIn(parent);
     }
 
     @Override

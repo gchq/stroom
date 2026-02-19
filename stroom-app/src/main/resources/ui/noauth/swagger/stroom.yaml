@@ -7980,6 +7980,26 @@ paths:
       summary: Lists tasks for a node
       tags:
       - Tasks
+  /textConverter/v1:
+    post:
+      operationId: createTextConverter
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: name
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TextConverterDoc"
+          description: default response
+      summary: Create a text converter doc
+      tags:
+      - Text Converters
   /textConverter/v1/{uuid}:
     get:
       operationId: fetchTextConverter
@@ -8612,6 +8632,26 @@ paths:
       summary: Update a xml schema doc
       tags:
       - XML Schemas
+  /xslt/v1:
+    post:
+      operationId: createXslt
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: name
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/XsltDoc"
+          description: default response
+      summary: Create an xslt doc
+      tags:
+      - XSLTs
   /xslt/v1/{uuid}:
     get:
       operationId: fetchXslt
@@ -15499,6 +15539,8 @@ components:
     PipelinePropertyType:
       type: object
       properties:
+        canEmbed:
+          type: boolean
         defaultValue:
           type: string
         description:
@@ -15522,6 +15564,8 @@ components:
       type: object
       properties:
         boolean:
+          type: boolean
+        embedded:
           type: boolean
         entity:
           $ref: "#/components/schemas/DocRef"
@@ -19497,6 +19541,8 @@ components:
           type: string
         description:
           type: string
+        embeddedIn:
+          $ref: "#/components/schemas/DocRef"
         name:
           type: string
         type:
@@ -20359,6 +20405,8 @@ components:
           type: string
         description:
           type: string
+        embeddedIn:
+          $ref: "#/components/schemas/DocRef"
         name:
           type: string
         type:

@@ -58,23 +58,14 @@ in [CONTRIBUTING.md](https://github.com/gchq/stroom/blob/master/CONTRIBUTING.md)
 
 Stroom and its associated libraries, services and content span several repositories:
 
-- [`stroom`](https://github.com/gchq/stroom) - The core Stroom application.
-- [`stroom-agent`](https://github.com/gchq/stroom-agent) - An application for capturing and sending log files to Stroom.
-- [`stroom-auth`](https://github.com/gchq/stroom-auth) - The OAuth2 authentication service used by Stroom.
+- [`stroom`](https://github.com/gchq/stroom) - The core Stroom application and proxy.
 - [`stroom-clients`](https://github.com/gchq/stroom-clients) - Various client libraries for sending logs to Stroom.
 - [`stroom-content`](https://github.com/gchq/stroom-content) - Packaged content packs for import into Stroom.
 - [`stroom-docs`](https://github.com/gchq/stroom-docs) - Documentation for the Stroom family of products.
-- [`stroom-expression`](https://github.com/gchq/stroom-expression) - An expression library used in Stroom's dashboards
-  and query API.
 - [`stroom-headless`](https://github.com/gchq/stroom-headless) - An example of how to run Stroom in headless mode from
   the command line.
-- [`stroom-proxy`](https://github.com/gchq/stroom-proxy) - An application that acts as a data receipt proxy for Stroom (
-  Legacy v5 only).
-- [`stroom-query`](https://github.com/gchq/stroom-query) - A library for querying Stroom's data sources.
 - [`stroom-resources`](https://github.com/gchq/stroom-resources) - Configuration for orchestrating stroom in docker
   containers and released docker stacks.
-- [`stroom-stats`](https://github.com/gchq/stroom-stats) - An application for storing and querying aggregates of event
-  data.
 - [`stroom-visualisations-dev`](https://github.com/gchq/stroom-visualisations-dev) - A set of visualisations for use in
   Stroom.
 - [`event-logging-schema`](https://github.com/gchq/event-logging-schema) - An XML Schema for describing auditable

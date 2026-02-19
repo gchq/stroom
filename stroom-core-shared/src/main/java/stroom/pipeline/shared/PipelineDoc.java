@@ -22,14 +22,19 @@ import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * This entity is used to persist pipeline configuration.
@@ -116,6 +121,21 @@ public class PipelineDoc extends AbstractDoc {
 
     public PipelineData getPipelineData() {
         return pipelineData;
+    }
+
+    @JsonIgnore
+    public List<DocRef> getPropertyDocRefs() {
+        if (pipelineData != null && pipelineData.getProperties() != null &&
+            pipelineData.getProperties().getAdd() != null) {
+            return pipelineData.getProperties().getAdd().stream()
+                    .map(PipelineProperty::getValue)
+                    .filter(Objects::nonNull)
+                    .map(PipelinePropertyValue::getEntity)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        }
+
+        return List.of();
     }
 
     @Override

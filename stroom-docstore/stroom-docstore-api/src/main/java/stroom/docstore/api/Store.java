@@ -95,6 +95,8 @@ public interface Store<D extends AbstractDoc>
      */
     List<DocRef> list();
 
+    List<DocRef> findDocRefsEmbeddedIn(DocRef parent);
+
     interface DocumentCreator<D extends AbstractDoc> {
 
         D create(final String uuid,

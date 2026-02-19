@@ -11685,6 +11685,36 @@
         "tags" : [ "Tasks" ]
       }
     },
+    "/textConverter/v1" : {
+      "post" : {
+        "operationId" : "createTextConverter",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "description" : "name",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TextConverterDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create a text converter doc",
+        "tags" : [ "Text Converters" ]
+      }
+    },
     "/textConverter/v1/{uuid}" : {
       "get" : {
         "operationId" : "fetchTextConverter",
@@ -12599,6 +12629,36 @@
         },
         "summary" : "Update a xml schema doc",
         "tags" : [ "XML Schemas" ]
+      }
+    },
+    "/xslt/v1" : {
+      "post" : {
+        "operationId" : "createXslt",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "description" : "name",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/XsltDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create an xslt doc",
+        "tags" : [ "XSLTs" ]
       }
     },
     "/xslt/v1/{uuid}" : {
@@ -21030,6 +21090,9 @@
       "PipelinePropertyType" : {
         "type" : "object",
         "properties" : {
+          "canEmbed" : {
+            "type" : "boolean"
+          },
           "defaultValue" : {
             "type" : "string"
           },
@@ -21064,6 +21127,9 @@
         "type" : "object",
         "properties" : {
           "boolean" : {
+            "type" : "boolean"
+          },
+          "embedded" : {
             "type" : "boolean"
           },
           "entity" : {
@@ -26219,6 +26285,9 @@
           "description" : {
             "type" : "string"
           },
+          "embeddedIn" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
           "name" : {
             "type" : "string"
           },
@@ -27410,6 +27479,9 @@
           },
           "description" : {
             "type" : "string"
+          },
+          "embeddedIn" : {
+            "$ref" : "#/components/schemas/DocRef"
           },
           "name" : {
             "type" : "string"

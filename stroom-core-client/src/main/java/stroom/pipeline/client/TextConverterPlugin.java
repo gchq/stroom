@@ -93,6 +93,20 @@ public class TextConverterPlugin extends DocumentPlugin<TextConverterDoc> {
     }
 
     @Override
+    public void create(final String documentName,
+                       final Consumer<TextConverterDoc> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(TEXT_CONVERTER_RESOURCE)
+                .method(res -> res.create(documentName))
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
     public String getType() {
         return TextConverterDoc.TYPE;
     }

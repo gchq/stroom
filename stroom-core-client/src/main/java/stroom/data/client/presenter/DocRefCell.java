@@ -69,6 +69,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
     private final Function<T_ROW, SafeHtml> cellTextFunction;
     private final Function<T_ROW, DocRef> docRefFunction;
     private final Function<T_ROW, String> cssClassFunction;
+    private final Function<T_ROW, Boolean> canOpenFunction;
 
     /**
      * @param showIcon         Set to true to show the type icon next to the text
@@ -81,7 +82,8 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                        final boolean hasOpenAndCopy,
                        final Function<T_ROW, SafeHtml> cellTextFunction,
                        final Function<T_ROW, DocRef> docRefFunction,
-                       final Function<T_ROW, String> cssClassFunction) {
+                       final Function<T_ROW, String> cssClassFunction,
+                       final Function<T_ROW, Boolean> canOpenFunction) {
         super(BrowserEvents.MOUSEDOWN);
         this.eventBus = eventBus;
         this.showIcon = showIcon;
@@ -89,6 +91,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
         this.cellTextFunction = cellTextFunction;
         this.docRefFunction = docRefFunction;
         this.cssClassFunction = cssClassFunction;
+        this.canOpenFunction = canOpenFunction;
     }
 
     @Override
@@ -127,12 +130,15 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
             type = NullSafe.getOrElse(documentType, DocumentType::getDisplayType, docRef.getType());
 
             int priority = 1;
-            menuItems.add(new IconMenuItem.Builder()
-                    .priority(priority++)
-                    .icon(SvgImage.OPEN)
-                    .text("Open " + type)
-                    .command(() -> OpenDocumentEvent.fire(this, docRef, true))
-                    .build());
+            final Boolean canOpen = NullSafe.get(value, canOpenFunction);
+            if (canOpen != null && canOpen) {
+                menuItems.add(new IconMenuItem.Builder()
+                        .priority(priority++)
+                        .icon(SvgImage.OPEN)
+                        .text("Open " + type)
+                        .command(() -> OpenDocumentEvent.fire(this, docRef, true))
+                        .build());
+            }
             menuItems.add(createCopyAsMenuItem(docRef, priority++));
 
         }
@@ -306,6 +312,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
         private Function<T, SafeHtml> cellTextFunction;
         private Function<T, DocRef> docRefFunction;
         private Function<T, String> cssClassFunction;
+        private Function<T, Boolean> canOpenFunction;
 
         public Builder<T> eventBus(final EventBus eventBus) {
             this.eventBus = eventBus;
@@ -329,6 +336,11 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
         public Builder<T> cellTextFunction(final Function<T, SafeHtml> cellTextFunction) {
             this.cellTextFunction = cellTextFunction;
+            return this;
+        }
+
+        public Builder<T> canOpenFunction(final Function<T, Boolean> canOpenFunction) {
+            this.canOpenFunction = canOpenFunction;
             return this;
         }
 
@@ -365,6 +377,9 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                 cssClassFunction = v -> null;
             }
 
+            if (canOpenFunction == null) {
+                canOpenFunction = v -> true;
+            }
 //
 //                public static String getTextFromDocRef(final DocRef docRef) {
 //                    return getTextFromDocRef(docRef, DisplayType.AUTO);
@@ -395,7 +410,8 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                     hasOpenAndCopy,
                     cellTextFunction,
                     docRefFunction,
-                    cssClassFunction);
+                    cssClassFunction,
+                    canOpenFunction);
         }
     }
 }

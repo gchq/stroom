@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
+import stroom.docstore.shared.AbstractEmbeddableDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasData;
@@ -61,7 +62,7 @@ import java.util.Objects;
         "data",
         "converterType"})
 @JsonInclude(Include.NON_NULL)
-public class TextConverterDoc extends AbstractDoc implements HasData {
+public class TextConverterDoc extends AbstractEmbeddableDoc implements HasData {
 
     public static final String TYPE = "TextConverter";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.TEXT_CONVERTER_DOCUMENT_TYPE;
@@ -83,8 +84,9 @@ public class TextConverterDoc extends AbstractDoc implements HasData {
                             @JsonProperty("updateUser") final String updateUser,
                             @JsonProperty("description") final String description,
                             @JsonProperty("data") final String data,
-                            @JsonProperty("converterType") final TextConverterType converterType) {
-        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+                            @JsonProperty("converterType") final TextConverterType converterType,
+                            @JsonProperty("embeddedIn") final DocRef embeddedIn) {
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser, embeddedIn);
         this.description = description;
         this.data = data;
         this.converterType = NullSafe.requireNonNullElse(converterType, TextConverterType.NONE);
@@ -176,6 +178,7 @@ public class TextConverterDoc extends AbstractDoc implements HasData {
         private String description;
         private String data;
         private TextConverterType converterType;
+        private DocRef embeddedIn;
 
         private Builder() {
         }
@@ -202,6 +205,11 @@ public class TextConverterDoc extends AbstractDoc implements HasData {
             return self();
         }
 
+        public Builder embeddedIn(final DocRef embeddedIn) {
+            this.embeddedIn = embeddedIn;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -218,7 +226,8 @@ public class TextConverterDoc extends AbstractDoc implements HasData {
                     updateUser,
                     description,
                     data,
-                    converterType);
+                    converterType,
+                    embeddedIn);
         }
     }
 }
