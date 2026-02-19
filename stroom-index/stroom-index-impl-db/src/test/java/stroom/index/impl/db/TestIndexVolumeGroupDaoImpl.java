@@ -18,7 +18,6 @@ package stroom.index.impl.db;
 
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.shared.IndexVolumeGroup;
-import stroom.util.AuditUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -62,10 +61,12 @@ class TestIndexVolumeGroupDaoImpl {
         final String groupName = TestData.createVolumeGroupName();
         final IndexVolumeGroup group = createGroup(groupName);
         final String newGroupName = TestData.createVolumeGroupName();
-        final IndexVolumeGroup reloadedGroup = indexVolumeGroupDao.get(group.getId());
+        final IndexVolumeGroup reloadedGroup = indexVolumeGroupDao.get(group.getId())
+                .copy()
+                .name(newGroupName)
+                .build();
 
         // When
-        reloadedGroup.setName(newGroupName);
         indexVolumeGroupDao.update(reloadedGroup);
 
         // Then
@@ -147,9 +148,11 @@ class TestIndexVolumeGroupDaoImpl {
     }
 
     private IndexVolumeGroup createGroup(final String name) {
-        final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
-        indexVolumeGroup.setName(name);
-        AuditUtil.stamp(() -> TestModule.TEST_USER, indexVolumeGroup);
+        final IndexVolumeGroup indexVolumeGroup = IndexVolumeGroup
+                .builder()
+                .name(name)
+                .createAudit(TestModule.TEST_USER)
+                .build();
         return indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
     }
 }

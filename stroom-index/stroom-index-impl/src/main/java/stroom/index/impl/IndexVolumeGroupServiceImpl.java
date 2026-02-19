@@ -106,9 +106,11 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     @Override
     public IndexVolumeGroup getOrCreate(final String name) {
         ensureDefaultVolumes();
-        final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
-        indexVolumeGroup.setName(name);
-        AuditUtil.stamp(securityContext, indexVolumeGroup);
+        final IndexVolumeGroup indexVolumeGroup = IndexVolumeGroup
+                .builder()
+                .name(name)
+                .createAudit(securityContext)
+                .build();
         final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
         fireChange(EntityAction.CREATE);
@@ -118,10 +120,12 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     @Override
     public IndexVolumeGroup create() {
         ensureDefaultVolumes();
-        final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
         final String newName = NextNameGenerator.getNextName(indexVolumeGroupDao.getNames(), "New group");
-        indexVolumeGroup.setName(newName);
-        AuditUtil.stamp(securityContext, indexVolumeGroup);
+        final IndexVolumeGroup indexVolumeGroup = IndexVolumeGroup
+                .builder()
+                .name(newName)
+                .createAudit(securityContext)
+                .build();
         final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
         fireChange(EntityAction.CREATE);
@@ -131,9 +135,8 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     @Override
     public IndexVolumeGroup update(final IndexVolumeGroup indexVolumeGroup) {
         ensureDefaultVolumes();
-        AuditUtil.stamp(securityContext, indexVolumeGroup);
         final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
-                () -> indexVolumeGroupDao.update(indexVolumeGroup));
+                () -> indexVolumeGroupDao.update(indexVolumeGroup.copy().updateAudit(securityContext).build()));
         fireChange(EntityAction.UPDATE);
         return result;
     }
@@ -188,11 +191,10 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
                     final boolean isEnabled = volumeConfig.isCreateDefaultIndexVolumesOnStart();
                     if (isEnabled) {
                         if (volumeConfig.getDefaultIndexVolumeGroupName() != null) {
-                            final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
                             final UserIdentity processingUserIdentity = userIdentityFactory.getServiceUserIdentity();
                             final String groupName = volumeConfig.getDefaultIndexVolumeGroupName();
-                            indexVolumeGroup.setName(groupName);
-                            AuditUtil.stamp(processingUserIdentity, indexVolumeGroup);
+                            final IndexVolumeGroup indexVolumeGroup = IndexVolumeGroup
+                                    .builder().name(groupName).createAudit(processingUserIdentity).build();
 
                             LOGGER.info("Creating default index volume group [{}]", groupName);
                             final IndexVolumeGroup newGroup = indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
@@ -219,13 +221,14 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
                                         final OptionalLong byteLimitOption = getDefaultVolumeLimit(
                                                 resolvedPath.toString());
 
-                                        final IndexVolume indexVolume = new IndexVolume();
-                                        indexVolume.setIndexVolumeGroupId(newGroup.getId());
-                                        indexVolume.setBytesLimit(byteLimitOption.orElse(0L));
-                                        indexVolume.setNodeName(nodeName);
-                                        indexVolume.setPath(resolvedPath.toString());
-                                        AuditUtil.stamp(processingUserIdentity, indexVolume);
-
+                                        final IndexVolume indexVolume = IndexVolume
+                                                .builder()
+                                                .indexVolumeGroupId(newGroup.getId())
+                                                .bytesLimit(byteLimitOption.orElse(0L))
+                                                .nodeName(nodeName)
+                                                .path(resolvedPath.toString())
+                                                .createAudit(processingUserIdentity)
+                                                .build();
                                         indexVolumeDao.create(indexVolume);
                                     }
                                 }

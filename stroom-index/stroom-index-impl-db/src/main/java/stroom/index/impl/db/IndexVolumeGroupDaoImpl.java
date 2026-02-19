@@ -44,17 +44,17 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexVolumeGroupDaoImpl.class);
 
-    static final Function<Record, IndexVolumeGroup> RECORD_TO_INDEX_VOLUME_GROUP_MAPPER = record -> {
-        final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
-        indexVolumeGroup.setId(record.get(INDEX_VOLUME_GROUP.ID));
-        indexVolumeGroup.setVersion(record.get(INDEX_VOLUME_GROUP.VERSION));
-        indexVolumeGroup.setCreateTimeMs(record.get(INDEX_VOLUME_GROUP.CREATE_TIME_MS));
-        indexVolumeGroup.setCreateUser(record.get(INDEX_VOLUME_GROUP.CREATE_USER));
-        indexVolumeGroup.setUpdateTimeMs(record.get(INDEX_VOLUME_GROUP.UPDATE_TIME_MS));
-        indexVolumeGroup.setUpdateUser(record.get(INDEX_VOLUME_GROUP.UPDATE_USER));
-        indexVolumeGroup.setName(record.get(INDEX_VOLUME_GROUP.NAME));
-        return indexVolumeGroup;
-    };
+    static final Function<Record, IndexVolumeGroup> RECORD_TO_INDEX_VOLUME_GROUP_MAPPER = record ->
+            IndexVolumeGroup
+                    .builder()
+                    .id(record.get(INDEX_VOLUME_GROUP.ID))
+                    .version(record.get(INDEX_VOLUME_GROUP.VERSION))
+                    .createTimeMs(record.get(INDEX_VOLUME_GROUP.CREATE_TIME_MS))
+                    .createUser(record.get(INDEX_VOLUME_GROUP.CREATE_USER))
+                    .updateTimeMs(record.get(INDEX_VOLUME_GROUP.UPDATE_TIME_MS))
+                    .updateUser(record.get(INDEX_VOLUME_GROUP.UPDATE_USER))
+                    .name(record.get(INDEX_VOLUME_GROUP.NAME))
+                    .build();
 
     @SuppressWarnings("checkstyle:LineLength")
     private static final BiFunction<IndexVolumeGroup, IndexVolumeGroupRecord, IndexVolumeGroupRecord> INDEX_VOLUME_GROUP_TO_RECORD_MAPPER =
@@ -107,11 +107,8 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
                         .returning(INDEX_VOLUME_GROUP.ID)
                         .fetchOptional(INDEX_VOLUME_GROUP.ID)));
 
-        return optional.map(id -> {
-            indexVolumeGroup.setId(id);
-            indexVolumeGroup.setVersion(1);
-            return indexVolumeGroup;
-        }).orElse(get(indexVolumeGroup.getName()));
+        return optional.map(id ->
+                indexVolumeGroup.copy().id(id).version(1).build()).orElse(get(indexVolumeGroup.getName()));
     }
 
     @Override

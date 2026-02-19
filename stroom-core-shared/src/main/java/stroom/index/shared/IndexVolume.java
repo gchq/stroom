@@ -17,12 +17,13 @@
 package stroom.index.shared;
 
 import stroom.docref.HasDisplayValue;
-import stroom.util.shared.HasAuditInfo;
-import stroom.util.shared.HasAuditInfoGetters;
+import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.HasAuditInfoBuilder;
 import stroom.util.shared.HasCapacity;
 import stroom.util.shared.HasCapacityInfo;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PrimitiveValueConverter;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -56,44 +57,41 @@ import java.util.OptionalLong;
         "indexVolumeGroupId"
 })
 @JsonInclude(Include.NON_NULL)
-public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity {
+public class IndexVolume implements HasIntegerId, HasCapacity {
 
     @JsonProperty
-    private Integer id;
+    private final Integer id;
     @JsonProperty
-    private Integer version;
+    private final Integer version;
     @JsonProperty
-    private Long createTimeMs;
+    private final Long createTimeMs;
     @JsonProperty
-    private String createUser;
+    private final String createUser;
     @JsonProperty
-    private Long updateTimeMs;
+    private final Long updateTimeMs;
     @JsonProperty
-    private String updateUser;
+    private final String updateUser;
     @JsonProperty
-    private String path;
+    private final String path;
     @JsonProperty
-    private String nodeName;
+    private final String nodeName;
     @JsonProperty
-    private VolumeUseState state = VolumeUseState.ACTIVE;
+    private final VolumeUseState state;
     @JsonProperty
-    private Long bytesLimit;
+    private final Long bytesLimit;
     @JsonProperty
-    private Long bytesUsed;
+    private final Long bytesUsed;
     @JsonProperty
-    private Long bytesFree;
+    private final Long bytesFree;
     @JsonProperty
-    private Long bytesTotal;
+    private final Long bytesTotal;
     @JsonProperty
-    private Long statusMs;
+    private final Long statusMs;
     @JsonProperty
-    private Integer indexVolumeGroupId;
+    private final Integer indexVolumeGroupId;
 
     @JsonIgnore
     private final HasCapacityInfo capacityInfo = new CapacityInfo();
-
-    public IndexVolume() {
-    }
 
     @JsonCreator
     public IndexVolume(@JsonProperty("id") final Integer id,
@@ -119,7 +117,7 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
         this.updateUser = updateUser;
         this.path = path;
         this.nodeName = nodeName;
-        this.state = state;
+        this.state = NullSafe.requireNonNullElse(state, VolumeUseState.ACTIVE);
         this.bytesLimit = bytesLimit;
         this.bytesUsed = bytesUsed;
         this.bytesFree = bytesFree;
@@ -133,68 +131,32 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
         return id;
     }
 
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
     public Integer getVersion() {
         return version;
     }
 
-    public void setVersion(final Integer version) {
-        this.version = version;
-    }
-
-    @Override
     public Long getCreateTimeMs() {
         return createTimeMs;
     }
 
-    public void setCreateTimeMs(final Long createTimeMs) {
-        this.createTimeMs = createTimeMs;
-    }
-
-    @Override
     public String getCreateUser() {
         return createUser;
     }
 
-    public void setCreateUser(final String createUser) {
-        this.createUser = createUser;
-    }
-
-    @Override
     public Long getUpdateTimeMs() {
         return updateTimeMs;
     }
 
-    public void setUpdateTimeMs(final Long updateTimeMs) {
-        this.updateTimeMs = updateTimeMs;
-    }
-
-    @Override
     public String getUpdateUser() {
         return updateUser;
-    }
-
-    public void setUpdateUser(final String updateUser) {
-        this.updateUser = updateUser;
     }
 
     public Integer getIndexVolumeGroupId() {
         return indexVolumeGroupId;
     }
 
-    public void setIndexVolumeGroupId(final Integer indexVolumeGroupId) {
-        this.indexVolumeGroupId = indexVolumeGroupId;
-    }
-
     public String getNodeName() {
         return nodeName;
-    }
-
-    public void setNodeName(final String nodeName) {
-        this.nodeName = nodeName;
     }
 
     /**
@@ -205,56 +167,28 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
         return path;
     }
 
-    public void setPath(final String path) {
-        this.path = path;
-    }
-
     public VolumeUseState getState() {
         return state;
-    }
-
-    public void setState(final VolumeUseState state) {
-        this.state = state;
     }
 
     public Long getBytesLimit() {
         return bytesLimit;
     }
 
-    public void setBytesLimit(final Long bytesLimit) {
-        this.bytesLimit = bytesLimit;
-    }
-
     public Long getBytesUsed() {
         return bytesUsed;
-    }
-
-    public void setBytesUsed(final Long bytesUsed) {
-        this.bytesUsed = bytesUsed;
     }
 
     public Long getBytesFree() {
         return bytesFree;
     }
 
-    public void setBytesFree(final Long bytesFree) {
-        this.bytesFree = bytesFree;
-    }
-
     public Long getBytesTotal() {
         return bytesTotal;
     }
 
-    public void setBytesTotal(final Long bytesTotal) {
-        this.bytesTotal = bytesTotal;
-    }
-
     public Long getStatusMs() {
         return statusMs;
-    }
-
-    public void setStatusMs(final Long statusMs) {
-        this.statusMs = statusMs;
     }
 
     public static Builder builder() {
@@ -346,7 +280,9 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
         }
     }
 
-    public static final class Builder {
+    public static final class Builder
+            extends AbstractBuilder<IndexVolume, IndexVolume.Builder>
+            implements HasAuditInfoBuilder<IndexVolume, IndexVolume.Builder> {
 
         private Integer id;
         private Integer version;
@@ -385,56 +321,87 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
             this.indexVolumeGroupId = indexVolume.indexVolumeGroupId;
         }
 
-        // Replaces the copy function
-        public Builder fromOriginal(final IndexVolume original) {
-            path = original.path;
-            nodeName = original.nodeName;
-            bytesLimit = original.bytesLimit;
-            return this;
+        public Builder id(final Integer id) {
+            this.id = id;
+            return self();
+        }
+
+        public Builder version(final Integer version) {
+            this.version = version;
+            return self();
+        }
+
+        @Override
+        public Builder createTimeMs(final Long createTimeMs) {
+            this.createTimeMs = createTimeMs;
+            return self();
+        }
+
+        @Override
+        public Builder createUser(final String createUser) {
+            this.createUser = createUser;
+            return self();
+        }
+
+        @Override
+        public Builder updateTimeMs(final Long updateTimeMs) {
+            this.updateTimeMs = updateTimeMs;
+            return self();
+        }
+
+        @Override
+        public Builder updateUser(final String updateUser) {
+            this.updateUser = updateUser;
+            return self();
         }
 
         public Builder nodeName(final String nodeName) {
             this.nodeName = nodeName;
-            return this;
+            return self();
         }
 
         public Builder path(final String path) {
             this.path = path;
-            return this;
+            return self();
         }
 
         public Builder state(final VolumeUseState state) {
             this.state = state;
-            return this;
+            return self();
         }
 
         public Builder bytesUsed(final Long bytesUsed) {
             this.bytesUsed = bytesUsed;
-            return this;
+            return self();
         }
 
         public Builder bytesFree(final Long bytesFree) {
             this.bytesFree = bytesFree;
-            return this;
+            return self();
         }
 
         public Builder bytesTotal(final Long bytesTotal) {
             this.bytesTotal = bytesTotal;
-            return this;
+            return self();
         }
 
         public Builder bytesLimit(final Long bytesLimit) {
             this.bytesLimit = bytesLimit;
-            return this;
+            return self();
         }
 
         public Builder statusMs(final Long statusMs) {
             this.statusMs = statusMs;
-            return this;
+            return self();
         }
 
         public Builder indexVolumeGroupId(final Integer indexVolumeGroupId) {
             this.indexVolumeGroupId = indexVolumeGroupId;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
             return this;
         }
 
