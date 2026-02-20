@@ -502,7 +502,7 @@ public class VisualisationAssetsPresenter
                             restFactory.create(VISUALISATION_ASSET_RESOURCE)
                                     .method(r -> r.revertDraftFromLive(document.getUuid()))
                                     .onSuccess(revertResult -> {
-                                        clearEditor();
+                                        disableEditor();
                                         if (revertResult) {
                                             // It worked - data reverted
                                             Scheduler.get().scheduleFinally(() -> {
@@ -519,7 +519,7 @@ public class VisualisationAssetsPresenter
                                         }
                                     })
                                     .onFailure(error -> {
-                                        clearEditor();
+                                        disableEditor();
                                         AlertEvent.fireError(this,
                                                 "Error reverting to live version: " + error.getMessage(),
                                                 null);
@@ -556,6 +556,7 @@ public class VisualisationAssetsPresenter
      */
     private void doSelectionChangeAfterUpdateContentFailed() {
         tree.setSelectedItem(assetDirtyState.getEditItem(), false);
+        updateState();
     }
 
     /**
@@ -587,7 +588,8 @@ public class VisualisationAssetsPresenter
      */
     private void doSelectItemFetchDraftContentFailed() {
         Console.info("2a doSelectItemFetchDraftContentFailed");
-        clearEditor();
+        disableEditor();
+        updateState();
     }
 
     /**
@@ -773,7 +775,7 @@ public class VisualisationAssetsPresenter
                 .onSuccess(result -> {
                     if (result) {
                         // Clear the editor - the thing we're editing has disappeared
-                        clearEditor();
+                        disableEditor();
 
                         // Get the assets again
                         fetchDraftAssets(document);
@@ -865,13 +867,12 @@ public class VisualisationAssetsPresenter
     }
 
     /**
-     * Called to clear-down the editor.
+     * Called to clear-down the editor and disable it when the item cannot be edited
      */
-    private void clearEditor() {
-        Console.info("======== ClearEditor =======");
+    private void disableEditor() {
         editorPresenter.setText("");
         editorPresenter.setReadOnly(true);
-        Console.info("======== Editor cleared =======");
+        editorPresenter.getWidget().setVisible(false);
     }
 
     /**
@@ -902,6 +903,7 @@ public class VisualisationAssetsPresenter
                             editorMode = AceEditorMode.PLAIN_TEXT;
                         }
 
+                        editorPresenter.getWidget().setVisible(true);
                         editorPresenter.setText(result.getContent());
                         editorPresenter.setMode(editorMode);
                         successCallback.run();
