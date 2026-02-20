@@ -28,6 +28,9 @@ public class VisualisationAssetConfig extends AbstractConfig {
     /** Default location where assets will be cached */
     private static final String DEFAULT_ASSET_CACHE_DIR = "asset_cache";
 
+    /** Default switch for whether to wipe the Servlet asset cache on startup - do not wipe */
+    private static final boolean DEFAULT_CLEAR_ASSET_CACHE_ON_STARTUP = false;
+
     /** Default mimetype map */
     private static final Map<String, String> DEFAULT_MIMETYPES = new HashMap<>();
 
@@ -37,10 +40,14 @@ public class VisualisationAssetConfig extends AbstractConfig {
     /** Default mapping from filename extension to ACE Editor mode */
     private static final Map<String, String> DEFAULT_EDITOR_MODES = new HashMap<>();
 
+    /** Mode to use for editor if nothing else matches */
     private static final String DEFAULT_ACE_EDITOR_MODE = "TEXT";
 
     /** Where assets will be cached */
     private final String assetCacheDir;
+
+    /** Whether to wipe the asset cache on startup */
+    private final boolean clearAssetCacheOnStartup;
 
     /** Map of filename extension to mimetype */
     private final Map<String, String> mimetypes = new HashMap<>();
@@ -86,12 +93,13 @@ public class VisualisationAssetConfig extends AbstractConfig {
     }
 
     /**
-     * Default constructor. Configuration created with default values.
+     * Configuration created with default values.
      */
     public VisualisationAssetConfig() {
         this.mimetypes.putAll(DEFAULT_MIMETYPES);
         this.defaultMimetype = DEFAULT_MIMETYPE;
         this.assetCacheDir = DEFAULT_ASSET_CACHE_DIR;
+        this.clearAssetCacheOnStartup = DEFAULT_CLEAR_ASSET_CACHE_ON_STARTUP;
         this.aceEditorModes.putAll(DEFAULT_EDITOR_MODES);
         this.defaultAceEditorMode = DEFAULT_ACE_EDITOR_MODE;
     }
@@ -101,6 +109,7 @@ public class VisualisationAssetConfig extends AbstractConfig {
     public VisualisationAssetConfig(@JsonProperty("mimetypes") final Map<String, String> mimetypes,
                                     @JsonProperty("default") final String defaultMimetype,
                                     @JsonProperty("assetCacheDir") final String assetCacheDir,
+                                    @JsonProperty("clearAssetCacheOnStartup") final Boolean clearAssetCacheOnStartup,
                                     @JsonProperty("aceEditorModes") final Map<String, String> aceEditorModes,
                                     @JsonProperty("defaultAceEditorMode") final String defaultAceEditorMode) {
 
@@ -112,17 +121,27 @@ public class VisualisationAssetConfig extends AbstractConfig {
         }
 
         if (defaultMimetype == null || defaultMimetype.isEmpty()) {
-            LOGGER.info("No default mimetype supplied in the configuration file; using default value");
+            LOGGER.info("No default mimetype supplied in the configuration file; using default value of '{}'",
+                    DEFAULT_MIMETYPE);
             this.defaultMimetype = DEFAULT_MIMETYPE;
         } else {
             this.defaultMimetype = defaultMimetype;
         }
 
         if (assetCacheDir == null || assetCacheDir.isEmpty()) {
-            LOGGER.info("No default asset cache directory supplied in the configuration file; using default value");
+            LOGGER.info("No asset cache directory supplied in the configuration file; using default value of '{}'",
+                    DEFAULT_ASSET_CACHE_DIR);
             this.assetCacheDir = DEFAULT_ASSET_CACHE_DIR;
         } else {
             this.assetCacheDir = assetCacheDir;
+        }
+
+        if (clearAssetCacheOnStartup == null) {
+            LOGGER.info("No setting for whether to clear the asset cache on startup supplied in the "
+                    + "configuration file; using default value of '{}'", DEFAULT_CLEAR_ASSET_CACHE_ON_STARTUP);
+            this.clearAssetCacheOnStartup = DEFAULT_CLEAR_ASSET_CACHE_ON_STARTUP;
+        } else {
+            this.clearAssetCacheOnStartup = clearAssetCacheOnStartup;
         }
 
         if (aceEditorModes == null || aceEditorModes.isEmpty()) {
@@ -133,7 +152,8 @@ public class VisualisationAssetConfig extends AbstractConfig {
         }
 
         if (defaultAceEditorMode == null || defaultAceEditorMode.isEmpty()) {
-            LOGGER.info("No default editor mode supplied in the configuration file; using default value");
+            LOGGER.info("No default editor mode supplied in the configuration file; using default value of '{}'",
+                    DEFAULT_ACE_EDITOR_MODE);
             this.defaultAceEditorMode = DEFAULT_ACE_EDITOR_MODE;
         } else {
             this.defaultAceEditorMode = defaultAceEditorMode;
@@ -160,6 +180,13 @@ public class VisualisationAssetConfig extends AbstractConfig {
     @JsonProperty("assetCacheDir")
     public String getAssetCacheDir() {
         return assetCacheDir;
+    }
+
+    @RequiresRestart(RestartScope.SYSTEM)
+    @JsonPropertyDescription("Whether to clear the asset cache on startup")
+    @JsonProperty("clearAssetCacheOnStartup")
+    public boolean isClearAssetCacheOnStartup() {
+        return clearAssetCacheOnStartup;
     }
 
     @RequiresRestart(RestartScope.SYSTEM)

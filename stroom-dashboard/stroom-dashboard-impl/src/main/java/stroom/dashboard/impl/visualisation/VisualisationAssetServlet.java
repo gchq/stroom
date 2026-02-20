@@ -67,6 +67,9 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
     /** Where we're caching assets */
     private final Path assetCacheDir;
 
+    /** Whether we're wiping the cache on startup */
+    private final boolean clearAssetCacheOnStartup;
+
     @Inject
     public VisualisationAssetServlet(final VisualisationAssetService service,
                                      final Provider<VisualisationAssetConfig> configProvider,
@@ -76,6 +79,7 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
         this.mimetypes = config.getMimetypes();
         this.defaultMimetype = config.getDefaultMimetype();
         this.assetCacheDir = pathCreator.toAppPath(config.getAssetCacheDir());
+        this.clearAssetCacheOnStartup = config.isClearAssetCacheOnStartup();
 
         try {
             if (!this.assetCacheDir.toFile().exists()) {
@@ -288,11 +292,45 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
         }
     }
 
+    /**
+     * Deletes all the files from the cache. Called on startup if the config tells us to do so.
+     */
+    private void clearCache() {
+        try {
+            Files.walkFileTree(assetCacheDir,
+                    new SimpleFileVisitor<>() {
+                        @Override
+                        public @NonNull FileVisitResult visitFile(final @NonNull Path file,
+                                                                  final @NonNull BasicFileAttributes attrs)
+                                throws IOException {
+
+                            Files.delete(file);
+                            return FileVisitResult.CONTINUE;
+                        }
+
+                        @Override
+                        public @NonNull FileVisitResult postVisitDirectory(@NonNull final Path dir,
+                                                                           final IOException exc)
+                                throws IOException {
+
+                            Files.delete(dir);
+                            return FileVisitResult.CONTINUE;
+                        }
+                    });
+        } catch (final IOException e) {
+            LOGGER.error("Error clearing visualisation asset cache: {}", e.getMessage(), e);
+        }
+    }
+
     @Override
     public void init() throws ServletException {
         LOGGER.debug("Creating VisualisationAssetServlet");
         super.init();
-        deleteTempFiles();
+        if (clearAssetCacheOnStartup) {
+            clearCache();
+        } else {
+            deleteTempFiles();
+        }
     }
 
     @Override
