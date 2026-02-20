@@ -18,11 +18,13 @@ package stroom.job.client.presenter;
 
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
+import stroom.job.client.presenter.JobListPresenter.JobWrapper;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
+import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -54,12 +56,13 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> impl
         super.onBind();
 
         registerHandler(jobListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            final Job row = jobListPresenter.getSelectionModel().getSelected();
+            final Job row = NullSafe.get(
+                    jobListPresenter,
+                    JobListPresenter::getSelectionModel,
+                    MultiSelectionModel::getSelected,
+                    JobWrapper::getJob);
             jobNodeListPresenter.read(row);
         }));
-
-        jobListPresenter.setChangeHandler(job ->
-                jobNodeListPresenter.refresh());
     }
 
     @Override

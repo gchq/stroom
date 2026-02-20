@@ -80,7 +80,7 @@ public class PrioritisedFilters implements Clearable {
                     .build();
 
             final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
-            final List<ProcessorFilter> filters = processorFilterService
+            List<ProcessorFilter> filters = processorFilterService
                     .find(findProcessorFilterCriteria)
                     .getValues();
             LOGGER.trace("Found {} filters", filters.size());
@@ -90,26 +90,30 @@ public class PrioritisedFilters implements Clearable {
             filters.sort(ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
 
             // Try and ensure we have pipeline names for each filter
-            for (final ProcessorFilter filter : NullSafe.list(filters)) {
-                try {
-                    if (filter != null
-                        && filter.getPipelineUuid() != null
-                        && NullSafe.isEmptyString(filter.getPipelineName())) {
-                        final Optional<String> pipelineName = processorFilterService
-                                .getPipelineName(filter.getProcessorType(), filter.getPipelineUuid());
-                        pipelineName.ifPresent(newPipeName -> {
-                            if (!Objects.equals(filter.getPipelineName(), newPipeName)) {
-                                filter.setPipelineName(newPipeName);
+            return filters
+                    .stream()
+                    .map(filter -> {
+                        try {
+                            if (filter != null
+                                && filter.getPipelineUuid() != null
+                                && NullSafe.isEmptyString(filter.getPipelineName())) {
+                                final Optional<String> pipelineName = processorFilterService
+                                        .getPipelineName(filter.getProcessorType(), filter.getPipelineUuid());
+                                if (pipelineName.isPresent()) {
+                                    final String newPipeName = pipelineName.get();
+                                    if (!Objects.equals(filter.getPipelineName(), newPipeName)) {
+                                        return filter.copy().pipelineName(newPipeName).build();
+                                    }
+                                }
                             }
-                        });
-                    }
-                } catch (final RuntimeException e) {
-                    // This error is expected in tests and the pipeline name isn't essential
-                    // as it is only used in here for logging purposes.
-                    LOGGER.trace(e::getMessage, e);
-                }
-            }
-            return filters;
+                        } catch (final RuntimeException e) {
+                            // This error is expected in tests and the pipeline name isn't essential
+                            // as it is only used in here for logging purposes.
+                            LOGGER.trace(e::getMessage, e);
+                        }
+                        return filter;
+                    })
+                    .toList();
         });
     }
 

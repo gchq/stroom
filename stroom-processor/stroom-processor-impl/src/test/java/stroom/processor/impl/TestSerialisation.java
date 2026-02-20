@@ -42,7 +42,7 @@ public class TestSerialisation {
 
         final List<ProcessorListRow> rows = new ArrayList<>();
         rows.add(new ProcessorRow(new Expander(), Processor.builder().build()));
-        rows.add(new ProcessorFilterRow(new ProcessorFilter()));
+        rows.add(new ProcessorFilterRow(ProcessorFilter.builder().build()));
 
         final ProcessorListRowResultPage resultPage1 = new ProcessorListRowResultPage(
                 rows,

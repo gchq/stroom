@@ -48,7 +48,6 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.FindUserContext;
 import stroom.security.user.api.UserRefLookup;
-import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -138,7 +137,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         final int calculatedPriority = getAutoPriority(processor, request.getPriority(), request.isAutoPriority());
 
         // Create the filter and tracker
-        final ProcessorFilter processorFilter = ProcessorFilter
+        final ProcessorFilter.Builder builder = ProcessorFilter
                 .builder()
                 .reprocess(request.isReprocess())
                 .enabled(request.isEnabled())
@@ -148,14 +147,13 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                 .processor(processor)
                 .queryData(request.getQueryData())
                 .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
-                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs())
-                .build();
-        setRunAs(request, processorFilter);
-        return create(processorFilter);
+                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        setRunAs(request, builder);
+        return create(builder.build());
     }
 
-    private void setRunAs(final CreateProcessFilterRequest request, final ProcessorFilter filter) {
-        filter.setRunAsUser(NullSafe.getOrElseGet(
+    private void setRunAs(final CreateProcessFilterRequest request, final ProcessorFilter.Builder filter) {
+        filter.runAsUser(NullSafe.getOrElseGet(
                 request,
                 CreateProcessFilterRequest::getRunAsUser,
                 securityContext::getUserRef));
@@ -188,25 +186,26 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         }
 
         // now create the filter and tracker
-        final ProcessorFilter processorFilter = Objects.requireNonNullElseGet(
-                existingProcessorFilter,
-                ProcessorFilter::new);
-
-        AuditUtil.stamp(securityContext, processorFilter);
-        processorFilter.setReprocess(request.isReprocess());
-        processorFilter.setEnabled(request.isEnabled());
-        processorFilter.setExport(request.isExport());
-        processorFilter.setPriority(calculatedPriority);
-        processorFilter.setMaxProcessingTasks(request.getMaxProcessingTasks());
-        processorFilter.setProcessor(processor);
-        processorFilter.setQueryData(queryData);
-        processorFilter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
-        processorFilter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
-        setRunAs(request, processorFilter);
+        final ProcessorFilter.Builder builder = NullSafe.getOrElse(
+                        existingProcessorFilter,
+                        ProcessorFilter::copy,
+                        ProcessorFilter.builder())
+                .reprocess(request.isReprocess())
+                .enabled(request.isEnabled())
+                .export(request.isExport())
+                .priority(calculatedPriority)
+                .maxProcessingTasks(request.getMaxProcessingTasks())
+                .processor(processor)
+                .queryData(queryData)
+                .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
+                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs())
+                .stampAudit(securityContext);
+        setRunAs(request, builder);
         if (processorFilterDocRef != null) {
-            processorFilter.setUuid(processorFilterDocRef.getUuid());
+            builder.uuid(processorFilterDocRef.getUuid());
         }
 
+        final ProcessorFilter processorFilter = builder.build();
         if (existingProcessorFilter != null) {
             LOGGER.debug("importFilter() - updating {}", processorFilter);
             return update(processorFilter);
@@ -216,15 +215,16 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         }
     }
 
-    private void checkRunAs(final ProcessorFilter processorFilter) {
+    private ProcessorFilter ensureRunAs(final ProcessorFilter processorFilter) {
         final UserRef currentUser = securityContext.getUserRef();
         if (processorFilter.getRunAsUser() == null) {
             // By default the creator of the filter becomes the run as user for the filter
             // (see stroom.processor.impl.ProcessorTaskCreatorImpl.createNewTasks)
-            processorFilter.setRunAsUser(currentUser);
+            return processorFilter.copy().runAsUser(currentUser).build();
         } else {
             checkRunAs(processorFilter.getRunAsUser());
         }
+        return processorFilter;
     }
 
     private void checkRunAs(final UserRef runAsUser) {
@@ -238,13 +238,10 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
-        checkRunAs(processorFilter);
-
+        final ProcessorFilter updated = ensureRunAs(processorFilter);
         final ProcessorFilter createdFilter = securityContext.secureResult(PERMISSION, () ->
-                processorFilterDao.create(ensureValid(processorFilter)));
-        createdFilter.setProcessor(processorFilter.getProcessor());
-
-        return createdFilter;
+                processorFilterDao.create(ensureValid(updated)));
+        return createdFilter.copy().processor(updated.getProcessor()).build();
     }
 
     @Override
@@ -272,15 +269,16 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                     "You do not have permission to update this processor filter");
         }
 
-        if (processorFilter.getUuid() == null) {
-            processorFilter.setUuid(UUID.randomUUID().toString());
-        }
+        return securityContext.secureResult(PERMISSION, () -> {
+            ProcessorFilter updated = processorFilter;
+            if (processorFilter.getUuid() == null) {
+                updated = updated.copy().uuid(UUID.randomUUID().toString()).build();
+            }
 
-        checkRunAs(processorFilter);
-
-        AuditUtil.stamp(securityContext, processorFilter);
-        return securityContext.secureResult(PERMISSION, () ->
-                processorFilterDao.update(processorFilter));
+            updated = ensureRunAs(updated);
+            updated = updated.copy().stampAudit(securityContext).build();
+            return processorFilterDao.update(updated);
+        });
     }
 
     @Override
@@ -299,26 +297,20 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
 
     @Override
     public void setPriority(final Integer id, final Integer priority) {
-        fetch(id).ifPresent(processorFilter -> {
-            processorFilter.setPriority(priority);
-            update(processorFilter);
-        });
+        fetch(id).ifPresent(processorFilter ->
+                update(processorFilter.copy().priority(priority).build()));
     }
 
     @Override
     public void setMaxProcessingTasks(final Integer id, final Integer maxProcessingTasks) {
-        fetch(id).ifPresent(processorFilter -> {
-            processorFilter.setMaxProcessingTasks(maxProcessingTasks);
-            update(processorFilter);
-        });
+        fetch(id).ifPresent(processorFilter ->
+                update(processorFilter.copy().maxProcessingTasks(maxProcessingTasks).build()));
     }
 
     @Override
     public void setEnabled(final Integer id, final Boolean enabled) {
-        fetch(id).ifPresent(processorFilter -> {
-            processorFilter.setEnabled(enabled);
-            update(processorFilter);
-        });
+        fetch(id).ifPresent(processorFilter ->
+                update(processorFilter.copy().enabled(enabled).build()));
     }
 
     @Override
@@ -392,10 +384,12 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                                 // If the user is not an admin then only show them filters that are set to run as them.
                                 if (securityContext.isAdmin() ||
                                     Objects.equals(currentUser, processorFilter.getRunAsUser())) {
+                                    final ProcessorFilter.Builder processorFilterBuilder = processorFilter.copy();
+
                                     // Decorate the expression with resolved dictionaries etc.
                                     final QueryData queryData = processorFilter.getQueryData();
                                     if (queryData != null && queryData.getExpression() != null) {
-                                        processorFilter.setQueryData(queryData
+                                        processorFilterBuilder.queryData(queryData
                                                 .copy()
                                                 .expression(decorate(queryData.getExpression()))
                                                 .build());
@@ -405,11 +399,11 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                                         if (processor.getPipelineName() == null) {
                                             processor = updatePipelineName(processor);
                                         }
-                                        processorFilter.setPipelineName(processor.getPipelineName());
+                                        processorFilterBuilder.pipelineName(processor.getPipelineName());
                                     }
 
-                                    final ProcessorFilterRow processorFilterRow = getRow(processorFilter);
-                                    processorFilter.setProcessor(processor);
+                                    final ProcessorFilterRow processorFilterRow =
+                                            getRow(processorFilterBuilder.processor(processor).build());
                                     values.add(processorFilterRow);
                                 }
                             }
@@ -635,8 +629,9 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
             return null;
         }
 
+        final ProcessorFilter.Builder builder = processorFilter.copy();
         if (processorFilter.getUuid() == null) {
-            processorFilter.setUuid(UUID.randomUUID().toString());
+            builder.uuid(UUID.randomUUID().toString());
         }
 
         QueryData queryData = processorFilter.getQueryData();
@@ -646,11 +641,11 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
 
         if (queryData.getDataSource() == null) {
             queryData = queryData.copy().dataSource(MetaFields.STREAM_STORE_DOC_REF).build();
-            processorFilter.setQueryData(queryData);
+            builder.queryData(queryData);
         }
 
-        AuditUtil.stamp(securityContext, processorFilter);
-        return processorFilter;
+        builder.stampAudit(securityContext);
+        return builder.build();
     }
 
     @Override

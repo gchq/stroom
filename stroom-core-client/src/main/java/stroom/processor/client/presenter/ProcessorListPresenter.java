@@ -399,7 +399,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             priorityColumn.setFieldUpdater((index, row, value) -> {
                 if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-                    processorFilter.setPriority(value.intValue());
+                    processorFilterRow.setProcessorFilter(
+                            processorFilter.copy().priority(value.intValue()).build());
                     processorFilterPrioritySaveQueue.setValue(processorFilter.getId(), value.intValue());
                 }
             });
@@ -430,7 +431,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             maxProcessingTasksColumn.setFieldUpdater((index, row, value) -> {
                 if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-                    processorFilter.setMaxProcessingTasks(value.intValue());
+                    processorFilterRow.setProcessorFilter(
+                            processorFilter.copy().maxProcessingTasks(value.intValue()).build());
                     processorFilterMaxProcessingTasksSaveQueue.setValue(processorFilter.getId(), value.intValue());
                 }
             });
@@ -497,7 +499,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             enabledColumn.setFieldUpdater((index, row, value) -> {
                 if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-                    processorFilter.setEnabled(value.toBoolean());
+                    processorFilterRow.setProcessorFilter(
+                            processorFilter.copy().enabled(value.toBoolean()).build());
 
                     processorFilterEnabledSaveQueue.setValue(processorFilter.getId(), value.toBoolean());
 //                    final Rest<ProcessorFilter> rest = restFactory.create();
@@ -505,7 +508,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
 
                 } else if (row instanceof final ProcessorRow processorRow) {
                     final Processor processor = processorRow.getProcessor();
-//                    processor.setEnabled(value.toBoolean());
+                    processorRow.setProcessor(
+                            processor.copy().enabled(value.toBoolean()).build());
 
                     processorEnabledSaveQueue.setValue(processor.getId(), value.toBoolean());
 //                    final Rest<Processor> rest = restFactory.create();

@@ -34,7 +34,6 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.State;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.AuditUtil;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
@@ -42,6 +41,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Embeddable;
+import stroom.util.shared.HasAuditInfoBuilder;
 import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PermissionException;
@@ -480,7 +480,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                     throw new IOException("Unable to read " + toDocRefDisplayString(docRef));
                 }
                 if (omitAuditFields) {
-                    document = AuditUtil.removeAuditData(builderFunction, document);
+                    document = removeAuditData(builderFunction, document);
                 }
                 data = serialiser.write(function.apply(document));
             }
@@ -496,8 +496,8 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                                        final List<String> updatedFieldList) {
         try {
             final D newDoc = serialiser.read(dataMap);
-            final D existingDocument = AuditUtil.removeAuditData(builderFunction, existingDoc);
-            final D newDocument = AuditUtil.removeAuditData(builderFunction, newDoc);
+            final D existingDocument = removeAuditData(builderFunction, existingDoc);
+            final D newDocument = removeAuditData(builderFunction, newDoc);
 
             try {
                 final Method[] methods = existingDocument.getClass().getMethods();
@@ -782,5 +782,26 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                 }
             }
         }
+    }
+
+    /**
+     * Remove audit data from docs.
+     *
+     * @param builderFunction The builder factory that allows a builder to be created for the doc that can remove the
+     *                        fields.
+     * @param doc             The doc to alter.
+     * @param <D>             Doc type.
+     * @param <B>             Builder type.
+     * @return The doc with audit fields removed.
+     */
+    private static <D, B extends HasAuditInfoBuilder<D, ?>> D removeAuditData(final Function<D, B> builderFunction,
+                                                                              final D doc) {
+        return builderFunction
+                .apply(doc)
+                .createTimeMs(null)
+                .createUser(null)
+                .updateTimeMs(null)
+                .updateUser(null)
+                .build();
     }
 }
