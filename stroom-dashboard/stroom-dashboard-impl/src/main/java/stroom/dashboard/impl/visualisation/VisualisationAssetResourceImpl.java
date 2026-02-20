@@ -1,5 +1,6 @@
 package stroom.dashboard.impl.visualisation;
 
+import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -17,13 +18,12 @@ import jakarta.inject.Provider;
 
 import java.io.IOException;
 
-import static stroom.event.logging.rs.api.AutoLogged.OperationType.UNLOGGED;
+import static stroom.event.logging.rs.api.AutoLogged.OperationType.ALLOCATE_AUTOMATICALLY;
 
 /**
  * Serverside REST handling for Visualisation Assets.
- * <br>TODO Perform audit logging
  */
-@AutoLogged(UNLOGGED)
+@AutoLogged(ALLOCATE_AUTOMATICALLY)
 public class VisualisationAssetResourceImpl implements VisualisationAssetResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(VisualisationAssetResourceImpl.class);
@@ -37,7 +37,8 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
     @SuppressWarnings("unused")
     @Inject
     VisualisationAssetResourceImpl(final Provider<VisualisationAssetService> serviceProvider,
-                                   final Provider<VisualisationAssetConfig> configProvider ) {
+                                   final Provider<VisualisationAssetConfig> configProvider,
+                                   final Provider<DocumentEventLog> docEventLogProvider) {
         this.serviceProvider = serviceProvider;
         this.configProvider = configProvider;
     }
