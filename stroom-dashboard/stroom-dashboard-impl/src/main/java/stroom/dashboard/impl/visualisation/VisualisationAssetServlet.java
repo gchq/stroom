@@ -155,7 +155,6 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
             throws IOException, PermissionException {
 
         final Path cachedAssetPath = getCachePathForAsset(docId, assetPath);
-        LOGGER.info("Cached path of '{}' is {}", assetPath, cachedAssetPath);
 
         // Synchronise to prevent race conditions.
         // Not the most efficient way to do this but can be optimised if necessary.
@@ -213,7 +212,7 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
             LOGGER.error("Error retrieving asset for docId {}, path '{}': {}", docId, path, e.getMessage(), e);
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         } catch (final PermissionException e) {
-            LOGGER.info("User does not have permission to view assets");
+            LOGGER.warn("User does not have permission to view assets");
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         }
     }
@@ -324,7 +323,6 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
 
     @Override
     public void init() throws ServletException {
-        LOGGER.debug("Creating VisualisationAssetServlet");
         super.init();
         if (clearAssetCacheOnStartup) {
             clearCache();
@@ -335,14 +333,12 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
 
     @Override
     public void destroy() {
-        LOGGER.debug("Destroying VisualisationAssetServlet");
         super.destroy();
         deleteTempFiles();
     }
 
     @Override
     public Set<String> getPathSpecs() {
-        LOGGER.debug("PathSpecs: {}", PATH_SPECS);
         return PATH_SPECS;
     }
 

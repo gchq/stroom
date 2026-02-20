@@ -27,8 +27,13 @@ import java.util.Objects;
  * Intermediates between VisualisationAssetResource and VisualisationAssetDao.
  * Primarily responsible for checking permissions.
  * Allows easy access to Assets within the database.
+ * <P>
+ *     TODO: What is correct behaviour on permission failure?
+ * </P>
  */
 public class VisualisationAssetService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(VisualisationAssetService.class);
 
     /** DAO to talk to the DB */
     private final VisualisationAssetDao dao;
@@ -39,12 +44,6 @@ public class VisualisationAssetService {
     /** Security checks */
     private final SecurityContext securityContext;
 
-    /** Logger */
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(VisualisationAssetService.class);
-
-    /**
-     * Injected constructor.
-     */
     @SuppressWarnings("unused")
     @Inject
     public VisualisationAssetService(final VisualisationAssetDao dao,
@@ -69,7 +68,7 @@ public class VisualisationAssetService {
             return dao.fetchDraftAssets(securityContext.getUserRef().getUuid(), ownerId);
         } else {
             // No permission so return empty assets
-            LOGGER.info("User does not have permission to see assets");
+            LOGGER.warn("User does not have permission to see assets");
             return new VisualisationAssets(ownerId);
         }
     }
@@ -91,7 +90,7 @@ public class VisualisationAssetService {
                     ownerDocId,
                     path);
         } else {
-            LOGGER.info("User does not have permission to create a new folder '{}'", path);
+            LOGGER.warn("User does not have permission to create a new folder '{}'", path);
         }
 
     }
@@ -114,7 +113,7 @@ public class VisualisationAssetService {
                     ownerDocId,
                     path);
         } else {
-            LOGGER.info("User does not have permission to create a new file '{}'", path);
+            LOGGER.warn("User does not have permission to create a new file '{}'", path);
         }
     }
 
@@ -148,7 +147,7 @@ public class VisualisationAssetService {
                 resourceStore.deleteTempFile(resourceKey);
             }
         } else {
-            LOGGER.info("User does not have permission to create a new file from an upload: '{}'", path);
+            LOGGER.warn("User does not have permission to create a new file from an upload: '{}'", path);
         }
     }
 
@@ -172,7 +171,7 @@ public class VisualisationAssetService {
                     path,
                     isFolder);
         } else {
-            LOGGER.info("User does not have permission to delete an item '{}'", path);
+            LOGGER.warn("User does not have permission to delete an item '{}'", path);
         }
     }
 
@@ -200,7 +199,7 @@ public class VisualisationAssetService {
                     newPath,
                     isFolder);
         } else {
-            LOGGER.info("User does not have permission to rename an item '{}'", oldPath);
+            LOGGER.warn("User does not have permission to rename an item '{}'", oldPath);
         }
     }
 
@@ -224,7 +223,7 @@ public class VisualisationAssetService {
                     path,
                     content);
         } else {
-            LOGGER.info("User does not have permission to update the content of an item '{}'", path);
+            LOGGER.warn("User does not have permission to update the content of an item '{}'", path);
         }
     }
 
@@ -248,7 +247,7 @@ public class VisualisationAssetService {
                     ownerDocId,
                     path);
         } else {
-            LOGGER.info("User does not have permission to view the content of an item");
+            LOGGER.warn("User does not have permission to view the content of an item");
             return null;
         }
     }
@@ -262,6 +261,8 @@ public class VisualisationAssetService {
         final DocRef docRef = new DocRef(VisualisationDoc.TYPE, ownerDocId);
         if (securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
             dao.saveDraftToLive(securityContext.getUserRef().getUuid(), ownerDocId);
+        } else {
+            LOGGER.warn("User does not have permission to save assets");
         }
     }
 
@@ -274,6 +275,8 @@ public class VisualisationAssetService {
         final DocRef docRef = new DocRef(VisualisationDoc.TYPE, ownerDocId);
         if (securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
             dao.revertDraftFromLive(securityContext.getUserRef().getUuid(), ownerDocId);
+        } else {
+            LOGGER.warn("User does not have permission to revert changes");
         }
     }
 
@@ -303,7 +306,7 @@ public class VisualisationAssetService {
                                     final Instant cacheTimestamp,
                                     final Path cachedPath)
             throws IOException, PermissionException {
-        LOGGER.info("Returning asset for {}, {}", ownerDocId, assetPath);
+
         final DocRef docRef = new DocRef(VisualisationDoc.TYPE, ownerDocId);
         if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
             return dao.writeLiveToServletCache(tempFilePrefix,
@@ -328,7 +331,6 @@ public class VisualisationAssetService {
      */
     Collection<ImportExportAsset> getAssetsForExport(final DocRef docRef)
             throws IOException, PermissionException {
-        LOGGER.info("Returning assets for export for {}", docRef);
         if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
             return dao.getAssetsForExport(docRef.getUuid());
         } else {
@@ -348,7 +350,6 @@ public class VisualisationAssetService {
                              final Collection<ImportExportAsset> pathAssets)
         throws IOException, PermissionException {
 
-        LOGGER.info("Setting assets from import for {}", docRef);
         if (securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
             dao.setAssetsFromImport(docRef.getUuid(), pathAssets);
         } else {
@@ -363,12 +364,11 @@ public class VisualisationAssetService {
      * @param fromDocRef Where the assets are coming from.
      * @param toDocRef Where the assets are going.
      * @throws IOException If something goes wrong
-     * @throws PermissionException If the user doesn't have permission
+     * @throws PermissionException If the user doesn't have EDIT permission
      */
     void copyAssetsToDoc(final DocRef fromDocRef,
                          final DocRef toDocRef)
         throws IOException, PermissionException {
-        LOGGER.info("Copying assets from {} to {}", fromDocRef, toDocRef);
 
         if (securityContext.hasDocumentPermission(fromDocRef, DocumentPermission.EDIT)) {
             if (securityContext.hasDocumentPermission(toDocRef, DocumentPermission.EDIT)) {
@@ -383,9 +383,15 @@ public class VisualisationAssetService {
         }
     }
 
+    /**
+     * Deletes the assets associated with a document.
+     * Called when the document is deleted.
+     * @param docRef The document that has been deleted.
+     * @throws IOException If something goes wrong
+     * @throws PermissionException If the user does not have DELETE permission.
+     */
     void deleteAssetsForDoc(final DocRef docRef)
         throws IOException, PermissionException {
-        LOGGER.info("Deleting assets for document {}", docRef);
 
         if (securityContext.hasDocumentPermission(docRef, DocumentPermission.DELETE)) {
             dao.deleteAssetsForDoc(docRef.getUuid());

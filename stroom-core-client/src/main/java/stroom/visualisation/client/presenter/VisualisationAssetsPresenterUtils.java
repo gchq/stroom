@@ -16,7 +16,6 @@
 
 package stroom.visualisation.client.presenter;
 
-import stroom.util.client.Console;
 import stroom.visualisation.client.presenter.assets.VisualisationAssetTreeItem;
 import stroom.visualisation.shared.VisualisationAsset;
 
@@ -114,7 +113,6 @@ public class VisualisationAssetsPresenterUtils {
      * Stores the state of the tree in the variable treeItemPathToOpenState.
      */
     static void storeOpenClosedState(final Tree tree, final Set<String> treeItemPathToOpenState) {
-        Console.info("Storing open/closed state");
         for (int i = 0; i < tree.getItemCount(); ++i) {
             final VisualisationAssetTreeItem treeItem = (VisualisationAssetTreeItem) tree.getItem(i);
             recurseStoreOpenClosedState(treeItem, treeItemPathToOpenState);

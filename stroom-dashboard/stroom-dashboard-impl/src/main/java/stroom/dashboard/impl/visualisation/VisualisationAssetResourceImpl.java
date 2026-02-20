@@ -45,7 +45,6 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
 
     @Override
     public VisualisationAssets fetchDraftAssets(final String ownerId) throws RuntimeException {
-        LOGGER.info("ResourceImpl: fetchAssets with ownerId {}", ownerId);
         try {
             return serviceProvider.get().fetchDraftAssets(ownerId);
         } catch (final IOException e) {
@@ -60,7 +59,6 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
     public Boolean updateNewFolder(final String ownerDocId, final String path)
             throws RuntimeException {
 
-        LOGGER.info("updateNewFolder: {}", path);
         try {
             serviceProvider.get().updateNewFolder(ownerDocId, path);
         } catch (final IOException e) {
@@ -76,7 +74,6 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
     @Override
     public Boolean updateNewFile(final String ownerDocId, final VisualisationAssetUpdateNewFile update)
             throws RuntimeException {
-        LOGGER.info("updateNewFile: {}", update.getPath());
         try {
             serviceProvider.get().updateNewFile(ownerDocId, update.getPath());
         } catch (final IOException e) {
@@ -93,7 +90,6 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
     public Boolean updateNewUploadedFile(final String ownerDocId,
                                          final VisualisationAssetUpdateNewFile update)
             throws RuntimeException {
-        LOGGER.info("updateNewUploadedFile: {}", update.getPath());
         try {
             serviceProvider.get().updateNewUploadedFile(
                     ownerDocId,
@@ -113,7 +109,6 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
     @Override
     public Boolean updateDelete(final String ownerDocId, final VisualisationAssetUpdateDelete update)
             throws RuntimeException {
-        LOGGER.info("updateDelete: {}", update.getPath());
         try {
             serviceProvider.get().updateDelete(ownerDocId, update.getPath(), update.isFolder());
         } catch (final IOException e) {
@@ -130,7 +125,6 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
     public Boolean updateRename(final String ownerDocId,
                                 final VisualisationAssetUpdateRename update)
             throws RuntimeException {
-        LOGGER.info("updateRename: '{}' -> '{}'", update.getOldPath(), update.getNewPath());
         try {
             serviceProvider.get().updateRename(
                     ownerDocId,
@@ -151,7 +145,6 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
     public Boolean updateContent(final String ownerDocId,
                                  final VisualisationAssetUpdateContent update)
             throws RuntimeException {
-        LOGGER.info("updateContent: {}", update.getPath());
         try {
             serviceProvider.get().updateContent(ownerDocId, update.getPath(), update.getContent());
         } catch (final IOException e) {
@@ -166,7 +159,6 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
 
     @Override
     public VisualisationAssetContent getDraftContent(final String ownerDocId, final String path) {
-        LOGGER.info("getDraftContent({}, {})", ownerDocId, path);
         try {
             final String content = serviceProvider.get().getDraftContent(ownerDocId, path);
             final String extension = Files.getFileExtension(path);

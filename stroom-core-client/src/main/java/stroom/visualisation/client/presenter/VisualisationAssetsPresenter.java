@@ -303,15 +303,10 @@ public class VisualisationAssetsPresenter
     protected void onRead(@SuppressWarnings("unused") final DocRef docRef,
                           final VisualisationDoc document,
                           final boolean readOnly) {
-        Console.info("onRead()");
 
         // Is this the first time this tab has been loaded?
         final boolean firstLoad = this.document == null || !this.document.getUuid().equals(document.getUuid());
-        Console.info("onRead(): first load = " + firstLoad);
-
         this.document = document;
-
-        // Set the readonly flag
         this.readOnly = readOnly;
 
         // Update UI state
@@ -323,8 +318,6 @@ public class VisualisationAssetsPresenter
         if (firstLoad) {
             this.fetchDraftAssets(document);
         }
-
-        Console.info("onRead() complete");
     }
 
     /**
@@ -336,7 +329,6 @@ public class VisualisationAssetsPresenter
      */
     @Override
     protected VisualisationDoc onWrite(final VisualisationDoc document) {
-        Console.info("onWrite(); isDirty()==" + isDirty());
 
         // Run this section after the main document has been saved to the server
         Scheduler.get().scheduleFinally(() -> {
@@ -434,7 +426,6 @@ public class VisualisationAssetsPresenter
     @Override
     public void onDirty(final boolean dirty) {
         super.onDirty(dirty);
-        Console.info("VisualisationAssetsPresenter.onDirty(" + dirty + ")");
         updateState();
     }
 
@@ -535,16 +526,13 @@ public class VisualisationAssetsPresenter
      * Called when the selection changes.
      */
     private void onSelectionChange() {
-        Console.info("onSelectionChange");
         if (!readOnly) {
             if (assetDirtyState.isDirtyAndNeedsSaveToDraft()) {
-                Console.info("0 onSelectionChange - saving " + assetDirtyState);
                 doUpdateContent(assetDirtyState.getPathToEditItem(),
                         editorPresenter.getText().getBytes(StandardCharsets.UTF_8),
                         this::doSelectionChangeAfterUpdateContentSuccess,
                         this::doSelectionChangeAfterUpdateContentFailed);
             } else {
-                Console.info("0 No previous item to save");
                 doSelectionChangeAfterUpdateContentSuccess();
             }
         }
@@ -564,13 +552,11 @@ public class VisualisationAssetsPresenter
      * Loads up the new editor contents.
      */
     private void doSelectionChangeAfterUpdateContentSuccess() {
-        Console.info("1b doSelectItemAfterUpdateContent");
         assetDirtyState.onUpdateContentSuccess();
 
         final VisualisationAssetTreeItem selectedItem = (VisualisationAssetTreeItem) tree.getSelectedItem();
 
         if (selectedItem != null && selectedItem.isLeaf()) {
-            Console.info("Item is selected and is leaf");
             final String selectedItemPath = VisualisationAssetsPresenterUtils.getItemPath(selectedItem);
             assetDirtyState.onSelectNewItemAfterSaveOldItem(selectedItem, selectedItemPath);
             fetchDraftContent(document,
@@ -578,7 +564,6 @@ public class VisualisationAssetsPresenter
                     this::doSelectionChangeAfterFetchDraftContentSuccess,
                     this::doSelectItemFetchDraftContentFailed);
         } else {
-            Console.info("Nothing selected or not leaf");
             doSelectItemFetchDraftContentFailed();
         }
     }
@@ -587,7 +572,6 @@ public class VisualisationAssetsPresenter
      * Called after doSelectItemAfterUpdateContent() to handle failures.
      */
     private void doSelectItemFetchDraftContentFailed() {
-        Console.info("2a doSelectItemFetchDraftContentFailed");
         disableEditor();
         updateState();
     }
@@ -596,7 +580,6 @@ public class VisualisationAssetsPresenter
      * Called after the new editor contents has been loaded.
      */
     private void doSelectionChangeAfterFetchDraftContentSuccess() {
-        Console.info("2b doSelectItemAfterFetchDraftContent");
         editorPresenter.setReadOnly(readOnly);
         updateState();
     }
@@ -643,7 +626,6 @@ public class VisualisationAssetsPresenter
                 .method(r -> r.saveDraftToLive(document.getUuid()))
                 .onSuccess(result -> {
                     if (result) {
-                        Console.info("doOnWrite(); onSuccess(); isDirty()==" + isDirty());
                         Scheduler.get().scheduleFinally(() -> {
                             // Reload doc via chain, once this chain is complete
                             fetchDraftAssets(document);
@@ -898,7 +880,7 @@ public class VisualisationAssetsPresenter
                         try {
                             editorMode = AceEditorMode.valueOf(result.getEditorMode());
                         } catch (final IllegalArgumentException e) {
-                            Console.info("Error converting '" + result.getEditorMode()
+                            Console.warn("Error converting '" + result.getEditorMode()
                                          + "' to an editor mode: " + e.getMessage());
                             editorMode = AceEditorMode.PLAIN_TEXT;
                         }
@@ -926,26 +908,22 @@ public class VisualisationAssetsPresenter
      * @param document The document received from the server.
      */
     private void fetchDraftAssets(final VisualisationDoc document) {
-        Console.info("fetchDraftAssets() start");
         final String ownerId = document.getUuid();
         VisualisationAssetsPresenterUtils.storeOpenClosedState(tree, treeItemPathToOpenState);
 
         restFactory.create(VISUALISATION_ASSET_RESOURCE)
                 .method(r -> r.fetchDraftAssets(ownerId))
                 .onSuccess(assets -> {
-                    Console.info("fetchDraftAssets() - onSuccess");
                     // Clear any existing content from the tree
                     tree.clear();
 
                     // Put the new tree in
-                    Console.info("fetchDraftAssets: got " + assets.getAssets().size() + " assets to add to the tree");
                     VisualisationAssetsPresenterUtils.addPathsToTree(tree, assets.getAssets());
 
                     // Mark the editor content as clean
                     assetDirtyState.onFetchDraftAssets();
 
                     // Set dirty state from the state of the DB
-                    Console.info("fetchDraftAssets: dirty=" + assets.isDirty());
                     setDirty(assets.isDirty());
 
                     // Restore the open/closed state of the tree
@@ -953,7 +931,6 @@ public class VisualisationAssetsPresenter
 
                     // Make sure UI state is correct
                     updateState();
-                    Console.info("fetchDraftAssets() - onSuccess end");
                 })
                 .onFailure(error -> {
                     AlertEvent.fireError(this,
@@ -962,7 +939,6 @@ public class VisualisationAssetsPresenter
                 })
                 .taskMonitorFactory(this)
                 .exec();
-        Console.info("fetchDraftAssets() end");
     }
 
     /**
