@@ -128,7 +128,7 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
     /**
      * Process a path to ensure it has / for queries
      */
-    private String slashPath(String in, final boolean isFolder) {
+    private static String slashPath(String in, final boolean isFolder) {
         LOGGER.info("Adding slashes to path '{}'; is folder = {}", in, isFolder);
         if (!in.startsWith("/")) {
             in = "/" + in;
@@ -237,6 +237,7 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                                                 .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId))
                                         )
                         )
+                        .having(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(ownerDocId))
                 ).execute();
     }
 
@@ -290,7 +291,7 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
             throw t;
         }
 
-}
+    }
 
     @Override
     public void updateNewFolder(final String userUuid,
@@ -561,6 +562,39 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                 }
 
                 markUpdateAsDelete(userUuid, ownerDocId, txnContext);
+
+                // Make sure that an asset exists for the parent of the deleted asset.
+                // This will always be a folder.
+                final String parentPath = getParentPath(deletedPath);
+
+                final byte[] hashParentPath = Hashing.sha256().hashString(parentPath, StandardCharsets.UTF_8).asBytes();
+
+                final int rowsInserted = txnContext
+                        .insertInto(Tables.VISUALISATION_ASSETS_DRAFT)
+                        .columns(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID,
+                                Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID,
+                                Tables.VISUALISATION_ASSETS_DRAFT.ASSET_UUID,
+                                Tables.VISUALISATION_ASSETS_DRAFT.PATH,
+                                Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH,
+                                Tables.VISUALISATION_ASSETS_DRAFT.IS_FOLDER,
+                                Tables.VISUALISATION_ASSETS_DRAFT.DATA)
+                        .values(userUuid,
+                                ownerDocId,
+                                UUID.randomUUID().toString(),
+                                parentPath,
+                                hashParentPath,
+                                BYTE_TRUE,
+                                null)
+                        .onDuplicateKeyIgnore()
+                        .execute();
+
+                if (rowsInserted != 1) {
+                    throw new DataAccessException("1 row should have been inserted for '"
+                                                  + parentPath + "' but "
+                                                  + rowsInserted + " rows were inserted");
+                }
+
+
             });
         } catch (final DataAccessException e) {
             LOGGER.error("Error deleting an asset for user {}, document {}: {}",
@@ -743,11 +777,14 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                         canCopyDraftToLive = true;
                     } else {
                         LOGGER.info("Cannot copy draft table to live table; no draft records exist "
-                        + "and the last update was not a delete.");
+                                    + "and the last update was not a delete.");
                     }
                 }
 
                 if (canCopyDraftToLive) {
+                    // De-duplicate the draft assets
+                    deleteDuplicateDraftAssets(userUuid, ownerDocId, txnContext);
+
                     LOGGER.info("Deleting existing live assets");
                     // Delete all existing live content for the owning document ID
                     int recordCount = txnContext
@@ -1084,6 +1121,68 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                 StandardCopyOption.REPLACE_EXISTING,
                 StandardCopyOption.ATOMIC_MOVE);
         LOGGER.info("Copied to '{}': size is now {}", filePath, filePath.toFile().length());
+    }
+
+    /**
+     * Goes through the draft assets and removes any duplicate assets.
+     * For example, given the assets "/folder/", "/folder/subfolder/",
+     * "/folder/subfolder/file.ext" we only want "/folder/subfolder/file.ext".
+     * The rest can be deleted as they are not necessary.
+     * @param userUuid The user who owns the draft assets
+     * @param ownerDocId The document which owns the assets
+     * @param txnContext JooQ transaction
+     * @throws DataAccessException If something goes wrong.
+     */
+    private void deleteDuplicateDraftAssets(final String userUuid,
+                                            final String ownerDocId,
+                                            final DSLContext txnContext)
+            throws DataAccessException {
+
+        final Table<?> tmp = txnContext.select(Tables.VISUALISATION_ASSETS_DRAFT.PATH,
+                        Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH)
+                .from(Tables.VISUALISATION_ASSETS_DRAFT)
+                .asTable("tmp");
+        final Field<String> tmpPath = tmp.field(Tables.VISUALISATION_ASSETS_DRAFT.PATH);
+
+        if (tmpPath != null) {
+            txnContext.deleteFrom(Tables.VISUALISATION_ASSETS_DRAFT)
+                    .where(DSL.exists(txnContext.selectOne()
+                            .from(tmp)
+                            .where(DSL.function("LOCATE",
+                                            Integer.class,
+                                            Tables.VISUALISATION_ASSETS_DRAFT.PATH,
+                                            tmpPath).eq(1)
+                                    .and(tmpPath.ne(Tables.VISUALISATION_ASSETS_DRAFT.PATH)))))
+                    .and(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
+                            .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId)))
+                    .execute();
+        }
+    }
+
+    /**
+     * Returns the path of the parent of this item.
+     * public static to allow testing.
+     * @param path The path to find the parent of. Can be null in which case empty string is returned.
+     * @return The path to the parent, including trailing slash. or empty string if there is no parent.
+     */
+    public static String getParentPath(final String path) {
+        if (path == null) {
+            return "";
+        }
+
+        if (path.isEmpty()) {
+            return "";
+        } else {
+            final String pathWithoutTerminalSlash = path.substring(0, path.length() - 1);
+            LOGGER.info("{}, {}", path, pathWithoutTerminalSlash);
+            final int iLastSlash = pathWithoutTerminalSlash.lastIndexOf("/");
+            LOGGER.info("iLastSlash: {}", iLastSlash);
+            if (iLastSlash > 1) {
+                return slashPath(path.substring(0, iLastSlash), true);
+            } else {
+                return "";
+            }
+        }
     }
 
 }

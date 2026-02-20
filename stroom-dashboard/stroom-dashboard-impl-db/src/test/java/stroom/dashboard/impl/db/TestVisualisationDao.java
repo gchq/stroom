@@ -61,7 +61,7 @@ public class TestVisualisationDao {
         assetDao.updateDelete(userUuid, ownerDocUuid, "/assetOne", true);
         assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
         assertThat(assets.isDirty()).isEqualTo(true);
-        assertThat(assets.getAssets().size()).isEqualTo(1);
+        assertThat(assets.getAssets().size()).isEqualTo(2);
 
         assetDao.updateRename(userUuid,
                 ownerDocUuid,
@@ -70,7 +70,7 @@ public class TestVisualisationDao {
                 true);
         assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
         assertThat(assets.isDirty()).isEqualTo(true);
-        assertThat(assets.getAssets().size()).isEqualTo(1);
+        assertThat(assets.getAssets().size()).isEqualTo(2);
         assertThat(assets.getAssets().getFirst().getPath()).isEqualTo("/root/NewFile.txt");
 
         assetDao.updateContent(userUuid, ownerDocUuid, "/root/NewFile.txt",
@@ -142,6 +142,50 @@ public class TestVisualisationDao {
         } catch (final IOException e) {
             // OK it worked as expected
         }
-
     }
+
+    @Test
+    void testDeDupAssets() throws IOException {
+        final String ownerDocUuid = "depdupDoc";
+        final String userUuid = "dedupUser";
+
+        VisualisationAssets assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
+        assertThat(assets.getAssets().size()).isEqualTo(0);
+        assertThat(assets.isDirty()).isEqualTo(false);
+
+        // Add in duplicated assets
+        assetDao.updateNewFolder(userUuid, ownerDocUuid, "folder");
+        assetDao.updateNewFolder(userUuid, ownerDocUuid, "/folder/subfolder");
+        assetDao.updateNewFile(userUuid, ownerDocUuid, "/folder/subfolder/file.ext");
+
+        // Draft table contains duplicates
+        assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
+        assertThat(assets.isDirty()).isEqualTo(true);
+        assertThat(assets.getAssets().size()).isEqualTo(3);
+
+        // Save to live
+        assetDao.saveDraftToLive(userUuid, ownerDocUuid);
+        assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
+        assertThat(assets.isDirty()).isEqualTo(false);
+        assertThat(assets.getAssets().size()).isEqualTo(1);
+        assertThat(assets.getAssets().getFirst().getPath()).isEqualTo("/folder/subfolder/file.ext");
+    }
+
+    @Test
+    void testParentPath() {
+        final String fullPath = "/1/2/3/4/5/6.ext";
+        final String path5 = VisualisationAssetDaoImpl.getParentPath(fullPath);
+        assertThat(path5).isEqualTo("/1/2/3/4/5/");
+        final String path4 = VisualisationAssetDaoImpl.getParentPath(path5);
+        assertThat(path4).isEqualTo("/1/2/3/4/");
+        final String path3 = VisualisationAssetDaoImpl.getParentPath(path4);
+        assertThat(path3).isEqualTo("/1/2/3/");
+        final String path2 = VisualisationAssetDaoImpl.getParentPath(path3);
+        assertThat(path2).isEqualTo("/1/2/");
+        final String path1 = VisualisationAssetDaoImpl.getParentPath(path2);
+        assertThat(path1).isEqualTo("/1/");
+        final String path0 = VisualisationAssetDaoImpl.getParentPath(path1);
+        assertThat(path0).isEqualTo("");
+    }
+
 }
