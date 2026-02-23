@@ -217,15 +217,24 @@ public class AttributeMapUtil {
      * @param keys The keys to find values for. Assumed to be already trimmed.
      *             Keys must be distinct ignoring case.
      * @return A list of values using the same indexing as the supplied keys. The length of the
-     * returned list will always match that of the supplied keys list.
+     * returned list will always match that of the supplied keys list. If the key is not
+     * found, the value in the list will be null. If no keys are found the list will contain
+     * null for each key.
      */
     public static List<String> readKeys(final String data,
                                         final List<String> keys) throws IOException {
-        if (NullSafe.hasItems(keys) && NullSafe.isNonBlankString(data)) {
-            // Meta keys come from headers so should be ascii, and thus we don't have to
-            // worry about multibyte 'chars' and other such oddities.
-            try (final Stream<String> linesStream = data.lines()) {
-                return readKeys(keys, linesStream);
+        if (NullSafe.hasItems(keys)) {
+            if (NullSafe.isNonBlankString(data)) {
+                // Meta keys come from headers so should be ascii, and thus we don't have to
+                // worry about multibyte 'chars' and other such oddities.
+                try (final Stream<String> linesStream = data.lines()) {
+                    return readKeys(keys, linesStream);
+                }
+            } else {
+                // Return a list of nulls as there is no data to read entries from
+                return keys.stream()
+                        .map(ignored -> (String) null)
+                        .toList();
             }
         } else {
             return Collections.emptyList();
@@ -240,7 +249,9 @@ public class AttributeMapUtil {
      * @param keys The keys to find values for. Assumed to be already trimmed.
      *             Keys must be distinct ignoring case.
      * @return A list of values using the same indexing as the supplied keys. The length of the
-     * returned list will always match that of the supplied keys list.
+     * returned list will always match that of the supplied keys list. If the key is not
+     * found, the value in the list will be null. If no keys are found the list will contain
+     * null for each key.
      */
     public static List<String> readKeys(final Path path,
                                         final List<String> keys) throws IOException {

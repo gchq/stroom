@@ -208,8 +208,8 @@ class TestAttributeMapUtil {
                     return AttributeMapUtil.readKeys(data, keys);
                 }))
                 .withSimpleEqualityAssertion()
-                .addCase(Tuple.of(null, List.of("Feed", "type")), List.of())
-                .addCase(Tuple.of("", List.of("Feed", "type")), List.of())
+                .addCase(Tuple.of(null, List.of("Feed", "type")), Arrays.asList(null, null))
+                .addCase(Tuple.of("", List.of("Feed", "type")), Arrays.asList(null, null))
                 .addCase(Tuple.of(data1, List.of("Feed")), List.of("MY_FEED"))
                 .addCase(Tuple.of(data1, List.of("FEED")), List.of("MY_FEED"))
                 .addCase(Tuple.of(data1, List.of("type")), List.of("EVENTS"))
@@ -217,6 +217,8 @@ class TestAttributeMapUtil {
                 .addCase(Tuple.of(data1, List.of("FEED", "TYPE")), List.of("MY_FEED", "EVENTS"))
                 .addCase(Tuple.of(data1, List.of("feed", "type")), List.of("MY_FEED", "EVENTS"))
                 .addCase(Tuple.of(data1, List.of("type", "feed")), List.of("EVENTS", "MY_FEED"))
+                .addCase(Tuple.of(data1, List.of("FEED", "notHere")), Arrays.asList("MY_FEED", null))
+                .addCase(Tuple.of(data1, List.of("notHere", "FEED")), Arrays.asList(null, "MY_FEED"))
                 .addCase(Tuple.of(data1, List.of("notHere")), Collections.singletonList(null))
                 .addCase(Tuple.of(data1, List.of("notHere", "notThere")), Arrays.asList(null, null))
                 .build();
