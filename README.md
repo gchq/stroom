@@ -53,8 +53,18 @@ See [Stroom Documentation](https://gchq.github.io/stroom-docs/).
 
 ## Contributing
 
-If you'd like to make a contribution then the details for doing all of that are
+Contributing to Stroom can come in the following forms:
+
+* Raising issues for bugs or feature requests in Stroom.
+* Making code contributions to fix bugs or adding new features.
+* Developing new Stroom content (see [stroom-content](https://github.com/gchq/stroom-content)).
+* Adding to or updating the documentation.
+
+If you'd like to make a contribution to Stroom then the details for doing all of that are
 in [CONTRIBUTING.md](https://github.com/gchq/stroom/blob/master/CONTRIBUTING.md).
+
+If you would like to contribute to Stroom's documentation then see [here](https://gchq.github.io/stroom-docs/community/documentation/).
+The documentation repository can be found at [github.com/gchq/stroom-docs](https://github.com/gchq/stroom-docs).
 
 
 ## GitHub Repositories
