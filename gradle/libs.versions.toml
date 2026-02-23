@@ -181,7 +181,7 @@ simple-java-mail = { module = "org.simplejavamail:simple-java-mail", version.ref
 simple-java-mail-batch-module = { module = "org.simplejavamail:batch-module", version.ref = "simple-java-mail" }
 slf4j-api = { module = "org.slf4j:slf4j-api" } # version controlled by dropwizard-dependencies
 snake-yaml = { module = "org.yaml:snakeyaml", version = "2.3" }
-solrj = { module = "org.apache.solr:solr-solrj", version = "9.8.0" }
+solrj = { module = "org.apache.solr:solr-solrj", version = "9.10.1" }
 stax-api = { module = "stax:stax-api", version = "1.0.1" }
 swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations-jakarta", version.ref = "swagger" }
 swagger-core = { module = "io.swagger.core.v3:swagger-core-jakarta", version.ref = "swagger" }
