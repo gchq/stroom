@@ -8,10 +8,10 @@ aws = "2.31.68"
 commons-io = "2.19.0"
 dropwizard = "4.0.14" # used to set the dropwizard-bom version, that controls lots of dependency versions
 elasticsearch = "9.2.1"
-flyway = "11.20.0"
+flyway = "12.0.0"
 guice = "7.0.0"
 gwt = "2.12.2"
-jgit = "7.3.0.202506031305-r"
+jgit = "7.5.0.202512021534-r"
 jmh = "1.37"
 jooq = "3.20.10"
 junit-jupiter = "5.13.1"
@@ -23,7 +23,7 @@ openai = "4.3.0"
 poi = "5.4.1"
 scylladb = "4.19.0.1"
 simple-java-mail = "8.8.0"
-swagger = "2.2.41"
+swagger = "2.2.42"
 
 [libraries]
 #------Stroom-libs---------------
@@ -47,7 +47,7 @@ commons-csv = { module = "org.apache.commons:commons-csv", version = "1.14.1" }
 commons-fileupload = { module = "org.apache.commons:commons-fileupload2-jakarta-servlet6", version = "2.0.0-M4" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 commons-lang = { module = "org.apache.commons:commons-lang3" } # version controlled by dropwizard-dependencies
-commons-pool2 = { module = "org.apache.commons:commons-pool2", version = "2.12.1" }
+commons-pool2 = { module = "org.apache.commons:commons-pool2", version = "2.13.1" }
 commons-text = { module = "org.apache.commons:commons-text" } # version controlled by dropwizard-dependencies
 classgraph = { module = "io.github.classgraph:classgraph", version = "4.8.184" }
 data-faker = { module = "net.datafaker:datafaker", version = "2.4.2" }
@@ -181,7 +181,7 @@ simple-java-mail = { module = "org.simplejavamail:simple-java-mail", version.ref
 simple-java-mail-batch-module = { module = "org.simplejavamail:batch-module", version.ref = "simple-java-mail" }
 slf4j-api = { module = "org.slf4j:slf4j-api" } # version controlled by dropwizard-dependencies
 snake-yaml = { module = "org.yaml:snakeyaml", version = "2.3" }
-solrj = { module = "org.apache.solr:solr-solrj", version = "9.8.0" }
+solrj = { module = "org.apache.solr:solr-solrj", version = "9.10.1" }
 stax-api = { module = "stax:stax-api", version = "1.0.1" }
 swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations-jakarta", version.ref = "swagger" }
 swagger-core = { module = "io.swagger.core.v3:swagger-core-jakarta", version.ref = "swagger" }
