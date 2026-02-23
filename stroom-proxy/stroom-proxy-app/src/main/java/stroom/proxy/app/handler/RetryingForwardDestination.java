@@ -98,7 +98,8 @@ public class RetryingForwardDestination implements ForwardDestination {
         this.destinationName = Objects.requireNonNull(delegateDestination.getName());
         final String safeDirName = DirUtil.makeSafeName(destinationName);
         final Path forwardingDir = dataDirProvider.get()
-                .resolve(DirNames.FORWARDING).resolve(safeDirName);
+                .resolve(DirNames.FORWARDING)
+                .resolve(safeDirName);
         DirUtil.ensureDirExists(forwardingDir);
 
         forwardQueue = dirQueueFactory.create(
