@@ -23,7 +23,7 @@ openai = "4.3.0"
 poi = "5.4.1"
 scylladb = "4.19.0.1"
 simple-java-mail = "8.8.0"
-swagger = "2.2.41"
+swagger = "2.2.42"
 
 [libraries]
 #------Stroom-libs---------------
