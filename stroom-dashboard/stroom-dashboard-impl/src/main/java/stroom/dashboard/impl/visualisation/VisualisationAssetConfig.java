@@ -87,7 +87,7 @@ public class VisualisationAssetConfig extends AbstractConfig {
         DEFAULT_EDITOR_MODES.put("html", "HTML");
         DEFAULT_EDITOR_MODES.put("htm",  "HTML");
         DEFAULT_EDITOR_MODES.put("js",   "JAVASCRIPT");
-        DEFAULT_EDITOR_MODES.put("svg",  "SVG");
+        DEFAULT_EDITOR_MODES.put("svg",  "XML"); // We don't have SVG javascript loaded into the editor
         DEFAULT_EDITOR_MODES.put("txt",  "TEXT");
         DEFAULT_EDITOR_MODES.put("xml",  "XML");
     }
