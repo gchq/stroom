@@ -18,6 +18,7 @@ package stroom.index.shared;
 
 import stroom.docref.HasDisplayValue;
 import stroom.util.shared.AuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasCapacity;
 import stroom.util.shared.HasCapacityInfo;
 import stroom.util.shared.HasIntegerId;
@@ -56,7 +57,7 @@ import java.util.OptionalLong;
         "indexVolumeGroupId"
 })
 @JsonInclude(Include.NON_NULL)
-public class IndexVolume implements HasIntegerId, HasCapacity {
+public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity {
 
     @JsonProperty
     private final Integer id;
@@ -134,18 +135,22 @@ public class IndexVolume implements HasIntegerId, HasCapacity {
         return version;
     }
 
+    @Override
     public Long getCreateTimeMs() {
         return createTimeMs;
     }
 
+    @Override
     public String getCreateUser() {
         return createUser;
     }
 
+    @Override
     public Long getUpdateTimeMs() {
         return updateTimeMs;
     }
 
+    @Override
     public String getUpdateUser() {
         return updateUser;
     }

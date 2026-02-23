@@ -18,6 +18,7 @@ package stroom.security.shared;
 
 
 import stroom.util.shared.AuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
@@ -35,7 +36,7 @@ import java.util.Objects;
  * Represents a user or a named group of users.
  */
 @JsonInclude(Include.NON_NULL)
-public class User implements HasIntegerId, HasUserRef {
+public class User implements HasAuditInfoGetters, HasIntegerId, HasUserRef {
 
     /**
      * The unique subjectId of the default Admin user that gets created if
@@ -119,18 +120,22 @@ public class User implements HasIntegerId, HasUserRef {
         return version;
     }
 
+    @Override
     public Long getCreateTimeMs() {
         return createTimeMs;
     }
 
+    @Override
     public String getCreateUser() {
         return createUser;
     }
 
+    @Override
     public Long getUpdateTimeMs() {
         return updateTimeMs;
     }
 
+    @Override
     public String getUpdateUser() {
         return updateUser;
     }

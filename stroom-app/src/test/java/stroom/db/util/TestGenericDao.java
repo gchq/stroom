@@ -16,6 +16,7 @@
 
 package stroom.db.util;
 
+import stroom.job.impl.db.JobDaoImpl;
 import stroom.job.impl.db.JobDbConnProvider;
 import stroom.job.impl.db.jooq.tables.records.JobRecord;
 import stroom.job.shared.Job;
@@ -245,6 +246,11 @@ public class TestGenericDao extends AbstractCoreIntegrationTest {
 
     private GenericDao<JobRecord, Job, Integer> getGenericDao() {
         // Use the job table as it is fairly simple and has a mappable Pojo
-        return new GenericDao<>(jobDbConnProvider, JOB, JOB.ID, Job.class);
+        return new GenericDao<>(
+                jobDbConnProvider,
+                JOB,
+                JOB.ID,
+                JobDaoImpl.JOB_TO_RECORD_MAPPER,
+                JobDaoImpl.RECORD_TO_JOB_MAPPER);
     }
 }

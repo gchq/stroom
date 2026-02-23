@@ -230,17 +230,18 @@ class TestConfigMapper {
 
         // getting each prop as a ConfigProperty ensure we can serialise to string
         configProperties.forEach(configProperty -> {
-            configProperty.setDatabaseOverrideValue(configProperty.getDefaultValue().orElse(null));
+            final ConfigProperty updated = configProperty.copy()
+                    .databaseOverrideValue(configProperty.getDefaultValue().orElse(null))
+                    .build();
 
             // verify we can convert back to an object from a string
-            final ConfigProperty newConfigProperty = configMapper.decorateDbConfigProperty(configProperty);
+            final ConfigProperty newConfigProperty = configMapper.decorateDbConfigProperty(updated);
 
-            LOGGER.debug(configProperty.toString());
+            LOGGER.debug(updated.toString());
             assertThat(newConfigProperty.getSource())
                     .isIn(ConfigProperty.SourceType.DATABASE, ConfigProperty.SourceType.DEFAULT);
         });
     }
-
 
     @Test
     void testValidatePropertyPath_valid() {
@@ -522,8 +523,10 @@ class TestConfigMapper {
         // make sure our new value differs from the current one
         assertThat(configPropertyCopy.getDefaultValue().get()).isNotEqualTo(newValueAsStr);
 
-        configPropertyCopy.setDatabaseOverrideValue(newValueAsStr);
-        configMapper.decorateDbConfigProperty(configPropertyCopy);
+        configMapper.decorateDbConfigProperty(configPropertyCopy
+                .copy()
+                .databaseOverrideValue(newValueAsStr)
+                .build());
 
         final T newObj = parseFunc.apply(prop, newValueAsStr);
 
@@ -561,8 +564,10 @@ class TestConfigMapper {
         // Make a copy as decorateDbConfigProperty will be comparing the one from the map
         // against this one.
         final ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
-        configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.decorateDbConfigProperty(configPropertyCopy);
+        configMapper.decorateDbConfigProperty(configPropertyCopy
+                .copy()
+                .databaseOverrideValue(ConfigMapper.convertToString(newValue))
+                .build());
 
         final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class);
 
@@ -583,8 +588,10 @@ class TestConfigMapper {
         // Make a copy as decorateDbConfigProperty will be comparing the one from the map
         // against this one.
         final ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
-        configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.decorateDbConfigProperty(configPropertyCopy);
+        configMapper.decorateDbConfigProperty(configPropertyCopy
+                .copy()
+                .databaseOverrideValue(ConfigMapper.convertToString(newValue))
+                .build());
 
         final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class);
 
@@ -607,8 +614,10 @@ class TestConfigMapper {
         // Make a copy as decorateDbConfigProperty will be comparing the one from the map
         // against this one.
         final ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
-        configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.decorateDbConfigProperty(configPropertyCopy);
+        configMapper.decorateDbConfigProperty(configPropertyCopy
+                .copy()
+                .databaseOverrideValue(ConfigMapper.convertToString(newValue))
+                .build());
 
         final TestConfig newtTestConfig = configMapper.getConfigObject(TestConfig.class);
 
@@ -633,8 +642,10 @@ class TestConfigMapper {
         // Make a copy as decorateDbConfigProperty will be comparing the one from the map
         // against this one.
         final ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
-        configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.decorateDbConfigProperty(configPropertyCopy);
+        configMapper.decorateDbConfigProperty(configPropertyCopy
+                .copy()
+                .databaseOverrideValue(ConfigMapper.convertToString(newValue))
+                .build());
 
         final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class);
         assertThat(newTestConfig.getStringLongMapProp()).isEqualTo(newValue);

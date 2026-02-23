@@ -22,6 +22,7 @@ import stroom.docref.DocRef.TypedBuilder;
 import stroom.docref.HasUuid;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.util.shared.AuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
@@ -36,7 +37,7 @@ import java.util.Comparator;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class ProcessorFilter implements HasUuid, HasIntegerId {
+public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasIntegerId {
 
     public static final String ENTITY_TYPE = "ProcessorFilter";
     public static final int MIN_PRIORITY = 1;
@@ -123,10 +124,6 @@ public class ProcessorFilter implements HasUuid, HasIntegerId {
     @JsonProperty
     private final Long maxMetaCreateTimeMs;
 
-//    public ProcessorFilter() {
-//        priority = DEFAULT_PRIORITY;
-//    }
-
     @JsonCreator
     public ProcessorFilter(@JsonProperty("id") final Integer id,
                            @JsonProperty("version") final Integer version,
@@ -162,8 +159,9 @@ public class ProcessorFilter implements HasUuid, HasIntegerId {
         this.queryData = queryData;
         this.processor = processor;
         this.processorFilterTracker = processorFilterTracker;
-        this.pipelineUuid = NullSafe.requireNonNullElse(pipelineUuid,
-                NullSafe.get(processor, Processor::getPipelineUuid));
+        this.pipelineUuid = pipelineUuid != null
+                ? pipelineUuid
+                : NullSafe.get(processor, Processor::getPipelineUuid);
         this.priority = priority > 0
                 ? priority
                 : DEFAULT_PRIORITY;
@@ -172,11 +170,13 @@ public class ProcessorFilter implements HasUuid, HasIntegerId {
         this.enabled = enabled;
         this.deleted = deleted;
         this.export = export;
-        this.processorType = NullSafe.requireNonNullElse(processorType, NullSafe
-                .getOrElse(processor, Processor::getProcessorType, ProcessorType.PIPELINE));
+        this.processorType = processorType != null
+                ? processorType
+                : NullSafe.getOrElse(processor, Processor::getProcessorType, ProcessorType.PIPELINE);
 
-        this.processorUuid = NullSafe.requireNonNullElse(processorUuid,
-                NullSafe.get(processor, Processor::getUuid));
+        this.processorUuid = processorUuid != null
+                ? processorUuid
+                : NullSafe.get(processor, Processor::getUuid);
         this.pipelineName = pipelineName;
         this.runAsUser = runAsUser;
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
@@ -192,18 +192,22 @@ public class ProcessorFilter implements HasUuid, HasIntegerId {
         return version;
     }
 
+    @Override
     public Long getCreateTimeMs() {
         return createTimeMs;
     }
 
+    @Override
     public String getCreateUser() {
         return createUser;
     }
 
+    @Override
     public Long getUpdateTimeMs() {
         return updateTimeMs;
     }
 
+    @Override
     public String getUpdateUser() {
         return updateUser;
     }
@@ -244,37 +248,6 @@ public class ProcessorFilter implements HasUuid, HasIntegerId {
     public String getProcessorUuid() {
         return processorUuid;
     }
-
-
-
-    //    public ProcessorType getProcessorType() {
-//        if (processorType == null) {
-//            if (processor != null) {
-//                processorType = getProcessor().getProcessorType();
-//            } else {
-//                processorType = ProcessorType.PIPELINE;
-//            }
-//        }
-//        return processorType;
-//    }
-//
-//    public String getProcessorUuid() {
-//        if (processorUuid == null && processor != null) {
-//            processorUuid = getProcessor().getUuid();
-//        }
-//        return processorUuid;
-//    }
-//
-//    public String getPipelineUuid() {
-//        if (pipelineUuid == null) {
-//            final Processor processor = getProcessor();
-//            if (processor != null) {
-//                pipelineUuid = processor.getPipelineUuid();
-//            }
-//        }
-//        return pipelineUuid;
-//    }
-
 
     public String getPipelineUuid() {
         return pipelineUuid;
@@ -603,33 +576,6 @@ public class ProcessorFilter implements HasUuid, HasIntegerId {
             this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
             return self();
         }
-
-
-//        public void setProcessor(final Processor processor) {
-//            this.processor = processor;
-//
-//            if (processor != null) {
-//                processorType = processor.getProcessorType();
-//                processorUuid = processor.getUuid();
-//                pipelineUuid = processor.getPipelineUuid();
-//                pipelineName = processor.getPipelineName();
-//            }
-//        }
-//
-//        public void setPipelineName(final String pipelineName) {
-//            this.pipelineName = pipelineName;
-//            if (processor != null) {
-//                processor = processor.copy().pipelineName(pipelineName).build();
-//            }
-//        }
-//
-//
-//        public void setPipelineUuid(final String pipelineUuid) {
-//            this.pipelineUuid = pipelineUuid;
-//            if (processor != null) {
-//                processor = processor.copy().pipelineUuid(pipelineUuid).build();
-//            }
-//        }
 
         protected Builder self() {
             return this;

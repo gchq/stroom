@@ -35,7 +35,9 @@ import java.util.Set;
 @Singleton
 public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
 
-    private final MockIntCrud<ProcessorFilter> dao = new MockIntCrud<>();
+    private final MockIntCrud<ProcessorFilter> dao = new MockIntCrud<>(
+            (processorFilter, integer) -> processorFilter.copy().id(integer).build(),
+            processorFilter -> (int) processorFilter.getId());
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {

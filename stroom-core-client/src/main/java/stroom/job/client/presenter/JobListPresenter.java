@@ -80,9 +80,10 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
         dataProvider.addDataDisplay(dataGrid);
     }
 
-    private static RestDataProvider<JobWrapper, ResultPage<JobWrapper>> createDataProvider(final EventBus eventBus,
-                                                                                           final PagerView view,
-                                                                                           final RestFactory restFactory) {
+    private static RestDataProvider<JobWrapper, ResultPage<JobWrapper>> createDataProvider(
+            final EventBus eventBus,
+            final PagerView view,
+            final RestFactory restFactory) {
         return new RestDataProvider<JobWrapper, ResultPage<JobWrapper>>(eventBus) {
             @Override
             protected void exec(final Range range,

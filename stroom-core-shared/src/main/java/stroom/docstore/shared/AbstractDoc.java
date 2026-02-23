@@ -18,6 +18,7 @@ package stroom.docstore.shared;
 
 import stroom.util.shared.Document;
 import stroom.util.shared.HasAuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasAuditableUserIdentity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -38,7 +39,7 @@ import java.util.Objects;
         "createUser",
         "updateUser"})
 @JsonInclude(Include.NON_NULL)
-public abstract class AbstractDoc implements Document {
+public abstract class AbstractDoc implements HasAuditInfoGetters, Document {
 
     @JsonProperty
     private final String type;
@@ -102,13 +103,13 @@ public abstract class AbstractDoc implements Document {
     }
 
     @Override
-    public Long getUpdateTimeMs() {
-        return updateTimeMs;
+    public String getCreateUser() {
+        return createUser;
     }
 
     @Override
-    public String getCreateUser() {
-        return createUser;
+    public Long getUpdateTimeMs() {
+        return updateTimeMs;
     }
 
     @Override

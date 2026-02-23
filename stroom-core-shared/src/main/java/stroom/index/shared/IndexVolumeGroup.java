@@ -17,6 +17,7 @@
 package stroom.index.shared;
 
 import stroom.util.shared.AuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -27,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class IndexVolumeGroup implements HasIntegerId {
+public class IndexVolumeGroup implements HasAuditInfoGetters, HasIntegerId {
 
     @JsonProperty
     private final Integer id;
@@ -70,18 +71,22 @@ public class IndexVolumeGroup implements HasIntegerId {
         return version;
     }
 
+    @Override
     public Long getCreateTimeMs() {
         return createTimeMs;
     }
 
+    @Override
     public String getCreateUser() {
         return createUser;
     }
 
+    @Override
     public Long getUpdateTimeMs() {
         return updateTimeMs;
     }
 
+    @Override
     public String getUpdateUser() {
         return updateUser;
     }

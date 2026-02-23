@@ -64,15 +64,6 @@ public class Processor implements HasAuditInfoGetters, HasUuid {
     @JsonProperty
     private final boolean deleted;
 
-//    public Processor() {
-//        processorType = ProcessorType.PIPELINE;
-//    }
-//
-//    public Processor(final DocRef pipelineRef) {
-//        processorType = ProcessorType.PIPELINE;
-//        this.pipelineUuid = pipelineRef.getUuid();
-//    }
-
     @JsonCreator
     public Processor(@JsonProperty("id") final Integer id,
                      @JsonProperty("version") final Integer version,

@@ -595,13 +595,13 @@ class TestUserDaoImpl {
     }
 
     private User createUser(final String name, final boolean group) {
-        final User userOrGroup = User.builder()
+        User userOrGroup = User.builder()
                 .subjectId(name)
                 .uuid(UUID.randomUUID().toString())
                 .group(group)
                 .stampAudit("test")
                 .build();
-        userDao.create(userOrGroup);
+        userOrGroup = userDao.create(userOrGroup);
 
         if (group) {
             assertThat(userDao.getGroupByName(name))

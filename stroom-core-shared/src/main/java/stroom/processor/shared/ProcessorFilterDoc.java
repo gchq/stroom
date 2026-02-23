@@ -55,22 +55,18 @@ public class ProcessorFilterDoc implements Document {
         return processorFilter.getUuid();
     }
 
-    @Override
     public Long getCreateTimeMs() {
         return processorFilter.getCreateTimeMs();
     }
 
-    @Override
     public String getCreateUser() {
         return processorFilter.getCreateUser();
     }
 
-    @Override
     public Long getUpdateTimeMs() {
         return processorFilter.getUpdateTimeMs();
     }
 
-    @Override
     public String getUpdateUser() {
         return processorFilter.getUpdateUser();
     }

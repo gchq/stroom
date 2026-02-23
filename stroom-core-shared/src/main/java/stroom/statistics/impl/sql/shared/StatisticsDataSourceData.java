@@ -38,16 +38,12 @@ public class StatisticsDataSourceData {
     /**
      * Should be a SortedSet but GWT doesn't support that. Contents should be
      * sorted and not contain duplicates
-     * <p>
-     * XMLTransient to force JAXB to use the setter
      */
     @JsonProperty
     private final List<StatisticField> fields;
 
     /**
      * Held in a set to prevent duplicates.
-     * <p>
-     * XMLTransient to force JAXB to use the setter
      */
     @JsonProperty
     private final Set<CustomRollUpMask> customRollUpMasks;

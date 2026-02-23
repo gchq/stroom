@@ -18,6 +18,7 @@ package stroom.dashboard.shared;
 
 import stroom.query.api.Query;
 import stroom.util.shared.AuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.UserRef;
 
@@ -26,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class StoredQuery implements HasIntegerId {
+public class StoredQuery implements HasAuditInfoGetters, HasIntegerId {
 
     @JsonProperty
     private final Integer id;
@@ -93,18 +94,22 @@ public class StoredQuery implements HasIntegerId {
         return version;
     }
 
+    @Override
     public Long getCreateTimeMs() {
         return createTimeMs;
     }
 
+    @Override
     public String getCreateUser() {
         return createUser;
     }
 
+    @Override
     public Long getUpdateTimeMs() {
         return updateTimeMs;
     }
 
+    @Override
     public String getUpdateUser() {
         return updateUser;
     }

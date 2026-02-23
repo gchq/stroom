@@ -25,7 +25,6 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.shared.AppPermission;
-import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;

@@ -80,7 +80,7 @@ public class PrioritisedFilters implements Clearable {
                     .build();
 
             final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
-            List<ProcessorFilter> filters = processorFilterService
+            final List<ProcessorFilter> filters = processorFilterService
                     .find(findProcessorFilterCriteria)
                     .getValues();
             LOGGER.trace("Found {} filters", filters.size());

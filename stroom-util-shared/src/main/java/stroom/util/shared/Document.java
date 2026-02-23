@@ -21,7 +21,7 @@ import stroom.docref.HasName;
 import stroom.docref.HasType;
 import stroom.docref.HasUuid;
 
-public interface Document extends HasType, HasUuid, HasName, HasAuditInfoGetters {
+public interface Document extends HasType, HasUuid, HasName {
 
     default DocRef asDocRef() {
         return DocRef.builder()

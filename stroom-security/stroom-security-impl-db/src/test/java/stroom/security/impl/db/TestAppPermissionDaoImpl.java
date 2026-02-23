@@ -25,7 +25,6 @@ import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.FetchAppUserPermissionsRequest;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.security.shared.User;
-import stroom.util.AuditUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;

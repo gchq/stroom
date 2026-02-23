@@ -28,14 +28,51 @@ import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
+import org.jooq.Record;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
 
 public class NodeDaoImpl implements NodeDao {
+
+    static final Function<Record, Node> RECORD_TO_NODE_MAPPER = record -> Node
+            .builder()
+            .id(record.get(NODE.ID))
+            .version(record.get(NODE.VERSION))
+            .createTimeMs(record.get(NODE.CREATE_TIME_MS))
+            .createUser(record.get(NODE.CREATE_USER))
+            .updateTimeMs(record.get(NODE.UPDATE_TIME_MS))
+            .updateUser(record.get(NODE.UPDATE_USER))
+            .name(record.get(NODE.NAME))
+            .url(record.get(NODE.URL))
+            .priority(record.get(NODE.PRIORITY))
+            .enabled(record.get(NODE.ENABLED))
+            .buildVersion(record.get(NODE.BUILD_VERSION))
+            .lastBootMs(record.get(NODE.LAST_BOOT_MS))
+            .build();
+
+    private static final BiFunction<Node, NodeRecord, NodeRecord> NODE_TO_RECORD_MAPPER =
+            (node, record) -> {
+                record.from(node);
+                record.set(NODE.ID, node.getId());
+                record.set(NODE.VERSION, node.getVersion());
+                record.set(NODE.CREATE_TIME_MS, node.getCreateTimeMs());
+                record.set(NODE.CREATE_USER, node.getCreateUser());
+                record.set(NODE.UPDATE_TIME_MS, node.getUpdateTimeMs());
+                record.set(NODE.UPDATE_USER, node.getUpdateUser());
+                record.set(NODE.NAME, node.getName());
+                record.set(NODE.URL, node.getUrl());
+                record.set(NODE.PRIORITY, (short) node.getPriority());
+                record.set(NODE.ENABLED, node.isEnabled());
+                record.set(NODE.BUILD_VERSION, node.getBuildVersion());
+                record.set(NODE.LAST_BOOT_MS, node.getLastBootMs());
+                return record;
+            };
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindNodeCriteria.FIELD_ID, NODE.ID,
@@ -49,7 +86,12 @@ public class NodeDaoImpl implements NodeDao {
     @Inject
     NodeDaoImpl(final NodeDbConnProvider nodeDbConnProvider) {
         this.nodeDbConnProvider = nodeDbConnProvider;
-        this.genericDao = new GenericDao<>(nodeDbConnProvider, NODE, NODE.ID, Node.class);
+        this.genericDao = new GenericDao<>(
+                nodeDbConnProvider,
+                NODE,
+                NODE.ID,
+                NODE_TO_RECORD_MAPPER,
+                RECORD_TO_NODE_MAPPER);
     }
 
     @Override
@@ -78,7 +120,7 @@ public class NodeDaoImpl implements NodeDao {
                                 .orderBy(orderFields)
                                 .limit(offset, limit)
                                 .fetch())
-                .map(r -> r.into(Node.class));
+                .map(RECORD_TO_NODE_MAPPER::apply);
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 

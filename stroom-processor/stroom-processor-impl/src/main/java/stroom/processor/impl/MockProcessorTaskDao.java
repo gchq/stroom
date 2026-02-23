@@ -43,7 +43,9 @@ import java.util.Set;
 @Singleton
 public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
 
-    private final MockIntCrud<ProcessorTask> dao = new MockIntCrud<>();
+    private final MockIntCrud<ProcessorTask> dao = new MockIntCrud<>(
+            (processorTask, integer) -> processorTask.copy().id(integer).build(),
+            processorTask -> (int) processorTask.getId());
 
     @Override
     public long releaseOwnedTasks(final String nodeName) {

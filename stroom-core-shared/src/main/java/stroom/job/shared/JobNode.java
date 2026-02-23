@@ -18,6 +18,7 @@ package stroom.job.shared;
 
 
 import stroom.util.shared.AuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.NullSafe;
@@ -34,7 +35,7 @@ import java.util.Objects;
 import java.util.function.Function;
 
 @JsonInclude(Include.NON_NULL)
-public class JobNode implements HasIntegerId {
+public class JobNode implements HasAuditInfoGetters, HasIntegerId {
 
     @JsonProperty
     private final Integer id;
@@ -97,18 +98,22 @@ public class JobNode implements HasIntegerId {
         return version;
     }
 
+    @Override
     public Long getCreateTimeMs() {
         return createTimeMs;
     }
 
+    @Override
     public String getCreateUser() {
         return createUser;
     }
 
+    @Override
     public Long getUpdateTimeMs() {
         return updateTimeMs;
     }
 
+    @Override
     public String getUpdateUser() {
         return updateUser;
     }

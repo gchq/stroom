@@ -18,6 +18,7 @@ package stroom.job.shared;
 
 
 import stroom.util.shared.AuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -28,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public final class Job implements HasIntegerId {
+public final class Job implements HasAuditInfoGetters, HasIntegerId {
 
     @JsonProperty
     private final Integer id;
@@ -50,16 +51,6 @@ public final class Job implements HasIntegerId {
     private final String description;
     @JsonProperty
     private final boolean advanced;
-
-//    public Job() {
-//    }
-//
-//    public Job(final Integer id, final boolean enabled, final String description, final boolean advanced) {
-//        this.id = id;
-//        this.enabled = enabled;
-//        this.description = description;
-//        this.advanced = advanced;
-//    }
 
     @JsonCreator
     public Job(@JsonProperty("id") final Integer id,
@@ -93,18 +84,22 @@ public final class Job implements HasIntegerId {
         return version;
     }
 
+    @Override
     public Long getCreateTimeMs() {
         return createTimeMs;
     }
 
+    @Override
     public String getCreateUser() {
         return createUser;
     }
 
+    @Override
     public Long getUpdateTimeMs() {
         return updateTimeMs;
     }
 
+    @Override
     public String getUpdateUser() {
         return updateUser;
     }

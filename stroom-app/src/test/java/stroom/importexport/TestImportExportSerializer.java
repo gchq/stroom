@@ -18,6 +18,7 @@ package stroom.importexport;
 
 
 import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.api.FsVolumeGroupService;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
@@ -99,6 +100,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
     private ProcessorService processorService;
     @Inject
     private ProcessorFilterService processorFilterService;
+    @Inject
+    private FsVolumeGroupService fsVolumeGroupService;
 
     private Set<DocRef> buildFindFolderCriteria() {
         final Set<DocRef> criteria = new HashSet<>();
@@ -113,7 +116,10 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 null,
                 null);
         FeedDoc eventFeed = feedStore.readDocument(testNode.getDocRef())
-                .copy().description("Original Description").build();
+                .copy()
+                .description("Original Description")
+                .volumeGroup(fsVolumeGroupService.getDefaultVolumeGroup().orElseThrow())
+                .build();
         feedStore.writeDocument(eventFeed);
 
         commonTestControl.createRequiredXMLSchemas();
@@ -137,7 +143,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 testDataDir,
                 list,
                 ImportSettings.createConfirmation());
-        assertThat(list.size() > 0).isTrue();
+        assertThat(!list.isEmpty()).isTrue();
 
         // Should all be relative
         Map<DocRef, ImportState> map = new HashMap<>();
@@ -168,7 +174,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
             map.put(confirmation.getDocRef(), confirmation);
         }
 
-        assertThat(list.size() > 0).isTrue();
+        assertThat(!list.isEmpty()).isTrue();
         assertThat(map.get(testNode.getDocRef()).getState()).isEqualTo(State.UPDATE);
         assertThat(map.get(testNode.getDocRef()).getUpdatedFieldList().contains("description")).isTrue();
 
@@ -204,7 +210,10 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 null,
                 null);
         FeedDoc eventFeed = feedStore.readDocument(testNode.getDocRef())
-                .copy().description("Original Description").build();
+                .copy()
+                .description("Original Description")
+                .volumeGroup(fsVolumeGroupService.getDefaultVolumeGroup().orElseThrow())
+                .build();
         feedStore.writeDocument(eventFeed);
 
         commonTestControl.createRequiredXMLSchemas();
@@ -314,8 +323,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 folder,
                 null);
 
-        final PipelineDoc pipeline = pipelineStore.readDocument(pipelineNode.getDocRef());
-
+        pipelineStore.readDocument(pipelineNode.getDocRef());
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, "TEST-FEED-EVENTS")
@@ -376,7 +384,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 folder,
                 null);
 
-        final PipelineDoc pipeline = pipelineStore.readDocument(pipelineNode.getDocRef());
+        pipelineStore.readDocument(pipelineNode.getDocRef());
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, "TEST-FEED-EVENTS")

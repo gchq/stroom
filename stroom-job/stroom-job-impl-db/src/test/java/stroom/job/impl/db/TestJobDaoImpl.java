@@ -74,7 +74,7 @@ class TestJobDaoImpl {
         // Given
         final Job job = Job.builder()
                 .enabled(true)
-                .name(RandomStringUtils.randomAlphabetic(256))
+                .name(RandomStringUtils.insecure().nextAlphabetic(256))
                 .build();
 
         // When/then
