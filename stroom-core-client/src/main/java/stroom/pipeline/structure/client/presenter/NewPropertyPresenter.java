@@ -58,6 +58,7 @@ public class NewPropertyPresenter
     private final DocSelectionBoxPresenter entityDropDownPresenter;
     private boolean dirty;
 
+    private PipelineElement pipelineElement;
     private PipelinePropertyType propertyType;
     private PipelineProperty defaultProperty;
     private PipelineProperty inheritedProperty;
@@ -108,11 +109,16 @@ public class NewPropertyPresenter
                      final String defaultValue,
                      final String inheritedValue,
                      final String inheritedFrom) {
+        this.pipelineElement = pipelineElement;
         this.propertyType = propertyType;
         this.defaultProperty = defaultProperty;
         this.inheritedProperty = inheritedProperty;
         this.localProperty = localProperty;
         this.source = source;
+
+        if (propertyType.canEmbed()) {
+            getView().addSource(Source.EMBEDDED);
+        }
 
         getView().setElement(pipelineElement.getDisplayName());
         getView().setName(defaultProperty.getName());
@@ -135,7 +141,17 @@ public class NewPropertyPresenter
             case LOCAL:
                 startEdit(localProperty);
                 break;
+            case EMBEDDED:
+                showEmbeddedProperty();
+                break;
         }
+    }
+
+    private void showEmbeddedProperty() {
+        final String embeddedPropertyName = "EMBEDDED " + propertyType.getDocRefTypes()[0] + " (" +
+                                            pipelineElement.getId() + ")";
+        enterStringMode(PipelineProperty.builder().value(new PipelinePropertyValue(embeddedPropertyName)).build());
+        textBox.setEnabled(false);
     }
 
     private void startEdit(final PipelineProperty property) {
@@ -275,7 +291,7 @@ public class NewPropertyPresenter
         if (property.getValue() != null && property.getValue().getString() != null) {
             value = property.getValue().getString();
         }
-
+        textBox.setEnabled(true);
         textBox.setText(value);
     }
 
@@ -438,5 +454,7 @@ public class NewPropertyPresenter
         void setSource(Source source);
 
         void setValueWidget(Widget widget);
+
+        void addSource(Source source);
     }
 }

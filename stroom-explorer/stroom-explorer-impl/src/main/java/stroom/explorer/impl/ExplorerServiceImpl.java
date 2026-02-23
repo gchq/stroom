@@ -943,7 +943,7 @@ class ExplorerServiceImpl
             throw e;
         }
 
-        // Create the explorer node.
+        // Create the explorer node
         explorerNodeService.createNode(result, folderRef, permissionInheritance);
 
         // Make sure the tree model is rebuilt.

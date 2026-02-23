@@ -19,6 +19,7 @@ package stroom.pipeline;
 import stroom.docref.DocRef;
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
+import stroom.docstore.api.DocumentStore;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.explorer.api.ExplorerActionHandler;
@@ -54,6 +55,8 @@ public class PipelineModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(PipelineStoreImpl.class);
         GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
+                .addBinding(PipelineStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), DocumentStore.class)
                 .addBinding(PipelineStoreImpl.class);
 
         RestResourcesBinder.create(binder())

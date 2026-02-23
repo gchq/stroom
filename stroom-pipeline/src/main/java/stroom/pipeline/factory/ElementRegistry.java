@@ -208,6 +208,7 @@ public class ElementRegistry {
                 .docRefTypes((docRefProperty != null)
                         ? docRefProperty.types()
                         : null)
+                .canEmbed(docRefProperty != null && docRefProperty.canEmbed())
                 .build();
     }
 
