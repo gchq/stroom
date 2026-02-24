@@ -96,26 +96,27 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         super(createNodeList(BASE_PORT));
     }
 
-    // TODO : The tests in this class previously updated static values in place so this test now fails.
-    // I've no idea why `.peek` .vs `.map` is used whe returning the lists.
-    // Assume this was also just relying on in place mutation.
+    @Test
+    void list() {
+        initNodes();
 
-//    @Test
-//    void list() {
-//        initNodes();
-//
-//        final String subPath = GlobalConfigResource.PROPERTIES_SUB_PATH;
-//
-//        final ListConfigResponse expectedResponse = FULL_PROP_LIST;
-//
-//        doPostTest(subPath,
-//                new GlobalConfigCriteria(),
-//                ListConfigResponse.class,
-//                expectedResponse);
-//
-//        verify(globalConfigServiceMap.get("node1"), times(1))
-//                .list(eq(new GlobalConfigCriteria()));
-//    }
+        final String subPath = GlobalConfigResource.PROPERTIES_SUB_PATH;
+
+        final ListConfigResponse expectedResponse = new ListConfigResponse(
+                List.of(
+                        CONFIG_PROPERTY_1.copy().yamlOverrideValue("node1").build(),
+                        CONFIG_PROPERTY_2.copy().yamlOverrideValue("node1").build(),
+                        CONFIG_PROPERTY_3.copy().yamlOverrideValue("node1").build()),
+                "node1a");
+
+        doPostTest(subPath,
+                new GlobalConfigCriteria(),
+                ListConfigResponse.class,
+                expectedResponse);
+
+        verify(globalConfigServiceMap.get("node1"), times(1))
+                .list(eq(new GlobalConfigCriteria()));
+    }
 
     @Test
     void list_partialName() {
@@ -204,7 +205,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 GlobalConfigResource.PROPERTIES_SUB_PATH,
                 "some.other.property");
 
-        final ConfigProperty expectedResponse = CONFIG_PROPERTY_2;
+        final ConfigProperty expectedResponse = CONFIG_PROPERTY_2.copy().yamlOverrideValue("node1").build();
 
         final ConfigProperty listConfigResponse = doGetTest(
                 subPath,
@@ -378,7 +379,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 .thenAnswer(invocation -> {
                     final PropertyPath propertyPath = invocation.getArgument(0);
                     return FULL_PROP_LIST.stream()
-                            .peek(configProperty ->
+                            .map(configProperty ->
                                     configProperty.copy().yamlOverrideValue(node.getNodeName()).build())
                             .filter(configProperty -> configProperty.getName().equals(propertyPath))
                             .findFirst();
