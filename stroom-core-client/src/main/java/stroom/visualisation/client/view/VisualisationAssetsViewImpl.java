@@ -41,7 +41,7 @@ public class VisualisationAssetsViewImpl extends ViewImpl
     ThinSplitLayoutPanel splitLayoutPanel;
 
     /** Size of tree panel */
-    private static final double TREE_SIZE = 128;
+    private static final double TREE_SIZE = 200;
 
     @Inject
     public VisualisationAssetsViewImpl(final Binder binder) {
