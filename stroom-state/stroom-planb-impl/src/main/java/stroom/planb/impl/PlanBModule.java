@@ -34,12 +34,14 @@ import stroom.planb.impl.data.ShardManager;
 import stroom.planb.impl.data.TracesRemoteQueryResourceImpl;
 import stroom.planb.impl.pipeline.PlanBElementModule;
 import stroom.planb.impl.pipeline.PlanBLookupImpl;
+import stroom.planb.impl.pipeline.StateFetcherImpl;
 import stroom.planb.impl.pipeline.StateProviderImpl;
 import stroom.planb.shared.PlanBDoc;
 import stroom.query.api.QueryNodeResolver;
 import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
+import stroom.query.language.functions.StateFetcher;
 import stroom.query.language.functions.StateProvider;
 import stroom.searchable.api.Searchable;
 import stroom.util.RunnableWrapper;
@@ -60,6 +62,7 @@ public class PlanBModule extends AbstractModule {
 
         bind(PlanBLookup.class).to(PlanBLookupImpl.class);
         GuiceUtil.buildMultiBinder(binder(), StateProvider.class).addBinding(StateProviderImpl.class);
+        bind(StateFetcher.class).to(StateFetcherImpl.class);
 
         // Caches
         bind(PlanBDocCache.class).to(PlanBDocCacheImpl.class);

@@ -100,8 +100,6 @@
     <inherits name="stroom.search.solr.SolrIndex" />
     <inherits name="stroom.ai.AI" />
     <inherits name="stroom.dashboard.Dashboard" />
-    <inherits name="stroom.state.ScyllaDb" />
-    <inherits name="stroom.state.StateStore" />
     <inherits name="stroom.pathways.Pathways" />
     <inherits name="stroom.planb.PlanB" />
     <inherits name="stroom.contentstore.ContentStore" />

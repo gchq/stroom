@@ -6963,70 +6963,6 @@ paths:
       summary: Update a script doc
       tags:
       - Scripts
-  /scyllaDB/v1/testCluster:
-    post:
-      operationId: testScyllaDB
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ScyllaDbDoc"
-        description: scyllaDbDoc
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ScyllaDbTestResponse"
-          description: default response
-      summary: Test connection to the ScyllaDb instance
-      tags:
-      - ScyllaDB Instances
-  /scyllaDB/v1/{uuid}:
-    get:
-      operationId: fetchScyllaDB
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ScyllaDbDoc"
-          description: default response
-      summary: Fetch an ScyllaDb config doc by its UUID
-      tags:
-      - ScyllaDB Instances
-    put:
-      operationId: updateScyllaDB
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ScyllaDbDoc"
-        description: doc
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ScyllaDbDoc"
-          description: default response
-      summary: Update an ScyllaDb config doc
-      tags:
-      - ScyllaDB Instances
   /searchable/v2/destroy:
     post:
       operationId: destroySearchableQuery
@@ -7244,118 +7180,6 @@ paths:
       summary: Submit a search request
       tags:
       - Sql Statistics Query
-  /stateStore/v1/{uuid}:
-    get:
-      operationId: fetchStateStore_1
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StateDoc"
-          description: default response
-      summary: Fetch an state store doc by its UUID
-      tags:
-      - State Stores
-    put:
-      operationId: updateStateStore_1
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/StateDoc"
-        description: doc
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StateDoc"
-          description: default response
-      summary: Update an state store doc
-      tags:
-      - State Stores
-  /statistic/rollUp/v1/bitMaskConversion:
-    post:
-      operationId: statisticBitMaskConversion
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: integer
-                format: int32
-        description: maskValues
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/CustomRollUpMaskFields"
-          description: default response
-      summary: Get rollup bit mask
-      tags:
-      - SQL Statistics RollUps
-  /statistic/rollUp/v1/bitMaskPermGeneration:
-    post:
-      operationId: statisticBitMaskPermGeneration
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: integer
-              format: int32
-        description: fieldCount
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/CustomRollUpMask"
-          description: default response
-      summary: Create rollup bit mask
-      tags:
-      - SQL Statistics RollUps
-  /statistic/rollUp/v1/dataSourceFieldChange:
-    post:
-      operationId: statisticFieldChange
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/StatisticsDataSourceFieldChangeRequest"
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StatisticsDataSourceData"
-          description: default response
-      summary: Change fields
-      tags:
-      - SQL Statistics RollUps
   /statistic/v1/{uuid}:
     get:
       operationId: fetchStatisticStore
@@ -7400,114 +7224,6 @@ paths:
       summary: Update a statistic doc
       tags:
       - SQL Statistics Stores
-  /statsStore/rollUp/v1/bitMaskConversion:
-    post:
-      operationId: statsBitMaskConversion
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: integer
-                format: int32
-        description: maskValues
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResultPageCustomRollUpMaskFields"
-          description: default response
-      summary: Get rollup bit mask
-      tags:
-      - Stroom Stats RollUps
-  /statsStore/rollUp/v1/bitMaskPermGeneration:
-    post:
-      operationId: statsBitMaskPermGeneration
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: integer
-              format: int32
-        description: fieldCount
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResultPageCustomRollUpMask"
-          description: default response
-      summary: Create rollup bit mask
-      tags:
-      - Stroom Stats RollUps
-  /statsStore/rollUp/v1/dataSourceFieldChange:
-    post:
-      operationId: statsFieldChange
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/StroomStatsStoreFieldChangeRequest"
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StroomStatsStoreEntityData"
-          description: default response
-      summary: Change fields
-      tags:
-      - Stroom Stats RollUps
-  /statsStore/v1/{uuid}:
-    get:
-      operationId: fetchStroomStatsStore
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StroomStatsStoreDoc"
-          description: default response
-      summary: Fetch a store doc doc by its UUID
-      tags:
-      - Stroom Stats Stores
-    put:
-      operationId: updateStroomStatsStore
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/StroomStatsStoreDoc"
-        description: doc
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StroomStatsStoreDoc"
-          description: default response
-      summary: Update a stats store doc
-      tags:
-      - Stroom Stats Stores
   /stepping/v1/findElementDoc:
     post:
       operationId: findElementDoc
@@ -10713,21 +10429,6 @@ components:
           items:
             type: integer
             format: int32
-    CustomRollUpMaskFields:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int32
-        maskValue:
-          type: integer
-          format: int32
-        rolledUpFieldPositions:
-          type: array
-          items:
-            type: integer
-            format: int32
-          uniqueItems: true
     CustomRowStyle:
       type: object
       properties:
@@ -11213,7 +10914,7 @@ components:
         type:
           type: string
           description: The type of the 'document' that this DocRef refers to
-          example: StroomStatsStore
+          example: StatisticStore
         uuid:
           type: string
           description: The unique identifier for this 'document'
@@ -11331,14 +11032,11 @@ components:
           - DOCUMENT_REPORT
           - DOCUMENT_S3
           - DOCUMENT_SCRIPT
-          - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
           - DOCUMENT_SELECT_ALL_OR_NONE
           - DOCUMENT_SIGMA_RULE
           - DOCUMENT_SOLR_INDEX
-          - DOCUMENT_STATE_STORE
           - DOCUMENT_STATISTIC_STORE
-          - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
           - DOCUMENT_TEXT_CONVERTER
           - DOCUMENT_TRACES
@@ -11437,7 +11135,6 @@ components:
           - PIPELINE_STATISTICS
           - PIPELINE_STREAM
           - PIPELINE_STROOM_STATS
-          - PIPELINE_STROOM_STATS_STORE
           - PIPELINE_TEXT
           - PIPELINE_XML
           - PIPELINE_XML_SEARCH
@@ -15314,14 +15011,11 @@ components:
           - DOCUMENT_REPORT
           - DOCUMENT_S3
           - DOCUMENT_SCRIPT
-          - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
           - DOCUMENT_SELECT_ALL_OR_NONE
           - DOCUMENT_SIGMA_RULE
           - DOCUMENT_SOLR_INDEX
-          - DOCUMENT_STATE_STORE
           - DOCUMENT_STATISTIC_STORE
-          - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
           - DOCUMENT_TEXT_CONVERTER
           - DOCUMENT_TRACES
@@ -15420,7 +15114,6 @@ components:
           - PIPELINE_STATISTICS
           - PIPELINE_STREAM
           - PIPELINE_STROOM_STATS
-          - PIPELINE_STROOM_STATS_STORE
           - PIPELINE_TEXT
           - PIPELINE_XML
           - PIPELINE_XML_SEARCH
@@ -16940,26 +16633,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CredentialWithPerms"
-    ResultPageCustomRollUpMask:
-      type: object
-      description: A page of results.
-      properties:
-        pageResponse:
-          $ref: "#/components/schemas/PageResponse"
-        values:
-          type: array
-          items:
-            $ref: "#/components/schemas/CustomRollUpMask"
-    ResultPageCustomRollUpMaskFields:
-      type: object
-      description: A page of results.
-      properties:
-        pageResponse:
-          $ref: "#/components/schemas/PageResponse"
-        values:
-          type: array
-          items:
-            $ref: "#/components/schemas/CustomRollUpMaskFields"
     ResultPageDBTableStatus:
       type: object
       description: A page of results.
@@ -17535,42 +17208,6 @@ components:
           type: string
         version:
           type: string
-    ScyllaDbDoc:
-      type: object
-      properties:
-        connection:
-          type: string
-        createTimeMs:
-          type: integer
-          format: int64
-        createUser:
-          type: string
-        description:
-          type: string
-        keyspace:
-          type: string
-        keyspaceCql:
-          type: string
-        name:
-          type: string
-        type:
-          type: string
-        updateTimeMs:
-          type: integer
-          format: int64
-        updateUser:
-          type: string
-        uuid:
-          type: string
-        version:
-          type: string
-    ScyllaDbTestResponse:
-      type: object
-      properties:
-        message:
-          type: string
-        ok:
-          type: boolean
     Search:
       type: object
       properties:
@@ -18503,73 +18140,6 @@ components:
             $ref: "#/components/schemas/KeyPrefix"
           value:
             $ref: "#/components/schemas/Val"
-    StateDoc:
-      type: object
-      properties:
-        condense:
-          type: boolean
-        condenseAge:
-          type: integer
-          format: int32
-        condenseTimeUnit:
-          type: string
-          enum:
-          - NANOSECONDS
-          - MILLISECONDS
-          - SECONDS
-          - MINUTES
-          - HOURS
-          - DAYS
-          - WEEKS
-          - MONTHS
-          - YEARS
-        createTimeMs:
-          type: integer
-          format: int64
-        createUser:
-          type: string
-        description:
-          type: string
-        name:
-          type: string
-        retainAge:
-          type: integer
-          format: int32
-        retainForever:
-          type: boolean
-        retainTimeUnit:
-          type: string
-          enum:
-          - NANOSECONDS
-          - MILLISECONDS
-          - SECONDS
-          - MINUTES
-          - HOURS
-          - DAYS
-          - WEEKS
-          - MONTHS
-          - YEARS
-        scyllaDbRef:
-          $ref: "#/components/schemas/DocRef"
-        stateType:
-          type: string
-          enum:
-          - STATE
-          - TEMPORAL_STATE
-          - RANGED_STATE
-          - TEMPORAL_RANGED_STATE
-          - SESSION
-        type:
-          type: string
-        updateTimeMs:
-          type: integer
-          format: int64
-        updateUser:
-          type: string
-        uuid:
-          type: string
-        version:
-          type: string
     StateKeySchema:
       type: object
       properties:
@@ -18683,13 +18253,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/StatisticField"
-    StatisticsDataSourceFieldChangeRequest:
-      type: object
-      properties:
-        newStatisticsDataSourceData:
-          $ref: "#/components/schemas/StatisticsDataSourceData"
-        oldStatisticsDataSourceData:
-          $ref: "#/components/schemas/StatisticsDataSourceData"
     StepLocation:
       type: object
       properties:
@@ -18930,71 +18493,6 @@ components:
       properties:
         string:
           type: string
-    StroomStatsStoreDoc:
-      type: object
-      properties:
-        config:
-          $ref: "#/components/schemas/StroomStatsStoreEntityData"
-        createTimeMs:
-          type: integer
-          format: int64
-        createUser:
-          type: string
-        description:
-          type: string
-        enabled:
-          type: boolean
-        name:
-          type: string
-        precision:
-          type: string
-          enum:
-          - SECOND
-          - MINUTE
-          - HOUR
-          - DAY
-          - FOREVER
-        rollUpType:
-          type: string
-          enum:
-          - NONE
-          - ALL
-          - CUSTOM
-        statisticType:
-          type: string
-          enum:
-          - COUNT
-          - VALUE
-        type:
-          type: string
-        updateTimeMs:
-          type: integer
-          format: int64
-        updateUser:
-          type: string
-        uuid:
-          type: string
-        version:
-          type: string
-    StroomStatsStoreEntityData:
-      type: object
-      properties:
-        customRollUpMasks:
-          type: array
-          items:
-            $ref: "#/components/schemas/CustomRollUpMask"
-          uniqueItems: true
-        fields:
-          type: array
-          items:
-            $ref: "#/components/schemas/StatisticField"
-    StroomStatsStoreFieldChangeRequest:
-      type: object
-      properties:
-        newEntityData:
-          $ref: "#/components/schemas/StroomStatsStoreEntityData"
-        oldEntityData:
-          $ref: "#/components/schemas/StroomStatsStoreEntityData"
     Suggestions:
       type: object
       properties:

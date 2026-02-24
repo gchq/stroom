@@ -250,9 +250,6 @@ include 'stroom-query:stroom-query-common'
 include 'stroom-query:stroom-query-impl'
 include 'stroom-query:stroom-query-language'
 
-// State store
-include 'stroom-state:stroom-state-impl'
-
 // Suggestions
 include 'stroom-suggestions:stroom-suggestions-api'
 include 'stroom-suggestions:stroom-suggestions-impl'

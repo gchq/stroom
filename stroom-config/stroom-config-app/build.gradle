@@ -61,7 +61,6 @@ dependencies {
     implementation project(':stroom-security:stroom-security-identity')
     implementation project(':stroom-security:stroom-security-impl')
     implementation project(':stroom-security:stroom-security-impl-db')
-    implementation project(':stroom-state:stroom-state-impl')
     implementation project(':stroom-state:stroom-planb-impl')
     implementation project(':stroom-statistics:stroom-statistics-impl')
     implementation project(':stroom-statistics:stroom-statistics-impl-sql')

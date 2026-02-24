@@ -105,10 +105,6 @@ import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
 import stroom.security.identity.client.gin.ChangePasswordGinjector;
 import stroom.security.identity.client.gin.ChangePasswordModule;
-import stroom.state.client.gin.ScyllaDbGinjector;
-import stroom.state.client.gin.ScyllaDbModule;
-import stroom.state.client.gin.StateStoreGinjector;
-import stroom.state.client.gin.StateStoreModule;
 import stroom.statistics.impl.sql.client.gin.StatisticsGinjector;
 import stroom.statistics.impl.sql.client.gin.StatisticsModule;
 import stroom.task.client.gin.TaskGinjector;
@@ -181,8 +177,6 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         WelcomeModule.class,
         XMLSchemaModule.class,
         S3ConfigModule.class,
-        ScyllaDbModule.class,
-        StateStoreModule.class,
         PlanBModule.class,
         GitRepoModule.class
 })
@@ -231,8 +225,6 @@ public interface AppGinjectorUser extends
         WelcomeGinjector,
         XMLSchemaGinjector,
         S3ConfigGinjector,
-        ScyllaDbGinjector,
-        StateStoreGinjector,
         PlanBGinjector,
         GitRepoGinjector /*,
         CredentialsGinjector*/ {

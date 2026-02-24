@@ -1150,25 +1150,6 @@ appConfig:
     search:
       maxBooleanClauseCount: 1024
       maxStoredDataQueueSize: 1000
-  state:
-    scyllaDbDocCache:
-      expireAfterAccess: null
-      expireAfterWrite: "PT10M"
-      maximumSize: 100
-      refreshAfterWrite: null
-      statisticsMode: "INTERNAL"
-    sessionCache:
-      expireAfterAccess: "PT1H"
-      expireAfterWrite: null
-      maximumSize: 10
-      refreshAfterWrite: null
-      statisticsMode: "INTERNAL"
-    stateDocCache:
-      expireAfterAccess: null
-      expireAfterWrite: "PT10M"
-      maximumSize: 100
-      refreshAfterWrite: null
-      statisticsMode: "INTERNAL"
   statistics:
     internal:
       benchmarkCluster:
