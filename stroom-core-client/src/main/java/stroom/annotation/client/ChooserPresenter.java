@@ -117,6 +117,10 @@ public class ChooserPresenter<T>
         getView().clearFilter();
     }
 
+    public void setFilterVisible(final boolean visible) {
+        getView().setFilterVisible(visible);
+    }
+
     /**
      * Sets the function to provide a display value for value T.
      */
@@ -186,6 +190,8 @@ public class ChooserPresenter<T>
         void setBottomWidget(Widget widget);
 
         void clearFilter();
+
+        void setFilterVisible(boolean visible);
 
         void setClearSelectionText(String text);
     }

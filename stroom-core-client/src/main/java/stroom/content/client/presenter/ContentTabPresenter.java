@@ -16,7 +16,8 @@
 
 package stroom.content.client.presenter;
 
-import stroom.widget.tab.client.presenter.TabData;
+import stroom.docref.DocRef;
+import stroom.document.client.DocumentTabData;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -24,7 +25,7 @@ import com.gwtplatform.mvp.client.View;
 
 public abstract class ContentTabPresenter<V extends View>
         extends MyPresenterWidget<V>
-        implements TabData {
+        implements DocumentTabData {
 
     public ContentTabPresenter(final EventBus eventBus, final V view) {
         super(eventBus, view);
@@ -33,5 +34,10 @@ public abstract class ContentTabPresenter<V extends View>
     @Override
     public boolean isCloseable() {
         return true;
+    }
+
+    @Override
+    public DocRef getDocRef() {
+        return DocRef.builder().uuid(getType()).name(getType()).type(getType()).build();
     }
 }

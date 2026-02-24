@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.app.client.gin;
+package stroom.explorer.impl;
 
-import stroom.explorer.client.NavigationPlugin;
-import stroom.explorer.client.presenter.TabSessionManager;
-import stroom.help.client.HelpPlugin;
+import stroom.docref.DocRef;
+import stroom.explorer.shared.TabSession;
 
-import com.google.gwt.inject.client.AsyncProvider;
+import java.util.List;
 
-public interface PluginsGinjector {
+public interface TabSessionService {
+    List<TabSession> add(String sessionId, String name, List<DocRef> docRefs);
 
-    AsyncProvider<HelpPlugin> getHelpPlugin();
+    List<TabSession> getForCurrentUser();
 
-    TabSessionManager getTabSessionManager();
-
-    NavigationPlugin getNavigationPlugin();
-
+    List<TabSession> delete(String sessionId);
 }

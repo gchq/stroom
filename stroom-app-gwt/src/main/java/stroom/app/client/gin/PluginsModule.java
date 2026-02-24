@@ -19,8 +19,12 @@ package stroom.app.client.gin;
 import stroom.core.client.gin.PluginModule;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.explorer.client.NavigationPlugin;
+import stroom.explorer.client.presenter.TabSessionManager;
 import stroom.help.client.HelpPlugin;
 import stroom.trackers.client.TrackersPlugin;
+import stroom.widget.popup.client.presenter.TextBoxPopup;
+import stroom.widget.popup.client.presenter.TextBoxPopup.TextBoxView;
+import stroom.widget.popup.client.view.TextBoxViewImpl;
 
 public class PluginsModule extends PluginModule {
 
@@ -31,5 +35,11 @@ public class PluginsModule extends PluginModule {
         bindPlugin(HelpPlugin.class);
         bindPlugin(TrackersPlugin.class);
         bindPlugin(NavigationPlugin.class);
+        bindPlugin(TabSessionManager.class);
+
+        bindPresenterWidget(
+                TextBoxPopup.class,
+                TextBoxView.class,
+                TextBoxViewImpl.class);
     }
 }

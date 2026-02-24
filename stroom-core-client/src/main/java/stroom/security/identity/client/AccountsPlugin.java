@@ -19,6 +19,7 @@ package stroom.security.identity.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.identity.client.event.OpenAccountEvent;
@@ -28,6 +29,7 @@ import stroom.security.shared.AppPermission;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.welcome.client.presenter.WelcomePresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -51,8 +53,9 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
                           final ContentManager eventManager,
                           final ClientSecurityContext securityContext,
                           final Provider<AccountsPresenter> accountsPresenterProvider,
-                          final Provider<UiConfigCache> uiConfigCacheProvider) {
-        super(eventBus, eventManager, accountsPresenterProvider, securityContext);
+                          final Provider<UiConfigCache> uiConfigCacheProvider,
+                          final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, eventManager, accountsPresenterProvider, securityContext, documentPluginRegistry);
         this.uiConfigCacheProvider = uiConfigCacheProvider;
 
         registerHandler(getEventBus().addHandler(OpenAccountEvent.getType(), event -> {
@@ -111,5 +114,10 @@ public class AccountsPlugin extends MonitoringPlugin<AccountsPresenter> {
                 .command(this::open)
                 .build();
         event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU, apiKeysMenuItem);
+    }
+
+    @Override
+    public String getType() {
+        return AccountsPresenter.TAB_TYPE;
     }
 }

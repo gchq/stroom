@@ -16,6 +16,9 @@
 
 package stroom.document.client;
 
+import stroom.content.client.ContentPlugin;
+import stroom.core.client.TabPlugin;
+
 import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Singleton;
@@ -23,13 +26,29 @@ import javax.inject.Singleton;
 @Singleton
 public class DocumentPluginRegistry {
 
-    private final Map<String, DocumentPlugin<?>> pluginMap = new HashMap<>();
+    private final Map<String, TabPlugin> pluginMap = new HashMap<>();
 
-    public void register(final String type, final DocumentPlugin<?> plugin) {
+    public void register(final String type, final TabPlugin plugin) {
         pluginMap.put(type, plugin);
     }
 
-    public DocumentPlugin<?> get(final String type) {
+    public TabPlugin get(final String type) {
         return pluginMap.get(type);
+    }
+
+    public DocumentPlugin<?> getDocumentPlugin(final String type) {
+        final TabPlugin plugin = pluginMap.get(type);
+        if (plugin instanceof final DocumentPlugin<?> documentPlugin) {
+            return documentPlugin;
+        }
+        return null;
+    }
+
+    public ContentPlugin<?> getContentPlugin(final String type) {
+        final TabPlugin plugin = pluginMap.get(type);
+        if (plugin instanceof final ContentPlugin<?> contentPlugin) {
+            return contentPlugin;
+        }
+        return null;
     }
 }

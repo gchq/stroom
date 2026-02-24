@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.app.client.gin;
+package stroom.core.client;
 
-import stroom.explorer.client.NavigationPlugin;
-import stroom.explorer.client.presenter.TabSessionManager;
-import stroom.help.client.HelpPlugin;
+import stroom.core.client.presenter.Plugin;
 
-import com.google.gwt.inject.client.AsyncProvider;
+import com.google.web.bindery.event.shared.EventBus;
 
-public interface PluginsGinjector {
+public abstract class TabPlugin extends Plugin {
 
-    AsyncProvider<HelpPlugin> getHelpPlugin();
+    public TabPlugin(final EventBus eventBus) {
+        super(eventBus);
+    }
 
-    TabSessionManager getTabSessionManager();
-
-    NavigationPlugin getNavigationPlugin();
-
+    public abstract String getType();
 }

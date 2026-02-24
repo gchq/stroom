@@ -139,7 +139,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
         }
 
         // Open the tab.
-        contentManager.open(closeHandler, tabData, myPresenterWidget);
+        contentManager.open(closeHandler, tabData, myPresenterWidget, myPresenterWidget, callbackOnOpen);
     }
 
     @Override

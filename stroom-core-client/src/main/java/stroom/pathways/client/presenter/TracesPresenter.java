@@ -19,6 +19,7 @@ package stroom.pathways.client.presenter;
 import stroom.data.grid.client.DefaultResources;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.DocumentTabData;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pathways.client.presenter.TracesPresenter.TracesView;
 import stroom.pathways.shared.GetTraceRequest;
@@ -29,7 +30,6 @@ import stroom.planb.shared.PlanBDoc;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.time.SimpleDuration;
-import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -38,7 +38,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-public class TracesPresenter extends MyPresenterWidget<TracesView> implements TabData {
+public class TracesPresenter extends MyPresenterWidget<TracesView> implements DocumentTabData {
+
+    public static final String TAB_TYPE = "Traces";
 
     private static final TracesResource TRACES_RESOURCE = GWT.create(TracesResource.class);
 
@@ -109,7 +111,7 @@ public class TracesPresenter extends MyPresenterWidget<TracesView> implements Ta
 
     @Override
     public String getType() {
-        return "Traces";
+        return TAB_TYPE;
     }
 
     public void setDataSourceRef(final DocRef dataSourceRef) {
@@ -128,6 +130,11 @@ public class TracesPresenter extends MyPresenterWidget<TracesView> implements Ta
 
     public void refresh() {
         listPresenter.refresh();
+    }
+
+    @Override
+    public DocRef getDocRef() {
+        return DocRef.builder().name(getType()).uuid(getType()).type(getType()).build();
     }
 
     public interface TracesView extends View {

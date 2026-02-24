@@ -238,7 +238,7 @@ public class ElementPresenter
     private void loadEntityRef(final DocRef entityRef,
                                final Consumer<Boolean> future) {
         if (entityRef != null) {
-            final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(entityRef.getType());
+            final DocumentPlugin<?> documentPlugin = documentPluginRegistry.getDocumentPlugin(entityRef.getType());
             documentPlugin.load(entityRef,
                     result -> {
                         loadedDoc = entityRef;
@@ -263,7 +263,7 @@ public class ElementPresenter
     public void save() {
         if (loaded && hasData != null && dirtyCode) {
             write();
-            final DocumentPlugin documentPlugin = documentPluginRegistry.get(loadedDoc.getType());
+            final DocumentPlugin documentPlugin = documentPluginRegistry.getDocumentPlugin(loadedDoc.getType());
             documentPlugin.save(loadedDoc, hasData,
                     result -> {
                         hasData = (HasData) result;

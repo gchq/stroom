@@ -1,0 +1,222 @@
+/*
+ * Copyright 2016-2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.explorer.client.presenter;
+
+import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
+import stroom.annotation.client.ChooserPresenter;
+import stroom.core.client.presenter.Plugin;
+import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
+import stroom.document.client.event.OpenDocumentEvent;
+import stroom.explorer.client.event.DeleteTabSessionEvent;
+import stroom.explorer.client.event.GetCurrentTabSessionEvent;
+import stroom.explorer.client.event.OpenTabSessionEvent;
+import stroom.explorer.client.event.SaveTabSessionEvent;
+import stroom.explorer.client.event.TabSessionChangeEvent;
+import stroom.explorer.shared.TabSession;
+import stroom.explorer.shared.TabSessionAddRequest;
+import stroom.explorer.shared.TabSessionResource;
+import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.task.client.HasTaskMonitorFactory;
+import stroom.task.client.TaskMonitor;
+import stroom.task.client.TaskMonitorFactory;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.popup.client.presenter.TextBoxPopup;
+import stroom.widget.tab.client.event.RequestCloseAllTabsEvent;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
+import com.google.web.bindery.event.shared.EventBus;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Consumer;
+
+@Singleton
+public class TabSessionManager extends Plugin implements TaskMonitorFactory, HasTaskMonitorFactory {
+
+    private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
+
+    private static final TabSessionResource TAB_SESSION_RESOURCE = GWT.create(TabSessionResource.class);
+
+    private final RestFactory restFactory;
+    private final ChooserPresenter<TabSession> chooserPresenter;
+    private final Provider<TextBoxPopup> textBoxPopupProvider;
+
+    @Inject
+    public TabSessionManager(final EventBus eventBus,
+                             final RestFactory restFactory,
+                             final ChooserPresenter<TabSession> chooserPresenter,
+                             final Provider<TextBoxPopup> textBoxPopupProvider) {
+        super(eventBus);
+        this.restFactory = restFactory;
+        this.chooserPresenter = chooserPresenter;
+        this.textBoxPopupProvider = textBoxPopupProvider;
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+
+        registerHandler(getEventBus().addHandler(OpenTabSessionEvent.getType(),
+                event -> {
+                getTabSessions(tabSessions -> showTabSessionList(tabSessions,
+                        "Select Tab Session To Open:",
+                        tabSession -> openDocRefs(tabSession.getDocRefs())));
+            }));
+
+        registerHandler(getEventBus().addHandler(DeleteTabSessionEvent.getType(),
+                event -> {
+                    getTabSessions(tabSessions -> showTabSessionList(tabSessions,
+                            "Select Tab Session To Delete:",
+                            this::delete));
+                }));
+
+
+        registerHandler(getEventBus().addHandler(SaveTabSessionEvent.getType(), event -> {
+            final TextBoxPopup textBoxPopup = textBoxPopupProvider.get();
+            textBoxPopup.show("Save New Tab Session", name -> {
+                GetCurrentTabSessionEvent.fire(this, docRefs -> {
+                    saveTabSession(UUID.randomUUID().toString(), name, docRefs);
+                });
+            });
+        }));
+    }
+
+    private void showTabSessionList(final List<TabSession> sessions, final String caption,
+                                    final Consumer<TabSession> consumer) {
+        {
+            if (sessions == null || sessions.isEmpty()) {
+                AlertEvent.fireInfo(this, "You do not have any saved tab sessions.", null);
+                return;
+            }
+
+            if (sessions.size() == 1) {
+                consumer.accept(sessions.get(0));
+                return;
+            }
+
+            chooserPresenter.setFilterVisible(false);
+            chooserPresenter.setDataSupplier((f, c) -> {
+                c.accept(sessions);
+            });
+            chooserPresenter.setDisplayValueFunction(s -> SafeHtmlUtils.fromString(
+                    s.getName()));
+
+            final int popupHeight = 200 + sessions.size() * 23;
+            final PopupSize popupSize = PopupSize.resizable(650, popupHeight);
+            ShowPopupEvent.builder(chooserPresenter)
+                    .popupType(PopupType.OK_CANCEL_DIALOG)
+                    .popupSize(popupSize)
+                    .caption(caption)
+                    .onHideRequest(e -> {
+                        final Optional<TabSession> tabSession = Optional.ofNullable(
+                                chooserPresenter.getSelected());
+                        if (e.isOk() && tabSession.isPresent()) {
+                            consumer.accept(tabSession.get());
+                        }
+                        e.hide();
+                    })
+                    .fire();
+        }
+    }
+
+    private void openDocRefs(final List<DocRef> docRefs) {
+        if (docRefs == null || docRefs.isEmpty()) {
+            return;
+        }
+
+        RequestCloseAllTabsEvent.fire(this);
+
+        buildOpenDocumentEvents(docRefs, docRefs.size() - 1, null).fire();
+    }
+
+    private OpenDocumentEvent.Builder buildOpenDocumentEvents(
+            final List<DocRef> docRefs, final int index, final OpenDocumentEvent.Builder child) {
+        if (index < 0) {
+            return child;
+        }
+
+        final OpenDocumentEvent.Builder builder = OpenDocumentEvent.builder(this, docRefs.get(index));
+        if (child != null) {
+            builder.callbackOnOpen(p -> {
+                child.fire();
+            });
+        }
+
+        return buildOpenDocumentEvents(docRefs, index - 1, builder);
+    }
+
+    public void getTabSessions(final Consumer<List<TabSession>> consumer) {
+        restFactory
+                .create(TAB_SESSION_RESOURCE)
+                .method(TabSessionResource::getForCurrentUser)
+                .onSuccess(consumer)
+                .onFailure(error ->
+                        AlertEvent.fireError(this,
+                                error.getMessage(),
+                                null))
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    private void saveTabSession(final String sessionId, final String name, final List<DocRef> docRefs) {
+        restFactory.create(TAB_SESSION_RESOURCE)
+                .method(res -> res.add(new TabSessionAddRequest(sessionId, name, docRefs)))
+                .onSuccess(s -> TabSessionChangeEvent.fire(this, s))
+                .onFailure(error ->
+                            AlertEvent.fireError(this,
+                                    error.getMessage(),
+                                    null))
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    private void delete(final TabSession tabSession) {
+        ConfirmEvent.fire(this,
+                "Are you sure you want to delete the tab session '" + tabSession.getName() + "'?", ok -> {
+                if (ok) {
+                    restFactory.create(TAB_SESSION_RESOURCE)
+                            .method(res -> res.delete(tabSession))
+                            .onSuccess(s -> TabSessionChangeEvent.fire(this, s))
+                            .onFailure(error ->
+                                    AlertEvent.fireError(this,
+                                            error.getMessage(),
+                                            null))
+                            .taskMonitorFactory(taskMonitorFactory)
+                            .exec();
+                }
+            });
+    }
+
+    @Override
+    public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
+        this.taskMonitorFactory = taskMonitorFactory;
+    }
+
+    @Override
+    public TaskMonitor createTaskMonitor() {
+        return taskMonitorFactory.createTaskMonitor();
+    }
+}
