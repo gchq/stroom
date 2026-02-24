@@ -227,7 +227,7 @@ include 'stroom-node:stroom-node-impl-db-jooq'
 include 'stroom-pipeline'
 
 // Plan B
-include 'stroom-state:stroom-planb-impl'
+include 'stroom-planb:stroom-planb-impl'
 
 // Processor
 include 'stroom-processor:stroom-processor-api'
