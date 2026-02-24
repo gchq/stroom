@@ -18,6 +18,8 @@ package stroom.analytics.impl.db;
 
 import stroom.analytics.impl.ExecutionNode;
 import stroom.analytics.impl.ExecutionScheduleDao;
+import stroom.analytics.impl.ReportExecutor;
+import stroom.analytics.impl.ScheduledQueryAnalyticExecutor;
 import stroom.analytics.impl.db.jooq.tables.records.ExecutionScheduleRecord;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionHistory;
@@ -40,6 +42,9 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.FindUserContext;
 import stroom.security.shared.UserFields;
 import stroom.security.user.api.UserRefLookup;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.scheduler.CronTrigger;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ModelStringUtil;
@@ -70,8 +75,12 @@ import static stroom.analytics.impl.db.jooq.tables.ExecutionTracker.EXECUTION_TR
 
 public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExecutionScheduleDaoImpl.class);
+
     private final AnalyticsDbConnProvider analyticsDbConnProvider;
     private final Provider<UserRefLookup> userRefLookupProvider;
+    private final Provider<ScheduledQueryAnalyticExecutor> scheduledQueryAnalyticExecutorProvider;
+    private final Provider<ReportExecutor> reportExecutorProvider;
     private final SecurityContext securityContext;
     private final DocRefInfoService docRefInfoService;
     private final ExpressionMapper expressionMapper;
@@ -79,11 +88,15 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
     @Inject
     public ExecutionScheduleDaoImpl(final AnalyticsDbConnProvider analyticsDbConnProvider,
                                     final Provider<UserRefLookup> userRefLookupProvider,
+                                    final Provider<ScheduledQueryAnalyticExecutor> scheduledQueryAnalyticExecutorProvider,
+                                    final Provider<ReportExecutor> reportExecutorProvider,
                                     final SecurityContext securityContext,
                                     final DocRefInfoService docRefInfoService,
                                     final ExpressionMapperFactory expressionMapperFactory) {
         this.analyticsDbConnProvider = analyticsDbConnProvider;
         this.userRefLookupProvider = userRefLookupProvider;
+        this.scheduledQueryAnalyticExecutorProvider = scheduledQueryAnalyticExecutorProvider;
+        this.reportExecutorProvider = reportExecutorProvider;
         this.securityContext = securityContext;
         this.docRefInfoService = docRefInfoService;
 
@@ -492,6 +505,34 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
             if (!result) {
                 return false;
             }
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean executeSchedulesNow(final List<ExecutionSchedule> schedules) {
+        try {
+            final List<ExecutionSchedule> analyticRuleSchedules = new ArrayList<>();
+            final List<ExecutionSchedule> reportSchedules = new ArrayList<>();
+            for (final ExecutionSchedule schedule : schedules) {
+                switch (schedule.getOwningDoc().getType()) {
+                    case AnalyticRuleDoc.TYPE -> analyticRuleSchedules.add(schedule);
+                    case ReportDoc.TYPE -> reportSchedules.add(schedule);
+                    default -> throw new UnsupportedOperationException(
+                            "Unsupported execution schedule type: " + schedule.getOwningDoc().getType()
+                    );
+                }
+            }
+            if (!analyticRuleSchedules.isEmpty()) {
+                scheduledQueryAnalyticExecutorProvider.get().execFromSchedules(analyticRuleSchedules);
+            }
+            if (!reportSchedules.isEmpty()) {
+                reportExecutorProvider.get().execFromSchedules(reportSchedules);
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.error(() ->
+                    LogUtil.message("Error during forced schedule processing: {}", e.getMessage()), e);
+            return false;
         }
         return true;
     }
