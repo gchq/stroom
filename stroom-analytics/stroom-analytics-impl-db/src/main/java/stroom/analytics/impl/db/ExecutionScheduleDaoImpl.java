@@ -427,6 +427,9 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                         .returning(EXECUTION_SCHEDULE.ID)
                         .fetchOptional())
                 .map(ExecutionScheduleRecord::getId);
+        if(executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
+            executeSchedulesNow(Collections.singletonList(executionSchedule));
+        }
         return optionalId.flatMap(this::fetchScheduleById).orElse(null);
     }
 
@@ -474,6 +477,9 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                 .set(EXECUTION_SCHEDULE.RUN_AS_USER_UUID, runAsUser.getUuid())
                 .where(EXECUTION_SCHEDULE.ID.eq(executionSchedule.getId()))
                 .execute());
+        if(executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
+            executeSchedulesNow(Collections.singletonList(executionSchedule));
+        }
         return fetchScheduleById(executionSchedule.getId()).orElse(null);
     }
 

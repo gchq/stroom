@@ -48,6 +48,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.scheduler.Schedule;
+import stroom.util.shared.scheduler.ScheduleType;
 
 import jakarta.inject.Provider;
 
@@ -273,6 +274,10 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
         final ExecutionSchedule schedule = optionalSchedule.get();
         if (!schedule.isEnabled()) {
             return false;
+        }
+
+        if(schedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
+            executionScheduleDao.updateExecutionSchedule(schedule.copy().enabled(false).build());
         }
 
         // Reload the rule in case it has changed since last executed.
