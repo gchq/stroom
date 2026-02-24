@@ -30,6 +30,8 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import javax.inject.Provider;
 
 public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPanelView, VisualisationDoc> {
@@ -38,6 +40,8 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
     private static final TabData ASSETS = new TabDataImpl("Assets");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
+
+    private final VisualisationAssetsPresenter visualisationAssetsPresenter;
 
     @Inject
     public VisualisationPresenter(final EventBus eventBus,
@@ -49,8 +53,11 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
                                           documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
+        final DocumentEditTabProvider<VisualisationDoc> assetsTabProvider =
+                new DocumentEditTabProvider<>(assetsPresenterProvider::get);
+
         addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
-        addTab(ASSETS, new DocumentEditTabProvider<>(assetsPresenterProvider::get));
+        addTab(ASSETS, assetsTabProvider);
         addTab(DOCUMENTATION, new MarkdownTabProvider<>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -69,6 +76,10 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
+
+        // Get the instance of the assets presenter from the tab so we've got it for onSave()
+        this.visualisationAssetsPresenter = (VisualisationAssetsPresenter) assetsTabProvider.getPresenter();
+
         selectTab(SETTINGS);
     }
 
@@ -85,5 +96,19 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
     @Override
     protected TabData getDocumentationTab() {
         return DOCUMENTATION;
+    }
+
+    @Override
+    public BiConsumer<VisualisationDoc, Consumer<VisualisationDoc>> getPostSaveCallback() {
+        return this::saveAssets;
+    }
+
+    /**
+     * Called by VisualisationPlugin to save the assets associated with the document.
+     * @param document The document that was written by all the data in all the tabs.
+     * @param callback Thing to call when the assets have been saved.
+     */
+    public void saveAssets(final VisualisationDoc document, final Consumer<VisualisationDoc> callback) {
+        visualisationAssetsPresenter.onSave(document, callback);
     }
 }

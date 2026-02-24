@@ -53,6 +53,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -291,8 +292,9 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                 document = presenter.write(document);
                 if (document != null) {
                     final D finalDocument = document;
-
+                    final BiConsumer<D, Consumer<D>> postSaveCallback = presenter.getPostSaveCallback();
                     save(getDocRef(document), document,
+                            postSaveCallback,
                             doc -> presenter.read(getDocRef(doc), doc, presenter.isReadOnly()),
                             throwable -> AlertEvent.fireError(
                                     this,
@@ -337,7 +339,12 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                     // Write to the newly created document.
                     document = presenter.write(document);
                     // Save the new document and read it back into the presenter.
-                    save(newDocRef, document, saveConsumer, null,
+                    final BiConsumer<D, Consumer<D>> postSaveCallback = presenter.getPostSaveCallback();
+                    save(newDocRef,
+                            document,
+                            postSaveCallback,
+                            saveConsumer,
+                            null,
                             presenter);
                 };
 
@@ -623,6 +630,26 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                               final Consumer<D> resultConsumer,
                               final RestErrorHandler errorHandler,
                               final TaskMonitorFactory taskMonitorFactory);
+
+    /**
+     * Extension to the class API to handle a callback after save completes.
+     * Default is to call the old save() method for back compatibility.
+     * Override if you return non-null from getPostSaveCallback() otherwise
+     * you'll get an IllegalStateException from this method.
+     */
+    public void save(final DocRef docRef,
+                     final D document,
+                     final BiConsumer<D, Consumer<D>> postSaveCallback,
+                     final Consumer<D> resultConsumer,
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
+        if (postSaveCallback != null) {
+            throw new IllegalStateException("PostSaveCallback is defined but "
+                                            + "DocumentPlugin.save() is not reimplemented");
+        } else {
+            save(docRef, document, resultConsumer, errorHandler, taskMonitorFactory);
+        }
+    }
 
     protected abstract DocRef getDocRef(D document);
 

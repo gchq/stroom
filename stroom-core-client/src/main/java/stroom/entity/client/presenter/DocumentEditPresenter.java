@@ -26,6 +26,9 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
 public abstract class DocumentEditPresenter<V extends View, D> extends MyPresenterWidget<V>
         implements HasDocumentRead<D>, HasDocumentWrite<D>, HasDirtyHandlers, HasClose {
 
@@ -38,7 +41,7 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
         super(eventBus, view);
     }
 
-    private void setDirty(final boolean dirty, final boolean force) {
+    protected void setDirty(final boolean dirty, final boolean force) {
         if (!isReadOnly()) {
             if (!reading && (force || this.dirty != dirty)) {
                 this.dirty = dirty;
@@ -104,4 +107,14 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
+
+    /**
+     * Allows the derived class to specify a callback after the document has been written
+     * to the server. Default is no callback. Override if you want a callback.
+     * @return null if no callback, otherwise the consumer to be called.
+     */
+    public BiConsumer<D, Consumer<D>> getPostSaveCallback() {
+        return null;
+    }
+
 }

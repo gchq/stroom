@@ -66,6 +66,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import javax.inject.Provider;
 
 /**
@@ -257,6 +258,9 @@ public class VisualisationAssetsPresenter
         editorPresenter.addFormatHandler(
                 event -> this.onEditorContentChanged());
 
+        // Ensure editor is disabled by default
+        disableEditor();
+
         // Create the Add menu
         menuItems.add(new IconMenuItem.Builder()
                 .priority(0)
@@ -303,47 +307,43 @@ public class VisualisationAssetsPresenter
     protected void onRead(@SuppressWarnings("unused") final DocRef docRef,
                           final VisualisationDoc document,
                           final boolean readOnly) {
-
-        // Is this the first time this tab has been loaded?
-        final boolean firstLoad = this.document == null || !this.document.getUuid().equals(document.getUuid());
         this.document = document;
         this.readOnly = readOnly;
 
         // Update UI state
         updateState();
 
-        // Get the assets associated with the document (async)
-        // but only if this is the first time this has been loaded
-        // Otherwise we get into trouble with async operations clashing
-        if (firstLoad) {
-            this.fetchDraftAssets(document);
-        }
+        // Get the asset metadata
+        this.fetchDraftAssets(document);
     }
 
     /**
-     * Called by VisualisationPresenter so this tab gets a chance to write any changes
-     * to the document before it is saved.
-     * Requests the server to copy data from the draft area to the live area of the database.
-     * @param document Document to store stuff in
-     * @return The updated document.
+     * Implementation of onWrite() from DocumentEditPresenter. Doesn't do anything
+     * as this is replaced by VisualisationPlugin directly calling onSave().
      */
     @Override
     protected VisualisationDoc onWrite(final VisualisationDoc document) {
-
-        // Run this section after the main document has been saved to the server
-        Scheduler.get().scheduleFinally(() -> {
-
-            if (assetDirtyState.isDirtyAndNeedsSaveToDraft()) {
-                doUpdateContent(assetDirtyState.getPathToEditItem(),
-                        editorPresenter.getText().getBytes(StandardCharsets.UTF_8),
-                        this::doOnWrite,
-                        this::doSelectionChangeAfterUpdateContentFailed);
-            } else {
-                doOnWrite();
-            }
-        });
-
         return document;
+    }
+
+    /**
+     * Called by VisualisationPlugin to save the assets.
+     * Requests the server to copy data from the draft area to the live area of the database.
+     * @param document Document that was returned by the save
+     * @param callback Thing to call when everything is saved.
+     */
+    public void onSave(final VisualisationDoc document, final Consumer<VisualisationDoc> callback) {
+        this.document = document;
+
+        // Check if the editor content is dirty and needs saving
+        if (assetDirtyState.isDirtyAndNeedsSaveToDraft()) {
+            doUpdateContent(assetDirtyState.getPathToEditItem(),
+                    editorPresenter.getText().getBytes(StandardCharsets.UTF_8),
+                    () -> doOnWrite(callback),
+                    this::doSelectionChangeAfterUpdateContentFailed);
+        } else {
+            doOnWrite(callback);
+        }
     }
 
     /**
@@ -535,6 +535,8 @@ public class VisualisationAssetsPresenter
             } else {
                 doSelectionChangeAfterUpdateContentSuccess();
             }
+        } else {
+            disableEditor();
         }
     }
 
@@ -580,7 +582,6 @@ public class VisualisationAssetsPresenter
      * Called after the new editor contents has been loaded.
      */
     private void doSelectionChangeAfterFetchDraftContentSuccess() {
-        editorPresenter.setReadOnly(readOnly);
         updateState();
     }
 
@@ -620,16 +621,14 @@ public class VisualisationAssetsPresenter
     /**
      * Called from onWrite() after any saving of content has happened, if that is necessary.
      */
-    private void doOnWrite() {
+    private void doOnWrite(final Consumer<VisualisationDoc> callback) {
         // Transfer draft saves to live
         restFactory.create(VISUALISATION_ASSET_RESOURCE)
                 .method(r -> r.saveDraftToLive(document.getUuid()))
                 .onSuccess(result -> {
                     if (result) {
-                        Scheduler.get().scheduleFinally(() -> {
-                            // Reload doc via chain, once this chain is complete
-                            fetchDraftAssets(document);
-                        });
+                        // Do the original resultConsumer
+                        callback.accept(document);
                     } else {
                         AlertEvent.fireError(this,
                                 "Error saving assets",
@@ -887,6 +886,7 @@ public class VisualisationAssetsPresenter
 
                         editorPresenter.getWidget().setVisible(true);
                         editorPresenter.setText(result.getContent());
+                        editorPresenter.setReadOnly(isReadOnly());
                         editorPresenter.setMode(editorMode);
                         successCallback.run();
                     }
@@ -924,7 +924,7 @@ public class VisualisationAssetsPresenter
                     assetDirtyState.onFetchDraftAssets();
 
                     // Set dirty state from the state of the DB
-                    setDirty(assets.isDirty());
+                    setDirty(assets.isDirty(), true);
 
                     // Restore the open/closed state of the tree
                     VisualisationAssetsPresenterUtils.restoreOpenClosedState(tree, treeItemPathToOpenState);
@@ -962,6 +962,7 @@ public class VisualisationAssetsPresenter
                 deleteButton.setEnabled(false);
                 editButton.setEnabled(false);
                 viewButton.setEnabled(false);
+                disableEditor();
             } else {
                 addButton.setEnabled(true);
                 deleteButton.setEnabled(true);
