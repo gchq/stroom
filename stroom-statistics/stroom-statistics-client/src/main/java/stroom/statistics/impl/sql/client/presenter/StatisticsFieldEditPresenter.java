@@ -16,7 +16,7 @@
 
 package stroom.statistics.impl.sql.client.presenter;
 
-import stroom.statistics.impl.sql.shared.StatisticField;
+import stroom.statistics.impl.sql.client.presenter.State.Field;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -29,7 +29,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.List;
+import java.util.Set;
 
 public class StatisticsFieldEditPresenter
         extends MyPresenterWidget<StatisticsFieldEditPresenter.StatisticsFieldEditView> {
@@ -37,7 +37,7 @@ public class StatisticsFieldEditPresenter
     private static final String DEFAULT_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
 
     private String fieldNamePattern;
-    private List<StatisticField> otherFields;
+    private Set<String> otherFieldNames;
 
     @Inject
     public StatisticsFieldEditPresenter(final EventBus eventBus,
@@ -60,22 +60,19 @@ public class StatisticsFieldEditPresenter
         }, this);
     }
 
-    public void read(final StatisticField field, final List<StatisticField> otherFields) {
-        this.otherFields = otherFields;
-        getView().setFieldName(field.getFieldName());
-
+    public void read(final Field field, final Set<String> otherFieldNames) {
+        this.otherFieldNames = otherFieldNames;
+        getView().setFieldName(field.getName());
     }
 
-    public StatisticField write(final StatisticField field) {
+    public void write(final Field field) {
         String name = getView().getFieldName();
         name = name.trim();
-
-        final StatisticField updated = field.copy().fieldName(name).build();
 
         if (name.length() == 0) {
             throw new RuntimeException("An index field must have a name");
         }
-        if (otherFields.contains(updated)) {
+        if (otherFieldNames.contains(name)) {
             throw new RuntimeException("Another field with this name already exists");
         }
         if (fieldNamePattern != null && !fieldNamePattern.isEmpty()) {
@@ -86,7 +83,7 @@ public class StatisticsFieldEditPresenter
                                            fieldNamePattern + ")");
             }
         }
-        return updated;
+        field.setName(name);
     }
 
     void show(final String caption, final HidePopupRequestEvent.Handler handler) {

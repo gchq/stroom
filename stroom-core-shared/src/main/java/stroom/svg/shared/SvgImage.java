@@ -1369,17 +1369,6 @@ public enum SvgImage {
             "5 34.5-385-34.5-280-93.5-103-128v-128q0-69 103-128t280-93.5 385-34.5z\"/></svg>\n" +
             ""),
 
-    DOCUMENT_STROOM_STATS_STORE("document/StroomStatsStore.svg", "svg-image__document-stroom-stats-store", "" +
-            "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
-            "1792 1792\"><path style=\"fill:var(--icon-colour__purple)\" d=\"M896 768q237 0 443-4" +
-            "3t325-127v170q0 69-103 128t-280 93.5-385 34.5-385-34.5-280-93.5-103-128v-170q119" +
-            " 84 325 127t443 43zm0 768q237 0 443-43t325-127v170q0 69-103 128t-280 93.5-385 34" +
-            ".5-385-34.5-280-93.5-103-128v-170q119 84 325 127t443 43zm0-384q237 0 443-43t325-" +
-            "127v170q0 69-103 128t-280 93.5-385 34.5-385-34.5-280-93.5-103-128v-170q119 84 32" +
-            "5 127t443 43zm0-1152q208 0 385 34.5t280 93.5 103 128v128q0 69-103 128t-280 93.5-" +
-            "385 34.5-385-34.5-280-93.5-103-128v-128q0-69 103-128t280-93.5 385-34.5z\"/></svg>\n" +
-            ""),
-
     DOCUMENT_SYSTEM("document/System.svg", "svg-image__document-system", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"1792\" height=\"1792\" viewBox=\"0 0 " +
             "1792 1792\"><path style=\"fill:var(--icon-colour__dirty-amber)\" d=\"m 224,128 c -26" +

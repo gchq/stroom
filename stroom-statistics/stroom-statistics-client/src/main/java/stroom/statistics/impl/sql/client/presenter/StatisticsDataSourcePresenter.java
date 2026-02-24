@@ -23,14 +23,23 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
+import stroom.statistics.impl.sql.client.presenter.State.Field;
+import stroom.statistics.impl.sql.shared.CustomRollUpMask;
+import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
+import stroom.util.shared.NullSafe;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Provider;
 
 public class StatisticsDataSourcePresenter extends DocTabPresenter<LinkTabPanelView, StatisticStoreDoc> {
@@ -40,6 +49,8 @@ public class StatisticsDataSourcePresenter extends DocTabPresenter<LinkTabPanelV
     private static final TabData CUSTOM_ROLLUPS = new TabDataImpl("Custom Roll-ups");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
+
+    private final State state = new State();
 
     @Inject
     public StatisticsDataSourcePresenter(
@@ -55,6 +66,8 @@ public class StatisticsDataSourcePresenter extends DocTabPresenter<LinkTabPanelV
         // the field and rollup presenters need to know about each other as
         // changes in one affect the other
         statisticsFieldListPresenter.setCustomMaskListPresenter(statisticsCustomMaskListPresenter);
+        statisticsFieldListPresenter.setState(state);
+        statisticsCustomMaskListPresenter.setState(state);
 
         addTab(SETTINGS, new DocTabProvider<>(statisticsDataSourceSettingsPresenterProvider::get));
         addTab(FIELDS, new DocTabProvider<>(() -> statisticsFieldListPresenter));
@@ -82,11 +95,61 @@ public class StatisticsDataSourcePresenter extends DocTabPresenter<LinkTabPanelV
 
     @Override
     public void onRead(final DocRef docRef, final StatisticStoreDoc doc, final boolean readOnly) {
-        if (doc.getConfig() == null) {
+        state.clear();
+        final StatisticsDataSourceData config = doc.getConfig();
+        if (config != null) {
+
+            final List<Field> fields = NullSafe
+                    .list(config.getFields())
+                    .stream()
+                    .map(f -> state.createField(f.getFieldName()))
+                    .collect(Collectors.toList());
+            fields.forEach(state::addField);
+
+            NullSafe.collection(config.getCustomRollUpMasks()).forEach(customRollUpMask -> {
+                final Set<Field> rollup = new HashSet<>();
+                for (int i = 0; i < fields.size(); i++) {
+                    if (customRollUpMask.isTagRolledUp(i)) {
+                        final Field field = fields.get(i);
+                        rollup.add(field);
+                    }
+                }
+                state.addMask(rollup);
+            });
+
             super.onRead(docRef, doc.copy().config(StatisticsDataSourceData.builder().build()).build(), readOnly);
         } else {
             super.onRead(docRef, doc, readOnly);
         }
+    }
+
+    @Override
+    protected StatisticStoreDoc onWrite(final StatisticStoreDoc document) {
+        final StatisticStoreDoc doc = super.onWrite(document);
+
+        state.sortFields();
+        final List<StatisticField> statisticFields = state.getFields()
+                .stream()
+                .map(field -> new StatisticField(field.getName()))
+                .collect(Collectors.toList());
+
+        final Set<List<Integer>> masks = state.getIntegerMaskSet();
+
+        final Set<CustomRollUpMask> customRollUpMasks = masks
+                .stream()
+                .map(CustomRollUpMask::new)
+                .sorted()
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        final StatisticsDataSourceData config = NullSafe.getOrElse(
+                        doc,
+                        StatisticStoreDoc::getConfig,
+                        StatisticsDataSourceData::copy,
+                        StatisticsDataSourceData.builder())
+                .fields(statisticFields)
+                .customRollUpMasks(customRollUpMasks)
+                .build();
+        return doc.copy().config(config).build();
     }
 
     @Override

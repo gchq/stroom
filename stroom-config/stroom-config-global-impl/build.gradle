@@ -73,7 +73,6 @@ dependencies {
     implementation project(':stroom-state:stroom-state-impl')
     implementation project(':stroom-state:stroom-planb-impl')
     implementation project(':stroom-statistics:stroom-statistics-impl')
-    implementation project(':stroom-statistics:stroom-statistics-impl-hbase')
     implementation project(':stroom-statistics:stroom-statistics-impl-sql')
     implementation project(':stroom-task:stroom-task-api')
     implementation project(':stroom-job:stroom-job-api')

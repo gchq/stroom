@@ -17,6 +17,7 @@
 package stroom.statistics.impl.sql.shared;
 
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.collection.GwtCollectionUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -54,7 +55,7 @@ public class StatisticsDataSourceData {
         final List<StatisticField> sorted = new ArrayList<>(NullSafe.list(fields));
         sorted.sort(StatisticField::compareTo);
         this.fields = Collections.unmodifiableList(sorted);
-        this.customRollUpMasks = Collections.unmodifiableSet(NullSafe.set(customRollUpMasks));
+        this.customRollUpMasks = GwtCollectionUtil.asUnmodifiabledConsistentOrderSet(customRollUpMasks);
     }
 
     public List<StatisticField> getFields() {

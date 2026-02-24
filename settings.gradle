@@ -295,7 +295,6 @@ include 'stroom-security:stroom-security-user-api'
 include 'stroom-statistics:stroom-statistics-api'
 include 'stroom-statistics:stroom-statistics-client'
 include 'stroom-statistics:stroom-statistics-impl'
-include 'stroom-statistics:stroom-statistics-impl-hbase'
 include 'stroom-statistics:stroom-statistics-mock'
 include 'stroom-statistics:stroom-statistics-impl-sql'
 

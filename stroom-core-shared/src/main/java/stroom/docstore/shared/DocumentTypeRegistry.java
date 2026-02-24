@@ -83,11 +83,6 @@ public class DocumentTypeRegistry {
             "Report",
             "Report",
             SvgImage.DOCUMENT_REPORT);
-    public static final DocumentType STROOM_STATS_STORE_DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.INDEXING,
-            "StroomStatsStore",
-            "Stroom-Stats Store",
-            SvgImage.DOCUMENT_STROOM_STATS_STORE);
     public static final DocumentType XML_SCHEMA_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.TRANSFORMATION,
             "XMLSchema",
@@ -184,7 +179,7 @@ public class DocumentTypeRegistry {
             "Text Converter",
             SvgImage.DOCUMENT_TEXT_CONVERTER);
     public static final DocumentType VIEW_DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.SEARCH,
+            DocumentTypeGroup.INDEXING,
             "View",
             "View",
             SvgImage.DOCUMENT_VIEW);
@@ -286,7 +281,6 @@ public class DocumentTypeRegistry {
         put(STATE_STORE_DOCUMENT_TYPE);
         put(PLAN_B_DOCUMENT_TYPE);
         put(STATISTIC_STORE_DOCUMENT_TYPE);
-        put(STROOM_STATS_STORE_DOCUMENT_TYPE);
         put(SYSTEM_DOCUMENT_TYPE);
         put(TEXT_CONVERTER_DOCUMENT_TYPE);
         put(VIEW_DOCUMENT_TYPE);

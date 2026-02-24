@@ -26,12 +26,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"rolledUpTagPosition"})
 @JsonInclude(Include.NON_NULL)
-public class CustomRollUpMask {
+public class CustomRollUpMask implements Comparable<CustomRollUpMask> {
 
     /**
      * Holds a list of the positions of tags that are rolled up, zero based. The
@@ -76,5 +77,37 @@ public class CustomRollUpMask {
     @Override
     public String toString() {
         return "CustomRollUpMask [rolledUpTagPositions=" + rolledUpTagPosition + "]";
+    }
+
+    @Override
+    public int compareTo(final CustomRollUpMask o) {
+        return IntegerListComparator.INSTANCE.compare(rolledUpTagPosition, o.rolledUpTagPosition);
+    }
+
+    public static class IntegerListComparator implements Comparator<List<Integer>> {
+
+        public static final Comparator<List<Integer>> INSTANCE = new IntegerListComparator();
+
+        @Override
+        public int compare(final List<Integer> a, final List<Integer> b) {
+            if (a == b) {
+                return 0;
+            }
+            if (a == null) {
+                return -1;
+            }
+            if (b == null) {
+                return 1;
+            }
+
+            final int minLen = Math.min(a.size(), b.size());
+            for (int i = 0; i < minLen; i++) {
+                final int cmp = Integer.compare(a.get(i), b.get(i));
+                if (cmp != 0) {
+                    return cmp;
+                }
+            }
+            return Integer.compare(a.size(), b.size());
+        }
     }
 }

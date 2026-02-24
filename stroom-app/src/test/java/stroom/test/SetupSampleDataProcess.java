@@ -47,7 +47,6 @@ import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.UserDao;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.User;
-import stroom.statistics.impl.hbase.entity.StroomStatsStoreStore;
 import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.date.DateUtil;
@@ -114,7 +113,6 @@ public final class SetupSampleDataProcess {
     private final IndexVolumeGroupService indexVolumeGroupService;
     private final FsVolumeService fsVolumeService;
     private final StatisticStoreStore statisticStoreStore;
-    private final StroomStatsStoreStore stroomStatsStoreStore;
     private final SampleDataGenerator sampleDataGenerator;
     private final StreamTargetStreamHandlers streamTargetStreamHandlers;
     private final UserDao userDao;
@@ -133,7 +131,6 @@ public final class SetupSampleDataProcess {
                            final IndexVolumeGroupService indexVolumeGroupService,
                            final FsVolumeService fsVolumeService,
                            final StatisticStoreStore statisticStoreStore,
-                           final StroomStatsStoreStore stroomStatsStoreStore,
                            final SampleDataGenerator sampleDataGenerator,
                            final StreamTargetStreamHandlers streamTargetStreamHandlers,
                            final UserDao userDao,
@@ -150,7 +147,6 @@ public final class SetupSampleDataProcess {
         this.indexVolumeGroupService = indexVolumeGroupService;
         this.fsVolumeService = fsVolumeService;
         this.statisticStoreStore = statisticStoreStore;
-        this.stroomStatsStoreStore = stroomStatsStoreStore;
         this.sampleDataGenerator = sampleDataGenerator;
         this.streamTargetStreamHandlers = streamTargetStreamHandlers;
         this.userDao = userDao;
@@ -199,8 +195,6 @@ public final class SetupSampleDataProcess {
 //        final List<DocRef> statisticsDataSources = getSortedDocRefs(statisticStoreStore::list);
 //        logDocRefs(statisticsDataSources, "statisticStores");
 //
-//        final List<DocRef> stroomStatsStoreEntities = getSortedDocRefs(stroomStatsStoreStore::list);
-//        logDocRefs(stroomStatsStoreEntities, "stroomStatsStores");
 
 //        createProcessorFilters(feeds);
 
