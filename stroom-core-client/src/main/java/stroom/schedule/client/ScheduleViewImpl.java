@@ -25,6 +25,7 @@ import stroom.util.shared.scheduler.FrequencyExpression;
 import stroom.util.shared.scheduler.FrequencyExpressions;
 import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.button.client.Button;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -40,6 +41,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
+import java.util.logging.Logger;
+
 public class ScheduleViewImpl extends ViewWithUiHandlers<ScheduleUiHandlers> implements ScheduleView {
 
     private final Widget widget;
@@ -49,24 +52,39 @@ public class ScheduleViewImpl extends ViewWithUiHandlers<ScheduleUiHandlers> imp
     @UiField
     SimplePanel quickSettings;
     @UiField
+    FormGroup quickSettingsFormGroup;
+    @UiField
     TextBox expression;
+    @UiField
+    FormGroup expressionFormGroup;
     @UiField
     Label lastExecuted;
     @UiField
+    FormGroup lastExecutedFormGroup;
+    @UiField
     Label nextScheduledTime;
+    @UiField
+    FormGroup nextScheduledTimeFormGroup;
     @UiField
     Button calculate;
 
     @Inject
     public ScheduleViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        scheduleType.addItem(ScheduleType.INSTANT);
         scheduleType.addItem(ScheduleType.FREQUENCY);
         scheduleType.addItem(ScheduleType.CRON);
         calculate.setIcon(SvgImage.HISTORY);
         enterCronMode();
     }
 
+    private void enterInstantMode() {
+        setNonInstantSettingsVisible(false);
+    }
+
     private void enterFrequencyMode() {
+        setNonInstantSettingsVisible(true);
+
         final FlowPanel minute = createPanel("Minute");
         for (final FrequencyExpression cronExpression : FrequencyExpressions.MINUTE) {
             minute.add(createLabel(cronExpression));
@@ -86,6 +104,8 @@ public class ScheduleViewImpl extends ViewWithUiHandlers<ScheduleUiHandlers> imp
     }
 
     private void enterCronMode() {
+        setNonInstantSettingsVisible(true);
+
         final FlowPanel minute = createPanel("Minute");
         for (final CronExpression cronExpression : CronExpressions.MINUTE) {
             minute.add(createLabel(cronExpression));
@@ -114,6 +134,18 @@ public class ScheduleViewImpl extends ViewWithUiHandlers<ScheduleUiHandlers> imp
         quickSettingsPanel.add(month);
 
         this.quickSettings.setWidget(quickSettingsPanel);
+    }
+
+    private void setNonInstantSettingsVisible(final boolean visible) {
+        quickSettings.setVisible(visible);
+        quickSettingsFormGroup.setVisible(visible);
+        expression.setVisible(visible);
+        expressionFormGroup.setVisible(visible);
+        lastExecuted.setVisible(visible);
+        lastExecutedFormGroup.setVisible(visible);
+        nextScheduledTime.setVisible(visible);
+        nextScheduledTimeFormGroup.setVisible(visible);
+        calculate.setVisible(visible);
     }
 
     private FlowPanel createPanel(final String name) {
@@ -162,12 +194,16 @@ public class ScheduleViewImpl extends ViewWithUiHandlers<ScheduleUiHandlers> imp
     public void setScheduleType(final ScheduleType scheduleType) {
         this.scheduleType.setValue(scheduleType);
         switch (scheduleType) {
-            case CRON: {
-                enterCronMode();
+            case INSTANT: {
+                enterInstantMode();
                 break;
             }
             case FREQUENCY: {
                 enterFrequencyMode();
+                break;
+            }
+            case CRON: {
+                enterCronMode();
                 break;
             }
         }

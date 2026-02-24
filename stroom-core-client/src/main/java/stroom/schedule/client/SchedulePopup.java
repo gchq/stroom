@@ -28,6 +28,7 @@ import stroom.util.shared.scheduler.CronExpressions;
 import stroom.util.shared.scheduler.FrequencyExpressions;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
+import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 
@@ -40,7 +41,9 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.time.Instant;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 public class SchedulePopup
         extends MyPresenterWidget<SchedulePopup.ScheduleView>
@@ -48,6 +51,8 @@ public class SchedulePopup
 
     private final ScheduledTimeClient scheduledTimeClient;
     private final DateTimeFormatter dateTimeFormatter;
+    private Schedule instantSchedule =
+            new Schedule(ScheduleType.INSTANT, "");
     private Schedule frequencySchedule =
             new Schedule(ScheduleType.FREQUENCY, FrequencyExpressions.EVERY_10_MINUTES.getExpression());
     private Schedule cronSchedule =
@@ -98,6 +103,10 @@ public class SchedulePopup
     @Override
     public void onScheduleTypeChange(final ScheduleType scheduleType) {
         switch (currentSchedule.getType()) {
+            case INSTANT: {
+                instantSchedule = new Schedule(currentSchedule.getType(), getView().getExpression().getText().trim());
+                break;
+            }
             case FREQUENCY: {
                 frequencySchedule = new Schedule(currentSchedule.getType(), getView().getExpression().getText().trim());
                 break;
@@ -108,6 +117,10 @@ public class SchedulePopup
             }
         }
         switch (scheduleType) {
+            case INSTANT: {
+                currentSchedule = instantSchedule;
+                break;
+            }
             case FREQUENCY: {
                 currentSchedule = frequencySchedule;
                 break;
@@ -121,6 +134,9 @@ public class SchedulePopup
     }
 
     private Schedule createSchedule() {
+        if(getView().getScheduleType().equals(ScheduleType.INSTANT)) {
+            return new Schedule(getView().getScheduleType(), "Instant");
+        }
         return new Schedule(getView().getScheduleType(), getView().getExpression().getText().trim());
     }
 
@@ -131,7 +147,9 @@ public class SchedulePopup
                 .get(this.scheduleReferenceTime, ScheduleReferenceTime::getScheduleReferenceTime);
         final Long lastExecutedTime = NullSafe
                 .get(this.scheduleReferenceTime, ScheduleReferenceTime::getLastExecutedTime);
-        if (!NullSafe.isBlankString(currentString) && scheduleType != null) {
+        if (scheduleType != null
+            && (scheduleType == ScheduleType.INSTANT || NullSafe.isNonBlankString(currentString))
+        ) {
             final Schedule schedule = createSchedule();
             final GetScheduledTimesRequest request = new GetScheduledTimesRequest(
                     schedule,
@@ -145,7 +163,6 @@ public class SchedulePopup
                         getView().getLastExecutedTime().setText(dateTimeFormatter
                                 .format(lastExecutedTime));
                     }
-
                     if (result.isError()) {
                         getView().getNextScheduledTime().setText(result.getError());
                     } else if (result.getNextScheduledTimeMs() != null) {

@@ -33,6 +33,8 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.security.shared.FindUserContext;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.scheduler.ScheduleType;
+import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.datepicker.client.DateTimePopup;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -47,6 +49,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.function.Consumer;
 
 public class ScheduledProcessEditPresenter
@@ -179,14 +183,23 @@ public class ScheduledProcessEditPresenter
             } else if (scheduledTimes.isError()) {
                 AlertEvent.fireWarn(this, scheduledTimes.getError(), event::reset);
             } else {
-                if (!getView().getStartTime().isValid()) {
+                if (!getView().getStartTime().isValid()
+                    && !scheduledTimes.getSchedule().getType().equals(ScheduleType.INSTANT)) {
                     AlertEvent.fireWarn(this, "Invalid start time", event::reset);
-                } else if (!getView().getEndTime().isValid()) {
+                } else if (!getView().getEndTime().isValid()
+                           && !scheduledTimes.getSchedule().getType().equals(ScheduleType.INSTANT)) {
                     AlertEvent.fireWarn(this, "Invalid end time", event::reset);
                 } else {
-                    final ScheduleBounds scheduleBounds = new ScheduleBounds(
-                            getView().getStartTime().getValue(),
-                            getView().getEndTime().getValue());
+                    final ScheduleBounds scheduleBounds;
+                    if(scheduledTimes.getSchedule().getType().equals(ScheduleType.INSTANT)) {
+                        Date now = new Date();
+                        scheduleBounds = new ScheduleBounds(now.getTime(), now.getTime());
+                    } else {
+                        scheduleBounds = new ScheduleBounds(
+                                getView().getStartTime().getValue(),
+                                getView().getEndTime().getValue()
+                        );
+                    }
                     final ExecutionSchedule schedule = executionSchedule
                             .copy()
                             .name(getView().getName())
