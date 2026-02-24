@@ -149,6 +149,7 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
 
         RequestCloseAllTabsEvent.fire(this);
 
+        // Chain the OpenDocumentEvents so we have the tabs opened in the same order as they were saved
         buildOpenDocumentEvents(docRefs, docRefs.size() - 1, null).fire();
     }
 
@@ -160,9 +161,8 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
 
         final OpenDocumentEvent.Builder builder = OpenDocumentEvent.builder(this, docRefs.get(index));
         if (child != null) {
-            builder.callbackOnOpen(p -> {
-                child.fire();
-            });
+            builder.callbackOnOpen(p -> child.fire())
+                    .callbackOnFailure(child::fire);
         }
 
         return buildOpenDocumentEvents(docRefs, index - 1, builder);

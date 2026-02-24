@@ -87,11 +87,10 @@ public class App implements EntryPoint {
                 // at some point.
                 // ginjector.getPlaceManager().revealCurrentPlace();
             }, new QuietTaskMonitorFactory());
+
+            ginjector.getTabSessionManager().getTabSessions(s ->
+                    ginjector.getNavigationPlugin().setTabSessions(s));
         }
-
-        ginjector.getTabSessionManager().getTabSessions(s ->
-                ginjector.getNavigationPlugin().setTabSessions(s));
-
     }
 
     private void appendStackTraces(final Throwable e, final StringBuilder stringBuilder) {

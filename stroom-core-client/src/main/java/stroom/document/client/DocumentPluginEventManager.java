@@ -346,6 +346,7 @@ public class DocumentPluginEventManager extends Plugin {
                         event.isFullScreen(),
                         event.getSelectedTab().orElse(null),
                         event.getCallbackOnOpen(),
+                        event.getCallbackOnFailure().orElse(() -> {}),
                         explorerListener)));
 
         registerHandler(getEventBus().addHandler(CloseSelectedDocumentEvent.getType(), event -> {
@@ -767,6 +768,7 @@ public class DocumentPluginEventManager extends Plugin {
                      final boolean fullScreen,
                      final CommonDocLinkTab selectedLinkTab,
                      final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                     final Runnable callbackOnFailure,
                      final TaskMonitorFactory taskMonitorFactory) {
         if (docRef != null && docRef.getType() != null) {
             final TabPlugin tabPlugin = documentPluginRegistry.get(docRef.getType());
@@ -781,6 +783,9 @@ public class DocumentPluginEventManager extends Plugin {
                                 AlertEvent.fireError(DocumentPluginEventManager.this,
                                         buildNotFoundMessage(docRef),
                                         null);
+                                if (callbackOnFailure != null) {
+                                    callbackOnFailure.run();
+                                }
                             } else {
                                 documentPlugin.open(
                                         decoratedDocRef,
@@ -796,6 +801,9 @@ public class DocumentPluginEventManager extends Plugin {
                             AlertEvent.fireError(DocumentPluginEventManager.this,
                                     buildNotFoundMessage(docRef),
                                     null);
+                            if (callbackOnFailure != null) {
+                                callbackOnFailure.run();
+                            }
                         })
                         .taskMonitorFactory(taskMonitorFactory)
                         .exec();
