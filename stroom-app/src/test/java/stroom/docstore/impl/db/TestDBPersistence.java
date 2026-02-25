@@ -122,13 +122,15 @@ class TestDBPersistence extends AbstractCoreIntegrationTest {
                 }""";
 
         // Create
-        final Map<String, byte[]> data1 = new HashMap<>();
-        data1.put("meta", String.format(metaJson1, uuid1, uuid2).getBytes(CHARSET));
-        persistence.write(docRef1, false, data1);
+        final ImportExportDocument ieDoc1 = new ImportExportDocument();
+        ieDoc1.addExtAsset(new ByteArrayImportExportAsset("meta",
+                String.format(metaJson1, uuid1, uuid2).getBytes(CHARSET)));
+        persistence.write(docRef1, false, ieDoc1);
 
-        final Map<String, byte[]> data2 = new HashMap<>();
-        data2.put("meta", String.format(metaJson2, uuid2).getBytes(CHARSET));
-        persistence.write(docRef2, false, data2);
+        final ImportExportDocument ieDoc2 = new ImportExportDocument();
+        ieDoc2.addExtAsset(new ByteArrayImportExportAsset("meta",
+                String.format(metaJson2, uuid2).getBytes(CHARSET)));
+        persistence.write(docRef2, false, ieDoc2);
 
         final List<DocRef> docRefs = persistence.findDocRefsEmbeddedIn(docRef2);
         assertThat(docRefs.size()).isEqualTo(1);
