@@ -591,7 +591,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
         // If we have an document edit presenter then reload the document.
         for (final DocumentTabData tabData : tabDataList) {
             if (tabData instanceof AbstractDocPresenter<?, ?>) {
-                final AbstractDocPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
+                final AbstractDocPresenter<?, D> presenter = (AbstractDocPresenter<?, D>) tabData;
 
                 // Reload the document.
                 load(docRef,
