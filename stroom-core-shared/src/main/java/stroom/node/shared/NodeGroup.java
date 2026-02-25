@@ -16,7 +16,7 @@
 
 package stroom.node.shared;
 
-import stroom.util.shared.AbstractHasAuditInfoBuilder;
+import stroom.util.shared.AuditInfoBuilder;
 import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 
@@ -146,7 +146,7 @@ public class NodeGroup implements HasAuditInfoGetters, HasIntegerId {
         return new Builder();
     }
 
-    public static class Builder extends AbstractHasAuditInfoBuilder<NodeGroup, NodeGroup.Builder> {
+    public static class Builder extends AuditInfoBuilder<NodeGroup, Builder> {
 
         private Integer id;
         private Integer version;
@@ -169,22 +169,22 @@ public class NodeGroup implements HasAuditInfoGetters, HasIntegerId {
 
         public Builder id(final Integer id) {
             this.id = id;
-            return this;
+            return self();
         }
 
         public Builder version(final Integer version) {
             this.version = version;
-            return this;
+            return self();
         }
 
         public Builder name(final String name) {
             this.name = name;
-            return this;
+            return self();
         }
 
         public Builder enabled(final boolean enabled) {
             this.enabled = enabled;
-            return this;
+            return self();
         }
 
         @Override

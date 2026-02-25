@@ -16,7 +16,9 @@
 
 package stroom.query.client.presenter;
 
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.index.shared.IndexConstants;
 import stroom.pipeline.shared.SourceLocation;
@@ -41,7 +43,7 @@ import java.util.function.Supplier;
 
 public class QueryResultTableSplitPresenter
         extends MyPresenterWidget<QueryResultTableSplitView>
-        implements ResultComponent, HasDirtyHandlers {
+        implements ResultComponent, HasChangeHandlers {
 
     private final QueryResultTablePresenter tablePresenter;
     private final TextPresenter textPresenter;
@@ -185,8 +187,8 @@ public class QueryResultTableSplitPresenter
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return tablePresenter.addDirtyHandler(handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return tablePresenter.addChangeHandler(handler);
     }
 
     public void setQueryResultVisPresenter(final QueryResultVisPresenter queryResultVisPresenter) {

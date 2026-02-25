@@ -26,6 +26,7 @@ import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.impl.sql.search.FilterTermsTree;
 import stroom.statistics.impl.sql.search.FindEventCriteria;
 import stroom.statistics.impl.sql.search.StatStoreCriteriaBuilder;
+import stroom.statistics.impl.sql.search.StatisticStoreDocUtil;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
@@ -38,7 +39,6 @@ import jakarta.ws.rs.BadRequestException;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -74,13 +74,17 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         // define all the tag/value perms we expect to get back
         final List<List<StatisticTag>> expectedTagPerms = new ArrayList<>();
-        expectedTagPerms
-                .add(Arrays.asList(new StatisticTag(TAG1_NAME, TAG1_VALUE), new StatisticTag(TAG2_NAME, TAG2_VALUE)));
-        expectedTagPerms.add(
-                Arrays.asList(new StatisticTag(TAG1_NAME, TAG1_VALUE), new StatisticTag(TAG2_NAME, ROLLED_UP_VALUE)));
-        expectedTagPerms.add(
-                Arrays.asList(new StatisticTag(TAG1_NAME, ROLLED_UP_VALUE), new StatisticTag(TAG2_NAME, TAG2_VALUE)));
-        expectedTagPerms.add(Arrays.asList(new StatisticTag(TAG1_NAME, ROLLED_UP_VALUE),
+        expectedTagPerms.add(List.of(
+                new StatisticTag(TAG1_NAME, TAG1_VALUE),
+                new StatisticTag(TAG2_NAME, TAG2_VALUE)));
+        expectedTagPerms.add(List.of(
+                new StatisticTag(TAG1_NAME, TAG1_VALUE),
+                new StatisticTag(TAG2_NAME, ROLLED_UP_VALUE)));
+        expectedTagPerms.add(List.of(
+                new StatisticTag(TAG1_NAME, ROLLED_UP_VALUE),
+                new StatisticTag(TAG2_NAME, TAG2_VALUE)));
+        expectedTagPerms.add(List.of(
+                new StatisticTag(TAG1_NAME, ROLLED_UP_VALUE),
                 new StatisticTag(TAG2_NAME, ROLLED_UP_VALUE)));
 
         System.out.println("-------------------------------------------------");
@@ -128,15 +132,18 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final List<List<StatisticTag>> expectedTagPerms = new ArrayList<>();
 
         // nothing rolled up
-        expectedTagPerms
-                .add(Arrays.asList(new StatisticTag(TAG1_NAME, TAG1_VALUE), new StatisticTag(TAG2_NAME, TAG2_VALUE)));
+        expectedTagPerms.add(List.of(
+                new StatisticTag(TAG1_NAME, TAG1_VALUE),
+                new StatisticTag(TAG2_NAME, TAG2_VALUE)));
 
         // tag 2 rolled up
-        expectedTagPerms.add(
-                Arrays.asList(new StatisticTag(TAG1_NAME, TAG1_VALUE), new StatisticTag(TAG2_NAME, ROLLED_UP_VALUE)));
+        expectedTagPerms.add(List.of(
+                new StatisticTag(TAG1_NAME, TAG1_VALUE),
+                new StatisticTag(TAG2_NAME, ROLLED_UP_VALUE)));
 
         // tags 1 and 2 rolled up
-        expectedTagPerms.add(Arrays.asList(new StatisticTag(TAG1_NAME, ROLLED_UP_VALUE),
+        expectedTagPerms.add(List.of(
+                new StatisticTag(TAG1_NAME, ROLLED_UP_VALUE),
                 new StatisticTag(TAG2_NAME, ROLLED_UP_VALUE)));
 
         System.out.println("-------------------------------------------------");
@@ -243,28 +250,32 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
                 .uuid(UUID.randomUUID().toString())
                 .build();
 
-        final StatisticsDataSourceData statisticsDataSourceData = new StatisticsDataSourceData();
+        StatisticsDataSourceData statisticsDataSourceData = StatisticsDataSourceData.builder().build();
 
         final List<StatisticField> fields = new ArrayList<>();
 
         fields.add(new StatisticField(TAG1_NAME));
         fields.add(new StatisticField(TAG2_NAME));
 
-        statisticsDataSourceData.setFields(fields);
+        statisticsDataSourceData = statisticsDataSourceData.copy().fields(fields).build();
 
         // add the custom rollup masks, which only come into play if the type is
         // CUSTOM
-        statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(new ArrayList<>())); // no
+        statisticsDataSourceData = StatisticStoreDocUtil.addCustomRollUpMask(statisticsDataSourceData,
+                new CustomRollUpMask(new ArrayList<>())); // no
         // tags
-        statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(Arrays.asList(0, 1))); // tags
+        statisticsDataSourceData = StatisticStoreDocUtil.addCustomRollUpMask(statisticsDataSourceData,
+                new CustomRollUpMask(List.of(0, 1))); // tags
         // 1&2
-        statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(Arrays.asList(1))); // tag
+        statisticsDataSourceData = StatisticStoreDocUtil.addCustomRollUpMask(statisticsDataSourceData,
+                new CustomRollUpMask(List.of(1))); // tag
         // 2
 
-        statisticsDataSource.setConfig(statisticsDataSourceData);
-        statisticsDataSource.setRollUpType(statisticRollUpType);
-
-        return statisticsDataSource;
+        return statisticsDataSource
+                .copy()
+                .config(statisticsDataSourceData)
+                .rollUpType(statisticRollUpType)
+                .build();
     }
 
     @Test

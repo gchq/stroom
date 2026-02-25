@@ -37,6 +37,8 @@ import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
+import stroom.util.shared.Document;
+import stroom.util.shared.Embeddable;
 import stroom.util.shared.ErrorType;
 import stroom.util.shared.HasData;
 import stroom.util.shared.Indicators;
@@ -85,8 +87,8 @@ public class ElementPresenter
     private boolean refreshRequired = true;
     private boolean loaded;
     private boolean dirtyCode;
-    private DocRef loadedDoc;
-    private HasData hasData;
+    private DocRef docRef;
+    private Document document;
     private final EnumMap<IndicatorType, EditorPresenter> presenterMap = new EnumMap<>(IndicatorType.class);
 
     private Indicators indicators;
@@ -177,6 +179,10 @@ public class ElementPresenter
         this.desiredLogPanVisibility = desiredLogPanVisibility;
     }
 
+    public void setReadOnly(final boolean readOnly) {
+        codePresenter.setReadOnly(readOnly);
+    }
+
     public void setLogPaneVisibility(final boolean isVisible) {
         getView().setLogVisible(isVisible);
     }
@@ -238,11 +244,12 @@ public class ElementPresenter
     private void loadEntityRef(final DocRef entityRef,
                                final Consumer<Boolean> future) {
         if (entityRef != null) {
-            final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(entityRef.getType());
+            final DocumentPlugin<Document> documentPlugin = documentPluginRegistry.get(entityRef.getType(),
+                    Document.class);
             documentPlugin.load(entityRef,
                     result -> {
-                        loadedDoc = entityRef;
-                        hasData = (HasData) result;
+                        docRef = entityRef;
+                        document = result;
                         dirtyCode = false;
                         read();
 
@@ -261,18 +268,20 @@ public class ElementPresenter
     }
 
     public void save() {
-        if (loaded && hasData != null && dirtyCode) {
+        if (loaded && document != null && dirtyCode) {
             write();
-            final DocumentPlugin documentPlugin = documentPluginRegistry.get(loadedDoc.getType());
-            documentPlugin.save(loadedDoc, hasData,
+
+            final DocumentPlugin<Document> documentPlugin = documentPluginRegistry.get(docRef.getType(),
+                    Document.class);
+            documentPlugin.save(docRef, document,
                     result -> {
-                        hasData = (HasData) result;
+                        document = result;
                         dirtyCode = false;
                     },
                     throwable -> {
                         AlertEvent.fireError(
                                 this,
-                                "Unable to save document " + loadedDoc,
+                                "Unable to save document " + docRef,
                                 throwable.getMessage(), null);
                     },
                     this);
@@ -280,7 +289,7 @@ public class ElementPresenter
     }
 
     private void read() {
-        if (hasData != null) {
+        if (document instanceof final HasData hasData) {
             setCode(hasData.getData());
         } else {
             setCode("");
@@ -288,7 +297,9 @@ public class ElementPresenter
     }
 
     private void write() {
-        hasData.setData(getCode());
+        if (document instanceof final HasData hasData) {
+            document = (Document) hasData.copyWithData(getCode());
+        }
     }
 
     public String getCode() {
@@ -314,6 +325,12 @@ public class ElementPresenter
 
             codePresenter.setMode(getMode(element));
 
+            if (document instanceof final Embeddable embeddable && embeddable.getEmbeddedIn() != null) {
+                final DocRef pipelineDocRef = pipelineModel.getPipelineLayer().getSourcePipeline();
+                if (!pipelineDocRef.equals(embeddable.getEmbeddedIn())) {
+                    setReadOnly(true);
+                }
+            }
 
             registerHandler(codePresenter.getView().asWidget().addDomHandler(e -> {
                 if (KeyCodes.KEY_ENTER == e.getNativeKeyCode() &&
@@ -476,8 +493,16 @@ public class ElementPresenter
         this.refreshRequired = refreshRequired;
     }
 
-    public boolean isDirtyCode() {
-        return dirtyCode;
+    public boolean isDirty() {
+        return loaded && document != null && dirtyCode;
+    }
+
+    public void setLoaded(final boolean loaded) {
+        this.loaded = loaded;
+    }
+
+    public DocRef getDocRef() {
+        return docRef;
     }
 
     public void clearAllIndicators() {

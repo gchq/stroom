@@ -500,9 +500,9 @@ public final class ManageGlobalPropertyEditPresenter
     private void refreshValuesOnChange() {
         if (getView().getUseOverride()) {
             final String value = getView().getDatabaseValue().getText();
-            getEntity().setDatabaseOverrideValue(OverrideValue.with(value.trim()));
+            setEntity(getEntity().copy().databaseOverrideValue(OverrideValue.with(value.trim())).build());
         } else {
-            getEntity().setDatabaseOverrideValue(OverrideValue.unSet(String.class));
+            setEntity(getEntity().copy().databaseOverrideValue(OverrideValue.unSet(String.class)).build());
 
             // Don't clear the db override field on screen in case they unticked
             // by accident

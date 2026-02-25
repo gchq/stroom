@@ -528,12 +528,14 @@ class DashboardServiceImpl implements DashboardService {
                         search.getParams(),
                         search.getTimeRange());
                 final SearchRequestSource searchRequestSource = request.getSearchRequestSource();
-                final StoredQuery storedQuery = new StoredQuery();
-                storedQuery.setName("History");
-                storedQuery.setDashboardUuid(NullSafe
-                        .get(searchRequestSource, SearchRequestSource::getOwnerDocRef, DocRef::getUuid));
-                storedQuery.setComponentId(searchRequestSource.getComponentId());
-                storedQuery.setQuery(query);
+                final StoredQuery storedQuery = StoredQuery
+                        .builder()
+                        .name("History")
+                        .dashboardUuid(NullSafe
+                                .get(searchRequestSource, SearchRequestSource::getOwnerDocRef, DocRef::getUuid))
+                        .componentId(searchRequestSource.getComponentId())
+                        .query(query)
+                        .build();
                 queryService.create(storedQuery);
 
             } catch (final RuntimeException e) {

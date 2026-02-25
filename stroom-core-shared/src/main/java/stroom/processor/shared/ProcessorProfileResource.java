@@ -53,7 +53,8 @@ public interface ProcessorProfileResource extends RestResource, DirectRestServic
     @Operation(
             summary = "Creates a processor profile",
             operationId = "createProcessorProfile")
-    ProcessorProfile create(@Parameter(description = "processorProfile", required = true) ProcessorProfile processorProfile);
+    ProcessorProfile create(@Parameter(description = "processorProfile", required = true)
+                            ProcessorProfile processorProfile);
 
     @GET
     @Path("/fetchById/{id}")

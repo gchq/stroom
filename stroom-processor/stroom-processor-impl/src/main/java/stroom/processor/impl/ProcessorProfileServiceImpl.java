@@ -19,7 +19,6 @@ package stroom.processor.impl;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.util.AuditUtil;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
@@ -68,7 +67,7 @@ public class ProcessorProfileServiceImpl implements ProcessorProfileService {
     @Override
     public ProcessorProfile create(final ProcessorProfile processorProfile) {
         final ProcessorProfile result = securityContext.secureResult(AppPermission.MANAGE_PROCESSORS_PERMISSION, () ->
-                processorProfileDao.create(AuditUtil.stamp(securityContext, processorProfile.copy())));
+                processorProfileDao.create(processorProfile.copy().stampAudit(securityContext).build()));
         fireChange(EntityAction.CREATE);
         return result;
     }
@@ -86,7 +85,7 @@ public class ProcessorProfileServiceImpl implements ProcessorProfileService {
     @Override
     public ProcessorProfile update(final ProcessorProfile processorProfile) {
         final ProcessorProfile result = securityContext.secureResult(AppPermission.MANAGE_PROCESSORS_PERMISSION, () ->
-                processorProfileDao.update(AuditUtil.stamp(securityContext, processorProfile.copy())));
+                processorProfileDao.update(processorProfile.copy().stampAudit(securityContext).build()));
         fireChange(EntityAction.UPDATE);
         return result;
     }

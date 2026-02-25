@@ -77,8 +77,7 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         volumeToRecord(fileVolume, record);
         final FsVolumeRecord persistedRecord = JooqUtil.updateWithOptimisticLocking(fsDataStoreDbConnProvider, record);
         final FsVolume result = recordToVolume(persistedRecord, fileVolume.getVolumeState());
-        result.setVolumeState(fileVolume.getVolumeState());
-        return result;
+        return result.copy().volumeState(fileVolume.getVolumeState()).build();
     }
 
     @Override
@@ -214,34 +213,34 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
     }
 
     private FsVolume recordToVolume(final Record record, final FsVolumeState fileSystemVolumeState) {
-        final FsVolume fileVolume = new FsVolume();
-        fileVolume.setId(record.get(FS_VOLUME.ID));
-        fileVolume.setVersion(record.get(FS_VOLUME.VERSION));
-        fileVolume.setCreateTimeMs(record.get(FS_VOLUME.CREATE_TIME_MS));
-        fileVolume.setCreateUser(record.get(FS_VOLUME.CREATE_USER));
-        fileVolume.setUpdateTimeMs(record.get(FS_VOLUME.UPDATE_TIME_MS));
-        fileVolume.setUpdateUser(record.get(FS_VOLUME.UPDATE_USER));
-        fileVolume.setPath(record.get(FS_VOLUME.PATH));
-        fileVolume.setStatus(
-                VolumeUseStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(FS_VOLUME.STATUS)));
-        fileVolume.setByteLimit(record.get(FS_VOLUME.BYTE_LIMIT));
-        fileVolume.setVolumeState(fileSystemVolumeState);
-        fileVolume.setVolumeType(FsVolumeType.fromId(record.get(FS_VOLUME.VOLUME_TYPE)));
-        fileVolume.setVolumeGroupId(record.get(FS_VOLUME.FK_FS_VOLUME_GROUP_ID));
+        final FsVolume.Builder builder = FsVolume
+                .builder()
+                .id(record.get(FS_VOLUME.ID))
+                .version(record.get(FS_VOLUME.VERSION))
+                .createTimeMs(record.get(FS_VOLUME.CREATE_TIME_MS))
+                .createUser(record.get(FS_VOLUME.CREATE_USER))
+                .updateTimeMs(record.get(FS_VOLUME.UPDATE_TIME_MS))
+                .updateUser(record.get(FS_VOLUME.UPDATE_USER))
+                .path(record.get(FS_VOLUME.PATH))
+                .status(VolumeUseStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(FS_VOLUME.STATUS)))
+                .byteLimit(record.get(FS_VOLUME.BYTE_LIMIT))
+                .volumeState(fileSystemVolumeState)
+                .volumeType(FsVolumeType.fromId(record.get(FS_VOLUME.VOLUME_TYPE)))
+                .volumeGroupId(record.get(FS_VOLUME.FK_FS_VOLUME_GROUP_ID));
 
         final byte[] data = record.get(FS_VOLUME.DATA);
         if (data != null) {
             try {
                 final String s3ClientConfigData = new String(data, StandardCharsets.UTF_8);
-                fileVolume.setS3ClientConfigData(s3ClientConfigData);
+                builder.s3ClientConfigData(s3ClientConfigData);
                 final S3ClientConfig s3ClientConfig = JsonUtil
                         .readValue(s3ClientConfigData, S3ClientConfig.class);
-                fileVolume.setS3ClientConfig(s3ClientConfig);
+                builder.s3ClientConfig(s3ClientConfig);
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             }
         }
-        return fileVolume;
+        return builder.build();
     }
 
     private Optional<Condition> volumeStatusCriteriaSetToCondition(final TableField<FsVolumeRecord, Byte> field,

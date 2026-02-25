@@ -65,11 +65,8 @@ class VolumeCreatorForTesting implements VolumeCreator {
     }
 
     private IndexVolume createVolume(final Path tempDir, final String path, final String nodeName) {
-        final IndexVolume vol = new IndexVolume();
         final String p = tempDir.resolve(path).toAbsolutePath().toString();
-        vol.setPath(p);
-        vol.setNodeName(nodeName);
-        return vol;
+        return IndexVolume.builder().path(p).nodeName(nodeName).build();
     }
 
     @Override
@@ -82,7 +79,7 @@ class VolumeCreatorForTesting implements VolumeCreator {
                 boolean found = false;
                 for (final IndexVolume existingVolume : existingVolumes) {
                     if (existingVolume.getNodeName().equals(volume.getNodeName())
-                            && existingVolume.getPath().equals(volume.getPath())) {
+                        && existingVolume.getPath().equals(volume.getPath())) {
                         found = true;
                         break;
                     }

@@ -125,7 +125,7 @@ public class EventStore implements EventConsumer {
 
     public void tryRoll() {
         stores.keySet().forEach(feedKey -> {
-            LOGGER.debug(() -> "Try rolling: " + feedKey.toString());
+            LOGGER.debug("Try rolling: {}", feedKey);
             stores.compute(feedKey, (k, v) -> {
                 EventAppender eventAppender = v;
                 if (eventAppender != null) {
@@ -145,7 +145,7 @@ public class EventStore implements EventConsumer {
 
     public void roll() {
         stores.keySet().forEach(feedKey -> {
-            LOGGER.debug(() -> "Rolling: " + feedKey.toString());
+            LOGGER.debug("Rolling: {}", feedKey);
             stores.compute(feedKey, (k, v) -> {
                 if (v != null) {
                     try {
@@ -175,7 +175,7 @@ public class EventStore implements EventConsumer {
     }
 
     private void forward(final Path file) {
-        LOGGER.debug(() -> "Forwarding: " + file);
+        LOGGER.debug("Forwarding: {}", file);
         if (Files.isRegularFile(file)) {
             final FeedKey feedKey = EventStoreFile.getFeedKey(file);
 
@@ -273,7 +273,7 @@ public class EventStore implements EventConsumer {
                     file = EventStoreFile.createNew(dir, k, now);
                     // Ensure file doesn't already exist.
                     if (Files.isRegularFile(file)) {
-                        LOGGER.debug("File already exists: " + file);
+                        LOGGER.debug("File already exists: {}", file);
                         ThreadUtil.sleep(1);
                     } else {
                         success = true;

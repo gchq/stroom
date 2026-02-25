@@ -17,8 +17,8 @@
 package stroom.openai.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -32,7 +32,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-public class OpenAIModelPresenter extends DocumentEditTabPresenter<LinkTabPanelView, OpenAIModelDoc> {
+public class OpenAIModelPresenter extends DocTabPresenter<LinkTabPanelView, OpenAIModelDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
@@ -47,7 +47,7 @@ public class OpenAIModelPresenter extends DocumentEditTabPresenter<LinkTabPanelV
             final DocumentUserPermissionsTabProvider<OpenAIModelDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        addTab(SETTINGS, new DocumentEditTabProvider<>(modelSettingsPresenterProvider::get));
+        addTab(SETTINGS, new DocTabProvider<>(modelSettingsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -61,8 +61,7 @@ public class OpenAIModelPresenter extends DocumentEditTabPresenter<LinkTabPanelV
             @Override
             public OpenAIModelDoc onWrite(final MarkdownEditPresenter presenter,
                                           final OpenAIModelDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

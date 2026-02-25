@@ -17,8 +17,8 @@
 package stroom.search.solr.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -32,7 +32,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-public class SolrIndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, SolrIndexDoc> {
+public class SolrIndexPresenter extends DocTabPresenter<LinkTabPanelView, SolrIndexDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData FIELDS = new TabDataImpl("Fields");
@@ -49,8 +49,8 @@ public class SolrIndexPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
                                       documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        addTab(FIELDS, new DocumentEditTabProvider<>(indexFieldListPresenterProvider::get));
-        addTab(SETTINGS, new DocumentEditTabProvider<>(indexSettingsPresenterProvider::get));
+        addTab(FIELDS, new DocTabProvider<>(indexFieldListPresenterProvider::get));
+        addTab(SETTINGS, new DocTabProvider<>(indexSettingsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<SolrIndexDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -64,8 +64,7 @@ public class SolrIndexPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
             @Override
             public SolrIndexDoc onWrite(final MarkdownEditPresenter presenter,
                                         final SolrIndexDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

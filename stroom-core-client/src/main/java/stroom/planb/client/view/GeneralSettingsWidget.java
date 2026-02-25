@@ -16,7 +16,7 @@
 
 package stroom.planb.client.view;
 
-import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -47,7 +47,7 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
     }
 
     @Override
-    public void setUiHandlers(final PlanBSettingsUiHandlers uiHandlers) {
+    public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
     }
 

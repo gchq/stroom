@@ -377,15 +377,14 @@ class TestReceiveDataRuleSetServiceImpl {
     private DictionaryDoc createDict(final String name,
                                      final DictionaryDoc importedDoc,
                                      final String... lines) {
-        final DictionaryDoc dict = DictionaryDoc.builder()
+        final DictionaryDoc.Builder builder = DictionaryDoc.builder()
                 .uuid(UUID.randomUUID().toString())
-                .name(name)
-                .build();
+                .name(name);
         if (importedDoc != null) {
-            dict.setImports(List.of(importedDoc.asDocRef()));
+            builder.imports(List.of(importedDoc.asDocRef()));
         }
-        dict.setData(String.join("\n", lines));
-        return dict;
+        builder.data(String.join("\n", lines));
+        return builder.build();
     }
 
     private ExpressionTerm getChildAsTerm(final ExpressionOperator expressionOperator,

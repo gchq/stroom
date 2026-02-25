@@ -18,8 +18,7 @@ package stroom.view.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -36,7 +35,6 @@ import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 class ViewStoreImpl implements ViewStore {
@@ -48,13 +46,17 @@ class ViewStoreImpl implements ViewStore {
     ViewStoreImpl(final StoreFactory storeFactory,
                   final ViewSerialiser serialiser,
                   final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, ViewDoc.TYPE, ViewDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                ViewDoc.TYPE,
+                ViewDoc::builder,
+                ViewDoc::copy);
         this.securityContext = securityContext;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public DocRef createDocument(final String name) {
@@ -100,13 +102,13 @@ class ViewStoreImpl implements ViewStore {
         return store.info(docRef);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -124,24 +126,26 @@ class ViewStoreImpl implements ViewStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<ViewDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<ViewDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
+            final ViewDoc.Builder builder = doc.copy();
             if (doc.getDataSource() != null) {
-                doc.setDataSource(dependencyRemapper.remap(doc.getDataSource()));
+                builder.dataSource(dependencyRemapper.remap(doc.getDataSource()));
             }
             if (doc.getPipeline() != null) {
-                doc.setPipeline(dependencyRemapper.remap(doc.getPipeline()));
+                builder.pipeline(dependencyRemapper.remap(doc.getPipeline()));
             }
+            return builder.build();
         };
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public ViewDoc readDocument(final DocRef docRef) {
@@ -153,13 +157,13 @@ class ViewStoreImpl implements ViewStore {
         return store.writeDocument(document);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -178,10 +182,7 @@ class ViewStoreImpl implements ViewStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override
@@ -194,9 +195,9 @@ class ViewStoreImpl implements ViewStore {
         return null;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public List<DocRef> list() {

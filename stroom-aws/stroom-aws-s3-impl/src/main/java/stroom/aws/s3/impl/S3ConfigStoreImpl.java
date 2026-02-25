@@ -20,7 +20,6 @@ import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.aws.s3.shared.S3ConfigDoc;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -48,13 +47,16 @@ class S3ConfigStoreImpl implements S3ConfigStore {
                       final Provider<S3Config> s3ConfigProvider,
                       final S3ConfigSerialiser serialiser) {
         this.s3ConfigProvider = s3ConfigProvider;
-        this.store = storeFactory.createStore(serialiser, S3ConfigDoc.TYPE, S3ConfigDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                S3ConfigDoc.TYPE,
+                S3ConfigDoc::builder,
+                S3ConfigDoc::copy);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
-
-    /// /////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public DocRef createDocument(final String name) {
@@ -107,14 +109,13 @@ class S3ConfigStoreImpl implements S3ConfigStore {
         return store.info(docRef);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-
-    /// /////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -132,14 +133,13 @@ class S3ConfigStoreImpl implements S3ConfigStore {
         store.remapDependencies(docRef, remappings, null);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF DocumentActionHandler
-
-    /// /////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public S3ConfigDoc readDocument(final DocRef docRef) {
@@ -154,14 +154,13 @@ class S3ConfigStoreImpl implements S3ConfigStore {
         return store.writeDocument(document);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-
-    /// /////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -180,10 +179,7 @@ class S3ConfigStoreImpl implements S3ConfigStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override
@@ -195,10 +191,9 @@ class S3ConfigStoreImpl implements S3ConfigStore {
     public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
         return null;
     }
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ImportExportActionHandler
-
-    /// /////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public List<DocRef> list() {

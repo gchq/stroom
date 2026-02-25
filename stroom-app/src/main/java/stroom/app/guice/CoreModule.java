@@ -125,18 +125,12 @@ public class CoreModule extends AbstractModule {
         install(new stroom.security.impl.db.SecurityDaoModule());
         install(new stroom.analytics.rule.impl.AnalyticRuleModule());
         install(new stroom.analytics.rule.impl.ReportModule());
-        install(new stroom.state.impl.StateModule());
         install(new stroom.planb.impl.PlanBModule());
         install(new stroom.statistics.impl.InternalStatisticsModule());
-        install(new stroom.statistics.impl.hbase.entity.StroomStatsStoreModule());
-        install(new stroom.statistics.impl.hbase.internal.InternalModule());
-        install(new stroom.statistics.impl.hbase.pipeline.StatisticsElementModule());
-        install(new stroom.statistics.impl.hbase.rollup.StroomStatsRollupModule());
         install(new stroom.statistics.impl.sql.SqlStatisticsModule());
         install(new stroom.statistics.impl.sql.entity.StatisticStoreModule());
         install(new stroom.statistics.impl.sql.filter.StatisticsElementsModule());
         install(new stroom.statistics.impl.sql.internal.InternalModule());
-        install(new stroom.statistics.impl.sql.rollup.SQLStatisticRollupModule());
         install(new stroom.statistics.impl.sql.search.SQLStatisticSearchModule());
         install(new stroom.storedquery.impl.StoredQueryModule());
         install(new stroom.storedquery.impl.db.StoredQueryDaoModule());

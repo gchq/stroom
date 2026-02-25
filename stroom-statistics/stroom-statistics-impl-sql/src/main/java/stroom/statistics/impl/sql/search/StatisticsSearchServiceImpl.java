@@ -104,11 +104,12 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
         final RollUpBitMask result;
 
-        if (rolledUpTagsFound.size() > 0) {
+        if (!rolledUpTagsFound.isEmpty()) {
             final List<Integer> rollUpTagPositionList = new ArrayList<>();
-
+            final Map<String, Integer> fieldPositionMap =
+                    StatisticStoreDocUtil.createFieldPositionMap(statisticsDataSource);
             for (final String tag : rolledUpTagsFound) {
-                final Integer position = statisticsDataSource.getPositionInFieldList(tag);
+                final Integer position = fieldPositionMap.get(tag);
                 if (position == null) {
                     throw new RuntimeException(String.format("No field position found for tag %s", tag));
                 }
@@ -165,7 +166,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             }
 
             //now add in all the dynamic tag field mappings
-            statisticStoreEntity.getFieldNames().forEach(tagField ->
+            StatisticStoreDocUtil.getFieldNames(statisticStoreEntity).forEach(tagField ->
                     fieldToColumnsMap.computeIfAbsent(tagField, k -> new ArrayList<>())
                             .add(KEY_TABLE_ALIAS + "." + SQLStatisticNames.NAME));
 
@@ -269,6 +270,9 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         LOGGER.debug(() -> String.format("Building mapper for fieldIndexMap %s, entity %s",
                 fieldIndex, statisticStoreEntity.getUuid()));
 
+        final Map<String, Integer> fieldPositionMap =
+                StatisticStoreDocUtil.createFieldPositionMap(statisticStoreEntity);
+
         // construct a list of field extractors that can populate the appropriate bit of the data arr
         // when given a resultSet row
         final List<ValueExtractor> valueExtractors = fieldIndex.stream()
@@ -292,7 +296,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                         } else {
                             throw new RuntimeException(String.format("Unexpected type %s", statisticType));
                         }
-                    } else if (statisticStoreEntity.getFieldNames().contains(fieldName)) {
+                    } else if (fieldPositionMap.containsKey(fieldName)) {
                         // this is a tag field so need to extract the tags/values from the NAME col.
                         // We only want to do this extraction once so we cache the values
                         extractor = buildTagFieldValueExtractor(fieldName, idx);

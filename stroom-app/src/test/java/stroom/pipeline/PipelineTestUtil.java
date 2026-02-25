@@ -54,13 +54,14 @@ public final class PipelineTestUtil {
                                             final String description,
                                             final String data) {
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(docRef);
-        pipelineDoc.setName(name);
-        pipelineDoc.setDescription(description);
+        final PipelineDoc.Builder builder = pipelineDoc.copy();
+        builder.name(name);
+        builder.description(description);
         if (data != null) {
             final PipelineData pipelineData = JsonUtil.readValue(data, PipelineData.class);
-            pipelineDoc.setPipelineData(pipelineData);
+            builder.pipelineData(pipelineData);
         }
-        pipelineStore.writeDocument(pipelineDoc);
+        pipelineStore.writeDocument(builder.build());
         return docRef;
     }
 }

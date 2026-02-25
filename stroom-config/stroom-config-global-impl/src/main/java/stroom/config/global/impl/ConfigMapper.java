@@ -506,11 +506,15 @@ public class ConfigMapper {
                     final Optional<String> effectiveValueBefore = globalProp.getEffectiveValue();
                     final SourceType sourceBefore = globalProp.getSource();
 
-                    globalProp.setDatabaseOverrideValue(OverrideValue.unSet(String.class));
+                    final ConfigProperty.Builder builder = globalProp.copy();
+                    builder.databaseOverrideValue(OverrideValue.unSet(String.class));
                     // Not in the DB so make sure it has no ID, e.g. if the prop is in the db on boot
                     // then get changed back to default val (which removes it from the db) we would hold
                     // an old ID for it, which would break future updates
-                    globalProp.setId(null);
+                    builder.id(null);
+
+                    // Update in map.
+                    globalPropertiesMap.put(entry.getKey(), builder.build());
 
                     final boolean hasChanged = hasEffectiveValueChanged(
                             globalProp.getName(), effectiveValueBefore, sourceBefore);
@@ -575,18 +579,22 @@ public class ConfigMapper {
                 final SourceType sourceBefore = globalConfigProperty.getSource();
 
                 // Update all the DB related values from the passed DB config prop
-                globalConfigProperty.setId(dbConfigProperty.getId());
-                globalConfigProperty.setDatabaseOverrideValue(dbConfigProperty.getDatabaseOverrideValue());
-                globalConfigProperty.setVersion(dbConfigProperty.getVersion());
-                globalConfigProperty.setCreateTimeMs(dbConfigProperty.getCreateTimeMs());
-                globalConfigProperty.setCreateUser(dbConfigProperty.getCreateUser());
-                globalConfigProperty.setUpdateTimeMs(dbConfigProperty.getUpdateTimeMs());
-                globalConfigProperty.setUpdateUser(dbConfigProperty.getUpdateUser());
+                final ConfigProperty updated = globalConfigProperty.copy()
+                        .id(dbConfigProperty.getId())
+                        .databaseOverrideValue(dbConfigProperty.getDatabaseOverrideValue())
+                        .version(dbConfigProperty.getVersion())
+                        .createTimeMs(dbConfigProperty.getCreateTimeMs())
+                        .createUser(dbConfigProperty.getCreateUser())
+                        .updateTimeMs(dbConfigProperty.getUpdateTimeMs())
+                        .updateUser(dbConfigProperty.getUpdateUser())
+                        .build();
+                // Update the map with the new property.
+                globalPropertiesMap.put(fullPath, updated);
 
                 final boolean hasChanged = hasEffectiveValueChanged(
                         fullPath, effectiveValueBefore, sourceBefore);
 
-                return Tuple.of(globalConfigProperty, hasChanged);
+                return Tuple.of(updated, hasChanged);
             } else {
                 throw new UnknownPropertyException(LogUtil.message("No prop object for {}", fullPath));
             }
@@ -671,7 +679,7 @@ public class ConfigMapper {
     private int haveAnyEffectiveValuesChanged(final Map<PropertyPath, Optional<String>> currentEffectiveValues,
                                               final Map<PropertyPath, SourceType> currentSources) {
 
-        final int changeCount = allPropertyPaths.stream()
+        return allPropertyPaths.stream()
                 .mapToInt(propertyPath -> {
 
                     final Optional<String> effectiveValueBefore = currentEffectiveValues
@@ -688,8 +696,6 @@ public class ConfigMapper {
                             : 0;
                 })
                 .sum();
-
-        return changeCount;
     }
 
     private boolean hasEffectiveValueChanged(final PropertyPath fullPath,
@@ -745,10 +751,12 @@ public class ConfigMapper {
 
         // Update yaml override in global property.
         if (Objects.equals(defaultValue, newValue)) {
-            configProperty.setYamlOverrideValue(OverrideValue.unSet(String.class));
+            globalPropertiesMap.put(fullPath,
+                    configProperty.copy().yamlOverrideValue(OverrideValue.unSet(String.class)).build());
         } else {
             final String yamlValueAsStr = getStringValue(yamlProp);
-            configProperty.setYamlOverrideValue(yamlValueAsStr);
+            globalPropertiesMap.put(fullPath,
+                    configProperty.copy().yamlOverrideValue(yamlValueAsStr).build());
         }
     }
 
@@ -759,15 +767,18 @@ public class ConfigMapper {
         final String defaultValueAsStr = getDefaultValue(defaultProp);
 
         // build a new ConfigProperty object from our Prop and our defaults
-        final ConfigProperty configProperty = new ConfigProperty(fullPath, defaultValueAsStr);
+        final ConfigProperty.Builder builder = ConfigProperty
+                .builder()
+                .name(fullPath)
+                .defaultValue(defaultValueAsStr);
         // Add all the meta data for the prop
-        updatePropertyFromConfigAnnotations(configProperty, defaultProp);
+        updatePropertyFromConfigAnnotations(builder, defaultProp);
 
         if (defaultValueAsStr == null) {
             LOGGER.trace("Property {} has no default value", fullPath);
         }
 
-        globalPropertiesMap.put(fullPath, configProperty);
+        globalPropertiesMap.put(fullPath, builder.build());
     }
 
     private static boolean isSupportedPropertyType(final Class<?> type) {
@@ -802,21 +813,21 @@ public class ConfigMapper {
         return isSupported;
     }
 
-    private void updatePropertyFromConfigAnnotations(final ConfigProperty configProperty,
+    private void updatePropertyFromConfigAnnotations(final ConfigProperty.Builder builder,
                                                      final Prop prop) {
         // Editable by default unless found otherwise below
-        configProperty.setEditable(true);
+        builder.editable(true);
 
         prop.getAnnotation(JsonPropertyDescription.class)
                 .ifPresent(jsonPropertyDescription ->
-                        configProperty.setDescription(jsonPropertyDescription.value()));
+                        builder.description(jsonPropertyDescription.value()));
 
         if (prop.hasAnnotation(ReadOnly.class)) {
-            configProperty.setEditable(false);
+            builder.editable(false);
         }
 
         if (prop.hasAnnotation(Password.class)) {
-            configProperty.setPassword(true);
+            builder.password(true);
         }
 
         prop.getAnnotation(RequiresRestart.class)
@@ -824,23 +835,22 @@ public class ConfigMapper {
                     final RequiresRestart.RestartScope scope = requiresRestart.value();
                     switch (scope) {
                         case SYSTEM:
-                            configProperty.setRequireRestart(true);
+                            builder.requireRestart(true);
                             break;
                         case UI:
-                            configProperty.setRequireUiRestart(true);
+                            builder.requireUiRestart(true);
                             break;
                         default:
                             throw new RuntimeException("Should never get here");
                     }
                 });
 
-        configProperty.setDataTypeName(getDataTypeName(prop.getValueType()));
+        builder.dataTypeName(getDataTypeName(prop.getValueType()));
     }
 
     private static String getDataTypeName(final Type type) {
         try {
-            if (type instanceof Class) {
-                final Class<?> valueClass = (Class<?>) type;
+            if (type instanceof final Class<?> valueClass) {
                 final String dataTypeName;
 
                 if (valueClass.equals(int.class)) {
@@ -854,8 +864,7 @@ public class ConfigMapper {
                     dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, valueClass.getSimpleName());
                 }
                 return dataTypeName;
-            } else if (type instanceof ParameterizedType) {
-                final ParameterizedType parameterizedType = (ParameterizedType) type;
+            } else if (type instanceof final ParameterizedType parameterizedType) {
                 final String rawTypeName = getDataTypeName(parameterizedType.getRawType());
 
                 if (parameterizedType.getActualTypeArguments() != null) {
@@ -1156,7 +1165,7 @@ public class ConfigMapper {
                     final String value = ConfigMapper.convertToString(entry.getValue());
                     return Map.entry(key, value);
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         // join all strings into one fat string
         final String allText = strEntries.stream()
@@ -1268,7 +1277,7 @@ public class ConfigMapper {
                         final List<String> parts = Splitter.on(keyValueDelimiter)
                                 .splitToList(keyValueStr);
 
-                        if (parts.size() < 1 || parts.size() > 2) {
+                        if (parts.isEmpty() || parts.size() > 2) {
                             throw new RuntimeException(LogUtil.message(
                                     "Too many parts [{}] in value [{}], whole value [{}]",
                                     parts.size(), keyValueStr, serialisedForm));

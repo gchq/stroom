@@ -28,19 +28,20 @@ class RecordToNodeMapper implements Function<Record, Node> {
 
     @Override
     public Node apply(final Record record) {
-        final Node node = new Node();
-        node.setId(record.get(NODE.ID));
-        node.setVersion(record.get(NODE.VERSION));
-        node.setCreateTimeMs(record.get(NODE.CREATE_TIME_MS));
-        node.setCreateUser(record.get(NODE.CREATE_USER));
-        node.setUpdateTimeMs(record.get(NODE.UPDATE_TIME_MS));
-        node.setUpdateUser(record.get(NODE.UPDATE_USER));
-        node.setName(record.get(NODE.NAME));
-        node.setUrl(record.get(NODE.URL));
-        node.setPriority(record.get(NODE.PRIORITY));
-        node.setEnabled(record.get(NODE.ENABLED));
-        node.setBuildVersion(record.get(NODE.BUILD_VERSION));
-        node.setLastBootMs(record.get(NODE.LAST_BOOT_MS));
-        return node;
+        return Node
+                .builder()
+                .id(record.get(NODE.ID))
+                .version(record.get(NODE.VERSION))
+                .createTimeMs(record.get(NODE.CREATE_TIME_MS))
+                .createUser(record.get(NODE.CREATE_USER))
+                .updateTimeMs(record.get(NODE.UPDATE_TIME_MS))
+                .updateUser(record.get(NODE.UPDATE_USER))
+                .name(record.get(NODE.NAME))
+                .url(record.get(NODE.URL))
+                .priority(record.get(NODE.PRIORITY))
+                .enabled(record.get(NODE.ENABLED))
+                .buildVersion(record.get(NODE.BUILD_VERSION))
+                .lastBootMs(record.get(NODE.LAST_BOOT_MS))
+                .build();
     }
 }

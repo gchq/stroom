@@ -19,11 +19,11 @@ package stroom.dashboard.client.main;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.flexlayout.FlexLayout;
+import stroom.dashboard.client.flexlayout.MutableTabConfig;
+import stroom.dashboard.client.flexlayout.MutableTabLayoutConfig;
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
-import stroom.dashboard.shared.TabConfig;
-import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
@@ -51,7 +51,7 @@ public class TabManager {
 
     private FlexLayout flexLayout;
     private TabLayout tabLayout;
-    private TabConfig currentTabConfig;
+    private MutableTabConfig currentTabConfig;
 
     public TabManager(final Components components,
                       final Provider<RenameTabPresenter> renameTabPresenterProvider,
@@ -64,7 +64,7 @@ public class TabManager {
     public void showMenu(final Element target,
                          final FlexLayout flexLayout,
                          final TabLayout tabLayout,
-                         final TabConfig tabConfig) {
+                         final MutableTabConfig tabConfig) {
         this.flexLayout = flexLayout;
         this.tabLayout = tabLayout;
 
@@ -116,33 +116,33 @@ public class TabManager {
                 nameChangeConsumer);
     }
 
-    public void showSettings(final TabConfig tabConfig) {
+    public void showSettings(final MutableTabConfig tabConfig) {
         final Component component = components.get(tabConfig.getId());
         if (component != null) {
             component.showSettings();
         }
     }
 
-    public void duplicateTabTo(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+    public void duplicateTabTo(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig) {
         dashboardPresenter.duplicateTabTo(tabLayoutConfig, tabConfig);
     }
 
-    private void duplicateTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+    private void duplicateTab(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig) {
         dashboardPresenter.duplicateTab(tabLayoutConfig, tabConfig);
     }
 
-    private void duplicateTabPanel(final TabLayoutConfig tabLayoutConfig) {
+    private void duplicateTabPanel(final MutableTabLayoutConfig tabLayoutConfig) {
         dashboardPresenter.duplicateTabPanel(tabLayoutConfig);
     }
 
-    private void showTab(final TabConfig tabConfig) {
+    private void showTab(final MutableTabConfig tabConfig) {
         tabConfig.setVisible(true);
         flexLayout.clear();
         flexLayout.refresh();
-        dashboardPresenter.onDirty();
+        dashboardPresenter.onChange();
     }
 
-    private void maximiseTab(final TabConfig tabConfig) {
+    private void maximiseTab(final MutableTabConfig tabConfig) {
         dashboardPresenter.maximiseTabs(tabConfig);
     }
 
@@ -150,27 +150,27 @@ public class TabManager {
         dashboardPresenter.restoreTabs();
     }
 
-    private void hideTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+    private void hideTab(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig) {
         if (tabLayoutConfig.getVisibleTabCount() <= 1) {
             AlertEvent.fireError(dashboardPresenter, "You cannot remove or hide all tabs", null);
         } else {
             tabConfig.setVisible(false);
             flexLayout.clear();
             flexLayout.refresh();
-            dashboardPresenter.onDirty();
+            dashboardPresenter.onChange();
         }
     }
 
-    private void removeTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tab) {
+    private void removeTab(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tab) {
         dashboardPresenter.removeTab(tabLayoutConfig, tab);
     }
 
-    private void removeTabPanel(final TabLayoutConfig tabLayoutConfig) {
+    private void removeTabPanel(final MutableTabLayoutConfig tabLayoutConfig) {
         dashboardPresenter.removeTabPanel(tabLayoutConfig);
     }
 
-    private List<Item> updateMenuItems(final TabLayoutConfig tabLayoutConfig,
-                                       final TabConfig tabConfig,
+    private List<Item> updateMenuItems(final MutableTabLayoutConfig tabLayoutConfig,
+                                       final MutableTabConfig tabConfig,
                                        final Component component) {
         final ComponentConfig componentConfig = component.getComponentConfig();
         final Consumer<String> nameChangeConsumer = component::setComponentName;
@@ -239,7 +239,7 @@ public class TabManager {
                 .build();
     }
 
-    private Item createSettingsMenu(final TabConfig tabConfig) {
+    private Item createSettingsMenu(final MutableTabConfig tabConfig) {
         return new IconMenuItem.Builder()
                 .priority(1)
                 .icon(SvgImage.SETTINGS)
@@ -248,7 +248,7 @@ public class TabManager {
                 .build();
     }
 
-    private Item createHideMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+    private Item createHideMenu(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig) {
         return new IconMenuItem.Builder()
                 .priority(6)
                 .icon(SvgImage.HIDE)
@@ -257,12 +257,12 @@ public class TabManager {
                 .build();
     }
 
-    private Item createShowMenu(final TabLayoutConfig tabLayoutConfig) {
+    private Item createShowMenu(final MutableTabLayoutConfig tabLayoutConfig) {
         final List<Item> menuItems = new ArrayList<>();
 
         int i = 0;
-        for (final TabConfig tc : tabLayoutConfig.getTabs()) {
-            if (!tc.visible()) {
+        for (final MutableTabConfig tc : tabLayoutConfig.getTabs()) {
+            if (!tc.isVisible()) {
                 final Component component = components.get(tc.getId());
                 if (component != null) {
                     final Item item2 = new IconMenuItem.Builder()
@@ -288,7 +288,7 @@ public class TabManager {
                 .build();
     }
 
-    private Item createDuplicateMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+    private Item createDuplicateMenu(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig) {
         return new IconMenuItem.Builder()
                 .priority(8)
                 .icon(SvgImage.COPY)
@@ -297,7 +297,7 @@ public class TabManager {
                 .build();
     }
 
-    private Item createDuplicateToMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+    private Item createDuplicateToMenu(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig) {
         return new IconMenuItem.Builder()
                 .priority(8)
                 .icon(SvgImage.COPY)
@@ -306,7 +306,7 @@ public class TabManager {
                 .build();
     }
 
-    private Item createDuplicateTabPanelMenu(final TabLayoutConfig tabLayoutConfig) {
+    private Item createDuplicateTabPanelMenu(final MutableTabLayoutConfig tabLayoutConfig) {
         return new IconMenuItem.Builder()
                 .priority(9)
                 .icon(SvgImage.COPY)
@@ -315,7 +315,7 @@ public class TabManager {
                 .build();
     }
 
-    private Item createRemoveMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+    private Item createRemoveMenu(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig) {
         return new IconMenuItem.Builder()
                 .priority(10)
                 .icon(SvgImage.DELETE)
@@ -324,7 +324,7 @@ public class TabManager {
                 .build();
     }
 
-    private Item createRemoveTabPanel(final TabLayoutConfig tabLayoutConfig) {
+    private Item createRemoveTabPanel(final MutableTabLayoutConfig tabLayoutConfig) {
         return new IconMenuItem.Builder()
                 .priority(11)
                 .icon(SvgImage.DELETE)
@@ -333,7 +333,7 @@ public class TabManager {
                 .build();
     }
 
-    private Item createMaximiseMenu(final TabConfig tabConfig) {
+    private Item createMaximiseMenu(final MutableTabConfig tabConfig) {
         return new IconMenuItem.Builder()
                 .priority(10)
                 .icon(SvgImage.MAXIMISE)

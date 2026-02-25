@@ -21,6 +21,7 @@ import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.Field;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.IndexField;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -78,44 +79,44 @@ public class SolrIndexField implements IndexField {
     private String fieldType;
 
     @JsonProperty
-    private String fldName;
+    private final String fldName;
     @JsonProperty
-    private FieldType fldType = FieldType.TEXT;
+    private final FieldType fldType;
     @JsonProperty
-    private String nativeType;
+    private final String nativeType;
 
     @JsonProperty
-    private String defaultValue;
+    private final String defaultValue;
     @JsonProperty
-    private boolean stored;
+    private final boolean stored;
     @JsonProperty
-    private boolean indexed;
+    private final boolean indexed;
     @JsonProperty
-    private boolean uninvertible;
+    private final boolean uninvertible;
     @JsonProperty
-    private boolean docValues;
+    private final boolean docValues;
     @JsonProperty
-    private boolean multiValued;
+    private final boolean multiValued;
     @JsonProperty
-    private boolean required;
+    private final boolean required;
     @JsonProperty
-    private boolean omitNorms;
+    private final boolean omitNorms;
     @JsonProperty
-    private boolean omitTermFreqAndPositions;
+    private final boolean omitTermFreqAndPositions;
     @JsonProperty
-    private boolean omitPositions;
+    private final boolean omitPositions;
     @JsonProperty
-    private boolean termVectors;
+    private final boolean termVectors;
     @JsonProperty
-    private boolean termPositions;
+    private final boolean termPositions;
     @JsonProperty
-    private boolean termOffsets;
+    private final boolean termOffsets;
     @JsonProperty
-    private boolean termPayloads;
+    private final boolean termPayloads;
     @JsonProperty
-    private boolean sortMissingFirst;
+    private final boolean sortMissingFirst;
     @JsonProperty
-    private boolean sortMissingLast;
+    private final boolean sortMissingLast;
     @JsonProperty
     private final DenseVectorFieldConfig denseVectorFieldConfig;
 
@@ -146,7 +147,7 @@ public class SolrIndexField implements IndexField {
             @JsonProperty("sortMissingLast") final boolean sortMissingLast,
             @JsonProperty("denseVectorFieldConfig") final DenseVectorFieldConfig denseVectorFieldConfig) {
         this.fldName = convertLegacyName(fldName, fieldName);
-        this.fldType = convertLegacyType(fldType, fieldUse);
+        this.fldType = NullSafe.requireNonNullElse(convertLegacyType(fldType, fieldUse), FieldType.TEXT);
         this.nativeType = convertLegacyNativeType(nativeType, fieldType);
         this.stored = stored;
         this.indexed = indexed;
@@ -232,153 +233,77 @@ public class SolrIndexField implements IndexField {
         return fldName;
     }
 
-    public void setFldName(final String fldName) {
-        this.fldName = fldName;
-    }
-
     @Override
     public FieldType getFldType() {
         return fldType;
-    }
-
-    public void setFldType(final FieldType fldType) {
-        this.fldType = fldType;
     }
 
     public String getNativeType() {
         return nativeType;
     }
 
-    public void setNativeType(final String nativeType) {
-        this.nativeType = nativeType;
-    }
-
     public String getDefaultValue() {
         return defaultValue;
-    }
-
-    public void setDefaultValue(final String defaultValue) {
-        this.defaultValue = defaultValue;
     }
 
     public boolean isStored() {
         return stored;
     }
 
-    public void setStored(final boolean stored) {
-        this.stored = stored;
-    }
-
     public boolean isIndexed() {
         return indexed;
-    }
-
-    public void setIndexed(final boolean indexed) {
-        this.indexed = indexed;
     }
 
     public boolean isUninvertible() {
         return uninvertible;
     }
 
-    public void setUninvertible(final boolean uninvertible) {
-        this.uninvertible = uninvertible;
-    }
-
     public boolean isDocValues() {
         return docValues;
-    }
-
-    public void setDocValues(final boolean docValues) {
-        this.docValues = docValues;
     }
 
     public boolean isMultiValued() {
         return multiValued;
     }
 
-    public void setMultiValued(final boolean multiValued) {
-        this.multiValued = multiValued;
-    }
-
     public boolean isRequired() {
         return required;
-    }
-
-    public void setRequired(final boolean required) {
-        this.required = required;
     }
 
     public boolean isOmitNorms() {
         return omitNorms;
     }
 
-    public void setOmitNorms(final boolean omitNorms) {
-        this.omitNorms = omitNorms;
-    }
-
     public boolean isOmitTermFreqAndPositions() {
         return omitTermFreqAndPositions;
-    }
-
-    public void setOmitTermFreqAndPositions(final boolean omitTermFreqAndPositions) {
-        this.omitTermFreqAndPositions = omitTermFreqAndPositions;
     }
 
     public boolean isOmitPositions() {
         return omitPositions;
     }
 
-    public void setOmitPositions(final boolean omitPositions) {
-        this.omitPositions = omitPositions;
-    }
-
     public boolean isTermVectors() {
         return termVectors;
-    }
-
-    public void setTermVectors(final boolean termVectors) {
-        this.termVectors = termVectors;
     }
 
     public boolean isTermPositions() {
         return termPositions;
     }
 
-    public void setTermPositions(final boolean termPositions) {
-        this.termPositions = termPositions;
-    }
-
     public boolean isTermOffsets() {
         return termOffsets;
-    }
-
-    public void setTermOffsets(final boolean termOffsets) {
-        this.termOffsets = termOffsets;
     }
 
     public boolean isTermPayloads() {
         return termPayloads;
     }
 
-    public void setTermPayloads(final boolean termPayloads) {
-        this.termPayloads = termPayloads;
-    }
-
     public boolean isSortMissingFirst() {
         return sortMissingFirst;
     }
 
-    public void setSortMissingFirst(final boolean sortMissingFirst) {
-        this.sortMissingFirst = sortMissingFirst;
-    }
-
     public boolean isSortMissingLast() {
         return sortMissingLast;
-    }
-
-    public void setSortMissingLast(final boolean sortMissingLast) {
-        this.sortMissingLast = sortMissingLast;
     }
 
     @JsonIgnore

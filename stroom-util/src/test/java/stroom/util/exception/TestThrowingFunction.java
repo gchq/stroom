@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,11 +43,67 @@ class TestThrowingFunction {
 
     @Test
     void unchecked_throws() {
-        Assertions.assertThatThrownBy(() ->
-                        Stream.of(0)
+        Assertions.assertThatThrownBy(
+                        () -> Stream.of(0)
                                 .map(ThrowingFunction.unchecked(this::addTen))
-                                .collect(Collectors.toList()))
+                                .toList())
                 .isInstanceOf(RuntimeException.class);
+    }
+
+    @Test
+    void unchecked_throwsChecked() {
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            ThrowingFunction.unchecked(this::throwChecked).apply(null);
+                        })
+                .isInstanceOf(RuntimeException.class)
+                .cause()
+                .isInstanceOf(MyCheckedException.class);
+    }
+
+    @Test
+    void unchecked_throwsIOException() {
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            ThrowingFunction.unchecked(this::throwIoException).apply(null);
+                        })
+                .isInstanceOf(UncheckedIOException.class)
+                .cause()
+                .isInstanceOf(IOException.class);
+    }
+
+    @Test
+    void unchecked_throwsRuntimeException() {
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            ThrowingFunction.unchecked(this::throwRuntimeException).apply(null);
+                        })
+                .isInstanceOf(MyRuntimeException.class);
+    }
+
+    @Test
+    void unchecked_throwsIllegalArgumentException() {
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            ThrowingFunction.unchecked(this::throwIllegalArgumentException).apply(null);
+                        })
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    private String throwChecked(final String ignored) throws Exception {
+        throw new MyCheckedException();
+    }
+
+    private String throwRuntimeException(final String ignored) {
+        throw new MyRuntimeException();
+    }
+
+    private String throwIoException(final String ignored) throws Exception {
+        throw new IOException("Arrrrggghhhh");
+    }
+
+    private String throwIllegalArgumentException(final String ignored) {
+        throw new IllegalArgumentException("Arrrrggghhh");
     }
 
     private int addTen(final int i) throws MyCheckedException {
@@ -56,6 +114,10 @@ class TestThrowingFunction {
     }
 
     private static class MyCheckedException extends Exception {
+
+    }
+
+    private static class MyRuntimeException extends RuntimeException {
 
     }
 }

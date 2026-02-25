@@ -736,7 +736,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
     }
 
 
-    // ===================================================================
+    // ---------------------------------------------------------------------
 
 
     /**
@@ -824,7 +824,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
     }
 
 
-    // ===================================================================
+    // ---------------------------------------------------------------------
 
 
     /**
@@ -884,7 +884,7 @@ public class SourcePresenter extends MyPresenterWidget<SourceView> implements
     }
 
 
-    // ===================================================================
+    // ---------------------------------------------------------------------
 
 
     public interface SourceView extends View, TaskMonitorFactory {

@@ -18,8 +18,7 @@ package stroom.search.elastic;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -34,7 +33,6 @@ import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 public class ElasticIndexStoreImpl implements ElasticIndexStore {
@@ -47,13 +45,17 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
             final StoreFactory storeFactory,
             final ElasticIndexService elasticIndexService,
             final ElasticIndexSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, ElasticIndexDoc.TYPE, ElasticIndexDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                ElasticIndexDoc.TYPE,
+                ElasticIndexDoc::builder,
+                ElasticIndexDoc::copy);
         this.elasticIndexService = elasticIndexService;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public DocRef createDocument(final String name) {
@@ -89,35 +91,32 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
         return store.info(docRef);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public ElasticIndexDoc readDocument(final DocRef docRef) {
         final ElasticIndexDoc doc = store.readDocument(docRef);
-        doc.setFields(elasticIndexService.getFields(doc));
-        return doc;
+        return doc.copy().fields(elasticIndexService.getFields(doc)).build();
     }
 
     @Override
     public ElasticIndexDoc writeDocument(final ElasticIndexDoc document) {
-        document.setFields(elasticIndexService.getFields(document));
-
-        return store.writeDocument(document);
+        return store.writeDocument(document.copy().fields(elasticIndexService.getFields(document)).build());
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -135,21 +134,22 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<ElasticIndexDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<ElasticIndexDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
             dependencyRemapper.remap(doc.getClusterRef());
             dependencyRemapper.remap(doc.getVectorGenerationModelRef());
             dependencyRemapper.remap(doc.getRerankModelRef());
+            return doc;
         };
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -168,10 +168,7 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override
@@ -184,9 +181,9 @@ public class ElasticIndexStoreImpl implements ElasticIndexStore {
         return null;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public List<DocRef> list() {

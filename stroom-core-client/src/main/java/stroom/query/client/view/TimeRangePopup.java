@@ -50,22 +50,22 @@ public class TimeRangePopup implements HasValue<TimeRange>, Focus {
         widget = binder.createAndBindUi(this);
 
         final FlowPanel recent = createPanel("Relative");
-        for (final TimeRange timeRange : TimeRanges.RELATIVE_RANGES) {
+        for (final TimeRange timeRange : stroom.query.api.TimeRanges.RELATIVE_RANGES) {
             recent.add(createLabel(timeRange));
         }
 
         final FlowPanel present = createPanel("Present");
-        for (final TimeRange timeRange : TimeRanges.PRESENT_RANGES) {
+        for (final TimeRange timeRange : stroom.query.api.TimeRanges.PRESENT_RANGES) {
             present.add(createLabel(timeRange));
         }
 
         final FlowPanel past = createPanel("Past");
-        for (final TimeRange timeRange : TimeRanges.PAST_RANGES) {
+        for (final TimeRange timeRange : stroom.query.api.TimeRanges.PAST_RANGES) {
             past.add(createLabel(timeRange));
         }
 
         final FlowPanel other = createPanel("All");
-        other.add(createLabel(TimeRanges.ALL_TIME));
+        other.add(createLabel(stroom.query.api.TimeRanges.ALL_TIME));
 
         final FlowPanel quickSettingsPanel = new FlowPanel();
         quickSettingsPanel.setStyleName("timeRange-quickSettings");
@@ -94,7 +94,7 @@ public class TimeRangePopup implements HasValue<TimeRange>, Focus {
 
         final TimeRange range = new TimeRange(null, Condition.BETWEEN, from, to);
         // See if this is a quick select range.
-        for (final TimeRange timeRange : TimeRanges.ALL_RANGES) {
+        for (final TimeRange timeRange : stroom.query.api.TimeRanges.ALL_RANGES) {
             if (timeRange.equals(range)) {
                 return timeRange;
             }

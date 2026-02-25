@@ -105,7 +105,6 @@ class IndexShardDaoImpl implements IndexShardDao {
 
     private static final BiFunction<IndexShard, IndexShardRecord, IndexShardRecord> INDEX_SHARD_TO_RECORD_MAPPER =
             (indexShard, record) -> {
-                record.from(indexShard);
                 record.set(INDEX_SHARD.ID, indexShard.getId());
                 record.set(INDEX_SHARD.PARTITION_NAME, indexShard.getPartition());
                 record.set(INDEX_SHARD.PARTITION_FROM_MS, indexShard.getPartitionFromTime());

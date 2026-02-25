@@ -173,6 +173,11 @@ public class FSPersistence implements Persistence, Clearable {
         return lockFactory;
     }
 
+    @Override
+    public List<DocRef> findDocRefsEmbeddedIn(final DocRef parent) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
     private Path getPath(final DocRef docRef, final String ext) {
         return getPathForType(docRef.getType()).resolve(docRef.getUuid() + "." + ext);
     }

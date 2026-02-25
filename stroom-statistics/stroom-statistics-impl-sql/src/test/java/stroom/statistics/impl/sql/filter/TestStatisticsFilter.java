@@ -47,7 +47,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -98,12 +97,19 @@ class TestStatisticsFilter implements Statistics {
 
         final StatisticStoreStore statisticStoreStore = getStore();
         final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
-        statisticsDataSource.setStatisticType(StatisticType.COUNT);
-        statisticsDataSource.setConfig(new StatisticsDataSourceData(
-                Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
-        statisticsDataSource.setPrecision(1000L);
-        statisticsDataSource.setEnabled(true);
+        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef)
+                .copy()
+                .statisticType(StatisticType.COUNT)
+                .config(StatisticsDataSourceData
+                        .builder()
+                        .fields(List.of(
+                                new StatisticField("tag1name"),
+                                new StatisticField("tag2name")))
+                        .build())
+                .precision(1000L)
+                .enabled(true)
+                .build();
+
         statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
@@ -202,12 +208,18 @@ class TestStatisticsFilter implements Statistics {
 
         final StatisticStoreStore statisticStoreStore = getStore();
         final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
-        statisticsDataSource.setStatisticType(StatisticType.VALUE);
-        statisticsDataSource.setConfig(new StatisticsDataSourceData(
-                Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
-        statisticsDataSource.setPrecision(precision);
-        statisticsDataSource.setEnabled(true);
+        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef)
+                .copy()
+                .statisticType(StatisticType.VALUE)
+                .config(StatisticsDataSourceData
+                        .builder()
+                        .fields(List.of(
+                                new StatisticField("tag1name"),
+                                new StatisticField("tag2name")))
+                        .build())
+                .precision(precision)
+                .enabled(true)
+                .build();
         statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
@@ -271,12 +283,19 @@ class TestStatisticsFilter implements Statistics {
 
             final StatisticStoreStore statisticStoreStore = getStore();
             final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-            final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
+
             // xml has a value element so set this to count
-            statisticsDataSource.setStatisticType(StatisticType.COUNT);
-            statisticsDataSource.setConfig(new StatisticsDataSourceData(
-                    Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
-            statisticsDataSource.setEnabled(true);
+            final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef)
+                    .copy()
+                    .statisticType(StatisticType.COUNT)
+                    .config(StatisticsDataSourceData
+                            .builder()
+                            .fields(List.of(
+                                    new StatisticField("tag1name"),
+                                    new StatisticField("tag2name")))
+                            .build())
+                    .enabled(true)
+                    .build();
             statisticStoreStore.writeDocument(statisticsDataSource);
 
             final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
@@ -300,12 +319,18 @@ class TestStatisticsFilter implements Statistics {
 
         final StatisticStoreStore statisticStoreStore = getStore();
         final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
         // xml has a value element so set this to count
-        statisticsDataSource.setStatisticType(StatisticType.COUNT);
-        statisticsDataSource.setConfig(new StatisticsDataSourceData(
-                Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
-        statisticsDataSource.setEnabled(true);
+        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef)
+                .copy()
+                .statisticType(StatisticType.COUNT)
+                .config(StatisticsDataSourceData
+                        .builder()
+                        .fields(List.of(
+                                new StatisticField("tag1name"),
+                                new StatisticField("tag2name")))
+                        .build())
+                .enabled(true)
+                .build();
         statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
@@ -336,12 +361,18 @@ class TestStatisticsFilter implements Statistics {
 
             final StatisticStoreStore statisticStoreStore = getStore();
             final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-            final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
             // xml has a value element so set this to count
-            statisticsDataSource.setStatisticType(StatisticType.VALUE);
-            statisticsDataSource.setConfig(new StatisticsDataSourceData(
-                    Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
-            statisticsDataSource.setEnabled(true);
+            final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef)
+                    .copy()
+                    .statisticType(StatisticType.VALUE)
+                    .config(StatisticsDataSourceData
+                            .builder()
+                            .fields(List.of(
+                                    new StatisticField("tag1name"),
+                                    new StatisticField("tag2name")))
+                            .build())
+                    .enabled(true)
+                    .build();
             statisticStoreStore.writeDocument(statisticsDataSource);
 
             final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
@@ -367,12 +398,18 @@ class TestStatisticsFilter implements Statistics {
 
             final StatisticStoreStore statisticStoreStore = getStore();
             final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-            final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
             // xml has a value element so set this to count
-            statisticsDataSource.setStatisticType(StatisticType.COUNT);
-            statisticsDataSource.setConfig(new StatisticsDataSourceData(
-                    Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
-            statisticsDataSource.setEnabled(false);
+            final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef)
+                    .copy()
+                    .statisticType(StatisticType.COUNT)
+                    .config(StatisticsDataSourceData
+                            .builder()
+                            .fields(List.of(
+                                    new StatisticField("tag1name"),
+                                    new StatisticField("tag2name")))
+                            .build())
+                    .enabled(false)
+                    .build();
             statisticStoreStore.writeDocument(statisticsDataSource);
 
             final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
@@ -397,12 +434,18 @@ class TestStatisticsFilter implements Statistics {
 
             final StatisticStoreStore statisticStoreStore = getStore();
             final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-            final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
             // xml has a value element so set this to count
-            statisticsDataSource.setStatisticType(StatisticType.COUNT);
-            statisticsDataSource.setConfig(new StatisticsDataSourceData(
-                    Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
-            statisticsDataSource.setEnabled(true);
+            final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef)
+                    .copy()
+                    .statisticType(StatisticType.COUNT)
+                    .config(StatisticsDataSourceData
+                            .builder()
+                            .fields(List.of(
+                                    new StatisticField("tag1name"),
+                                    new StatisticField("tag2name")))
+                            .build())
+                    .enabled(true)
+                    .build();
             statisticStoreStore.writeDocument(statisticsDataSource);
 
             final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
@@ -426,12 +469,18 @@ class TestStatisticsFilter implements Statistics {
 
         final StatisticStoreStore statisticStoreStore = getStore();
         final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
         // xml has a value element so set this to count
-        statisticsDataSource.setStatisticType(StatisticType.COUNT);
-        statisticsDataSource.setConfig(new StatisticsDataSourceData(
-                Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
-        statisticsDataSource.setEnabled(true);
+        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef)
+                .copy()
+                .statisticType(StatisticType.COUNT)
+                .config(StatisticsDataSourceData
+                        .builder()
+                        .fields(List.of(
+                                new StatisticField("tag1name"),
+                                new StatisticField("tag2name")))
+                        .build())
+                .enabled(true)
+                .build();
         statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());
@@ -461,12 +510,18 @@ class TestStatisticsFilter implements Statistics {
 
         final StatisticStoreStore statisticStoreStore = getStore();
         final DocRef docRef = statisticStoreStore.createDocument(STAT_NAME);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
         // xml has a value element so set this to count
-        statisticsDataSource.setStatisticType(StatisticType.COUNT);
-        statisticsDataSource.setConfig(new StatisticsDataSourceData(
-                Arrays.asList(new StatisticField("tag1name"), new StatisticField("tag2name"))));
-        statisticsDataSource.setEnabled(true);
+        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef)
+                .copy()
+                .statisticType(StatisticType.COUNT)
+                .config(StatisticsDataSourceData
+                        .builder()
+                        .fields(List.of(
+                                new StatisticField("tag1name"),
+                                new StatisticField("tag2name")))
+                        .build())
+                .enabled(true)
+                .build();
         statisticStoreStore.writeDocument(statisticsDataSource);
 
         final ErrorReceiverProxy errorReceiverProxy = new ErrorReceiverProxy(new FatalErrorReceiver());

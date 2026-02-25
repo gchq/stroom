@@ -17,8 +17,8 @@
 package stroom.index.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -34,7 +34,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, LuceneIndexDoc> {
+public class IndexPresenter extends DocTabPresenter<LinkTabPanelView, LuceneIndexDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData FIELDS = new TabDataImpl("Fields");
@@ -57,11 +57,11 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, L
 
         if (securityContext.hasAppPermission(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION)) {
             selectFirst = SHARDS;
-            addTab(SHARDS, new DocumentEditTabProvider<LuceneIndexDoc>(indexShardPresenterProvider::get));
+            addTab(SHARDS, new DocTabProvider<LuceneIndexDoc>(indexShardPresenterProvider::get));
         }
 
-        addTab(FIELDS, new DocumentEditTabProvider<LuceneIndexDoc>(indexFieldListPresenterProvider::get));
-        addTab(SETTINGS, new DocumentEditTabProvider<LuceneIndexDoc>(indexSettingsPresenterProvider::get));
+        addTab(FIELDS, new DocTabProvider<LuceneIndexDoc>(indexFieldListPresenterProvider::get));
+        addTab(SETTINGS, new DocTabProvider<LuceneIndexDoc>(indexSettingsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<LuceneIndexDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -75,8 +75,7 @@ public class IndexPresenter extends DocumentEditTabPresenter<LinkTabPanelView, L
             @Override
             public LuceneIndexDoc onWrite(final MarkdownEditPresenter presenter,
                                           final LuceneIndexDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

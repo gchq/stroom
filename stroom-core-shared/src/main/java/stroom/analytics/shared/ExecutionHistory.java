@@ -17,6 +17,7 @@
 package stroom.analytics.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -34,6 +35,9 @@ import java.util.Objects;
         "message"
 })
 public class ExecutionHistory {
+
+    public static final String STATUS_COMPLETE = "Complete";
+    public static final String STATUS_ERROR = "Error";
 
     @JsonProperty
     private final long id;
@@ -83,6 +87,11 @@ public class ExecutionHistory {
         return status;
     }
 
+    @JsonIgnore
+    public boolean isComplete() {
+        return STATUS_COMPLETE.equals(status);
+    }
+
     public String getMessage() {
         return message;
     }
@@ -107,13 +116,13 @@ public class ExecutionHistory {
     @Override
     public String toString() {
         return "HistoricExecution{" +
-                "id=" + id +
-                ", executionSchedule=" + executionSchedule +
-                ", executionTimeMs=" + executionTimeMs +
-                ", effectiveExecutionTimeMs=" + effectiveExecutionTimeMs +
-                ", status='" + status + '\'' +
-                ", message='" + message + '\'' +
-                '}';
+               "id=" + id +
+               ", executionSchedule=" + executionSchedule +
+               ", executionTimeMs=" + executionTimeMs +
+               ", effectiveExecutionTimeMs=" + effectiveExecutionTimeMs +
+               ", status='" + status + '\'' +
+               ", message='" + message + '\'' +
+               '}';
     }
 
 

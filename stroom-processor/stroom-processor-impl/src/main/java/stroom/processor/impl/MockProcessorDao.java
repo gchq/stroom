@@ -36,7 +36,9 @@ import java.util.stream.Collectors;
 @Singleton
 public class MockProcessorDao implements ProcessorDao, Clearable {
 
-    private final MockIntCrud<Processor> dao = new MockIntCrud<>();
+    private final MockIntCrud<Processor> dao = new MockIntCrud<>(
+            (processor, integer) -> processor.copy().id(integer).build(),
+            processor -> (int) processor.getId());
 
     @Override
     public Processor create(final Processor processor) {

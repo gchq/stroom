@@ -73,7 +73,11 @@ class TestDocStoreModule {
         injector.injectMembers(this);
         final DocumentSerialiser2<MyDoc> serialiser = serialiser2Factory.createSerialiser(MyDoc.class);
 
-        final Store<MyDoc> store2 = storeFactory.createStore(serialiser, "MyDocType", MyDoc::builder);
+        final Store<MyDoc> store2 = storeFactory.createStore(
+                serialiser,
+                "MyDocType",
+                MyDoc::builder,
+                MyDoc::copy);
     }
 
     private static class MyDoc extends AbstractDoc {
@@ -96,7 +100,7 @@ class TestDocStoreModule {
             return new Builder();
         }
 
-        public static final class Builder extends AbstractDoc.AbstractBuilder<MyDoc, MyDoc.Builder> {
+        public static final class Builder extends AbstractBuilder<MyDoc, Builder> {
 
             private Builder() {
             }

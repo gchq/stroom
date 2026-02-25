@@ -17,7 +17,7 @@
 package stroom.processor.shared;
 
 import stroom.query.api.UserTimeZone;
-import stroom.util.shared.AbstractHasAuditInfoBuilder;
+import stroom.util.shared.AuditInfoBuilder;
 import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 
@@ -189,7 +189,7 @@ public class ProcessorProfile implements HasIntegerId, HasAuditInfoGetters {
         return new Builder();
     }
 
-    public static class Builder extends AbstractHasAuditInfoBuilder<ProcessorProfile, ProcessorProfile.Builder> {
+    public static class Builder extends AuditInfoBuilder<ProcessorProfile, Builder> {
 
         private Integer id;
         private Integer version;
@@ -216,32 +216,32 @@ public class ProcessorProfile implements HasIntegerId, HasAuditInfoGetters {
 
         public Builder id(final Integer id) {
             this.id = id;
-            return this;
+            return self();
         }
 
         public Builder version(final Integer version) {
             this.version = version;
-            return this;
+            return self();
         }
 
         public Builder name(final String name) {
             this.name = name;
-            return this;
+            return self();
         }
 
         public Builder nodeGroupName(final String nodeGroupName) {
             this.nodeGroupName = nodeGroupName;
-            return this;
+            return self();
         }
 
         public Builder profilePeriods(final List<ProfilePeriod> profilePeriods) {
             this.profilePeriods = profilePeriods;
-            return this;
+            return self();
         }
 
         public Builder timeZone(final UserTimeZone timeZone) {
             this.timeZone = timeZone;
-            return this;
+            return self();
         }
 
         @Override

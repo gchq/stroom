@@ -22,7 +22,6 @@ import stroom.node.shared.NodeGroupChange;
 import stroom.node.shared.NodeGroupState;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.util.AuditUtil;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
@@ -65,7 +64,7 @@ public class NodeGroupServiceImpl implements NodeGroupService {
     @Override
     public NodeGroup create(final String name) {
         final NodeGroup result = securityContext.secureResult(AppPermission.MANAGE_NODES_PERMISSION, () ->
-                nodeGroupDao.create(AuditUtil.stamp(securityContext, NodeGroup.builder().name(name))));
+                nodeGroupDao.create(NodeGroup.builder().name(name).stampAudit(securityContext).build()));
         fireChange(EntityAction.CREATE);
         return result;
     }
@@ -73,7 +72,7 @@ public class NodeGroupServiceImpl implements NodeGroupService {
     @Override
     public NodeGroup update(final NodeGroup nodeGroup) {
         final NodeGroup result = securityContext.secureResult(AppPermission.MANAGE_NODES_PERMISSION, () ->
-                nodeGroupDao.update(AuditUtil.stamp(securityContext, nodeGroup.copy())));
+                nodeGroupDao.update(nodeGroup.copy().stampAudit(securityContext).build()));
         fireChange(EntityAction.UPDATE);
         return result;
     }

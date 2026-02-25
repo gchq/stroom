@@ -65,9 +65,11 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
     private final EventBus eventBus;
     private final boolean showIcon;
+    private final boolean hasOpenAndCopy;
     private final Function<T_ROW, SafeHtml> cellTextFunction;
     private final Function<T_ROW, DocRef> docRefFunction;
     private final Function<T_ROW, String> cssClassFunction;
+    private final Function<T_ROW, Boolean> canOpenFunction;
 
     /**
      * @param showIcon         Set to true to show the type icon next to the text
@@ -77,15 +79,19 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
      */
     private DocRefCell(final EventBus eventBus,
                        final boolean showIcon,
+                       final boolean hasOpenAndCopy,
                        final Function<T_ROW, SafeHtml> cellTextFunction,
                        final Function<T_ROW, DocRef> docRefFunction,
-                       final Function<T_ROW, String> cssClassFunction) {
+                       final Function<T_ROW, String> cssClassFunction,
+                       final Function<T_ROW, Boolean> canOpenFunction) {
         super(BrowserEvents.MOUSEDOWN);
         this.eventBus = eventBus;
         this.showIcon = showIcon;
+        this.hasOpenAndCopy = hasOpenAndCopy;
         this.cellTextFunction = cellTextFunction;
         this.docRefFunction = docRefFunction;
         this.cssClassFunction = cssClassFunction;
+        this.canOpenFunction = canOpenFunction;
     }
 
     @Override
@@ -124,12 +130,15 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
             type = NullSafe.getOrElse(documentType, DocumentType::getDisplayType, docRef.getType());
 
             int priority = 1;
-            menuItems.add(new IconMenuItem.Builder()
-                    .priority(priority++)
-                    .icon(SvgImage.OPEN)
-                    .text("Open " + type)
-                    .command(() -> OpenDocumentEvent.fire(this, docRef, true))
-                    .build());
+            final Boolean canOpen = NullSafe.get(value, canOpenFunction);
+            if (canOpen != null && canOpen) {
+                menuItems.add(new IconMenuItem.Builder()
+                        .priority(priority++)
+                        .icon(SvgImage.OPEN)
+                        .text("Open " + type)
+                        .command(() -> OpenDocumentEvent.fire(this, docRef, true))
+                        .build());
+            }
             menuItems.add(createCopyAsMenuItem(docRef, priority++));
 
         }
@@ -206,7 +215,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
             sb.append(textDiv);
 
             // Add copy and open links.
-            if (docRef != null) {
+            if (hasOpenAndCopy && docRef != null) {
                 // This DocRefCell gets used for pipeline props which sometimes are a docRef
                 // and other times just a simple string
                 final SafeHtml copy = SvgImageUtil.toSafeHtml(
@@ -298,10 +307,12 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
         private EventBus eventBus;
         private boolean showIcon = false;
+        private boolean hasOpenAndCopy = false;
         private DocRef.DisplayType displayType = DisplayType.NAME;
         private Function<T, SafeHtml> cellTextFunction;
         private Function<T, DocRef> docRefFunction;
         private Function<T, String> cssClassFunction;
+        private Function<T, Boolean> canOpenFunction;
 
         public Builder<T> eventBus(final EventBus eventBus) {
             this.eventBus = eventBus;
@@ -313,6 +324,11 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
             return this;
         }
 
+        public Builder<T> hasOpenAndCopy(final boolean hasOpenAndCopy) {
+            this.hasOpenAndCopy = hasOpenAndCopy;
+            return this;
+        }
+
         public Builder<T> displayType(final DisplayType displayType) {
             this.displayType = displayType;
             return this;
@@ -320,6 +336,11 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 
         public Builder<T> cellTextFunction(final Function<T, SafeHtml> cellTextFunction) {
             this.cellTextFunction = cellTextFunction;
+            return this;
+        }
+
+        public Builder<T> canOpenFunction(final Function<T, Boolean> canOpenFunction) {
+            this.canOpenFunction = canOpenFunction;
             return this;
         }
 
@@ -356,6 +377,9 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                 cssClassFunction = v -> null;
             }
 
+            if (canOpenFunction == null) {
+                canOpenFunction = v -> true;
+            }
 //
 //                public static String getTextFromDocRef(final DocRef docRef) {
 //                    return getTextFromDocRef(docRef, DisplayType.AUTO);
@@ -383,9 +407,11 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
             return new DocRefCell<>(
                     eventBus,
                     showIcon,
+                    hasOpenAndCopy,
                     cellTextFunction,
                     docRefFunction,
-                    cssClassFunction);
+                    cssClassFunction,
+                    canOpenFunction);
         }
     }
 }

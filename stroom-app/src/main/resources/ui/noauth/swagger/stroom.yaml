@@ -941,189 +941,9 @@ paths:
       summary: Update an annotation tag
       tags:
       - Annotations
-  /apikey/v1:
-    delete:
-      deprecated: true
-      operationId: deleteAllApiKeys
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: integer
-                format: int32
-          description: default response
-      summary: Delete all API keys.
-      tags:
-      - Api Keys
-    post:
-      deprecated: true
-      operationId: createApiKey
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateApiKeyRequest"
-        description: CreateApiKeyRequest
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiKey"
-          description: default response
-      summary: Create a new API key.
-      tags:
-      - Api Keys
-  /apikey/v1/byData/{data}:
-    delete:
-      deprecated: true
-      operationId: deleteApiKeyByData
-      parameters:
-      - in: path
-        name: data
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: integer
-                format: int32
-          description: default response
-      summary: Delete an API key by the data itself.
-      tags:
-      - Api Keys
-    get:
-      deprecated: true
-      operationId: fetchApiKeyByData
-      parameters:
-      - in: path
-        name: data
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiKey"
-          description: default response
-      summary: Read a API key by the data itself.
-      tags:
-      - Api Keys
-  /apikey/v1/noauth/getDefaultApiKeyExpirySeconds:
-    get:
-      deprecated: true
-      operationId: getDefaultApiKeyExpirySeconds
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: integer
-                format: int64
-          description: default response
-      summary: Get the default time taken for API keys to expire
-      tags:
-      - Api Keys
-  /apikey/v1/search:
-    post:
-      deprecated: true
-      operationId: searchApiKeys
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SearchApiKeyRequest"
-        description: SearchRequest
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiKeyResultPage"
-          description: default response
-      summary: Submit a search request for API keys
-      tags:
-      - Api Keys
-  /apikey/v1/{id}:
-    delete:
-      deprecated: true
-      operationId: deleteApiKey
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: integer
-          format: int32
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: integer
-                format: int32
-          description: default response
-      summary: Delete a API key by ID.
-      tags:
-      - Api Keys
-    get:
-      deprecated: true
-      operationId: fetchApiKey
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: integer
-          format: int32
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ApiKey"
-          description: default response
-      summary: Read a API key by ID.
-      tags:
-      - Api Keys
-  /apikey/v1/{id}/enabled:
-    get:
-      deprecated: true
-      operationId: toggleApiKeyEnabled
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: integer
-          format: int32
-      - in: query
-        name: enabled
-        required: true
-        schema:
-          type: boolean
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: integer
-                format: int32
-          description: default response
-      summary: Enable or disable the state of an API key.
-      tags:
-      - Api Keys
   /apikey/v2:
     post:
-      operationId: createApiKey_1
+      operationId: createApiKey
       requestBody:
         content:
           application/json:
@@ -1143,7 +963,7 @@ paths:
       - API Key
   /apikey/v2/deleteBatch:
     delete:
-      operationId: deleteApiKey_2
+      operationId: deleteApiKey_1
       requestBody:
         content:
           application/json:
@@ -1207,7 +1027,7 @@ paths:
       - API Key
   /apikey/v2/{id}:
     delete:
-      operationId: deleteApiKey_1
+      operationId: deleteApiKey
       parameters:
       - in: path
         name: id
@@ -1226,7 +1046,7 @@ paths:
       tags:
       - API Key
     get:
-      operationId: fetchApiKey_1
+      operationId: fetchApiKey
       parameters:
       - in: path
         name: id
@@ -4909,6 +4729,169 @@ paths:
       summary: "Get a meta record for a given id, if permitted."
       tags:
       - Meta
+  /node/nodeGroup/v2:
+    post:
+      operationId: createNodeGroup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: name
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeGroup"
+          description: default response
+      summary: Creates a node group
+      tags:
+      - Node Groups
+  /node/nodeGroup/v2/fetchById/{id}:
+    get:
+      operationId: fetchNodeGroupById
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeGroup"
+          description: default response
+      summary: Gets an node group by id
+      tags:
+      - Node Groups
+  /node/nodeGroup/v2/fetchByName/{name}:
+    get:
+      operationId: fetchNodeGroupByName
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeGroup"
+          description: default response
+      summary: Gets an node group by name
+      tags:
+      - Node Groups
+  /node/nodeGroup/v2/find:
+    post:
+      operationId: findNodeGroups
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FindNodeGroupRequest"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultPageNodeGroup"
+          description: default response
+      summary: Finds node groups matching request
+      tags:
+      - Node Groups
+  /node/nodeGroup/v2/getNodeGroupStates/{id}:
+    get:
+      operationId: getNodeGroupState
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultPageNodeGroupState"
+          description: default response
+      summary: Gets node group states
+      tags:
+      - Node Groups
+  /node/nodeGroup/v2/updateNodeGroupState:
+    post:
+      operationId: updateNodeGroupState
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NodeGroupChange"
+        description: nodeGroupState
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Updates node group state
+      tags:
+      - Node Groups
+  /node/nodeGroup/v2/{id}:
+    delete:
+      operationId: deleteNodeGroup
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Deletes an node group
+      tags:
+      - Node Groups
+    put:
+      operationId: updateNodeGroup
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NodeGroup"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeGroup"
+          description: default response
+      summary: Updates an node group
+      tags:
+      - Node Groups
   /node/v1/all:
     get:
       operationId: listAllNodes
@@ -6074,6 +6057,129 @@ paths:
       summary: Sets the priority for a filter
       tags:
       - Processor Filters
+  /processorProfile/v1:
+    post:
+      operationId: createProcessorProfile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessorProfile"
+        description: processorProfile
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessorProfile"
+          description: default response
+      summary: Creates a processor profile
+      tags:
+      - Processor Profiles
+  /processorProfile/v1/fetchById/{id}:
+    get:
+      operationId: fetchProcessorProfileById
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessorProfile"
+          description: default response
+      summary: Gets a processor profile by ID
+      tags:
+      - Processor Profiles
+  /processorProfile/v1/fetchByName/{name}:
+    get:
+      operationId: fetchProcessorProfileByName
+      parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessorProfile"
+          description: default response
+      summary: Gets a processor profile by name
+      tags:
+      - Processor Profiles
+  /processorProfile/v1/find:
+    post:
+      operationId: findProcessorProfiles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExpressionCriteria"
+        description: request
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResultPageProcessorProfile"
+          description: default response
+      summary: Finds processor profiles matching request
+      tags:
+      - Processor Profiles
+  /processorProfile/v1/{id}:
+    delete:
+      operationId: deleteProcessorProfile
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Deletes a processor profile
+      tags:
+      - Processor Profiles
+    put:
+      operationId: updateProcessorProfile
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessorProfile"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessorProfile"
+          description: default response
+      summary: Updates a processor profile
+      tags:
+      - Processor Profiles
   /processorTask/v1/abandon/{nodeName}:
     post:
       operationId: abandonProcessorTasks
@@ -6851,32 +6957,6 @@ paths:
       summary: Destroy a search result store for a node
       tags:
       - ResultStore
-  /result-store/v1/exists/{nodeName}:
-    post:
-      operationId: resultStoreExists
-      parameters:
-      - in: path
-        name: nodeName
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/QueryKey"
-        description: queryKey
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: boolean
-          description: default response
-      summary: Determines if the requested result store still exists
-      tags:
-      - ResultStore
   /result-store/v1/find/{nodeName}:
     post:
       operationId: findResultStores
@@ -7169,70 +7249,6 @@ paths:
       summary: Update a script doc
       tags:
       - Scripts
-  /scyllaDB/v1/testCluster:
-    post:
-      operationId: testScyllaDB
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ScyllaDbDoc"
-        description: scyllaDbDoc
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ScyllaDbTestResponse"
-          description: default response
-      summary: Test connection to the ScyllaDb instance
-      tags:
-      - ScyllaDB Instances
-  /scyllaDB/v1/{uuid}:
-    get:
-      operationId: fetchScyllaDB
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ScyllaDbDoc"
-          description: default response
-      summary: Fetch an ScyllaDb config doc by its UUID
-      tags:
-      - ScyllaDB Instances
-    put:
-      operationId: updateScyllaDB
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ScyllaDbDoc"
-        description: doc
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ScyllaDbDoc"
-          description: default response
-      summary: Update an ScyllaDb config doc
-      tags:
-      - ScyllaDB Instances
   /searchable/v2/destroy:
     post:
       operationId: destroySearchableQuery
@@ -7450,118 +7466,6 @@ paths:
       summary: Submit a search request
       tags:
       - Sql Statistics Query
-  /stateStore/v1/{uuid}:
-    get:
-      operationId: fetchStateStore_1
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StateDoc"
-          description: default response
-      summary: Fetch an state store doc by its UUID
-      tags:
-      - State Stores
-    put:
-      operationId: updateStateStore_1
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/StateDoc"
-        description: doc
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StateDoc"
-          description: default response
-      summary: Update an state store doc
-      tags:
-      - State Stores
-  /statistic/rollUp/v1/bitMaskConversion:
-    post:
-      operationId: statisticBitMaskConversion
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: integer
-                format: int32
-        description: maskValues
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/CustomRollUpMaskFields"
-          description: default response
-      summary: Get rollup bit mask
-      tags:
-      - SQL Statistics RollUps
-  /statistic/rollUp/v1/bitMaskPermGeneration:
-    post:
-      operationId: statisticBitMaskPermGeneration
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: integer
-              format: int32
-        description: fieldCount
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/CustomRollUpMask"
-          description: default response
-      summary: Create rollup bit mask
-      tags:
-      - SQL Statistics RollUps
-  /statistic/rollUp/v1/dataSourceFieldChange:
-    post:
-      operationId: statisticFieldChange
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/StatisticsDataSourceFieldChangeRequest"
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StatisticsDataSourceData"
-          description: default response
-      summary: Change fields
-      tags:
-      - SQL Statistics RollUps
   /statistic/v1/{uuid}:
     get:
       operationId: fetchStatisticStore
@@ -7606,114 +7510,6 @@ paths:
       summary: Update a statistic doc
       tags:
       - SQL Statistics Stores
-  /statsStore/rollUp/v1/bitMaskConversion:
-    post:
-      operationId: statsBitMaskConversion
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: array
-              items:
-                type: integer
-                format: int32
-        description: maskValues
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResultPageCustomRollUpMaskFields"
-          description: default response
-      summary: Get rollup bit mask
-      tags:
-      - Stroom Stats RollUps
-  /statsStore/rollUp/v1/bitMaskPermGeneration:
-    post:
-      operationId: statsBitMaskPermGeneration
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: integer
-              format: int32
-        description: fieldCount
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResultPageCustomRollUpMask"
-          description: default response
-      summary: Create rollup bit mask
-      tags:
-      - Stroom Stats RollUps
-  /statsStore/rollUp/v1/dataSourceFieldChange:
-    post:
-      operationId: statsFieldChange
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/StroomStatsStoreFieldChangeRequest"
-        description: request
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StroomStatsStoreEntityData"
-          description: default response
-      summary: Change fields
-      tags:
-      - Stroom Stats RollUps
-  /statsStore/v1/{uuid}:
-    get:
-      operationId: fetchStroomStatsStore
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StroomStatsStoreDoc"
-          description: default response
-      summary: Fetch a store doc doc by its UUID
-      tags:
-      - Stroom Stats Stores
-    put:
-      operationId: updateStroomStatsStore
-      parameters:
-      - in: path
-        name: uuid
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/StroomStatsStoreDoc"
-        description: doc
-        required: true
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StroomStatsStoreDoc"
-          description: default response
-      summary: Update a stats store doc
-      tags:
-      - Stroom Stats Stores
   /stepping/v1/findElementDoc:
     post:
       operationId: findElementDoc
@@ -8186,6 +7982,26 @@ paths:
       summary: Lists tasks for a node
       tags:
       - Tasks
+  /textConverter/v1:
+    post:
+      operationId: createTextConverter
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: name
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TextConverterDoc"
+          description: default response
+      summary: Create a text converter doc
+      tags:
+      - Text Converters
   /textConverter/v1/{uuid}:
     get:
       operationId: fetchTextConverter
@@ -8818,6 +8634,26 @@ paths:
       summary: Update a xml schema doc
       tags:
       - XML Schemas
+  /xslt/v1:
+    post:
+      operationId: createXslt
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: name
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/XsltDoc"
+          description: default response
+      summary: Create an xslt doc
+      tags:
+      - XSLTs
   /xslt/v1/{uuid}:
     get:
       operationId: fetchXslt
@@ -9520,49 +9356,6 @@ components:
           $ref: "#/components/schemas/KeyValueList"
         stringValue:
           type: string
-    ApiKey:
-      type: object
-      properties:
-        comments:
-          type: string
-        createTimeMs:
-          type: integer
-          format: int64
-        createUser:
-          type: string
-        data:
-          type: string
-        enabled:
-          type: boolean
-        expiresOnMs:
-          type: integer
-          format: int64
-        id:
-          type: integer
-          format: int32
-        type:
-          type: string
-        updateTimeMs:
-          type: integer
-          format: int64
-        updateUser:
-          type: string
-        userEmail:
-          type: string
-        userId:
-          type: string
-        version:
-          type: integer
-          format: int32
-    ApiKeyResultPage:
-      type: object
-      properties:
-        pageResponse:
-          $ref: "#/components/schemas/PageResponse"
-        values:
-          type: array
-          items:
-            $ref: "#/components/schemas/ApiKey"
     AppPermissionSet:
       type: object
       discriminator:
@@ -10793,24 +10586,6 @@ components:
           - STATUS
           - LABEL
           - COLLECTION
-    CreateApiKeyRequest:
-      type: object
-      properties:
-        comments:
-          type: string
-        enabled:
-          type: boolean
-        expiresOnMs:
-          type: integer
-          format: int64
-        tokenType:
-          type: string
-          pattern: ^user$|^api$|^email_reset$
-        userId:
-          type: string
-      required:
-      - tokenType
-      - userId
     CreateHashedApiKeyRequest:
       type: object
       properties:
@@ -10940,21 +10715,6 @@ components:
           items:
             type: integer
             format: int32
-    CustomRollUpMaskFields:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int32
-        maskValue:
-          type: integer
-          format: int32
-        rolledUpFieldPositions:
-          type: array
-          items:
-            type: integer
-            format: int32
-          uniqueItems: true
     CustomRowStyle:
       type: object
       properties:
@@ -11259,6 +11019,21 @@ components:
       required:
       - localZoneId
       - referenceTime
+    Days:
+      type: object
+      properties:
+        days:
+          type: array
+          items:
+            type: string
+            enum:
+            - MONDAY
+            - TUESDAY
+            - WEDNESDAY
+            - THURSDAY
+            - FRIDAY
+            - SATURDAY
+            - SUNDAY
     DecorateRequest:
       type: object
       properties:
@@ -11440,7 +11215,7 @@ components:
         type:
           type: string
           description: The type of the 'document' that this DocRef refers to
-          example: StroomStatsStore
+          example: StatisticStore
         uuid:
           type: string
           description: The unique identifier for this 'document'
@@ -11558,14 +11333,11 @@ components:
           - DOCUMENT_REPORT
           - DOCUMENT_S3
           - DOCUMENT_SCRIPT
-          - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
           - DOCUMENT_SELECT_ALL_OR_NONE
           - DOCUMENT_SIGMA_RULE
           - DOCUMENT_SOLR_INDEX
-          - DOCUMENT_STATE_STORE
           - DOCUMENT_STATISTIC_STORE
-          - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
           - DOCUMENT_TEXT_CONVERTER
           - DOCUMENT_TRACES
@@ -11664,7 +11436,6 @@ components:
           - PIPELINE_STATISTICS
           - PIPELINE_STREAM
           - PIPELINE_STROOM_STATS
-          - PIPELINE_STROOM_STATS_STORE
           - PIPELINE_TEXT
           - PIPELINE_XML
           - PIPELINE_XML_SEARCH
@@ -12106,10 +11877,6 @@ components:
             $ref: "#/components/schemas/Automate"
           embeddedQueryDoc:
             $ref: "#/components/schemas/QueryDoc"
-          lastQueryKey:
-            $ref: "#/components/schemas/QueryKey"
-          lastQueryNode:
-            type: string
           queryRef:
             $ref: "#/components/schemas/DocRef"
           queryTablePreferences:
@@ -13246,6 +13013,20 @@ components:
           $ref: "#/components/schemas/ExpressionOperator"
         fetchRelationships:
           type: boolean
+        pageRequest:
+          $ref: "#/components/schemas/PageRequest"
+        sort:
+          type: string
+          writeOnly: true
+        sortList:
+          type: array
+          items:
+            $ref: "#/components/schemas/CriteriaFieldSort"
+    FindNodeGroupRequest:
+      type: object
+      properties:
+        filter:
+          type: string
         pageRequest:
           $ref: "#/components/schemas/PageRequest"
         sort:
@@ -15048,6 +14829,47 @@ components:
         version:
           type: integer
           format: int32
+    NodeGroup:
+      type: object
+      properties:
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        enabled:
+          type: boolean
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        version:
+          type: integer
+          format: int32
+    NodeGroupChange:
+      type: object
+      properties:
+        included:
+          type: boolean
+        nodeGroupId:
+          type: integer
+          format: int32
+        nodeId:
+          type: integer
+          format: int32
+    NodeGroupState:
+      type: object
+      properties:
+        included:
+          type: boolean
+        node:
+          $ref: "#/components/schemas/Node"
     NodeInfo:
       type: object
       properties:
@@ -15545,14 +15367,11 @@ components:
           - DOCUMENT_REPORT
           - DOCUMENT_S3
           - DOCUMENT_SCRIPT
-          - DOCUMENT_SCYLLA_DB
           - DOCUMENT_SEARCHABLE
           - DOCUMENT_SELECT_ALL_OR_NONE
           - DOCUMENT_SIGMA_RULE
           - DOCUMENT_SOLR_INDEX
-          - DOCUMENT_STATE_STORE
           - DOCUMENT_STATISTIC_STORE
-          - DOCUMENT_STROOM_STATS_STORE
           - DOCUMENT_SYSTEM
           - DOCUMENT_TEXT_CONVERTER
           - DOCUMENT_TRACES
@@ -15651,7 +15470,6 @@ components:
           - PIPELINE_STATISTICS
           - PIPELINE_STREAM
           - PIPELINE_STROOM_STATS
-          - PIPELINE_STROOM_STATS_STORE
           - PIPELINE_TEXT
           - PIPELINE_XML
           - PIPELINE_XML_SEARCH
@@ -15770,6 +15588,8 @@ components:
     PipelinePropertyType:
       type: object
       properties:
+        canEmbed:
+          type: boolean
         defaultValue:
           type: string
         description:
@@ -15793,6 +15613,8 @@ components:
       type: object
       properties:
         boolean:
+          type: boolean
+        embedded:
           type: boolean
         entity:
           $ref: "#/components/schemas/DocRef"
@@ -16125,6 +15947,35 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ProcessorListRow"
+    ProcessorProfile:
+      type: object
+      properties:
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        nodeGroupName:
+          type: string
+        profilePeriods:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProfilePeriod"
+        timeZone:
+          $ref: "#/components/schemas/UserTimeZone"
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        version:
+          type: integer
+          format: int32
     ProcessorRow:
       type: object
       allOf:
@@ -16207,6 +16058,27 @@ components:
           - COMPLETE
           - FAILED
           - DELETED
+    ProfilePeriod:
+      type: object
+      properties:
+        days:
+          $ref: "#/components/schemas/Days"
+        endTime:
+          $ref: "#/components/schemas/Time"
+        limitClusterThreads:
+          type: boolean
+        limitNodeThreads:
+          type: boolean
+        maxClusterThreads:
+          type: integer
+          format: int32
+        maxNodeThreads:
+          type: integer
+          format: int32
+        startTime:
+          $ref: "#/components/schemas/Time"
+        uuid:
+          type: string
     Prop:
       type: object
       properties:
@@ -16310,10 +16182,6 @@ components:
             $ref: "#/components/schemas/DocRef"
           expression:
             $ref: "#/components/schemas/ExpressionOperator"
-          lastQueryKey:
-            $ref: "#/components/schemas/QueryKey"
-          lastQueryNode:
-            type: string
           selectionHandlers:
             type: array
             items:
@@ -17001,6 +16869,8 @@ components:
           - EXCEL
           - CSV
           - TSV
+        sendEmptyReports:
+          type: boolean
     ReportUiDefaultConfig:
       type: object
       properties:
@@ -17169,26 +17039,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CredentialWithPerms"
-    ResultPageCustomRollUpMask:
-      type: object
-      description: A page of results.
-      properties:
-        pageResponse:
-          $ref: "#/components/schemas/PageResponse"
-        values:
-          type: array
-          items:
-            $ref: "#/components/schemas/CustomRollUpMask"
-    ResultPageCustomRollUpMaskFields:
-      type: object
-      description: A page of results.
-      properties:
-        pageResponse:
-          $ref: "#/components/schemas/PageResponse"
-        values:
-          type: array
-          items:
-            $ref: "#/components/schemas/CustomRollUpMaskFields"
     ResultPageDBTableStatus:
       type: object
       description: A page of results.
@@ -17369,6 +17219,36 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MetaRow"
+    ResultPageNodeGroup:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/NodeGroup"
+    ResultPageNodeGroupState:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/NodeGroupState"
+    ResultPageProcessorProfile:
+      type: object
+      description: A page of results.
+      properties:
+        pageResponse:
+          $ref: "#/components/schemas/PageResponse"
+        values:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProcessorProfile"
     ResultPageProcessorTask:
       type: object
       description: A page of results.
@@ -17764,42 +17644,6 @@ components:
           type: string
         version:
           type: string
-    ScyllaDbDoc:
-      type: object
-      properties:
-        connection:
-          type: string
-        createTimeMs:
-          type: integer
-          format: int64
-        createUser:
-          type: string
-        description:
-          type: string
-        keyspace:
-          type: string
-        keyspaceCql:
-          type: string
-        name:
-          type: string
-        type:
-          type: string
-        updateTimeMs:
-          type: integer
-          format: int64
-        updateUser:
-          type: string
-        uuid:
-          type: string
-        version:
-          type: string
-    ScyllaDbTestResponse:
-      type: object
-      properties:
-        message:
-          type: string
-        ok:
-          type: boolean
     Search:
       type: object
       properties:
@@ -17821,20 +17665,6 @@ components:
           type: string
         timeRange:
           $ref: "#/components/schemas/TimeRange"
-    SearchApiKeyRequest:
-      type: object
-      properties:
-        pageRequest:
-          $ref: "#/components/schemas/PageRequest"
-        quickFilter:
-          type: string
-        sort:
-          type: string
-          writeOnly: true
-        sortList:
-          type: array
-          items:
-            $ref: "#/components/schemas/CriteriaFieldSort"
     SearchRequest:
       type: object
       description: A request for new search or a follow up request for more data for
@@ -18746,73 +18576,6 @@ components:
             $ref: "#/components/schemas/KeyPrefix"
           value:
             $ref: "#/components/schemas/Val"
-    StateDoc:
-      type: object
-      properties:
-        condense:
-          type: boolean
-        condenseAge:
-          type: integer
-          format: int32
-        condenseTimeUnit:
-          type: string
-          enum:
-          - NANOSECONDS
-          - MILLISECONDS
-          - SECONDS
-          - MINUTES
-          - HOURS
-          - DAYS
-          - WEEKS
-          - MONTHS
-          - YEARS
-        createTimeMs:
-          type: integer
-          format: int64
-        createUser:
-          type: string
-        description:
-          type: string
-        name:
-          type: string
-        retainAge:
-          type: integer
-          format: int32
-        retainForever:
-          type: boolean
-        retainTimeUnit:
-          type: string
-          enum:
-          - NANOSECONDS
-          - MILLISECONDS
-          - SECONDS
-          - MINUTES
-          - HOURS
-          - DAYS
-          - WEEKS
-          - MONTHS
-          - YEARS
-        scyllaDbRef:
-          $ref: "#/components/schemas/DocRef"
-        stateType:
-          type: string
-          enum:
-          - STATE
-          - TEMPORAL_STATE
-          - RANGED_STATE
-          - TEMPORAL_RANGED_STATE
-          - SESSION
-        type:
-          type: string
-        updateTimeMs:
-          type: integer
-          format: int64
-        updateUser:
-          type: string
-        uuid:
-          type: string
-        version:
-          type: string
     StateKeySchema:
       type: object
       properties:
@@ -18926,13 +18689,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/StatisticField"
-    StatisticsDataSourceFieldChangeRequest:
-      type: object
-      properties:
-        newStatisticsDataSourceData:
-          $ref: "#/components/schemas/StatisticsDataSourceData"
-        oldStatisticsDataSourceData:
-          $ref: "#/components/schemas/StatisticsDataSourceData"
     StepLocation:
       type: object
       properties:
@@ -19173,71 +18929,6 @@ components:
       properties:
         string:
           type: string
-    StroomStatsStoreDoc:
-      type: object
-      properties:
-        config:
-          $ref: "#/components/schemas/StroomStatsStoreEntityData"
-        createTimeMs:
-          type: integer
-          format: int64
-        createUser:
-          type: string
-        description:
-          type: string
-        enabled:
-          type: boolean
-        name:
-          type: string
-        precision:
-          type: string
-          enum:
-          - SECOND
-          - MINUTE
-          - HOUR
-          - DAY
-          - FOREVER
-        rollUpType:
-          type: string
-          enum:
-          - NONE
-          - ALL
-          - CUSTOM
-        statisticType:
-          type: string
-          enum:
-          - COUNT
-          - VALUE
-        type:
-          type: string
-        updateTimeMs:
-          type: integer
-          format: int64
-        updateUser:
-          type: string
-        uuid:
-          type: string
-        version:
-          type: string
-    StroomStatsStoreEntityData:
-      type: object
-      properties:
-        customRollUpMasks:
-          type: array
-          items:
-            $ref: "#/components/schemas/CustomRollUpMask"
-          uniqueItems: true
-        fields:
-          type: array
-          items:
-            $ref: "#/components/schemas/StatisticField"
-    StroomStatsStoreFieldChangeRequest:
-      type: object
-      properties:
-        newEntityData:
-          $ref: "#/components/schemas/StroomStatsStoreEntityData"
-        oldEntityData:
-          $ref: "#/components/schemas/StroomStatsStoreEntityData"
     Suggestions:
       type: object
       properties:
@@ -19784,6 +19475,8 @@ components:
           type: string
         description:
           type: string
+        embeddedIn:
+          $ref: "#/components/schemas/DocRef"
         name:
           type: string
         type:
@@ -19816,6 +19509,18 @@ components:
           type: string
         selectedTabColour:
           type: string
+    Time:
+      type: object
+      properties:
+        hour:
+          type: integer
+          format: int32
+        minute:
+          type: integer
+          format: int32
+        second:
+          type: integer
+          format: int32
     TimeFilter:
       type: object
       description: If the data includes time in the key then you can apply a time
@@ -20646,6 +20351,8 @@ components:
           type: string
         description:
           type: string
+        embeddedIn:
+          $ref: "#/components/schemas/DocRef"
         name:
           type: string
         type:

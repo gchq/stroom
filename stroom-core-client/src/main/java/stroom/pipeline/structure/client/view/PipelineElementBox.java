@@ -18,6 +18,7 @@ package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.svg.shared.SvgImage;
@@ -35,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 public class PipelineElementBox extends Box<PipelineElement> {
 
@@ -91,6 +93,28 @@ public class PipelineElementBox extends Box<PipelineElement> {
         }
 
         background.add(label);
+
+        final Optional<PipelineProperty> embeddedProperty = pipelineModel.getProperties(pipelineElement).stream()
+                .filter(Objects::nonNull)
+                .filter(p -> p.getValue() != null && p.getValue().getEntity() != null &&
+                        p.getValue().isEmbedded())
+                .findAny();
+
+        if (embeddedProperty.isPresent()) {
+            final SimplePanel embeddedIcon = new SimplePanel();
+            if (pipelineModel.getPipelineLayer().getPipelineData().getProperties() != null &&
+                pipelineModel.getPipelineLayer().getPipelineData().getProperties().getAdd() != null &&
+                pipelineModel.getPipelineLayer().getPipelineData().getProperties().getAdd().contains(
+                        embeddedProperty.get())) {
+                SvgImageUtil.setSvgAsInnerHtml(embeddedIcon, SvgImage.CODE, "svgIcon",
+                        BASE_CLASS + " icon-colour__blue");
+
+            } else {
+                SvgImageUtil.setSvgAsInnerHtml(embeddedIcon, SvgImage.EXPLORER, "svgIcon",
+                        BASE_CLASS + " icon-colour__blue");
+            }
+            background.add(embeddedIcon);
+        }
 
         filterIcon = new SimplePanel();
         SvgImageUtil.setSvgAsInnerHtml(

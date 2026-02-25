@@ -20,7 +20,7 @@ import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.AbstractTabProvider;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -52,9 +52,10 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 
+import java.util.List;
 import javax.inject.Provider;
 
-public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView, PipelineDoc>
+public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, PipelineDoc>
         implements ChangeDataHandler<PipelineModel>, HasChangeDataHandlers<PipelineModel> {
 
     public static final TabData DATA = new TabDataImpl("Data");
@@ -202,8 +203,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
             @Override
             public PipelineDoc onWrite(final MarkdownEditPresenter presenter,
                                        final PipelineDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
@@ -285,7 +285,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
     public void onChange(final ChangeDataEvent<PipelineModel> event) {
         this.pipelineModel = event.getData();
         doStepping = true;
-        this.setDirty(true);
+        this.onChange();
     }
 
     @Override
@@ -327,9 +327,22 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
         );
     }
 
+    public List<DocRef> getDirtyDocs() {
+        final List<DocRef> dirtyDocs = steppingPresenter.getDirtyDocs();
+
+        if (pipelineStructurePresenter.isDirty()) {
+            dirtyDocs.add(docRef);
+        }
+
+        return dirtyDocs;
+    }
+
+    public void saveDocs(final List<DocRef> docRefs) {
+        steppingPresenter.save(docRefs);
+    }
+
     @Override
     protected PipelineDoc onWrite(final PipelineDoc document) {
-        steppingPresenter.save();
         return pipelineStructurePresenter.onWrite(document);
     }
 

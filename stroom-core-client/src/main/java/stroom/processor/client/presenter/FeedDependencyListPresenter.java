@@ -22,9 +22,6 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.shared.StreamTypeNames;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.processor.shared.FeedDependency;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
@@ -40,7 +37,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
@@ -48,8 +44,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class FeedDependencyListPresenter
-        extends MyPresenterWidget<PagerView>
-        implements HasDirtyHandlers {
+        extends MyPresenterWidget<PagerView> {
 
     private final MyDataGrid<FeedDependency> dataGrid;
     private final MultiSelectionModelImpl<FeedDependency> selectionModel;
@@ -220,8 +215,6 @@ public class FeedDependencyListPresenter
                             feedDependencies.remove(index);
                             feedDependencies.add(index, updated);
                         }
-
-                        setDirty(isNew || editor.isDirty());
                         refresh();
                         e.hide();
                     }
@@ -250,7 +243,6 @@ public class FeedDependencyListPresenter
         final FeedDependency selected = selectionModel.getSelected();
         if (selected != null) {
             feedDependencies.remove(selected);
-            setDirty(true);
             refresh();
         }
     }
@@ -282,16 +274,5 @@ public class FeedDependencyListPresenter
             editButton.setTitle("Edit Reference");
             removeButton.setTitle("Remove Reference");
         }
-    }
-
-    protected void setDirty(final boolean dirty) {
-        if (dirty) {
-            DirtyEvent.fire(this, dirty);
-        }
-    }
-
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 }

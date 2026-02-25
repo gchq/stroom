@@ -130,9 +130,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler, ImportExport
     public DocRefInfo info(final DocRef docRef) {
         final ExplorerTreeNode explorerTreeNode = explorerTreeDao.findByUUID(docRef.getUuid());
         if (explorerTreeNode == null) {
-            throw new DocumentNotFoundException(DocRef.builder()
-                    .uuid(docRef.getUuid())
-                    .build());
+            throw new DocumentNotFoundException(docRef);
         }
 
         if (!securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
@@ -142,11 +140,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler, ImportExport
 
         return DocRefInfo
                 .builder()
-                .docRef(DocRef.builder()
-                        .type(explorerTreeNode.getType())
-                        .uuid(explorerTreeNode.getUuid())
-                        .name(explorerTreeNode.getName())
-                        .build())
+                .docRef(explorerTreeNode.getDocRef())
                 .otherInfo("DB ID: " + explorerTreeNode.getId())
                 .build();
     }
@@ -161,9 +155,9 @@ class FolderExplorerActionHandler implements ExplorerActionHandler, ImportExport
         return Set.of();
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -179,9 +173,9 @@ class FolderExplorerActionHandler implements ExplorerActionHandler, ImportExport
     public void remapDependencies(final DocRef docRef, final Map<DocRef, DocRef> remappings) {
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
 
     @Override
@@ -200,9 +194,9 @@ class FolderExplorerActionHandler implements ExplorerActionHandler, ImportExport
                 .collect(Collectors.toSet());
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     @Override
     public DocRef importDocument(final DocRef docRef,
                                  final Map<String, byte[]> dataMap,

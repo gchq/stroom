@@ -22,7 +22,7 @@ import stroom.annotation.shared.LinkAnnotations;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.annotation.shared.UnlinkAnnotations;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
 import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.explorer.client.presenter.FindUiHandlers;
@@ -38,7 +38,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.Collections;
 
 public class AnnotationLinkPresenter
-        extends DocumentEditPresenter<FindView, Annotation>
+        extends DocPresenter<FindView, Annotation>
         implements FindUiHandlers, FindDocResultListHandler<Annotation> {
 
     private final AnnotationResourceClient annotationResourceClient;

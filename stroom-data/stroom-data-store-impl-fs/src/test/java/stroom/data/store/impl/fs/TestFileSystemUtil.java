@@ -52,9 +52,7 @@ class TestFileSystemUtil {
     Path tempDir;
 
     private FsVolume buildTestVolume() {
-        final FsVolume config = new FsVolume();
-        config.setPath(FileUtil.getCanonicalPath(tempDir));
-        return config;
+        return FsVolume.builder().path(FileUtil.getCanonicalPath(tempDir)).build();
     }
 
     @Test

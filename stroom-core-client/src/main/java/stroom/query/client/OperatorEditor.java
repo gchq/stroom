@@ -41,7 +41,7 @@ public class OperatorEditor extends Composite {
             registerHandler(listBox.addValueChangeHandler(event -> {
                 if (!reading && operator != null) {
                     operator.setOp(event.getValue());
-                    fireDirty();
+                    onChange();
                 }
             }));
         }
@@ -101,10 +101,10 @@ public class OperatorEditor extends Composite {
         }
     }
 
-    private void fireDirty() {
+    private void onChange() {
         if (!reading) {
             if (uiHandlers != null) {
-                uiHandlers.fireDirty();
+                uiHandlers.onChange();
             }
         }
     }

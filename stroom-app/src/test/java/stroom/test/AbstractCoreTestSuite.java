@@ -54,7 +54,6 @@ import org.junit.jupiter.api.Disabled;
 //        stroom.statistics.impl.common.TestStatisticsDataSourceImportExportSerializer.class,
 //        stroom.statistics.sql.TestSQLStatisticAggregationManager.class,
 //        stroom.statistics.sql.TestSQLStatisticFlushTaskHandler.class,
-//        stroom.stats.TestStroomStatsStoreImportExportSerializer.class,
 //        TestFileSystemZipProcessor.class,
 //        TestFileSystemStreamMaintenanceService.class,
 //        TestFileSystemStreamStore.class,

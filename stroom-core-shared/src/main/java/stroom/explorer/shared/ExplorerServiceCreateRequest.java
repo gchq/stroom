@@ -42,7 +42,6 @@ public class ExplorerServiceCreateRequest {
             @JsonProperty("docName") final String docName,
             @JsonProperty("destinationFolder") final ExplorerNode destinationFolder,
             @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance) {
-
         this.docType = docType;
         this.docName = docName;
         this.destinationFolder = destinationFolder;

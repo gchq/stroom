@@ -16,11 +16,8 @@
 
 package stroom.node.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.RestErrorHandler;
 import stroom.node.client.NodeGroupClient;
 import stroom.node.shared.NodeGroup;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -31,7 +28,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.Objects;
 import java.util.function.Consumer;
 
 public class NodeGroupEditPresenter
@@ -95,7 +91,7 @@ public class NodeGroupEditPresenter
 //                                            this),
 //                                    e);
 //                        } else {
-                            e.hide();
+                        e.hide();
 //                        }
                     })
                     .onHide(e -> {

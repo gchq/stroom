@@ -16,19 +16,19 @@
 
 package stroom.planb.client.view;
 
-import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 
 import com.google.gwt.user.client.ui.Widget;
 
 public abstract class AbstractSettingsWidget {
 
-    private PlanBSettingsUiHandlers uiHandlers;
+    private ChangeUiHandlers uiHandlers;
 
-    public void setUiHandlers(final PlanBSettingsUiHandlers uiHandlers) {
+    public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         this.uiHandlers = uiHandlers;
     }
 
-    public PlanBSettingsUiHandlers getUiHandlers() {
+    public ChangeUiHandlers getUiHandlers() {
         return uiHandlers;
     }
 

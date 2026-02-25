@@ -70,13 +70,20 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     public ResultPage<ProcessorTask> find(final ExpressionCriteria criteria) {
         return securityContext.secureResult(PERMISSION, () -> {
             final ResultPage<ProcessorTask> resultPage = processorTaskDao.find(criteria);
-            resultPage.getValues().forEach(processorTask -> {
-                final DocRef docRef = new DocRef(PipelineDoc.TYPE,
-                        processorTask.getProcessorFilter().getPipelineUuid());
-                final Optional<String> name = docRefInfoService.name(docRef);
-                processorTask.getProcessorFilter().setPipelineName(name.orElse(null));
-            });
-            return resultPage;
+            final List<ProcessorTask> values = resultPage
+                    .getValues()
+                    .stream()
+                    .map(task -> {
+                        final DocRef docRef = new DocRef(PipelineDoc.TYPE, task.getProcessorFilter().getPipelineUuid());
+                        final Optional<String> name = docRefInfoService.name(docRef);
+                        return task.copy()
+                                .processorFilter(task.getProcessorFilter().copy()
+                                        .pipelineName(name.orElse(null))
+                                        .build())
+                                .build();
+                    })
+                    .toList();
+            return new ResultPage<>(values, resultPage.getPageResponse());
         });
     }
 

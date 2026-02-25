@@ -39,6 +39,7 @@ import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
+import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskProgress;
@@ -53,6 +54,7 @@ import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
@@ -152,18 +154,21 @@ public class SqlStatisticSearchProvider implements SearchProvider {
                 .build());
 
         // one field per tag
-        if (entity.getConfig() != null) {
-            for (final StatisticField statisticField : entity.getStatisticFields()) {
-                // TODO currently only EQUALS is supported, but need to add
-                // support for more conditions like CONTAINS
-                fields.add(QueryField
-                        .builder()
-                        .fldName(statisticField.getFieldName())
-                        .fldType(FieldType.TEXT)
-                        .conditionSet(ConditionSet.STAT_TEXT)
-                        .queryable(true)
-                        .build());
-            }
+        final List<StatisticField> statisticFields = NullSafe.getOrElse(
+                entity,
+                StatisticStoreDoc::getConfig,
+                StatisticsDataSourceData::getFields,
+                Collections.emptyList());
+        for (final StatisticField statisticField : statisticFields) {
+            // TODO currently only EQUALS is supported, but need to add
+            // support for more conditions like CONTAINS
+            fields.add(QueryField
+                    .builder()
+                    .fldName(statisticField.getFieldName())
+                    .fldType(FieldType.TEXT)
+                    .conditionSet(ConditionSet.STAT_TEXT)
+                    .queryable(true)
+                    .build());
         }
 
         fields.add(QueryField.createLong(StatisticStoreDoc.FIELD_NAME_COUNT, false));
