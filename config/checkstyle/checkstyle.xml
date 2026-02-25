@@ -186,6 +186,8 @@
       stroom.explorer.impl.db.jooq.tables.ExplorerFavourite.*,
       stroom.explorer.impl.db.jooq.tables.ExplorerNode.*,
       stroom.explorer.impl.db.jooq.tables.ExplorerPath.*,
+      stroom.explorer.impl.db.jooq.tables.TabSession.*,
+      stroom.explorer.impl.db.jooq.tables.TabSessionDocRef.*,
       stroom.gitrepo.impl.db.jooq.tables.GitRepo.*,
       stroom.index.impl.db.jooq.tables.IndexField.*,
       stroom.index.impl.db.jooq.tables.IndexFieldSource.*,

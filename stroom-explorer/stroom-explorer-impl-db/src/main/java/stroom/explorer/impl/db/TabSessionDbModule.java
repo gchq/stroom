@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.explorer.impl;
+package stroom.explorer.impl.db;
 
-import stroom.docref.DocRef;
-import stroom.explorer.shared.TabSession;
+import stroom.explorer.impl.TabSessionDao;
 
-import java.util.List;
+import com.google.inject.AbstractModule;
 
-public interface TabSessionService {
-    List<TabSession> addForCurrentUser(String name, List<DocRef> docRefs);
+public class TabSessionDbModule extends AbstractModule {
 
-    List<TabSession> getForCurrentUser();
+    @Override
+    protected void configure() {
+        super.configure();
 
-    List<TabSession> deleteForCurrentUser(String name);
+        bind(TabSessionDao.class).to(TabSessionDaoImpl.class);
+    }
 }

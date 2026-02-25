@@ -24,56 +24,44 @@ import stroom.util.shared.UserRef;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 @Singleton
 public class TabSessionServiceImpl implements TabSessionService {
 
-    final Map<String, List<TabSession>> savedSessions = new HashMap<>();
-
     private final SecurityContext securityContext;
+    private final TabSessionDao tabSessionDao;
 
     @Inject
-    public TabSessionServiceImpl(final SecurityContext securityContext) {
+    public TabSessionServiceImpl(final SecurityContext securityContext,
+                                 final TabSessionDao tabSessionDao) {
         this.securityContext = securityContext;
+        this.tabSessionDao = tabSessionDao;
     }
 
     @Override
-    public List<TabSession> add(final String sessionId, final String name, final List<DocRef> docRefs) {
+    public List<TabSession> addForCurrentUser(final String name, final List<DocRef> docRefs) {
         final String userId = getCurrentUser().getUuid();
 
-        final List<TabSession> userSessions = savedSessions.computeIfAbsent(userId, id -> new ArrayList<>());
+        tabSessionDao.deleteTabSession(userId, name);
+        tabSessionDao.createTabSession(userId, name, docRefs);
 
-        userSessions.removeIf(session -> Objects.equals(name, session.getName()));
-
-        final TabSession newTabSession = new TabSession(userId, sessionId, name, docRefs);
-        userSessions.add(newTabSession);
-
-        return userSessions;
+        return tabSessionDao.getTabSessionForUser(userId);
     }
 
     @Override
     public List<TabSession> getForCurrentUser() {
-        return savedSessions.get(getCurrentUser().getUuid());
+        return tabSessionDao.getTabSessionForUser(getCurrentUser().getUuid());
     }
 
     @Override
-    public List<TabSession> delete(final String sessionId) {
+    public List<TabSession> deleteForCurrentUser(final String name) {
         final String userId = getCurrentUser().getUuid();
 
-        final List<TabSession> userSessions = savedSessions.get(userId);
+        tabSessionDao.deleteTabSession(userId, name);
 
-        if (userSessions == null) {
-            return List.of();
-        }
-
-        userSessions.removeIf(session -> Objects.equals(session.getSessionId(), sessionId));
-
-        return userSessions;
+        return tabSessionDao.getTabSessionForUser(userId);
     }
 
     private UserRef getCurrentUser() {

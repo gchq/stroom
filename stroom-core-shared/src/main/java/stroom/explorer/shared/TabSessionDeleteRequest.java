@@ -16,18 +16,15 @@
 
 package stroom.explorer.shared;
 
-import stroom.docref.DocRef;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public class TabSessionAddRequest {
+public class TabSessionDeleteRequest {
 
     @JsonProperty
     private final String sessionId;
@@ -35,16 +32,11 @@ public class TabSessionAddRequest {
     @JsonProperty
     private final String name;
 
-    @JsonProperty
-    private final List<DocRef> docRefs;
-
     @JsonCreator
-    public TabSessionAddRequest(@JsonProperty("sessionId") final String sessionId,
-                                @JsonProperty("name") final String name,
-                                @JsonProperty("docRefs") final List<DocRef> docRefs) {
+    public TabSessionDeleteRequest(@JsonProperty("sessionId") final String sessionId,
+                                   @JsonProperty("name") final String name) {
         this.sessionId = sessionId;
         this.name = name;
-        this.docRefs = docRefs;
     }
 
     public String getSessionId() {
@@ -55,32 +47,26 @@ public class TabSessionAddRequest {
         return name;
     }
 
-    public List<DocRef> getDocRefs() {
-        return docRefs;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final TabSessionAddRequest that = (TabSessionAddRequest) o;
-        return Objects.equals(sessionId,
-                that.sessionId) && Objects.equals(name, that.name) && Objects.equals(docRefs,
-                that.docRefs);
+        final TabSessionDeleteRequest that = (TabSessionDeleteRequest) o;
+        return Objects.equals(sessionId, that.sessionId)
+               && Objects.equals(name, that.name);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sessionId, name, docRefs);
+        return Objects.hash(sessionId, name);
     }
 
     @Override
     public String toString() {
-        return "TabSessionAddRequest{" +
+        return "TabSessionDeleteRequest{" +
                ", sessionId='" + sessionId + '\'' +
                ", name='" + name + '\'' +
-               ", docRefs=" + docRefs +
                '}';
     }
 }

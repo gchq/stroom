@@ -11140,6 +11140,90 @@
         "tags" : [ "System Info" ]
       }
     },
+    "/tabSession/v1" : {
+      "delete" : {
+        "operationId" : "deleteTabSession",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TabSessionDeleteRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TabSession"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Deletes a tab session",
+        "tags" : [ "Tab Sessions" ]
+      },
+      "get" : {
+        "operationId" : "getForCurrentUser",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TabSession"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get tab sessions for the current user",
+        "tags" : [ "Tab Sessions" ]
+      },
+      "post" : {
+        "operationId" : "addTabSession",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TabSessionAddRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TabSession"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Add a tab session for the current user",
+        "tags" : [ "Tab Sessions" ]
+      }
+    },
     "/task/v1/find/{nodeName}" : {
       "post" : {
         "operationId" : "findTasks",
@@ -24980,6 +25064,54 @@
             }
           }
         } ]
+      },
+      "TabSession" : {
+        "type" : "object",
+        "properties" : {
+          "docRefs" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "sessionId" : {
+            "type" : "string"
+          },
+          "userId" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TabSessionAddRequest" : {
+        "type" : "object",
+        "properties" : {
+          "docRefs" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "sessionId" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TabSessionDeleteRequest" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "sessionId" : {
+            "type" : "string"
+          }
+        }
       },
       "TableBuilderAnalyticProcessConfig" : {
         "type" : "object",

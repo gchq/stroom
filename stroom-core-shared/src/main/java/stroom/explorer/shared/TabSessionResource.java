@@ -57,6 +57,6 @@ public interface TabSessionResource extends RestResource, DirectRestService {
             summary = "Deletes a tab session",
             operationId = "deleteTabSession"
     )
-    List<TabSession> delete(TabSession tabSession);
+    List<TabSession> delete(@Parameter(description = "request", required = true) TabSessionDeleteRequest request);
 }
 

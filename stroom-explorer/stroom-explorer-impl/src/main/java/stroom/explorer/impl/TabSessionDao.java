@@ -21,10 +21,11 @@ import stroom.explorer.shared.TabSession;
 
 import java.util.List;
 
-public interface TabSessionService {
-    List<TabSession> addForCurrentUser(String name, List<DocRef> docRefs);
+public interface TabSessionDao {
 
-    List<TabSession> getForCurrentUser();
+    List<TabSession> getTabSessionForUser(String userId);
 
-    List<TabSession> deleteForCurrentUser(String name);
+    TabSession createTabSession(String userId, String name, List<DocRef> docRefs);
+
+    void deleteTabSession(String userId, String name);
 }

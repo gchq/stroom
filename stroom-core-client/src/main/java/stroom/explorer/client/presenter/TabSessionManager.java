@@ -30,6 +30,7 @@ import stroom.explorer.client.event.SaveTabSessionEvent;
 import stroom.explorer.client.event.TabSessionChangeEvent;
 import stroom.explorer.shared.TabSession;
 import stroom.explorer.shared.TabSessionAddRequest;
+import stroom.explorer.shared.TabSessionDeleteRequest;
 import stroom.explorer.shared.TabSessionResource;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
@@ -198,7 +199,9 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
                 "Are you sure you want to delete the tab session '" + tabSession.getName() + "'?", ok -> {
                 if (ok) {
                     restFactory.create(TAB_SESSION_RESOURCE)
-                            .method(res -> res.delete(tabSession))
+                            .method(res -> res.delete(
+                                    new TabSessionDeleteRequest(tabSession.getSessionId(), tabSession.getName())
+                            ))
                             .onSuccess(s -> TabSessionChangeEvent.fire(this, s))
                             .onFailure(error ->
                                     AlertEvent.fireError(this,

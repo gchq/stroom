@@ -56,7 +56,7 @@ jooq {
                         outputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
-                        includes = 'explorer.node|explorer.path|explorer.favourite'
+                        includes = 'explorer.node|explorer.path|explorer.favourite|tab.session|tab.session.doc.ref'
                         // We don't want to include flyway versioning
                         excludes = 'explorer.schema.version'
                         // Specify 'version' for use in optimistic concurrency control

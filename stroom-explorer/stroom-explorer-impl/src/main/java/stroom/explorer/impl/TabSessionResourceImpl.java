@@ -16,8 +16,11 @@
 
 package stroom.explorer.impl;
 
+import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.explorer.shared.TabSession;
 import stroom.explorer.shared.TabSessionAddRequest;
+import stroom.explorer.shared.TabSessionDeleteRequest;
 import stroom.explorer.shared.TabSessionResource;
 
 import jakarta.inject.Inject;
@@ -25,6 +28,7 @@ import jakarta.inject.Provider;
 
 import java.util.List;
 
+@AutoLogged(OperationType.MANUALLY_LOGGED)
 public class TabSessionResourceImpl implements TabSessionResource {
 
     final Provider<TabSessionService> tabSessionServiceProvider;
@@ -41,11 +45,11 @@ public class TabSessionResourceImpl implements TabSessionResource {
 
     @Override
     public List<TabSession> add(final TabSessionAddRequest request) {
-        return tabSessionServiceProvider.get().add(request.getSessionId(), request.getName(), request.getDocRefs());
+        return tabSessionServiceProvider.get().addForCurrentUser(request.getName(), request.getDocRefs());
     }
 
     @Override
-    public List<TabSession> delete(final TabSession tabSession) {
-        return tabSessionServiceProvider.get().delete(tabSession.getSessionId());
+    public List<TabSession> delete(final TabSessionDeleteRequest request) {
+        return tabSessionServiceProvider.get().deleteForCurrentUser(request.getName());
     }
 }
