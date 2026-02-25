@@ -190,16 +190,9 @@ public class ScheduledProcessEditPresenter
                            && !scheduledTimes.getSchedule().getType().equals(ScheduleType.INSTANT)) {
                     AlertEvent.fireWarn(this, "Invalid end time", event::reset);
                 } else {
-                    final ScheduleBounds scheduleBounds;
-                    if(scheduledTimes.getSchedule().getType().equals(ScheduleType.INSTANT)) {
-                        Date now = new Date();
-                        scheduleBounds = new ScheduleBounds(now.getTime(), now.getTime());
-                    } else {
-                        scheduleBounds = new ScheduleBounds(
+                    final ScheduleBounds scheduleBounds = new ScheduleBounds(
                                 getView().getStartTime().getValue(),
-                                getView().getEndTime().getValue()
-                        );
-                    }
+                                getView().getEndTime().getValue());
                     final ExecutionSchedule schedule = executionSchedule
                             .copy()
                             .name(getView().getName())

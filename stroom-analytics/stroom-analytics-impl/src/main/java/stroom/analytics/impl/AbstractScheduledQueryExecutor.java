@@ -277,7 +277,13 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
         }
 
         if(schedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
-            executionScheduleDao.updateExecutionSchedule(schedule.copy().enabled(false).build());
+            Long nowMs = Instant.now().toEpochMilli();
+            executionScheduleDao.updateExecutionSchedule(schedule
+                    .copy()
+                    .enabled(false)
+                    .scheduleBounds(new ScheduleBounds(nowMs, nowMs))
+                    .build()
+            );
         }
 
         // Reload the rule in case it has changed since last executed.
@@ -311,7 +317,9 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
         final Trigger trigger = TriggerFactory.create(schedule);
 
         final Instant effectiveExecutionTime;
-        if (currentTracker != null) {
+        if(executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
+            effectiveExecutionTime = executionTime;
+        } else if (currentTracker != null) {
             final Instant startTime = NullSafe.get(
                     scheduleBounds,
                     ScheduleBounds::getStartTimeMs,
@@ -332,11 +340,17 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
         }
 
         // Calculate end bounds.
-        final Instant endTime = NullSafe.getOrElse(
+        final Instant endTime;
+        if(executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
+            endTime = executionTime;
+        } else {
+            endTime = NullSafe.getOrElse(
                 scheduleBounds,
                 ScheduleBounds::getEndTimeMs,
                 Instant::ofEpochMilli,
                 Instant.MAX);
+        }
+
 
         LOGGER.debug("execute() - endTime: {}, executionTime: {}, " +
                      "effectiveExecutionTime: {}, schedule: {}",
@@ -345,7 +359,8 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
         // bounds are inclusive
         if (effectiveExecutionTime != null
             && !effectiveExecutionTime.isAfter(executionTime)
-            && !effectiveExecutionTime.isAfter(endTime)) {
+            && !effectiveExecutionTime.isAfter(endTime)
+            || executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
 
             LOGGER.debug("execute() - Executing - endTime: {}, executionTime: {}, " +
                          "effectiveExecutionTime: {}, schedule: {}",

@@ -394,6 +394,20 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
     public ExecutionSchedule createExecutionSchedule(final ExecutionSchedule executionSchedule) {
         final UserRef runAsUser = checkRunAs(executionSchedule);
 
+        final Long startTimeMs;
+        final Long endTimeMs;
+        if(executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
+            startTimeMs = Instant.now().toEpochMilli();
+            endTimeMs = Instant.now().toEpochMilli();
+        } else {
+            startTimeMs = (executionSchedule.getScheduleBounds() == null)
+                    ? null
+                    : executionSchedule.getScheduleBounds().getStartTimeMs();
+            endTimeMs = (executionSchedule.getScheduleBounds() == null)
+                    ? null
+                    : executionSchedule.getScheduleBounds().getEndTimeMs();
+        }
+
         final Optional<Integer> optionalId = JooqUtil.contextResult(analyticsDbConnProvider, context -> context
                         .insertInto(EXECUTION_SCHEDULE,
                                 EXECUTION_SCHEDULE.NAME,
@@ -413,21 +427,15 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                                 executionSchedule.getSchedule().getType().name(),
                                 executionSchedule.getSchedule().getExpression(),
                                 executionSchedule.isContiguous(),
-                                executionSchedule.getScheduleBounds() == null
-                                        ? null
-                                        :
-                                                executionSchedule.getScheduleBounds().getStartTimeMs(),
-                                executionSchedule.getScheduleBounds() == null
-                                        ? null
-                                        :
-                                                executionSchedule.getScheduleBounds().getEndTimeMs(),
+                                startTimeMs,
+                                endTimeMs,
                                 executionSchedule.getOwningDoc().getType(),
                                 executionSchedule.getOwningDoc().getUuid(),
                                 runAsUser.getUuid())
                         .returning(EXECUTION_SCHEDULE.ID)
                         .fetchOptional())
                 .map(ExecutionScheduleRecord::getId);
-        if(executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
+        if(executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT) && executionSchedule.isEnabled()) {
             executeSchedulesNow(Collections.singletonList(executionSchedule));
         }
         return optionalId.flatMap(this::fetchScheduleById).orElse(null);
@@ -477,7 +485,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                 .set(EXECUTION_SCHEDULE.RUN_AS_USER_UUID, runAsUser.getUuid())
                 .where(EXECUTION_SCHEDULE.ID.eq(executionSchedule.getId()))
                 .execute());
-        if(executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
+        if(executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT) && executionSchedule.isEnabled()) {
             executeSchedulesNow(Collections.singletonList(executionSchedule));
         }
         return fetchScheduleById(executionSchedule.getId()).orElse(null);
