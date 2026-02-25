@@ -95,8 +95,7 @@ public class PipelineServiceImpl implements PipelineService {
         }
 
         final PipelineData pipelineData = pipelineSerialiser.getPipelineDataFromJson(json);
-        pipelineDoc.setPipelineData(pipelineData);
-        pipelineStore.writeDocument(pipelineDoc);
+        pipelineStore.writeDocument(pipelineDoc.copy().pipelineData(pipelineData).build());
 
         return true;
     }

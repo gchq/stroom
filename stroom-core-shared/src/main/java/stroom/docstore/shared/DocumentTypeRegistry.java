@@ -23,10 +23,12 @@ import stroom.util.shared.NullSafe;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class DocumentTypeRegistry {
 
     private static final Map<String, DocumentType> MAP = new HashMap<>();
+    public static final Set<String> DEPRECATED_TYPES = Set.of("StroomStatsStore", "ScyllaDB", "StateStore");
 
     public static final DocumentType SYSTEM_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.SYSTEM,
@@ -83,11 +85,6 @@ public class DocumentTypeRegistry {
             "Report",
             "Report",
             SvgImage.DOCUMENT_REPORT);
-    public static final DocumentType STROOM_STATS_STORE_DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.INDEXING,
-            "StroomStatsStore",
-            "Stroom-Stats Store",
-            SvgImage.DOCUMENT_STROOM_STATS_STORE);
     public static final DocumentType XML_SCHEMA_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.TRANSFORMATION,
             "XMLSchema",
@@ -103,11 +100,6 @@ public class DocumentTypeRegistry {
             "SolrIndex",
             "Solr Index",
             SvgImage.DOCUMENT_SOLR_INDEX);
-    public static final DocumentType SCYLLA_DB_DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.CONFIGURATION,
-            "ScyllaDB",
-            "Scylla DB",
-            SvgImage.DOCUMENT_SCYLLA_DB);
     public static final DocumentType DOCUMENTATION_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.CONFIGURATION,
             "Documentation",
@@ -123,11 +115,6 @@ public class DocumentTypeRegistry {
             "ElasticIndex",
             "Elastic Index",
             SvgImage.DOCUMENT_ELASTIC_INDEX);
-    public static final DocumentType STATE_STORE_DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.INDEXING,
-            "StateStore",
-            "State Store",
-            SvgImage.DOCUMENT_STATE_STORE);
     public static final DocumentType PLAN_B_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.INDEXING,
             "PlanB",
@@ -184,7 +171,7 @@ public class DocumentTypeRegistry {
             "Text Converter",
             SvgImage.DOCUMENT_TEXT_CONVERTER);
     public static final DocumentType VIEW_DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.SEARCH,
+            DocumentTypeGroup.INDEXING,
             "View",
             "View",
             SvgImage.DOCUMENT_VIEW);
@@ -281,12 +268,9 @@ public class DocumentTypeRegistry {
         put(S3_CONFIG_DOCUMENT_TYPE);
         put(SCRIPT_DOCUMENT_TYPE);
         put(GIT_REPO_DOCUMENT_TYPE);
-        put(SCYLLA_DB_DOCUMENT_TYPE);
         put(SOLR_INDEX_DOCUMENT_TYPE);
-        put(STATE_STORE_DOCUMENT_TYPE);
         put(PLAN_B_DOCUMENT_TYPE);
         put(STATISTIC_STORE_DOCUMENT_TYPE);
-        put(STROOM_STATS_STORE_DOCUMENT_TYPE);
         put(SYSTEM_DOCUMENT_TYPE);
         put(TEXT_CONVERTER_DOCUMENT_TYPE);
         put(VIEW_DOCUMENT_TYPE);

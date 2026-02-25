@@ -19,7 +19,7 @@ package stroom.dictionary.client.presenter;
 import stroom.dictionary.client.presenter.DictionarySettingsPresenter.DictionarySettingsView;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.util.shared.NullSafe;
 
 import com.google.inject.Inject;
@@ -28,7 +28,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 
-public class DictionarySettingsPresenter extends DocumentEditPresenter<DictionarySettingsView, DictionaryDoc> {
+public class DictionarySettingsPresenter extends DocPresenter<DictionarySettingsView, DictionaryDoc> {
 
     private final DictionaryListPresenter dictionaryListPresenter;
     private final WordListPresenter wordListPresenter;
@@ -48,8 +48,7 @@ public class DictionarySettingsPresenter extends DocumentEditPresenter<Dictionar
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(dictionaryListPresenter.addDirtyHandler(event -> setDirty(true)));
-
+        registerHandler(dictionaryListPresenter.addDirtyHandler(event -> onChange()));
         dictionaryListPresenter.registerDictionarySelectionHandler(wordListPresenter::setDocRef);
     }
 

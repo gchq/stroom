@@ -159,8 +159,9 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
     /**
      * Method to use when testing. Allows the repository URLs in the content pack to be
      * overridden.
+     *
      * @param originalUrl The gitUrl that we want to put elsewhere
-     * @param newUrl The new URL that we want to use
+     * @param newUrl      The new URL that we want to use
      */
     public synchronized void remapGitUrl(final String originalUrl, final String newUrl) {
         if (overrideGitUrls == null) {
@@ -319,13 +320,13 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
                     // Update the GitRepoDoc
                     docRef = gitRepoNode.getDocRef();
                 }
-                final GitRepoDoc gitRepoDoc = gitRepoStore.get().readDocument(docRef);
-                contentPack.updateSettingsIn(gitRepoDoc);
+                GitRepoDoc gitRepoDoc = gitRepoStore.get().readDocument(docRef);
+                gitRepoDoc = contentPack.updateSettingsIn(gitRepoDoc);
 
                 // Add credentials if necessary
                 if (contentPack.getGitNeedsAuth()) {
                     messages.add(new Message(Severity.INFO, "Adding credentials for pull"));
-                    gitRepoDoc.setCredentialName(createGitRepoRequest.getCredentialName());
+                    gitRepoDoc = gitRepoDoc.copy().credentialName(createGitRepoRequest.getCredentialName()).build();
                 }
 
                 // Write doc to DB
@@ -482,7 +483,7 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
 
             // Do a pack upgrade
             // i.e. copy settings from Content Pack into GitRepo
-            contentPack.updateSettingsIn(gitRepoDoc);
+            gitRepoDoc = contentPack.updateSettingsIn(gitRepoDoc);
 
             // Pull down any new content
             messages.addAll(this.gitRepoStorageService.get().importDoc(gitRepoDoc, false));

@@ -29,6 +29,7 @@ import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeFields;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.query.api.ExpressionOperator;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
@@ -57,26 +58,29 @@ import static stroom.index.impl.db.jooq.tables.IndexVolumeGroup.INDEX_VOLUME_GRO
 class IndexVolumeDaoImpl implements IndexVolumeDao {
 
     static final Function<Record, IndexVolume> RECORD_TO_INDEX_VOLUME_MAPPER = record -> {
-        final IndexVolume indexVolume = new IndexVolume();
-        indexVolume.setId(record.get(INDEX_VOLUME.ID));
-        indexVolume.setVersion(record.get(INDEX_VOLUME.VERSION));
-        indexVolume.setCreateTimeMs(record.get(INDEX_VOLUME.CREATE_TIME_MS));
-        indexVolume.setCreateUser(record.get(INDEX_VOLUME.CREATE_USER));
-        indexVolume.setUpdateTimeMs(record.get(INDEX_VOLUME.UPDATE_TIME_MS));
-        indexVolume.setUpdateUser(record.get(INDEX_VOLUME.UPDATE_USER));
-        indexVolume.setPath(record.get(INDEX_VOLUME.PATH));
-        indexVolume.setNodeName(record.get(INDEX_VOLUME.NODE_NAME));
-        indexVolume.setIndexVolumeGroupId(record.get(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID));
-        final Byte state = record.get(INDEX_VOLUME.STATE);
-        if (state != null) {
-            indexVolume.setState(VolumeUseState.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(state));
-        }
-        indexVolume.setBytesLimit(record.get(INDEX_VOLUME.BYTES_LIMIT));
-        indexVolume.setBytesUsed(record.get(INDEX_VOLUME.BYTES_USED));
-        indexVolume.setBytesFree(record.get(INDEX_VOLUME.BYTES_FREE));
-        indexVolume.setBytesTotal(record.get(INDEX_VOLUME.BYTES_TOTAL));
-        indexVolume.setStatusMs(record.get(INDEX_VOLUME.STATUS_MS));
-        return indexVolume;
+        final VolumeUseState state = NullSafe.getOrElse(
+                record.get(INDEX_VOLUME.STATE),
+                VolumeUseState.PRIMITIVE_VALUE_CONVERTER::fromPrimitiveValue,
+                VolumeUseState.ACTIVE);
+
+        return IndexVolume
+                .builder()
+                .id(record.get(INDEX_VOLUME.ID))
+                .version(record.get(INDEX_VOLUME.VERSION))
+                .createTimeMs(record.get(INDEX_VOLUME.CREATE_TIME_MS))
+                .createUser(record.get(INDEX_VOLUME.CREATE_USER))
+                .updateTimeMs(record.get(INDEX_VOLUME.UPDATE_TIME_MS))
+                .updateUser(record.get(INDEX_VOLUME.UPDATE_USER))
+                .path(record.get(INDEX_VOLUME.PATH))
+                .nodeName(record.get(INDEX_VOLUME.NODE_NAME))
+                .indexVolumeGroupId(record.get(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID))
+                .state(state)
+                .bytesLimit(record.get(INDEX_VOLUME.BYTES_LIMIT))
+                .bytesUsed(record.get(INDEX_VOLUME.BYTES_USED))
+                .bytesFree(record.get(INDEX_VOLUME.BYTES_FREE))
+                .bytesTotal(record.get(INDEX_VOLUME.BYTES_TOTAL))
+                .statusMs(record.get(INDEX_VOLUME.STATUS_MS))
+                .build();
     };
 
     private static final BiFunction<IndexVolume, IndexVolumeRecord, IndexVolumeRecord> INDEX_VOLUME_TO_RECORD_MAPPER =

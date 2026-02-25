@@ -21,7 +21,6 @@ langchain4j-jina = "1.10.0-beta18"
 kafka = "3.9.0"
 openai = "4.3.0"
 poi = "5.4.1"
-scylladb = "4.19.0.1"
 simple-java-mail = "8.8.0"
 swagger = "2.2.42"
 
@@ -172,11 +171,6 @@ poi-ooxml = { module = "org.apache.poi:poi-ooxml", version.ref = "poi" }
 quartz = { module = "org.quartz-scheduler:quartz", version = "2.5.1" }
 restygwt = { module = "org.fusesource.restygwt:restygwt", version = "2.2.7" }
 saxon-he = { module = "net.sf.saxon:Saxon-HE", version = "9.9.1-8" }
-
-scylladb-driver-core = { module = "com.scylladb:java-driver-core", version.ref = "scylladb" }
-scylladb-query-builder = { module = "com.scylladb:java-driver-query-builder", version.ref = "scylladb" }
-scylladb-driver-mapper = { module = "com.scylladb:java-driver-mapper-runtime", version.ref = "scylladb" }
-
 simple-java-mail = { module = "org.simplejavamail:simple-java-mail", version.ref = "simple-java-mail" }
 simple-java-mail-batch-module = { module = "org.simplejavamail:batch-module", version.ref = "simple-java-mail" }
 slf4j-api = { module = "org.slf4j:slf4j-api" } # version controlled by dropwizard-dependencies

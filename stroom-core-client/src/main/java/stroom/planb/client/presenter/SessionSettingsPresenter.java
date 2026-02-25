@@ -16,6 +16,7 @@
 
 package stroom.planb.client.presenter;
 
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.SessionSettingsPresenter.SessionSettingsView;
 import stroom.planb.client.view.CondenseSettingsView;
@@ -81,7 +82,7 @@ public class SessionSettingsPresenter
             SnapshotSettingsView,
             SessionKeySchemaSettingsView,
             ReadOnlyChangeHandler,
-            HasUiHandlers<PlanBSettingsUiHandlers> {
+            HasUiHandlers<ChangeUiHandlers> {
 
     }
 }

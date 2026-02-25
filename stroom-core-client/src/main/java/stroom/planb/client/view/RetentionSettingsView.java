@@ -16,13 +16,13 @@
 
 package stroom.planb.client.view;
 
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
 import stroom.planb.shared.RetentionSettings;
 
 import com.gwtplatform.mvp.client.HasUiHandlers;
 
-public interface RetentionSettingsView extends ReadOnlyChangeHandler, HasUiHandlers<PlanBSettingsUiHandlers> {
+public interface RetentionSettingsView extends ReadOnlyChangeHandler, HasUiHandlers<ChangeUiHandlers> {
 
     RetentionSettings getRetention();
 

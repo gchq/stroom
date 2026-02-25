@@ -26,9 +26,9 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.DisplayType;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
@@ -38,7 +38,6 @@ import stroom.pipeline.shared.data.PipelineLayer;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.planb.shared.PlanBDoc;
-import stroom.state.shared.StateDoc;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
@@ -72,8 +71,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
-        implements HasDirtyHandlers {
+public class PipelineReferenceListPresenter
+        extends MyPresenterWidget<PagerView>
+        implements HasChangeHandlers {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final String ADDED = "pipelineStructureViewImpl-property-added";
@@ -353,13 +353,11 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                     if (updated.getPipeline() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this,
                                 "You must specify a pipeline to use.", e::reset);
-                    } else if (!StateDoc.TYPE.equals(updated.getPipeline().getType()) &&
-                               !PlanBDoc.TYPE.equals(updated.getPipeline().getType()) &&
+                    } else if (!PlanBDoc.TYPE.equals(updated.getPipeline().getType()) &&
                                updated.getFeed() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this, "You must specify a feed to use.",
                                 e::reset);
-                    } else if (!StateDoc.TYPE.equals(updated.getPipeline().getType()) &&
-                               !PlanBDoc.TYPE.equals(updated.getPipeline().getType()) &&
+                    } else if (!PlanBDoc.TYPE.equals(updated.getPipeline().getType()) &&
                                updated.getStreamType() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this,
                                 "You must specify a stream type to use.", e::reset);
@@ -370,7 +368,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
 
                         setPipelineData(builder.build());
 
-                        setDirty(isNew || editor.isDirty());
+                        onChange();
                         refresh();
                         e.hide();
                     }
@@ -422,7 +420,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
             }
 
             setPipelineData(builder.build());
-            setDirty(true);
+            onChange();
             refresh();
         }
     }
@@ -555,15 +553,13 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         }
     }
 
-    protected void setDirty(final boolean dirty) {
-        if (dirty) {
-            DirtyEvent.fire(this, dirty);
-        }
+    private void onChange() {
+        ChangeEvent.fire(this);
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
     private enum State {

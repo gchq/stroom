@@ -267,13 +267,10 @@ public class RulesPresenter
 
     @Override
     public void read(final ComponentConfig componentConfig) {
-        if (componentConfig.getSettings() instanceof TableComponentSettings) {
-            final TableComponentSettings tableComponentSettings =
-                    (TableComponentSettings) componentConfig.getSettings();
+        if (componentConfig.getSettings() instanceof final TableComponentSettings tableComponentSettings) {
             read(tableComponentSettings);
-        } else if (componentConfig.getSettings() instanceof EmbeddedQueryComponentSettings) {
-            final EmbeddedQueryComponentSettings embeddedQueryComponentSettings =
-                    (EmbeddedQueryComponentSettings) componentConfig.getSettings();
+        } else if (componentConfig.getSettings() instanceof
+                final EmbeddedQueryComponentSettings embeddedQueryComponentSettings) {
             read(embeddedQueryComponentSettings.getQueryTablePreferences());
         }
     }
@@ -329,17 +326,13 @@ public class RulesPresenter
 
     @Override
     public ComponentConfig write(final ComponentConfig componentConfig) {
-        if (componentConfig.getSettings() instanceof TableComponentSettings) {
-            final TableComponentSettings oldSettings =
-                    (TableComponentSettings) componentConfig.getSettings();
+        if (componentConfig.getSettings() instanceof final TableComponentSettings oldSettings) {
             final TableComponentSettings newSettings = oldSettings
                     .copy()
                     .conditionalFormattingRules(rules)
                     .build();
             return componentConfig.copy().settings(newSettings).build();
-        } else if (componentConfig.getSettings() instanceof EmbeddedQueryComponentSettings) {
-            final EmbeddedQueryComponentSettings oldSettings =
-                    (EmbeddedQueryComponentSettings) componentConfig.getSettings();
+        } else if (componentConfig.getSettings() instanceof final EmbeddedQueryComponentSettings oldSettings) {
             final QueryTablePreferences queryTablePreferences =
                     write(oldSettings.getQueryTablePreferences());
             final EmbeddedQueryComponentSettings newSettings = oldSettings

@@ -21,7 +21,6 @@ import stroom.dashboard.shared.StoredQuery;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.storedquery.api.StoredQueryService;
-import stroom.util.AuditUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
@@ -55,10 +54,13 @@ public class StoredQueryServiceImpl implements StoredQueryService {
                                     "different to the logged in user.", ownerFromReq));
         }
 
-        AuditUtil.stamp(securityContext, storedQuery);
-        storedQuery.setOwner(securityContext.getUserRef());
-        storedQuery.setUuid(UUID.randomUUID().toString());
-        return securityContext.secureResult(() -> dao.create(storedQuery));
+        final StoredQuery updated = storedQuery
+                .copy()
+                .owner(securityContext.getUserRef())
+                .uuid(UUID.randomUUID().toString())
+                .stampAudit(securityContext)
+                .build();
+        return securityContext.secureResult(() -> dao.create(updated));
     }
 
     @Override
@@ -80,11 +82,12 @@ public class StoredQueryServiceImpl implements StoredQueryService {
             if (securityContext.isAdmin()
                 || securityContext.isCurrentUser(existingOwner)) {
 
-                AuditUtil.stamp(securityContext, storedQuery);
+                final StoredQuery.Builder builder = storedQuery.copy();
+                builder.stampAudit(securityContext);
                 if (storedQuery.getOwner() == null) {
-                    storedQuery.setOwner(securityContext.getUserRef());
+                    builder.owner(securityContext.getUserRef());
                 }
-                return dao.update(storedQuery);
+                return dao.update(builder.build());
             } else {
                 throw new PermissionException(securityContext.getUserRef(),
                         "You must be the owner of a stored query to update it, or be administrator.");

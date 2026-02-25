@@ -16,9 +16,8 @@
 
 package stroom.index.client.presenter;
 
-import com.gwtplatform.mvp.client.UiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 
-public interface IndexSettingsUiHandlers extends UiHandlers {
+public interface IndexSettingsUiHandlers extends ChangeUiHandlers {
 
-    void onChange();
 }

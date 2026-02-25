@@ -16,12 +16,13 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.presenter.AbstractProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
@@ -36,7 +37,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRuleDoc>
-        extends DocumentEditPresenter<AbstractProcessingPresenter.AnalyticProcessingView, D>
+        extends DocPresenter<AnalyticProcessingView, D>
         implements AnalyticProcessingUiHandlers, HasChangeDataHandlers<AnalyticProcessType> {
 
     private final ScheduledProcessingPresenter scheduledProcessingPresenter;
@@ -59,7 +60,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
         view.setUiHandlers(this);
     }
 
-    public void setDocumentEditPresenter(final DocumentEditPresenter<?, ?> documentEditPresenter) {
+    public void setDocumentEditPresenter(final DocPresenter<?, ?> documentEditPresenter) {
         scheduledProcessingPresenter.setDocumentEditPresenter(documentEditPresenter);
         streamingProcessingPresenter.setDocumentEditPresenter(documentEditPresenter);
     }
@@ -67,13 +68,13 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(tableBuilderProcessingPresenter.addDirtyHandler(event -> setDirty(true)));
-        registerHandler(streamingProcessingPresenter.addDirtyHandler(event -> setDirty(true)));
+        registerHandler(tableBuilderProcessingPresenter.addDirtyHandler(event -> onChange()));
+        registerHandler(streamingProcessingPresenter.addDirtyHandler(event -> onChange()));
     }
 
     @Override
     public void onProcessingTypeChange() {
-        setDirty(true);
+        onChange();
         setProcessType(getView().getProcessingType());
         ChangeDataEvent.fire(this, getView().getProcessingType());
     }
@@ -143,11 +144,6 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
                 break;
         }
         return analyticProcessConfig;
-    }
-
-    @Override
-    public void onDirty() {
-        setDirty(true);
     }
 
     @Override

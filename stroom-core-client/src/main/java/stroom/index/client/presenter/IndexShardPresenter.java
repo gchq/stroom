@@ -32,7 +32,7 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.IndexShard;
@@ -67,7 +67,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public class IndexShardPresenter
-        extends DocumentEditPresenter<PagerView, LuceneIndexDoc>
+        extends DocPresenter<PagerView, LuceneIndexDoc>
         implements Refreshable {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);

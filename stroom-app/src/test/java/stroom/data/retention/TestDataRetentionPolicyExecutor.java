@@ -67,7 +67,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
 
         final long now = System.currentTimeMillis();
         final long timeOutsideRetentionPeriod = now - java.util.concurrent.TimeUnit.DAYS.toMillis(RETENTION_PERIOD_DAYS)
-                - java.util.concurrent.TimeUnit.MINUTES.toMillis(1);
+                                                - java.util.concurrent.TimeUnit.MINUTES.toMillis(1);
 
         LOGGER.info(() -> "now: " + DateUtil.createNormalDateTimeString(now));
         LOGGER.info(() -> "timeOutsideRetentionPeriod: " + DateUtil.createNormalDateTimeString(
@@ -94,7 +94,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
             dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
         }
 
-        dataRetentionRules.setRules(List.of(rule1, rule2));
+        dataRetentionRules = dataRetentionRules.copy().rules(List.of(rule1, rule2)).build();
         dataRetentionRulesService.writeDocument(dataRetentionRules);
 
         Meta metaInsideRetention = createMeta(feedName1, now);
@@ -185,13 +185,13 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
 
         for (final Meta meta : list) {
             LOGGER.info(() -> "meta: " +
-                    meta +
-                    ", createMs:" +
-                    DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
-                    ", statusMs: " +
-                    DateUtil.createNormalDateTimeString(meta.getStatusMs()) +
-                    ", status: " +
-                    meta.getStatus());
+                              meta +
+                              ", createMs:" +
+                              DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
+                              ", statusMs: " +
+                              DateUtil.createNormalDateTimeString(meta.getStatusMs()) +
+                              ", status: " +
+                              meta.getStatus());
         }
     }
 }

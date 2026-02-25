@@ -16,6 +16,7 @@
 
 package stroom.planb.client.presenter;
 
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.RangeStateSettingsPresenter.RangeStateSettingsView;
 import stroom.planb.client.view.GeneralSettingsView;
@@ -81,7 +82,7 @@ public class RangeStateSettingsPresenter
             RangeKeySchemaSettingsView,
             StateValueSchemaSettingsView,
             ReadOnlyChangeHandler,
-            HasUiHandlers<PlanBSettingsUiHandlers> {
+            HasUiHandlers<ChangeUiHandlers> {
 
     }
 }

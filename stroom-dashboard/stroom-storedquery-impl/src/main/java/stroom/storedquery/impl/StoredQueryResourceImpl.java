@@ -111,7 +111,7 @@ class StoredQueryResourceImpl implements StoredQueryResource {
             result = storedQueryServiceProvider.get().create(storedQuery);
             documentEventLogProvider.get().create(result, null);
         } catch (final RuntimeException e) {
-            documentEventLogProvider.get().create(new StoredQuery(), e);
+            documentEventLogProvider.get().create(StoredQuery.builder().build(), e);
             throw e;
         }
 

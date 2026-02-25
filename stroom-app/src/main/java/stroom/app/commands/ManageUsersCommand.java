@@ -252,8 +252,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                                     final String outcomeMsg = LogUtil
                                             .message("User '{}' already exists but is disabled, enabling",
                                                     user.asRef().toInfoString());
-                                    user.setEnabled(true);
-                                    userService.update(user);
+                                    userService.update(user.copy().enabled(true).build());
                                     indentedWarn(LOGGER, outcomeMsg, "  ");
                                     logCreateUserEvent(userName, false, outcomeMsg);
                                 } else {
@@ -287,8 +286,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                                 if (!user.isEnabled()) {
                                     final String outcomeMsg = LogUtil
                                             .message("Group '{}' already exists but is disabled, enabling", groupName);
-                                    user.setEnabled(true);
-                                    userService.update(user);
+                                    userService.update(user.copy().enabled(true).build());
                                     indentedWarn(LOGGER, outcomeMsg, "  ");
                                     logCreateGroupEvent(groupName, true, outcomeMsg);
                                 } else {

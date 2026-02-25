@@ -16,7 +16,7 @@
 
 package stroom.planb.client.view;
 
-import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.planb.client.presenter.TemporalRangeStateSettingsPresenter.TemporalRangeStateSettingsView;
 import stroom.planb.shared.DurationSetting;
 import stroom.planb.shared.RetentionSettings;
@@ -31,7 +31,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class TemporalRangeStateSettingsViewImpl
-        extends ViewWithUiHandlers<PlanBSettingsUiHandlers>
+        extends ViewWithUiHandlers<ChangeUiHandlers>
         implements TemporalRangeStateSettingsView {
 
     private final Widget widget;
@@ -80,7 +80,7 @@ public class TemporalRangeStateSettingsViewImpl
     }
 
     @Override
-    public void setUiHandlers(final PlanBSettingsUiHandlers uiHandlers) {
+    public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
         generalSettingsWidget.setUiHandlers(uiHandlers);
         snapshotSettingsWidget.setUiHandlers(uiHandlers);

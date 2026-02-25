@@ -57,13 +57,13 @@ public class VisualisationDoc extends AbstractDoc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.VISUALISATION_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private String functionName;
+    private final String functionName;
     @JsonProperty
-    private DocRef scriptRef;
+    private final DocRef scriptRef;
     @JsonProperty
-    private String settings;
+    private final String settings;
 
     @JsonCreator
     public VisualisationDoc(@JsonProperty("uuid") final String uuid,
@@ -104,32 +104,16 @@ public class VisualisationDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public String getFunctionName() {
         return functionName;
-    }
-
-    public void setFunctionName(final String functionName) {
-        this.functionName = functionName;
     }
 
     public DocRef getScriptRef() {
         return scriptRef;
     }
 
-    public void setScriptRef(final DocRef scriptRef) {
-        this.scriptRef = scriptRef;
-    }
-
     public String getSettings() {
         return settings;
-    }
-
-    public void setSettings(final String settings) {
-        this.settings = settings;
     }
 
     @Override
@@ -164,7 +148,7 @@ public class VisualisationDoc extends AbstractDoc {
     }
 
     public static final class Builder
-            extends AbstractDoc.AbstractBuilder<VisualisationDoc, VisualisationDoc.Builder> {
+            extends AbstractBuilder<VisualisationDoc, Builder> {
 
         private String description;
         private String functionName;

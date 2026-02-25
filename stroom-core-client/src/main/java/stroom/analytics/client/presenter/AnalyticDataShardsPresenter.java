@@ -23,7 +23,7 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.GetAnalyticShardDataRequest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.QueryResultTablePresenter;
@@ -41,7 +41,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class AnalyticDataShardsPresenter
-        extends DocumentEditPresenter<AnalyticDataShardsView, AnalyticRuleDoc>
+        extends DocPresenter<AnalyticDataShardsView, AnalyticRuleDoc>
         implements HasToolbar {
 
     private static final AnalyticDataShardResource ANALYTIC_DATA_SHARD_RESOURCE =

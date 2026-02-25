@@ -831,7 +831,7 @@ public class SteppingPresenter
             requestBuilder.sessionUuid(null);
 
             final PipelineData pipelineData = pipelineModel.diff();
-            pipelineDoc.setPipelineData(pipelineData);
+            pipelineDoc = pipelineDoc.copy().pipelineData(pipelineData).build();
             requestBuilder.pipelineDoc(pipelineDoc);
 
             // If we are stepping to the first or last record then clear all

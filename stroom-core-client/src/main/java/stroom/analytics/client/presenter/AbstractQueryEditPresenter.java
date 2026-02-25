@@ -18,7 +18,7 @@ package stroom.analytics.client.presenter;
 
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.query.client.presenter.QueryEditPresenter;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
@@ -31,7 +31,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 public abstract class AbstractQueryEditPresenter<D extends AbstractAnalyticRuleDoc>
-        extends DocumentEditPresenter<QueryEditView, D>
+        extends DocPresenter<QueryEditView, D>
         implements HasToolbar {
 
     final QueryEditPresenter queryEditPresenter;
@@ -51,11 +51,8 @@ public abstract class AbstractQueryEditPresenter<D extends AbstractAnalyticRuleD
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(queryEditPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
+        registerHandler(queryEditPresenter.addChangeHandler(this::onChange));
+        registerHandler(queryEditPresenter.addValueChangeHandler(event -> onChange()));
     }
 
     @Override

@@ -19,7 +19,7 @@ package stroom.search.elastic.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.openai.shared.OpenAIModelDoc;
@@ -40,7 +40,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.UUID;
 
-public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<ElasticIndexSettingsView, ElasticIndexDoc>
+public class ElasticIndexSettingsPresenter extends DocPresenter<ElasticIndexSettingsView, ElasticIndexDoc>
         implements ElasticIndexSettingsUiHandlers {
 
     private static final ElasticIndexResource ELASTIC_INDEX_RESOURCE = GWT.create(ElasticIndexResource.class);
@@ -90,15 +90,10 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
     @Override
     protected void onBind() {
         // If the selected `ElasticCluster` changes, set the dirty flag to `true`
-        registerHandler(clusterPresenter.addDataSelectionHandler(event -> setDirty(true)));
-        registerHandler(vectorGenerationModelPresenter.addDataSelectionHandler(event -> setDirty(true)));
-        registerHandler(rerankModelPresenter.addDataSelectionHandler(event -> setDirty(true)));
-        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> setDirty(true)));
-    }
-
-    @Override
-    public void onChange() {
-        setDirty(true);
+        registerHandler(clusterPresenter.addDataSelectionHandler(event -> onChange()));
+        registerHandler(vectorGenerationModelPresenter.addDataSelectionHandler(event -> onChange()));
+        registerHandler(rerankModelPresenter.addDataSelectionHandler(event -> onChange()));
+        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> onChange()));
     }
 
     @Override
@@ -139,24 +134,19 @@ public class ElasticIndexSettingsPresenter extends DocumentEditPresenter<Elastic
 
     @Override
     protected ElasticIndexDoc onWrite(final ElasticIndexDoc index) {
-        index.setClusterRef(clusterPresenter.getSelectedEntityReference());
-        index.setVectorGenerationModelRef(vectorGenerationModelPresenter.getSelectedEntityReference());
-        index.setRerankModelRef(rerankModelPresenter.getSelectedEntityReference());
-
-        final String indexName = getView().getIndexName().trim();
-        if (indexName.isEmpty()) {
-            index.setIndexName(null);
-        } else {
-            index.setIndexName(indexName);
-        }
-
-        index.setSearchSlices(getView().getSearchSlices());
-        index.setSearchScrollSize(getView().getSearchScrollSize());
-        index.setTimeField(getView().getTimeField());
-        index.setRerankTextFieldSuffix(getView().getRerankTextFieldSuffix());
-        index.setRerankScoreMinimum(getView().getRerankScoreMinimum());
-        index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
-        return index;
+        return index
+                .copy()
+                .clusterRef(clusterPresenter.getSelectedEntityReference())
+                .vectorGenerationModelRef(vectorGenerationModelPresenter.getSelectedEntityReference())
+                .rerankModelRef(rerankModelPresenter.getSelectedEntityReference())
+                .indexName(getView().getIndexName().trim())
+                .searchSlices(getView().getSearchSlices())
+                .searchScrollSize(getView().getSearchScrollSize())
+                .timeField(getView().getTimeField())
+                .rerankTextFieldSuffix(getView().getRerankTextFieldSuffix())
+                .rerankScoreMinimum(getView().getRerankScoreMinimum())
+                .defaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference())
+                .build();
     }
 
     @Override

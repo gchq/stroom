@@ -21,7 +21,7 @@ import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.shared.PipelineDoc;
@@ -34,6 +34,7 @@ import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -45,7 +46,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class SolrIndexSettingsPresenter
-        extends DocumentEditPresenter<SolrIndexSettingsView, SolrIndexDoc>
+        extends DocPresenter<SolrIndexSettingsView, SolrIndexDoc>
         implements SolrIndexSettingsUiHandlers {
 
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
@@ -78,13 +79,8 @@ public class SolrIndexSettingsPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(editExpressionPresenter.addDirtyHandler(dirty -> setDirty(true)));
-        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> setDirty(true)));
-    }
-
-    @Override
-    public void onChange() {
-        setDirty(true);
+        registerHandler(editExpressionPresenter.addChangeHandler(this::onChange));
+        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> onChange()));
     }
 
     @Override
@@ -121,34 +117,40 @@ public class SolrIndexSettingsPresenter
 
         getView().setCollection(index.getCollection());
 
-        if (index.getRetentionExpression() == null) {
-            index.setRetentionExpression(ExpressionOperator.builder().build());
+        ExpressionOperator retentionExpression = index.getRetentionExpression();
+        if (retentionExpression == null) {
+            retentionExpression = ExpressionOperator.builder().build();
         }
 
         fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(docRef));
         editExpressionPresenter.init(restFactory, docRef, fieldSelectionBoxModel);
-        editExpressionPresenter.read(index.getRetentionExpression());
+        editExpressionPresenter.read(retentionExpression);
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
     }
 
     @Override
     protected SolrIndexDoc onWrite(final SolrIndexDoc index) {
-        final SolrConnectionConfig connectionConfig = new SolrConnectionConfig();
-        connectionConfig.setInstanceType(getView().getInstanceType());
-        connectionConfig.setSolrUrls(getView().getSolrUrls());
-        connectionConfig.setZkHosts(getView().getZkHosts());
-        connectionConfig.setZkPath(getView().getZkPath());
-        connectionConfig.setUseZk(getView().isUseZk());
-        index.setSolrConnectionConfig(connectionConfig);
+        final SolrConnectionConfig connectionConfig = SolrConnectionConfig
+                .builder()
+                .instanceType(getView().getInstanceType())
+                .solrUrls(getView().getSolrUrls())
+                .zkHosts(getView().getZkHosts())
+                .zkPath(getView().getZkPath())
+                .useZk(getView().isUseZk())
+                .build();
 
-        if (getView().getCollection().trim().length() == 0) {
-            index.setCollection(null);
-        } else {
-            index.setCollection(getView().getCollection().trim());
+        String collection = null;
+        if (!NullSafe.isBlankString(getView().getCollection())) {
+            collection = getView().getCollection().trim();
         }
-        index.setRetentionExpression(editExpressionPresenter.write());
-        index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
-        return index;
+
+        return index
+                .copy()
+                .collection(collection)
+                .solrConnectionConfig(connectionConfig)
+                .retentionExpression(editExpressionPresenter.write())
+                .defaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference())
+                .build();
     }
 
     @Override

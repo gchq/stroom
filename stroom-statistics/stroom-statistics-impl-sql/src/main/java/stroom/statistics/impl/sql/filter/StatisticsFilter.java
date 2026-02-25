@@ -34,9 +34,11 @@ import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
+import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.svg.shared.SvgImage;
 import stroom.util.CharBuffer;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -47,9 +49,11 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -95,6 +99,9 @@ public class StatisticsFilter extends AbstractXMLFilter {
     private DocRef statisticStoreRef;
     private StatisticStoreDoc statisticStoreEntity;
     private Statistics statisticEventStore;
+    private List<StatisticField> fieldList;
+    private Set<String> fieldNameSet;
+
     /**
      * Events attributes
      */
@@ -139,7 +146,13 @@ public class StatisticsFilter extends AbstractXMLFilter {
         }
 
         // clean out the map of field names to values
-        for (final String fieldName : statisticStoreEntity.getFieldNames()) {
+        fieldList = NullSafe.getOrElse(
+                statisticStoreEntity,
+                StatisticStoreDoc::getConfig,
+                StatisticsDataSourceData::getFields,
+                Collections.emptyList());
+        fieldNameSet = fieldList.stream().map(StatisticField::getFieldName).collect(Collectors.toSet());
+        for (final String fieldName : fieldNameSet) {
             emptyTagToValueMap.put(fieldName, null);
         }
     }
@@ -214,10 +227,10 @@ public class StatisticsFilter extends AbstractXMLFilter {
                     final String attValue = atts.getValue(i);
                     if (TAG_NAME.equals(attLocalName)) {
                         currentTagName = attValue;
-                        if (!statisticStoreEntity.isValidField(currentTagName)) {
+                        if (!fieldNameSet.contains(currentTagName)) {
                             throw new RuntimeException(String.format(
                                     "Statistic record contains a tag name [%s] that is not valid for this " +
-                                            "statistic data source [%s]",
+                                    "statistic data source [%s]",
                                     currentTagName,
                                     statisticStoreEntity.getName()));
                         }
@@ -310,28 +323,30 @@ public class StatisticsFilter extends AbstractXMLFilter {
             } else if (STATISTIC.equals(localName)) {
                 final StatisticEvent statisticEvent;
 
-                final List<StatisticTag> tagList = new ArrayList<>(
-                        statisticStoreEntity.getStatisticFieldCount());
+                final List<StatisticTag> tagList = new ArrayList<>(fieldNameSet.size());
 
                 // construct a list of stat tags in the correct order, as
                 // defined by the SDS
-                for (final StatisticField statisticField : statisticStoreEntity.getStatisticFields()) {
+                for (final StatisticField statisticField : fieldList) {
                     final String tagName = statisticField.getFieldName();
                     tagList.add(new StatisticTag(tagName, currentTagToValueMap.get(tagName)));
                 }
 
                 if (currentEventTimeMs == null) {
                     throw new IllegalStateException("Statistic with missing timestamp. Cannot update " +
-                            statisticStoreEntity.toString() +
-                            " other tags associated with this record are as follows: " +
-                            tagList.stream().map(StatisticTag::toString).collect(Collectors.joining(", ")));
+                                                    statisticStoreEntity.toString() +
+                                                    " other tags associated with this record are as follows: " +
+                                                    tagList
+                                                            .stream()
+                                                            .map(StatisticTag::toString)
+                                                            .collect(Collectors.joining(", ")));
                 }
 
-                if (currentTagToValueMap.size() != statisticStoreEntity.getFieldNames().size()) {
+                if (currentTagToValueMap.size() != fieldNameSet.size()) {
                     throw new RuntimeException(String.format(
                             "Number of tags in the data source [%s] does not agree with the number in the record " +
-                                    "passed to the filter [%s]",
-                            statisticStoreEntity.getFieldNames().size(),
+                            "passed to the filter [%s]",
+                            fieldNameSet.size(),
                             currentTagToValueMap.size()));
                 }
 

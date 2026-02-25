@@ -21,9 +21,9 @@ import stroom.alert.client.event.FireAlertEventFunction;
 import stroom.core.client.messages.ErrorMessageTemplates;
 import stroom.query.api.ParamValues;
 import stroom.query.api.TimeRange;
+import stroom.query.api.TimeRanges;
 import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
 import stroom.query.client.view.QueryButtons;
-import stroom.query.client.view.TimeRanges;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.ErrorMessages;
 import stroom.util.shared.Severity;
@@ -103,8 +103,10 @@ public class QueryToolbarPresenter
     }
 
     private String getAlertMessage(final int numberOfMessages) {
-        return numberOfMessages == 1 ? ERROR_MESSAGE_TEMPLATES.errorMessageCreatedSingular() :
-                ERROR_MESSAGE_TEMPLATES.errorMessagesCreatedPlural();
+        return numberOfMessages == 1
+                ? ERROR_MESSAGE_TEMPLATES.errorMessageCreatedSingular()
+                :
+                        ERROR_MESSAGE_TEMPLATES.errorMessagesCreatedPlural();
     }
 
     @Override

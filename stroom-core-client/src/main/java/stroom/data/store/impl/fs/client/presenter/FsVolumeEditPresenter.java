@@ -51,7 +51,6 @@ public class FsVolumeEditPresenter
 
     private final EditorPresenter editorPresenter;
     private final RestFactory restFactory;
-    private FsVolume volume;
 
     @Inject
     public FsVolumeEditPresenter(final EventBus eventBus,
@@ -77,12 +76,12 @@ public class FsVolumeEditPresenter
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        write();
+                        final FsVolume updated = write(volume);
                         try {
-                            if (volume.getId() == null) {
-                                doWithVolumeValidation(volume, () -> createVolume(consumer, volume, e), e);
+                            if (updated.getId() == null) {
+                                doWithVolumeValidation(updated, () -> createVolume(consumer, updated, e), e);
                             } else {
-                                doWithVolumeValidation(volume, () -> updateVolume(consumer, volume, e), e);
+                                doWithVolumeValidation(updated, () -> updateVolume(consumer, updated, e), e);
                             }
                         } catch (final RuntimeException ex) {
                             AlertEvent.fireError(FsVolumeEditPresenter.this, ex.getMessage(), e::reset);
@@ -158,8 +157,6 @@ public class FsVolumeEditPresenter
     }
 
     private void read(final FsVolume volume) {
-        this.volume = volume;
-
         getView().getVolumeType().addItems(FsVolumeType.values());
         getView().getVolumeType().setValue(volume.getVolumeType());
         getView().getPath().setText(volume.getPath());
@@ -177,18 +174,20 @@ public class FsVolumeEditPresenter
         }
     }
 
-    private void write() {
-        volume.setVolumeType(getView().getVolumeType().getValue());
-        volume.setPath(getView().getPath().getText());
-        volume.setStatus(getView().getVolumeStatus().getValue());
-        volume.setS3ClientConfigData(editorPresenter.getText());
-
+    private FsVolume write(final FsVolume volume) {
         Long bytesLimit = null;
         final String limit = getView().getByteLimit().getText().trim();
         if (limit.length() > 0) {
             bytesLimit = ModelStringUtil.parseIECByteSizeString(limit);
         }
-        volume.setByteLimit(bytesLimit);
+        return volume
+                .copy()
+                .volumeType(getView().getVolumeType().getValue())
+                .path(getView().getPath().getText())
+                .status(getView().getVolumeStatus().getValue())
+                .s3ClientConfigData(editorPresenter.getText())
+                .byteLimit(bytesLimit)
+                .build();
     }
 
     public interface FsVolumeEditView extends View, Focus {

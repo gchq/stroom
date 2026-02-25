@@ -17,7 +17,7 @@
 package stroom.pathways.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.pathways.client.presenter.PathwaysSplitPresenter.PathwaysSplitView;
 import stroom.pathways.shared.PathwaysDoc;
 import stroom.pathways.shared.pathway.Pathway;
@@ -26,7 +26,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-public class PathwaysSplitPresenter extends DocumentEditPresenter<PathwaysSplitView, PathwaysDoc> {
+public class PathwaysSplitPresenter extends DocPresenter<PathwaysSplitView, PathwaysDoc> {
 
     private final PathwayListPresenter pathwayListPresenter;
     private final PathwayTreePresenter pathwayTreePresenter;

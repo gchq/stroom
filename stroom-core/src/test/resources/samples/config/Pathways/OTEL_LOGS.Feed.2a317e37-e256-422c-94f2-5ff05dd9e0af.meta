@@ -3,7 +3,16 @@
   "uuid" : "2a317e37-e256-422c-94f2-5ff05dd9e0af",
   "name" : "OTEL_LOGS",
   "version" : "5e6b2764-ca3f-4abd-b224-480abb484cdf",
+  "description" : "",
+  "classification" : "",
+  "encoding" : "UTF-8",
+  "contextEncoding" : "UTF-8",
   "reference" : false,
   "streamType" : "Raw Events",
-  "status" : "RECEIVE"
+  "dataFormat" : "",
+  "contextFormat" : "",
+  "schema" : "",
+  "schemaVersion" : "",
+  "status" : "RECEIVE",
+  "volumeGroup" : "Default Volume Group"
 }

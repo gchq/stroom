@@ -158,7 +158,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
             errorListener = new ErrorListenerAdaptor(getElementId(), locationFactory, errorReceiverProxy);
             maxElementCount = xsltConfig.getMaxElements();
 
-            final XsltDoc xslt = loadXsltDoc();
+            XsltDoc xslt = loadXsltDoc();
 
             // If we have found XSLT then get a template.
             if (xslt != null) {
@@ -166,7 +166,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 // want to add them to the newly loaded XSLT.
 
                 if (injectedCode != null) {
-                    xslt.setData(injectedCode);
+                    xslt = xslt.copy().data(injectedCode).build();
                     usePool = false;
                 }
 

@@ -62,9 +62,9 @@ public class DashboardDoc extends AbstractDoc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.DASHBOARD_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private DashboardConfig dashboardConfig;
+    private final DashboardConfig dashboardConfig;
 
     @JsonCreator
     public DashboardDoc(@JsonProperty("uuid") final String uuid,
@@ -101,23 +101,12 @@ public class DashboardDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public DashboardConfig getDashboardConfig() {
         return dashboardConfig;
     }
 
-    public void setDashboardConfig(final DashboardConfig dashboardConfig) {
-        this.dashboardConfig = dashboardConfig;
-    }
-
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
@@ -125,12 +114,26 @@ public class DashboardDoc extends AbstractDoc {
             return false;
         }
         final DashboardDoc that = (DashboardDoc) o;
-        return Objects.equals(dashboardConfig, that.dashboardConfig);
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(description, that.description);
+//        final boolean b2 = Objects.equals(dashboardConfig, that.dashboardConfig);
+
+        return Objects.equals(description, that.description) &&
+               Objects.equals(dashboardConfig, that.dashboardConfig);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), dashboardConfig);
+        return Objects.hash(super.hashCode(), description, dashboardConfig);
+    }
+
+    @Override
+    public String toString() {
+        return "DashboardDoc{" +
+               "description='" + description + '\'' +
+               ", dashboardConfig=" + dashboardConfig +
+               '}';
     }
 
     public Builder copy() {
@@ -141,7 +144,7 @@ public class DashboardDoc extends AbstractDoc {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDoc.AbstractBuilder<DashboardDoc, DashboardDoc.Builder> {
+    public static final class Builder extends AbstractBuilder<DashboardDoc, Builder> {
 
         private String description;
         private DashboardConfig dashboardConfig;

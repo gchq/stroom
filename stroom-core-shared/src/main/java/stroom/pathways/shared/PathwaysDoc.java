@@ -51,25 +51,25 @@ public class PathwaysDoc extends AbstractDoc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.PATHWAYS_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private SimpleDuration temporalOrderingTolerance;
+    private final SimpleDuration temporalOrderingTolerance;
     @JsonProperty
-    private List<Pathway> pathways;
+    private final List<Pathway> pathways;
     @JsonProperty
-    private boolean allowPathwayCreation = true;
+    private final boolean allowPathwayCreation;
     @JsonProperty
-    private boolean allowPathwayMutation = true;
+    private final boolean allowPathwayMutation;
     @JsonProperty
-    private boolean allowConstraintCreation = true;
+    private final boolean allowConstraintCreation;
     @JsonProperty
-    private boolean allowConstraintMutation = true;
+    private final boolean allowConstraintMutation;
     @JsonProperty
-    private DocRef tracesDocRef;
+    private final DocRef tracesDocRef;
     @JsonProperty
-    private DocRef infoFeed;
+    private final DocRef infoFeed;
     @JsonProperty
-    private String processingNode;
+    private final String processingNode;
 
     @JsonCreator
     public PathwaysDoc(@JsonProperty("uuid") final String uuid,
@@ -122,80 +122,40 @@ public class PathwaysDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public SimpleDuration getTemporalOrderingTolerance() {
         return temporalOrderingTolerance;
-    }
-
-    public void setTemporalOrderingTolerance(final SimpleDuration temporalOrderingTolerance) {
-        this.temporalOrderingTolerance = temporalOrderingTolerance;
     }
 
     public List<Pathway> getPathways() {
         return pathways;
     }
 
-    public void setPathways(final List<Pathway> pathways) {
-        this.pathways = pathways;
-    }
-
     public boolean isAllowPathwayCreation() {
         return allowPathwayCreation;
-    }
-
-    public void setAllowPathwayCreation(final boolean allowPathwayCreation) {
-        this.allowPathwayCreation = allowPathwayCreation;
     }
 
     public boolean isAllowPathwayMutation() {
         return allowPathwayMutation;
     }
 
-    public void setAllowPathwayMutation(final boolean allowPathwayMutation) {
-        this.allowPathwayMutation = allowPathwayMutation;
-    }
-
     public boolean isAllowConstraintCreation() {
         return allowConstraintCreation;
-    }
-
-    public void setAllowConstraintCreation(final boolean allowConstraintCreation) {
-        this.allowConstraintCreation = allowConstraintCreation;
     }
 
     public boolean isAllowConstraintMutation() {
         return allowConstraintMutation;
     }
 
-    public void setAllowConstraintMutation(final boolean allowConstraintMutation) {
-        this.allowConstraintMutation = allowConstraintMutation;
-    }
-
     public DocRef getTracesDocRef() {
         return tracesDocRef;
-    }
-
-    public void setTracesDocRef(final DocRef tracesDocRef) {
-        this.tracesDocRef = tracesDocRef;
     }
 
     public DocRef getInfoFeed() {
         return infoFeed;
     }
 
-    public void setInfoFeed(final DocRef infoFeed) {
-        this.infoFeed = infoFeed;
-    }
-
     public String getProcessingNode() {
         return processingNode;
-    }
-
-    public void setProcessingNode(final String processingNode) {
-        this.processingNode = processingNode;
     }
 
     @Override
@@ -262,7 +222,7 @@ public class PathwaysDoc extends AbstractDoc {
     }
 
     public static final class Builder
-            extends AbstractDoc.AbstractBuilder<PathwaysDoc, PathwaysDoc.Builder> {
+            extends AbstractBuilder<PathwaysDoc, Builder> {
 
         private String description;
         private SimpleDuration temporalOrderingTolerance = new SimpleDuration(0, TimeUnit.NANOSECONDS);

@@ -56,17 +56,17 @@ public class OpenAIModelDoc extends AbstractDoc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.OPENAI_MODEL_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private String baseUrl;
+    private final String baseUrl;
     @JsonProperty
-    private String apiKeyName;
+    private final String apiKeyName;
     @JsonProperty
-    private String modelId;
+    private final String modelId;
     @JsonProperty
-    private int maxContextWindowTokens;
+    private final int maxContextWindowTokens;
     @JsonProperty
-    private HttpClientConfig httpClientConfiguration;
+    private final HttpClientConfig httpClientConfiguration;
 
     @JsonCreator
     public OpenAIModelDoc(
@@ -103,74 +103,46 @@ public class OpenAIModelDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public String getBaseUrl() {
         return baseUrl;
-    }
-
-    public void setBaseUrl(final String baseUrl) {
-        this.baseUrl = baseUrl;
     }
 
     public String getApiKeyName() {
         return apiKeyName;
     }
 
-    public void setApiKeyName(final String apiKeyName) {
-        this.apiKeyName = apiKeyName;
-    }
-
     public String getModelId() {
         return modelId;
-    }
-
-    public void setModelId(final String modelId) {
-        this.modelId = modelId;
     }
 
     public int getMaxContextWindowTokens() {
         return maxContextWindowTokens;
     }
 
-    public void setMaxContextWindowTokens(final int maxContextWindowTokens) {
-        this.maxContextWindowTokens = maxContextWindowTokens;
-    }
-
     public HttpClientConfig getHttpClientConfiguration() {
         return httpClientConfiguration;
     }
 
-    public void setHttpClientConfiguration(final HttpClientConfig httpClientConfiguration) {
-        this.httpClientConfiguration = httpClientConfiguration;
-    }
-
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof OpenAIModelDoc)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
         if (!super.equals(o)) {
             return false;
         }
-        final OpenAIModelDoc model = (OpenAIModelDoc) o;
-        return Objects.equals(description, model.description) &&
-               Objects.equals(baseUrl, model.baseUrl) &&
-               Objects.equals(apiKeyName, model.apiKeyName) &&
-               Objects.equals(modelId, model.modelId) &&
-               Objects.equals(maxContextWindowTokens, model.maxContextWindowTokens) &&
-               Objects.equals(httpClientConfiguration, model.httpClientConfiguration);
+        final OpenAIModelDoc that = (OpenAIModelDoc) o;
+        return maxContextWindowTokens == that.maxContextWindowTokens &&
+               Objects.equals(description, that.description) &&
+               Objects.equals(baseUrl, that.baseUrl) &&
+               Objects.equals(apiKeyName, that.apiKeyName) &&
+               Objects.equals(modelId, that.modelId) &&
+               Objects.equals(httpClientConfiguration, that.httpClientConfiguration);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                super.hashCode(),
+        return Objects.hash(super.hashCode(),
                 description,
                 baseUrl,
                 apiKeyName,
@@ -198,7 +170,7 @@ public class OpenAIModelDoc extends AbstractDoc {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDoc.AbstractBuilder<OpenAIModelDoc, OpenAIModelDoc.Builder> {
+    public static final class Builder extends AbstractBuilder<OpenAIModelDoc, Builder> {
 
         private String description;
         private String baseUrl;

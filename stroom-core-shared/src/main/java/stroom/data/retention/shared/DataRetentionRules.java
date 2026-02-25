@@ -55,7 +55,7 @@ public class DataRetentionRules extends AbstractDoc {
             SvgImage.DOCUMENT_RECEIVE_DATA_RULE_SET);
 
     @JsonProperty
-    private List<DataRetentionRule> rules;
+    private final List<DataRetentionRule> rules;
 
     @JsonCreator
     public DataRetentionRules(@JsonProperty("uuid") final String uuid,
@@ -97,10 +97,6 @@ public class DataRetentionRules extends AbstractDoc {
                 .collect(Collectors.toList());
     }
 
-    public void setRules(final List<DataRetentionRule> rules) {
-        this.rules = rules;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -130,7 +126,7 @@ public class DataRetentionRules extends AbstractDoc {
     }
 
     public static final class Builder
-            extends AbstractDoc.AbstractBuilder<DataRetentionRules, DataRetentionRules.Builder> {
+            extends AbstractBuilder<DataRetentionRules, Builder> {
 
         private List<DataRetentionRule> rules;
 

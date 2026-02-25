@@ -157,12 +157,17 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 //        commonTestControl.setup(tempDir);
 
         final DocRef statisticStoreRef = statisticStoreStore.createDocument(STAT_NAME);
-        final StatisticStoreDoc statisticStoreDoc = statisticStoreStore.readDocument(statisticStoreRef);
-        statisticStoreDoc.setDescription("My Description");
-        statisticStoreDoc.setStatisticType(StatisticType.VALUE);
-        statisticStoreDoc.setConfig(new StatisticsDataSourceData());
-        statisticStoreDoc.getConfig().addStatisticField(new StatisticField(TAG1));
-        statisticStoreDoc.getConfig().addStatisticField(new StatisticField(TAG2));
+        final StatisticStoreDoc statisticStoreDoc = statisticStoreStore.readDocument(statisticStoreRef)
+                        .copy()
+                .description("My Description")
+                        .statisticType(StatisticType.VALUE)
+                .config(StatisticsDataSourceData
+                        .builder()
+                        .fields(List.of(
+                                new StatisticField(TAG1),
+                                new StatisticField(TAG2)))
+                        .build())
+                .build();
         statisticStoreStore.writeDocument(statisticStoreDoc);
         this.statisticStoreDoc = statisticStoreDoc;
     }
@@ -301,7 +306,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
             // only search on the first tag
             final List<StatisticTag> searchTags = new ArrayList<>();
-            searchTags.add(tags.get(0));
+            searchTags.add(tags.getFirst());
 
             final Map<String, Set<String>> expectedValuesMap = ImmutableMap.of(
                     TAG1, Collections.singleton(nastyVal),

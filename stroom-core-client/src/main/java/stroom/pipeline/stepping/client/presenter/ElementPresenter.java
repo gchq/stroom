@@ -298,7 +298,7 @@ public class ElementPresenter
 
     private void write() {
         if (document instanceof final HasData hasData) {
-            hasData.setData(getCode());
+            document = (Document) hasData.copyWithData(getCode());
         }
     }
 

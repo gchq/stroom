@@ -32,7 +32,7 @@ dependencies {
     implementation project(':stroom-meta:stroom-meta-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-pipeline')
-    implementation project(':stroom-state:stroom-planb-impl')
+    implementation project(':stroom-planb:stroom-planb-impl')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
