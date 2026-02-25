@@ -276,8 +276,8 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
             return false;
         }
 
-        if(schedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
-            Long nowMs = Instant.now().toEpochMilli();
+        if (schedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
+            final Long nowMs = Instant.now().toEpochMilli();
             executionScheduleDao.updateExecutionSchedule(schedule
                     .copy()
                     .enabled(false)
@@ -317,7 +317,7 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
         final Trigger trigger = TriggerFactory.create(schedule);
 
         final Instant effectiveExecutionTime;
-        if(executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
+        if (executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
             effectiveExecutionTime = executionTime;
         } else if (currentTracker != null) {
             final Instant startTime = NullSafe.get(
@@ -341,7 +341,7 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
 
         // Calculate end bounds.
         final Instant endTime;
-        if(executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
+        if (executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
             endTime = executionTime;
         } else {
             endTime = NullSafe.getOrElse(

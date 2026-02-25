@@ -88,14 +88,14 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
     @Inject
     public ExecutionScheduleDaoImpl(final AnalyticsDbConnProvider analyticsDbConnProvider,
                                     final Provider<UserRefLookup> userRefLookupProvider,
-                                    final Provider<ScheduledQueryAnalyticExecutor> scheduledQueryAnalyticExecutorProvider,
+                                    final Provider<ScheduledQueryAnalyticExecutor> scheduledQueryAEProvider,
                                     final Provider<ReportExecutor> reportExecutorProvider,
                                     final SecurityContext securityContext,
                                     final DocRefInfoService docRefInfoService,
                                     final ExpressionMapperFactory expressionMapperFactory) {
         this.analyticsDbConnProvider = analyticsDbConnProvider;
         this.userRefLookupProvider = userRefLookupProvider;
-        this.scheduledQueryAnalyticExecutorProvider = scheduledQueryAnalyticExecutorProvider;
+        this.scheduledQueryAnalyticExecutorProvider = scheduledQueryAEProvider;
         this.reportExecutorProvider = reportExecutorProvider;
         this.securityContext = securityContext;
         this.docRefInfoService = docRefInfoService;
@@ -396,7 +396,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
 
         final Long startTimeMs;
         final Long endTimeMs;
-        if(executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
+        if (executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
             startTimeMs = Instant.now().toEpochMilli();
             endTimeMs = Instant.now().toEpochMilli();
         } else {
@@ -435,7 +435,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                         .returning(EXECUTION_SCHEDULE.ID)
                         .fetchOptional())
                 .map(ExecutionScheduleRecord::getId);
-        if(executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT) && executionSchedule.isEnabled()) {
+        if (executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT) && executionSchedule.isEnabled()) {
             executeSchedulesNow(Collections.singletonList(executionSchedule));
         }
         return optionalId.flatMap(this::fetchScheduleById).orElse(null);
@@ -485,7 +485,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                 .set(EXECUTION_SCHEDULE.RUN_AS_USER_UUID, runAsUser.getUuid())
                 .where(EXECUTION_SCHEDULE.ID.eq(executionSchedule.getId()))
                 .execute());
-        if(executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT) && executionSchedule.isEnabled()) {
+        if (executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT) && executionSchedule.isEnabled()) {
             executeSchedulesNow(Collections.singletonList(executionSchedule));
         }
         return fetchScheduleById(executionSchedule.getId()).orElse(null);

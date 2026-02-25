@@ -40,10 +40,9 @@ public class Schedule {
     public Schedule(@JsonProperty("type") final ScheduleType type,
                     @JsonProperty("expression") final String expression) {
         this.type = type;
-        if(type == ScheduleType.INSTANT) {
+        if (type == ScheduleType.INSTANT) {
             this.expression = "";
-        }
-        else {
+        } else {
             this.expression = expression;
         }
     }

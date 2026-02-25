@@ -72,10 +72,10 @@ public class ScheduledProcessEditViewImpl
     }
 
     private void onSchedule(final ValueChangeEvent<Schedule> event) {
-        if(event == null) {
+        if (event == null) {
             return;
         }
-        if(event.getValue() == null) {
+        if (event.getValue() == null) {
             return;
         }
         updateNonInstantUI(event.getValue().getType());
@@ -85,8 +85,13 @@ public class ScheduledProcessEditViewImpl
         startTime.setEnabled(!scheduleType.equals(ScheduleType.INSTANT));
         endTime.setEnabled(!scheduleType.equals(ScheduleType.INSTANT));
         scheduleBox.setEnabled(!scheduleType.equals(ScheduleType.INSTANT));
-        if(scheduleType.equals(ScheduleType.INSTANT)) {
-            scheduleBox.setValue(scheduleBox.getValue().copy().expression(ScheduleType.INSTANT.getDisplayValue()).build());
+        if (scheduleType.equals(ScheduleType.INSTANT)) {
+            scheduleBox.setValue(scheduleBox
+                    .getValue()
+                    .copy()
+                    .expression(ScheduleType.INSTANT.getDisplayValue())
+                    .build()
+            );
         }
         scheduleForm.setLabel("Schedule (" + scheduleType.getDisplayValue() + ")");
     }
@@ -101,7 +106,7 @@ public class ScheduledProcessEditViewImpl
         name.setFocus(true);
         name.selectAll();
 
-        if(scheduleBox != null) {
+        if (scheduleBox != null) {
             updateNonInstantUI(scheduleBox.getValue().getType());
         }
     }

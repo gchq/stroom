@@ -134,7 +134,7 @@ public class SchedulePopup
     }
 
     private Schedule createSchedule() {
-        if(getView().getScheduleType().equals(ScheduleType.INSTANT)) {
+        if (getView().getScheduleType().equals(ScheduleType.INSTANT)) {
             return new Schedule(getView().getScheduleType(), "Instant");
         }
         return new Schedule(getView().getScheduleType(), getView().getExpression().getText().trim());
