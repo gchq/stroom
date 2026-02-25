@@ -127,8 +127,7 @@ public class ScriptDependencyListPresenter extends MyPresenterWidget<WrapperView
 
     @Override
     public ScriptDoc write(final ScriptDoc document) {
-        document.setDependencies(scripts);
-        return document;
+        return document.copy().dependencies(scripts).build();
     }
 
     private void refresh() {

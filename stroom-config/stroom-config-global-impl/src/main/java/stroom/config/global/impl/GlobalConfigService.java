@@ -34,7 +34,6 @@ import stroom.query.common.v2.ValueFunctionFactoriesImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.AuditUtil;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator.Result;
 import stroom.util.config.PropertyUtil;
@@ -190,12 +189,8 @@ public class GlobalConfigService implements GlobalConfig {
             // object from global properties which may have a yaml value in it and a different
             // effective value
             return dao.fetch(propertyPath.toString())
-                    .map(configProp ->
-                            configMapper.decorateDbConfigProperty(configProp))
-                    .or(() -> {
-
-                        return configMapper.getGlobalProperty(propertyPath);
-                    });
+                    .map(configMapper::decorateDbConfigProperty)
+                    .or(() -> configMapper.getGlobalProperty(propertyPath));
         });
     }
 
@@ -210,10 +205,9 @@ public class GlobalConfigService implements GlobalConfig {
             // update the global config from the returned db record then return the corresponding
             // object from global properties which may have a yaml value in it and a different
             // effective value
-            final Optional<ConfigProperty> optionalConfigProperty = dao.fetch(id)
+            return dao
+                    .fetch(id)
                     .map(configMapper::decorateDbConfigProperty);
-
-            return optionalConfigProperty;
         });
     }
 
@@ -244,38 +238,40 @@ public class GlobalConfigService implements GlobalConfig {
 
     public ConfigProperty update(final ConfigProperty configProperty) {
         return securityContext.secureResult(AppPermission.MANAGE_PROPERTIES_PERMISSION, () -> {
-
             LOGGER.debug(() -> LogUtil.message(
                     "Saving property [{}] with new database value [{}]",
                     configProperty.getName(), configProperty.getDatabaseOverrideValue()));
 
             // Make sure we can parse the string value,
             // into an object (e.g. if it is a docref, list, map etc)
-            final ConfigProperty persistedConfigProperty;
+            ConfigProperty persistedConfigProperty;
             if (configProperty.hasDatabaseOverride()) {
 
                 // Ensure the value is a valid serialised form and that the de-serialised form
                 // passes javax validation
                 validateConfigProperty(configProperty);
 
-                AuditUtil.stamp(securityContext, configProperty);
+                final ConfigProperty.Builder builder = configProperty.copy();
+                builder.stampAudit(securityContext);
 
+                final ConfigProperty updated = builder.build();
                 if (configProperty.getId() == null) {
                     try {
-                        persistedConfigProperty = dao.create(configProperty);
+                        persistedConfigProperty = dao.create(updated);
                     } catch (final Exception e) {
                         throw new RuntimeException(LogUtil.message("Error inserting property {}: {}",
-                                configProperty.getName(), e.getMessage()));
+                                updated.getName(), e.getMessage()));
                     }
                 } else {
                     try {
-                        persistedConfigProperty = dao.update(configProperty);
+                        persistedConfigProperty = dao.update(updated);
                     } catch (final Exception e) {
                         throw new RuntimeException(LogUtil.message("Error updating property {} with id {}: {}",
-                                configProperty.getName(), configProperty.getId(), e.getMessage()));
+                                updated.getName(), updated.getId(), e.getMessage()));
                     }
                 }
             } else {
+                final ConfigProperty.Builder builder = configProperty.copy();
                 if (configProperty.getId() != null) {
                     // getDatabaseValue is unset so we need to remove it from the DB
                     try {
@@ -285,13 +281,13 @@ public class GlobalConfigService implements GlobalConfig {
                                 configProperty.getName(), e.getMessage()));
                     }
                     // this is now orphaned so clear the ID
-                    configProperty.setId(null);
+                    builder.id(null);
                 }
-                persistedConfigProperty = configProperty;
+                persistedConfigProperty = builder.build();
             }
 
             // Update property in the config object tree
-            configMapper.decorateDbConfigProperty(persistedConfigProperty);
+            persistedConfigProperty = configMapper.decorateDbConfigProperty(persistedConfigProperty);
 
             // Having updated a prop make sure the in mem config is correct.
             globalConfigBootstrapService.updateConfigFromDb(false);
@@ -350,14 +346,13 @@ public class GlobalConfigService implements GlobalConfig {
             final StringBuilder stringBuilder = new StringBuilder()
                     .append("Value [").append(effectiveValueStr).append("] ")
                     .append(" for property ")
-                    .append(propertyPath.toString())
+                    .append(propertyPath)
                     .append(" is invalid:");
 
-            validationResult.handleErrors(error -> {
-                stringBuilder
-                        .append("\n")
-                        .append(error.getMessage());
-            });
+            validationResult.handleErrors(error ->
+                    stringBuilder
+                            .append("\n")
+                            .append(error.getMessage()));
             throw new ConfigPropertyValidationException(stringBuilder.toString());
         }
     }
@@ -365,7 +360,7 @@ public class GlobalConfigService implements GlobalConfig {
     private AbstractConfig getInjectableAncestor(final PropertyPath propertyPath) {
 
         PropertyPath curPropertyPath = propertyPath;
-        AbstractConfig ancestorConfig = null;
+        AbstractConfig ancestorConfig;
 
         while (true) {
 

@@ -29,6 +29,7 @@ import com.google.inject.AbstractModule;
 import javax.xml.transform.URIResolver;
 
 public class XsltModule extends AbstractModule {
+
     @Override
     protected void configure() {
         bind(XsltStore.class).to(XsltStoreImpl.class);

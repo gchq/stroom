@@ -16,6 +16,7 @@
 
 package stroom.planb.client.presenter;
 
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.TemporalStateSettingsPresenter.TemporalStateSettingsView;
 import stroom.planb.client.view.CondenseSettingsView;
@@ -85,7 +86,7 @@ public class TemporalStateSettingsPresenter
             TemporalStateKeySchemaSettingsView,
             StateValueSchemaSettingsView,
             ReadOnlyChangeHandler,
-            HasUiHandlers<PlanBSettingsUiHandlers> {
+            HasUiHandlers<ChangeUiHandlers> {
 
     }
 }

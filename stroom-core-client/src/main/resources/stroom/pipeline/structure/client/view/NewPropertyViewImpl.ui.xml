@@ -25,9 +25,22 @@
             <form:HelpHTML>
                 <p>The source of the value for this property.</p>
                 <ul>
-                    <li><code>Default</code> means the default value is used.</li>
-                    <li><code>Inherit</code> means the value is inherited from the parent pipeline.</li>
-                    <li><code>Local</code> means the value set on this element is used.</li>
+                    <li>
+                        <code>Default</code>
+                        means the default value is used.
+                    </li>
+                    <li>
+                        <code>Inherit</code>
+                        means the value is inherited from the parent pipeline.
+                    </li>
+                    <li>
+                        <code>Inline</code>
+                        means the value is owned by the pipeline????
+                    </li>
+                    <li>
+                        <code>Local</code>
+                        means the value set on this element is used.
+                    </li>
                 </ul>
             </form:HelpHTML>
             <i:SelectionBox ui:field="source" addStyleNames="w-100"/>

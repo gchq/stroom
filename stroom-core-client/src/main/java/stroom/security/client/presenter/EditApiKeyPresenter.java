@@ -187,10 +187,11 @@ public class EditApiKeyPresenter
             if (NullSafe.isBlankString(getView().getName())) {
                 AlertEvent.fireError(this, "A name must be provided for the API key.", e::reset);
             } else {
-                final HashedApiKey updatedApiKey = HashedApiKey.builder(this.apiKey)
-                        .withName(getView().getName())
-                        .withComments(getView().getComments())
-                        .withEnabled(getView().isEnabled())
+                final HashedApiKey updatedApiKey = this.apiKey
+                        .copy()
+                        .name(getView().getName())
+                        .comments(getView().getComments())
+                        .enabled(getView().isEnabled())
                         .build();
 
 //                GWT.log("ID: " + this.apiKey.getId());

@@ -24,8 +24,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.AbstractTabProvider;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -43,7 +43,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import javax.inject.Provider;
 
-public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelView, DictionaryDoc> {
+public class DictionaryPresenter extends DocTabPresenter<LinkTabPanelView, DictionaryDoc> {
 
     private static final DictionaryResource DICTIONARY_RESOURCE = GWT.create(DictionaryResource.class);
 
@@ -99,8 +99,8 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
                 editorPresenter.getStylesOption().setUnavailable();
                 editorPresenter.getFormatAction().setUnavailable();
 
-                registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
-                registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
+                registerHandler(editorPresenter.addValueChangeHandler(event -> onChange()));
+                registerHandler(editorPresenter.addFormatHandler(event -> onChange()));
                 return editorPresenter;
             }
 
@@ -115,11 +115,10 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
 
             @Override
             public DictionaryDoc onWrite(final EditorPresenter presenter, final DictionaryDoc document) {
-                document.setData(presenter.getText());
-                return document;
+                return document.copy().data(presenter.getText()).build();
             }
         });
-        addTab(IMPORTS, new DocumentEditTabProvider<>(dictionarySettingsPresenterProvider::get));
+        addTab(IMPORTS, new DocTabProvider<>(dictionarySettingsPresenterProvider::get));
         addTab(EFFECTIVE_WORDS, createEffectiveWordsTabProvider(eventBus, wordListPresenterProvider));
         addTab(DOCUMENTATION, new MarkdownTabProvider<DictionaryDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
@@ -134,8 +133,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
             @Override
             public DictionaryDoc onWrite(final MarkdownEditPresenter presenter,
                                          final DictionaryDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

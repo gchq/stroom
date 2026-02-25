@@ -18,7 +18,6 @@ package stroom.search.elastic;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -42,9 +41,12 @@ public class ElasticClusterStoreImpl implements ElasticClusterStore {
     @Inject
     public ElasticClusterStoreImpl(
             final StoreFactory storeFactory,
-            final ElasticClusterSerialiser serialiser
-    ) {
-        this.store = storeFactory.createStore(serialiser, ElasticClusterDoc.TYPE, ElasticClusterDoc::builder);
+            final ElasticClusterSerialiser serialiser) {
+        this.store = storeFactory.createStore(
+                serialiser,
+                ElasticClusterDoc.TYPE,
+                ElasticClusterDoc::builder,
+                ElasticClusterDoc::copy);
     }
 
     // ---------------------------------------------------------------------
@@ -152,10 +154,7 @@ public class ElasticClusterStoreImpl implements ElasticClusterStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

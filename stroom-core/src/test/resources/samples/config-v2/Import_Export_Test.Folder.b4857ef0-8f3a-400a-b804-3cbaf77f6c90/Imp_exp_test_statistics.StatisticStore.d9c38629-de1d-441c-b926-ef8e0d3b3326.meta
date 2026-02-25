@@ -19,9 +19,9 @@
     "customRollUpMasks" : [ {
       "rolledUpTagPosition" : [ 0, 1 ]
     }, {
-      "rolledUpTagPosition" : [ 1, 2 ]
-    }, {
       "rolledUpTagPosition" : [ 1 ]
+    }, {
+      "rolledUpTagPosition" : [ 1, 2 ]
     } ]
   }
 }

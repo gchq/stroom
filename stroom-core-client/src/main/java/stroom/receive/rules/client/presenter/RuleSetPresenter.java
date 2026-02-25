@@ -27,6 +27,7 @@ import stroom.core.client.event.CloseContentEvent.DirtyMode;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -63,8 +64,10 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
+import java.util.Objects;
+
 public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
-        implements HasDirtyHandlers, CloseContentEvent.Handler, HasSave, DocumentTabData {
+        implements HasDirtyHandlers, CloseContentEvent.Handler, HasSave, DocumentTabData, ChangeUiHandlers {
 
     private static final ReceiveDataRuleSetResource RULES_RESOURCE = GWT.create(ReceiveDataRuleSetResource.class);
     private static final TabData RULES_TAB = new TabDataImpl("Rules");
@@ -75,15 +78,15 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     private final ButtonView warningButton;
 
     private final RuleSetSettingsPresenter ruleSetSettingsPresenter;
-    private final LazyValue<FieldListPresenter> lazyFieldListPresenter;
+    private final FieldListPresenter fieldListPresenter;
     private final LazyValue<MarkdownEditPresenter> lazyMarkdownEditPresenter;
     private final RestFactory restFactory;
     private final ButtonPanel toolbar;
 
     private PresenterWidget<?> currentContent;
-    private boolean dirty;
     private String lastLabel;
     private ReceiveDataRules receiveDataRules = null;
+    private boolean dirty;
 
     @Inject
     public RuleSetPresenter(final EventBus eventBus,
@@ -99,28 +102,16 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         this.ruleSetSettingsPresenter = ruleSetSettingsPresenter;
         registerHandler(this.ruleSetSettingsPresenter.addDirtyHandler(event -> {
 //            GWT.log("dirty event from ruleSetSettingsPresenter: " + event.isDirty());
-            if (event.isDirty()) {
-                setDirty(true);
-            }
+            onChange();
         }));
-        this.lazyFieldListPresenter = new LazyValue<>(
-                fieldListPresenterProvider,
-                fieldListPresenter -> {
-                    setFieldsOnPresenter(fieldListPresenter);
-                    registerHandler(fieldListPresenter.addDirtyHandler(event -> {
-                        if (event.isDirty()) {
-                            setDirty(true);
-                        }
-                    }));
-                });
+        fieldListPresenter = fieldListPresenterProvider.get();
+        ruleSetSettingsPresenter.setFieldListPresenter(fieldListPresenter);
         this.lazyMarkdownEditPresenter = new LazyValue<>(
                 markdownEditPresenterProvider,
                 markdownEditPresenter -> {
                     setDescriptionOnPresenter(markdownEditPresenter);
                     registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
-                        if (event.isDirty()) {
-                            setDirty(true);
-                        }
+                        onChange();
                     }));
                 });
         this.restFactory = restFactory;
@@ -143,22 +134,17 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         restFactory
                 .create(RULES_RESOURCE)
                 .method(ReceiveDataRuleSetResource::fetch)
-                .onSuccess(result -> {
-                    receiveDataRules = result;
-                    // Make sure the rules and lists are in mutable lists so we can mutate the doc
-                    receiveDataRules.setRules(NullSafe.mutableList(receiveDataRules.getRules()));
-                    receiveDataRules.setFields(NullSafe.mutableList(receiveDataRules.getFields()));
-
-                    ruleSetSettingsPresenter.read(receiveDataRules.asDocRef(), receiveDataRules, false);
-                    lazyFieldListPresenter.consumeIfInitialised(this::setFieldsOnPresenter);
-                    lazyMarkdownEditPresenter.consumeIfInitialised(this::setDescriptionOnPresenter);
-                })
+                .onSuccess(this::read)
                 .onFailure(error -> AlertEvent.fireError(
                         RuleSetPresenter.this,
                         "Unable to load Receive Data Rules", error.getMessage(),
                         null))
                 .taskMonitorFactory(this)
                 .exec();
+    }
+
+    public final boolean isDirty() {
+        return dirty;
     }
 
     private void initToolbar(final ButtonPanel toolbar, final ReceiptCheckMode receiptCheckMode) {
@@ -186,32 +172,18 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     }
 
     private void setDescriptionOnPresenter(final MarkdownEditPresenter markdownEditPresenter) {
-        final ReceiveDataRules receiveDataRules = getReceiveDataRules();
         markdownEditPresenter.setText(receiveDataRules.getDescription());
         markdownEditPresenter.setReadOnly(false);
-    }
-
-    private void setFieldsOnPresenter(final FieldListPresenter fieldListPresenter) {
-        final ReceiveDataRules receiveDataRules = getReceiveDataRules();
-        fieldListPresenter.read(receiveDataRules.asDocRef(), receiveDataRules, false);
-    }
-
-//    private void setRulesOnPresenter(final RuleSetSettingsPresenter ruleSetSettingsPresenter) {
-//        final ReceiveDataRules receiveDataRules = getReceiveDataRules();
-//        ruleSetSettingsPresenter.onRead(receiveDataRules.asDocRef(), receiveDataRules, false);
-//    }
-
-    private ReceiveDataRules getReceiveDataRules() {
-        return receiveDataRules;
     }
 
     @Override
     protected void onBind() {
         super.onBind();
         registerHandler(ruleSetSettingsPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
+            onChange();
+        }));
+        registerHandler(fieldListPresenter.addDirtyHandler(event -> {
+            onChange();
         }));
         registerHandler(getView().getTabBar().addSelectionHandler(event ->
                 selectTab(event.getSelectedItem())));
@@ -270,11 +242,12 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
 
     @Override
     public void save() {
+        final ReceiveDataRules updated = write(receiveDataRules);
         restFactory.create(RULES_RESOURCE)
-                .method(resource -> resource.update(receiveDataRules))
+                .method(resource -> resource.update(updated))
                 .onSuccess(persistedRules -> {
-                    receiveDataRules = persistedRules;
-                    setDirty(false);
+                    read(persistedRules);
+                    onChange();
                 })
                 .onFailure(error -> AlertEvent.fireError(
                         RuleSetPresenter.this,
@@ -284,25 +257,46 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
                 .exec();
     }
 
-    public boolean isDirty() {
-        return dirty;
+    @Override
+    public final void onChange() {
+        final ReceiveDataRules original = receiveDataRules;
+        final ReceiveDataRules updated = write(original);
+        final boolean dirty = !Objects.equals(original, updated);
+        setDirty(dirty);
     }
 
-    void setDirty(final boolean dirty) {
-        GWT.log("dirty: " + dirty);
+    private void read(final ReceiveDataRules rules) {
+        this.receiveDataRules = rules;
+        ruleSetSettingsPresenter.read(receiveDataRules.asDocRef(), receiveDataRules, false);
+        fieldListPresenter.read(receiveDataRules.asDocRef(), receiveDataRules, false);
+        lazyMarkdownEditPresenter.consumeIfInitialised(this::setDescriptionOnPresenter);
+    }
+
+    private ReceiveDataRules write(final ReceiveDataRules rules) {
+        ReceiveDataRules updated = rules;
+        updated = ruleSetSettingsPresenter.write(updated);
+        updated = fieldListPresenter.write(updated);
+        if (lazyMarkdownEditPresenter.isInitialised()) {
+            updated = updated.copy().description(lazyMarkdownEditPresenter.getValue().getText()).build();
+        }
+        return updated;
+    }
+
+    private void setDirty(final boolean dirty) {
         if (this.dirty != dirty) {
             this.dirty = dirty;
+            updateLabel();
             DirtyEvent.fire(this, dirty);
-
-            if (lastLabel == null || !lastLabel.equals(getLabel())) {
-                lastLabel = getLabel();
-                RefreshContentTabEvent.fire(this, this);
-            }
         }
-        ruleSetSettingsPresenter.setDirty(dirty);
-        lazyFieldListPresenter.consumeIfInitialised(fieldListPresenter ->
-                fieldListPresenter.setDirty(dirty));
-        saveButton.setEnabled(dirty);
+    }
+
+    private void updateLabel() {
+        // Only fire tab refresh if the tab has changed.
+        if (lastLabel == null || !lastLabel.equals(getLabel())) {
+            lastLabel = getLabel();
+            RefreshContentTabEvent.fire(this, this);
+        }
+        saveButton.setEnabled(isDirty());
     }
 
     @Override
@@ -326,7 +320,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         if (RULES_TAB.equals(tab)) {
             callback.onReady(ruleSetSettingsPresenter);
         } else if (FIELDS_TAB.equals(tab)) {
-            callback.onReady(lazyFieldListPresenter.getValue());
+            callback.onReady(fieldListPresenter);
         } else if (DOCUMENTATION_TAB.equals(tab)) {
             callback.onReady(lazyMarkdownEditPresenter.getValue());
         } else {

@@ -27,7 +27,6 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.planb.shared.PlanBDoc;
 import stroom.security.shared.DocumentPermission;
-import stroom.state.shared.StateDoc;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 
@@ -53,7 +52,6 @@ public class NewPipelineReferencePresenter
     private final RestFactory restFactory;
     private final UiConfigCache uiConfigCache;
     private final SelectionBox<String> dataTypeWidget;
-    private boolean dirty;
     private boolean initialised;
     private PipelineReference currentPipelineReference;
 
@@ -71,7 +69,7 @@ public class NewPipelineReferencePresenter
         this.uiConfigCache = uiConfigCache;
 
         // TODO : @66 FIX TEMPORARY ABUSE OF PIPELINE REF
-        pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE, StateDoc.TYPE, PlanBDoc.TYPE);
+        pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE, PlanBDoc.TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermission.USE);
 
         feedPresenter.setIncludedTypes(FeedDoc.TYPE);
@@ -116,7 +114,7 @@ public class NewPipelineReferencePresenter
             if (initialised) {
                 final DocRef selection = pipelinePresenter.getSelectedEntityReference();
                 if (!Objects.equals(pipelineReference.getPipeline(), selection)) {
-                    setDirty(true);
+                    onChange();
                 }
             }
         });
@@ -124,7 +122,7 @@ public class NewPipelineReferencePresenter
             if (initialised) {
                 final DocRef selection = feedPresenter.getSelectedEntityReference();
                 if (!Objects.equals(pipelineReference.getFeed(), selection)) {
-                    setDirty(true);
+                    onChange();
                 }
             }
         });
@@ -132,10 +130,14 @@ public class NewPipelineReferencePresenter
             if (initialised) {
                 final String selection = dataTypeWidget.getValue();
                 if (!Objects.equals(pipelineReference.getStreamType(), selection)) {
-                    setDirty(true);
+                    onChange();
                 }
             }
         });
+    }
+
+    private void onChange() {
+
     }
 
     public PipelineReference write() {
@@ -165,14 +167,6 @@ public class NewPipelineReferencePresenter
                 })
                 .taskMonitorFactory(this)
                 .exec();
-    }
-
-    public boolean isDirty() {
-        return dirty;
-    }
-
-    private void setDirty(final boolean dirty) {
-        this.dirty = dirty;
     }
 
     public interface NewPipelineReferenceView extends View {

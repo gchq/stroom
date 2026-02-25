@@ -23,7 +23,7 @@ import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.http.client.presenter.HttpClientConfigPresenter;
 import stroom.item.client.SelectionBox;
@@ -44,7 +44,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIModelSettingsView, OpenAIModelDoc>
+public class OpenAIModelSettingsPresenter extends DocPresenter<OpenAIModelSettingsView, OpenAIModelDoc>
         implements OpenAIModelSettingsUiHandlers {
 
     private static final OpenAIModelResource OPEN_AI_MODEL_RESOURCE = GWT.create(OpenAIModelResource.class);
@@ -72,11 +72,6 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
         credentialListModel.setTaskMonitorFactory(this);
         view.getApiKeySelectionBox().setModel(credentialListModel);
         view.setUiHandlers(this);
-    }
-
-    @Override
-    public void onChange() {
-        setDirty(true);
     }
 
     @Override
@@ -121,23 +116,25 @@ public class OpenAIModelSettingsPresenter extends DocumentEditPresenter<OpenAIMo
 
     @Override
     protected OpenAIModelDoc onWrite(final OpenAIModelDoc model) {
-        model.setBaseUrl(getView().getBaseUrl());
-        model.setApiKeyName(NullSafe.get(
-                getView(),
-                OpenAIModelSettingsView::getApiKeySelectionBox,
-                SelectionBox::getValue,
-                Credential::getName));
-        model.setModelId(getView().getModelId());
-        model.setMaxContextWindowTokens(getView().getMaxContextWindowTokens());
-        model.setHttpClientConfiguration(httpClientConfiguration);
-        return model;
+        return model
+                .copy()
+                .baseUrl(getView().getBaseUrl())
+                .apiKey(NullSafe.get(
+                        getView(),
+                        OpenAIModelSettingsView::getApiKeySelectionBox,
+                        SelectionBox::getValue,
+                        Credential::getName))
+                .modelId(getView().getModelId())
+                .maxContextWindowTokens(getView().getMaxContextWindowTokens())
+                .httpClientConfiguration(httpClientConfiguration)
+                .build();
     }
 
     @Override
     public void onSetHttpClientConfiguration() {
         httpClientSettingsPresenterProvider.get().show(httpClientConfiguration, updated -> {
             if (!Objects.equals(httpClientConfiguration, updated)) {
-                setDirty(true);
+                onChange();
                 httpClientConfiguration = updated;
             }
         });

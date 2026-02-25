@@ -30,6 +30,7 @@ import jakarta.validation.constraints.NotNull;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
+import org.jooq.Record;
 import org.jooq.impl.DSL;
 
 import java.util.Collection;
@@ -37,6 +38,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static stroom.job.impl.db.jooq.tables.Job.JOB;
 import static stroom.job.impl.db.jooq.tables.JobNode.JOB_NODE;
@@ -54,6 +57,32 @@ import static stroom.job.impl.db.jooq.tables.JobNode.JOB_NODE;
 public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(JobDao.class);
 
+    public static final Function<Record, Job> RECORD_TO_JOB_MAPPER = record -> Job
+            .builder()
+            .id(record.get(JOB.ID))
+            .version(record.get(JOB.VERSION))
+            .createTimeMs(record.get(JOB.CREATE_TIME_MS))
+            .createUser(record.get(JOB.CREATE_USER))
+            .updateTimeMs(record.get(JOB.UPDATE_TIME_MS))
+            .updateUser(record.get(JOB.UPDATE_USER))
+            .name(record.get(JOB.NAME))
+            .enabled(record.get(JOB.ENABLED))
+            .build();
+
+    public static final BiFunction<Job, JobRecord, JobRecord> JOB_TO_RECORD_MAPPER =
+            (job, record) -> {
+                record.from(job);
+                record.set(JOB.ID, job.getId());
+                record.set(JOB.VERSION, job.getVersion());
+                record.set(JOB.CREATE_TIME_MS, job.getCreateTimeMs());
+                record.set(JOB.CREATE_USER, job.getCreateUser());
+                record.set(JOB.UPDATE_TIME_MS, job.getUpdateTimeMs());
+                record.set(JOB.UPDATE_USER, job.getUpdateUser());
+                record.set(JOB.NAME, job.getName());
+                record.set(JOB.ENABLED, job.isEnabled());
+                return record;
+            };
+
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindJobCriteria.FIELD_ID, JOB.ID,
             FindJobCriteria.FIELD_NAME, JOB.NAME);
@@ -63,7 +92,12 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
 
     @Inject
     JobDaoImpl(final JobDbConnProvider jobDbConnProvider) {
-        genericDao = new GenericDao<>(jobDbConnProvider, JOB, JOB.ID, Job.class);
+        genericDao = new GenericDao<>(
+                jobDbConnProvider,
+                JOB,
+                JOB.ID,
+                JOB_TO_RECORD_MAPPER,
+                RECORD_TO_JOB_MAPPER);
         this.jobDbConnProvider = jobDbConnProvider;
     }
 
@@ -102,7 +136,7 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
                         .orderBy(orderFields)
                         .limit(offset, limit)
                         .fetch())
-                .into(Job.class);
+                .map(RECORD_TO_JOB_MAPPER::apply);
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 

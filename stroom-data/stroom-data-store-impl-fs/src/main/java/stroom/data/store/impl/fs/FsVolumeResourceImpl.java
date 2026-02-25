@@ -101,8 +101,10 @@ class FsVolumeResourceImpl implements FsVolumeResource {
             result = volumeServiceProvider.get().fetch(id);
             documentEventLogProvider.get().view(result, null);
         } catch (final RuntimeException e) {
-            final FsVolume fsVolume = new FsVolume();
-            fsVolume.setId(id);
+            final FsVolume fsVolume = FsVolume
+                    .builder()
+                    .id(id)
+                    .build();
             documentEventLogProvider.get().view(fsVolume, e);
             throw e;
         }
@@ -137,8 +139,10 @@ class FsVolumeResourceImpl implements FsVolumeResource {
 
     @Override
     public Boolean delete(final Integer id) {
-        final FsVolume fsVolume = new FsVolume();
-        fsVolume.setId(id);
+        final FsVolume fsVolume = FsVolume
+                .builder()
+                .id(id)
+                .build();
 
         try {
             volumeServiceProvider.get().delete(id);

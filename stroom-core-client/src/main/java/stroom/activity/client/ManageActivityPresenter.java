@@ -139,7 +139,7 @@ public class ManageActivityPresenter
         uiConfigCache.get(uiConfig -> {
             if (uiConfig != null) {
                 final boolean show = uiConfig.getActivity().isChooseOnStartup() &&
-                        uiConfig.getActivity().isEnabled();
+                                     uiConfig.getActivity().isEnabled();
                 if (show) {
                     if (urlParameters.isEmbedded()) {
                         // If we are in embedded more then see if we can find a current activity set in the session.
@@ -229,9 +229,9 @@ public class ManageActivityPresenter
     private void enableButtons() {
         final Activity activity = getSelected();
         final boolean enabled = activity != null &&
-                activity.getDetails() != null &&
-                activity.getDetails().getProperties() != null &&
-                activity.getDetails().getProperties().size() > 0;
+                                activity.getDetails() != null &&
+                                activity.getDetails().getProperties() != null &&
+                                activity.getDetails().getProperties().size() > 0;
         openButton.setEnabled(enabled);
         deleteButton.setEnabled(enabled);
         if (enabled) {
@@ -271,7 +271,7 @@ public class ManageActivityPresenter
         final Activity entity = getSelected();
         if (entity != null) {
             ConfirmEvent.fire(this, "Are you sure you want to delete the selected " +
-                            getEntityDisplayType() + "?",
+                                    getEntityDisplayType() + "?",
                     result -> {
                         if (result) {
                             // Delete the activity
@@ -302,7 +302,7 @@ public class ManageActivityPresenter
     }
 
     private void onNew() {
-        onEdit(Activity.create());
+        onEdit(Activity.builder().build());
     }
 
     private void setSelected(final Activity activity) {

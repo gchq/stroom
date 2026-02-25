@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder({
         "light",
         "dark"})
@@ -48,6 +50,34 @@ public class CustomConditionalFormattingStyle {
         return dark;
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final CustomConditionalFormattingStyle that = (CustomConditionalFormattingStyle) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(light, that.light);
+//        final boolean b2 = Objects.equals(dark, that.dark);
+
+        return Objects.equals(light, that.light) &&
+               Objects.equals(dark, that.dark);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(light, dark);
+    }
+
+    @Override
+    public String toString() {
+        return "CustomConditionalFormattingStyle{" +
+               "light=" + light +
+               ", dark=" + dark +
+               '}';
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -55,7 +85,6 @@ public class CustomConditionalFormattingStyle {
     public Builder copy() {
         return new Builder(this);
     }
-
 
     public static final class Builder {
 

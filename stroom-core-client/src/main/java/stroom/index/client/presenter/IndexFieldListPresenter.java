@@ -28,7 +28,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.index.shared.AddField;
 import stroom.index.shared.DeleteField;
 import stroom.index.shared.IndexFieldImpl;
@@ -56,7 +56,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class IndexFieldListPresenter
-        extends DocumentEditPresenter<QuickFilterPageView, LuceneIndexDoc>
+        extends DocPresenter<QuickFilterPageView, LuceneIndexDoc>
         implements QuickFilterUiHandlers {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);

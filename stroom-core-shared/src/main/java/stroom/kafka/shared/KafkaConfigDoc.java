@@ -54,9 +54,9 @@ public class KafkaConfigDoc extends AbstractDoc implements HasData {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.KAFKA_CONFIG_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description = "";
+    private final String description;
     @JsonProperty
-    private String data = "";
+    private final String data;
 
     @JsonCreator
     public KafkaConfigDoc(@JsonProperty("uuid") final String uuid,
@@ -93,19 +93,9 @@ public class KafkaConfigDoc extends AbstractDoc implements HasData {
         return description;
     }
 
-    @SuppressWarnings("unused")
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     @Override
     public String getData() {
         return data;
-    }
-
-    @Override
-    public void setData(final String data) {
-        this.data = data;
     }
 
     @Override
@@ -133,11 +123,16 @@ public class KafkaConfigDoc extends AbstractDoc implements HasData {
         return new Builder(this);
     }
 
+    @Override
+    public HasData copyWithData(final String data) {
+        return copy().data(data).build();
+    }
+
     public static Builder builder() {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDoc.AbstractBuilder<KafkaConfigDoc, KafkaConfigDoc.Builder> {
+    public static final class Builder extends AbstractBuilder<KafkaConfigDoc, Builder> {
 
         private String description = "";
         private String data = "";

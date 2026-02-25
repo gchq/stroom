@@ -22,7 +22,6 @@ import stroom.job.shared.JobNode;
 import stroom.node.api.NodeInfo;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
-import stroom.util.AuditUtil;
 import stroom.util.exception.DataChangedException;
 
 import jakarta.inject.Inject;
@@ -46,10 +45,11 @@ class TestJobNodeDao extends AbstractCoreIntegrationTest {
 
     @Test
     void test() {
-        Job job = new Job();
-        job.setName("Test Job" + System.currentTimeMillis());
-        job.setEnabled(true);
-        AuditUtil.stamp(() -> "test", job);
+        Job job = Job.builder()
+                .name("Test Job" + System.currentTimeMillis())
+                .enabled(true)
+                .stampAudit("test")
+                .build();
         job = jobDao.create(job);
 
         // Test update
@@ -64,18 +64,16 @@ class TestJobNodeDao extends AbstractCoreIntegrationTest {
         }).isInstanceOf(DataChangedException.class);
 
         // Test that job service can continually update jobs.
-        job.setEnabled(false);
-        jobService.update(job);
-        job.setEnabled(true);
-        jobService.update(job);
+        jobService.update(job.copy().enabled(false).build());
+        jobService.update(job.copy().enabled(true).build());
 
-        JobNode jobNode = new JobNode();
-        jobNode.setJob(job);
-        jobNode.setNodeName(nodeInfo.getThisNodeName());
-
-        AuditUtil.stamp(() -> "test", jobNode);
+        JobNode jobNode = JobNode.builder()
+                .job(job)
+                .nodeName(nodeInfo.getThisNodeName())
+                .stampAudit("test")
+                .build();
         jobNode = jobNodeDao.create(jobNode);
-        jobNode.setEnabled(true);
+        jobNode = jobNode.copy().enabled(true).build();
 
         // Test update
         jobNode = jobNodeDao.update(jobNode);
@@ -89,9 +87,9 @@ class TestJobNodeDao extends AbstractCoreIntegrationTest {
         }).isInstanceOf(DataChangedException.class);
 
         // Test that job node service can continually update jobs.
-        jobNode.setEnabled(false);
+        jobNode = jobNode.copy().enabled(false).build();
         jobNodeService.update(jobNode);
-        jobNode.setEnabled(true);
+        jobNode = jobNode.copy().enabled(true).build();
         jobNodeService.update(jobNode);
     }
 }

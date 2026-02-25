@@ -220,13 +220,13 @@ class TestDictionaryStoreImpl {
                 .randomUuid()
                 .name(name)
                 .build();
-        final DictionaryDoc dictionaryDoc = DictionaryDoc.builder()
+        DictionaryDoc dictionaryDoc = DictionaryDoc.builder()
                 .uuid(docRef.getUuid())
                 .name(docRef.getName())
                 .data(data)
                 .build();
         if (imports != null && imports.length > 0) {
-            dictionaryDoc.setImports(Arrays.asList(imports));
+            dictionaryDoc = dictionaryDoc.copy().imports(Arrays.asList(imports)).build();
         }
 
         Mockito.when(mockStore.readDocument(Mockito.eq(docRef)))
@@ -239,6 +239,7 @@ class TestDictionaryStoreImpl {
         final Store<DictionaryDoc> store = mockStoreFactory.createStore(
                 Mockito.any(),
                 Mockito.eq(DictionaryDoc.TYPE),
+                Mockito.any(),
                 Mockito.any());
         Mockito.when(store).thenReturn(mockStore);
 

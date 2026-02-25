@@ -25,14 +25,16 @@ import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasPrimitiveValue;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PrimitiveValueConverter;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.util.Objects;
 
 @Description(
         "The {{< glossary \"Feed\" >}} is Stroom's way of compartmentalising data that has been ingested or " +
@@ -72,31 +74,31 @@ public class FeedDoc extends AbstractDoc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.FEED_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private String classification;
+    private final String classification;
     @JsonProperty
-    private String encoding;
+    private final String encoding;
     @JsonProperty
-    private String contextEncoding;
+    private final String contextEncoding;
     @JsonProperty
-    private Integer retentionDayAge;
+    private final Integer retentionDayAge;
     @JsonProperty
-    private boolean reference;
+    private final boolean reference;
     @JsonProperty
-    private String streamType;
+    private final String streamType;
     @JsonProperty
-    private String dataFormat;
+    private final String dataFormat;
     @JsonProperty
-    private String contextFormat;
+    private final String contextFormat;
     @JsonProperty
-    private String schema;
+    private final String schema;
     @JsonProperty
-    private String schemaVersion;
+    private final String schemaVersion;
     @JsonProperty
-    private FeedStatus status;
+    private final FeedStatus status;
     @JsonProperty
-    private String volumeGroup;
+    private final String volumeGroup;
 
     @JsonCreator
     public FeedDoc(@JsonProperty("uuid") final String uuid,
@@ -120,19 +122,22 @@ public class FeedDoc extends AbstractDoc {
                    @JsonProperty("status") final FeedStatus status,
                    @JsonProperty("volumeGroup") final String volumeGroup) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
-        this.description = description;
-        this.classification = classification;
-        this.encoding = encoding;
-        this.contextEncoding = contextEncoding;
+        this.description = NullSafe.string(description);
+        this.classification = NullSafe.string(classification);
+        this.encoding = NullSafe.requireNonNullElse(encoding, "UTF-8");
+        this.contextEncoding = NullSafe.requireNonNullElse(contextEncoding, "UTF-8");
         this.retentionDayAge = retentionDayAge;
         this.reference = reference;
-        this.streamType = streamType;
-        this.status = status;
-        this.dataFormat = dataFormat;
-        this.contextFormat = contextFormat;
-        this.schema = schema;
-        this.schemaVersion = schemaVersion;
-        this.volumeGroup = volumeGroup;
+        this.streamType = NullSafe.requireNonNullElse(streamType,
+                reference
+                        ? StreamTypeNames.RAW_REFERENCE
+                        : StreamTypeNames.RAW_EVENTS);
+        this.dataFormat = NullSafe.string(dataFormat);
+        this.contextFormat = NullSafe.string(contextFormat);
+        this.schema = NullSafe.string(schema);
+        this.schemaVersion = NullSafe.string(schemaVersion);
+        this.status = NullSafe.requireNonNullElse(status, FeedStatus.RECEIVE);
+        this.volumeGroup = NullSafe.string(volumeGroup);
     }
 
     /**
@@ -155,122 +160,52 @@ public class FeedDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public String getStreamType() {
-        if (streamType == null) {
-            if (reference) {
-                streamType = StreamTypeNames.RAW_REFERENCE;
-            } else {
-                streamType = StreamTypeNames.RAW_EVENTS;
-            }
-        }
-
         return streamType;
-    }
-
-    public void setStreamType(final String streamType) {
-        this.streamType = streamType;
     }
 
     public String getClassification() {
         return classification;
     }
 
-    public void setClassification(final String classification) {
-        this.classification = classification;
-    }
-
     public String getEncoding() {
         return encoding;
     }
 
-    public void setEncoding(final String encoding) {
-        this.encoding = encoding;
-    }
-
     public FeedStatus getStatus() {
-        if (status == null) {
-            return FeedStatus.RECEIVE;
-        }
-
         return status;
-    }
-
-    public void setStatus(final FeedStatus feedStatus) {
-        this.status = feedStatus;
-    }
-
-    @JsonIgnore
-    public boolean isReceive() {
-        return !FeedStatus.REJECT.equals(getStatus());
     }
 
     public String getContextEncoding() {
         return contextEncoding;
     }
 
-    public void setContextEncoding(final String contextEncoding) {
-        this.contextEncoding = contextEncoding;
-    }
-
     public Integer getRetentionDayAge() {
         return retentionDayAge;
-    }
-
-
-    public void setRetentionDayAge(final Integer retentionDayAge) {
-        this.retentionDayAge = retentionDayAge;
     }
 
     public boolean isReference() {
         return reference;
     }
 
-    public void setReference(final boolean reference) {
-        this.reference = reference;
-    }
-
     public String getDataFormat() {
         return dataFormat;
-    }
-
-    public void setDataFormat(final String dataFormat) {
-        this.dataFormat = dataFormat;
     }
 
     public String getContextFormat() {
         return contextFormat;
     }
 
-    public void setContextFormat(final String contextFormat) {
-        this.contextFormat = contextFormat;
-    }
-
     public String getSchema() {
         return schema;
-    }
-
-    public void setSchema(final String schema) {
-        this.schema = schema;
     }
 
     public String getSchemaVersion() {
         return schemaVersion;
     }
 
-    public void setSchemaVersion(final String schemaVersion) {
-        this.schemaVersion = schemaVersion;
-    }
-
     public String getVolumeGroup() {
         return volumeGroup;
-    }
-
-    public void setVolumeGroup(final String volumeGroup) {
-        this.volumeGroup = volumeGroup;
     }
 
     public enum FeedStatus implements HasDisplayValue, HasPrimitiveValue {
@@ -299,6 +234,67 @@ public class FeedDoc extends AbstractDoc {
         }
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        final FeedDoc feedDoc = (FeedDoc) o;
+        return reference == feedDoc.reference &&
+               Objects.equals(description, feedDoc.description) &&
+               Objects.equals(classification, feedDoc.classification) &&
+               Objects.equals(encoding, feedDoc.encoding) &&
+               Objects.equals(contextEncoding, feedDoc.contextEncoding) &&
+               Objects.equals(retentionDayAge, feedDoc.retentionDayAge) &&
+               Objects.equals(streamType, feedDoc.streamType) &&
+               Objects.equals(dataFormat, feedDoc.dataFormat) &&
+               Objects.equals(contextFormat, feedDoc.contextFormat) &&
+               Objects.equals(schema, feedDoc.schema) &&
+               Objects.equals(schemaVersion, feedDoc.schemaVersion) &&
+               status == feedDoc.status &&
+               Objects.equals(volumeGroup, feedDoc.volumeGroup);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(),
+                description,
+                classification,
+                encoding,
+                contextEncoding,
+                retentionDayAge,
+                reference,
+                streamType,
+                dataFormat,
+                contextFormat,
+                schema,
+                schemaVersion,
+                status,
+                volumeGroup);
+    }
+
+    @Override
+    public String toString() {
+        return "FeedDoc{" +
+               "description='" + description + '\'' +
+               ", classification='" + classification + '\'' +
+               ", encoding='" + encoding + '\'' +
+               ", contextEncoding='" + contextEncoding + '\'' +
+               ", retentionDayAge=" + retentionDayAge +
+               ", reference=" + reference +
+               ", streamType='" + streamType + '\'' +
+               ", dataFormat='" + dataFormat + '\'' +
+               ", contextFormat='" + contextFormat + '\'' +
+               ", schema='" + schema + '\'' +
+               ", schemaVersion='" + schemaVersion + '\'' +
+               ", status=" + status +
+               ", volumeGroup='" + volumeGroup + '\'' +
+               '}';
+    }
+
     public Builder copy() {
         return new Builder(this);
     }
@@ -307,7 +303,7 @@ public class FeedDoc extends AbstractDoc {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractBuilder<FeedDoc, FeedDoc.Builder> {
+    public static final class Builder extends AbstractBuilder<FeedDoc, Builder> {
 
         private String description;
         private String classification;

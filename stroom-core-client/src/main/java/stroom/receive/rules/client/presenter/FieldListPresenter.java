@@ -22,7 +22,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.query.api.datasource.QueryField;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.svg.client.SvgPresets;
@@ -41,12 +41,13 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class FieldListPresenter extends DocumentEditPresenter<PagerView, ReceiveDataRules> {
+public class FieldListPresenter extends DocPresenter<PagerView, ReceiveDataRules> {
 
     private static final String NAME_FIELD = "name";
     private static final String TYPE_FIELD = "type";
@@ -62,7 +63,7 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
     //    private final ButtonView upButton;
 //    private final ButtonView downButton;
     private final DataGridComparatorFactory<QueryField> comparatorFactory;
-    private List<QueryField> fields;
+    private final List<QueryField> fields = new ArrayList<>();
     private Set<CIKey> obfuscatedFields;
 
     @Inject
@@ -155,7 +156,7 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
     private void enableButtons() {
         newButton.setEnabled(!isReadOnly());
 
-        if (!isReadOnly() && fields != null) {
+        if (!isReadOnly()) {
             final QueryField selectedElement = selectionModel.getSelected();
             final boolean enabled = selectedElement != null;
             editButton.setEnabled(enabled);
@@ -328,10 +329,6 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
 //    }
 
     public void refresh() {
-        if (fields == null) {
-            fields = new ArrayList<>();
-        }
-
         if (!fields.isEmpty()) {
             final Comparator<QueryField> comparator = comparatorFactory.create();
             NullSafe.consume(comparator, fields::sort);
@@ -372,14 +369,18 @@ public class FieldListPresenter extends DocumentEditPresenter<PagerView, Receive
     protected void onRead(final DocRef docRef, final ReceiveDataRules document, final boolean readOnly) {
         enableButtons();
         if (document != null) {
-            fields = document.getFields();
+            fields.clear();
+            fields.addAll(document.getFields());
             refresh();
         }
     }
 
     @Override
     protected ReceiveDataRules onWrite(final ReceiveDataRules document) {
-        document.setFields(fields);
-        return document;
+        return document.copy().fields(new ArrayList<>(fields)).build();
+    }
+
+    public List<QueryField> getFields() {
+        return fields;
     }
 }

@@ -24,8 +24,7 @@ import stroom.dictionary.shared.WordList.Builder;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefDecorator;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -49,7 +48,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Stack;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -63,7 +61,11 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     @Inject
     DictionaryStoreImpl(final StoreFactory storeFactory,
                         final DictionarySerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, DictionaryDoc.TYPE, DictionaryDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                DictionaryDoc.TYPE,
+                DictionaryDoc::builder,
+                DictionaryDoc::copy);
     }
 
     // ---------------------------------------------------------------------
@@ -128,7 +130,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<DictionaryDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<DictionaryDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
             if (doc.getImports() != null) {
                 final List<DocRef> replacedDocRefImports = doc
@@ -136,8 +138,9 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
                         .stream()
                         .map(dependencyRemapper::remap)
                         .toList();
-                doc.setImports(replacedDocRefImports);
+                return doc.copy().imports(replacedDocRefImports).build();
             }
+            return doc;
         };
     }
 
@@ -151,8 +154,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     @Override
     public DictionaryDoc readDocument(final DocRef docRef) {
-        final DictionaryDoc dictionaryDoc = store.readDocument(docRef);
-        return dictionaryDoc;
+        return store.readDocument(docRef);
     }
 
     @Override
@@ -218,10 +220,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

@@ -548,7 +548,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     @PipelineProperty(
             description = "A previously saved XSLT, used to modify the output via xsl:output attributes.",
             displayPriority = 1)
-    @PipelinePropertyDocRef(types = XsltDoc.TYPE)
+    @PipelinePropertyDocRef(types = XsltDoc.TYPE, canEmbed = true)
     public void setXslt(final DocRef xsltRef) {
         this.xsltRef = xsltRef;
     }

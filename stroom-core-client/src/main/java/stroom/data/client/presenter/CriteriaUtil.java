@@ -77,4 +77,26 @@ public final class CriteriaUtil {
         }
         return criteriaSortList;
     }
+
+    public static boolean hasSortColumn(final ColumnSortList columnSortList, final String columnName) {
+        for (int i = 0; i < columnSortList.size(); i++) {
+            final ColumnSortInfo columnSortInfo = columnSortList.get(i);
+            final Column<?, ?> column = columnSortInfo.getColumn();
+            if (column instanceof final OrderByColumn<?, ?> orderByColumn) {
+                final String dataStoreName = orderByColumn.getField();
+                if (columnName.equals(dataStoreName)) {
+                    return true;
+                }
+            } else {
+                final String dataStoreName = column.getDataStoreName();
+                if (dataStoreName != null) {
+                    if (columnName.equals(dataStoreName)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
 }

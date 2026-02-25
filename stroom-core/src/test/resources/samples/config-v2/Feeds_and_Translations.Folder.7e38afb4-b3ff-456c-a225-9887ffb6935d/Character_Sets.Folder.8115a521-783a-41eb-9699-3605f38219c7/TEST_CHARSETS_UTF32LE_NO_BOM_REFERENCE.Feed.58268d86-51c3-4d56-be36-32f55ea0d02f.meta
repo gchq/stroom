@@ -9,5 +9,10 @@
   "contextEncoding" : "UTF-32LE",
   "reference" : false,
   "streamType" : "Raw Reference",
-  "status" : "RECEIVE"
+  "dataFormat" : "",
+  "contextFormat" : "",
+  "schema" : "",
+  "schemaVersion" : "",
+  "status" : "RECEIVE",
+  "volumeGroup" : "Default Volume Group"
 }

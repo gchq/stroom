@@ -18,7 +18,6 @@ package stroom.documentation.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -46,7 +45,8 @@ public class DocumentationStoreImpl implements DocumentationStore {
         this.store = storeFactory.createStore(
                 documentationSerialiser,
                 DocumentationDoc.TYPE,
-                DocumentationDoc::builder);
+                DocumentationDoc::builder,
+                DocumentationDoc::copy);
     }
 
     // ---------------------------------------------------------------------
@@ -156,10 +156,7 @@ public class DocumentationStoreImpl implements DocumentationStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

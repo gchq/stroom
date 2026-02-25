@@ -17,8 +17,7 @@
 package stroom.statistics.impl.sql.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourceSettingsPresenter.StatisticsDataSourceSettingsView;
 import stroom.statistics.impl.sql.shared.EventStoreTimeIntervalEnum;
@@ -33,7 +32,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 public class StatisticsDataSourceSettingsPresenter
-        extends DocumentEditPresenter<StatisticsDataSourceSettingsView, StatisticStoreDoc>
+        extends DocPresenter<StatisticsDataSourceSettingsView, StatisticStoreDoc>
         implements StatisticsDataSourceSettingsUiHandlers {
 
     @Inject
@@ -43,30 +42,23 @@ public class StatisticsDataSourceSettingsPresenter
     }
 
     @Override
-    public void onChange() {
-        DirtyEvent.fire(StatisticsDataSourceSettingsPresenter.this, true);
-    }
-
-    @Override
     protected void onRead(final DocRef docRef, final StatisticStoreDoc document, final boolean readOnly) {
         getView().onReadOnly(readOnly);
-        if (document != null) {
-            getView().setStatisticType(document.getStatisticType());
-            getView().getEnabled().setValue(document.isEnabled());
-            getView().setPrecision(EventStoreTimeIntervalEnum.fromColumnInterval(document.getPrecision()));
-            getView().setRollUpType(document.getRollUpType());
-        }
+        getView().setStatisticType(document.getStatisticType());
+        getView().getEnabled().setValue(document.isEnabled());
+        getView().setPrecision(EventStoreTimeIntervalEnum.fromColumnInterval(document.getPrecision()));
+        getView().setRollUpType(document.getRollUpType());
     }
 
     @Override
     protected StatisticStoreDoc onWrite(final StatisticStoreDoc document) {
-        if (document != null) {
-            document.setStatisticType(getView().getStatisticType());
-            document.setEnabled(getView().getEnabled().getValue());
-            document.setPrecision(getView().getPrecision().columnInterval());
-            document.setRollUpType(getView().getRollUpType());
-        }
-        return document;
+        return document
+                .copy()
+                .statisticType(getView().getStatisticType())
+                .enabled(getView().getEnabled().getValue())
+                .precision(getView().getPrecision().columnInterval())
+                .rollUpType(getView().getRollUpType())
+                .build();
     }
 
     public interface StatisticsDataSourceSettingsView

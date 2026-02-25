@@ -17,7 +17,7 @@
 package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AbstractDuplicateManagementPresenter.DuplicateManagementView;
-import stroom.document.client.event.DirtyUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -32,7 +32,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class DuplicateManagementViewImpl
-        extends ViewWithUiHandlers<DirtyUiHandlers>
+        extends ViewWithUiHandlers<ChangeUiHandlers>
         implements DuplicateManagementView {
 
     private final Widget widget;
@@ -107,23 +107,23 @@ public class DuplicateManagementViewImpl
 
     @UiHandler("rememberNotifications")
     public void onRememberNotifications(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("suppressDuplicateNotifications")
     public void onSuppressDuplicateNotifications(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("chooseColumns")
     public void onChooseColumns(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onDirty();
         columns.setEnabled(chooseColumns.getValue());
+        getUiHandlers().onChange();
     }
 
     @UiHandler("columns")
     public void onColumns(final ValueChangeEvent<String> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     public interface Binder extends UiBinder<Widget, DuplicateManagementViewImpl> {

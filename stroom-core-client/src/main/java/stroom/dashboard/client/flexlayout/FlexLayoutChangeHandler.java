@@ -16,14 +16,11 @@
 
 package stroom.dashboard.client.flexlayout;
 
-import stroom.dashboard.shared.TabConfig;
-import stroom.dashboard.shared.TabLayoutConfig;
-
 public interface FlexLayoutChangeHandler {
 
-    void removeTab(TabLayoutConfig tabLayoutConfig, TabConfig tab);
+    void removeTab(MutableTabLayoutConfig tabLayoutConfig, MutableTabConfig tab);
 
-    void removeTabPanel(TabLayoutConfig tabLayoutConfig);
+    void removeTabPanel(MutableTabLayoutConfig tabLayoutConfig);
 
-    void onDirty();
+    void onChange();
 }

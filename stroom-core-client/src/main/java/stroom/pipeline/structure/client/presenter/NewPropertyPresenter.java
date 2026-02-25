@@ -58,6 +58,7 @@ public class NewPropertyPresenter
     private final DocSelectionBoxPresenter entityDropDownPresenter;
     private boolean dirty;
 
+    private PipelineElement pipelineElement;
     private PipelinePropertyType propertyType;
     private PipelineProperty defaultProperty;
     private PipelineProperty inheritedProperty;
@@ -94,7 +95,7 @@ public class NewPropertyPresenter
     public void onSourceChange(final Source source) {
         if (!this.source.equals(source)) {
             NewPropertyPresenter.this.source = source;
-            setDirty(true, false);
+            onChange(false);
             startEdit(source);
         }
     }
@@ -108,11 +109,16 @@ public class NewPropertyPresenter
                      final String defaultValue,
                      final String inheritedValue,
                      final String inheritedFrom) {
+        this.pipelineElement = pipelineElement;
         this.propertyType = propertyType;
         this.defaultProperty = defaultProperty;
         this.inheritedProperty = inheritedProperty;
         this.localProperty = localProperty;
         this.source = source;
+
+        if (propertyType.canEmbed()) {
+            getView().addSource(Source.EMBEDDED);
+        }
 
         getView().setElement(pipelineElement.getDisplayName());
         getView().setName(defaultProperty.getName());
@@ -135,7 +141,17 @@ public class NewPropertyPresenter
             case LOCAL:
                 startEdit(localProperty);
                 break;
+            case EMBEDDED:
+                showEmbeddedProperty();
+                break;
         }
+    }
+
+    private void showEmbeddedProperty() {
+        final String embeddedPropertyName = "EMBEDDED " + propertyType.getDocRefTypes()[0] + " (" +
+                                            pipelineElement.getId() + ")";
+        enterStringMode(PipelineProperty.builder().value(new PipelinePropertyValue(embeddedPropertyName)).build());
+        textBox.setEnabled(false);
     }
 
     private void startEdit(final PipelineProperty property) {
@@ -197,7 +213,7 @@ public class NewPropertyPresenter
             listBox.addItem("false");
 
             listBox.addValueChangeHandler(event -> {
-                setDirty(true);
+                onChange();
                 getView().setSource(Source.LOCAL);
             });
 
@@ -241,7 +257,7 @@ public class NewPropertyPresenter
             valueSpinner.setMax(10000000);
 
             registerHandler(valueSpinner.addValueChangeHandler(event -> {
-                setDirty(true);
+                onChange();
                 getView().setSource(Source.LOCAL);
             }));
 
@@ -260,7 +276,7 @@ public class NewPropertyPresenter
             textBox = new TextBox();
 
             textBox.addValueChangeHandler(event -> {
-                setDirty(true);
+                onChange();
                 getView().setSource(Source.LOCAL);
             });
 
@@ -275,7 +291,7 @@ public class NewPropertyPresenter
         if (property.getValue() != null && property.getValue().getString() != null) {
             value = property.getValue().getString();
         }
-
+        textBox.setEnabled(true);
         textBox.setText(value);
     }
 
@@ -302,7 +318,7 @@ public class NewPropertyPresenter
                     .exec();
 
             dataTypeWidget.addValueChangeHandler(event -> {
-                setDirty(true);
+                onChange();
                 getView().setSource(Source.LOCAL);
             });
 
@@ -352,7 +368,7 @@ public class NewPropertyPresenter
                     .exec();
 
             dataTypeWidget.addValueChangeHandler(event -> {
-                setDirty(true);
+                onChange();
                 getView().setSource(Source.LOCAL);
             });
 
@@ -375,7 +391,7 @@ public class NewPropertyPresenter
     private void enterEntityMode(final PipelineProperty property) {
         if (!entityPresenterInitialised) {
             entityDropDownPresenter.addDataSelectionHandler(event -> {
-                setDirty(true);
+                onChange();
                 getView().setSource(Source.LOCAL);
             });
 
@@ -402,8 +418,8 @@ public class NewPropertyPresenter
 
     }
 
-    private void setDirty(final boolean dirty, final boolean changeSource) {
-        this.dirty = dirty;
+    private void onChange(final boolean changeSource) {
+        this.dirty = true;
         if (changeSource) {
             getView().setSource(Source.LOCAL);
         }
@@ -413,8 +429,8 @@ public class NewPropertyPresenter
         return dirty;
     }
 
-    private void setDirty(final boolean dirty) {
-        setDirty(dirty, true);
+    private void onChange() {
+        onChange(true);
     }
 
 
@@ -438,5 +454,7 @@ public class NewPropertyPresenter
         void setSource(Source source);
 
         void setValueWidget(Widget widget);
+
+        void addSource(Source source);
     }
 }

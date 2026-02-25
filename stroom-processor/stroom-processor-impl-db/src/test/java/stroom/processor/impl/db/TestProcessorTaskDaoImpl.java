@@ -257,8 +257,10 @@ class TestProcessorTaskDaoImpl extends AbstractProcessorTest {
         createProcessorTask(processorFilter1a, TaskStatus.QUEUED, NODE1, FEED);
         createProcessorTask(processorFilter1a, TaskStatus.PROCESSING, NODE1, FEED);
 
-        processorFilter1a.setDeleted(true);
-        processorFilter1a.setUpdateTimeMs(Instant.now().toEpochMilli());
+        processorFilter1a = processorFilter1a.copy()
+                .deleted(true)
+                .updateTimeMs(Instant.now().toEpochMilli())
+                .build();
         processorFilterDao.update(processorFilter1a);
 
         processorFilter1b = createProcessorFilter(processor1);

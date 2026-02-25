@@ -37,26 +37,26 @@ class TestCustomRollUpMask {
         assertThat(mask.isTagRolledUp(0)).isTrue();
     }
 
-    @Test
-    void testSetRollUpState() {
-        final CustomRollUpMask mask = new CustomRollUpMask(Arrays.asList(3, 1, 0));
-
-        assertThat(mask.isTagRolledUp(2)).isFalse();
-        assertThat(mask.isTagRolledUp(3)).isTrue();
-
-        mask.setRollUpState(2, false);
-        assertThat(mask.isTagRolledUp(2)).isFalse();
-
-        mask.setRollUpState(2, true);
-        assertThat(mask.isTagRolledUp(2)).isTrue();
-
-        mask.setRollUpState(2, false);
-        assertThat(mask.isTagRolledUp(2)).isFalse();
-
-        mask.setRollUpState(3, true);
-        assertThat(mask.isTagRolledUp(3)).isTrue();
-
-        mask.setRollUpState(3, false);
-        assertThat(mask.isTagRolledUp(3)).isFalse();
-    }
+//    @Test
+//    void testSetRollUpState() {
+//        final CustomRollUpMask mask = new CustomRollUpMask(Arrays.asList(3, 1, 0));
+//
+//        assertThat(mask.isTagRolledUp(2)).isFalse();
+//        assertThat(mask.isTagRolledUp(3)).isTrue();
+//
+//        mask.setRollUpState(2, false);
+//        assertThat(mask.isTagRolledUp(2)).isFalse();
+//
+//        mask.setRollUpState(2, true);
+//        assertThat(mask.isTagRolledUp(2)).isTrue();
+//
+//        mask.setRollUpState(2, false);
+//        assertThat(mask.isTagRolledUp(2)).isFalse();
+//
+//        mask.setRollUpState(3, true);
+//        assertThat(mask.isTagRolledUp(3)).isTrue();
+//
+//        mask.setRollUpState(3, false);
+//        assertThat(mask.isTagRolledUp(3)).isFalse();
+//    }
 }

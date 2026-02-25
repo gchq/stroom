@@ -18,7 +18,6 @@ package stroom.pathways.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -47,7 +46,11 @@ public class PathwaysStoreImpl implements PathwaysStore {
     @Inject
     PathwaysStoreImpl(final StoreFactory storeFactory,
                       final PathwaysSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, PathwaysDoc.TYPE, PathwaysDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                PathwaysDoc.TYPE,
+                PathwaysDoc::builder,
+                PathwaysDoc::copy);
         this.serialiser = serialiser;
     }
 
@@ -215,10 +218,7 @@ public class PathwaysStoreImpl implements PathwaysStore {
 //                return d;
 //            });
 //        }
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     // TODO : Leaving here as we will want to copy pathways once they are in the DB.

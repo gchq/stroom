@@ -45,8 +45,11 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.preferences.client.UserPreferencesManager;
@@ -108,7 +111,7 @@ import java.util.stream.Collectors;
 
 public class QueryResultTablePresenter
         extends MyPresenterWidget<QueryResultTableView>
-        implements ResultComponent, HasComponentSelection, HasDirtyHandlers, HasHandlers, FilterableTable {
+        implements ResultComponent, HasComponentSelection, HasChangeHandlers, HasHandlers, FilterableTable {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
@@ -387,7 +390,7 @@ public class QueryResultTablePresenter
         final QueryTablePreferences queryTablePreferences = getQueryTablePreferences();
         final boolean applyValueFilters = !queryTablePreferences.applyValueFilters();
         setQueryTablePreferences(queryTablePreferences.copy().applyValueFilters(applyValueFilters).build());
-        setDirty(true);
+        onChange();
         refresh();
         setApplyValueFilters(applyValueFilters);
     }
@@ -896,8 +899,7 @@ public class QueryResultTablePresenter
     public void setPreferredColumns(final List<Column> columns) {
         setQueryTablePreferences(getQueryTablePreferences().copy().columns(columns).build());
         currentColumns = columns;
-        setDirty(true);
-
+        onChange();
         fireColumnAndDataUpdate();
     }
 
@@ -937,12 +939,12 @@ public class QueryResultTablePresenter
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
-    public void setDirty(final boolean dirty) {
-        DirtyEvent.fire(this, dirty);
+    public void onChange() {
+        ChangeEvent.fire(this);
     }
 
     public void setQueryResultVisPresenter(final QueryResultVisPresenter queryResultVisPresenter) {

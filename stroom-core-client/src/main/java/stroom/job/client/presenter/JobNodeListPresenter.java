@@ -309,7 +309,10 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
                         .enabledWhen(jobNodeListHelper::isJobNodeEnabled)
                         .withFieldUpdater((rowIndex, jobNodeAndInfo, value) -> {
                             if (jobNodeAndInfo != null) {
-                                jobNodeAndInfo.getJobNode().setTaskLimit(value.intValue());
+                                jobNodeAndInfo.setJobNode(jobNodeAndInfo.getJobNode()
+                                        .copy()
+                                        .taskLimit(value.intValue())
+                                        .build());
                                 restFactory
                                         .create(JOB_NODE_RESOURCE)
                                         .call(res -> res.setTaskLimit(jobNodeAndInfo.getId(), value.intValue()))

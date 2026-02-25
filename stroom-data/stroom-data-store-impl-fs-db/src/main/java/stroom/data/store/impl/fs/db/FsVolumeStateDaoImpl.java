@@ -23,13 +23,39 @@ import stroom.db.util.GenericDao;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.jooq.Record;
 
 import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState.FS_VOLUME_STATE;
 
 @Singleton
 public class FsVolumeStateDaoImpl implements FsVolumeStateDao {
+
+    static final Function<Record, FsVolumeState> RECORD_TO_FS_VOLUME_STATE_MAPPER = record -> FsVolumeState
+            .builder()
+            .id(record.get(FS_VOLUME_STATE.ID))
+            .version(record.get(FS_VOLUME_STATE.VERSION))
+            .bytesUsed(record.get(FS_VOLUME_STATE.BYTES_USED))
+            .bytesFree(record.get(FS_VOLUME_STATE.BYTES_FREE))
+            .bytesTotal(record.get(FS_VOLUME_STATE.BYTES_TOTAL))
+            .updateTimeMs(record.get(FS_VOLUME_STATE.UPDATE_TIME_MS))
+            .build();
+
+    @SuppressWarnings("checkstyle:LineLength")
+    private static final BiFunction<FsVolumeState, FsVolumeStateRecord, FsVolumeStateRecord> FS_VOLUME_STATE_TO_RECORD_MAPPER =
+            (fsVolumeState, record) -> {
+                record.from(fsVolumeState);
+                record.set(FS_VOLUME_STATE.ID, fsVolumeState.getId());
+                record.set(FS_VOLUME_STATE.VERSION, fsVolumeState.getVersion());
+                record.set(FS_VOLUME_STATE.BYTES_USED, fsVolumeState.getBytesUsed());
+                record.set(FS_VOLUME_STATE.BYTES_FREE, fsVolumeState.getBytesFree());
+                record.set(FS_VOLUME_STATE.BYTES_TOTAL, fsVolumeState.getBytesTotal());
+                record.set(FS_VOLUME_STATE.UPDATE_TIME_MS, fsVolumeState.getUpdateTimeMs());
+                return record;
+            };
 
     private final GenericDao<FsVolumeStateRecord, FsVolumeState, Integer> genericDao;
 
@@ -39,7 +65,8 @@ public class FsVolumeStateDaoImpl implements FsVolumeStateDao {
                 fsDataStoreDbConnProvider,
                 FS_VOLUME_STATE,
                 FS_VOLUME_STATE.ID,
-                FsVolumeState.class);
+                FS_VOLUME_STATE_TO_RECORD_MAPPER,
+                RECORD_TO_FS_VOLUME_STATE_MAPPER);
     }
 
     @Override

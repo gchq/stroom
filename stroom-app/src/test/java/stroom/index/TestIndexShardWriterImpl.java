@@ -267,8 +267,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         Files.setPosixFilePermissions(tempDir, Set.of(PosixFilePermission.OWNER_READ));
         final ResultPage<IndexVolume> resultPage = indexVolumeDao.find(new ExpressionCriteria());
         resultPage.forEach(indexVolume -> {
-            indexVolume.setPath(tempDir + indexVolume.getPath());
-            indexVolumeDao.update(indexVolume);
+            indexVolumeDao.update(indexVolume.copy().path(tempDir + indexVolume.getPath()).build());
         });
 
         // Do some work.
