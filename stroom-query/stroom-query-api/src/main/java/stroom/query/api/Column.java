@@ -195,13 +195,25 @@ public final class Column implements HasDisplayValue {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
         final Column column = (Column) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(id, column.id);
+//        final boolean b2 = Objects.equals(name, column.name);
+//        final boolean b3 = Objects.equals(expression, column.expression);
+//        final boolean b4 = Objects.equals(sort, column.sort);
+//        final boolean b5 = Objects.equals(filter, column.filter);
+//        final boolean b6 = Objects.equals(format, column.format);
+//        final boolean b7 = Objects.equals(group, column.group);
+//        final boolean b8 = Objects.equals(width, column.width);
+//        final boolean b9 = Objects.equals(visible, column.visible);
+//        final boolean b10 = Objects.equals(special, column.special);
+//        final boolean b11 = Objects.equals(columnFilter, column.columnFilter);
+//        final boolean b12 = Objects.equals(columnValueSelection, column.columnValueSelection);
+
         return Objects.equals(id, column.id) &&
                Objects.equals(name, column.name) &&
                Objects.equals(expression, column.expression) &&
@@ -230,6 +242,24 @@ public final class Column implements HasDisplayValue {
                 special,
                 columnFilter,
                 columnValueSelection);
+    }
+
+    @Override
+    public String toString() {
+        return "Column{" +
+               "id='" + id + '\'' +
+               ", name='" + name + '\'' +
+               ", expression='" + expression + '\'' +
+               ", sort=" + sort +
+               ", filter=" + filter +
+               ", format=" + format +
+               ", group=" + group +
+               ", width=" + width +
+               ", visible=" + visible +
+               ", special=" + special +
+               ", columnFilter=" + columnFilter +
+               ", columnValueSelection=" + columnValueSelection +
+               '}';
     }
 
     public static Builder builder() {

@@ -24,7 +24,6 @@ import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,22 +33,22 @@ class TestProcessorFilter {
 
     @Test
     void testCompare() {
-        final ProcessorFilter t1 = new ProcessorFilter();
-        t1.setProcessorFilterTracker(new ProcessorFilterTracker());
-        t1.getProcessorFilterTracker().setMinMetaId(1L);
-        t1.setPriority(1);
+        final ProcessorFilter t1 = ProcessorFilter.builder()
+                .processorFilterTracker(ProcessorFilterTracker.builder().minMetaId(1L).build())
+                .priority(1)
+                .build();
 
-        final ProcessorFilter t2 = new ProcessorFilter();
-        t2.setProcessorFilterTracker(new ProcessorFilterTracker());
-        t2.getProcessorFilterTracker().setMinMetaId(2L);
-        t2.setPriority(1);
-        t2.setMaxProcessingTasks(10);
+        final ProcessorFilter t2 = ProcessorFilter.builder()
+                .processorFilterTracker(ProcessorFilterTracker.builder().minMetaId(2L).build())
+                .priority(1)
+                .maxProcessingTasks(10)
+                .build();
 
-        final ProcessorFilter t3 = new ProcessorFilter();
-        t3.setProcessorFilterTracker(new ProcessorFilterTracker());
-        t3.getProcessorFilterTracker().setMinMetaId(3L);
-        t3.setPriority(3);
-        t3.setMaxProcessingTasks(20);
+        final ProcessorFilter t3 = ProcessorFilter.builder()
+                .processorFilterTracker(ProcessorFilterTracker.builder().minMetaId(3L).build())
+                .priority(3)
+                .maxProcessingTasks(20)
+                .build();
 
         assertThat(t1.isHigherPriority(t2)).isTrue();
         assertThat(t3.isHigherPriority(t2)).isTrue();
@@ -63,7 +62,7 @@ class TestProcessorFilter {
         taskList.add(t2);
         taskList.add(t3);
 
-        Collections.sort(taskList, ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
+        taskList.sort(ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
 
         assertThat(taskList.get(0) == t3).isTrue();
         assertThat(taskList.get(1) == t1).isTrue();
@@ -78,15 +77,17 @@ class TestProcessorFilter {
         }
 
         // Sort the new list
-        Collections.sort(newStreamTaskList, ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
+        newStreamTaskList.sort(ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
     }
 
     private ProcessorFilter createFilter() {
-        final ProcessorFilter filter = new ProcessorFilter();
-        filter.setPriority(RandomUtils.nextInt() % 10);
-        filter.setProcessorFilterTracker(new ProcessorFilterTracker());
-        filter.getProcessorFilterTracker().setMinMetaId(RandomUtils.nextInt() % 10);
-        return filter;
+        return ProcessorFilter.builder()
+                .priority(RandomUtils.insecure().randomInt() % 10)
+                .processorFilterTracker(ProcessorFilterTracker
+                        .builder()
+                        .minMetaId(RandomUtils.insecure().randomInt() % 10)
+                        .build())
+                .build();
     }
 
 //    @Test

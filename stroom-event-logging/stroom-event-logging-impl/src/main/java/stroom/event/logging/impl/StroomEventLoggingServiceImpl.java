@@ -35,7 +35,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BuildInfo;
-import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.time.StroomDuration;
@@ -392,8 +392,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
         final ObjectInfoProvider objectInfoProvider = getInfoAppender(object.getClass());
         if (objectInfoProvider == null) {
-            if (object instanceof Collection) {
-                final Collection<?> collection = (Collection<?>) object;
+            if (object instanceof final Collection<?> collection) {
                 if (collection.isEmpty()) {
                     return "Empty collection";
                 } else {
@@ -566,7 +565,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
         final List<BeanPropertyDefinition> availableProperties = properties.stream()
                 .filter(property -> !ignoredProperties.contains(property.getName()))
-                .collect(Collectors.toList());
+                .toList();
 
         return availableProperties.stream().map(
                 beanPropDef -> {
@@ -580,8 +579,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
 
         if (valObj != null) {
             final LoggingConfig loggingConfig = loggingConfigProvider.get();
-            if (valObj instanceof Collection<?>) {
-                final Collection<?> collection = (Collection<?>) valObj;
+            if (valObj instanceof final Collection<?> collection) {
 
                 if (loggingConfig.getMaxListElements() >= 0
                     && collection.size() > loggingConfig.getMaxListElements()) {
@@ -629,7 +627,7 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
     private static Set<String> ignorePropertiesFromStandardInterfaces(final Object obj) {
         final Set<String> ignore = new HashSet<>();
         ignorePropertiesFromSuperType(obj, HasIntegerId.class, ignore);
-        ignorePropertiesFromSuperType(obj, HasAuditInfo.class, ignore);
+        ignorePropertiesFromSuperType(obj, HasAuditInfoGetters.class, ignore);
         ignorePropertiesFromSuperType(obj, HasId.class, ignore);
         ignorePropertiesFromSuperType(obj, HasName.class, ignore);
         ignorePropertiesFromSuperType(obj, HasUuid.class, ignore);
@@ -653,7 +651,8 @@ public class StroomEventLoggingServiceImpl extends DefaultEventLoggingService im
                         } else {
                             return Stream.empty();
                         }
-                    }).collect(Collectors.toList()));
+                    })
+                    .toList());
         }
     }
 

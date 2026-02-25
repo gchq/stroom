@@ -16,11 +16,8 @@
 
 package stroom.planb.client.view;
 
-import stroom.planb.client.presenter.MetricSettingsPresenter.MetricSettingsView;
-import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.planb.client.presenter.TraceSettingsPresenter.TraceSettingsView;
-import stroom.planb.shared.MetricKeySchema;
-import stroom.planb.shared.MetricValueSchema;
 import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.SnapshotSettings;
 
@@ -31,7 +28,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class TraceSettingsViewImpl
-        extends ViewWithUiHandlers<PlanBSettingsUiHandlers>
+        extends ViewWithUiHandlers<ChangeUiHandlers>
         implements TraceSettingsView {
 
     private final Widget widget;
@@ -61,7 +58,7 @@ public class TraceSettingsViewImpl
     }
 
     @Override
-    public void setUiHandlers(final PlanBSettingsUiHandlers uiHandlers) {
+    public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
         generalSettingsWidget.setUiHandlers(uiHandlers);
         snapshotSettingsWidget.setUiHandlers(uiHandlers);

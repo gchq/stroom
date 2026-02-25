@@ -19,8 +19,8 @@ package stroom.dashboard.client.main;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
@@ -40,7 +40,7 @@ import java.util.Objects;
 import javax.inject.Provider;
 
 public class DashboardSuperPresenter
-        extends DocumentEditTabPresenter<LinkTabPanelView, DashboardDoc>
+        extends DocTabPresenter<LinkTabPanelView, DashboardDoc>
         implements HasToolbar {
 
     private static final TabData DASHBOARD = new TabDataImpl("Dashboard", DashboardDoc.TYPE);
@@ -59,7 +59,7 @@ public class DashboardSuperPresenter
         super(eventBus, view);
         this.dashboardPresenter = dashboardPresenter;
 
-        addTab(DASHBOARD, new DocumentEditTabProvider<>(() -> dashboardPresenter));
+        addTab(DASHBOARD, new DocTabProvider<>(() -> dashboardPresenter));
         addTab(DOCUMENTATION, new MarkdownTabProvider<DashboardDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -73,8 +73,7 @@ public class DashboardSuperPresenter
             @Override
             public DashboardDoc onWrite(final MarkdownEditPresenter presenter,
                                         final DashboardDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

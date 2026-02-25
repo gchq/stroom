@@ -56,13 +56,6 @@ public class ResultStoreResourceImpl implements ResultStoreResource {
     }
 
     @Override
-    public Boolean exists(final String nodeName, final QueryKey queryKey) {
-        return resultStoreServiceProvider.get().exists(nodeName, queryKey);
-    }
-
-    //    @AutoLogged(value = OperationType.PROCESS, verb = "Terminating",
-//            decorator = TerminateDecorator.class)
-    @Override
     public Boolean terminate(final String nodeName, final QueryKey queryKey) {
         return resultStoreServiceProvider.get().terminate(nodeName, queryKey);
     }

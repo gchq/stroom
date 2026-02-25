@@ -49,17 +49,14 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
         final PipelineDoc document = delegate.read(data);
         final String json = EncodingUtil.asString(data.get(JSON));
         final PipelineData pipelineData = getPipelineDataFromJson(json);
-        document.setPipelineData(pipelineData);
-
-        return document;
+        return document.copy().pipelineData(pipelineData).build();
     }
 
     @Override
     public Map<String, byte[]> write(final PipelineDoc document) throws IOException {
         PipelineData pipelineData = document.getPipelineData();
-        document.setPipelineData(null);
 
-        final Map<String, byte[]> data = delegate.write(document);
+        final Map<String, byte[]> data = delegate.write(document.copy().pipelineData(null).build());
 
         // If the pipeline doesn't have data, it may be a new pipeline, create a blank one.
         if (pipelineData == null) {
@@ -67,8 +64,6 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
         }
 
         data.put(JSON, EncodingUtil.asBytes(getJsonFromPipelineData(pipelineData)));
-
-        document.setPipelineData(pipelineData);
 
         return data;
     }

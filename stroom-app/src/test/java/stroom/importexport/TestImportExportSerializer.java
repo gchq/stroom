@@ -18,6 +18,7 @@ package stroom.importexport;
 
 
 import stroom.data.shared.StreamTypeNames;
+import stroom.data.store.api.FsVolumeGroupService;
 import stroom.docref.DocRef;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
@@ -99,6 +100,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
     private ProcessorService processorService;
     @Inject
     private ProcessorFilterService processorFilterService;
+    @Inject
+    private FsVolumeGroupService fsVolumeGroupService;
 
     private Set<DocRef> buildFindFolderCriteria() {
         final Set<DocRef> criteria = new HashSet<>();
@@ -112,8 +115,11 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 FileSystemTestUtil.getUniqueTestString(),
                 null,
                 null);
-        FeedDoc eventFeed = feedStore.readDocument(testNode.getDocRef());
-        eventFeed.setDescription("Original Description");
+        FeedDoc eventFeed = feedStore.readDocument(testNode.getDocRef())
+                .copy()
+                .description("Original Description")
+                .volumeGroup(fsVolumeGroupService.getDefaultVolumeGroup().orElseThrow())
+                .build();
         feedStore.writeDocument(eventFeed);
 
         commonTestControl.createRequiredXMLSchemas();
@@ -137,7 +143,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 testDataDir,
                 list,
                 ImportSettings.createConfirmation());
-        assertThat(list.size() > 0).isTrue();
+        assertThat(!list.isEmpty()).isTrue();
 
         // Should all be relative
         Map<DocRef, ImportState> map = new HashMap<>();
@@ -147,14 +153,13 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         assertThat(map.get(testNode.getDocRef()).getState()).isEqualTo(State.EQUAL);
 
-        eventFeed = feedStore.readDocument(testNode.getDocRef());
-        eventFeed.setDescription("New Description");
+        eventFeed = feedStore.readDocument(testNode.getDocRef())
+                .copy().description("New Description").build();
         feedStore.writeDocument(eventFeed);
 
         List<DocRef> allSchemas = xmlSchemaStore.list();
         for (final DocRef ref : allSchemas) {
-            final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(ref);
-            xmlSchema.setData("XML");
+            final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(ref).copy().data("XML").build();
             xmlSchemaStore.writeDocument(xmlSchema);
         }
 
@@ -169,7 +174,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
             map.put(confirmation.getDocRef(), confirmation);
         }
 
-        assertThat(list.size() > 0).isTrue();
+        assertThat(!list.isEmpty()).isTrue();
         assertThat(map.get(testNode.getDocRef()).getState()).isEqualTo(State.UPDATE);
         assertThat(map.get(testNode.getDocRef()).getUpdatedFieldList().contains("description")).isTrue();
 
@@ -204,8 +209,11 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 FileSystemTestUtil.getUniqueTestString(),
                 null,
                 null);
-        FeedDoc eventFeed = feedStore.readDocument(testNode.getDocRef());
-        eventFeed.setDescription("Original Description");
+        FeedDoc eventFeed = feedStore.readDocument(testNode.getDocRef())
+                .copy()
+                .description("Original Description")
+                .volumeGroup(fsVolumeGroupService.getDefaultVolumeGroup().orElseThrow())
+                .build();
         feedStore.writeDocument(eventFeed);
 
         commonTestControl.createRequiredXMLSchemas();
@@ -238,14 +246,13 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         assertThat(map.get(testNode.getDocRef()).getState()).isEqualTo(State.EQUAL);
 
-        eventFeed = feedStore.readDocument(testNode.getDocRef());
-        eventFeed.setDescription("New Description");
+        eventFeed = feedStore.readDocument(testNode.getDocRef())
+                .copy().description("New Description").build();
         feedStore.writeDocument(eventFeed);
 
         List<DocRef> allSchemas = xmlSchemaStore.list();
         for (final DocRef ref : allSchemas) {
-            final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(ref);
-            xmlSchema.setData("XML");
+            final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(ref).copy().data("XML").build();
             xmlSchemaStore.writeDocument(xmlSchema);
         }
 
@@ -316,8 +323,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 folder,
                 null);
 
-        final PipelineDoc pipeline = pipelineStore.readDocument(pipelineNode.getDocRef());
-
+        pipelineStore.readDocument(pipelineNode.getDocRef());
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, "TEST-FEED-EVENTS")
@@ -378,7 +384,7 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 folder,
                 null);
 
-        final PipelineDoc pipeline = pipelineStore.readDocument(pipelineNode.getDocRef());
+        pipelineStore.readDocument(pipelineNode.getDocRef());
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, "TEST-FEED-EVENTS")
@@ -445,8 +451,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 "Child",
                 folder,
                 null);
-        final PipelineDoc childPipeline = pipelineStore.readDocument(childPipelineNode.getDocRef());
-        childPipeline.setParentPipeline(parentPipelineNode.getDocRef());
+        final PipelineDoc childPipeline = pipelineStore.readDocument(childPipelineNode.getDocRef())
+                .copy().parentPipeline(parentPipelineNode.getDocRef()).build();
         pipelineStore.writeDocument(childPipeline);
 
         assertThat(pipelineStore.list().size()).isEqualTo(2);
@@ -500,8 +506,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
                 "Child",
                 folder,
                 null);
-        final PipelineDoc childPipeline = pipelineStore.readDocument(childPipelineNode.getDocRef());
-        childPipeline.setParentPipeline(parentPipelineNode.getDocRef());
+        final PipelineDoc childPipeline = pipelineStore.readDocument(childPipelineNode.getDocRef())
+                .copy().parentPipeline(parentPipelineNode.getDocRef()).build();
         pipelineStore.writeDocument(childPipeline);
 
         dumpNodeStructure(explorerNodeService.getRoot(), 0);

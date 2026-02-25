@@ -90,7 +90,7 @@ public class RenameTabPresenter
 
 //                tabLayout.clear();
                 tabLayout.refresh();
-                dashboardPresenter.onDirty();
+                dashboardPresenter.onChange();
             }
         }
         e.hide();

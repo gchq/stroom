@@ -29,9 +29,9 @@ import stroom.docref.DocRef.DisplayType;
 import stroom.docref.HasDisplayValue;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginRegistry;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineDataBuilder;
@@ -78,7 +78,7 @@ import java.util.stream.Collectors;
 
 public class PropertyListPresenter
         extends MyPresenterWidget<PagerView>
-        implements HasDirtyHandlers {
+        implements HasChangeHandlers {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
 
@@ -163,7 +163,7 @@ public class PropertyListPresenter
                 .eventBus(getEventBus())
                 .showIcon(true)
                 .canOpenFunction(property -> property.getValue() != null &&
-                                    !property.getValue().isEmbedded())
+                                             !property.getValue().isEmbedded())
                 .cssClassFunction(property1 -> getStateCssClass(property1, true))
                 .cellTextFunction(property -> {
                     if (property == null || property.getValue() == null || property.getValue().getEntity() == null) {
@@ -437,8 +437,7 @@ public class PropertyListPresenter
                                             pipelineModel.setPipelineLayer(new PipelineLayer(pipelineModel
                                                     .getPipelineLayer().getSourcePipeline(), pipelineData));
 
-                                            setDirty(true);
-
+                                            onChange();
                                             refresh();
                                             e.hide();
                                         });
@@ -452,8 +451,7 @@ public class PropertyListPresenter
                         pipelineModel.setPipelineLayer(
                                 new PipelineLayer(pipelineModel.getPipelineLayer().getSourcePipeline(), pipelineData));
 
-                        setDirty(true);
-
+                        onChange();
                         refresh();
                     }
                 }
@@ -480,9 +478,9 @@ public class PropertyListPresenter
     }
 
     private void createEmbeddedDocument(final DocumentPlugin<Document> documentPlugin,
-                                            final String documentName,
-                                            final DocRef parentDocRef,
-                                            final Consumer<Document> callback) {
+                                        final String documentName,
+                                        final DocRef parentDocRef,
+                                        final Consumer<Document> callback) {
         final RestErrorHandler errorHandler = throwable -> AlertEvent.fireError(
                 this,
                 "Unable to create embedded document",
@@ -578,10 +576,8 @@ public class PropertyListPresenter
         }
     }
 
-    private void setDirty(final boolean dirty) {
-        if (dirty) {
-            DirtyEvent.fire(this, dirty);
-        }
+    private void onChange() {
+        ChangeEvent.fire(this);
     }
 
     private PipelinePropertyValue getDefaultValue(final PipelinePropertyType propertyType) {
@@ -633,8 +629,8 @@ public class PropertyListPresenter
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
 

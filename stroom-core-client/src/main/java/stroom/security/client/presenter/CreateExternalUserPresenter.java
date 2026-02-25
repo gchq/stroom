@@ -87,8 +87,7 @@ public class CreateExternalUserPresenter extends MyPresenterWidget<CreateExterna
                 "would you like to restore the existing user?",
                 ok -> {
                     if (ok) {
-                        user.setEnabled(true);
-                        update(user, consumer, event, taskMonitorFactory);
+                        update(user.copy().enabled(true).build(), consumer, event, taskMonitorFactory);
                     } else {
                         consumer.accept(user);
                         event.hide();

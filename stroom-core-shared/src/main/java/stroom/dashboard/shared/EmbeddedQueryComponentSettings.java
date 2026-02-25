@@ -17,7 +17,6 @@
 package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
-import stroom.query.api.QueryKey;
 import stroom.query.api.TableSettings;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryTablePreferences;
@@ -69,13 +68,11 @@ public final class EmbeddedQueryComponentSettings
             @JsonProperty("queryRef") final DocRef queryRef,
             @JsonProperty("automate") final Automate automate,
             @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers,
-            @JsonProperty("lastQueryKey") final QueryKey lastQueryKey,
-            @JsonProperty("lastQueryNode") final String lastQueryNode,
             @JsonProperty("showTable") final Boolean showTable,
             @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences,
             @JsonProperty("selectionFilter") final List<ComponentSelectionHandler> selectionFilter,
             @JsonProperty("embeddedQueryDoc") final QueryDoc embeddedQueryDoc) {
-        super(automate, selectionHandlers, lastQueryKey, lastQueryNode);
+        super(automate, selectionHandlers);
         this.reference = reference;
         this.queryRef = queryRef;
         this.showTable = showTable;
@@ -125,6 +122,15 @@ public final class EmbeddedQueryComponentSettings
             return false;
         }
         final EmbeddedQueryComponentSettings that = (EmbeddedQueryComponentSettings) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(reference, that.reference);
+//        final boolean b2 = Objects.equals(queryRef, that.queryRef);
+//        final boolean b3 = Objects.equals(showTable, that.showTable);
+//        final boolean b4 = Objects.equals(queryTablePreferences, that.queryTablePreferences);
+//        final boolean b5 = Objects.equals(selectionFilter, that.selectionFilter);
+//        final boolean b6 = Objects.equals(embeddedQueryDoc, that.embeddedQueryDoc);
+
         return Objects.equals(reference, that.reference) &&
                Objects.equals(queryRef, that.queryRef) &&
                Objects.equals(showTable, that.showTable) &&
@@ -231,8 +237,6 @@ public final class EmbeddedQueryComponentSettings
                     queryRef,
                     automate,
                     selectionQuery,
-                    lastQueryKey,
-                    lastQueryNode,
                     showTable,
                     queryTablePreferences,
                     selectionFilter,

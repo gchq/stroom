@@ -42,8 +42,8 @@ class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
     void test() {
         // Create a dictionary and save it.
         final DocRef docRef = dictionaryStore.createDocument("TEST");
-        final DictionaryDoc dictionary = dictionaryStore.readDocument(docRef);
-        dictionary.setData("This\nis\na\nlist\nof\nwords");
+        final DictionaryDoc dictionary = dictionaryStore.readDocument(docRef)
+                .copy().data("This\nis\na\nlist\nof\nwords").build();
         dictionaryStore.writeDocument(dictionary);
 
         // Make sure we can get it back.
@@ -57,22 +57,20 @@ class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
     void testImport() {
         // Create a dictionary and save it.
         final DocRef docRef1 = dictionaryStore.createDocument("TEST");
-        final DictionaryDoc dictionary1 = dictionaryStore.readDocument(docRef1);
-        dictionary1.setData("dic1");
+        final DictionaryDoc dictionary1 = dictionaryStore.readDocument(docRef1)
+                .copy().data("dic1").build();
         dictionaryStore.writeDocument(dictionary1);
 
         // Create a dictionary and save it.
         final DocRef docRef2 = dictionaryStore.createDocument("TEST");
-        final DictionaryDoc dictionary2 = dictionaryStore.readDocument(docRef2);
-        dictionary2.setData("dic2");
-        dictionary2.setImports(Collections.singletonList(docRef1));
+        final DictionaryDoc dictionary2 = dictionaryStore.readDocument(docRef2)
+                .copy().data("dic2").imports(Collections.singletonList(docRef1)).build();
         dictionaryStore.writeDocument(dictionary2);
 
         // Create a dictionary and save it.
         final DocRef docRef3 = dictionaryStore.createDocument("TEST");
-        final DictionaryDoc dictionary3 = dictionaryStore.readDocument(docRef3);
-        dictionary3.setData("dic3");
-        dictionary3.setImports(Collections.singletonList(docRef2));
+        final DictionaryDoc dictionary3 = dictionaryStore.readDocument(docRef3)
+                .copy().data("dic3").imports(Collections.singletonList(docRef2)).build();
         dictionaryStore.writeDocument(dictionary3);
 
         // Make sure we can get it back.
@@ -85,15 +83,14 @@ class TestDictionaryStoreImpl extends AbstractCoreIntegrationTest {
     void testFindByName() {
         // Create a dictionary and save it.
         final DocRef docRef1 = dictionaryStore.createDocument("dic1_name");
-        final DictionaryDoc dictionary1 = dictionaryStore.readDocument(docRef1);
-        dictionary1.setData("dic1");
+        final DictionaryDoc dictionary1 = dictionaryStore.readDocument(docRef1)
+                .copy().data("dic1").build();
         dictionaryStore.writeDocument(dictionary1);
 
         // Create a dictionary and save it.
         final DocRef docRef2 = dictionaryStore.createDocument("dic2_name");
-        final DictionaryDoc dictionary2 = dictionaryStore.readDocument(docRef2);
-        dictionary2.setData("dic2");
-        dictionary2.setImports(Collections.singletonList(docRef1));
+        final DictionaryDoc dictionary2 = dictionaryStore.readDocument(docRef2)
+                .copy().data("dic2").imports(Collections.singletonList(docRef1)).build();
         dictionaryStore.writeDocument(dictionary2);
 
         // Make sure we can get it back.

@@ -18,7 +18,6 @@ package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
 import stroom.query.api.ExpressionOperator;
-import stroom.query.api.QueryKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -50,10 +49,8 @@ public final class QueryComponentSettings extends AbstractQueryComponentSettings
     public QueryComponentSettings(@JsonProperty("dataSource") final DocRef dataSource,
                                   @JsonProperty("expression") final ExpressionOperator expression,
                                   @JsonProperty("automate") final Automate automate,
-                                  @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers,
-                                  @JsonProperty("lastQueryKey") final QueryKey lastQueryKey,
-                                  @JsonProperty("lastQueryNode") final String lastQueryNode) {
-        super(automate, selectionHandlers, lastQueryKey, lastQueryNode);
+                                  @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers) {
+        super(automate, selectionHandlers);
         this.dataSource = dataSource;
         this.expression = expression;
     }
@@ -78,8 +75,13 @@ public final class QueryComponentSettings extends AbstractQueryComponentSettings
             return false;
         }
         final QueryComponentSettings that = (QueryComponentSettings) o;
-        return Objects.equals(dataSource, that.dataSource) && Objects.equals(expression,
-                that.expression);
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(dataSource, that.dataSource);
+//        final boolean b2 = Objects.equals(expression, that.expression);
+
+        return Objects.equals(dataSource, that.dataSource) &&
+               Objects.equals(expression, that.expression);
     }
 
     @Override
@@ -145,9 +147,7 @@ public final class QueryComponentSettings extends AbstractQueryComponentSettings
                     dataSource,
                     expression,
                     automate,
-                    selectionQuery,
-                    lastQueryKey,
-                    lastQueryNode);
+                    selectionQuery);
         }
     }
 }

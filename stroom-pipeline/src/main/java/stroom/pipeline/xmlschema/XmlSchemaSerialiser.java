@@ -40,22 +40,16 @@ public class XmlSchemaSerialiser implements DocumentSerialiser2<XmlSchemaDoc> {
 
     @Override
     public XmlSchemaDoc read(final Map<String, byte[]> data) throws IOException {
-        final XmlSchemaDoc document = delegate.read(data);
-        document.setData(EncodingUtil.asString(data.get(XSD)));
-        return document;
+        return delegate.read(data).copy().data(EncodingUtil.asString(data.get(XSD))).build();
     }
 
     @Override
     public Map<String, byte[]> write(final XmlSchemaDoc document) throws IOException {
         final String xsd = document.getData();
-        document.setData(null);
-
-        final Map<String, byte[]> data = delegate.write(document);
+        final Map<String, byte[]> data = delegate.write(document.copy().data(null).build());
         if (xsd != null) {
             data.put(XSD, EncodingUtil.asBytes(xsd));
-            document.setData(xsd);
         }
-
         return data;
     }
 }

@@ -207,8 +207,7 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
     void testApplyAllCriteria() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final Node testNode = new Node();
-        testNode.setId(1);
+        final Node testNode = Node.builder().id(1).build();
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTextTerm(ProcessorTaskFields.NODE_NAME, Condition.EQUALS, "Node name")
@@ -239,8 +238,7 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
     void testApplyAllCriteriaSummary() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final Node testNode = new Node();
-        testNode.setId(1);
+        final Node testNode = Node.builder().id(1).build();
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTextTerm(ProcessorTaskFields.NODE_NAME, Condition.EQUALS, "Node name")

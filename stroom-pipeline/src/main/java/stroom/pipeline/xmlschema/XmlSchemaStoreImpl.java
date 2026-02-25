@@ -18,7 +18,6 @@ package stroom.pipeline.xmlschema;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -48,7 +47,11 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
     @Inject
     public XmlSchemaStoreImpl(final StoreFactory storeFactory,
                               final XmlSchemaSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, XmlSchemaDoc.TYPE, XmlSchemaDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                XmlSchemaDoc.TYPE,
+                XmlSchemaDoc::builder,
+                XmlSchemaDoc::copy);
     }
 
     // ---------------------------------------------------------------------
@@ -156,10 +159,7 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

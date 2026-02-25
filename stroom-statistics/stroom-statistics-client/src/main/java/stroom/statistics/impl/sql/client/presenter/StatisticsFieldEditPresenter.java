@@ -16,8 +16,7 @@
 
 package stroom.statistics.impl.sql.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
-import stroom.statistics.impl.sql.shared.StatisticField;
+import stroom.statistics.impl.sql.client.presenter.State.Field;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -30,7 +29,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.List;
+import java.util.Set;
 
 public class StatisticsFieldEditPresenter
         extends MyPresenterWidget<StatisticsFieldEditPresenter.StatisticsFieldEditView> {
@@ -38,10 +37,11 @@ public class StatisticsFieldEditPresenter
     private static final String DEFAULT_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
 
     private String fieldNamePattern;
-    private List<StatisticField> otherFields;
+    private Set<String> otherFieldNames;
 
     @Inject
-    public StatisticsFieldEditPresenter(final EventBus eventBus, final StatisticsFieldEditView view,
+    public StatisticsFieldEditPresenter(final EventBus eventBus,
+                                        final StatisticsFieldEditView view,
                                         final UiConfigCache clientPropertyCache) {
         super(eventBus, view);
 
@@ -60,34 +60,30 @@ public class StatisticsFieldEditPresenter
         }, this);
     }
 
-    public void read(final StatisticField field, final List<StatisticField> otherFields) {
-        this.otherFields = otherFields;
-        getView().setFieldName(field.getFieldName());
-
+    public void read(final Field field, final Set<String> otherFieldNames) {
+        this.otherFieldNames = otherFieldNames;
+        getView().setFieldName(field.getName());
     }
 
-    public boolean write(final StatisticField field) {
+    public void write(final Field field) {
         String name = getView().getFieldName();
         name = name.trim();
 
-        field.setFieldName(name);
-
         if (name.length() == 0) {
-            AlertEvent.fireWarn(this, "An index field must have a name", null);
-            return false;
+            throw new RuntimeException("An index field must have a name");
         }
-        if (otherFields.contains(field)) {
-            AlertEvent.fireWarn(this, "Another field with this name already exists", null);
-            return false;
+        if (otherFieldNames.contains(name)) {
+            throw new RuntimeException("Another field with this name already exists");
         }
         if (fieldNamePattern != null && !fieldNamePattern.isEmpty()) {
             if (!name.matches(fieldNamePattern)) {
-                AlertEvent.fireWarn(this,
-                        "Invalid name \"" + name + "\" (valid name pattern: " + fieldNamePattern + ")", null);
-                return false;
+                throw new RuntimeException("Invalid name \"" +
+                                           name +
+                                           "\" (valid name pattern: " +
+                                           fieldNamePattern + ")");
             }
         }
-        return true;
+        field.setName(name);
     }
 
     void show(final String caption, final HidePopupRequestEvent.Handler handler) {

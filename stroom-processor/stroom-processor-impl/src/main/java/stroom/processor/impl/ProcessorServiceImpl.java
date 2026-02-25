@@ -24,7 +24,6 @@ import stroom.processor.shared.ProcessorType;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.AuditUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 
@@ -59,10 +58,12 @@ public class ProcessorServiceImpl implements ProcessorService {
                             final DocRef pipelineRef,
                             final boolean enabled) {
 
-        final Processor processor = new Processor();
-        processor.setProcessorType(processorType);
-        processor.setPipeline(pipelineRef);
-        processor.setEnabled(enabled);
+        final Processor processor = Processor
+                .builder()
+                .processorType(processorType)
+                .pipeline(pipelineRef)
+                .enabled(enabled)
+                .build();
 
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(
@@ -95,11 +96,13 @@ public class ProcessorServiceImpl implements ProcessorService {
                             final DocRef processorDocRef,
                             final DocRef pipelineDocRef,
                             final boolean enabled) {
-        final Processor processor = new Processor();
-        processor.setProcessorType(processorType);
-        processor.setPipeline(pipelineDocRef);
-        processor.setEnabled(enabled);
-        processor.setUuid(processorDocRef.getUuid());
+        final Processor processor = Processor
+                .builder()
+                .processorType(processorType)
+                .pipeline(pipelineDocRef)
+                .enabled(enabled)
+                .uuid(processorDocRef.getUuid())
+                .build();
 
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(
@@ -114,14 +117,15 @@ public class ProcessorServiceImpl implements ProcessorService {
 
     @Override
     public Processor create(final Processor processor) {
+        final Processor.Builder builder = processor.copy();
         if (processor.getUuid() == null) {
-            processor.setUuid(UUID.randomUUID().toString());
+            builder.uuid(UUID.randomUUID().toString());
         }
 
-        AuditUtil.stamp(securityContext, processor);
+        builder.stampAudit(securityContext);
 
         return securityContext.secureResult(PERMISSION, () ->
-                processorDao.create(processor));
+                processorDao.create(builder.build()));
     }
 
     @Override
@@ -138,13 +142,15 @@ public class ProcessorServiceImpl implements ProcessorService {
 
     @Override
     public Processor update(final Processor processor) {
+        final Processor.Builder builder = processor.copy();
         if (processor.getUuid() == null) {
-            processor.setUuid(UUID.randomUUID().toString());
+            builder.uuid(UUID.randomUUID().toString());
         }
 
-        AuditUtil.stamp(securityContext, processor);
+        builder.stampAudit(securityContext);
+
         return securityContext.secureResult(PERMISSION, () ->
-                processorDao.update(processor));
+                processorDao.update(builder.build()));
     }
 
     @Override
@@ -172,7 +178,7 @@ public class ProcessorServiceImpl implements ProcessorService {
                                 return delete(processor.getId());
                             } catch (final Exception e) {
                                 throw new RuntimeException("Error deleting filters and processor for pipelineUuid "
-                                        + pipelineUuid, e);
+                                                           + pipelineUuid, e);
                             }
                         })
                         .orElseGet(() -> {
@@ -190,8 +196,7 @@ public class ProcessorServiceImpl implements ProcessorService {
     @Override
     public void setEnabled(final Integer id, final Boolean enabled) {
         fetch(id).ifPresent(processor -> {
-            processor.setEnabled(enabled);
-            update(processor);
+            update(processor.copy().enabled(enabled).build());
         });
     }
 

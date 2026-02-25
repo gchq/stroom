@@ -158,7 +158,7 @@ public class JobNodeListHelper {
         return (final int rowIndex, final JobNodeAndInfo jobNodeAndInfo, final TickBoxState value) -> {
             if (jobNodeAndInfo != null) {
                 final boolean isEnabled = NullSafe.isTrue(value.toBoolean());
-                jobNodeAndInfo.getJobNode().setEnabled(isEnabled);
+//                jobNodeAndInfo.getJobNode().setEnabled(isEnabled);
                 restFactory
                         .create(JOB_NODE_RESOURCE)
                         .call(jobNodeResource ->
@@ -218,7 +218,7 @@ public class JobNodeListHelper {
                     ConfirmEvent.fire(hasHandlers, msg, isConfirm -> {
                         if (isConfirm) {
                             schedulePresenter.show(schedule -> {
-                                JobNodeUtil.setSchedule(jobNode, schedule);
+//                                jobNode = JobNodeUtil.setSchedule(jobNode, schedule);
                                 final Set<Integer> ids = selectedItems.stream()
                                         .map(JobNode::getId)
                                         .collect(Collectors.toSet());
@@ -240,7 +240,7 @@ public class JobNodeListHelper {
                 }
             } else {
                 schedulePresenter.show(schedule -> {
-                    JobNodeUtil.setSchedule(jobNode, schedule);
+//                    jobNode = JobNodeUtil.setSchedule(jobNode, schedule);
                     restFactory
                             .create(JOB_NODE_RESOURCE)
                             .call(resource ->

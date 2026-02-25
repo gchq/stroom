@@ -142,15 +142,13 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
 
     @Override
     protected XMLReader createReader() throws SAXException {
-        final XMLReader xmlReader = switch (getMode()) {
+        return switch (getMode()) {
             case XML -> createXMLReader();
             case XML_FRAGMENT, DATA_SPLITTER -> createTextConverter();
             case JSON -> createJSONReader();
             case UNKNOWN -> throw ProcessException.create("Unknown parser type '" + type + "'");
             default -> throw ProcessException.create("Unexpected combined parser mode: " + getMode());
         };
-
-        return xmlReader;
     }
 
     public Mode getMode() {
@@ -216,12 +214,12 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         // TODO: We need to use the cached TextConverter service ideally but
         //  before we do it needs to be aware cluster wide when TextConverter has
         //  been updated.
-        final TextConverterDoc tc = loadTextConverterDoc();
+        TextConverterDoc tc = loadTextConverterDoc();
 
         // If we are in stepping mode and have made code changes then we want to
         // add them to the newly loaded text converter.
         if (injectedCode != null) {
-            tc.setData(injectedCode);
+            tc = tc.copy().data(injectedCode).build();
             usePool = false;
         }
 

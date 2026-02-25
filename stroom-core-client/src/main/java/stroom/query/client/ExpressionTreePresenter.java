@@ -259,7 +259,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
     public void fireDirty() {
         if (uiHandlers != null) {
-            uiHandlers.fireDirty();
+            uiHandlers.onChange();
         }
     }
 

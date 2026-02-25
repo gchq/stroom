@@ -16,19 +16,20 @@
 
 package stroom.statistics.impl.sql.shared;
 
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.collection.GwtCollectionUtil;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @JsonPropertyOrder({"fields", "customRollUpMasks"})
@@ -38,220 +39,97 @@ public class StatisticsDataSourceData {
     /**
      * Should be a SortedSet but GWT doesn't support that. Contents should be
      * sorted and not contain duplicates
-     * <p>
-     * XMLTransient to force JAXB to use the setter
      */
     @JsonProperty
-    private List<StatisticField> fields;
+    private final List<StatisticField> fields;
 
     /**
      * Held in a set to prevent duplicates.
-     * <p>
-     * XMLTransient to force JAXB to use the setter
      */
     @JsonProperty
-    private Set<CustomRollUpMask> customRollUpMasks;
-
-    // cache the positions of the
-    @JsonIgnore
-    private Map<String, Integer> fieldPositionMap;
-
-    public StatisticsDataSourceData() {
-        this(new ArrayList<>(), new HashSet<>());
-    }
-
-    public StatisticsDataSourceData(final List<StatisticField> fields) {
-        this(new ArrayList<>(fields), new HashSet<>());
-    }
+    private final Set<CustomRollUpMask> customRollUpMasks;
 
     @JsonCreator
     public StatisticsDataSourceData(@JsonProperty("fields") final List<StatisticField> fields,
                                     @JsonProperty("customRollUpMasks") final Set<CustomRollUpMask> customRollUpMasks) {
-        this.fields = fields;
-        this.customRollUpMasks = customRollUpMasks;
+        final List<StatisticField> sorted = new ArrayList<>(NullSafe.list(fields));
+        sorted.sort(StatisticField::compareTo);
+        this.fields = Collections.unmodifiableList(sorted);
+        this.customRollUpMasks = GwtCollectionUtil.asUnmodifiabledConsistentOrderSet(customRollUpMasks);
     }
 
     public List<StatisticField> getFields() {
         return fields;
     }
 
-    public void setFields(final List<StatisticField> fields) {
-        this.fields = fields;
-    }
-
     public Set<CustomRollUpMask> getCustomRollUpMasks() {
         return customRollUpMasks;
     }
 
-    public void setCustomRollUpMasks(final Set<CustomRollUpMask> customRollUpMasks) {
-        this.customRollUpMasks = customRollUpMasks;
-    }
-
-    public void addStatisticField(final StatisticField statisticField) {
-        if (fields == null) {
-            fields = new ArrayList<>();
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
         }
-
-        // prevent duplicates
-        if (!fields.contains(statisticField)) {
-            fields.add(statisticField);
-            sortFields();
-            fieldPositionMap = null;
-        }
-    }
-
-    public void removeStatisticField(final StatisticField statisticField) {
-        if (fields != null) {
-            fields.remove(statisticField);
-            fieldPositionMap = null;
-        }
-    }
-
-    public void reOrderStatisticFields() {
-        if (fields != null) {
-            fieldPositionMap = null;
-        }
-    }
-
-    public boolean containsStatisticField(final StatisticField statisticField) {
-        if (fields != null) {
-            return fields.contains(statisticField);
-        }
-        return false;
-    }
-
-    public void addCustomRollUpMask(final CustomRollUpMask customRollUpMask) {
-        if (customRollUpMasks == null) {
-            customRollUpMasks = new HashSet<>();
-        }
-
-        customRollUpMasks.add(customRollUpMask);
-    }
-
-    public void removeCustomRollUpMask(final CustomRollUpMask customRollUpMask) {
-        if (customRollUpMasks != null) {
-            customRollUpMasks.remove(customRollUpMask);
-        }
-    }
-
-    public void clearCustomRollUpMask() {
-        if (customRollUpMasks != null) {
-            customRollUpMasks.clear();
-        }
-    }
-
-    public boolean containsCustomRollUpMask(final CustomRollUpMask customRollUpMask) {
-        if (customRollUpMasks != null) {
-            return customRollUpMasks.contains(customRollUpMask);
-        }
-        return false;
-    }
-
-    public boolean isRollUpCombinationSupported(final Set<String> rolledUpFieldNames) {
-        final Map<String, Integer> fieldPositionMap = getFieldPositionMap();
-
-        if (rolledUpFieldNames == null || rolledUpFieldNames.isEmpty()) {
-            return true;
-        }
-
-        if (rolledUpFieldNames.size() > fields.size()) {
-            throw new RuntimeException(
-                    "isRollUpCombinationSupported called with more rolled up fields (" + rolledUpFieldNames
-                            + ") than there are statistic fields (" + fieldPositionMap.keySet() + ")");
-        }
-
-        if (!fieldPositionMap.keySet().containsAll(rolledUpFieldNames)) {
-            throw new RuntimeException(
-                    "isRollUpCombinationSupported called rolled up fields (" + rolledUpFieldNames
-                            + ") that don't exist in the statistic fields list (" + fieldPositionMap.keySet() + ")");
-        }
-
-        final List<Integer> rolledUpFieldPositions = new ArrayList<>();
-        for (final String rolledUpField : rolledUpFieldNames) {
-            rolledUpFieldPositions.add(getFieldPositionInList(rolledUpField));
-        }
-
-        return customRollUpMasks.contains(new CustomRollUpMask(rolledUpFieldPositions));
-    }
-
-    public Integer getFieldPositionInList(final String fieldName) {
-        final Map<String, Integer> fieldPositionMap = getFieldPositionMap();
-        return fieldPositionMap.get(fieldName);
+        final StatisticsDataSourceData that = (StatisticsDataSourceData) o;
+        return Objects.equals(fields, that.fields) &&
+               Objects.equals(customRollUpMasks, that.customRollUpMasks);
     }
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((fields == null)
-                ? 0
-                : fields.hashCode());
-        return result;
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final StatisticsDataSourceData other = (StatisticsDataSourceData) obj;
-        if (fields == null) {
-            return other.fields == null;
-        } else {
-            return fields.equals(other.fields);
-        }
+        return Objects.hash(fields, customRollUpMasks);
     }
 
     @Override
     public String toString() {
-        return "StatisticFields [statisticFields=" + fields + "]";
+        return "StatisticsDataSourceData{" +
+               "fields=" + fields +
+               ", customRollUpMasks=" + customRollUpMasks +
+               '}';
     }
 
-    private Map<String, Integer> getFieldPositionMap() {
-        if (fieldPositionMap != null) {
-            return fieldPositionMap;
-        }
-        return updateFieldPositionbMap();
+    public static Builder builder() {
+        return new Builder();
     }
 
-    private Map<String, Integer> updateFieldPositionbMap() {
-        final Map<String, Integer> fieldPositionMap = createFieldPositionMap();
-        this.fieldPositionMap = fieldPositionMap;
-        return fieldPositionMap;
+    public Builder copy() {
+        return new Builder(this);
     }
 
-    private void sortFields() {
-        fields.sort(Comparator.naturalOrder());
-    }
+    public static final class Builder {
 
-    private Map<String, Integer> createFieldPositionMap() {
-        final Map<String, Integer> fieldPositionMap = new HashMap<>();
-        int i = 0;
-        for (final StatisticField field : fields) {
-            fieldPositionMap.put(field.getFieldName(), i++);
-        }
-        return fieldPositionMap;
-    }
+        private List<StatisticField> fields;
+        private Set<CustomRollUpMask> customRollUpMasks;
 
-    public StatisticsDataSourceData deepCopy() {
-        final List<StatisticField> newFieldList = new ArrayList<>();
-
-        for (final StatisticField statisticField : fields) {
-            newFieldList.add(statisticField.deepCopy());
+        private Builder() {
+            this.fields = new ArrayList<>();
+            this.customRollUpMasks = new HashSet<>();
         }
 
-        final Set<CustomRollUpMask> newMaskList = new HashSet<>();
-
-        for (final CustomRollUpMask customRollUpMask : customRollUpMasks) {
-            newMaskList.add(customRollUpMask.deepCopy());
+        private Builder(final StatisticsDataSourceData data) {
+            this.fields = data.fields != null
+                    ? new ArrayList<>(data.fields)
+                    : new ArrayList<>();
+            this.customRollUpMasks = data.customRollUpMasks != null
+                    ? new HashSet<>(data.customRollUpMasks)
+                    : new HashSet<>();
         }
 
-        return new StatisticsDataSourceData(newFieldList, newMaskList);
+        public Builder fields(final List<StatisticField> fields) {
+            this.fields = fields;
+            return this;
+        }
+
+        public Builder customRollUpMasks(final Set<CustomRollUpMask> customRollUpMasks) {
+            this.customRollUpMasks = customRollUpMasks;
+            return this;
+        }
+
+        public StatisticsDataSourceData build() {
+            return new StatisticsDataSourceData(
+                    fields,
+                    customRollUpMasks);
+        }
     }
 }

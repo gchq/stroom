@@ -236,7 +236,7 @@ public class GitRepoSettingsViewImpl
             "txtGitCommitToPull"})
     public void onWidgetValueChange(@SuppressWarnings("unused") final ValueChangeEvent<String> e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onDirty();
+            getUiHandlers().onChange();
         }
         this.setState();
     }
@@ -250,7 +250,7 @@ public class GitRepoSettingsViewImpl
     @UiHandler("credentialSelectionBox")
     public void onSelectionValueChange(@SuppressWarnings("unused") final ValueChangeEvent<Credential> e) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onDirty();
+            getUiHandlers().onChange();
         }
     }
 
@@ -263,7 +263,7 @@ public class GitRepoSettingsViewImpl
     @UiHandler({"chkGitAutoPush"})
     public void onAutoPushClick(@SuppressWarnings("unused") final ClickEvent event) {
         if (getUiHandlers() != null) {
-            getUiHandlers().onDirty();
+            getUiHandlers().onChange();
         }
         this.setState();
     }

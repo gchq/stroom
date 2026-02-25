@@ -18,7 +18,6 @@ package stroom.search.solr;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -70,7 +69,11 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     SolrIndexStoreImpl(final StoreFactory storeFactory,
                        final SolrIndexClientCache solrIndexClientCache,
                        final SolrIndexSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, SolrIndexDoc.TYPE, SolrIndexDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                SolrIndexDoc.TYPE,
+                SolrIndexDoc::builder,
+                SolrIndexDoc::copy);
         this.solrIndexClientCache = solrIndexClientCache;
     }
 
@@ -151,6 +154,8 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
 
     @Override
     public SolrIndexDoc writeDocument(final SolrIndexDoc document) {
+        final SolrIndexDoc.Builder builder = document.copy();
+
         final List<String> messages = new ArrayList<>();
         final AtomicInteger replaceCount = new AtomicInteger();
         final AtomicInteger addCount = new AtomicInteger();
@@ -225,19 +230,19 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                                     deleteCount.incrementAndGet();
                                 } catch (final RuntimeException | SolrServerException | IOException e) {
                                     final String message = "Failed to delete field '" + field.getFldName() +
-                                            "' - " + e.getMessage();
+                                                           "' - " + e.getMessage();
                                     messages.add(message);
                                     LOGGER.error(() -> message, e);
                                 }
                             }
                         });
-                        document.setDeletedFields(null);
+                        builder.deletedFields(null);
                     }
 
                     // Now pull all fields back from Solr and refresh our doc.
                     solrFields = fetchSolrFields(solrClient, document.getCollection(), existingFieldMap);
                     solrFields.sort(Comparator.comparing(SolrIndexField::getFldName, String.CASE_INSENSITIVE_ORDER));
-                    document.setFields(solrFields);
+                    builder.fields(solrFields);
 
                     messages.add("Replaced " + replaceCount.get() + " fields");
                     messages.add("Added " + addCount.get() + " fields");
@@ -254,9 +259,9 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
             LOGGER.error(e::getMessage, e);
         }
 
-        document.setSolrSynchState(new SolrSynchState(System.currentTimeMillis(), messages));
+        builder.solrSynchState(new SolrSynchState(System.currentTimeMillis(), messages));
 
-        return store.writeDocument(document);
+        return store.writeDocument(builder.build());
     }
 
     private List<SolrIndexField> fetchSolrFields(final SolrClient solrClient,
@@ -269,39 +274,40 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                 .stream()
                 .map(v -> {
                     final SolrIndexField field = fromAttributes(v);
-                    field.setFldType(FieldType.TEXT);
+                    final SolrIndexField.Builder builder = field.copy();
+                    builder.fldType(FieldType.TEXT);
 
                     final SolrIndexField existingField = existingFieldMap.get(field.getFldName());
                     if (existingField != null) {
-                        field.setFldType(existingField.getFldType());
+                        builder.fldType(existingField.getFldType());
                     }
 
-                    return field;
+                    return builder.build();
                 })
                 .collect(Collectors.toList());
     }
 
     private SolrIndexField fromAttributes(final Map<String, Object> attributes) {
-        final SolrIndexField field = SolrIndexField.builder().build();
-        setString(attributes, "name", field::setFldName);
-        setString(attributes, "type", field::setNativeType);
-        setString(attributes, "default", field::setDefaultValue);
-        setBoolean(attributes, "stored", field::setStored);
-        setBoolean(attributes, "indexed", field::setIndexed);
-        setBoolean(attributes, "uninvertible", field::setUninvertible);
-        setBoolean(attributes, "docValues", field::setDocValues);
-        setBoolean(attributes, "multiValued", field::setMultiValued);
-        setBoolean(attributes, "required", field::setRequired);
-        setBoolean(attributes, "omitNorms", field::setOmitNorms);
-        setBoolean(attributes, "omitTermFreqAndPositions", field::setOmitTermFreqAndPositions);
-        setBoolean(attributes, "omitPositions", field::setOmitPositions);
-        setBoolean(attributes, "termVectors", field::setTermVectors);
-        setBoolean(attributes, "termPositions", field::setTermPositions);
-        setBoolean(attributes, "termOffsets", field::setTermOffsets);
-        setBoolean(attributes, "termPayloads", field::setTermPayloads);
-        setBoolean(attributes, "sortMissingFirst", field::setSortMissingFirst);
-        setBoolean(attributes, "sortMissingLast", field::setSortMissingLast);
-        return field;
+        final SolrIndexField.Builder builder = SolrIndexField.builder();
+        setString(attributes, "name", builder::fldName);
+        setString(attributes, "type", builder::nativeType);
+        setString(attributes, "default", builder::defaultValue);
+        setBoolean(attributes, "stored", builder::stored);
+        setBoolean(attributes, "indexed", builder::indexed);
+        setBoolean(attributes, "uninvertible", builder::uninvertible);
+        setBoolean(attributes, "docValues", builder::docValues);
+        setBoolean(attributes, "multiValued", builder::multiValued);
+        setBoolean(attributes, "required", builder::required);
+        setBoolean(attributes, "omitNorms", builder::omitNorms);
+        setBoolean(attributes, "omitTermFreqAndPositions", builder::omitTermFreqAndPositions);
+        setBoolean(attributes, "omitPositions", builder::omitPositions);
+        setBoolean(attributes, "termVectors", builder::termVectors);
+        setBoolean(attributes, "termPositions", builder::termPositions);
+        setBoolean(attributes, "termOffsets", builder::termOffsets);
+        setBoolean(attributes, "termPayloads", builder::termPayloads);
+        setBoolean(attributes, "sortMissingFirst", builder::sortMissingFirst);
+        setBoolean(attributes, "sortMissingLast", builder::sortMissingLast);
+        return builder.build();
     }
 
     private Map<String, Object> toAttributes(final SolrIndexField field) {
@@ -379,23 +385,8 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        Function<SolrIndexDoc, SolrIndexDoc> filter = d -> {
-            d.setSolrSynchState(null);
-            return d;
-        };
-
-        if (omitAuditFields) {
-            filter = new AuditFieldFilter<>() {
-                @Override
-                public SolrIndexDoc apply(final SolrIndexDoc doc) {
-                    final SolrIndexDoc solrIndexDoc = super.apply(doc);
-                    solrIndexDoc.setSolrSynchState(null);
-                    return solrIndexDoc;
-                }
-            };
-        }
-
-        return store.exportDocument(docRef, messageList, filter);
+        return store.exportDocument(docRef, omitAuditFields, messageList, doc ->
+                doc.copy().solrSynchState(null).build());
     }
 
     @Override

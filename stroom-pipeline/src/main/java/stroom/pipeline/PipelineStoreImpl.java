@@ -18,7 +18,7 @@ package stroom.pipeline;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentStore;
 import stroom.docstore.api.DocumentStoreRegistry;
@@ -72,7 +72,11 @@ public class PipelineStoreImpl implements PipelineStore {
                              final PipelineDataMigration pipelineDataMigration,
                              final Provider<DocumentStoreRegistry> documentStoreRegistryProvider) {
         this.processorServiceProvider = processorServiceProvider;
-        this.store = storeFactory.createStore(serialiser, PipelineDoc.TYPE, PipelineDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                PipelineDoc.TYPE,
+                PipelineDoc::builder,
+                PipelineDoc::copy);
         this.processorFilterServiceProvider = processorFilterServiceProvider;
         this.pipelineDataMigration = pipelineDataMigration;
         this.documentStoreRegistryProvider = documentStoreRegistryProvider;
@@ -196,10 +200,11 @@ public class PipelineStoreImpl implements PipelineStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<PipelineDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<PipelineDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
+            final PipelineDoc.Builder copy = doc.copy();
             if (doc.getParentPipeline() != null) {
-                doc.setParentPipeline(dependencyRemapper.remap(doc.getParentPipeline()));
+                copy.parentPipeline(dependencyRemapper.remap(doc.getParentPipeline()));
             }
 
             final PipelineData pipelineData = doc.getPipelineData();
@@ -223,8 +228,9 @@ public class PipelineStoreImpl implements PipelineStore {
                         pipelineData.getRemovedPipelineReferences(),
                         builder.getReferences().getRemoveList(), dependencyRemapper);
 
-                doc.setPipelineData(builder.build());
+                copy.pipelineData(builder.build());
             }
+            return copy.build();
         };
     }
 
@@ -313,10 +319,7 @@ public class PipelineStoreImpl implements PipelineStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

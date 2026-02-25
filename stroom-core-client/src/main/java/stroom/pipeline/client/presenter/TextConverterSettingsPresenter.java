@@ -17,7 +17,7 @@
 package stroom.pipeline.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.item.client.SelectionBox;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.shared.TextConverterDoc;
@@ -28,7 +28,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
 public class TextConverterSettingsPresenter
-        extends DocumentEditPresenter<TextConverterSettingsView, TextConverterDoc> {
+        extends DocPresenter<TextConverterSettingsView, TextConverterDoc> {
 
     @Inject
     public TextConverterSettingsPresenter(final EventBus eventBus, final TextConverterSettingsView view) {
@@ -43,7 +43,7 @@ public class TextConverterSettingsPresenter
     protected void onBind() {
         super.onBind();
         registerHandler(
-                getView().getConverterType().addValueChangeHandler(event -> setDirty(true)));
+                getView().getConverterType().addValueChangeHandler(event -> onChange()));
     }
 
     @Override
@@ -54,8 +54,7 @@ public class TextConverterSettingsPresenter
     @Override
     protected TextConverterDoc onWrite(final TextConverterDoc textConverter) {
         final TextConverterType converterType = getView().getConverterType().getValue();
-        textConverter.setConverterType(converterType);
-        return textConverter;
+        return textConverter.copy().converterType(converterType).build();
     }
 
     public interface TextConverterSettingsView extends View {

@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.dashboard.client.flexlayout.MutableTabConfig;
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.shared.ComponentConfig;
@@ -54,9 +55,9 @@ public interface Component extends TabData, Layer, HasDisplayValue {
      */
     void setTabLayout(TabLayout tabLayout);
 
-    TabConfig getTabConfig();
+    MutableTabConfig getTabConfig();
 
-    void setTabConfig(TabConfig tabConfig);
+    void setTabConfig(MutableTabConfig tabConfig);
 
     void onClose();
 

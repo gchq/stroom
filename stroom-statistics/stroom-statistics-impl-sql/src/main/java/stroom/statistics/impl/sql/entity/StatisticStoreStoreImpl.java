@@ -18,7 +18,6 @@ package stroom.statistics.impl.sql.entity;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -42,7 +41,11 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
     @Inject
     public StatisticStoreStoreImpl(final StoreFactory storeFactory,
                                    final StatisticStoreSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, StatisticStoreDoc.TYPE, StatisticStoreDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                StatisticStoreDoc.TYPE,
+                StatisticStoreDoc::builder,
+                StatisticStoreDoc::copy);
     }
 
     // ---------------------------------------------------------------------
@@ -93,11 +96,7 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
 
     @Override
     public StatisticStoreDoc readDocument(final DocRef docRef) {
-        final StatisticStoreDoc statisticStoreDoc = store.readDocument(docRef);
-        if (statisticStoreDoc != null && statisticStoreDoc.getConfig() != null) {
-            statisticStoreDoc.getConfig().reOrderStatisticFields();
-        }
-        return statisticStoreDoc;
+        return store.readDocument(docRef);
     }
 
     @Override
@@ -154,10 +153,7 @@ public class StatisticStoreStoreImpl implements StatisticStoreStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

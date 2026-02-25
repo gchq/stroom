@@ -22,7 +22,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.documentation.shared.DocumentationDoc;
 import stroom.documentation.shared.DocumentationResource;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -40,7 +40,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Provider;
 
 public class DocumentationPresenter
-        extends DocumentEditTabPresenter<LinkTabPanelView, DocumentationDoc> {
+        extends DocTabPresenter<LinkTabPanelView, DocumentationDoc> {
 
     private static final DocumentationResource DOCUMENTATION_RESOURCE = GWT.create(DocumentationResource.class);
 
@@ -84,8 +84,7 @@ public class DocumentationPresenter
             @Override
             public DocumentationDoc onWrite(final MarkdownEditPresenter presenter,
                                             final DocumentationDoc document) {
-                document.setData(presenter.getText());
-                return document;
+                return document.copy().data(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

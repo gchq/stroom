@@ -23,7 +23,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.query.client.presenter.QueryDocPresenter;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryResource;
@@ -59,7 +59,7 @@ public class QueryPlugin extends DocumentPlugin<QueryDoc> {
     }
 
     @Override
-    protected DocumentEditPresenter<?, ?> createEditor() {
+    protected DocPresenter<?, ?> createEditor() {
         return editorProvider.get();
     }
 

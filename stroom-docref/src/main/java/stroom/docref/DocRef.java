@@ -40,7 +40,7 @@ public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, Has
                                             "or pipeline.";
 
     @Schema(description = "The type of the 'document' that this DocRef refers to",
-            example = "StroomStatsStore")
+            example = "StatisticStore")
     @JsonProperty
     private final String type;
 

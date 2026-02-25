@@ -65,7 +65,7 @@ import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class JobNodeResourceImpl implements JobNodeResource {
@@ -267,7 +267,7 @@ class JobNodeResourceImpl implements JobNodeResource {
 
     @Override
     public void setTaskLimit(final Integer id, final Integer taskLimit) {
-        modifyJobNode(id, jobNode -> jobNode.setTaskLimit(taskLimit));
+        modifyJobNode(id, jobNode -> jobNode.copy().taskLimit(taskLimit).build());
     }
 
     @Override
@@ -361,7 +361,7 @@ class JobNodeResourceImpl implements JobNodeResource {
 
     @Override
     public void setEnabled(final Integer id, final Boolean enabled) {
-        modifyJobNode(id, jobNode -> jobNode.setEnabled(enabled));
+        modifyJobNode(id, jobNode -> jobNode.copy().enabled(enabled).build());
     }
 
     @AutoLogged(value = OperationType.PROCESS, verb = "Executing job on node")
@@ -391,7 +391,7 @@ class JobNodeResourceImpl implements JobNodeResource {
         }
     }
 
-    private void modifyJobNode(final int id, final Consumer<JobNode> mutation) {
+    private void modifyJobNode(final int id, final Function<JobNode, JobNode> mutation) {
         final JobNode jobNode;
         JobNode before = null;
         JobNode after = null;
@@ -404,8 +404,7 @@ class JobNodeResourceImpl implements JobNodeResource {
             if (jobNode == null) {
                 throw new RuntimeException("Unknown job node: " + id);
             }
-            mutation.accept(jobNode);
-            after = jobNodeService.update(jobNode);
+            after = jobNodeService.update(mutation.apply(jobNode));
 
             documentEventLogProvider.get().update(before, after, null);
 

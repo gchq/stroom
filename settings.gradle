@@ -227,7 +227,7 @@ include 'stroom-node:stroom-node-impl-db-jooq'
 include 'stroom-pipeline'
 
 // Plan B
-include 'stroom-state:stroom-planb-impl'
+include 'stroom-planb:stroom-planb-impl'
 
 // Processor
 include 'stroom-processor:stroom-processor-api'
@@ -249,9 +249,6 @@ include 'stroom-query:stroom-query-api'
 include 'stroom-query:stroom-query-common'
 include 'stroom-query:stroom-query-impl'
 include 'stroom-query:stroom-query-language'
-
-// State store
-include 'stroom-state:stroom-state-impl'
 
 // Suggestions
 include 'stroom-suggestions:stroom-suggestions-api'
@@ -295,7 +292,6 @@ include 'stroom-security:stroom-security-user-api'
 include 'stroom-statistics:stroom-statistics-api'
 include 'stroom-statistics:stroom-statistics-client'
 include 'stroom-statistics:stroom-statistics-impl'
-include 'stroom-statistics:stroom-statistics-impl-hbase'
 include 'stroom-statistics:stroom-statistics-mock'
 include 'stroom-statistics:stroom-statistics-impl-sql'
 

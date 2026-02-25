@@ -18,7 +18,6 @@ package stroom.kafka.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -46,7 +45,11 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
                          final Provider<KafkaConfig> kafkaConfigProvider,
                          final KafkaConfigSerialiser serialiser) {
         this.kafkaConfigProvider = kafkaConfigProvider;
-        this.store = storeFactory.createStore(serialiser, KafkaConfigDoc.TYPE, KafkaConfigDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                KafkaConfigDoc.TYPE,
+                KafkaConfigDoc::builder,
+                KafkaConfigDoc::copy);
     }
 
     // ---------------------------------------------------------------------
@@ -171,10 +174,7 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

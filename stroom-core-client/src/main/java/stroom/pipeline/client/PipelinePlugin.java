@@ -26,7 +26,7 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -156,7 +156,9 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                                     super.save(tabData);
                                 }
 
-                                pipelinePresenter.setDirty(dirtyDocs.size() != selectedDocRefs.size());
+                                if (dirtyDocs.size() != selectedDocRefs.size()) {
+                                    pipelinePresenter.onChange();
+                                }
                             }
                             e.hide();
                         })
@@ -168,7 +170,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     }
 
     @Override
-    protected DocumentEditPresenter<?, ?> createEditor() {
+    protected DocPresenter<?, ?> createEditor() {
         return editorProvider.get();
     }
 
@@ -252,9 +254,9 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     }
 
     private void step(final StepType stepType,
-                           final StepLocation stepLocation,
-                           final String childStreamType,
-                           final DocRef pipeDocRef) {
+                      final StepLocation stepLocation,
+                      final String childStreamType,
+                      final DocRef pipeDocRef) {
         final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromId(
                 stepLocation.getMetaId());
 
@@ -277,10 +279,10 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     }
 
     private void openSteppingMode(final DocRef pipeline,
-                            final StepType stepType,
-                            final StepLocation stepLocation,
-                            final Meta meta,
-                            final String childStreamType) {
+                                  final StepType stepType,
+                                  final StepLocation stepLocation,
+                                  final Meta meta,
+                                  final String childStreamType) {
         open(pipeline, true, false,
                 null, presenter -> {
                     final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;

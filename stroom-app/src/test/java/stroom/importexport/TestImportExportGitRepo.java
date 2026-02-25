@@ -192,8 +192,8 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "GitRepo",
                 systemNode,
                 null);
-        final GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(gitRepoNode.getDocRef());
-        gitRepoDoc.setDescription("Original Description");
+        final GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(gitRepoNode.getDocRef())
+                .copy().description("Original Description").build();
         gitRepoStore.writeDocument(gitRepoDoc);
 
         final ExplorerNode folder1 = explorerService.create(ExplorerConstants.FOLDER_TYPE,
@@ -211,16 +211,16 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "Pipeline",
                 folder2,
                 null);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineNode.getDocRef());
-        pipelineDoc.setDescription("Pipeline Description");
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineNode.getDocRef())
+                .copy().description("Pipeline Description").build();
         pipelineStore.writeDocument(pipelineDoc);
 
         final ExplorerNode feedNode = explorerService.create(FeedDoc.TYPE,
                 "FEED",
                 folder1,
                 null);
-        final FeedDoc feedDoc = feedStore.readDocument(feedNode.getDocRef());
-        feedDoc.setDescription("Feed Description");
+        final FeedDoc feedDoc = feedStore.readDocument(feedNode.getDocRef())
+                .copy().description("Feed Description").build();
         feedStore.writeDocument(feedDoc);
 
         System.err.println("Showing structure that will be exported: ");
@@ -316,8 +316,8 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "GitRepo",
                 systemNode,
                 null);
-        final GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(gitRepoNode.getDocRef());
-        gitRepoDoc.setDescription("GitRepo Description");
+        final GitRepoDoc gitRepoDoc = gitRepoStore.readDocument(gitRepoNode.getDocRef())
+                .copy().description("GitRepo Description").build();
         gitRepoStore.writeDocument(gitRepoDoc);
 
         final ExplorerNode folder1 = explorerService.create(ExplorerConstants.FOLDER_TYPE,
@@ -335,8 +335,8 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "Pipeline",
                 folder2,
                 null);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineNode.getDocRef());
-        pipelineDoc.setDescription("Pipeline Description");
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineNode.getDocRef())
+                .copy().description("Pipeline Description").build();
         pipelineStore.writeDocument(pipelineDoc);
 
         // Something under the GitRepo to export
@@ -344,8 +344,8 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "FEED",
                 folder1,
                 null);
-        final FeedDoc feedDoc = feedStore.readDocument(feedNode.getDocRef());
-        feedDoc.setDescription("Feed Description");
+        final FeedDoc feedDoc = feedStore.readDocument(feedNode.getDocRef())
+                .copy().description("Feed Description").build();
         feedStore.writeDocument(feedDoc);
 
         System.err.println("Structure that is being exported:");
@@ -407,8 +407,8 @@ class TestImportExportGitRepo extends AbstractCoreIntegrationTest {
                 "GitRepo",
                 systemNode,
                 null);
-        final GitRepoDoc gitRepoDoc2 = gitRepoStore.readDocument(gitRepoNode2.getDocRef());
-        gitRepoDoc2.setDescription("GitRepo Description");
+        final GitRepoDoc gitRepoDoc2 = gitRepoStore.readDocument(gitRepoNode2.getDocRef())
+                .copy().description("GitRepo Description").build();
         gitRepoStore.writeDocument(gitRepoDoc2);
 
         final List<ImportState> importStates = new ArrayList<>();

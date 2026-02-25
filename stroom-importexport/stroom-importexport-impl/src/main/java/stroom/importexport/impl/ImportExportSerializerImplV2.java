@@ -18,6 +18,7 @@ package stroom.importexport.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.EmbeddedDocRef;
+import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
@@ -780,6 +781,7 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      * @return The DocRef of the imported document, or null if the importMode
      *         means that the item shouldn't be imported.
      */
+    @Nullable
     private DocRef importExplorerDoc(
             @Nullable final ImportExportActionHandler importExportActionHandler,
             final Path nodeFile,
@@ -791,6 +793,11 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
             final Map<DocRef, ImportState> confirmMap,
             final ImportSettings importSettings)
             throws IOException {
+
+        // Ignore deprecated document types.
+        if (DocumentTypeRegistry.DEPRECATED_TYPES.contains(importDocRef.getType())) {
+            return null;
+        }
 
         LOGGER.debug("{}Importing explorer doc with node file '{}'",
                 indent(importDocRefPath),

@@ -24,6 +24,7 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.Dimension;
+import stroom.dashboard.shared.LayoutConfig;
 import stroom.dashboard.shared.SplitLayoutConfig;
 import stroom.dashboard.shared.TabConfig;
 import stroom.dashboard.shared.TabLayoutConfig;
@@ -58,19 +59,13 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
         final List<ComponentConfig> components = new ArrayList<>();
 
         // ADD TEST DATA
-        final SplitLayoutConfig down = new SplitLayoutConfig(Dimension.Y);
+        final List<LayoutConfig> downList = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            final SplitLayoutConfig across = new SplitLayoutConfig(Dimension.X);
-            down.add(across);
-
+            final List<LayoutConfig> acrossList = new ArrayList<>();
             for (int l = 0; l < 2; l++) {
-                final SplitLayoutConfig down2 = new SplitLayoutConfig(Dimension.Y);
-                across.add(down2);
-
+                final List<LayoutConfig> down2List = new ArrayList<>();
                 for (int j = 0; j < 3; j++) {
-                    final TabLayoutConfig tablayout = new TabLayoutConfig();
-                    down2.add(tablayout);
-
+                    final List<TabConfig> tabConfigList = new ArrayList<>();
                     for (int k = 0; k < 2; k++) {
                         final String type = "table";
                         final String id = type + "_" + System.currentTimeMillis();
@@ -84,19 +79,38 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
                         components.add(componentConfig);
 
                         final TabConfig tabConfig = new TabConfig(id, true);
-                        tablayout.add(tabConfig);
+                        tabConfigList.add(tabConfig);
                     }
+                    final TabLayoutConfig tabLayoutConfig = TabLayoutConfig.builder().tabs(tabConfigList).build();
+                    down2List.add(tabLayoutConfig);
                 }
+                final SplitLayoutConfig down2 = SplitLayoutConfig
+                        .builder()
+                        .dimension(Dimension.Y)
+                        .children(down2List)
+                        .build();
+                acrossList.add(down2);
             }
+            final SplitLayoutConfig across = SplitLayoutConfig
+                    .builder()
+                    .dimension(Dimension.X)
+                    .children(acrossList)
+                    .build();
+            downList.add(across);
         }
         // DONE - ADD TEST DATA
+        final SplitLayoutConfig down = SplitLayoutConfig
+                .builder()
+                .dimension(Dimension.Y)
+                .children(downList)
+                .build();
+        final DashboardConfig dashboardConfig = DashboardConfig.builder()
+                .components(components)
+                .layout(down)
+                .build();
 
-        final DashboardConfig dashboardData = new DashboardConfig();
-        dashboardData.setComponents(components);
-        dashboardData.setLayout(down);
-
-        DashboardDoc dashboard = dashboardStore.readDocument(dashboardRef);
-        dashboard.setDashboardConfig(dashboardData);
+        DashboardDoc dashboard = dashboardStore.readDocument(dashboardRef)
+                .copy().dashboardConfig(dashboardConfig).build();
 
         dashboard = dashboardStore.writeDocument(dashboard);
 
@@ -107,13 +121,14 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
 
     private VisComponentSettings getVisSettings() {
         final DocRef scriptRef = scriptStore.createDocument("Test");
-        final ScriptDoc script = scriptStore.readDocument(scriptRef);
-        script.setData("Test");
+        final ScriptDoc script = scriptStore.readDocument(scriptRef).copy().data("Test").build();
         scriptStore.writeDocument(script);
 
         final DocRef visRef = visualisationStore.createDocument("Test");
-        final VisualisationDoc vis = visualisationStore.readDocument(visRef);
-        vis.setScriptRef(scriptRef);
+        final VisualisationDoc vis = visualisationStore.readDocument(visRef)
+                .copy()
+                .scriptRef(scriptRef)
+                .build();
         visualisationStore.writeDocument(vis);
 
         return VisComponentSettings.builder()

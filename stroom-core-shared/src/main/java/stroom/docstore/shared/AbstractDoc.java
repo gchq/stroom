@@ -17,9 +17,11 @@
 package stroom.docstore.shared;
 
 import stroom.util.shared.Document;
+import stroom.util.shared.HasAuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
+import stroom.util.shared.HasAuditableUserIdentity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -37,24 +39,24 @@ import java.util.Objects;
         "createUser",
         "updateUser"})
 @JsonInclude(Include.NON_NULL)
-public abstract class AbstractDoc implements Document {
+public abstract class AbstractDoc implements HasAuditInfoGetters, Document {
 
     @JsonProperty
     private final String type;
     @JsonProperty
-    private String uuid;
+    private final String uuid;
     @JsonProperty
-    private String name;
+    private final String name;
     @JsonProperty
-    private String version;
+    private final String version;
     @JsonProperty
-    private Long createTimeMs;
+    private final Long createTimeMs;
     @JsonProperty
-    private Long updateTimeMs;
+    private final Long updateTimeMs;
     @JsonProperty
-    private String createUser;
+    private final String createUser;
     @JsonProperty
-    private String updateUser;
+    private final String updateUser;
 
     @JsonCreator
     public AbstractDoc(@JsonProperty("type") final String type,
@@ -87,24 +89,12 @@ public abstract class AbstractDoc implements Document {
         return uuid;
     }
 
-    public void setUuid(final String uuid) {
-        this.uuid = uuid;
-    }
-
     public String getName() {
         return name;
     }
 
-    public void setName(final String name) {
-        this.name = name;
-    }
-
     public String getVersion() {
         return version;
-    }
-
-    public void setVersion(final String version) {
-        this.version = version;
     }
 
     @Override
@@ -113,8 +103,8 @@ public abstract class AbstractDoc implements Document {
     }
 
     @Override
-    public void setCreateTimeMs(final Long createTime) {
-        this.createTimeMs = createTime;
+    public String getCreateUser() {
+        return createUser;
     }
 
     @Override
@@ -123,47 +113,24 @@ public abstract class AbstractDoc implements Document {
     }
 
     @Override
-    public void setUpdateTimeMs(final Long updateTime) {
-        this.updateTimeMs = updateTime;
-    }
-
-    @Override
-    public String getCreateUser() {
-        return createUser;
-    }
-
-    @Override
-    public void setCreateUser(final String createUser) {
-        this.createUser = createUser;
-    }
-
-    @Override
     public String getUpdateUser() {
         return updateUser;
     }
 
     @Override
-    public void setUpdateUser(final String updateUser) {
-        this.updateUser = updateUser;
-    }
-
-    @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof AbstractDoc)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final AbstractDoc doc = (AbstractDoc) o;
-        return Objects.equals(type, type) &&
-               Objects.equals(uuid, doc.uuid) &&
-               Objects.equals(name, doc.name) &&
-               Objects.equals(version, doc.version) &&
-               Objects.equals(createTimeMs, doc.createTimeMs) &&
-               Objects.equals(updateTimeMs, doc.updateTimeMs) &&
-               Objects.equals(createUser, doc.createUser) &&
-               Objects.equals(updateUser, doc.updateUser);
+        final AbstractDoc that = (AbstractDoc) o;
+        return Objects.equals(type, that.type) &&
+               Objects.equals(uuid, that.uuid) &&
+               Objects.equals(name, that.name) &&
+               Objects.equals(version, that.version) &&
+               Objects.equals(createTimeMs, that.createTimeMs) &&
+               Objects.equals(updateTimeMs, that.updateTimeMs) &&
+               Objects.equals(createUser, that.createUser) &&
+               Objects.equals(updateUser, that.updateUser);
     }
 
     @Override
@@ -184,14 +151,15 @@ public abstract class AbstractDoc implements Document {
     // --------------------------------------------------------------------------------
 
 
-    public abstract static class AbstractBuilder<T extends AbstractDoc, B extends AbstractBuilder<T, ?>> {
+    public abstract static class AbstractBuilder<T extends AbstractDoc, B extends AbstractBuilder<T, ?>>
+            implements HasAuditInfoBuilder<T, B> {
 
         protected String uuid;
         protected String name;
         protected String version;
         protected Long createTimeMs;
-        protected Long updateTimeMs;
         protected String createUser;
+        protected Long updateTimeMs;
         protected String updateUser;
 
         public AbstractBuilder() {
@@ -202,9 +170,9 @@ public abstract class AbstractDoc implements Document {
             this.name = doc.name;
             this.version = doc.version;
             this.createTimeMs = doc.createTimeMs;
-            this.updateTimeMs = doc.updateTimeMs;
             this.createUser = doc.createUser;
             this.updateUser = doc.updateUser;
+            this.updateTimeMs = doc.updateTimeMs;
         }
 
         public B uuid(final String uuid) {
@@ -222,28 +190,58 @@ public abstract class AbstractDoc implements Document {
             return self();
         }
 
+        @Override
         public B createTimeMs(final Long createTimeMs) {
             this.createTimeMs = createTimeMs;
             return self();
         }
 
-        public B updateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
-            return self();
-        }
-
+        @Override
         public B createUser(final String createUser) {
             this.createUser = createUser;
             return self();
         }
 
+        @Override
+        public B updateTimeMs(final Long updateTimeMs) {
+            this.updateTimeMs = updateTimeMs;
+            return self();
+        }
+
+        @Override
         public B updateUser(final String updateUser) {
             this.updateUser = updateUser;
             return self();
         }
 
-        protected abstract B self();
+        @Override
+        public final B stampAudit(final HasAuditableUserIdentity hasAuditableUserIdentity) {
+            return stampAudit(hasAuditableUserIdentity.getUserIdentityForAudit());
+        }
 
-        public abstract T build();
+        @Override
+        public final B stampAudit(final String user) {
+            final long now = System.currentTimeMillis();
+            if (createTimeMs == null) {
+                this.createTimeMs = now;
+            }
+            if (createUser == null) {
+                this.createUser = user;
+            }
+            updateTimeMs = now;
+            updateUser = user;
+            return self();
+        }
+
+        @Override
+        public final B removeAudit() {
+            this.createTimeMs = null;
+            this.createUser = null;
+            updateTimeMs = null;
+            updateUser = null;
+            return self();
+        }
+
+        protected abstract B self();
     }
 }

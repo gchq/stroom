@@ -59,7 +59,7 @@ public class TextInputPresenter
     public void onValueChanged(final String value) {
         setSettings(getTextInputSettings().copy().value(value).build());
         ComponentChangeEvent.fire(this, this);
-        setDirty(true);
+        onChange();
     }
 
     @Override

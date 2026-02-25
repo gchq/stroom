@@ -17,6 +17,7 @@
 package stroom.processor.shared;
 
 
+import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.ModelStringUtil;
 
@@ -273,5 +274,137 @@ public class ProcessorFilterTracker implements HasIntegerId {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder extends AbstractBuilder<ProcessorFilterTracker, Builder> {
+
+        private Integer id;
+        private Integer version;
+        private long minMetaId;
+        private long minEventId;
+        private Long minMetaCreateMs;
+        private Long maxMetaCreateMs;
+        private Long metaCreateMs;
+        private Long lastPollMs;
+        private Integer lastPollTaskCount;
+        private ProcessorFilterTrackerStatus status;
+        private String message;
+        private Long metaCount;
+        private Long eventCount;
+
+        public Builder() {
+        }
+
+        public Builder(final ProcessorFilterTracker tracker) {
+            this.id = tracker.id;
+            this.version = tracker.version;
+            this.minMetaId = tracker.minMetaId;
+            this.minEventId = tracker.minEventId;
+            this.minMetaCreateMs = tracker.minMetaCreateMs;
+            this.maxMetaCreateMs = tracker.maxMetaCreateMs;
+            this.metaCreateMs = tracker.metaCreateMs;
+            this.lastPollMs = tracker.lastPollMs;
+            this.lastPollTaskCount = tracker.lastPollTaskCount;
+            this.status = tracker.status;
+            this.message = tracker.message;
+            this.metaCount = tracker.metaCount;
+            this.eventCount = tracker.eventCount;
+        }
+
+        public Builder id(final Integer id) {
+            this.id = id;
+            return self();
+        }
+
+        public Builder version(final Integer version) {
+            this.version = version;
+            return self();
+        }
+
+        public Builder minMetaId(final long minMetaId) {
+            this.minMetaId = minMetaId;
+            return self();
+        }
+
+        public Builder minEventId(final long minEventId) {
+            this.minEventId = minEventId;
+            return self();
+        }
+
+        public Builder minMetaCreateMs(final Long minMetaCreateMs) {
+            this.minMetaCreateMs = minMetaCreateMs;
+            return self();
+        }
+
+        public Builder maxMetaCreateMs(final Long maxMetaCreateMs) {
+            this.maxMetaCreateMs = maxMetaCreateMs;
+            return self();
+        }
+
+        public Builder metaCreateMs(final Long metaCreateMs) {
+            this.metaCreateMs = metaCreateMs;
+            return self();
+        }
+
+        public Builder lastPollMs(final Long lastPollMs) {
+            this.lastPollMs = lastPollMs;
+            return self();
+        }
+
+        public Builder lastPollTaskCount(final Integer lastPollTaskCount) {
+            this.lastPollTaskCount = lastPollTaskCount;
+            return self();
+        }
+
+        public Builder status(final ProcessorFilterTrackerStatus status) {
+            this.status = status;
+            return self();
+        }
+
+        public Builder message(final String message) {
+            this.message = message;
+            return self();
+        }
+
+        public Builder metaCount(final Long metaCount) {
+            this.metaCount = metaCount;
+            return self();
+        }
+
+        public Builder eventCount(final Long eventCount) {
+            this.eventCount = eventCount;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public ProcessorFilterTracker build() {
+            return new ProcessorFilterTracker(
+                    id,
+                    version,
+                    minMetaId,
+                    minEventId,
+                    minMetaCreateMs,
+                    maxMetaCreateMs,
+                    metaCreateMs,
+                    lastPollMs,
+                    lastPollTaskCount,
+                    status,
+                    message,
+                    metaCount,
+                    eventCount);
+        }
     }
 }

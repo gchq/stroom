@@ -19,7 +19,7 @@ package stroom.analytics.client.view;
 import stroom.analytics.client.presenter.ReportSettingsPresenter.ReportSettingsView;
 import stroom.analytics.shared.ReportSettings;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
-import stroom.document.client.event.DirtyUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
@@ -31,7 +31,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class ReportSettingsViewImpl extends ViewWithUiHandlers<DirtyUiHandlers> implements ReportSettingsView {
+public class ReportSettingsViewImpl extends ViewWithUiHandlers<ChangeUiHandlers> implements ReportSettingsView {
 
     private final Widget widget;
 
@@ -80,12 +80,12 @@ public class ReportSettingsViewImpl extends ViewWithUiHandlers<DirtyUiHandlers> 
 
     @UiHandler("fileType")
     public void onFileTypeChange(final ValueChangeEvent<DownloadSearchResultFileType> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("sendEmptyReports")
     public void onSendEmptyReports(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     public interface Binder extends UiBinder<Widget, ReportSettingsViewImpl> {

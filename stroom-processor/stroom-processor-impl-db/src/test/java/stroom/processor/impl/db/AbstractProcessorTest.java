@@ -45,7 +45,6 @@ import stroom.task.mock.MockTaskModule;
 import stroom.test.common.MockMetricsModule;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.guice.AbstractTestModule;
-import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
@@ -156,33 +155,34 @@ class AbstractProcessorTest {
     }
 
     protected Processor createProcessor() {
-        final Processor processor = new Processor(new DocRef(
-                PipelineDoc.TYPE,
-                UUID.randomUUID().toString()));
-        processor.setCreateTimeMs(System.currentTimeMillis());
-        processor.setCreateUser("jbloggs");
-        processor.setUpdateTimeMs(System.currentTimeMillis());
-        processor.setUpdateUser("jbloggs");
-        processor.setUuid(UUID.randomUUID().toString());
-        processor.setEnabled(true);
-        processor.setDeleted(false);
+        final Processor processor = Processor.builder()
+                .pipeline(new DocRef(
+                        PipelineDoc.TYPE,
+                        UUID.randomUUID().toString()))
+                .createTimeMs(System.currentTimeMillis())
+                .createUser("jbloggs")
+                .updateTimeMs(System.currentTimeMillis())
+                .updateUser("jbloggs")
+                .uuid(UUID.randomUUID().toString())
+                .enabled(true)
+                .deleted(false)
+                .build();
         return processorDao.create(processor);
     }
 
     protected ProcessorFilter createProcessorFilter(final Processor processor) {
-        final ProcessorFilter processorFilter = new ProcessorFilter();
-        processorFilter.setProcessor(processor);
-        processorFilter.setCreateTimeMs(System.currentTimeMillis());
-        processorFilter.setCreateUser("jbloggs");
-        processorFilter.setUpdateTimeMs(System.currentTimeMillis());
-        processorFilter.setUpdateUser("jbloggs");
-        processorFilter.setDeleted(false);
-        processorFilter.setQueryData(QueryData.builder()
-                .build());
-        processorFilter.setUuid(UUID.randomUUID().toString());
-        processorFilter.setRunAsUser(UserRef.builder().uuid(UUID.randomUUID().toString()).build());
-        stampProcessorFilter(processorFilter, "jbloggs");
-
+        final ProcessorFilter processorFilter = ProcessorFilter.builder()
+                .processor(processor)
+                .createTimeMs(System.currentTimeMillis())
+                .createUser("jbloggs")
+                .updateTimeMs(System.currentTimeMillis())
+                .updateUser("jbloggs")
+                .deleted(false)
+                .queryData(QueryData.builder().build())
+                .uuid(UUID.randomUUID().toString())
+                .runAsUser(UserRef.builder().uuid(UUID.randomUUID().toString()).build())
+                .stampAudit("jbloggs")
+                .build();
         return processorFilterDao.create(processorFilter);
     }
 
@@ -295,10 +295,5 @@ class AbstractProcessorTest {
                     .orderBy(PROCESSOR_TASK.ID)
                     .fetch(), false));
         });
-    }
-
-    private void stampProcessorFilter(final ProcessorFilter processorFilter,
-                                      final String auditUser) {
-        AuditUtil.stamp(() -> auditUser, processorFilter);
     }
 }
