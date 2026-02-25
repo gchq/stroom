@@ -23,6 +23,8 @@ import stroom.security.api.AppPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserService;
 import stroom.security.shared.AppPermission;
+import stroom.util.logging.AsciiTable;
+import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -48,11 +50,11 @@ import net.sourceforge.argparse4j.inf.Subparser;
 
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Creates an account in the internal identity provider
@@ -196,15 +198,20 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
 
     private void listPermissions(final Namespace namespace) {
         if (namespace.getBoolean(LIST_PERMISSIONS_ARG_NAME)) {
-            final String perms = Arrays.stream(AppPermission.values())
-                    .map(AppPermission::getDisplayValue)
-                    .sorted()
-                    .collect(Collectors.joining("\n"));
-            LOGGER.info("Valid application permission names:\n" +
-                        "--------------------\n" +
-                        "  {}\n" +
-                        "--------------------",
-                    perms);
+            final List<AppPermission> perms = Arrays.stream(AppPermission.values())
+                    .sorted(Comparator.comparing(AppPermission::getDisplayValue))
+                    .toList();
+
+            final String table = AsciiTable.builder(perms)
+                    .withColumn(Column.of("Permission", AppPermission::getDisplayValue))
+                    .withColumn(Column.of("Description", AppPermission::getDescription))
+                    .build();
+
+            LOGGER.info("""
+                            Valid application permission names:
+                            {}
+                            """,
+                    table);
         }
     }
 

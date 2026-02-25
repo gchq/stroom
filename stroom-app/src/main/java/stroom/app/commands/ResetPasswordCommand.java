@@ -21,6 +21,7 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.security.identity.account.AccountDao;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.Injector;
 import event.logging.AuthenticateAction;
@@ -47,7 +48,7 @@ public class ResetPasswordCommand extends AbstractStroomAppCommand {
 
     private static final String COMMAND_NAME = "reset_password";
     private static final String COMMAND_DESCRIPTION = "Reset the password of the user account " +
-            "in the internal identity provider";
+                                                      "in the internal identity provider";
 
     private static final String USERNAME_ARG_NAME = "user";
     private static final String PASSWORD_ARG_NAME = "password";
@@ -97,9 +98,15 @@ public class ResetPasswordCommand extends AbstractStroomAppCommand {
                                      final Namespace namespace,
                                      final Config config,
                                      final Injector injector) {
-
         final String username = namespace.getString(USERNAME_ARG_NAME);
+        if (NullSafe.isEmptyString(username)) {
+            throw new RuntimeException("Username must be provided");
+        }
+
         final String newPassword = namespace.getString(PASSWORD_ARG_NAME);
+        if (NullSafe.isEmptyString(newPassword)) {
+            throw new RuntimeException("Password must be provided");
+        }
 
         LOGGER.debug("Resetting password for account {}", username);
 
