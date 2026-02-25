@@ -91,6 +91,8 @@ public class VisualisationAssetService {
                     path);
         } else {
             LOGGER.warn("User does not have permission to create a new folder '{}'", path);
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to edit this asset");
         }
 
     }
@@ -114,6 +116,8 @@ public class VisualisationAssetService {
                     path);
         } else {
             LOGGER.warn("User does not have permission to create a new file '{}'", path);
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to edit this asset");
         }
     }
 
@@ -148,6 +152,8 @@ public class VisualisationAssetService {
             }
         } else {
             LOGGER.warn("User does not have permission to create a new file from an upload: '{}'", path);
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to edit this asset");
         }
     }
 
@@ -172,6 +178,8 @@ public class VisualisationAssetService {
                     isFolder);
         } else {
             LOGGER.warn("User does not have permission to delete an item '{}'", path);
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to edit this asset");
         }
     }
 
@@ -200,6 +208,8 @@ public class VisualisationAssetService {
                     isFolder);
         } else {
             LOGGER.warn("User does not have permission to rename an item '{}'", oldPath);
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to edit this asset");
         }
     }
 
@@ -224,6 +234,8 @@ public class VisualisationAssetService {
                     content);
         } else {
             LOGGER.warn("User does not have permission to update the content of an item '{}'", path);
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to edit this asset");
         }
     }
 
@@ -248,7 +260,8 @@ public class VisualisationAssetService {
                     path);
         } else {
             LOGGER.warn("User does not have permission to view the content of an item");
-            return null;
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to view this asset");
         }
     }
 
@@ -258,11 +271,15 @@ public class VisualisationAssetService {
      * @throws IOException If something goes wrong.
      */
     public void saveDraftToLive(final String ownerDocId) throws IOException {
+        LOGGER.info("saveDraftToLive: {}", ownerDocId);
+
         final DocRef docRef = new DocRef(VisualisationDoc.TYPE, ownerDocId);
         if (securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT)) {
             dao.saveDraftToLive(securityContext.getUserRef().getUuid(), ownerDocId);
         } else {
             LOGGER.warn("User does not have permission to save assets");
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to edit this asset");
         }
     }
 
@@ -277,6 +294,42 @@ public class VisualisationAssetService {
             dao.revertDraftFromLive(securityContext.getUserRef().getUuid(), ownerDocId);
         } else {
             LOGGER.warn("User does not have permission to revert changes");
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to edit this asset");
+        }
+    }
+
+    /**
+     * Performs the SaveAs operation, when invoked from the UI.
+     * @param fromOwnerDocId The document ID that is being saved
+     * @param toOwnerDocId Where the from document is being saved to
+     * @param updatedContentPath Path of any updated content that needs to be saved.
+     *                           Can be null if no such content.
+     * @param updatedContent Any updated content that needs to be saved. Can be null if no such content.
+     * @throws IOException If something goes wrong.
+     */
+    public void saveAs(final String fromOwnerDocId,
+                       final String toOwnerDocId,
+                       final String updatedContentPath,
+                       final byte[] updatedContent) throws IOException {
+        final DocRef fromDocRef = new DocRef(VisualisationDoc.TYPE, fromOwnerDocId);
+        final DocRef toDocRef = new DocRef(VisualisationDoc.TYPE, toOwnerDocId);
+        if (securityContext.hasDocumentPermission(fromDocRef, DocumentPermission.VIEW)) {
+            if (securityContext.hasDocumentPermission(toDocRef, DocumentPermission.EDIT)) {
+                dao.saveAs(securityContext.getUserRef().getUuid(),
+                        fromOwnerDocId,
+                        toOwnerDocId,
+                        updatedContentPath,
+                        updatedContent);
+            } else {
+                LOGGER.warn("User does not have permission to saveAs this document");
+                throw new PermissionException(securityContext.getUserRef(),
+                        "You do not have permission to view this asset");
+            }
+        } else {
+            LOGGER.warn("User does not have permission to save this document to a new document");
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to create this asset");
         }
     }
 
@@ -369,6 +422,8 @@ public class VisualisationAssetService {
     void copyAssetsToDoc(final DocRef fromDocRef,
                          final DocRef toDocRef)
         throws IOException, PermissionException {
+
+        LOGGER.info("Copying assets from {} to {}", fromDocRef, toDocRef);
 
         if (securityContext.hasDocumentPermission(fromDocRef, DocumentPermission.EDIT)) {
             if (securityContext.hasDocumentPermission(toDocRef, DocumentPermission.EDIT)) {

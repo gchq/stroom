@@ -112,4 +112,13 @@ public interface VisualisationAssetResource extends RestResource, DirectRestServ
     Boolean revertDraftFromLive(@PathParam("ownerDocId") String ownerDocId)
         throws RuntimeException;
 
+    @PUT
+    @Path("/saveAs/{fromOwnerDocId}")
+    @Operation(
+            summary = "Save the document's assets to another document",
+            operationId = "saveAs")
+    Boolean saveAs(@PathParam("fromOwnerDocId") String fromOwnerDocId,
+                   @Parameter(description="SaveAs parameters", required = true)
+                   VisualisationAssetSaveAsParameters updateParameters);
+
 }

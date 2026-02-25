@@ -6,6 +6,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.visualisation.shared.VisualisationAssetContent;
 import stroom.visualisation.shared.VisualisationAssetResource;
+import stroom.visualisation.shared.VisualisationAssetSaveAsParameters;
 import stroom.visualisation.shared.VisualisationAssetUpdateContent;
 import stroom.visualisation.shared.VisualisationAssetUpdateDelete;
 import stroom.visualisation.shared.VisualisationAssetUpdateNewFile;
@@ -197,6 +198,22 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
             throw new RuntimeException(e);
         } catch (final Throwable t) {
             LOGGER.error("Error in revertDraftFromLive: {}", t.getMessage(), t);
+            throw t;
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean saveAs(final String fromOwnerDocId, final VisualisationAssetSaveAsParameters updateParameters) {
+        try {
+            serviceProvider.get().saveAs(fromOwnerDocId,
+                    updateParameters.getToOwnerDocId(),
+                    updateParameters.getUpdatedContentPath(),
+                    updateParameters.getUpdatedContent());
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        } catch (final Throwable t) {
+            LOGGER.error("Error in saveAs: {}", t.getMessage(), t);
             throw t;
         }
         return Boolean.TRUE;

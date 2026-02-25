@@ -117,4 +117,13 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
         return null;
     }
 
+    /**
+     * Allows the derived class to specify a callback after SaveAs has been invoked.
+     * Default is no callback. Override if you want a callback.
+     * @return null if no callback, otherwise the consumer to be called.
+     */
+    public BiConsumer<D, Consumer<D>> getPostSaveAsCallback() {
+        return null;
+    }
+
 }

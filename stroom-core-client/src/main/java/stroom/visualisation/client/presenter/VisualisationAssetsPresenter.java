@@ -34,6 +34,7 @@ import stroom.visualisation.client.presenter.VisualisationAssetsPresenter.Visual
 import stroom.visualisation.client.presenter.assets.VisualisationAssetTreeItem;
 import stroom.visualisation.client.presenter.assets.VisualisationAssetsImageResource;
 import stroom.visualisation.shared.VisualisationAssetResource;
+import stroom.visualisation.shared.VisualisationAssetSaveAsParameters;
 import stroom.visualisation.shared.VisualisationAssetUpdateContent;
 import stroom.visualisation.shared.VisualisationAssetUpdateDelete;
 import stroom.visualisation.shared.VisualisationAssetUpdateNewFile;
@@ -344,6 +345,54 @@ public class VisualisationAssetsPresenter
         } else {
             doOnWrite(callback);
         }
+    }
+
+    /**
+     * Called by VisualisationPlugin to do SaveAs.
+     * SaveAs does the following:
+     * <ol>
+     *     <li>Copies the live assets to the new document</li>
+     *     <li>Copies the draft assets to the new document</li>
+     *     <li>Updates any necessary content in the draft assets</li>
+     *     <li>Saves the draft into live for the new document</li>
+     * </ol>
+     * @param newDocument The document we're Saving As.
+     * @param callback The lamda to call when this chain is complete.
+     */
+    public void onSaveAs(final VisualisationDoc newDocument, final Consumer<VisualisationDoc> callback) {
+
+        Console.info("onSaveAs for " + document + " to " + newDocument);
+
+        String updatedContentPath = null;
+        byte[] updatedContent = null;
+        if (assetDirtyState.isDirtyAndNeedsSaveToDraft()) {
+            updatedContentPath = assetDirtyState.getPathToEditItem();
+            updatedContent = editorPresenter.getText().getBytes(StandardCharsets.UTF_8);
+        }
+        final VisualisationAssetSaveAsParameters params =
+                new VisualisationAssetSaveAsParameters(newDocument.getUuid(), updatedContentPath, updatedContent);
+
+        restFactory.create(VISUALISATION_ASSET_RESOURCE)
+                .method(r -> r.saveAs(document.getUuid(), params))
+                .onSuccess(result -> {
+                    if (result) {
+                        // Tab becomes the new document so change the reference here
+                        this.document = newDocument;
+                        // Invoke next in the chain
+                        callback.accept(newDocument);
+                    } else {
+                        AlertEvent.fireError(this,
+                                "There was an error saving the document to a new document",
+                                null);
+                    }
+                })
+                .onFailure(error -> {
+                    AlertEvent.fireError(this,
+                            "There was an error saving the document to a new document: " + error.getMessage(),
+                            null);
+                })
+                .taskMonitorFactory(this)
+                .exec();
     }
 
     /**

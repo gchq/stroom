@@ -23,6 +23,7 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
+import stroom.util.client.Console;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -98,17 +99,40 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
         return DOCUMENTATION;
     }
 
+    /**
+     * Provide a callback to be inserted into the save chain after the save is complete.
+     * @return The consumer for the callback. The second parameter will be the
+     * consumer to call after this method has completed.
+     */
     @Override
     public BiConsumer<VisualisationDoc, Consumer<VisualisationDoc>> getPostSaveCallback() {
         return this::saveAssets;
     }
 
     /**
-     * Called by VisualisationPlugin to save the assets associated with the document.
+     * Provide a callback to be inserted into the SaveAs chain after the document saveAs
+     * has happened.
+     * @return The consumer for the callback. The second parameter will be the
+     * consumer to call after this method has completed.
+     */
+    @Override
+    public BiConsumer<VisualisationDoc, Consumer<VisualisationDoc>> getPostSaveAsCallback() {
+        return this::saveAsAssets;
+    }
+
+    /**
+     * Called by DocumentPlugin to save the assets associated with the document.
+     * Specified in getPostSaveCallback().
      * @param document The document that was written by all the data in all the tabs.
      * @param callback Thing to call when the assets have been saved.
      */
     public void saveAssets(final VisualisationDoc document, final Consumer<VisualisationDoc> callback) {
+        Console.info("PostSaveCallback: VisualisationAssetsPresenter.onSave() ");
         visualisationAssetsPresenter.onSave(document, callback);
+    }
+
+    public void saveAsAssets(final VisualisationDoc document, final Consumer<VisualisationDoc> callback) {
+        Console.info("PostSaveAsCallback: VisualisationAssetsPresenter.onSaveAs()");
+        visualisationAssetsPresenter.onSaveAs(document, callback);
     }
 }

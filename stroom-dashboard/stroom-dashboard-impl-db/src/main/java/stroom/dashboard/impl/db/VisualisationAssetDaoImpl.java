@@ -17,6 +17,7 @@ import org.jooq.Field;
 import org.jooq.Record1;
 import org.jooq.Record2;
 import org.jooq.Record3;
+import org.jooq.Record4;
 import org.jooq.Record5;
 import org.jooq.Result;
 import org.jooq.Table;
@@ -231,6 +232,161 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                         )
                         .having(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(ownerDocId))
                 ).execute();
+    }
+
+    /**
+     * Copies assets in the Live table from one DocID to another DocId, within the given transaction.
+     * @param fromDocId Where the assets are to be copied from
+     * @param toDocId Where the assets are going to
+     * @param txnContext The transaction
+     * @throws DataAccessException If something goes wrong.
+     */
+    private void copyLiveAssets(final String fromDocId, final String toDocId, final DSLContext txnContext)
+            throws DataAccessException {
+
+        final Table<Record5<Long, String, byte[], Byte, byte[]>> tmp =
+                txnContext.select(Tables.VISUALISATION_ASSETS.MODIFIED,
+                                Tables.VISUALISATION_ASSETS.PATH,
+                                Tables.VISUALISATION_ASSETS.PATH_HASH,
+                                Tables.VISUALISATION_ASSETS.IS_FOLDER,
+                                Tables.VISUALISATION_ASSETS.DATA)
+                        .from(Tables.VISUALISATION_ASSETS)
+                        .where(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(fromDocId))
+                        .asTable("tmp");
+
+        txnContext.insertInto(Tables.VISUALISATION_ASSETS,
+                        Tables.VISUALISATION_ASSETS.MODIFIED,
+                        Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID,
+                        Tables.VISUALISATION_ASSETS.ASSET_UUID,
+                        Tables.VISUALISATION_ASSETS.PATH,
+                        Tables.VISUALISATION_ASSETS.PATH_HASH,
+                        Tables.VISUALISATION_ASSETS.IS_FOLDER,
+                        Tables.VISUALISATION_ASSETS.DATA)
+                .select(
+                        txnContext.select(tmp.field(Tables.VISUALISATION_ASSETS.MODIFIED),
+                                        DSL.val(toDocId),
+                                        DSL.uuid().cast(String.class),
+                                        tmp.field(Tables.VISUALISATION_ASSETS.PATH),
+                                        tmp.field(Tables.VISUALISATION_ASSETS.PATH_HASH),
+                                        tmp.field(Tables.VISUALISATION_ASSETS.IS_FOLDER),
+                                        tmp.field(Tables.VISUALISATION_ASSETS.DATA))
+                                .from(tmp)
+                )
+                .execute();
+    }
+
+    /**
+     * Saves assets from the draft table into the live table.
+     * @param userUuid The user owning the draft assets
+     * @param ownerDocId The document that owns the draft assets
+     * @param txnContext Jooq transaction
+     * @throws DataAccessException If something goes wrong.
+     */
+    private void saveDraftToLive(final String userUuid, final String ownerDocId, final DSLContext txnContext)
+            throws DataAccessException {
+
+        // Timestamp for the new data, for Servlet cache invalidation
+        final long timestamp = Instant.now().toEpochMilli();
+
+        // If the user somehow manages to send saveDraftToLive() twice they can delete
+        // all their data. So we only allow copying if either the draft table has some records
+        // or if the last operation was a delete.
+        boolean canCopyDraftToLive = isLastUpdateDelete(userUuid, ownerDocId, txnContext);
+
+        if (!canCopyDraftToLive) {
+            // Last operation wasn't delete, so check if there is data in draft to copy to live
+            final Result<Record1<Integer>> result = txnContext
+                    .selectCount()
+                    .from(Tables.VISUALISATION_ASSETS_DRAFT)
+                    .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
+                            .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId)))
+                    .fetch();
+            final int updateDeleteRecordCount = result.getFirst().value1();
+            if (updateDeleteRecordCount > 0) {
+                canCopyDraftToLive = true;
+            } else {
+                LOGGER.warn("Cannot copy draft table to live table; no draft records exist "
+                            + "and the last update was not a delete.");
+            }
+        }
+
+        if (canCopyDraftToLive) {
+            // De-duplicate the draft assets
+            deleteDuplicateDraftAssets(userUuid, ownerDocId, txnContext);
+
+            // Delete all existing live content for the owning document ID
+            txnContext
+                    .deleteFrom(Tables.VISUALISATION_ASSETS)
+                    .where(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(ownerDocId))
+                    .execute();
+
+            // Copy all relevant data from the user draft table into the live table
+            txnContext
+                    .insertInto(Tables.VISUALISATION_ASSETS,
+                            Tables.VISUALISATION_ASSETS.MODIFIED,
+                            Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID,
+                            Tables.VISUALISATION_ASSETS.ASSET_UUID,
+                            Tables.VISUALISATION_ASSETS.PATH,
+                            Tables.VISUALISATION_ASSETS.PATH_HASH,
+                            Tables.VISUALISATION_ASSETS.IS_FOLDER,
+                            Tables.VISUALISATION_ASSETS.DATA)
+                    .select(txnContext.select(
+                                    DSL.val(timestamp),
+                                    Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID,
+                                    Tables.VISUALISATION_ASSETS_DRAFT.ASSET_UUID,
+                                    Tables.VISUALISATION_ASSETS_DRAFT.PATH,
+                                    Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH,
+                                    Tables.VISUALISATION_ASSETS_DRAFT.IS_FOLDER,
+                                    Tables.VISUALISATION_ASSETS_DRAFT.DATA)
+                            .from(Tables.VISUALISATION_ASSETS_DRAFT)
+                            .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
+                                    .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId))))
+                    .execute();
+
+            // Delete everything in the draft table so next time we'll get clean live data
+            txnContext
+                    .deleteFrom(Tables.VISUALISATION_ASSETS_DRAFT)
+                    .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
+                            .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId)))
+                    .execute();
+
+            // Last operation was not a delete - mark it so users cannot save again
+            markUpdateAsNotDelete(userUuid, ownerDocId, txnContext);
+        }
+    }
+
+    /**
+     * Updates content for an asset in the draft table.
+     * @param userUuid The user updating the asset's content
+     * @param ownerDocId The document that owns the asset
+     * @param path The path to the asset
+     * @param content The new content of the asset
+     * @param txnContext Jooq transaction
+     * @throws DataAccessException If something goes wrong.
+     */
+    void updateContent(final String userUuid,
+                       final String ownerDocId,
+                       final String path,
+                       final byte[] content,
+                       final DSLContext txnContext)
+            throws DataAccessException {
+
+        final String slashedPath = slashPath(path, false);
+        final byte[] pathHash = Hashing.sha256().hashString(slashedPath, StandardCharsets.UTF_8).asBytes();
+
+        populateDraft(userUuid, ownerDocId, txnContext);
+        final int rowsUpdated = txnContext.update(Tables.VISUALISATION_ASSETS_DRAFT)
+                .set(Tables.VISUALISATION_ASSETS_DRAFT.DATA, content)
+                .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
+                        .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId))
+                        .and(Tables.VISUALISATION_ASSETS_DRAFT.PATH.eq(slashedPath))
+                        .and(Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH.eq(pathHash)))
+                .execute();
+        if (rowsUpdated != 1) {
+            throw new DataAccessException("1 row should have been updated: " + rowsUpdated);
+        }
+
+        markUpdateAsNotDelete(userUuid, ownerDocId, txnContext);
     }
 
     @Override
@@ -608,24 +764,9 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
         Objects.requireNonNull(path);
         Objects.requireNonNull(content);
 
-        final String slashedPath = slashPath(path, false);
-        final byte[] pathHash = Hashing.sha256().hashString(slashedPath, StandardCharsets.UTF_8).asBytes();
-
         try {
             JooqUtil.transaction(connProvider, txnContext -> {
-                populateDraft(userUuid, ownerDocId, txnContext);
-                final int rowsUpdated = txnContext.update(Tables.VISUALISATION_ASSETS_DRAFT)
-                        .set(Tables.VISUALISATION_ASSETS_DRAFT.DATA, content)
-                        .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
-                                .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId))
-                                .and(Tables.VISUALISATION_ASSETS_DRAFT.PATH.eq(slashedPath))
-                                .and(Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH.eq(pathHash)))
-                        .execute();
-                if (rowsUpdated != 1) {
-                    throw new DataAccessException("1 row should have been updated: " + rowsUpdated);
-                }
-
-                markUpdateAsNotDelete(userUuid, ownerDocId, txnContext);
+                updateContent(userUuid, ownerDocId, path, content, txnContext);
             });
         } catch (final DataAccessException e) {
             LOGGER.error("Error updating asset content for user {}, document {}: {}",
@@ -733,8 +874,6 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
         Objects.requireNonNull(userUuid);
         Objects.requireNonNull(ownerDocId);
 
-        // Timestamp
-        final long timestamp = Instant.now().toEpochMilli();
 
         // This could probably be more efficient to avoid copying lots of data when it hasn't changed
         // However this version works, and it all happens inside the DB, so shouldn't be too bad.
@@ -742,72 +881,7 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
         try {
             // Do everything in one transaction
             JooqUtil.transaction(connProvider, txnContext -> {
-
-                // If the user somehow manages to send saveDraftToLive() twice they can delete
-                // all their data. So we only allow copying if either the draft table has some records
-                // or if the last operation was a delete.
-                boolean canCopyDraftToLive = isLastUpdateDelete(userUuid, ownerDocId, txnContext);
-
-                if (!canCopyDraftToLive) {
-                    // Last operation wasn't delete, so check if there is data in draft to copy to live
-                    final Result<Record1<Integer>> result = txnContext
-                            .selectCount()
-                            .from(Tables.VISUALISATION_ASSETS_DRAFT)
-                            .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
-                                    .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId)))
-                            .fetch();
-                    final int updateDeleteRecordCount = result.getFirst().value1();
-                    if (updateDeleteRecordCount > 0) {
-                        canCopyDraftToLive = true;
-                    } else {
-                        LOGGER.warn("Cannot copy draft table to live table; no draft records exist "
-                                    + "and the last update was not a delete.");
-                    }
-                }
-
-                if (canCopyDraftToLive) {
-                    // De-duplicate the draft assets
-                    deleteDuplicateDraftAssets(userUuid, ownerDocId, txnContext);
-
-                    // Delete all existing live content for the owning document ID
-                    txnContext
-                            .deleteFrom(Tables.VISUALISATION_ASSETS)
-                            .where(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(ownerDocId))
-                            .execute();
-
-                    // Copy all relevant data from the user draft table into the live table
-                    txnContext
-                            .insertInto(Tables.VISUALISATION_ASSETS,
-                                    Tables.VISUALISATION_ASSETS.MODIFIED,
-                                    Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID,
-                                    Tables.VISUALISATION_ASSETS.ASSET_UUID,
-                                    Tables.VISUALISATION_ASSETS.PATH,
-                                    Tables.VISUALISATION_ASSETS.PATH_HASH,
-                                    Tables.VISUALISATION_ASSETS.IS_FOLDER,
-                                    Tables.VISUALISATION_ASSETS.DATA)
-                            .select(txnContext.select(
-                                            DSL.val(timestamp),
-                                            Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID,
-                                            Tables.VISUALISATION_ASSETS_DRAFT.ASSET_UUID,
-                                            Tables.VISUALISATION_ASSETS_DRAFT.PATH,
-                                            Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH,
-                                            Tables.VISUALISATION_ASSETS_DRAFT.IS_FOLDER,
-                                            Tables.VISUALISATION_ASSETS_DRAFT.DATA)
-                                    .from(Tables.VISUALISATION_ASSETS_DRAFT)
-                                    .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
-                                            .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId))))
-                            .execute();
-
-                    // Delete everything in the draft table so next time we'll get clean live data
-                    txnContext
-                            .deleteFrom(Tables.VISUALISATION_ASSETS_DRAFT)
-                            .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
-                                    .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId)))
-                            .execute();
-
-                    // Last operation was not a delete - mark it so users cannot save again
-                    markUpdateAsNotDelete(userUuid, ownerDocId, txnContext);
-                }
+                saveDraftToLive(userUuid, ownerDocId, txnContext);
             });
         } catch (final DataAccessException e) {
             LOGGER.error("Error saving draft assets to live for user {}, doc {}: {}",
@@ -816,6 +890,73 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
         } catch (final Throwable t) {
             LOGGER.error("Error saving draft assets to live for user {}, doc {}: {}",
                     userUuid, ownerDocId, t.getMessage(), t);
+            throw t;
+        }
+    }
+
+    @Override
+    public void saveAs(final String userUuid,
+                       final String fromDocumentId,
+                       final String toDocumentId,
+                       final String updatedContentPath,
+                       final byte[] updatedContent) throws IOException {
+
+        try {
+            // Do everything in one transaction
+            JooqUtil.transaction(connProvider, txnContext -> {
+
+                // Copy live data
+                copyLiveAssets(fromDocumentId, toDocumentId, txnContext);
+
+                // Copy draft data
+                final Table<Record4<String, byte[], Byte, byte[]>> tmpDraft =
+                        txnContext.select(Tables.VISUALISATION_ASSETS_DRAFT.PATH,
+                                        Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH,
+                                        Tables.VISUALISATION_ASSETS_DRAFT.IS_FOLDER,
+                                        Tables.VISUALISATION_ASSETS_DRAFT.DATA)
+                                .from(Tables.VISUALISATION_ASSETS_DRAFT)
+                                .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
+                                        .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(fromDocumentId)))
+                                .asTable("tmpDraft");
+
+                int draftRowCount = txnContext.insertInto(Tables.VISUALISATION_ASSETS_DRAFT,
+                                Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID,
+                                Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID,
+                                Tables.VISUALISATION_ASSETS_DRAFT.ASSET_UUID,
+                                Tables.VISUALISATION_ASSETS_DRAFT.PATH,
+                                Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH,
+                                Tables.VISUALISATION_ASSETS_DRAFT.IS_FOLDER,
+                                Tables.VISUALISATION_ASSETS_DRAFT.DATA)
+                        .select(
+                                txnContext.select(DSL.val(userUuid),
+                                                DSL.val(toDocumentId),
+                                                DSL.uuid().cast(String.class),
+                                                tmpDraft.field(Tables.VISUALISATION_ASSETS.PATH),
+                                                tmpDraft.field(Tables.VISUALISATION_ASSETS.PATH_HASH),
+                                                tmpDraft.field(Tables.VISUALISATION_ASSETS.IS_FOLDER),
+                                                tmpDraft.field(Tables.VISUALISATION_ASSETS.DATA))
+                                        .from(tmpDraft)
+                        )
+                        .execute();
+
+                // Update the content, if updated content exists
+                if (updatedContentPath != null && updatedContent != null) {
+                    updateContent(userUuid, toDocumentId, updatedContentPath, updatedContent, txnContext);
+                    draftRowCount++;
+                }
+
+                // Save the draft to live for the new document, if there is draft data to save
+                if (draftRowCount > 0) {
+                    saveDraftToLive(userUuid, toDocumentId, txnContext);
+                }
+            });
+        } catch (final DataAccessException e) {
+            LOGGER.error("Error doing SaveAs for user {}, original doc {}, destination doc {}: {}",
+                    userUuid, fromDocumentId, toDocumentId, e.getMessage(), e);
+            throw new IOException("Error doing SaveAs: " + e.getMessage(), e);
+        } catch (final Throwable t) {
+            LOGGER.error("Error doing SaveAs for user {}, original doc {}, destination doc {}: {}",
+                    userUuid, fromDocumentId, toDocumentId, t.getMessage(), t);
             throw t;
         }
     }
@@ -994,35 +1135,7 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
             throws IOException {
         try {
             JooqUtil.transaction(connProvider, txnContext -> {
-                final Table<Record5<Long, String, byte[], Byte, byte[]>> tmp =
-                        txnContext.select(Tables.VISUALISATION_ASSETS.MODIFIED,
-                                        Tables.VISUALISATION_ASSETS.PATH,
-                                        Tables.VISUALISATION_ASSETS.PATH_HASH,
-                                        Tables.VISUALISATION_ASSETS.IS_FOLDER,
-                                        Tables.VISUALISATION_ASSETS.DATA)
-                                .from(Tables.VISUALISATION_ASSETS)
-                                .where(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(fromDocId))
-                                .asTable("tmp");
-
-                txnContext.insertInto(Tables.VISUALISATION_ASSETS,
-                                Tables.VISUALISATION_ASSETS.MODIFIED,
-                                Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID,
-                                Tables.VISUALISATION_ASSETS.ASSET_UUID,
-                                Tables.VISUALISATION_ASSETS.PATH,
-                                Tables.VISUALISATION_ASSETS.PATH_HASH,
-                                Tables.VISUALISATION_ASSETS.IS_FOLDER,
-                                Tables.VISUALISATION_ASSETS.DATA)
-                        .select(
-                                txnContext.select(tmp.field(Tables.VISUALISATION_ASSETS.MODIFIED),
-                                                DSL.val(toDocId),
-                                                DSL.uuid().cast(String.class),
-                                                tmp.field(Tables.VISUALISATION_ASSETS.PATH),
-                                                tmp.field(Tables.VISUALISATION_ASSETS.PATH_HASH),
-                                                tmp.field(Tables.VISUALISATION_ASSETS.IS_FOLDER),
-                                                tmp.field(Tables.VISUALISATION_ASSETS.DATA))
-                                        .from(tmp)
-                        )
-                        .execute();
+                copyLiveAssets(fromDocId, toDocId, txnContext);
             });
         } catch (final DataAccessException e) {
             LOGGER.error("Error copying assets from document '{}' to document '{}': {}",

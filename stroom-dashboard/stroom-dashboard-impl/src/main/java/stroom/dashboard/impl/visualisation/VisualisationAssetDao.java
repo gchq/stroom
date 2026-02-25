@@ -145,6 +145,23 @@ public interface VisualisationAssetDao {
     void revertDraftFromLive(String userUuid, String documentId) throws IOException;
 
     /**
+     * Copies all assets - draft and live - from one documentID to another.
+     * Can also update any content at the same time.
+     * Used when clicking SaveAs in the UI.
+     * @param userUuid The user ID who will own any draft assets in the copy
+     * @param fromDocumentId The document ID before the save.
+     * @param toDocumentId The document ID we're saving to.
+     * @param updatedContentPath The path to the updated content, if any. Null if no such content.
+     * @param updatedContent Any content in the UI that needs saving too. Null if no such content.
+     * @throws IOException If something goes wrong.
+     */
+    void saveAs(String userUuid,
+                String fromDocumentId,
+                String toDocumentId,
+                String updatedContentPath,
+                byte[] updatedContent) throws IOException;
+
+    /**
      * Returns live assets for serialising the assets for a document ID.
      * @param ownerId The document that owns the assets
      * @return ImportExportAssets holding the relevant Import/Export data.

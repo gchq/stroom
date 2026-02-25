@@ -292,9 +292,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                 document = presenter.write(document);
                 if (document != null) {
                     final D finalDocument = document;
-                    final BiConsumer<D, Consumer<D>> postSaveCallback = presenter.getPostSaveCallback();
                     save(getDocRef(document), document,
-                            postSaveCallback,
+                            presenter.getPostSaveCallback(),
                             doc -> presenter.read(getDocRef(doc), doc, presenter.isReadOnly()),
                             throwable -> AlertEvent.fireError(
                                     this,
@@ -339,10 +338,9 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                     // Write to the newly created document.
                     document = presenter.write(document);
                     // Save the new document and read it back into the presenter.
-                    final BiConsumer<D, Consumer<D>> postSaveCallback = presenter.getPostSaveCallback();
                     save(newDocRef,
                             document,
-                            postSaveCallback,
+                            presenter.getPostSaveAsCallback(),
                             saveConsumer,
                             null,
                             presenter);
@@ -634,8 +632,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     /**
      * Extension to the class API to handle a callback after save completes.
      * Default is to call the old save() method for back compatibility.
-     * Override if you return non-null from getPostSaveCallback() otherwise
-     * you'll get an IllegalStateException from this method.
+     * Override if you return non-null from DocumentEditPresenter.getPostSaveCallback()
+     * otherwise you'll get an IllegalStateException from this method.
      */
     public void save(final DocRef docRef,
                      final D document,
