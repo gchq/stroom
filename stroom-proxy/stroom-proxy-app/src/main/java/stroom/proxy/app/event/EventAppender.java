@@ -35,7 +35,6 @@ class EventAppender {
     private long eventCount = 0;
     private long byteCount = 0;
 
-
     public EventAppender(final Path file,
                          final Instant createTime,
                          final EventStoreConfig eventStoreConfig) {
@@ -81,8 +80,8 @@ class EventAppender {
 
     public synchronized boolean shouldRoll(final long addBytes) {
         return createTime.isBefore(Instant.now().minus(eventStoreConfig.getMaxAge()))
-                || eventCount >= eventStoreConfig.getMaxEventCount()
-                || byteCount + addBytes > eventStoreConfig.getMaxByteCount();
+               || eventCount >= eventStoreConfig.getMaxEventCount()
+               || byteCount + addBytes > eventStoreConfig.getMaxByteCount();
     }
 
     public synchronized Path closeAndGetFile() {
@@ -92,5 +91,15 @@ class EventAppender {
             throw new UncheckedIOException(e);
         }
         return file;
+    }
+
+    @Override
+    public String toString() {
+        return "EventAppender{" +
+               "file=" + file +
+               ", createTime=" + createTime +
+               ", eventCount=" + eventCount +
+               ", byteCount=" + byteCount +
+               '}';
     }
 }
