@@ -32,6 +32,8 @@ if [ "$(id -u)" = '0' ]; then
     chown proxy:proxy /stroom-proxy/logs/extra_headers.txt
     chown proxy:proxy /stroom-proxy/data
     chown proxy:proxy /stroom-proxy/failures
+    chown proxy:proxy /stroom-proxy/zip_file_ingest
+    chown proxy:proxy /stroom-proxy/zip_file_ingest_failed
 
     # This is a bit of a cludge to get round "Text file in use" errors
     # See: https://github.com/moby/moby/issues/9547
