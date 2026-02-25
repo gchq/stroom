@@ -80,9 +80,15 @@ public class Format {
             return false;
         }
         final Format format = (Format) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = type == format.type;
+//        final boolean b2 = Objects.equals(settings, format.settings);
+//        final boolean b3 = Objects.equals(wrap, format.wrap);
+
         return type == format.type &&
-                Objects.equals(settings, format.settings) &&
-                Objects.equals(wrap, format.wrap);
+               Objects.equals(settings, format.settings) &&
+               Objects.equals(wrap, format.wrap);
     }
 
     @Override
@@ -93,10 +99,10 @@ public class Format {
     @Override
     public String toString() {
         return "Format{" +
-                "type=" + type +
-                ", settings=" + settings +
-                ", wrap=" + wrap +
-                '}';
+               "type=" + type +
+               ", settings=" + settings +
+               ", wrap=" + wrap +
+               '}';
     }
 
     public static Builder builder() {

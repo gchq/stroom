@@ -16,13 +16,14 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.dashboard.client.flexlayout.MutableTabConfig;
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.TabConfig;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -36,12 +37,12 @@ import com.gwtplatform.mvp.client.View;
 
 public abstract class AbstractComponentPresenter<V extends View>
         extends MyPresenterWidget<V>
-        implements Component, HasDirtyHandlers {
+        implements Component, HasChangeHandlers {
 
     private final Provider<?> settingsPresenterProvider;
     private TabLayout tabLayout;
     private ComponentConfig componentConfig;
-    private TabConfig tabConfig;
+    private MutableTabConfig tabConfig;
     private SettingsPresenter settingsPresenter;
     private DashboardContext dashboardContext;
     protected boolean designMode;
@@ -143,7 +144,7 @@ public abstract class AbstractComponentPresenter<V extends View>
             tabLayout.refresh();
         }
 
-        setDirty(true);
+        onChange();
     }
 
     @Override
@@ -151,10 +152,8 @@ public abstract class AbstractComponentPresenter<V extends View>
         this.tabLayout = tabLayout;
     }
 
-    public void setDirty(final boolean dirty) {
-        if (dirty) {
-            DirtyEvent.fire(this, dirty);
-        }
+    public void onChange() {
+        ChangeEvent.fire(this);
     }
 
     @Override
@@ -178,17 +177,17 @@ public abstract class AbstractComponentPresenter<V extends View>
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
     @Override
-    public TabConfig getTabConfig() {
+    public MutableTabConfig getTabConfig() {
         return tabConfig;
     }
 
     @Override
-    public void setTabConfig(final TabConfig tabConfig) {
+    public void setTabConfig(final MutableTabConfig tabConfig) {
         this.tabConfig = tabConfig;
     }
 

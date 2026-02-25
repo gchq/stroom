@@ -332,29 +332,29 @@ public class TermEditor extends Composite {
         } else {
             switch (condition) {
                 case EQUALS,
-                        NOT_EQUALS,
-                        LESS_THAN,
-                        LESS_THAN_OR_EQUAL_TO,
-                        GREATER_THAN,
-                        GREATER_THAN_OR_EQUAL_TO:
+                     NOT_EQUALS,
+                     LESS_THAN,
+                     LESS_THAN_OR_EQUAL_TO,
+                     GREATER_THAN,
+                     GREATER_THAN_OR_EQUAL_TO:
                     enterTextOrDateMode(indexFieldType);
                     break;
                 case BETWEEN:
                     enterTextOrDateRangeMode(indexFieldType);
                     break;
                 case IN_DICTIONARY,
-                        IN_FOLDER,
-                        IS_DOC_REF,
-                        OF_DOC_REF:
+                     IN_FOLDER,
+                     IS_DOC_REF,
+                     OF_DOC_REF:
                     enterDocRefMode(field, condition);
                     break;
                 case IS_USER_REF,
-                        USER_HAS_PERM,
-                        USER_HAS_OWNER,
-                        USER_HAS_DELETE,
-                        USER_HAS_EDIT,
-                        USER_HAS_VIEW,
-                        USER_HAS_USE:
+                     USER_HAS_PERM,
+                     USER_HAS_OWNER,
+                     USER_HAS_DELETE,
+                     USER_HAS_EDIT,
+                     USER_HAS_VIEW,
+                     USER_HAS_USE:
                     enterUserRefMode(field, condition);
                     break;
                 default:
@@ -604,7 +604,7 @@ public class TermEditor extends Composite {
     private void fireDirty() {
         if (!reading) {
             if (uiHandlers != null) {
-                uiHandlers.fireDirty();
+                uiHandlers.onChange();
             }
         }
     }

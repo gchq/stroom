@@ -37,11 +37,11 @@ class TestScriptStoreImpl extends AbstractCoreIntegrationTest {
     @Test
     void testUTF8Resource() {
         final String data = "var π = Math.PI, τ = 2 * π, halfπ = π / 2, ε = 1e-6, ε2 = ε * ε, " +
-                "d3_radians = π / 180, d3_degrees = 180 / π;";
+                            "d3_radians = π / 180, d3_degrees = 180 / π;";
 
         final DocRef docRef = scriptStore.createDocument("test");
-        final ScriptDoc script = scriptStore.readDocument(docRef);
-        script.setData(data);
+        final ScriptDoc script = scriptStore.readDocument(docRef)
+                .copy().data(data).build();
         scriptStore.writeDocument(script);
         final ScriptDoc loaded = scriptStore.readDocument(docRef);
 

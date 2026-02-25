@@ -116,26 +116,6 @@ public class ResultStoreService {
         }
     }
 
-    public Boolean exists(final String nodeName, final QueryKey queryKey) {
-        try {
-            return nodeService
-                    .remoteRestResult(
-                            nodeName,
-                            Boolean.class,
-                            () -> ResourcePaths.buildAuthenticatedApiPath(
-                                    ResultStoreResource.BASE_PATH,
-                                    ResultStoreResource.TERMINATE_PATH_PART,
-                                    nodeName),
-                            () -> resultStoreManager
-                                    .terminate(queryKey),
-                            builder ->
-                                    builder.post(Entity.json(queryKey)));
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e.getMessage(), e);
-            return false;
-        }
-    }
-
     public Boolean terminate(final String nodeName, final QueryKey queryKey) {
         try {
             return nodeService

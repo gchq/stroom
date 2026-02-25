@@ -56,11 +56,11 @@ public class DictionaryDoc extends AbstractDoc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.DICTIONARY_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private String data;
+    private final String data;
     @JsonProperty
-    private List<DocRef> imports;
+    private final List<DocRef> imports;
 
     @JsonCreator
     public DictionaryDoc(@JsonProperty("uuid") final String uuid,
@@ -99,24 +99,12 @@ public class DictionaryDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public String getData() {
         return data;
     }
 
-    public void setData(final String data) {
-        this.data = data;
-    }
-
     public List<DocRef> getImports() {
         return imports;
-    }
-
-    public void setImports(final List<DocRef> imports) {
-        this.imports = imports;
     }
 
     @Override
@@ -150,7 +138,7 @@ public class DictionaryDoc extends AbstractDoc {
     }
 
     public static final class Builder
-            extends AbstractDoc.AbstractBuilder<DictionaryDoc, DictionaryDoc.Builder> {
+            extends AbstractBuilder<DictionaryDoc, Builder> {
 
         private String description;
         private String data;

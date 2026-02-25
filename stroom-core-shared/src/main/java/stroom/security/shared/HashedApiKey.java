@@ -16,8 +16,8 @@
 
 package stroom.security.shared;
 
+import stroom.util.shared.AuditInfoBuilder;
 import stroom.util.shared.HasAuditInfoGetters;
-import stroom.util.shared.HasAuditableUserIdentity;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.SerialisationTestConstructor;
 import stroom.util.shared.UserRef;
@@ -99,49 +99,28 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
 
     @SerialisationTestConstructor
     private HashedApiKey() {
-        this(HashedApiKey
-                .builder()
-                .withHashAlgorithm(HashAlgorithm.BCRYPT));
-    }
-
-    private HashedApiKey(final Builder builder) {
-        id = builder.id;
-        version = builder.version;
-        createTimeMs = builder.createTimeMs;
-        createUser = builder.createUser;
-        updateTimeMs = builder.updateTimeMs;
-        updateUser = builder.updateUser;
-        owner = builder.owner;
-        apiKeyHash = builder.apiKeyHash;
-        apiKeyPrefix = builder.apiKeyPrefix;
-        expireTimeMs = builder.expireTimeMs;
-        name = builder.name;
-        comments = builder.comments;
-        enabled = builder.enabled;
-        hashAlgorithm = builder.hashAlgorithm;
+        this(null,
+                0,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                HashAlgorithm.BCRYPT);
     }
 
     public static Builder builder() {
         return new Builder();
     }
 
-    public static Builder builder(final HashedApiKey copy) {
-        final Builder builder = new Builder();
-        builder.id = copy.getId();
-        builder.version = copy.getVersion();
-        builder.createTimeMs = copy.getCreateTimeMs();
-        builder.createUser = copy.getCreateUser();
-        builder.updateTimeMs = copy.getUpdateTimeMs();
-        builder.updateUser = copy.getUpdateUser();
-        builder.owner = copy.getOwner();
-        builder.apiKeyHash = copy.getApiKeyHash();
-        builder.apiKeyPrefix = copy.getApiKeyPrefix();
-        builder.expireTimeMs = copy.getExpireTimeMs();
-        builder.name = copy.getName();
-        builder.comments = copy.getComments();
-        builder.enabled = copy.getEnabled();
-        builder.hashAlgorithm = copy.getHashAlgorithm();
-        return builder;
+    public Builder copy() {
+        return new Builder(this);
     }
 
     @Override
@@ -263,14 +242,10 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
     // --------------------------------------------------------------------------------
 
 
-    public static final class Builder {
+    public static final class Builder extends AuditInfoBuilder<HashedApiKey, Builder> {
 
         private Integer id;
         private int version;
-        private Long createTimeMs;
-        private String createUser;
-        private Long updateTimeMs;
-        private String updateUser;
         private UserRef owner;
         private String apiKeyHash;
         private String apiKeyPrefix;
@@ -283,94 +258,94 @@ public class HashedApiKey implements HasAuditInfoGetters, HasIntegerId {
         private Builder() {
         }
 
-        public static Builder builder() {
-            return new Builder();
+        private Builder(final HashedApiKey hashedApiKey) {
+            id = hashedApiKey.id;
+            version = hashedApiKey.version;
+            createTimeMs = hashedApiKey.createTimeMs;
+            createUser = hashedApiKey.createUser;
+            updateTimeMs = hashedApiKey.updateTimeMs;
+            updateUser = hashedApiKey.updateUser;
+            owner = hashedApiKey.owner;
+            apiKeyHash = hashedApiKey.apiKeyHash;
+            apiKeyPrefix = hashedApiKey.apiKeyPrefix;
+            expireTimeMs = hashedApiKey.expireTimeMs;
+            name = hashedApiKey.name;
+            comments = hashedApiKey.comments;
+            enabled = hashedApiKey.enabled;
+            hashAlgorithm = hashedApiKey.hashAlgorithm;
         }
 
-        public Builder withId(final Integer val) {
-            id = val;
-            return this;
+        public Builder id(final Integer id) {
+            this.id = id;
+            return self();
         }
 
-        public Builder withVersion(final int val) {
-            version = val;
-            return this;
+        public Builder version(final int version) {
+            this.version = version;
+            return self();
         }
 
-        /**
-         * Stamp the builder with the audit info
-         */
-        public Builder stamp(final HasAuditableUserIdentity hasAuditableUserIdentity) {
-            final long now = System.currentTimeMillis();
-            createTimeMs = now;
-            createUser = hasAuditableUserIdentity.getUserIdentityForAudit();
-            updateTimeMs = now;
-            updateUser = hasAuditableUserIdentity.getUserIdentityForAudit();
-            return this;
+        public Builder owner(final UserRef owner) {
+            this.owner = owner;
+            return self();
         }
 
-        public Builder withCreateTimeMs(final long val) {
-            createTimeMs = val;
-            return this;
+        public Builder apiKeyHash(final String apiKeyHash) {
+            this.apiKeyHash = apiKeyHash;
+            return self();
         }
 
-        public Builder withCreateUser(final String val) {
-            createUser = val;
-            return this;
+        public Builder apiKeyPrefix(final String apiKeyPrefix) {
+            this.apiKeyPrefix = apiKeyPrefix;
+            return self();
         }
 
-        public Builder withUpdateTimeMs(final long val) {
-            updateTimeMs = val;
-            return this;
+        public Builder expireTimeMs(final long expireTimeMs) {
+            this.expireTimeMs = expireTimeMs;
+            return self();
         }
 
-        public Builder withUpdateUser(final String val) {
-            updateUser = val;
-            return this;
+        public Builder name(final String name) {
+            this.name = name;
+            return self();
         }
 
-        public Builder withOwner(final UserRef val) {
-            owner = val;
-            return this;
+        public Builder comments(final String comments) {
+            this.comments = comments;
+            return self();
         }
 
-        public Builder withApiKeyHash(final String val) {
-            apiKeyHash = val;
-            return this;
+        public Builder enabled(final boolean enabled) {
+            this.enabled = enabled;
+            return self();
         }
 
-        public Builder withApiKeyPrefix(final String val) {
-            apiKeyPrefix = val;
-            return this;
+        public Builder hashAlgorithm(final HashAlgorithm hashAlgorithm) {
+            this.hashAlgorithm = hashAlgorithm;
+            return self();
         }
 
-        public Builder withExpireTimeMs(final long val) {
-            expireTimeMs = val;
-            return this;
-        }
-
-        public Builder withName(final String val) {
-            name = val;
-            return this;
-        }
-
-        public Builder withComments(final String val) {
-            comments = val;
-            return this;
-        }
-
-        public Builder withEnabled(final boolean val) {
-            enabled = val;
-            return this;
-        }
-
-        public Builder withHashAlgorithm(final HashAlgorithm val) {
-            hashAlgorithm = val;
+        @Override
+        protected Builder self() {
             return this;
         }
 
         public HashedApiKey build() {
-            return new HashedApiKey(this);
+            return new HashedApiKey(
+                    id,
+                    version,
+                    createTimeMs,
+                    createUser,
+                    updateTimeMs,
+                    updateUser,
+                    owner,
+                    apiKeyHash,
+                    apiKeyPrefix,
+                    expireTimeMs,
+                    name,
+                    comments,
+                    enabled,
+                    hashAlgorithm);
         }
     }
 }

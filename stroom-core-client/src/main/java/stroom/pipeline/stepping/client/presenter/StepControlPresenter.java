@@ -111,14 +111,16 @@ public class StepControlPresenter
     public void setEnabledButtons(final StepType stepType,
                                   final boolean foundRecord,
                                   final boolean isFiltered,
-                                  final StepLocation stepLocation) {
+                                  final StepLocation stepLocation,
+                                  final boolean isFirstStream,
+                                  final boolean isLastStream) {
 
         // See if we are on the first record
-        final boolean isFirstRecord = stepLocation != null
+        final boolean isFirstRecord = isFirstStream && stepLocation != null
                 && stepLocation.getPartIndex() == 0
                 && stepLocation.getRecordIndex() == 0;
         // If a filter is in place the end record is a variable concept
-        final boolean isLastRecord = !isFiltered
+        final boolean isLastRecord = isLastStream && !isFiltered
                 && stepLocation != null
                 && endLocation != null
                 && stepLocation.getPartIndex() == endLocation.getPartIndex()

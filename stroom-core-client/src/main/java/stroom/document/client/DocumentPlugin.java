@@ -31,8 +31,8 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
-import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.AbstractDocPresenter;
+import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.LinkTabPanelPresenter;
 import stroom.explorer.shared.ExplorerNode;
@@ -44,6 +44,7 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 
+import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
@@ -142,8 +143,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                 // Tell the content presenter to select this existing tab.
                 SelectContentTabEvent.fire(this, existingTab);
 
-                if (existingTab instanceof DocumentEditPresenter) {
-                    presenter = (DocumentEditPresenter<?, D>) existingTab;
+                if (existingTab instanceof AbstractDocPresenter) {
+                    presenter = (AbstractDocPresenter<?, D>) existingTab;
 
                     if (callbackOnOpen != null) {
                         callbackOnOpen.accept(presenter);
@@ -151,8 +152,9 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                 }
 
                 if (selectedLinkTab != null) {
-                    if (existingTab instanceof DocumentEditTabPresenter<?, ?>) {
-                        ((DocumentEditTabPresenter<?, ?>) existingTab).selectCommonTab(selectedLinkTab);
+                    GWT.log("existing - " + existingTab.getClass().getName());
+                    if (existingTab instanceof DocTabPresenter<?, ?>) {
+                        ((DocTabPresenter<?, ?>) existingTab).selectCommonTab(selectedLinkTab);
                     } else if (existingTab instanceof LinkTabPanelPresenter) {
                         ((LinkTabPanelPresenter) existingTab).selectCommonTab(selectedLinkTab);
                     }
@@ -243,8 +245,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                 AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, null);
             } else {
                 if (selectedTab != null) {
-                    if (myPresenterWidget instanceof DocumentEditTabPresenter<?, ?>) {
-                        ((DocumentEditTabPresenter<?, ?>) myPresenterWidget).selectCommonTab(selectedTab);
+                    if (myPresenterWidget instanceof DocTabPresenter<?, ?>) {
+                        ((DocTabPresenter<?, ?>) myPresenterWidget).selectCommonTab(selectedTab);
                     } else if (myPresenterWidget instanceof LinkTabPanelPresenter) {
                         ((LinkTabPanelPresenter) myPresenterWidget).selectCommonTab(selectedTab);
                     }
@@ -298,8 +300,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
      */
     @SuppressWarnings("unchecked")
     public void save(final DocumentTabData tabData) {
-        if (tabData instanceof DocumentEditPresenter<?, ?>) {
-            final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
+        if (tabData instanceof AbstractDocPresenter<?, ?>) {
+            final AbstractDocPresenter<?, D> presenter = (AbstractDocPresenter<?, D>) tabData;
             if (presenter.isDirty()) {
                 D document = presenter.getEntity();
                 document = presenter.write(document);
@@ -333,8 +335,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     public void saveAs(final DocumentTabData tabData,
                        final ExplorerNode explorerNode) {
         final DocRef docRef = explorerNode.getDocRef();
-        if (tabData instanceof DocumentEditPresenter<?, ?>) {
-            final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
+        if (tabData instanceof AbstractDocPresenter<?, ?>) {
+            final AbstractDocPresenter<?, D> presenter = (AbstractDocPresenter<?, D>) tabData;
 
             final Consumer<ExplorerNode> newDocumentConsumer = newNode -> {
                 final DocRef newDocRef = newNode.getDocRef();
@@ -381,7 +383,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     @Override
     public boolean isDirty() {
         for (final DocumentTabData tabData : documentTabManager.getAll()) {
-            if (tabData instanceof final DocumentEditPresenter<?, ?> presenter) {
+            if (tabData instanceof final AbstractDocPresenter<?, ?> presenter) {
                 if (presenter.isDirty()) {
                     return true;
                 }
@@ -393,7 +395,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     public boolean isDirty(final DocRef docRef) {
         final List<DocumentTabData> tabDataList = documentTabManager.get(docRef);
         for (final DocumentTabData tabData : tabDataList) {
-            if (tabData instanceof final DocumentEditPresenter<?, ?> presenter) {
+            if (tabData instanceof final AbstractDocPresenter<?, ?> presenter) {
                 if (presenter.isDirty()) {
                     return true;
                 }
@@ -588,8 +590,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
         final List<DocumentTabData> tabDataList = documentTabManager.get(docRef);
         // If we have an document edit presenter then reload the document.
         for (final DocumentTabData tabData : tabDataList) {
-            if (tabData instanceof DocumentEditPresenter<?, ?>) {
-                final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
+            if (tabData instanceof AbstractDocPresenter<?, ?>) {
+                final AbstractDocPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
 
                 // Reload the document.
                 load(docRef,
@@ -645,6 +647,12 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
     public abstract String getType();
 
+    public void create(final String documentName,
+                         final Consumer<D> resultConsumer,
+                         final RestErrorHandler errorHandler,
+                         final TaskMonitorFactory taskMonitorFactory) {
+        throw new RuntimeException("Not yet implemented");
+    }
 
     // --------------------------------------------------------------------------------
 
@@ -661,8 +669,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
         @SuppressWarnings("unchecked")
         public void onCloseRequest(final CloseContentEvent event) {
             if (tabData != null) {
-                if (tabData instanceof DocumentEditPresenter<?, ?>) {
-                    final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
+                if (tabData instanceof AbstractDocPresenter<?, ?>) {
+                    final AbstractDocPresenter<?, D> presenter = (AbstractDocPresenter<?, D>) tabData;
                     final DirtyMode dirtyMode = event.getDirtyMode();
                     if (presenter.isDirty() && DirtyMode.FORCE != dirtyMode) {
                         if (DirtyMode.CONFIRM_DIRTY == dirtyMode) {
@@ -691,7 +699,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
         private void actuallyClose(final DocumentTabData tabData,
                                    final Callback callback,
-                                   final DocumentEditPresenter<?, D> presenter,
+                                   final AbstractDocPresenter<?, D> presenter,
                                    final boolean ok) {
             if (ok) {
                 // Tell the presenter we are closing.

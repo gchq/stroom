@@ -172,7 +172,7 @@ public class Annotation extends AbstractDoc {
         return new Builder();
     }
 
-    public static class Builder extends AbstractBuilder<Annotation, Annotation.Builder> {
+    public static class Builder extends AbstractBuilder<Annotation, Builder> {
 
         private Long id;
         private String subject;

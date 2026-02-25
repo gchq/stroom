@@ -70,6 +70,12 @@ public final class VisComponentSettings implements ComponentSettings {
             return false;
         }
         final VisComponentSettings that = (VisComponentSettings) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(tableId, that.tableId);
+//        final boolean b2 = Objects.equals(visualisation, that.visualisation);
+//        final boolean b3 = Objects.equals(json, that.json);
+
         return Objects.equals(tableId, that.tableId) &&
                Objects.equals(visualisation, that.visualisation) &&
                Objects.equals(json, that.json);

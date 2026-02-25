@@ -16,9 +16,9 @@
 
 package stroom.analytics.client.presenter;
 
-import stroom.document.client.event.DirtyUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 
-public interface AnalyticProcessingUiHandlers extends DirtyUiHandlers {
+public interface AnalyticProcessingUiHandlers extends ChangeUiHandlers {
 
     void onProcessingTypeChange();
 }

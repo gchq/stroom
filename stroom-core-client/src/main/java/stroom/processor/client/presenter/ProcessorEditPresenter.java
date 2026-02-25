@@ -351,15 +351,17 @@ public class ProcessorEditPresenter
                                          final HidePopupRequestEvent event) {
         if (filter != null) {
             // Now update the processor filter using the find stream criteria.
-            filter.setQueryData(queryData.copy().feedDependencies(feedDependencies).build());
-            filter.setMinMetaCreateTimeMs(minMetaCreateTimeMs);
-            filter.setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
-            filter.setExport(export);
-            filter.setRunAsUser(userRefSelectionBoxPresenter.getSelected());
+            final ProcessorFilter updated = filter.copy()
+                    .queryData(queryData.copy().feedDependencies(feedDependencies).build())
+                    .minMetaCreateTimeMs(minMetaCreateTimeMs)
+                    .maxMetaCreateTimeMs(maxMetaCreateTimeMs)
+                    .export(export)
+                    .runAsUser(userRefSelectionBoxPresenter.getSelected())
+                    .build();
 
             restFactory
                     .create(PROCESSOR_FILTER_RESOURCE)
-                    .method(res -> res.update(filter.getId(), filter))
+                    .method(res -> res.update(updated.getId(), updated))
                     .onSuccess(r -> hide(r, event))
                     .onFailure(RestErrorHandler.forPopup(this, event))
                     .taskMonitorFactory(this)

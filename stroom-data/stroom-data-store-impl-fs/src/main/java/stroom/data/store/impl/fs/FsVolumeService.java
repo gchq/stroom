@@ -33,7 +33,6 @@ import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.AuditUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -144,12 +143,12 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         // Can't call this in the ctor as it causes a circular dep problem with EntityEventBus
     }
 
-    public FsVolume create(final FsVolume fileVolume) {
+    public FsVolume create(final FsVolume fsVolume) {
         return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> {
-            final FsVolume result;
-            final Path volPath = getAbsVolumePath(fileVolume);
+            FsVolume.Builder builder = fsVolume.copy();
+            final Path volPath = getAbsVolumePath(fsVolume);
             try {
-                if (volPath != null && FsVolumeType.STANDARD.equals(fileVolume.getVolumeType())) {
+                if (volPath != null && FsVolumeType.STANDARD.equals(fsVolume.getVolumeType())) {
                     if (Files.exists(volPath) && !Files.isDirectory(volPath)) {
                         throw new RuntimeException(LogUtil.message(
                                 "Unable to create volume as path '{}' exists but is not a directory.", volPath));
@@ -166,28 +165,28 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                     Files.createDirectories(volPath);
                     LOGGER.info(() -> LogUtil.message("Creating volume in {}", volPath));
 
-                    if (fileVolume.getByteLimit() == null) {
+                    if (fsVolume.getByteLimit() == null) {
                         //set an arbitrary default limit size of 250MB on each volume to prevent the
                         //filesystem from running out of space, assuming they have 500MB free of course.
-                        getDefaultVolumeLimit(volPath).ifPresent(fileVolume::setByteLimit);
+                        getDefaultVolumeLimit(volPath).ifPresent(builder::byteLimit);
                     }
                 }
-                fileVolume.setStatus(FsVolume.VolumeUseStatus.ACTIVE);
+                builder.status(FsVolume.VolumeUseStatus.ACTIVE);
 
-                final FsVolumeState fileVolumeState = fileSystemVolumeStateDao.create(new FsVolumeState());
-                fileVolume.setVolumeState(fileVolumeState);
+                final FsVolumeState fileVolumeState = fileSystemVolumeStateDao.create(FsVolumeState.builder().build());
+                builder.volumeState(fileVolumeState);
 
-                if (fileVolume.getVolumeGroupId() == null) {
+                if (fsVolume.getVolumeGroupId() == null) {
                     final FsVolumeGroup fsVolumeGroup = fsVolumeGroupService
                             .getOrCreate(volumeConfigProvider.get().getDefaultStreamVolumeGroupName());
                     if (fsVolumeGroup != null) {
-                        fileVolume.setVolumeGroupId(fsVolumeGroup.getId());
+                        builder.volumeGroupId(fsVolumeGroup.getId());
                     }
                 }
 
-                AuditUtil.stamp(securityContext, fileVolume);
-                result = fsVolumeDao.create(fileVolume);
-                result.setVolumeState(fileVolume.getVolumeState());
+                builder.stampAudit(securityContext);
+                builder = fsVolumeDao.create(builder.build()).copy();
+                builder.volumeState(fileVolumeState);
             } catch (final IOException e) {
                 LOGGER.error("Unable to create volume due to an error creating directory {}", volPath, e);
                 final String msg;
@@ -205,17 +204,14 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
             fireChange(EntityAction.CREATE);
 
-            return result;
+            return builder.build();
         });
     }
 
     public FsVolume update(final FsVolume fileVolume) {
         return securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION, () -> {
-            AuditUtil.stamp(securityContext, fileVolume);
-            final FsVolume result = fsVolumeDao.update(fileVolume);
-
+            final FsVolume result = fsVolumeDao.update(fileVolume.copy().stampAudit(securityContext).build());
             fireChange(EntityAction.UPDATE);
-
             return result;
         });
     }
@@ -506,12 +502,12 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
             for (final FsVolume volume : dbVolumes) {
                 taskContextFactory.current().info(() -> "Refreshing volume '" + getAbsVolumePath(volume) + "'");
                 // Update the volume state and save in the DB.
-                updateVolumeState(volume);
+                final FsVolume updated = updateVolumeState(volume);
 
                 // Record some statistics for the use of this volume.
-                recordStats(volume);
-                final String groupName = groupNameMap.get(volume.getVolumeGroupId());
-                volumes.computeIfAbsent(groupName, k -> new ArrayList<>()).add(volume);
+                recordStats(updated);
+                final String groupName = groupNameMap.get(updated.getVolumeGroupId());
+                volumes.computeIfAbsent(groupName, k -> new ArrayList<>()).add(updated);
             }
         } else {
             LOGGER.debug(() -> LogUtil.message("Not updating state for vols {}, with min update time {}",
@@ -570,36 +566,37 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         }
     }
 
-    private void updateVolumeState(final FsVolume volume) {
+    private FsVolume updateVolumeState(final FsVolume volume) {
+        final FsVolume.Builder builder = volume.copy();
         final Path absPath = getAbsVolumePath(volume);
 
         try {
-            FsVolumeState volumeState = volume.getVolumeState();
-            volumeState.setUpdateTimeMs(System.currentTimeMillis());
+            FsVolumeState volumeState = volume.getVolumeState().copy().updateTimeMs(System.currentTimeMillis()).build();
 
             // Ensure the path exists
             if (Files.isDirectory(absPath)) {
-                LOGGER.debug(() -> LogUtil.message("updateVolumeState() path exists: {}", absPath));
-                setSizes(absPath, volume, volumeState);
+                LOGGER.debug("updateVolumeState() path exists: {}", absPath);
+                volumeState = setSizes(absPath, volume, volumeState);
             } else {
                 Files.createDirectories(absPath);
-                LOGGER.debug(() -> LogUtil.message("updateVolumeState() path created: {}", absPath));
-                setSizes(absPath, volume, volumeState);
+                LOGGER.debug("updateVolumeState() path created: {}", absPath);
+                volumeState = setSizes(absPath, volume, volumeState);
             }
 
             volumeState = saveVolumeState(volumeState);
-            volume.setVolumeState(volumeState);
+            builder.volumeState(volumeState).build();
 
-            LOGGER.debug(() -> LogUtil.message("updateVolumeState() exit {}", volume));
+            LOGGER.debug("updateVolumeState() exit {}", volume);
 
         } catch (final IOException | RuntimeException e) {
-            LOGGER.error(() -> LogUtil.message("updateVolumeState() path not created: {}", absPath));
+            LOGGER.error("updateVolumeState() path not created: {}", absPath);
         }
+        return builder.build();
     }
 
-    private void setSizes(final Path path,
-                          final FsVolume fsVolume,
-                          final FsVolumeState volumeState) throws IOException {
+    private FsVolumeState setSizes(final Path path,
+                                   final FsVolume fsVolume,
+                                   final FsVolumeState volumeState) throws IOException {
         final FileStore fileStore = Files.getFileStore(path);
         final long osUsableSpace = fileStore.getUsableSpace();
         final long osFreeSpace = fileStore.getUnallocatedSpace();
@@ -612,9 +609,12 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 .findAny()
                 .orElse(osUsableSpace);
 
-        volumeState.setBytesTotal(totalSpace);
-        volumeState.setBytesFree(freeSpace);
-        volumeState.setBytesUsed(usedSpace);
+        return volumeState
+                .copy()
+                .bytesTotal(totalSpace)
+                .bytesFree(freeSpace)
+                .bytesUsed(usedSpace)
+                .build();
     }
 
     private FsVolumeState saveVolumeState(final FsVolumeState volumeState) {
@@ -681,9 +681,11 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     }
 
     private void createVolume(final Path path) {
-        final FsVolume fileVolume = new FsVolume();
-        fileVolume.setVolumeType(FsVolumeType.STANDARD);
-        fileVolume.setPath(FileUtil.getCanonicalPath(path));
+        final FsVolume fileVolume = FsVolume
+                .builder()
+                .volumeType(FsVolumeType.STANDARD)
+                .path(FileUtil.getCanonicalPath(path))
+                .build();
         create(fileVolume);
     }
 

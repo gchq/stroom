@@ -22,14 +22,19 @@ import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * This entity is used to persist pipeline configuration.
@@ -67,11 +72,11 @@ public class PipelineDoc extends AbstractDoc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.PIPELINE_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private DocRef parentPipeline;
+    private final DocRef parentPipeline;
     @JsonProperty
-    private PipelineData pipelineData;
+    private final PipelineData pipelineData;
 
     @JsonCreator
     public PipelineDoc(@JsonProperty("uuid") final String uuid,
@@ -110,24 +115,27 @@ public class PipelineDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public DocRef getParentPipeline() {
         return parentPipeline;
-    }
-
-    public void setParentPipeline(final DocRef parentPipeline) {
-        this.parentPipeline = parentPipeline;
     }
 
     public PipelineData getPipelineData() {
         return pipelineData;
     }
 
-    public void setPipelineData(final PipelineData pipelineData) {
-        this.pipelineData = pipelineData;
+    @JsonIgnore
+    public List<DocRef> getPropertyDocRefs() {
+        if (pipelineData != null && pipelineData.getProperties() != null &&
+            pipelineData.getProperties().getAdd() != null) {
+            return pipelineData.getProperties().getAdd().stream()
+                    .map(PipelineProperty::getValue)
+                    .filter(Objects::nonNull)
+                    .map(PipelinePropertyValue::getEntity)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        }
+
+        return List.of();
     }
 
     @Override
@@ -161,7 +169,7 @@ public class PipelineDoc extends AbstractDoc {
     }
 
     public static final class Builder
-            extends AbstractDoc.AbstractBuilder<PipelineDoc, PipelineDoc.Builder> {
+            extends AbstractBuilder<PipelineDoc, Builder> {
 
         private String description;
         private DocRef parentPipeline;

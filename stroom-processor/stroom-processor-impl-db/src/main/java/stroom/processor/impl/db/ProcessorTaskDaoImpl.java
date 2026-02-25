@@ -759,9 +759,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         return result.map(record -> {
             final Integer processorFilterId = record.get(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID);
             final Optional<ProcessorFilter> processorFilter = processorFilterCache.get(processorFilterId);
-            final ProcessorTask processorTask = RECORD_TO_PROCESSOR_TASK_MAPPER.apply(record);
-            processorTask.setProcessorFilter(processorFilter.orElse(null));
-            return processorTask;
+            return RECORD_TO_PROCESSOR_TASK_MAPPER.apply(record)
+                    .copy()
+                    .processorFilter(processorFilter.orElse(null))
+                    .build();
         });
     }
 

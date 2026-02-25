@@ -18,7 +18,7 @@ package stroom.planb.client.view;
 
 import stroom.item.client.SelectionBox;
 import stroom.planb.client.presenter.PlanBSettingsPresenter.PlanBSettingsView;
-import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
+import stroom.planb.client.presenter.StateTypeChangeUiHandlers;
 import stroom.planb.shared.StateType;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -32,7 +32,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class PlanBSettingsViewImpl
-        extends ViewWithUiHandlers<PlanBSettingsUiHandlers>
+        extends ViewWithUiHandlers<StateTypeChangeUiHandlers>
         implements PlanBSettingsView {
 
     private final Widget widget;
@@ -85,6 +85,7 @@ public class PlanBSettingsViewImpl
     @UiHandler("stateType")
     public void onStateType(final ValueChangeEvent<StateType> event) {
         getUiHandlers().onChange();
+        getUiHandlers().onStateTypeChange();
     }
 
     public interface Binder extends UiBinder<Widget, PlanBSettingsViewImpl> {

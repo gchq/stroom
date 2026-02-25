@@ -20,7 +20,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.search.elastic.client.presenter.ElasticIndexFieldListPresenter.ElasticIndexFieldListView;
 import stroom.search.elastic.shared.ElasticIndexDoc;
@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class ElasticIndexFieldListPresenter extends DocumentEditPresenter<ElasticIndexFieldListView, ElasticIndexDoc> {
+public class ElasticIndexFieldListPresenter extends DocPresenter<ElasticIndexFieldListView, ElasticIndexDoc> {
 
     private final MyDataGrid<ElasticIndexField> dataGrid;
     private final DateTimeFormatter dateTimeFormatter;

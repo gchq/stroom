@@ -21,12 +21,9 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.TabManager;
 import stroom.dashboard.shared.Dimension;
-import stroom.dashboard.shared.LayoutConfig;
 import stroom.dashboard.shared.LayoutConstraints;
-import stroom.dashboard.shared.SplitLayoutConfig;
-import stroom.dashboard.shared.TabConfig;
-import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.data.grid.client.Glass;
+import stroom.util.shared.NullSafe;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.tab.client.view.LinkTab;
@@ -73,13 +70,13 @@ public class FlexLayout extends Composite {
     private final SimplePanel scrollPanel;
     private final Map<Object, PositionAndSize> positionAndSizeMap = new HashMap<>();
     private final Map<SplitInfo, Splitter> splitToWidgetMap = new HashMap<>();
-    private final Map<LayoutConfig, TabLayout> layoutToWidgetMap = new HashMap<>();
+    private final Map<MutableLayoutConfig, TabLayout> layoutToWidgetMap = new HashMap<>();
     private final Element designSurfaceElement;
     private Components components;
     private final LayoutConfigContainer layoutConfigContainer = new LayoutConfigContainer();
     private boolean maximised;
     private LayoutConstraints layoutConstraints;
-    private stroom.dashboard.shared.Size preferredSize;
+    private MutableSize preferredSize;
     private double offset;
     private double min;
     private double max;
@@ -98,9 +95,9 @@ public class FlexLayout extends Composite {
     private Size outerSize;
     private Size designSurfaceSize;
     private final SplitInfo outerAcrossSplit =
-            new SplitInfo(new SplitLayoutConfig(Dimension.X), -1);
+            new SplitInfo(new MutableSplitLayoutConfig(Dimension.X), -1);
     private final SplitInfo outerDownSplit =
-            new SplitInfo(new SplitLayoutConfig(Dimension.Y), -1);
+            new SplitInfo(new MutableSplitLayoutConfig(Dimension.Y), -1);
 
     private boolean designMode;
 
@@ -295,7 +292,7 @@ public class FlexLayout extends Composite {
 //            if (Objects.equals(selection.getFirstTab(), tab)) {
 //                final TabLayout tabLayout = mouseTarget.tabLayout;
             if (tabManager != null && mouseTarget.tabLayout != null && mouseTarget.tabWidget != null) {
-                final TabConfig tabConfig = mouseTarget.tabLayout.getTabLayoutConfig().get(mouseTarget.tabIndex);
+                final MutableTabConfig tabConfig = mouseTarget.tabLayout.getTabLayoutConfig().get(mouseTarget.tabIndex);
                 if (tabConfig != null) {
                     tabManager.showMenu(
                             mouseTarget.tabWidget.getElement(),
@@ -325,18 +322,18 @@ public class FlexLayout extends Composite {
                 // If a drag target is found then move the selected tab.
                 if (mouseTarget != null) {
                     final Pos targetPos = mouseTarget.pos;
-                    final LayoutConfig targetLayout = mouseTarget.layoutConfig;
+                    final MutableLayoutConfig targetLayout = mouseTarget.layoutConfig;
 
-                    final List<TabConfig> tabGroup = new ArrayList<>();
+                    final List<MutableTabConfig> tabGroup = new ArrayList<>();
                     for (final TabData tabData : selection.tabs) {
                         tabGroup.add(((Component) tabData).getTabConfig());
                     }
 
                     // Add all invisible tabs, so we can move them all together if this is the only tab.
-                    final TabLayoutConfig currentParent = selection.currentParent;
+                    final MutableTabLayoutConfig currentParent = selection.currentParent;
                     if (currentParent != null && currentParent.getVisibleTabCount() == 1) {
-                        for (final TabConfig tabConfig : currentParent.getTabs()) {
-                            if (!tabConfig.visible()) {
+                        for (final MutableTabConfig tabConfig : currentParent.getTabs()) {
+                            if (!tabConfig.isVisible()) {
                                 tabGroup.add(tabConfig);
                             }
                         }
@@ -359,7 +356,7 @@ public class FlexLayout extends Composite {
                         refresh();
 
                         // Let the handler know the layout is dirty.
-                        changeHandler.onDirty();
+                        changeHandler.onChange();
                     }
                 }
 
@@ -384,10 +381,10 @@ public class FlexLayout extends Composite {
 
                             if (!maximised) {
                                 // Let the handler know the layout is dirty.
-                                changeHandler.onDirty();
+                                changeHandler.onChange();
                             }
                         } else if (tabManager != null) {
-                            final TabConfig tabConfig = mouseTarget
+                            final MutableTabConfig tabConfig = mouseTarget
                                     .tabLayout
                                     .getTabLayoutConfig()
                                     .get(mouseTarget.tabIndex);
@@ -460,12 +457,12 @@ public class FlexLayout extends Composite {
     }
 
     private boolean moveTab(final MouseTarget mouseTarget,
-                            final List<TabConfig> tabGroup,
-                            final LayoutConfig targetLayout,
+                            final List<MutableTabConfig> tabGroup,
+                            final MutableLayoutConfig targetLayout,
                             final Pos targetPos) {
         boolean moved = false;
 
-        if (targetLayout instanceof final TabLayoutConfig targetTabLayoutConfig) {
+        if (targetLayout instanceof final MutableTabLayoutConfig targetTabLayoutConfig) {
             if (Pos.CENTER == targetPos || Pos.TAB == targetPos || Pos.AFTER_TAB == targetPos) {
                 moved = moveTabOntoTab(mouseTarget, tabGroup, targetTabLayoutConfig, targetPos);
 
@@ -473,7 +470,7 @@ public class FlexLayout extends Composite {
                 moved = moveTabOutside(mouseTarget, tabGroup, targetTabLayoutConfig, targetPos);
             }
 
-        } else if (targetLayout instanceof final SplitLayoutConfig targetSplitLayoutConfig) {
+        } else if (targetLayout instanceof final MutableSplitLayoutConfig targetSplitLayoutConfig) {
             moved = moveTabOntoSplit(mouseTarget, tabGroup, targetSplitLayoutConfig, targetPos);
         }
 
@@ -481,14 +478,14 @@ public class FlexLayout extends Composite {
     }
 
     private boolean moveTabOntoTab(final MouseTarget mouseTarget,
-                                   final List<TabConfig> tabGroup,
-                                   final TabLayoutConfig targetTabLayoutConfig,
+                                   final List<MutableTabConfig> tabGroup,
+                                   final MutableTabLayoutConfig targetTabLayoutConfig,
                                    final Pos targetPos) {
 //        GWT.log("moveTabOntoTab");
         boolean moved = false;
 
-        for (final TabConfig tabConfig : tabGroup) {
-            final TabLayoutConfig currentParent = tabConfig.getParent();
+        for (final MutableTabConfig tabConfig : tabGroup) {
+            final MutableTabLayoutConfig currentParent = tabConfig.getParent();
 
             // If we don't already have a parent (i.e. a new component) then just add the tab.
             if (currentParent == null) {
@@ -562,21 +559,21 @@ public class FlexLayout extends Composite {
     }
 
     private boolean moveTabOutside(final MouseTarget mouseTarget,
-                                   final List<TabConfig> tabGroup,
-                                   final TabLayoutConfig targetTabLayoutConfig,
+                                   final List<MutableTabConfig> tabGroup,
+                                   final MutableTabLayoutConfig targetTabLayoutConfig,
                                    final Pos targetPos) {
 //        GWT.log("moveTabOutside");
         boolean moved = false;
 
         // Ensure we have a parent.
-        SplitLayoutConfig parent = targetTabLayoutConfig.getParent();
+        MutableSplitLayoutConfig parent = targetTabLayoutConfig.getParent();
         if (parent == null) {
             int dim = Dimension.X;
             if (Pos.TOP == targetPos || Pos.BOTTOM == targetPos) {
                 dim = Dimension.Y;
             }
-            final SplitLayoutConfig splitLayoutConfig =
-                    new SplitLayoutConfig(targetTabLayoutConfig.getPreferredSize().copy().build(), dim);
+            final MutableSplitLayoutConfig splitLayoutConfig =
+                    new MutableSplitLayoutConfig(targetTabLayoutConfig.getPreferredSize().copy(), dim);
             splitLayoutConfig.add(targetTabLayoutConfig);
 
             final PositionAndSize positionAndSize = positionAndSizeMap.get(targetTabLayoutConfig);
@@ -589,12 +586,12 @@ public class FlexLayout extends Composite {
         // Get the index of the target layout and
         // therefore the insert position.
         int insertPos = parent.indexOf(targetTabLayoutConfig);
-        final TabLayoutConfig newTabLayout = new TabLayoutConfig();
+        final MutableTabLayoutConfig newTabLayout = new MutableTabLayoutConfig();
         newTabLayout.setSelected(0);
 
         // Move all tabs from the tab group onto the new tab layout.
-        for (final TabConfig tabConfig : tabGroup) {
-            final TabLayoutConfig currentParent = tabConfig.getParent();
+        for (final MutableTabConfig tabConfig : tabGroup) {
+            final MutableTabLayoutConfig currentParent = tabConfig.getParent();
 
             // If we don't already have a parent (i.e. a new component) then just add the tab.
             if (currentParent == null) {
@@ -656,9 +653,8 @@ public class FlexLayout extends Composite {
                 // a new split layout.
                 parent.remove(targetTabLayoutConfig);
 
-                final stroom.dashboard.shared.Size preferredSize =
-                        targetTabLayoutConfig.getPreferredSize().copy().build();
-                final SplitLayoutConfig newSplit = new SplitLayoutConfig(preferredSize, dim, null);
+                final MutableSize preferredSize = targetTabLayoutConfig.getPreferredSize().copy();
+                final MutableSplitLayoutConfig newSplit = new MutableSplitLayoutConfig(preferredSize, dim);
                 if (Pos.RIGHT == targetPos || Pos.BOTTOM == targetPos) {
                     newSplit.add(targetTabLayoutConfig);
                     newSplit.add(newTabLayout);
@@ -676,14 +672,14 @@ public class FlexLayout extends Composite {
     }
 
     private boolean moveTabOntoSplit(final MouseTarget mouseTarget,
-                                     final List<TabConfig> tabGroup,
-                                     final SplitLayoutConfig targetSplitLayoutConfig,
+                                     final List<MutableTabConfig> tabGroup,
+                                     final MutableSplitLayoutConfig targetSplitLayoutConfig,
                                      final Pos targetPos) {
 //        GWT.log("moveTabOntoSplit");
         boolean moved = false;
 
-        for (final TabConfig tabConfig : tabGroup) {
-            final TabLayoutConfig currentParent = tabConfig.getParent();
+        for (final MutableTabConfig tabConfig : tabGroup) {
+            final MutableTabLayoutConfig currentParent = tabConfig.getParent();
             if (Pos.CENTER != targetPos) {
                 int dim = Dimension.X;
                 if (Pos.TOP == targetPos || Pos.BOTTOM == targetPos) {
@@ -696,7 +692,7 @@ public class FlexLayout extends Composite {
                 }
 
                 // Create a new tab layout for the tab being moved.
-                final TabLayoutConfig tabLayoutConfig = new TabLayoutConfig();
+                final MutableTabLayoutConfig tabLayoutConfig = new MutableTabLayoutConfig();
                 tabLayoutConfig.add(tabConfig);
                 tabLayoutConfig.setSelected(0);
 
@@ -705,15 +701,15 @@ public class FlexLayout extends Composite {
                 if (targetSplitLayoutConfig.getDimension() != dim) {
                     // The target split layout is not the correct dimension so we will need to look at the parent
                     // layout.
-                    final SplitLayoutConfig parentSplitLayoutConfig = targetSplitLayoutConfig.getParent();
+                    final MutableSplitLayoutConfig parentSplitLayoutConfig = targetSplitLayoutConfig.getParent();
                     if (parentSplitLayoutConfig == null) {
                         // There is no parent of the target so we will create a new parent split to wrap the current
                         // target and insert the new tab layout in the correct location.
-                        final SplitLayoutConfig newSplitLayoutConfig =
-                                new SplitLayoutConfig(targetSplitLayoutConfig.getPreferredSize().copy().build(), dim);
+                        final MutableSplitLayoutConfig newSplitLayoutConfig =
+                                new MutableSplitLayoutConfig(targetSplitLayoutConfig.getPreferredSize().copy(), dim);
 
                         // Divide the original size between the new children.
-                        tabLayoutConfig.setPreferredSize(targetSplitLayoutConfig.getPreferredSize().copy().build());
+                        tabLayoutConfig.setPreferredSize(targetSplitLayoutConfig.getPreferredSize().copy());
                         final PositionAndSize positionAndSize = positionAndSizeMap.get(targetSplitLayoutConfig);
                         positionAndSizeMap.put(newSplitLayoutConfig, positionAndSize.copy());
                         divideSize(targetSplitLayoutConfig,
@@ -737,11 +733,11 @@ public class FlexLayout extends Composite {
                         final int insertPos = parentSplitLayoutConfig.indexOf(targetSplitLayoutConfig);
                         parentSplitLayoutConfig.remove(targetSplitLayoutConfig);
 
-                        final SplitLayoutConfig newSplitLayoutConfig =
-                                new SplitLayoutConfig(targetSplitLayoutConfig.getPreferredSize().copy().build(), dim);
+                        final MutableSplitLayoutConfig newSplitLayoutConfig =
+                                new MutableSplitLayoutConfig(targetSplitLayoutConfig.getPreferredSize().copy(), dim);
 
                         // Divide the original size between the new children.
-                        tabLayoutConfig.setPreferredSize(targetSplitLayoutConfig.getPreferredSize().copy().build());
+                        tabLayoutConfig.setPreferredSize(targetSplitLayoutConfig.getPreferredSize().copy());
                         final PositionAndSize positionAndSize = positionAndSizeMap.get(targetSplitLayoutConfig);
                         positionAndSizeMap.put(newSplitLayoutConfig, positionAndSize.copy());
                         divideSize(targetSplitLayoutConfig,
@@ -764,7 +760,7 @@ public class FlexLayout extends Composite {
                         // location.
 
                         // Divide the original size between the new children.
-                        tabLayoutConfig.setPreferredSize(targetSplitLayoutConfig.getPreferredSize().copy().build());
+                        tabLayoutConfig.setPreferredSize(targetSplitLayoutConfig.getPreferredSize().copy());
                         divideSize(targetSplitLayoutConfig,
                                 targetSplitLayoutConfig,
                                 tabLayoutConfig,
@@ -782,7 +778,7 @@ public class FlexLayout extends Composite {
                     // correct location.
 
                     // Divide the original size between the new children.
-                    tabLayoutConfig.setPreferredSize(targetSplitLayoutConfig.getPreferredSize().copy().build());
+                    tabLayoutConfig.setPreferredSize(targetSplitLayoutConfig.getPreferredSize().copy());
                     divideSize(targetSplitLayoutConfig,
                             tabLayoutConfig,
                             tabLayoutConfig,
@@ -805,9 +801,9 @@ public class FlexLayout extends Composite {
         return moved;
     }
 
-    private void divideSize(final LayoutConfig originalLayout,
-                            final LayoutConfig layout1,
-                            final LayoutConfig layout2,
+    private void divideSize(final MutableLayoutConfig originalLayout,
+                            final MutableLayoutConfig layout1,
+                            final MutableLayoutConfig layout2,
                             final int dim) {
         // Set the size of the target layout and the new
         // layout to be half the size of the original so
@@ -833,10 +829,10 @@ public class FlexLayout extends Composite {
         Event.releaseCapture(getElement());
     }
 
-    private void cascadeRemoval(final TabLayoutConfig tabLayoutConfig) {
+    private void cascadeRemoval(final MutableTabLayoutConfig tabLayoutConfig) {
         if (tabLayoutConfig != null && tabLayoutConfig.getAllTabCount() == 0) {
-            LayoutConfig child = tabLayoutConfig;
-            SplitLayoutConfig parent = child.getParent();
+            MutableLayoutConfig child = tabLayoutConfig;
+            MutableSplitLayoutConfig parent = child.getParent();
 
             if (parent != null) {
                 parent.remove(child);
@@ -857,7 +853,7 @@ public class FlexLayout extends Composite {
 
     private void startSplitResize(final double x, final double y) {
         final SplitInfo splitInfo = selectedSplitter.getSplitInfo();
-        final SplitLayoutConfig layoutConfig = splitInfo.getLayoutConfig();
+        final MutableSplitLayoutConfig layoutConfig = splitInfo.getLayoutConfig();
         final int dim = layoutConfig.getDimension();
 
         final PositionAndSize positionAndSize = positionAndSizeMap.get(layoutConfig);
@@ -925,7 +921,7 @@ public class FlexLayout extends Composite {
 
     private void stopSplitResize(final double x, final double y) {
         final SplitInfo splitInfo = selectedSplitter.getSplitInfo();
-        final SplitLayoutConfig layoutConfig = splitInfo.getLayoutConfig();
+        final MutableSplitLayoutConfig layoutConfig = splitInfo.getLayoutConfig();
         final int dim = layoutConfig.getDimension();
         final double initialChange = getEventPos(dim, x, y) - startPos[dim];
 
@@ -968,16 +964,16 @@ public class FlexLayout extends Composite {
             }
 
             // Let the handler know the layout is dirty.
-            changeHandler.onDirty();
+            changeHandler.onChange();
         }
     }
 
-    private double resizeChildren(final SplitLayoutConfig layoutConfig,
+    private double resizeChildren(final MutableSplitLayoutConfig layoutConfig,
                                   final double change) {
         return resizeChildren(layoutConfig, change, 1, 0);
     }
 
-    private double resizeChildren(final SplitLayoutConfig layoutConfig,
+    private double resizeChildren(final MutableSplitLayoutConfig layoutConfig,
                                   final double change,
                                   final int step,
                                   final int splitIndex) {
@@ -986,7 +982,7 @@ public class FlexLayout extends Composite {
 
         double realChange = 0;
         for (int i = splitIndex; i >= 0 && i < layoutConfig.count() && totalChange != 0; i += step) {
-            final LayoutConfig child = layoutConfig.get(i);
+            final MutableLayoutConfig child = layoutConfig.get(i);
             if (child != null) {
                 final double currentSize = positionAndSizeMap.get(child).getSize(dim);
                 final double minSize = getMinRequired(child, dim);
@@ -1005,7 +1001,7 @@ public class FlexLayout extends Composite {
     }
 
     private void moveSplit(final double x, final double y) {
-        final SplitLayoutConfig layoutConfig = selectedSplitter.getSplitInfo().getLayoutConfig();
+        final MutableSplitLayoutConfig layoutConfig = selectedSplitter.getSplitInfo().getLayoutConfig();
         final Element elem = selectedSplitter.getElement();
 
         setMarkerCursor(layoutConfig.getDimension());
@@ -1045,7 +1041,7 @@ public class FlexLayout extends Composite {
                                        final boolean selecting) {
         if (includeSplitLayout) {
             for (final Entry<Object, PositionAndSize> entry : positionAndSizeMap.entrySet()) {
-                if (entry.getKey() instanceof final SplitLayoutConfig layoutConfig) {
+                if (entry.getKey() instanceof final MutableSplitLayoutConfig layoutConfig) {
                     final PositionAndSize positionAndSize = entry.getValue();
                     final MouseTarget mouseTarget = findTargetLayout(
                             x,
@@ -1062,7 +1058,7 @@ public class FlexLayout extends Composite {
         }
 
         for (final Entry<Object, PositionAndSize> entry : positionAndSizeMap.entrySet()) {
-            if (entry.getKey() instanceof final TabLayoutConfig layoutConfig) {
+            if (entry.getKey() instanceof final MutableTabLayoutConfig layoutConfig) {
                 final PositionAndSize positionAndSize = entry.getValue();
                 final MouseTarget mouseTarget = findTargetLayout(
                         x,
@@ -1095,7 +1091,7 @@ public class FlexLayout extends Composite {
     private MouseTarget findTargetLayout(final double x,
                                          final double y,
                                          final boolean splitter,
-                                         final LayoutConfig layoutConfig,
+                                         final MutableLayoutConfig layoutConfig,
                                          final PositionAndSize positionAndSize,
                                          final boolean selecting) {
         final double width = positionAndSize.getWidth();
@@ -1119,7 +1115,7 @@ public class FlexLayout extends Composite {
                 final MouseTarget mouseTarget = findTargetTab(
                         x,
                         y,
-                        (TabLayoutConfig) layoutConfig,
+                        (MutableTabLayoutConfig) layoutConfig,
                         positionAndSize,
                         selecting);
                 if (mouseTarget != null) {
@@ -1183,7 +1179,7 @@ public class FlexLayout extends Composite {
 
     private MouseTarget findTargetTab(final double x,
                                       final double y,
-                                      final TabLayoutConfig layoutConfig,
+                                      final MutableTabLayoutConfig layoutConfig,
                                       final PositionAndSize positionAndSize,
                                       final boolean selecting) {
         MouseTarget mouseTarget = null;
@@ -1207,11 +1203,11 @@ public class FlexLayout extends Composite {
                     y >= ElementUtil.getClientTop(tabBar.getElement()) &&
                     y <= ElementUtil.getClientTop(tabBar.getElement()) + tabBar.getOffsetHeight()) {
 
-                    final List<TabConfig> tabConfigList = layoutConfig.getTabs();
+                    final List<MutableTabConfig> tabConfigList = layoutConfig.getTabs();
                     int visibleTabIndex = 0;
                     for (int i = 0; i < tabConfigList.size(); i++) {
-                        final TabConfig tabConfig = tabConfigList.get(i);
-                        if (tabConfig.visible()) {
+                        final MutableTabConfig tabConfig = tabConfigList.get(i);
+                        if (tabConfig.isVisible()) {
                             final TabData tabData = tabBar.getTabs().get(visibleTabIndex);
 
                             // This is somewhat confusing but there is a difference between tabs that have been hidden
@@ -1360,7 +1356,7 @@ public class FlexLayout extends Composite {
         this.components = components;
     }
 
-    public LayoutConfig getLayoutConfig() {
+    public MutableLayoutConfig getLayoutConfig() {
         return layoutConfigContainer.get();
     }
 
@@ -1388,9 +1384,9 @@ public class FlexLayout extends Composite {
         onResize();
     }
 
-    public void configure(final LayoutConfig layoutConfig,
+    public void configure(final MutableLayoutConfig layoutConfig,
                           final LayoutConstraints layoutConstraints,
-                          final stroom.dashboard.shared.Size preferredSize) {
+                          final MutableSize preferredSize) {
         layoutConfigContainer.set(layoutConfig);
         this.preferredSize = preferredSize;
         setLayoutConstraints(layoutConstraints);
@@ -1432,10 +1428,10 @@ public class FlexLayout extends Composite {
         Scheduler.get().scheduleDeferred(this::doRefresh);
     }
 
-    public stroom.dashboard.shared.Size getVisibleSize() {
+    public MutableSize getVisibleSize() {
         final double visibleWidth = Math.floor(ElementUtil.getSubPixelOffsetWidth(getElement()));
         final double visibleHeight = Math.floor(ElementUtil.getSubPixelOffsetHeight(getElement()));
-        return new stroom.dashboard.shared.Size((int) visibleWidth, (int) visibleHeight);
+        return new MutableSize((int) visibleWidth, (int) visibleHeight);
     }
 
     public void doRefresh() {
@@ -1605,13 +1601,13 @@ public class FlexLayout extends Composite {
         designSurface.clear();
     }
 
-    private void recalculateSingleLayout(final LayoutConfig layoutConfig) {
+    private void recalculateSingleLayout(final MutableLayoutConfig layoutConfig) {
         final PositionAndSize positionAndSize = positionAndSizeMap.get(layoutConfig);
         recalculate(layoutConfig, positionAndSize.getLeft(), positionAndSize.getTop(), positionAndSize.getWidth(),
                 positionAndSize.getHeight());
     }
 
-    private void recalculate(final LayoutConfig layoutConfig,
+    private void recalculate(final MutableLayoutConfig layoutConfig,
                              final double left,
                              final double top,
                              final double width,
@@ -1620,7 +1616,7 @@ public class FlexLayout extends Composite {
         recalculateDimension(layoutConfig, Dimension.Y, top, height, true);
     }
 
-    private double recalculateDimension(final LayoutConfig layoutConfig,
+    private double recalculateDimension(final MutableLayoutConfig layoutConfig,
                                         final int dim,
                                         double pos,
                                         final double size,
@@ -1654,11 +1650,11 @@ public class FlexLayout extends Composite {
             positionAndSize.setSize(dim, containerSize);
 
             // Now deal with children if this is split layout data.
-            if (layoutConfig instanceof final SplitLayoutConfig splitLayoutConfig) {
+            if (layoutConfig instanceof final MutableSplitLayoutConfig splitLayoutConfig) {
                 double remainingSize = containerSize;
 
                 for (int i = 0; i < splitLayoutConfig.count(); i++) {
-                    final LayoutConfig child = splitLayoutConfig.get(i);
+                    final MutableLayoutConfig child = splitLayoutConfig.get(i);
 
                     // See if this is the last child.
                     if (i < splitLayoutConfig.count() - 1) {
@@ -1703,30 +1699,30 @@ public class FlexLayout extends Composite {
         return containerSize;
     }
 
-    private double getMaxRequired(final LayoutConfig layoutConfig,
+    private double getMaxRequired(final MutableLayoutConfig layoutConfig,
                                   final int dim) {
         return getRequiredSize(layoutConfig, dim, 0, 1, false);
     }
 
-    private double getMinRequired(final LayoutConfig layoutConfig,
+    private double getMinRequired(final MutableLayoutConfig layoutConfig,
                                   final int dim) {
         return getRequiredSize(layoutConfig, dim, 0, 1, true);
     }
 
-    private double getMinRequired(final LayoutConfig layoutConfig,
+    private double getMinRequired(final MutableLayoutConfig layoutConfig,
                                   final int dim,
                                   final int index,
                                   final int step) {
         return getRequiredSize(layoutConfig, dim, index, step, true);
     }
 
-    private double getRequiredSize(final LayoutConfig layoutConfig,
+    private double getRequiredSize(final MutableLayoutConfig layoutConfig,
                                    final int dim,
                                    final int index,
                                    final int step,
                                    final boolean min) {
         double totalSize = 0;
-        if (layoutConfig instanceof final TabLayoutConfig tabLayoutConfig) {
+        if (layoutConfig instanceof final MutableTabLayoutConfig tabLayoutConfig) {
             if (min) {
                 totalSize = MIN_COMPONENT_WIDTH;
             } else {
@@ -1734,9 +1730,9 @@ public class FlexLayout extends Composite {
                 totalSize = Math.max(MIN_COMPONENT_WIDTH, totalSize);
             }
 
-        } else if (layoutConfig instanceof final SplitLayoutConfig splitLayoutConfig) {
+        } else if (layoutConfig instanceof final MutableSplitLayoutConfig splitLayoutConfig) {
             for (int i = index; i >= 0 && i < splitLayoutConfig.count(); i += step) {
-                final LayoutConfig child = splitLayoutConfig.get(i);
+                final MutableLayoutConfig child = splitLayoutConfig.get(i);
                 final double childSize = getRequiredSize(child, dim, 0, 1, min);
 
                 if (splitLayoutConfig.getDimension() == dim) {
@@ -1762,13 +1758,13 @@ public class FlexLayout extends Composite {
     private void layout() {
         for (final Entry<Object, PositionAndSize> entry : positionAndSizeMap.entrySet()) {
             final Object key = entry.getKey();
-            if (key instanceof final TabLayoutConfig tabLayoutConfig) {
+            if (key instanceof final MutableTabLayoutConfig tabLayoutConfig) {
                 TabLayout tabLayout = layoutToWidgetMap.get(tabLayoutConfig);
                 if (tabLayout == null) {
                     tabLayout = new TabLayout(eventBus, tabLayoutConfig, changeHandler);
                     if (tabLayoutConfig.getAllTabCount() > 0) {
-                        for (final TabConfig tabConfig : tabLayoutConfig.getTabs()) {
-                            if (tabConfig.visible()) {
+                        for (final MutableTabConfig tabConfig : tabLayoutConfig.getTabs()) {
+                            if (tabConfig.isVisible()) {
                                 final Component component = components.get(tabConfig.getId());
                                 if (component != null) {
                                     tabLayout.addTab(tabConfig, component);
@@ -1778,8 +1774,7 @@ public class FlexLayout extends Composite {
 
                         // Ensure the tab layout data has a valid tab selection.
                         Integer selectedTab = tabLayoutConfig.getSelected();
-                        if (tabLayout.getTabBar().getTabs() == null ||
-                            tabLayout.getTabBar().getTabs().size() == 0) {
+                        if (NullSafe.isEmptyCollection(tabLayout.getTabBar().getTabs())) {
                             selectedTab = null;
                         } else if (selectedTab == null || selectedTab < 0
                                    || selectedTab >= tabLayout.getTabBar().getTabs().size()) {
@@ -1832,17 +1827,17 @@ public class FlexLayout extends Composite {
         return y;
     }
 
-    public void maximiseTabs(final TabConfig selectedTab) {
+    public void maximiseTabs(final MutableTabConfig selectedTab) {
         if (!maximised) {
             maximised = true;
 
-            final TabLayoutConfig tabLayoutConfig = new TabLayoutConfig();
+            final MutableTabLayoutConfig tabLayoutConfig = new MutableTabLayoutConfig();
             components.getComponents().stream()
                     .sorted(Comparator.comparing((Component c) -> c.getComponentConfig().getName())
                             .thenComparing(c -> c.getComponentConfig().getId()))
                     .map(Component::getTabConfig)
                     .filter(Objects::nonNull)
-                    .filter(TabConfig::visible)
+                    .filter(MutableTabConfig::isVisible)
                     .forEach(tabLayoutConfig::add);
 
             final int selected = selectedTab == null
@@ -1872,8 +1867,8 @@ public class FlexLayout extends Composite {
         return maximised;
     }
 
-    public void closeTab(final TabConfig tabConfig) {
-        final TabLayoutConfig tabLayoutConfig = tabConfig.getParent();
+    public void closeTab(final MutableTabConfig tabConfig) {
+        final MutableTabLayoutConfig tabLayoutConfig = tabConfig.getParent();
         tabLayoutConfig.remove(tabConfig);
 
         // Cascade removal if necessary.
@@ -1883,7 +1878,7 @@ public class FlexLayout extends Composite {
         clear();
         refresh();
 
-        changeHandler.onDirty();
+        changeHandler.onChange();
     }
 
     public void setChangeHandler(final FlexLayoutChangeHandler changeHandler) {
@@ -1902,10 +1897,10 @@ public class FlexLayout extends Composite {
 
     private static class LayoutConfigContainer {
 
-        private final LinkedList<LayoutConfig> layoutConfigList = new LinkedList<>();
-        private LayoutConfig currentLayoutConfig = null;
+        private final LinkedList<MutableLayoutConfig> layoutConfigList = new LinkedList<>();
+        private MutableLayoutConfig currentLayoutConfig = null;
 
-        public LayoutConfig get() {
+        public MutableLayoutConfig get() {
             return currentLayoutConfig;
         }
 
@@ -1913,7 +1908,7 @@ public class FlexLayout extends Composite {
             currentLayoutConfig = layoutConfigList.removeLast();
         }
 
-        public void set(final LayoutConfig layoutConfig) {
+        public void set(final MutableLayoutConfig layoutConfig) {
             if (currentLayoutConfig != layoutConfig) {
                 layoutConfigList.add(currentLayoutConfig);
                 currentLayoutConfig = layoutConfig;
@@ -1923,20 +1918,20 @@ public class FlexLayout extends Composite {
 
     private static class MouseTarget {
 
-        private final LayoutConfig layoutConfig;
+        private final MutableLayoutConfig layoutConfig;
         private final PositionAndSize positionAndSize;
         private final Pos pos;
         private final TabLayout tabLayout;
-        private final TabLayoutConfig currentParent;
+        private final MutableTabLayoutConfig currentParent;
         private final List<TabData> tabs;
         private final int tabIndex;
         private final LinkTab tabWidget;
 
-        MouseTarget(final LayoutConfig layoutConfig,
+        MouseTarget(final MutableLayoutConfig layoutConfig,
                     final PositionAndSize positionAndSize,
                     final Pos pos,
                     final TabLayout tabLayout,
-                    final TabLayoutConfig currentParent,
+                    final MutableTabLayoutConfig currentParent,
                     final List<TabData> tabs,
                     final int tabIndex,
                     final LinkTab tabWidget) {
@@ -1951,7 +1946,7 @@ public class FlexLayout extends Composite {
         }
 
         TabData getFirstTab() {
-            if (tabs == null || tabs.size() == 0) {
+            if (NullSafe.isEmptyCollection(tabs)) {
                 return null;
             }
             return tabs.get(0);

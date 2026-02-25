@@ -29,7 +29,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.pathways.shared.AddPathway;
 import stroom.pathways.shared.DeletePathway;
 import stroom.pathways.shared.FindPathwayCriteria;
@@ -59,7 +59,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class PathwayListPresenter
-        extends DocumentEditPresenter<QuickFilterPageView, PathwaysDoc>
+        extends DocPresenter<QuickFilterPageView, PathwaysDoc>
         implements QuickFilterUiHandlers {
 
     private static final PathwaysResource PATHWAYS_RESOURCE = GWT.create(PathwaysResource.class);

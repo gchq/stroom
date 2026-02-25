@@ -595,8 +595,8 @@ docker_login
 
 check_for_out_of_date_puml_svgs
 
-echo "::group::Start stroom-all-dbs & scylladb"
-start_databases stroom-all-dbs scylladb
+echo "::group::Start stroom-all-dbs"
+start_databases stroom-all-dbs
 echo "::endgroup::"
 
 # Ensure we have a local.yml file as the integration tests will need it

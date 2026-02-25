@@ -40,22 +40,16 @@ public class XsltSerialiser implements DocumentSerialiser2<XsltDoc> {
 
     @Override
     public XsltDoc read(final Map<String, byte[]> data) throws IOException {
-        final XsltDoc document = delegate.read(data);
-        document.setData(EncodingUtil.asString(data.get(XSL)));
-        return document;
+        return delegate.read(data).copy().data(EncodingUtil.asString(data.get(XSL))).build();
     }
 
     @Override
     public Map<String, byte[]> write(final XsltDoc document) throws IOException {
         final String xsl = document.getData();
-        document.setData(null);
-
-        final Map<String, byte[]> data = delegate.write(document);
+        final Map<String, byte[]> data = delegate.write(document.copy().data(null).build());
         if (xsl != null) {
             data.put(XSL, EncodingUtil.asBytes(xsl));
-            document.setData(xsl);
         }
-
         return data;
     }
 }

@@ -17,7 +17,7 @@
 package stroom.planb.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.PlanBSettingsPresenter.PlanBSettingsView;
 import stroom.planb.client.view.CondenseSettingsView;
@@ -36,8 +36,8 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 public class PlanBSettingsPresenter
-        extends DocumentEditPresenter<PlanBSettingsView, PlanBDoc>
-        implements PlanBSettingsUiHandlers {
+        extends DocPresenter<PlanBSettingsView, PlanBDoc>
+        implements StateTypeChangeUiHandlers {
 
     private final Provider<StateSettingsPresenter> stateSettingsPresenterProvider;
     private final Provider<TemporalStateSettingsPresenter> temporalStateSettingsPresenterProvider;
@@ -82,8 +82,7 @@ public class PlanBSettingsPresenter
     }
 
     @Override
-    public void onChange() {
-        setDirty(true);
+    public void onStateTypeChange() {
         changeStateType();
     }
 
@@ -205,7 +204,7 @@ public class PlanBSettingsPresenter
                 settingsPresenter.read(getEntity().getSettings(), isReadOnly());
             }
             getView().setSettingsView(settingsPresenter.getView());
-            settingsPresenter.addDirtyHandler(e -> setDirty(true));
+            settingsPresenter.addChangeHandler(this::onChange);
         }
         currentStateType = stateType;
     }
@@ -246,7 +245,7 @@ public class PlanBSettingsPresenter
     }
 
     public interface PlanBSettingsView
-            extends View, ReadOnlyChangeHandler, HasUiHandlers<PlanBSettingsUiHandlers> {
+            extends View, ReadOnlyChangeHandler, HasUiHandlers<StateTypeChangeUiHandlers> {
 
         StateType getStateType();
 

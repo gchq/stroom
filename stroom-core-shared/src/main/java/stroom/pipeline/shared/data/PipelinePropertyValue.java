@@ -19,6 +19,7 @@ package stroom.pipeline.shared.data;
 import stroom.docref.DocRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -44,17 +45,22 @@ public class PipelinePropertyValue {
     @JsonProperty("entity")
     private final DocRef entity;
 
+    @JsonProperty("embedded")
+    private final Boolean embedded;
+
     @JsonCreator
     public PipelinePropertyValue(@JsonProperty("string") final String string,
                                  @JsonProperty("integer") final Integer integer,
                                  @JsonProperty("long") final Long _long,
                                  @JsonProperty("boolean") final Boolean _boolean,
-                                 @JsonProperty("entity") final DocRef entity) {
+                                 @JsonProperty("entity") final DocRef entity,
+                                 @JsonProperty("embedded") final Boolean embedded) {
         this.string = string;
         this.integer = integer;
         this._long = _long;
         this._boolean = _boolean;
         this.entity = entity;
+        this.embedded = embedded;
     }
 
     public PipelinePropertyValue() {
@@ -63,6 +69,7 @@ public class PipelinePropertyValue {
         this._long = null;
         this._boolean = null;
         this.entity = null;
+        this.embedded = null;
     }
 
     public PipelinePropertyValue(final String string) {
@@ -71,6 +78,7 @@ public class PipelinePropertyValue {
         this._long = null;
         this._boolean = null;
         this.entity = null;
+        this.embedded = null;
     }
 
     public PipelinePropertyValue(final Integer integer) {
@@ -79,6 +87,7 @@ public class PipelinePropertyValue {
         this._long = null;
         this._boolean = null;
         this.entity = null;
+        this.embedded = null;
     }
 
     public PipelinePropertyValue(final Long _long) {
@@ -87,6 +96,7 @@ public class PipelinePropertyValue {
         this.integer = null;
         this._boolean = null;
         this.entity = null;
+        this.embedded = null;
     }
 
     public PipelinePropertyValue(final Boolean _boolean) {
@@ -95,10 +105,21 @@ public class PipelinePropertyValue {
         this.integer = null;
         this._long = null;
         this.entity = null;
+        this.embedded = null;
     }
 
     public PipelinePropertyValue(final DocRef entity) {
         this.entity = entity;
+        this.string = null;
+        this.integer = null;
+        this._long = null;
+        this._boolean = null;
+        this.embedded = null;
+    }
+
+    public PipelinePropertyValue(final DocRef entity, final Boolean embedded) {
+        this.entity = entity;
+        this.embedded = embedded;
         this.string = null;
         this.integer = null;
         this._long = null;
@@ -137,6 +158,15 @@ public class PipelinePropertyValue {
         return entity;
     }
 
+    public Boolean getEmbedded() {
+        return embedded;
+    }
+
+    @JsonIgnore
+    public boolean isEmbedded() {
+        return embedded != null && embedded;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -150,12 +180,13 @@ public class PipelinePropertyValue {
                Objects.equals(integer, that.integer) &&
                Objects.equals(_long, that._long) &&
                Objects.equals(_boolean, that._boolean) &&
-               Objects.equals(entity, that.entity);
+               Objects.equals(entity, that.entity) &&
+               Objects.equals(embedded, that.embedded);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(string, integer, _long, _boolean, entity);
+        return Objects.hash(string, integer, _long, _boolean, entity, embedded);
     }
 
     @Override

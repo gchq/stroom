@@ -18,7 +18,6 @@ package stroom.pipeline.xslt;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -42,7 +41,11 @@ class XsltStoreImpl implements XsltStore {
     @Inject
     XsltStoreImpl(final StoreFactory storeFactory,
                   final XsltSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, XsltDoc.TYPE, XsltDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                XsltDoc.TYPE,
+                XsltDoc::builder,
+                XsltDoc::copy);
     }
 
     // ---------------------------------------------------------------------
@@ -150,10 +153,7 @@ class XsltStoreImpl implements XsltStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

@@ -37,7 +37,7 @@ import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
@@ -95,7 +95,7 @@ import java.util.stream.Collectors;
 
 public class QueryPresenter
         extends AbstractRefreshableComponentPresenter<QueryView>
-        implements HasDirtyHandlers, SearchStateListener, SearchErrorListener {
+        implements HasChangeHandlers, SearchStateListener, SearchErrorListener {
 
     public static final String TAB_TYPE = "query-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
@@ -176,8 +176,8 @@ public class QueryPresenter
 
         expressionPresenter.setUiHandlers(new ExpressionUiHandlers() {
             @Override
-            public void fireDirty() {
-                setDirty(true);
+            public void onChange() {
+                QueryPresenter.this.onChange();
             }
 
             @Override
@@ -434,7 +434,7 @@ public class QueryPresenter
                     .copy()
                     .dataSource(dataSourceRef)
                     .build());
-            setDirty(true);
+            onChange();
         }
 
         // Only allow searching if we have a data source and have loaded fields from it successfully.
@@ -735,12 +735,7 @@ public class QueryPresenter
     @Override
     public ComponentConfig write() {
         // Write expression.
-        setSettings(getQuerySettings()
-                .copy()
-                .expression(expressionPresenter.write())
-                .lastQueryKey(searchModel.getCurrentQueryKey())
-                .lastQueryNode(searchModel.getCurrentNode())
-                .build());
+        setSettings(getQuerySettings().copy().expression(expressionPresenter.write()).build());
         return super.write();
     }
 
@@ -774,21 +769,6 @@ public class QueryPresenter
             final Automate automate = getQuerySettings().getAutomate();
             if (queryOnOpen || automate.isOpen()) {
                 run(true, false);
-
-            } else if (getQuerySettings().getLastQueryKey() != null) {
-                // See if the result store exists before we try and resume a query.
-                restFactory
-                        .create(RESULT_STORE_RESOURCE)
-                        .method(res -> res.exists(getQuerySettings().getLastQueryNode(),
-                                getQuerySettings().getLastQueryKey()))
-                        .onSuccess(result -> {
-                            if (result != null && result) {
-                                // Resume search if we have a stored query key.
-                                resume(getQuerySettings().getLastQueryNode(), getQuerySettings().getLastQueryKey());
-                            }
-                        })
-                        .taskMonitorFactory(this)
-                        .exec();
             }
         }
     }

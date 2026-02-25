@@ -21,7 +21,6 @@ import stroom.config.impl.db.jooq.tables.Config;
 import stroom.config.impl.db.jooq.tables.ConfigUpdateTracker;
 import stroom.db.util.JooqUtil;
 import stroom.test.common.util.db.DbTestUtil;
-import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PropertyPath;
@@ -69,9 +68,11 @@ class TestConfigPropertyDaoImpl {
 
     @Test
     void createAndFetch_byID() {
-        final ConfigProperty configProperty = new ConfigProperty(PropertyPath.fromPathString("a.b.c"));
-        configProperty.setDatabaseOverrideValue("foo");
-        AuditUtil.stamp(() -> "testUser", configProperty);
+        final ConfigProperty configProperty = ConfigProperty.builder()
+                .name(PropertyPath.fromPathString("a.b.c"))
+                .databaseOverrideValue("foo")
+                .stampAudit("testUser")
+                .build();
 
         final ConfigProperty configProperty2 = configPropertyDao.create(configProperty);
 
@@ -92,9 +93,11 @@ class TestConfigPropertyDaoImpl {
         assertThat(configPropertyDao.fetch("a.b.c"))
                 .isEmpty();
 
-        final ConfigProperty configProperty = new ConfigProperty(PropertyPath.fromPathString("a.b.c"));
-        configProperty.setDatabaseOverrideValue("foo");
-        AuditUtil.stamp(() -> "testUser", configProperty);
+        final ConfigProperty configProperty = ConfigProperty.builder()
+                .name(PropertyPath.fromPathString("a.b.c"))
+                .databaseOverrideValue("foo")
+                .stampAudit("testUser")
+                .build();
 
         final ConfigProperty configProperty2 = configPropertyDao.create(configProperty);
 
@@ -154,9 +157,11 @@ class TestConfigPropertyDaoImpl {
 
     @Test
     void delete_byId() {
-        final ConfigProperty configProperty = new ConfigProperty(PropertyPath.fromPathString("a.b.c"));
-        configProperty.setDatabaseOverrideValue("foo");
-        AuditUtil.stamp(() -> "testUser", configProperty);
+        final ConfigProperty configProperty = ConfigProperty.builder()
+                .name(PropertyPath.fromPathString("a.b.c"))
+                .databaseOverrideValue("foo")
+                .stampAudit("testUser")
+                .build();
 
         final ConfigProperty configProperty2 = configPropertyDao.create(configProperty);
 
@@ -179,9 +184,11 @@ class TestConfigPropertyDaoImpl {
 
     @Test
     void testDelete_byName() {
-        final ConfigProperty configProperty = new ConfigProperty(PropertyPath.fromPathString("a.b.c"));
-        configProperty.setDatabaseOverrideValue("foo");
-        AuditUtil.stamp(() -> "testUser", configProperty);
+        final ConfigProperty configProperty = ConfigProperty.builder()
+                .name(PropertyPath.fromPathString("a.b.c"))
+                .databaseOverrideValue("foo")
+                .stampAudit("testUser")
+                .build();
 
         final ConfigProperty configProperty2 = configPropertyDao.create(configProperty);
 
@@ -204,9 +211,11 @@ class TestConfigPropertyDaoImpl {
 
     @Test
     void testDelete_byPropPath() {
-        final ConfigProperty configProperty = new ConfigProperty(PropertyPath.fromPathString("a.b.c"));
-        configProperty.setDatabaseOverrideValue("foo");
-        AuditUtil.stamp(() -> "testUser", configProperty);
+        final ConfigProperty configProperty = ConfigProperty.builder()
+                .name(PropertyPath.fromPathString("a.b.c"))
+                .databaseOverrideValue("foo")
+                .stampAudit("testUser")
+                .build();
 
         final ConfigProperty configProperty2 = configPropertyDao.create(configProperty);
 
@@ -231,10 +240,11 @@ class TestConfigPropertyDaoImpl {
     void list() {
         Stream.of("foo", "bar")
                 .forEach(val -> {
-                    final ConfigProperty configProperty = new ConfigProperty(
-                            PropertyPath.fromParts("root", val));
-                    configProperty.setDatabaseOverrideValue(val);
-                    AuditUtil.stamp(() -> "testUser", configProperty);
+                    final ConfigProperty configProperty = ConfigProperty.builder()
+                            .name(PropertyPath.fromParts("root", val))
+                            .databaseOverrideValue(val)
+                            .stampAudit("testUser")
+                            .build();
                     configPropertyDao.create(configProperty);
                 });
 

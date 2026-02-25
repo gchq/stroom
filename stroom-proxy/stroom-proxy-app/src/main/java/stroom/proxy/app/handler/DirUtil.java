@@ -658,9 +658,13 @@ public class DirUtil {
         }
     }
 
+    /**
+     * Cleans the passed string to return one containing only {@code [a-zA-Z0-9_-]}.
+     * All other characters are replaced with {@code _}.
+     */
     public static String makeSafeName(final String string) {
         return NullSafe.get(string, str ->
-                SAFE_NAME_PATTERN.matcher(string)
+                SAFE_NAME_PATTERN.matcher(str)
                         .replaceAll("_"));
     }
 

@@ -19,7 +19,6 @@ package stroom.processor.impl;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docrefinfo.api.DocRefInfoService;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentNotFoundException;
@@ -142,7 +141,7 @@ public class ProcessorFilterImportExportHandlerImpl
             importState.addMessage(Severity.WARNING,
                     "Unable to import processor filter as it already exists.");
         } else {
-            final ProcessorFilter processorFilter;
+            ProcessorFilter processorFilter;
             try {
                 // Read the filter being imported
                 processorFilter = delegate.read(dataMap.get(META));
@@ -175,10 +174,12 @@ public class ProcessorFilterImportExportHandlerImpl
 
                     final boolean enableFilters = importSettings.isEnableFilters();
                     final Long minMetaCreateTimeMs = importSettings.getEnableFiltersFromTime();
-                    processorFilter.setProcessor(findProcessorForFilter(processorFilter));
-                    processorFilter.setEnabled(enableFilters);
+                    processorFilter = processorFilter.copy()
+                            .processor(findProcessorForFilter(processorFilter))
+                            .enabled(enableFilters)
+                            .build();
                     if (existingProcessorFilter != null) {
-                        processorFilter.setDeleted(existingProcessorFilter.isDeleted());
+                        processorFilter = processorFilter.copy().deleted(existingProcessorFilter.isDeleted()).build();
                     }
 
                     // Make sure we can get the processor for this filter.
@@ -244,12 +245,13 @@ public class ProcessorFilterImportExportHandlerImpl
                     if (filter.getPipelineName() == null && filter.getPipelineUuid() != null) {
                         final Optional<String> optional = docRefInfoServiceProvider.get()
                                 .name(new DocRef(PipelineDoc.TYPE, filter.getPipelineUuid()));
-                        filter.setPipelineName(optional.orElse(null));
-                        if (filter.getPipelineName() == null) {
+                        final String pipelineName = optional.orElse(null);
+                        if (pipelineName == null) {
                             LOGGER.warn("Unable to find Pipeline " + filter.getPipelineUuid()
                                         + " associated with ProcessorFilter " + filter.getUuid()
                                         + " (id: " + filter.getId() + ")");
                         }
+                        return filter.copy().pipelineName(pipelineName).build();
                     }
                     return filter;
                 })
@@ -265,21 +267,21 @@ public class ProcessorFilterImportExportHandlerImpl
         }
 
         // Don't export certain fields
-        ProcessorFilter processorFilter = findProcessorFilter(docRef);
-
-        processorFilter.setId(null);
-        processorFilter.setVersion(null);
-        processorFilter.setProcessorFilterTracker(null);
-        processorFilter.setProcessor(null);
-        processorFilter.setRunAsUser(null);
+        final ProcessorFilter.Builder builder = findProcessorFilter(docRef)
+                .copy()
+                .id(null)
+                .version(null)
+                .processorFilterTracker(null)
+                .processor(null)
+                .runAsUser(null);
 
         if (omitAuditFields) {
-            processorFilter = new AuditFieldFilter<ProcessorFilter>().apply(processorFilter);
+            builder.removeAudit();
         }
 
         final Map<String, byte[]> data;
         try {
-            data = delegate.write(processorFilter);
+            data = delegate.write(builder.build());
         } catch (final IOException ioex) {
             LOGGER.error("Unable to create meta file for processor filter", ioex);
             importExportDocumentEventLog.exportDocument(docRef, ioex);
@@ -386,9 +388,7 @@ public class ProcessorFilterImportExportHandlerImpl
                     filter.getProcessorUuid(),
                     filter.getPipelineUuid(),
                     filter.getPipelineName());
-            filter.setProcessor(processor);
         }
-
         return processor;
     }
 

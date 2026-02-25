@@ -150,7 +150,7 @@ public class DataProcessorTaskHandler {
                         TaskStatus.PROCESSING, startTime, null);
                 if (processorTask != null) {
                     // Avoid having to do another fetch
-                    processorTask.setProcessorFilter(processorFilter);
+                    processorTask = processorTask.copy().processorFilter(processorFilter).build();
 
                     final Provider<ProcessorTaskExecutor> executorProvider = executorProviders.get(
                             processor.getProcessorType());

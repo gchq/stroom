@@ -419,6 +419,7 @@ class SteppingRequestHandler {
                             }
 
                             final Long nextMetaId = getMetaId(request);
+                            loggingErrorReceiver.clear();
                             process(request, nextMetaId);
                         }
                     }

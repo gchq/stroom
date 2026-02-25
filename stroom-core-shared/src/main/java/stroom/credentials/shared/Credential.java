@@ -3,6 +3,7 @@ package stroom.credentials.shared;
 import stroom.ai.shared.KeyStoreType;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
+import stroom.util.shared.HasAuditInfoGetters;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -31,7 +32,7 @@ import java.util.Objects;
         "secret"
 })
 @JsonInclude(Include.NON_NULL)
-public class Credential implements HasDisplayValue {
+public class Credential implements HasAuditInfoGetters, HasDisplayValue {
 
     /**
      * A sort-of type for this object. Not really a Document but handy to pretend it
@@ -98,18 +99,22 @@ public class Credential implements HasDisplayValue {
         return name;
     }
 
+    @Override
     public Long getCreateTimeMs() {
         return createTimeMs;
     }
 
+    @Override
     public Long getUpdateTimeMs() {
         return updateTimeMs;
     }
 
+    @Override
     public String getCreateUser() {
         return createUser;
     }
 
+    @Override
     public String getUpdateUser() {
         return updateUser;
     }

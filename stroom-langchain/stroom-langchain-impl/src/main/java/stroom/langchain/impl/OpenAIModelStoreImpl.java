@@ -18,7 +18,6 @@ package stroom.langchain.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -44,7 +43,11 @@ public class OpenAIModelStoreImpl implements OpenAIModelStore {
     public OpenAIModelStoreImpl(
             final StoreFactory storeFactory,
             final OpenAIModelSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, OpenAIModelDoc.TYPE, OpenAIModelDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                OpenAIModelDoc.TYPE,
+                OpenAIModelDoc::builder,
+                OpenAIModelDoc::copy);
     }
 
     // ---------------------------------------------------------------------
@@ -152,10 +155,7 @@ public class OpenAIModelStoreImpl implements OpenAIModelStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

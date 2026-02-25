@@ -17,8 +17,6 @@
 package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.client.main.Component;
-import stroom.dashboard.shared.TabConfig;
-import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.item.client.EventBinder;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
@@ -38,7 +36,7 @@ import com.gwtplatform.mvp.client.LayerContainer;
 public class TabLayout extends Composite implements RequiresResize, ProvidesResize {
 
     private final EventBus eventBus;
-    private final TabLayoutConfig tabLayoutConfig;
+    private final MutableTabLayoutConfig tabLayoutConfig;
     private final FlexLayoutChangeHandler changeHandler;
     private final InlineSvgButton settings;
     private final LinkTabBar tabBar;
@@ -51,7 +49,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
                 selectTab(selected);
                 final int index = tabBar.getTabs().indexOf(selected);
                 getTabLayoutConfig().setSelected(index);
-                changeHandler.onDirty();
+                changeHandler.onChange();
             }));
             registerHandler(tabBar.addShowMenuHandler(eventBus::fireEvent));
             registerHandler(settings.addDomHandler(event -> {
@@ -67,7 +65,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     };
 
     public TabLayout(final EventBus eventBus,
-                     final TabLayoutConfig tabLayoutConfig,
+                     final MutableTabLayoutConfig tabLayoutConfig,
                      final FlexLayoutChangeHandler changeHandler) {
         this.eventBus = eventBus;
 
@@ -126,7 +124,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         eventBinder.unbind();
     }
 
-    public void addTab(final TabConfig tabConfig, final Component component) {
+    public void addTab(final MutableTabConfig tabConfig, final Component component) {
         tabBar.addTab(component);
 
         component.setTabLayout(this);
@@ -171,7 +169,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         return tabBar;
     }
 
-    public TabLayoutConfig getTabLayoutConfig() {
+    public MutableTabLayoutConfig getTabLayoutConfig() {
         return tabLayoutConfig;
     }
 }

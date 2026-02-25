@@ -27,7 +27,6 @@ import stroom.util.shared.Message;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public interface Store<D extends AbstractDoc>
@@ -57,11 +56,11 @@ public interface Store<D extends AbstractDoc>
     // START OF HasDependencies
     // ---------------------------------------------------------------------
 
-    Map<DocRef, Set<DocRef>> getDependencies(BiConsumer<D, DependencyRemapper> mapper);
+    Map<DocRef, Set<DocRef>> getDependencies(DependencyRemapFunction<D> mapper);
 
-    Set<DocRef> getDependencies(DocRef docRef, BiConsumer<D, DependencyRemapper> mapper);
+    Set<DocRef> getDependencies(DocRef docRef, DependencyRemapFunction<D> mapper);
 
-    void remapDependencies(DocRef docRef, Map<DocRef, DocRef> remappings, BiConsumer<D, DependencyRemapper> mapper);
+    void remapDependencies(DocRef docRef, Map<DocRef, DocRef> remappings, DependencyRemapFunction<D> mapper);
 
     // ---------------------------------------------------------------------
     // END OF HasDependencies
@@ -83,13 +82,20 @@ public interface Store<D extends AbstractDoc>
             ImportSettings importSettings);
 
     Map<String, byte[]> exportDocument(DocRef docRef,
+                                       boolean omitAuditFields,
+                                       List<Message> messageList);
+
+    Map<String, byte[]> exportDocument(DocRef docRef,
+                                       boolean omitAuditFields,
                                        List<Message> messageList,
-                                       Function<D, D> filter);
+                                       Function<D, D> function);
 
     /**
      * List all documents of this stores type
      */
     List<DocRef> list();
+
+    List<DocRef> findDocRefsEmbeddedIn(DocRef parent);
 
     interface DocumentCreator<D extends AbstractDoc> {
 

@@ -20,7 +20,6 @@ import stroom.aws.s3.shared.S3ClientConfig;
 import stroom.aws.s3.shared.S3ConfigDoc;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -48,7 +47,11 @@ class S3ConfigStoreImpl implements S3ConfigStore {
                       final Provider<S3Config> s3ConfigProvider,
                       final S3ConfigSerialiser serialiser) {
         this.s3ConfigProvider = s3ConfigProvider;
-        this.store = storeFactory.createStore(serialiser, S3ConfigDoc.TYPE, S3ConfigDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                S3ConfigDoc.TYPE,
+                S3ConfigDoc::builder,
+                S3ConfigDoc::copy);
     }
 
     // ---------------------------------------------------------------------
@@ -176,10 +179,7 @@ class S3ConfigStoreImpl implements S3ConfigStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override
