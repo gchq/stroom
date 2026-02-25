@@ -41,7 +41,7 @@ public class DataGenSettingsViewImpl
     SimplePanel destinationFeed;
 
     @UiField
-    TextBox template;
+    SimplePanel templateEditor;
 
     @Inject
     public DataGenSettingsViewImpl(final Binder binder) {
@@ -59,23 +59,12 @@ public class DataGenSettingsViewImpl
     }
 
     @Override
-    public void setTemplate(final String template) {
-        this.template.setText(template);
-    }
-
-    @Override
-    public String getTemplate() {
-        return template.getText();
+    public void setTemplateEditor(final View view) {
+        templateEditor.setWidget(view.asWidget());
     }
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        template.setEnabled(!readOnly);
-    }
-
-    @UiHandler("template")
-    public void onTemplate(final ValueChangeEvent<String> event) {
-        getUiHandlers().onDirty();
     }
 
 

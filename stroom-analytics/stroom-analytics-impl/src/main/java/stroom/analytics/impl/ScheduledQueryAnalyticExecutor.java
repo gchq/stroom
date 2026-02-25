@@ -70,7 +70,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.scheduler.Trigger;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -94,7 +93,6 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
     private final DetectionConsumerFactory detectionConsumerFactory;
     private final SearchRequestFactory searchRequestFactory;
     private final ExpressionContextFactory expressionContextFactory;
-    private final ExecutionScheduleDao executionScheduleDao;
     private final DuplicateCheckFactory duplicateCheckFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider;
@@ -128,7 +126,8 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                 securityContext,
                 executionScheduleDao,
                 docRefInfoServiceProvider,
-                "analytic rule");
+                "analytic rule",
+                errorReceiverProxyProvider);
         this.analyticRuleStore = analyticRuleStore;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.detectionConsumerProxyProvider = detectionConsumerProxyProvider;
@@ -136,7 +135,6 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
         this.detectionConsumerFactory = detectionConsumerFactory;
         this.searchRequestFactory = searchRequestFactory;
         this.expressionContextFactory = expressionContextFactory;
-        this.executionScheduleDao = executionScheduleDao;
         this.duplicateCheckFactory = duplicateCheckFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.analyticUiDefaultConfigProvider = analyticUiDefaultConfigProvider;
@@ -145,25 +143,19 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
     }
 
     @Override
-    boolean process(final AnalyticRuleDoc analytic,
-                    final Trigger trigger,
-                    final Instant executionTime,
-                    final Instant effectiveExecutionTime,
-                    final ExecutionSchedule executionSchedule,
-                    final ExecutionTracker currentTracker) {
-        LOGGER.debug(() -> LogUtil.message(
-                "Executing analytic: {} with executionTime: {}, effectiveExecutionTime: {}, currentTracker: {}",
-                analytic.asDocRef().toShortString(), executionTime, effectiveExecutionTime, currentTracker));
-
-        boolean success = false;
-        final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
-        ExecutionResult executionResult = ExecutionResult.empty();
-
+    protected ExecutionResult innerProcess(final AnalyticRuleDoc doc,
+                                           final Trigger trigger,
+                                           final Instant executionTime,
+                                           final Instant effectiveExecutionTime,
+                                           final ExecutionSchedule executionSchedule,
+                                           final ExecutionTracker currentTracker,
+                                           ExecutionResult executionResult) {
         try {
-            final MappedRequestBundle mappedRequestBundle = buildMappedSearchRequest(analytic, effectiveExecutionTime);
+            final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
+
+            final MappedRequestBundle mappedRequestBundle = buildMappedSearchRequest(doc, effectiveExecutionTime);
             final ExpressionContext expressionContext = mappedRequestBundle.expressionContext;
             final SearchRequest mappedRequest = mappedRequestBundle.mappedRequest;
-            final SearchRequest sampleRequest = mappedRequestBundle.sampleRequest;
 
             // Fix table result requests.
             final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
@@ -200,9 +192,9 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                             paramMap, wordListProvider);
 
                     final Provider<DetectionConsumer> detectionConsumerProvider =
-                            detectionConsumerFactory.create(analytic);
+                            detectionConsumerFactory.create(doc);
                     final DetectionConsumerProxy detectionConsumerProxy = detectionConsumerProxyProvider.get();
-                    detectionConsumerProxy.setAnalyticRuleDoc(analytic);
+                    detectionConsumerProxy.setAnalyticRuleDoc(doc);
                     detectionConsumerProxy.setExecutionSchedule(executionSchedule);
                     detectionConsumerProxy.setExecutionTime(executionTime);
                     detectionConsumerProxy.setEffectiveExecutionTime(effectiveExecutionTime);
@@ -214,7 +206,7 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                             new ColumnFormatter(new FormatterFactory(expressionContext.getDateTimeSettings()));
 
                     try (final DuplicateCheck duplicateCheck =
-                            duplicateCheckFactory.create(analytic, compiledColumns)) {
+                            duplicateCheckFactory.create(doc, compiledColumns)) {
                         detectionConsumerProxy.start();
                         final Consumer<Item> itemConsumer = item -> {
                             if (duplicateCheck.check(item)) {
@@ -244,10 +236,10 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                                 final Detection detection = Detection
                                         .builder()
                                         .withDetectTime(DateUtil.createNormalDateTimeString())
-                                        .withDetectorName(analytic.getName())
-                                        .withDetectorUuid(analytic.getUuid())
-                                        .withDetectorVersion(analytic.getVersion())
-                                        .withDetailedDescription(analytic.getDescription())
+                                        .withDetectorName(doc.getName())
+                                        .withDetectorUuid(doc.getUuid())
+                                        .withDetectorVersion(doc.getVersion())
+                                        .withDetailedDescription(doc.getDescription())
                                         .withRandomDetectionUniqueId()
                                         .withDetectionRevision(0)
                                         .withExecutionSchedule(NullSafe
@@ -321,72 +313,15 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
                     searchResponseCreatorManager.destroy(modifiedRequest.getKey(), DestroyReason.NO_LONGER_NEEDED);
                 }
             }
-
-            // Remember last successful execution time and compute next execution time.
-            final Instant now = Instant.now();
-            final Instant nextExecutionTime;
-            if (executionSchedule.isContiguous()) {
-                nextExecutionTime = trigger.getNextExecutionTimeAfter(effectiveExecutionTime);
-            } else {
-                nextExecutionTime = trigger.getNextExecutionTimeAfter(now);
-            }
-
-            if (nextExecutionTime != null) {
-                // Update tracker.
-                final ExecutionTracker executionTracker = new ExecutionTracker(
-                        now.toEpochMilli(),
-                        effectiveExecutionTime.toEpochMilli(),
-                        nextExecutionTime.toEpochMilli());
-                if (currentTracker != null) {
-                    executionScheduleDao.updateTracker(executionSchedule, executionTracker);
-                } else {
-                    executionScheduleDao.createTracker(executionSchedule, executionTracker);
-                }
-            } else {
-                LOGGER.debug(() -> LogUtil.message(
-                        "process() - nextExecutionTime is null, analytic: {}, executionTime: {}, " +
-                        "effectiveExecutionTime: {}, currentTracker: {}",
-                        analytic.asDocRef().toShortString(), executionTime, effectiveExecutionTime, currentTracker));
-            }
-
-            if (executionResult.status() == null) {
-                executionResult = ExecutionResult.complete(executionResult.message());
-                success = true;
-            }
-
-        } catch (final Exception e) {
-            executionResult = ExecutionResult.error(e.getMessage());
-
-            try {
-                LOGGER.debug(e::getMessage, e);
-                errorReceiverProxyProvider.get()
-                        .getErrorReceiver()
-                        .log(Severity.ERROR, null, null, e.getMessage(), e);
-            } catch (final RuntimeException e2) {
-                LOGGER.error(e2::getMessage, e2);
-            }
-
-            // Disable future execution if the error was not an interrupted exception.
-            if (!(e instanceof InterruptedException) &&
-                !(e instanceof UncheckedInterruptedException)) {
-                // Disable future execution.
-                LOGGER.info(() -> LogUtil.message("Disabling: {}", RuleUtil.getRuleIdentity(analytic)));
-                executionScheduleDao.updateExecutionSchedule(executionSchedule.copy().enabled(false).build());
-            }
-
-        } finally {
-            // Record the execution.
-            addExecutionHistory(executionSchedule,
-                    executionTime,
-                    effectiveExecutionTime,
-                    executionResult);
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
         }
 
-        return success;
+        return executionResult;
     }
 
     @Override
-    void postExecuteTidyUp(final List<AnalyticRuleDoc> analyticDocs) {
+    protected void postExecuteTidyUp(final List<AnalyticRuleDoc> analyticDocs) {
         // Start by finding a set of UUIDs for existing rule checking stores.
         final List<String> duplicateStoreUuids = duplicateCheckDirs.getAnalyticRuleUUIDList();
 
@@ -395,8 +330,18 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
     }
 
     @Override
-    AnalyticRuleDoc load(final DocRef docRef) {
-        return analyticRuleStore.readDocument(docRef);
+    protected DocRef getDocRef(final AnalyticRuleDoc doc) {
+        return doc.asDocRef();
+    }
+
+    @Override
+    protected AnalyticRuleDoc reload(final AnalyticRuleDoc doc) {
+        return analyticRuleStore.readDocument(doc.asDocRef());
+    }
+
+    @Override
+    public String getIdentity(final AnalyticRuleDoc doc) {
+        return RuleUtil.getRuleIdentity(doc);
     }
 
     @Override

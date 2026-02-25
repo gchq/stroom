@@ -20,6 +20,7 @@ import stroom.datagen.client.presenter.DataGenSettingsPresenter.DataGenSettingsV
 import stroom.datagen.shared.DataGenDoc;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
+import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
@@ -31,32 +32,40 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
+import javax.inject.Provider;
+
 public class DataGenSettingsPresenter
         extends DocumentEditPresenter<DataGenSettingsView, DataGenDoc>
         implements DirtyUiHandlers {
 
     final DocSelectionBoxPresenter destinationFeedPresenter;
     private final UiConfigCache uiConfigCache;
+    private final EditorPresenter templatePresenter;
 
     @Inject
     public DataGenSettingsPresenter(final EventBus eventBus,
                                     final DataGenSettingsView view,
                                     final DocSelectionBoxPresenter destinationFeedPresenter,
-                                    final UiConfigCache uiConfigcache) {
+                                    final UiConfigCache uiConfigcache,
+                                    final Provider<EditorPresenter> editorPresenterProvider) {
         super(eventBus, view);
         this.destinationFeedPresenter = destinationFeedPresenter;
         this.uiConfigCache = uiConfigcache;
+        this.templatePresenter = editorPresenterProvider.get();
+
         view.setUiHandlers(this);
+        view.setTemplateEditor(templatePresenter.getView());
 
         destinationFeedPresenter.setIncludedTypes(FeedDoc.TYPE);
         destinationFeedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
-        getView().setDestinationFeed(destinationFeedPresenter.getView());
+        view.setDestinationFeed(destinationFeedPresenter.getView());
     }
 
     @Override
     protected void onBind() {
         super.onBind();
         registerHandler(destinationFeedPresenter.addDataSelectionHandler(e -> onDirty()));
+        registerHandler(templatePresenter.addValueChangeHandler(e -> onDirty()));
     }
 
     @Override
@@ -68,7 +77,9 @@ public class DataGenSettingsPresenter
                 if (selectedDocRef != null) {
                     destinationFeedPresenter.setSelectedEntityReference(selectedDocRef, true);
                 }
-                getView().setTemplate(dataGenDoc.getTemplate());
+                templatePresenter.setText(dataGenDoc.getTemplate());
+                templatePresenter.setReadOnly(false);
+                templatePresenter.getFormatAction().setAvailable(!readOnly);
             }
         }, this);
     }
@@ -82,7 +93,7 @@ public class DataGenSettingsPresenter
     protected DataGenDoc onWrite(final DataGenDoc doc) {
         return doc
                 .copy()
-                .template(getView().getTemplate())
+                .template(templatePresenter.getText())
                 .feed(destinationFeedPresenter.getSelectedEntityReference())
                 .build();
     }
@@ -91,8 +102,6 @@ public class DataGenSettingsPresenter
 
         void setDestinationFeed(View view);
 
-        String getTemplate();
-
-        void setTemplate(String template);
+        void setTemplateEditor(View view);
     }
 }

@@ -80,9 +80,12 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     /**
      * A rule's status denotes how reliable it is. There are several stages:
      *  - Experimental: An early-stage rule that may be incomplete. Expect more false positives.
-     *  - Testing: More mature than experimental rules. Actively being validated in rela environments. Expect some false positives.
-     *  - Stable: Considered production-ready. Has been thoroughly tested across multiple environments. Expect a reasonable false positive rate.
-     *  - Deprecated: An outdated or superseded rule that may rely on old techniques or assumptions. Generally avoid using these in production.
+     *  - Testing: More mature than experimental rules. Actively being validated in rela environments.
+     *    Expect some false positives.
+     *  - Stable: Considered production-ready. Has been thoroughly tested across multiple environments.
+     *    Expect a reasonable false positive rate.
+     *  - Deprecated: An outdated or superseded rule that may rely on old techniques or assumptions.
+     *    Generally avoid using these in production.
      **/
     @JsonProperty
     private final String status;

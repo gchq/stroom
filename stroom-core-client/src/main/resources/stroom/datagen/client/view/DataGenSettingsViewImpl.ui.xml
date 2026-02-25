@@ -4,18 +4,20 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:FlowPanel styleName="max form-padding form">
+    <g:FlowPanel styleName="max dock-container-vertical form-padding form">
 
         <form:FormGroup identity="dataGenDestinationFeed"
                         label="Destination Feed"
-                        helpText="The feed that the generated data will be sent to.">
+                        helpText="The feed that the generated data will be sent to."
+                        addStyleNames="dock-min">
             <g:SimplePanel ui:field="destinationFeed"/>
         </form:FormGroup>
 
         <form:FormGroup identity="dataGenSettingsTemplate"
                         label="Template"
-                        helpText="The data that will be sent into this Feed.">
-            <g:TextBox ui:field="template" width="400px"/>
+                        helpText="The data that will be sent into this Feed."
+                        addStyleNames="dock-max">
+            <g:SimplePanel ui:field="templateEditor" styleName="max form-control-border"/>
         </form:FormGroup>
 
     </g:FlowPanel>
