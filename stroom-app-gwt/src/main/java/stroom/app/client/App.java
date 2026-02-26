@@ -88,7 +88,7 @@ public class App implements EntryPoint {
                 // ginjector.getPlaceManager().revealCurrentPlace();
             }, new QuietTaskMonitorFactory());
 
-            ginjector.getTabSessionManager().getTabSessions(s ->
+            ginjector.getTabSessionManager().getTabSessionsThenAccept(s ->
                     ginjector.getNavigationPlugin().setTabSessions(s));
         }
     }

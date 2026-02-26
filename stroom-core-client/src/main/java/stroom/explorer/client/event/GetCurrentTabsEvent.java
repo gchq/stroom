@@ -16,7 +16,7 @@
 
 package stroom.explorer.client.event;
 
-import stroom.docref.DocRef;
+import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -25,19 +25,19 @@ import com.google.gwt.event.shared.HasHandlers;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class GetCurrentTabSessionEvent extends GwtEvent<GetCurrentTabSessionEvent.Handler> {
+public class GetCurrentTabsEvent extends GwtEvent<GetCurrentTabsEvent.Handler> {
 
     private static Type<Handler> TYPE;
 
-    private final Consumer<List<DocRef>> callback;
+    private final Consumer<List<TabData>> callback;
 
-    private GetCurrentTabSessionEvent(final Consumer<List<DocRef>> callback) {
+    private GetCurrentTabsEvent(final Consumer<List<TabData>> callback) {
         this.callback = callback;
     }
 
     public static void fire(final HasHandlers handlers,
-                            final Consumer<List<DocRef>> callback) {
-        handlers.fireEvent(new GetCurrentTabSessionEvent(callback));
+                            final Consumer<List<TabData>> callback) {
+        handlers.fireEvent(new GetCurrentTabsEvent(callback));
     }
 
     public static Type<Handler> getType() {
@@ -47,7 +47,7 @@ public class GetCurrentTabSessionEvent extends GwtEvent<GetCurrentTabSessionEven
         return TYPE;
     }
 
-    public Consumer<List<DocRef>> getCallback() {
+    public Consumer<List<TabData>> getCallback() {
         return callback;
     }
 
@@ -63,6 +63,6 @@ public class GetCurrentTabSessionEvent extends GwtEvent<GetCurrentTabSessionEven
 
     public interface Handler extends EventHandler {
 
-        void onGet(GetCurrentTabSessionEvent event);
+        void onGet(GetCurrentTabsEvent event);
     }
 }

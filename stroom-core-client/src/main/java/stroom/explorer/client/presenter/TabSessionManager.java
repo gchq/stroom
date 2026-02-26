@@ -18,12 +18,14 @@ package stroom.explorer.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.core.client.HasSave;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.explorer.client.event.DeleteTabSessionEvent;
-import stroom.explorer.client.event.GetCurrentTabSessionEvent;
+import stroom.explorer.client.event.GetCurrentTabsEvent;
 import stroom.explorer.client.event.OpenTabSessionEvent;
 import stroom.explorer.client.event.SaveTabSessionEvent;
 import stroom.explorer.client.event.TabSessionChangeEvent;
@@ -51,8 +53,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Singleton
 public class TabSessionManager extends Plugin implements TaskMonitorFactory, HasTaskMonitorFactory {
@@ -83,40 +85,53 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
 
         registerHandler(getEventBus().addHandler(OpenTabSessionEvent.getType(),
                 event -> {
-                getTabSessions(tabSessions -> showTabSessionList(tabSessions,
-                        "Select Tab Session To Open:",
-                        tabSession -> openDocRefs(tabSession.getDocRefs())));
-            }));
+                    checkDirtyTabsThenRun(() ->
+                            chooseTabSessionThenAccept("Select Tab Session To Open:", this::openTabSession)
+                    );
+                }));
 
         registerHandler(getEventBus().addHandler(DeleteTabSessionEvent.getType(),
-                event -> {
-                    getTabSessions(tabSessions -> showTabSessionList(tabSessions,
-                            "Select Tab Session To Delete:",
-                            this::delete));
-                }));
+                event ->
+                        chooseTabSessionThenAccept("Select Tab Session To Delete:", this::delete)
+                ));
 
 
         registerHandler(getEventBus().addHandler(SaveTabSessionEvent.getType(), event -> {
             final TextBoxPopup textBoxPopup = textBoxPopupProvider.get();
-            textBoxPopup.show("Save New Tab Session", name -> {
-                if (contains(userTabSessions, name)) {
+            textBoxPopup.show("Save New Tab Session", sessionName -> {
+                if (contains(userTabSessions, sessionName)) {
                     ConfirmEvent.fire(this,
                             "You are going to overwrite an existing tab session. Do you wish to continue?",
                             ok -> {
                             if (ok) {
-                                getTabsAndSave(name);
+                                getTabsAndSave(sessionName);
                             }
                         });
                 } else {
-                    getTabsAndSave(name);
+                    getTabsAndSave(sessionName);
                 }
             });
         }));
     }
 
-    private void showTabSessionList(final List<TabSession> sessions, final String caption,
-                                    final Consumer<TabSession> consumer) {
-        {
+    private void checkDirtyTabsThenRun(final Runnable runnable) {
+        GetCurrentTabsEvent.fire(this, tabDataList -> {
+            final boolean anyDirty = tabDataList.stream()
+                    .filter(t -> t instanceof HasSave)
+                    .map(t -> (HasSave) t)
+                    .anyMatch(HasSave::isDirty);
+
+            if (anyDirty) {
+                AlertEvent.fireInfo(this, "Please close or save any modified tabs before trying again.",
+                        () -> {});
+            } else {
+                runnable.run();
+            }
+        });
+    }
+
+    private void chooseTabSessionThenAccept(final String caption, final Consumer<TabSession> consumer) {
+        getTabSessionsThenAccept(sessions -> {
             if (sessions == null || sessions.isEmpty()) {
                 AlertEvent.fireInfo(this, "You do not have any saved tab sessions.", null);
                 return;
@@ -137,18 +152,19 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
                     .popupSize(popupSize)
                     .caption(caption)
                     .onHideRequest(e -> {
-                        final Optional<TabSession> tabSession = Optional.ofNullable(
-                                tabSessionChooserPresenter.getSelected());
+                        final Optional<TabSession> tabSession = tabSessionChooserPresenter.getSelected();
                         if (e.isOk() && tabSession.isPresent()) {
                             consumer.accept(tabSession.get());
                         }
                         e.hide();
                     })
                     .fire();
-        }
+        });
     }
 
-    private void openDocRefs(final List<DocRef> docRefs) {
+    private void openTabSession(final TabSession tabSession) {
+        final List<DocRef> docRefs = tabSession.getDocRefs();
+
         if (docRefs == null || docRefs.isEmpty()) {
             return;
         }
@@ -174,7 +190,7 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
         return buildOpenDocumentEvents(docRefs, index - 1, builder);
     }
 
-    public void getTabSessions(final Consumer<List<TabSession>> consumer) {
+    public void getTabSessionsThenAccept(final Consumer<List<TabSession>> consumer) {
         restFactory
                 .create(TAB_SESSION_RESOURCE)
                 .method(TabSessionResource::getForCurrentUser)
@@ -190,9 +206,9 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
                 .exec();
     }
 
-    private void saveTabSession(final String sessionId, final String name, final List<DocRef> docRefs) {
+    private void saveTabSession(final String sessionName, final List<DocRef> docRefs) {
         restFactory.create(TAB_SESSION_RESOURCE)
-                .method(res -> res.add(new TabSessionAddRequest(sessionId, name, docRefs)))
+                .method(res -> res.add(new TabSessionAddRequest(sessionName, docRefs)))
                 .onSuccess(ts -> {
                     userTabSessions = new ArrayList<>(ts);
                     TabSessionChangeEvent.fire(this, ts);
@@ -231,9 +247,16 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
         return tabSessions.stream().map(TabSession::getName).anyMatch(name::equalsIgnoreCase);
     }
 
-    private void getTabsAndSave(final String name) {
-        GetCurrentTabSessionEvent.fire(this, docRefs -> {
-            saveTabSession(UUID.randomUUID().toString(), name, docRefs);
+    private void getTabsAndSave(final String sessionName) {
+        GetCurrentTabsEvent.fire(this, tabDataList -> {
+
+            final List<DocRef> docRefs = tabDataList.stream()
+                    .filter(t -> t instanceof DocumentTabData)
+                    .map(t -> (DocumentTabData) t)
+                    .map(DocumentTabData::getDocRef)
+                    .collect(Collectors.toList());
+
+            saveTabSession(sessionName, docRefs);
         });
     }
 

@@ -29,9 +29,7 @@ import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent.SelectContentTabHandler;
 import stroom.data.table.client.Refreshable;
-import stroom.docref.DocRef;
-import stroom.document.client.DocumentTabData;
-import stroom.explorer.client.event.GetCurrentTabSessionEvent;
+import stroom.explorer.client.event.GetCurrentTabsEvent;
 import stroom.explorer.client.presenter.RecentItems;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.task.client.DefaultTaskMonitorFactory;
@@ -55,7 +53,6 @@ import com.gwtplatform.mvp.client.proxy.RevealContentEvent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ContentTabPanePresenter
         extends CurveTabLayoutPresenter<ContentTabPanePresenter.ContentTabPaneProxy>
@@ -92,15 +89,9 @@ public class ContentTabPanePresenter
                     }
                 }));
 
-        registerHandler(eventBus.addHandler(GetCurrentTabSessionEvent.getType(),
+        registerHandler(eventBus.addHandler(GetCurrentTabsEvent.getType(),
                 event -> {
-                    final List<DocRef> docRefs = getTabs().stream()
-                            .filter(t -> t instanceof DocumentTabData)
-                            .map(t -> (DocumentTabData) t)
-                            .map(DocumentTabData::getDocRef)
-                            .collect(Collectors.toList());
-
-                    event.getCallback().accept(docRefs);
+                    event.getCallback().accept(getTabs());
                 }));
 
         getView().setRightIndent(32);

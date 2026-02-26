@@ -30,25 +30,16 @@ import java.util.Objects;
 public class TabSessionAddRequest {
 
     @JsonProperty
-    private final String sessionId;
-
-    @JsonProperty
     private final String name;
 
     @JsonProperty
     private final List<DocRef> docRefs;
 
     @JsonCreator
-    public TabSessionAddRequest(@JsonProperty("sessionId") final String sessionId,
-                                @JsonProperty("name") final String name,
+    public TabSessionAddRequest(@JsonProperty("name") final String name,
                                 @JsonProperty("docRefs") final List<DocRef> docRefs) {
-        this.sessionId = sessionId;
         this.name = name;
         this.docRefs = docRefs;
-    }
-
-    public String getSessionId() {
-        return sessionId;
     }
 
     public String getName() {
@@ -65,20 +56,18 @@ public class TabSessionAddRequest {
             return false;
         }
         final TabSessionAddRequest that = (TabSessionAddRequest) o;
-        return Objects.equals(sessionId,
-                that.sessionId) && Objects.equals(name, that.name) && Objects.equals(docRefs,
-                that.docRefs);
+        return Objects.equals(name, that.name)
+               && Objects.equals(docRefs, that.docRefs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(sessionId, name, docRefs);
+        return Objects.hash(name, docRefs);
     }
 
     @Override
     public String toString() {
         return "TabSessionAddRequest{" +
-               ", sessionId='" + sessionId + '\'' +
                ", name='" + name + '\'' +
                ", docRefs=" + docRefs +
                '}';

@@ -41,6 +41,7 @@ import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class TabSessionChooserPresenter<T> extends MyPresenterWidget<TabSessionChooserView> {
@@ -100,8 +101,8 @@ public class TabSessionChooserPresenter<T> extends MyPresenterWidget<TabSessionC
         this.displayValueFunction = Objects.requireNonNull(displayValueFunction);
     }
 
-    public T getSelected() {
-        return selectionModel.getSelectedObject();
+    public Optional<T> getSelected() {
+        return Optional.ofNullable(selectionModel.getSelectedObject());
     }
 
     public void setSelected(final T value) {

@@ -44,8 +44,13 @@ public class TextBoxPopup extends MyPresenterWidget<TextBoxView> {
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        consumer.accept(getText());
-                        e.hide();
+                        final String text = getText();
+                        if (text != null && !text.isBlank()) {
+                            consumer.accept(getText());
+                            e.hide();
+                        } else {
+                            e.reset();
+                        }
                     } else {
                         e.hide();
                     }
