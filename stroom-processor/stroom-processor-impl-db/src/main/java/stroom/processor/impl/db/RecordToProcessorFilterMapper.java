@@ -51,6 +51,7 @@ class RecordToProcessorFilterMapper implements Function<Record, ProcessorFilter>
                 .queryData(queryDataSerialiser.deserialise(record.get(PROCESSOR_FILTER.DATA)))
                 .priority(record.get(PROCESSOR_FILTER.PRIORITY))
                 .maxProcessingTasks(record.get(PROCESSOR_FILTER.MAX_PROCESSING_TASKS))
+                .profileName(record.get(PROCESSOR_FILTER.PROFILE_NAME))
                 .reprocess(record.get(PROCESSOR_FILTER.REPROCESS))
                 .enabled(record.get(PROCESSOR_FILTER.ENABLED))
                 .deleted(record.get(PROCESSOR_FILTER.DELETED))

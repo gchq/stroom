@@ -85,7 +85,6 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
 
     private static final BiFunction<IndexVolume, IndexVolumeRecord, IndexVolumeRecord> INDEX_VOLUME_TO_RECORD_MAPPER =
             (indexVolume, record) -> {
-                record.from(indexVolume);
                 record.set(INDEX_VOLUME.ID, indexVolume.getId());
                 record.set(INDEX_VOLUME.VERSION, indexVolume.getVersion());
                 record.set(INDEX_VOLUME.CREATE_TIME_MS, indexVolume.getCreateTimeMs());

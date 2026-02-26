@@ -59,7 +59,6 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
     @SuppressWarnings("checkstyle:LineLength")
     private static final BiFunction<IndexVolumeGroup, IndexVolumeGroupRecord, IndexVolumeGroupRecord> INDEX_VOLUME_GROUP_TO_RECORD_MAPPER =
             (indexVolumeGroup, record) -> {
-                record.from(indexVolumeGroup);
                 record.set(INDEX_VOLUME_GROUP.ID, indexVolumeGroup.getId());
                 record.set(INDEX_VOLUME_GROUP.VERSION, indexVolumeGroup.getVersion());
                 record.set(INDEX_VOLUME_GROUP.CREATE_TIME_MS, indexVolumeGroup.getCreateTimeMs());

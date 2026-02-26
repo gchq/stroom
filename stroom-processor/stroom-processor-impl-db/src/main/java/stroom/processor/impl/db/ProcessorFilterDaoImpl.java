@@ -199,6 +199,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS,
                         PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS,
                         PROCESSOR_FILTER.MAX_PROCESSING_TASKS,
+                        PROCESSOR_FILTER.PROFILE_NAME,
                         PROCESSOR_FILTER.RUN_AS_USER_UUID)
                 .values(1,
                         filter.getCreateTimeMs(),
@@ -217,6 +218,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         filter.getMinMetaCreateTimeMs(),
                         filter.getMaxMetaCreateTimeMs(),
                         filter.getMaxProcessingTasks(),
+                        filter.getProfileName(),
                         NullSafe.get(filter.getRunAsUser(), UserRef::getUuid))
                 .returning(PROCESSOR_FILTER.ID)
                 .fetchOne(PROCESSOR_FILTER.ID);
@@ -240,6 +242,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .set(PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS, filter.getMinMetaCreateTimeMs())
                 .set(PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS, filter.getMaxMetaCreateTimeMs())
                 .set(PROCESSOR_FILTER.MAX_PROCESSING_TASKS, filter.getMaxProcessingTasks())
+                .set(PROCESSOR_FILTER.PROFILE_NAME, filter.getProfileName())
                 .set(PROCESSOR_FILTER.RUN_AS_USER_UUID, NullSafe.get(filter.getRunAsUser(), UserRef::getUuid))
                 .where(PROCESSOR_FILTER.ID.eq(filter.getId()))
                 .and(PROCESSOR_FILTER.VERSION.eq(filter.getVersion()))

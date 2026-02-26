@@ -47,7 +47,6 @@ public class FsVolumeStateDaoImpl implements FsVolumeStateDao {
     @SuppressWarnings("checkstyle:LineLength")
     private static final BiFunction<FsVolumeState, FsVolumeStateRecord, FsVolumeStateRecord> FS_VOLUME_STATE_TO_RECORD_MAPPER =
             (fsVolumeState, record) -> {
-                record.from(fsVolumeState);
                 record.set(FS_VOLUME_STATE.ID, fsVolumeState.getId());
                 record.set(FS_VOLUME_STATE.VERSION, fsVolumeState.getVersion());
                 record.set(FS_VOLUME_STATE.BYTES_USED, fsVolumeState.getBytesUsed());

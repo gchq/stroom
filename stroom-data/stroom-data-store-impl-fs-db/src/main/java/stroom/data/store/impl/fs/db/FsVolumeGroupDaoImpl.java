@@ -50,7 +50,6 @@ class FsVolumeGroupDaoImpl implements FsVolumeGroupDao {
     @SuppressWarnings("checkstyle:LineLength")
     private static final BiFunction<FsVolumeGroup, FsVolumeGroupRecord, FsVolumeGroupRecord> FS_VOLUME_GROUP_TO_RECORD_MAPPER =
             (fsVolumeGroup, record) -> {
-                record.from(fsVolumeGroup);
                 record.set(FS_VOLUME_GROUP.ID, fsVolumeGroup.getId());
                 record.set(FS_VOLUME_GROUP.VERSION, fsVolumeGroup.getVersion());
                 record.set(FS_VOLUME_GROUP.CREATE_TIME_MS, fsVolumeGroup.getCreateTimeMs());

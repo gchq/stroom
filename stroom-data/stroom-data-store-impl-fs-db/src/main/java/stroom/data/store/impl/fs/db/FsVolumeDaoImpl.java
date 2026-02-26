@@ -193,8 +193,15 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         }
 
         final FsVolumeType volumeType = Objects.requireNonNullElse(fileVolume.getVolumeType(), FsVolumeType.STANDARD);
-        record.from(fileVolume);
+        record.set(FS_VOLUME.ID, fileVolume.getId());
+        record.set(FS_VOLUME.VERSION, fileVolume.getVersion());
+        record.set(FS_VOLUME.CREATE_TIME_MS, fileVolume.getCreateTimeMs());
+        record.set(FS_VOLUME.CREATE_USER, fileVolume.getCreateUser());
+        record.set(FS_VOLUME.UPDATE_TIME_MS, fileVolume.getUpdateTimeMs());
+        record.set(FS_VOLUME.UPDATE_USER, fileVolume.getUpdateUser());
+        record.set(FS_VOLUME.PATH, fileVolume.getPath());
         record.set(FS_VOLUME.STATUS, fileVolume.getStatus().getPrimitiveValue());
+        record.set(FS_VOLUME.BYTE_LIMIT, fileVolume.getByteLimit());
         record.set(FS_VOLUME.FK_FS_VOLUME_STATE_ID, fileVolume.getVolumeState().getId());
         record.set(FS_VOLUME.VOLUME_TYPE, volumeType.getId());
         record.set(FS_VOLUME.FK_FS_VOLUME_GROUP_ID, fileVolume.getVolumeGroupId());

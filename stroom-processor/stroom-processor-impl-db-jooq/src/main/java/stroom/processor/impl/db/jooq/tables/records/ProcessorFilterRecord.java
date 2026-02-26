@@ -286,6 +286,20 @@ public class ProcessorFilterRecord extends UpdatableRecordImpl<ProcessorFilterRe
         return (Boolean) get(18);
     }
 
+    /**
+     * Setter for <code>stroom.processor_filter.profile_name</code>.
+     */
+    public void setProfileName(String value) {
+        set(19, value);
+    }
+
+    /**
+     * Getter for <code>stroom.processor_filter.profile_name</code>.
+     */
+    public String getProfileName() {
+        return (String) get(19);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -309,7 +323,7 @@ public class ProcessorFilterRecord extends UpdatableRecordImpl<ProcessorFilterRe
     /**
      * Create a detached, initialised ProcessorFilterRecord
      */
-    public ProcessorFilterRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String uuid, Integer fkProcessorId, Integer fkProcessorFilterTrackerId, String data, Integer priority, Boolean reprocess, Boolean enabled, Boolean deleted, Long minMetaCreateTimeMs, Long maxMetaCreateTimeMs, Integer maxProcessingTasks, String runAsUserUuid, Boolean export) {
+    public ProcessorFilterRecord(Integer id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, String uuid, Integer fkProcessorId, Integer fkProcessorFilterTrackerId, String data, Integer priority, Boolean reprocess, Boolean enabled, Boolean deleted, Long minMetaCreateTimeMs, Long maxMetaCreateTimeMs, Integer maxProcessingTasks, String runAsUserUuid, Boolean export, String profileName) {
         super(ProcessorFilter.PROCESSOR_FILTER);
 
         setId(id);
@@ -331,6 +345,7 @@ public class ProcessorFilterRecord extends UpdatableRecordImpl<ProcessorFilterRe
         setMaxProcessingTasks(maxProcessingTasks);
         setRunAsUserUuid(runAsUserUuid);
         setExport(export);
+        setProfileName(profileName);
         resetChangedOnNotNull();
     }
 }

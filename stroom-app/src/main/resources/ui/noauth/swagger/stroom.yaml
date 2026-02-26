@@ -10643,6 +10643,8 @@ components:
           enum:
           - PIPELINE
           - STREAMING_ANALYTIC
+        profileName:
+          type: string
         queryData:
           $ref: "#/components/schemas/QueryData"
         reprocess:
@@ -15858,6 +15860,8 @@ components:
           - PIPELINE
           - STREAMING_ANALYTIC
         processorUuid:
+          type: string
+        profileName:
           type: string
         queryData:
           $ref: "#/components/schemas/QueryData"

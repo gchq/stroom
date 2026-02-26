@@ -17,6 +17,7 @@
 package stroom.processor.shared;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -40,6 +41,8 @@ public class CreateProcessFilterRequest {
     @JsonProperty
     private final int maxProcessingTasks;
     @JsonProperty
+    private final String profileName;
+    @JsonProperty
     private final boolean autoPriority;
     @JsonProperty
     private final boolean reprocess;
@@ -60,6 +63,7 @@ public class CreateProcessFilterRequest {
                                       @JsonProperty("queryData") final QueryData queryData,
                                       @JsonProperty("priority") final int priority,
                                       @JsonProperty("maxProcessingTasks") final int maxProcessingTasks,
+                                      @JsonProperty("profileName") final String profileName,
                                       @JsonProperty("autoPriority") final boolean autoPriority,
                                       @JsonProperty("reprocess") final boolean reprocess,
                                       @JsonProperty("enabled") final boolean enabled,
@@ -72,6 +76,7 @@ public class CreateProcessFilterRequest {
         this.queryData = queryData;
         this.priority = priority;
         this.maxProcessingTasks = maxProcessingTasks;
+        this.profileName = profileName;
         this.autoPriority = autoPriority;
         this.reprocess = reprocess;
         this.enabled = enabled;
@@ -99,6 +104,10 @@ public class CreateProcessFilterRequest {
 
     public int getMaxProcessingTasks() {
         return maxProcessingTasks;
+    }
+
+    public String getProfileName() {
+        return profileName;
     }
 
     public boolean isAutoPriority() {
@@ -139,35 +148,40 @@ public class CreateProcessFilterRequest {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
         final CreateProcessFilterRequest that = (CreateProcessFilterRequest) o;
         return priority == that.priority &&
+               maxProcessingTasks == that.maxProcessingTasks &&
                autoPriority == that.autoPriority &&
                reprocess == that.reprocess &&
                enabled == that.enabled &&
                export == that.export &&
+               processorType == that.processorType &&
                Objects.equals(pipeline, that.pipeline) &&
                Objects.equals(queryData, that.queryData) &&
+               Objects.equals(profileName, that.profileName) &&
                Objects.equals(minMetaCreateTimeMs, that.minMetaCreateTimeMs) &&
-               Objects.equals(maxMetaCreateTimeMs, that.maxMetaCreateTimeMs);
+               Objects.equals(maxMetaCreateTimeMs, that.maxMetaCreateTimeMs) &&
+               Objects.equals(runAsUser, that.runAsUser);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(pipeline,
+        return Objects.hash(processorType,
+                pipeline,
                 queryData,
                 priority,
+                maxProcessingTasks,
+                profileName,
                 autoPriority,
                 reprocess,
                 enabled,
                 export,
                 minMetaCreateTimeMs,
-                maxMetaCreateTimeMs);
+                maxMetaCreateTimeMs,
+                runAsUser);
     }
 
     @Override
@@ -178,6 +192,7 @@ public class CreateProcessFilterRequest {
                ", queryData=" + queryData +
                ", priority=" + priority +
                ", maxProcessingTasks=" + maxProcessingTasks +
+               ", profileName='" + profileName + '\'' +
                ", autoPriority=" + autoPriority +
                ", reprocess=" + reprocess +
                ", enabled=" + enabled +
@@ -188,13 +203,15 @@ public class CreateProcessFilterRequest {
                '}';
     }
 
-    public static class Builder {
+    public static class Builder
+            extends AbstractBuilder<CreateProcessFilterRequest, CreateProcessFilterRequest.Builder> {
 
         private ProcessorType processorType = ProcessorType.PIPELINE;
         private DocRef pipeline;
         private QueryData queryData;
         private int priority = 10;
         private int maxProcessingTasks = 0;
+        private String profileName;
         private boolean autoPriority;
         private boolean reprocess;
         private boolean enabled = true;
@@ -212,6 +229,7 @@ public class CreateProcessFilterRequest {
             this.queryData = request.queryData;
             this.priority = request.priority;
             this.maxProcessingTasks = request.maxProcessingTasks;
+            this.profileName = request.profileName;
             this.autoPriority = request.autoPriority;
             this.reprocess = request.reprocess;
             this.enabled = request.enabled;
@@ -223,61 +241,71 @@ public class CreateProcessFilterRequest {
 
         public Builder processorType(final ProcessorType processorType) {
             this.processorType = processorType;
-            return this;
+            return self();
         }
 
         public Builder pipeline(final DocRef pipeline) {
             this.pipeline = pipeline;
-            return this;
+            return self();
         }
 
         public Builder queryData(final QueryData queryData) {
             this.queryData = queryData;
-            return this;
+            return self();
         }
 
         public Builder priority(final int priority) {
             this.priority = priority;
-            return this;
+            return self();
         }
 
         public Builder maxProcessingTasks(final int maxProcessingTasks) {
             this.maxProcessingTasks = maxProcessingTasks;
-            return this;
+            return self();
+        }
+
+        public Builder profileName(final String profileName) {
+            this.profileName = profileName;
+            return self();
         }
 
         public Builder autoPriority(final boolean autoPriority) {
             this.autoPriority = autoPriority;
-            return this;
+            return self();
         }
 
         public Builder reprocess(final boolean reprocess) {
             this.reprocess = reprocess;
-            return this;
+            return self();
         }
 
         public Builder enabled(final boolean enabled) {
             this.enabled = enabled;
-            return this;
+            return self();
         }
 
         public Builder export(final boolean export) {
             this.export = export;
-            return this;
+            return self();
         }
 
         public Builder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
             this.minMetaCreateTimeMs = minMetaCreateTimeMs;
-            return this;
+            return self();
         }
 
         public Builder maxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
             this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
-            return this;
+            return self();
         }
 
         public Builder runAsUser(final UserRef runAsUser) {
             this.runAsUser = runAsUser;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
             return this;
         }
 
@@ -288,6 +316,7 @@ public class CreateProcessFilterRequest {
                     queryData,
                     priority,
                     maxProcessingTasks,
+                    profileName,
                     autoPriority,
                     reprocess,
                     enabled,

@@ -112,6 +112,8 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
     @JsonProperty
     private final int maxProcessingTasks;
     @JsonProperty
+    private final String profileName;
+    @JsonProperty
     private final boolean reprocess;
     @JsonProperty
     private final boolean enabled;
@@ -137,6 +139,7 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
                            @JsonProperty("processorFilterTracker") final ProcessorFilterTracker processorFilterTracker,
                            @JsonProperty("priority") final int priority,
                            @JsonProperty("maxProcessingTasks") final int maxProcessingTasks,
+                           @JsonProperty("profileName") final String profileName,
                            @JsonProperty("reprocess") final boolean reprocess,
                            @JsonProperty("enabled") final boolean enabled,
                            @JsonProperty("deleted") final boolean deleted,
@@ -166,6 +169,7 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
                 ? priority
                 : DEFAULT_PRIORITY;
         this.maxProcessingTasks = maxProcessingTasks;
+        this.profileName = profileName;
         this.reprocess = reprocess;
         this.enabled = enabled;
         this.deleted = deleted;
@@ -226,6 +230,10 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
      */
     public int getMaxProcessingTasks() {
         return maxProcessingTasks;
+    }
+
+    public String getProfileName() {
+        return profileName;
     }
 
     @JsonIgnore
@@ -428,6 +436,7 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
          */
         private int priority = DEFAULT_PRIORITY;
         private int maxProcessingTasks;
+        private String profileName;
         private boolean reprocess;
         private boolean enabled;
         private boolean deleted;
@@ -459,6 +468,7 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
             this.processorFilterTracker = filter.processorFilterTracker;
             this.priority = filter.priority;
             this.maxProcessingTasks = filter.maxProcessingTasks;
+            this.profileName = filter.profileName;
             this.reprocess = filter.reprocess;
             this.enabled = filter.enabled;
             this.deleted = filter.deleted;
@@ -544,6 +554,11 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
             return self();
         }
 
+        public Builder profileName(final String profileName) {
+            this.profileName = profileName;
+            return self();
+        }
+
         public Builder reprocess(final boolean reprocess) {
             this.reprocess = reprocess;
             return self();
@@ -595,6 +610,7 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
                     processorFilterTracker,
                     priority,
                     maxProcessingTasks,
+                    profileName,
                     reprocess,
                     enabled,
                     deleted,

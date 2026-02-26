@@ -92,12 +92,21 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 
     private static final BiFunction<JobNode, JobNodeRecord, JobNodeRecord> JOB_NODE_TO_RECORD_MAPPER =
             (jobNode, record) -> {
-                record.from(jobNode);
+                record.set(JOB_NODE.ID, jobNode.getId());
+                record.set(JOB_NODE.VERSION, jobNode.getVersion());
+                record.set(JOB_NODE.CREATE_TIME_MS, jobNode.getCreateTimeMs());
+                record.set(JOB_NODE.CREATE_USER, jobNode.getCreateUser());
+                record.set(JOB_NODE.UPDATE_TIME_MS, jobNode.getUpdateTimeMs());
+                record.set(JOB_NODE.UPDATE_USER, jobNode.getUpdateUser());
                 record.set(JOB_NODE.JOB_ID, jobNode.getJob().getId());
                 record.set(JOB_NODE.JOB_TYPE,
                         jobNode.getJobType() != null
                                 ? jobNode.getJobType().getPrimitiveValue()
                                 : JobType.UNKNOWN.getPrimitiveValue());
+                record.set(JOB_NODE.NODE_NAME, jobNode.getNodeName());
+                record.set(JOB_NODE.TASK_LIMIT, jobNode.getTaskLimit());
+                record.set(JOB_NODE.SCHEDULE, jobNode.getSchedule());
+                record.set(JOB_NODE.ENABLED, jobNode.isEnabled());
                 return record;
             };
 

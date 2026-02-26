@@ -256,7 +256,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         addEnabledColumn();
         addPipelineColumn();
         addPriorityColumn();
-        addMaxProcessingTasksColumn();
+//        addMaxProcessingTasksColumn();
         addStatusColumn();
 //        addTrackerColumns();
         addLastPollColumns();
@@ -408,37 +408,37 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         dataGrid.addColumn(priorityColumn, "Priority", ColumnSizeConstants.MEDIUM_COL);
     }
 
-    private void addMaxProcessingTasksColumn() {
-        final Column<ProcessorListRow, Number> maxProcessingTasksColumn = new Column<ProcessorListRow, Number>(
-                new ValueSpinnerCell(
-                        ProcessorFilter.MIN_MAX_PROCESSING_TASKS,
-                        ProcessorFilter.MAX_MAX_PROCESSING_TASKS)) {
-            @Override
-            public Number getValue(final ProcessorListRow row) {
-                Number maxProcessingTasks = null;
-                if (row instanceof final ProcessorFilterRow processorFilterRow) {
-                    if (allowUpdate) {
-                        maxProcessingTasks = new EditableInteger(processorFilterRow.getProcessorFilter()
-                                .getMaxProcessingTasks());
-                    } else {
-                        maxProcessingTasks = processorFilterRow.getProcessorFilter().getMaxProcessingTasks();
-                    }
-                }
-                return maxProcessingTasks;
-            }
-        };
-        if (allowUpdate) {
-            maxProcessingTasksColumn.setFieldUpdater((index, row, value) -> {
-                if (row instanceof final ProcessorFilterRow processorFilterRow) {
-                    final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-                    processorFilterRow.setProcessorFilter(
-                            processorFilter.copy().maxProcessingTasks(value.intValue()).build());
-                    processorFilterMaxProcessingTasksSaveQueue.setValue(processorFilter.getId(), value.intValue());
-                }
-            });
-        }
-        dataGrid.addColumn(maxProcessingTasksColumn, "Max Concurrent", 120);
-    }
+//    private void addMaxProcessingTasksColumn() {
+//        final Column<ProcessorListRow, Number> maxProcessingTasksColumn = new Column<ProcessorListRow, Number>(
+//                new ValueSpinnerCell(
+//                        ProcessorFilter.MIN_MAX_PROCESSING_TASKS,
+//                        ProcessorFilter.MAX_MAX_PROCESSING_TASKS)) {
+//            @Override
+//            public Number getValue(final ProcessorListRow row) {
+//                Number maxProcessingTasks = null;
+//                if (row instanceof final ProcessorFilterRow processorFilterRow) {
+//                    if (allowUpdate) {
+//                        maxProcessingTasks = new EditableInteger(processorFilterRow.getProcessorFilter()
+//                                .getMaxProcessingTasks());
+//                    } else {
+//                        maxProcessingTasks = processorFilterRow.getProcessorFilter().getMaxProcessingTasks();
+//                    }
+//                }
+//                return maxProcessingTasks;
+//            }
+//        };
+//        if (allowUpdate) {
+//            maxProcessingTasksColumn.setFieldUpdater((index, row, value) -> {
+//                if (row instanceof final ProcessorFilterRow processorFilterRow) {
+//                    final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
+//                    processorFilterRow.setProcessorFilter(
+//                            processorFilter.copy().maxProcessingTasks(value.intValue()).build());
+//                    processorFilterMaxProcessingTasksSaveQueue.setValue(processorFilter.getId(), value.intValue());
+//                }
+//            });
+//        }
+//        dataGrid.addColumn(maxProcessingTasksColumn, "Max Concurrent", 120);
+//    }
 
     private void addTasksColumn() {
         dataGrid.addResizableColumn(new Column<ProcessorListRow, Number>(new NumberCell()) {

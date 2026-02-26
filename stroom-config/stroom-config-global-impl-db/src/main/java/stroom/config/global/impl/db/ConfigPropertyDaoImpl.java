@@ -70,7 +70,6 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
 
     private static final BiFunction<ConfigProperty, ConfigRecord, ConfigRecord> CONFIG_PROPERTY_TO_RECORD_MAPPER =
             (configProperty, record) -> {
-                record.from(configProperty);
                 record.set(CONFIG.ID, configProperty.getId());
                 record.set(CONFIG.VERSION, configProperty.getVersion());
                 record.set(CONFIG.CREATE_TIME_MS, configProperty.getCreateTimeMs());

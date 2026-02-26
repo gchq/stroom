@@ -155,6 +155,11 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
      */
     public final TableField<ProcessorFilterRecord, Boolean> EXPORT = createField(DSL.name("export"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
 
+    /**
+     * The column <code>stroom.processor_filter.profile_name</code>.
+     */
+    public final TableField<ProcessorFilterRecord, String> PROFILE_NAME = createField(DSL.name("profile_name"), SQLDataType.VARCHAR(255), this, "");
+
     private ProcessorFilter(Name alias, Table<ProcessorFilterRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
