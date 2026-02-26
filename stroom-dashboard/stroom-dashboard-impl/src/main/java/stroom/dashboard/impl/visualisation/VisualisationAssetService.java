@@ -241,7 +241,7 @@ public class VisualisationAssetService {
      * Will not return anything if the file isn't a text file.
      * @param ownerDocId Document that owns the assets. Must not be null.
      * @param path Location of the document to update the content for.
-     * @return The content and mimetype, or null if the content cannot be viewed.
+     * @return The content, or null if the content cannot be viewed.
      */
     String getDraftContent(final String ownerDocId,
                            final String path)

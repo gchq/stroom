@@ -1,5 +1,6 @@
 package stroom.util.concurrent;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -18,23 +19,40 @@ public class TestGuardPerformance {
     private final int threadCount = Runtime.getRuntime().availableProcessors();
     private volatile Object env = new Object();
 
+    /**
+     * From
+     * <a href="https://stackoverflow.com/questions/27583122/how-to-find-the-nearest-number-that-is-power-of-two-to-another-number">StackOverflow</a>
+     */
+    private int getNextPowerOf2(int x) {
+        x = x - 1;
+        x |= x >> 1;
+        x |= x >> 2;
+        x |= x >> 4;
+        x |= x >> 8;
+        x |= x >> 16;
+        return x + 1;
+    }
+
     @Test
+    @Disabled
     public void perfTest() {
         // Do multiple rounds to let it warm up
+        final int threadCountPower2 = getNextPowerOf2(threadCount);
+
         for (int i = 1; i <= 3; i++) {
             System.out.println("Round: " + i + " SimpleGuard");
-            IntStream.of(1, 2, 4, 8, threadCount, threadCount * 2)
+            IntStream.of(1, 2, 4, 8, threadCountPower2, threadCountPower2 * 2)
                     .forEach(stripes -> runTest(stripes, new SimpleGuard(this::onClose)));
 
 
             System.out.println("Round: " + i + " StripedGuard");
-            IntStream.of(1, 2, 4, 8, threadCount, threadCount * 2)
+            IntStream.of(1, 2, 4, 8, threadCountPower2, threadCountPower2 * 2)
                     .forEach(stripes -> runTest(stripes, new StripedGuard(this::onClose, stripes)));
         }
     }
 
 
-    private void runTest(int stripes, final Guard refCounter) {
+    private void runTest(final int stripes, final Guard refCounter) {
 //    System.out.println("Running test for " + stripes + " stripes");
 
         final AtomicReference<Instant> startTime = new AtomicReference<>(null);
