@@ -27,9 +27,6 @@ import java.util.Objects;
  * Intermediates between VisualisationAssetResource and VisualisationAssetDao.
  * Primarily responsible for checking permissions.
  * Allows easy access to Assets within the database.
- * <P>
- *     TODO: What is correct behaviour on permission failure?
- * </P>
  */
 public class VisualisationAssetService {
 

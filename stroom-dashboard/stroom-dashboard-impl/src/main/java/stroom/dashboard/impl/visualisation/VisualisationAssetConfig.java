@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -164,7 +163,7 @@ public class VisualisationAssetConfig extends AbstractConfig {
     @JsonPropertyDescription("The mimetypes map from extension to mimetype for the asset manager")
     @JsonProperty("mimetypes")
     public Map<String, String> getMimetypes() {
-        return Collections.unmodifiableMap(mimetypes);
+        return mimetypes;
     }
 
     @RequiresRestart(RestartScope.SYSTEM)
