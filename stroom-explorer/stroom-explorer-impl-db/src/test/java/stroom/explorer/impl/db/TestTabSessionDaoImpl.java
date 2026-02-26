@@ -16,17 +16,16 @@
 
 package stroom.explorer.impl.db;
 
+import stroom.db.util.JooqUtil;
 import stroom.docref.DocRef;
-import stroom.explorer.impl.TabSessionDao;
 import stroom.explorer.shared.TabSession;
 
-import org.h2.jdbcx.JdbcDataSource;
-import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
-import org.junit.jupiter.api.AfterEach;
+import com.google.inject.Guice;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
@@ -34,67 +33,41 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.explorer.impl.db.jooq.tables.TabSession.TAB_SESSION;
 import static stroom.explorer.impl.db.jooq.tables.TabSessionDocRef.TAB_SESSION_DOC_REF;
 
+@ExtendWith(MockitoExtension.class)
 class TestTabSessionDaoImpl {
 
-    private TabSessionDao dao;
-    private DSLContext context;
+    @Inject
+    private TabSessionDaoImpl dao;
+    @Inject
+    ExplorerDbConnProvider explorerDbConnProvider;
 
     @BeforeEach
-    void setup() throws Exception {
-        final JdbcDataSource dataSource = new JdbcDataSource();
-        dataSource.setURL("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;MODE=MySQL;CASE_INSENSITIVE_IDENTIFIERS=TRUE");
-
-        context = DSL.using(dataSource.getConnection(), SQLDialect.H2);
-        context.createSchemaIfNotExists("stroom").execute();
-        context.setSchema("stroom").execute();
-
-        context.createTableIfNotExists(TAB_SESSION)
-                .column(TAB_SESSION.ID)
-                .column(TAB_SESSION.NAME)
-                .column(TAB_SESSION.USER_UUID)
-                .primaryKey(TAB_SESSION.ID)
-                .execute();
-
-        context.createTableIfNotExists(TAB_SESSION_DOC_REF)
-                .column(TAB_SESSION_DOC_REF.TAB_SESSION_ID)
-                .column(TAB_SESSION_DOC_REF.TAB_INDEX)
-                .column(TAB_SESSION_DOC_REF.DOC_REF_TYPE)
-                .column(TAB_SESSION_DOC_REF.DOC_REF_ID)
-                .primaryKey(TAB_SESSION_DOC_REF.TAB_SESSION_ID,
-                        TAB_SESSION_DOC_REF.DOC_REF_TYPE,
-                        TAB_SESSION_DOC_REF.DOC_REF_ID)
-                .execute();
-
-        final ExplorerDbConnProvider connProvider = createConnProvider(dataSource);
-        dao = new TabSessionDaoImpl(connProvider);
-    }
-
-    @AfterEach
-    void tearDown() {
-        context.deleteFrom(TAB_SESSION_DOC_REF).execute();
-        context.deleteFrom(TAB_SESSION).execute();
-    }
-
-    private ExplorerDbConnProvider createConnProvider(final JdbcDataSource dataSource) {
-        return new H2ExplorerDbConnProvider(dataSource);
+    void setup() {
+        Guice.createInjector(new TestModule()).injectMembers(this);
+        JooqUtil.context(explorerDbConnProvider, context -> {
+            context.deleteFrom(TAB_SESSION_DOC_REF).execute();
+            context.deleteFrom(TAB_SESSION).execute();
+        });
     }
 
     private int insertTabSession(final String name, final String userUuid) {
-        return context.insertInto(TAB_SESSION, TAB_SESSION.NAME, TAB_SESSION.USER_UUID)
+        return JooqUtil.contextResult(explorerDbConnProvider, context ->
+                context.insertInto(TAB_SESSION, TAB_SESSION.NAME, TAB_SESSION.USER_UUID)
                 .values(name, userUuid)
                 .returning(TAB_SESSION.ID)
                 .fetchOne()
-                .get(TAB_SESSION.ID);
+                .get(TAB_SESSION.ID));
     }
 
     private void insertDocRef(final int sessionId, final int tabIndex, final String type, final String uuid) {
-        context.insertInto(TAB_SESSION_DOC_REF,
+        JooqUtil.context(explorerDbConnProvider, context ->
+                context.insertInto(TAB_SESSION_DOC_REF,
                         TAB_SESSION_DOC_REF.TAB_SESSION_ID,
                         TAB_SESSION_DOC_REF.TAB_INDEX,
                         TAB_SESSION_DOC_REF.DOC_REF_TYPE,
                         TAB_SESSION_DOC_REF.DOC_REF_ID)
                 .values(sessionId, tabIndex, type, uuid)
-                .execute();
+                .execute());
     }
 
     @Test

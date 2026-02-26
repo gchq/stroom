@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.annotation.client;
+package stroom.explorer.client.presenter;
 
-import stroom.annotation.client.ChooserPresenter.ChooserView;
 import stroom.data.table.client.MyCellTable;
+import stroom.explorer.client.presenter.TabSessionChooserPresenter.TabSessionChooserView;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.NullSafe;
-import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.util.client.BasicSelectionEventManager;
@@ -38,39 +36,31 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
-public class ChooserPresenter<T>
-        extends MyPresenterWidget<ChooserView>
-        implements ChooserUiHandlers {
+public class TabSessionChooserPresenter<T> extends MyPresenterWidget<TabSessionChooserView> {
 
     private final MySingleSelectionModel<T> selectionModel = new MySingleSelectionModel<>();
     private final CellTable<T> cellTable;
-    private DataSupplier<T> dataSupplier;
     private Function<T, SafeHtml> displayValueFunction = t -> SafeHtmlUtils.fromString(t.toString());
 
     @Inject
-    public ChooserPresenter(final EventBus eventBus,
-                            final ChooserView view,
-                            final UiConfigCache uiConfigCache) {
+    public TabSessionChooserPresenter(final EventBus eventBus,
+                                      final TabSessionChooserView view,
+                                      final UiConfigCache uiConfigCache) {
         super(eventBus, view);
-
-        view.setUiHandlers(this);
 
         cellTable = new MyCellTable<>(Integer.MAX_VALUE);
         cellTable.setSelectionModel(selectionModel, new BasicSelectionEventManager<T>(cellTable) {
             @Override
             protected void onClose(final CellPreviewEvent<T> e) {
                 super.onClose(e);
-                HidePopupRequestEvent.builder(ChooserPresenter.this).autoClose(true)
+                HidePopupRequestEvent.builder(TabSessionChooserPresenter.this).autoClose(true)
                         .action(DialogAction.CLOSE)
                         .fire();
             }
@@ -81,7 +71,7 @@ public class ChooserPresenter<T>
                 SelectionChangeEvent.fire(selectionModel);
             }
         });
-        view.setBottomWidget(cellTable);
+        view.setSelectionList(cellTable);
 
         // Text.
         final Column<T, SafeHtml> textColumn = new Column<T, SafeHtml>(new SafeHtmlCell()) {
@@ -97,24 +87,10 @@ public class ChooserPresenter<T>
             }
         };
         cellTable.addColumn(textColumn);
-
-        // Only deals in lists of strings so no field defs required.
-        uiConfigCache.get(uiConfig -> {
-            if (uiConfig != null) {
-                getView().registerPopupTextProvider(() ->
-                        QuickFilterTooltipUtil.createTooltip(
-                                "Choose Item Quick Filter",
-                                uiConfig.getHelpUrlQuickFilter()));
-            }
-        }, this);
     }
 
     void focus() {
         cellTable.setFocus(true);
-    }
-
-    void clearFilter() {
-        getView().clearFilter();
     }
 
     /**
@@ -128,65 +104,24 @@ public class ChooserPresenter<T>
         return selectionModel.getSelectedObject();
     }
 
-    public SafeHtml getSelectedDisplayValue() {
-        final T selected = getSelected();
-        return NullSafe.get(selected, displayValueFunction);
-    }
-
     public void setSelected(final T value) {
         selectionModel.setSelected(value, true);
-    }
-
-    public void setClearSelectionText(final String text) {
-        getView().setClearSelectionText(text);
     }
 
     public HandlerRegistration addDataSelectionHandler(final SelectionChangeEvent.Handler handler) {
         return selectionModel.addSelectionChangeHandler(handler);
     }
 
-    @Override
-    public void onFilterChange(final String filter) {
-        if (dataSupplier != null) {
-            dataSupplier.onChange(filter, values -> {
-                if (values != null) {
-                    cellTable.setRowData(0, values);
-                    cellTable.setRowCount(values.size());
-                }
-            });
-        }
-    }
-
-    @Override
-    public void onClearSelection() {
-        selectionModel.clear();
-    }
-
-    public void setDataSupplier(final DataSupplier<T> dataSupplier) {
-        this.dataSupplier = dataSupplier;
-        onFilterChange(null);
+    public void setSelectionList(final List<T> selectionList) {
+        cellTable.setRowData(0, selectionList);
+        cellTable.setRowCount(selectionList.size());
     }
 
     // --------------------------------------------------------------------------------
 
 
-    public interface DataSupplier<T> {
+    public interface TabSessionChooserView extends View {
 
-        void onChange(String filter, Consumer<List<T>> consumer);
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    public interface ChooserView extends View, HasUiHandlers<ChooserUiHandlers> {
-
-        void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
-
-        void setBottomWidget(Widget widget);
-
-        void clearFilter();
-
-        void setClearSelectionText(String text);
+        void setSelectionList(Widget widget);
     }
 }

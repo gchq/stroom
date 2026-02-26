@@ -18,7 +18,6 @@ package stroom.explorer.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.annotation.client.ChooserPresenter;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -49,6 +48,7 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -62,17 +62,18 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
     private static final TabSessionResource TAB_SESSION_RESOURCE = GWT.create(TabSessionResource.class);
 
     private final RestFactory restFactory;
-    private final ChooserPresenter<TabSession> chooserPresenter;
+    private final TabSessionChooserPresenter<TabSession> tabSessionChooserPresenter;
     private final Provider<TextBoxPopup> textBoxPopupProvider;
+    private List<TabSession> userTabSessions;
 
     @Inject
     public TabSessionManager(final EventBus eventBus,
                              final RestFactory restFactory,
-                             final ChooserPresenter<TabSession> chooserPresenter,
+                             final TabSessionChooserPresenter<TabSession> tabSessionChooserPresenter,
                              final Provider<TextBoxPopup> textBoxPopupProvider) {
         super(eventBus);
         this.restFactory = restFactory;
-        this.chooserPresenter = chooserPresenter;
+        this.tabSessionChooserPresenter = tabSessionChooserPresenter;
         this.textBoxPopupProvider = textBoxPopupProvider;
     }
 
@@ -98,9 +99,17 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
         registerHandler(getEventBus().addHandler(SaveTabSessionEvent.getType(), event -> {
             final TextBoxPopup textBoxPopup = textBoxPopupProvider.get();
             textBoxPopup.show("Save New Tab Session", name -> {
-                GetCurrentTabSessionEvent.fire(this, docRefs -> {
-                    saveTabSession(UUID.randomUUID().toString(), name, docRefs);
-                });
+                if (contains(userTabSessions, name)) {
+                    ConfirmEvent.fire(this,
+                            "You are going to overwrite an existing tab session. Do you wish to continue?",
+                            ok -> {
+                            if (ok) {
+                                getTabsAndSave(name);
+                            }
+                        });
+                } else {
+                    getTabsAndSave(name);
+                }
             });
         }));
     }
@@ -118,22 +127,18 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
                 return;
             }
 
-            chooserPresenter.setFilterVisible(false);
-            chooserPresenter.setDataSupplier((f, c) -> {
-                c.accept(sessions);
-            });
-            chooserPresenter.setDisplayValueFunction(s -> SafeHtmlUtils.fromString(
+            tabSessionChooserPresenter.setSelectionList(sessions);
+            tabSessionChooserPresenter.setDisplayValueFunction(s -> SafeHtmlUtils.fromString(
                     s.getName()));
 
-            final int popupHeight = 200 + sessions.size() * 23;
-            final PopupSize popupSize = PopupSize.resizable(650, popupHeight);
-            ShowPopupEvent.builder(chooserPresenter)
+            final PopupSize popupSize = PopupSize.resizable(650, 340);
+            ShowPopupEvent.builder(tabSessionChooserPresenter)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)
                     .caption(caption)
                     .onHideRequest(e -> {
                         final Optional<TabSession> tabSession = Optional.ofNullable(
-                                chooserPresenter.getSelected());
+                                tabSessionChooserPresenter.getSelected());
                         if (e.isOk() && tabSession.isPresent()) {
                             consumer.accept(tabSession.get());
                         }
@@ -173,7 +178,10 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
         restFactory
                 .create(TAB_SESSION_RESOURCE)
                 .method(TabSessionResource::getForCurrentUser)
-                .onSuccess(consumer)
+                .onSuccess(ts -> {
+                    userTabSessions = new ArrayList<>(ts);
+                    consumer.accept(ts);
+                })
                 .onFailure(error ->
                         AlertEvent.fireError(this,
                                 error.getMessage(),
@@ -185,7 +193,10 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
     private void saveTabSession(final String sessionId, final String name, final List<DocRef> docRefs) {
         restFactory.create(TAB_SESSION_RESOURCE)
                 .method(res -> res.add(new TabSessionAddRequest(sessionId, name, docRefs)))
-                .onSuccess(s -> TabSessionChangeEvent.fire(this, s))
+                .onSuccess(ts -> {
+                    userTabSessions = new ArrayList<>(ts);
+                    TabSessionChangeEvent.fire(this, ts);
+                })
                 .onFailure(error ->
                             AlertEvent.fireError(this,
                                     error.getMessage(),
@@ -202,7 +213,10 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
                             .method(res -> res.delete(
                                     new TabSessionDeleteRequest(tabSession.getSessionId(), tabSession.getName())
                             ))
-                            .onSuccess(s -> TabSessionChangeEvent.fire(this, s))
+                            .onSuccess(ts -> {
+                                userTabSessions = new ArrayList<>(ts);
+                                TabSessionChangeEvent.fire(this, ts);
+                            })
                             .onFailure(error ->
                                     AlertEvent.fireError(this,
                                             error.getMessage(),
@@ -211,6 +225,16 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
                             .exec();
                 }
             });
+    }
+
+    private boolean contains(final List<TabSession> tabSessions, final String name) {
+        return tabSessions.stream().map(TabSession::getName).anyMatch(name::equalsIgnoreCase);
+    }
+
+    private void getTabsAndSave(final String name) {
+        GetCurrentTabSessionEvent.fire(this, docRefs -> {
+            saveTabSession(UUID.randomUUID().toString(), name, docRefs);
+        });
     }
 
     @Override

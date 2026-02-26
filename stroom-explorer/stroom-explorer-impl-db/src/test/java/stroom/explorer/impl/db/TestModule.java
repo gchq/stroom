@@ -14,24 +14,20 @@
  * limitations under the License.
  */
 
-package stroom.app.client.gin;
+package stroom.explorer.impl.db;
 
-import stroom.core.client.gin.PluginModule;
-import stroom.document.client.DocumentPluginEventManager;
-import stroom.explorer.client.NavigationPlugin;
-import stroom.explorer.client.presenter.TabSessionManager;
-import stroom.help.client.HelpPlugin;
-import stroom.trackers.client.TrackersPlugin;
+import stroom.test.common.util.db.DbTestModule;
 
-public class PluginsModule extends PluginModule {
+import com.google.inject.AbstractModule;
+
+public class TestModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bindPlugin(DocumentPluginEventManager.class);
-
-        bindPlugin(HelpPlugin.class);
-        bindPlugin(TrackersPlugin.class);
-        bindPlugin(NavigationPlugin.class);
-        bindPlugin(TabSessionManager.class);
+        super.configure();
+        install(new ExplorerDaoModule());
+        install(new ExplorerDbModule());
+        install(new TabSessionDbModule());
+        install(new DbTestModule());
     }
 }

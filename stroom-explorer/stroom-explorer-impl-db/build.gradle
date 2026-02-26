@@ -40,7 +40,6 @@ dependencies {
     runtimeOnly libs.mysql.connector.java
 
     testImplementation project(':stroom-test-common')
-    testImplementation 'com.h2database:h2:2.2.224'
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

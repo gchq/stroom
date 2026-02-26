@@ -71,11 +71,6 @@ public class ChooserViewImpl extends ViewWithUiHandlers<ChooserUiHandlers> imple
     }
 
     @Override
-    public void setFilterVisible(final boolean visible) {
-        nameFilter.setVisible(visible);
-    }
-
-    @Override
     public void clearFilter() {
         nameFilter.clear();
     }
