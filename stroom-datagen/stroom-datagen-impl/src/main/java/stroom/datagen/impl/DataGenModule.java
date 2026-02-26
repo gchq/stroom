@@ -16,6 +16,7 @@
 
 package stroom.datagen.impl;
 
+import stroom.analytics.impl.ScheduledExecutorService;
 import stroom.datagen.shared.DataGenDoc;
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
@@ -26,7 +27,6 @@ import stroom.job.api.ScheduledJobsBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
-import stroom.util.shared.HasUserDependencies;
 
 import com.google.inject.AbstractModule;
 import jakarta.inject.Inject;
@@ -62,16 +62,14 @@ public class DataGenModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(DataGenResourceImpl.class);
-
-        GuiceUtil.buildMapBinder(binder(), String.class, HasUserDependencies.class)
-                .addBinding(ScheduledDataGenExecutor.class.getName(), ScheduledDataGenExecutor.class);
     }
 
     private static class ScheduledDataGenExecutorRunnable extends RunnableWrapper {
 
         @Inject
-        ScheduledDataGenExecutorRunnable(final ScheduledDataGenExecutor executor) {
-            super(executor::exec);
+        ScheduledDataGenExecutorRunnable(final ScheduledExecutorService<DataGenDoc> scheduledExecutorService,
+                                         final ScheduledDataGenExecutable scheduledDataGenExecutor) {
+            super(() -> scheduledExecutorService.exec(scheduledDataGenExecutor));
         }
     }
 }

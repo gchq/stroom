@@ -16,8 +16,8 @@
 
 package stroom.datagen.impl;
 
-import stroom.analytics.impl.ExecutionScheduleDao;
-import stroom.analytics.impl.ScheduledExecutorService;
+import stroom.analytics.impl.ScheduledExecutable;
+import stroom.analytics.impl.ScheduledExecutorService.ExecutionResult;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionTracker;
 import stroom.data.shared.StreamTypeNames;
@@ -26,20 +26,13 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.datagen.shared.DataGenDoc;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.meta.api.MetaProperties;
-import stroom.node.api.NodeInfo;
-import stroom.security.api.SecurityContext;
-import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.scheduler.Trigger;
-import stroom.util.shared.HasUserDependencies;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -48,43 +41,28 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ScheduledDataGenExecutor
-        extends ScheduledExecutorService<DataGenDoc>
-        implements HasUserDependencies {
+public class ScheduledDataGenExecutable implements ScheduledExecutable<DataGenDoc> {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ScheduledDataGenExecutor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ScheduledDataGenExecutable.class);
 
     private final DataGenStore dataGenStore;
     private final Store streamStore;
 
     @Inject
-    ScheduledDataGenExecutor(final DataGenStore dataGenStore,
-                             final ExecutorProvider executorProvider,
-                             final TaskContextFactory taskContextFactory,
-                             final NodeInfo nodeInfo,
-                             final SecurityContext securityContext,
-                             final ExecutionScheduleDao executionScheduleDao,
-                             final Provider<DocRefInfoService> docRefInfoServiceProvider,
-                             final Store streamStore) {
-        super(executorProvider,
-                taskContextFactory,
-                nodeInfo,
-                securityContext,
-                executionScheduleDao,
-                docRefInfoServiceProvider,
-                "analytic rule");
+    ScheduledDataGenExecutable(final DataGenStore dataGenStore,
+                               final Store streamStore) {
         this.dataGenStore = dataGenStore;
         this.streamStore = streamStore;
     }
 
     @Override
-    protected ExecutionResult innerProcess(final DataGenDoc doc,
-                                           final Trigger trigger,
-                                           final Instant executionTime,
-                                           final Instant effectiveExecutionTime,
-                                           final ExecutionSchedule executionSchedule,
-                                           final ExecutionTracker currentTracker,
-                                           final ExecutionResult executionResult) {
+    public ExecutionResult run(final DataGenDoc doc,
+                               final Trigger trigger,
+                               final Instant executionTime,
+                               final Instant effectiveExecutionTime,
+                               final ExecutionSchedule executionSchedule,
+                               final ExecutionTracker currentTracker,
+                               final ExecutionResult executionResult) {
 
         try {
             final DocRef outputFeed = doc.getFeed();
@@ -108,17 +86,17 @@ public class ScheduledDataGenExecutor
     }
 
     @Override
-    protected DocRef getDocRef(final DataGenDoc doc) {
+    public DocRef getDocRef(final DataGenDoc doc) {
         return doc.asDocRef();
     }
 
     @Override
-    protected DataGenDoc reload(final DataGenDoc doc) {
+    public DataGenDoc reload(final DataGenDoc doc) {
         return dataGenStore.readDocument(doc.asDocRef());
     }
 
     @Override
-    protected List<DataGenDoc> getDocs() {
+    public List<DataGenDoc> getDocs() {
         // TODO this is not very efficient. It fetches all the docrefs from the DB,
         //  then loops over them to fetch+deser the associated doc for each one (one by one)
         //  so the caller can filter half of them out by type.
@@ -138,6 +116,11 @@ public class ScheduledDataGenExecutor
             }
         }
         return currentDataGenerators;
+    }
+
+    @Override
+    public String getProcessType() {
+        return "data gen";
     }
 
     @Override

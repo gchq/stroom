@@ -101,10 +101,15 @@ public class Detection {
 
     /**
      * A rule's status denotes how reliable it is. There are several stages:
-     *  - Experimental: An early-stage rule that may be incomplete. Expect more false positives.
-     *  - Testing: More mature than experimental rules. Actively being validated in rela environments. Expect some false positives.
-     *  - Stable: Considered production-ready. Has been thoroughly tested across multiple environments. Expect a reasonable false positive rate.
-     *  - Deprecated: An outdated or superseded rule that may rely on old techniques or assumptions. Generally avoid using these in production.
+     * <ul>
+     *     <li>Experimental: An early-stage rule that may be incomplete. Expect more false positives.</li>
+     *     <li>Testing: More mature than experimental rules. Actively being validated in rela environments.
+     *     Expect some false positives.</li>
+     *     <li>Stable: Considered production-ready. Has been thoroughly tested across multiple environments.
+     *     Expect a reasonable false positive rate.</li>
+     *     <li>Deprecated: An outdated or superseded rule that may rely on old techniques or assumptions.
+     *     Generally avoid using these in production.</li>
+     * </ul>
      **/
     @JsonProperty
     private final String status;
@@ -253,9 +258,13 @@ public class Detection {
         return linkedEvents;
     }
 
-    public String getLevel() { return level; }
+    public String getLevel() {
+        return level;
+    }
 
-    public String getStatus() { return status; }
+    public String getStatus() {
+        return status;
+    }
 
     @Override
     public boolean equals(final Object o) {

@@ -16,15 +16,14 @@
 
 package stroom.analytics.impl;
 
+import stroom.analytics.impl.ScheduledExecutorService.ExecutionResult;
 import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionTracker;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.index.shared.IndexConstants;
-import stroom.node.api.NodeInfo;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
@@ -58,9 +57,6 @@ import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ref.ErrorConsumer;
-import stroom.security.api.SecurityContext;
-import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.AnalyticUiDefaultConfig;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
@@ -82,9 +78,9 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecutor<AnalyticRuleDoc> {
+public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExecutable<AnalyticRuleDoc> {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ScheduledQueryAnalyticExecutor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ScheduledQueryAnalyticExecutable.class);
 
     private final AnalyticRuleStore analyticRuleStore;
     private final ResultStoreManager searchResponseCreatorManager;
@@ -100,34 +96,20 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
     final WordListProvider wordListProvider;
 
     @Inject
-    ScheduledQueryAnalyticExecutor(final AnalyticRuleStore analyticRuleStore,
-                                   final ExecutorProvider executorProvider,
-                                   final ResultStoreManager searchResponseCreatorManager,
-                                   final Provider<DetectionConsumerProxy> detectionConsumerProxyProvider,
-                                   final Provider<AnalyticErrorWriter> analyticErrorWriterProvider,
-                                   final TaskContextFactory taskContextFactory,
-                                   final NodeInfo nodeInfo,
-                                   final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
-                                   final DetectionConsumerFactory detectionConsumerFactory,
-                                   final SearchRequestFactory searchRequestFactory,
-                                   final ExpressionContextFactory expressionContextFactory,
-                                   final SecurityContext securityContext,
-                                   final ExecutionScheduleDao executionScheduleDao,
-                                   final DuplicateCheckFactory duplicateCheckFactory,
-                                   final DuplicateCheckDirs duplicateCheckDirs,
-                                   final Provider<DocRefInfoService> docRefInfoServiceProvider,
-                                   final ExpressionPredicateFactory expressionPredicateFactory,
-                                   final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider,
-                                   final WordListProvider wordListProvider) {
-        super(executorProvider,
-                analyticErrorWriterProvider,
-                taskContextFactory,
-                nodeInfo,
-                securityContext,
-                executionScheduleDao,
-                docRefInfoServiceProvider,
-                "analytic rule",
-                errorReceiverProxyProvider);
+    ScheduledQueryAnalyticExecutable(final AnalyticRuleStore analyticRuleStore,
+                                     final ResultStoreManager searchResponseCreatorManager,
+                                     final Provider<DetectionConsumerProxy> detectionConsumerProxyProvider,
+                                     final Provider<AnalyticErrorWriter> analyticErrorWriterProvider,
+                                     final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
+                                     final DetectionConsumerFactory detectionConsumerFactory,
+                                     final SearchRequestFactory searchRequestFactory,
+                                     final ExpressionContextFactory expressionContextFactory,
+                                     final DuplicateCheckFactory duplicateCheckFactory,
+                                     final DuplicateCheckDirs duplicateCheckDirs,
+                                     final ExpressionPredicateFactory expressionPredicateFactory,
+                                     final Provider<AnalyticUiDefaultConfig> analyticUiDefaultConfigProvider,
+                                     final WordListProvider wordListProvider) {
+        super(analyticErrorWriterProvider, errorReceiverProxyProvider);
         this.analyticRuleStore = analyticRuleStore;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.detectionConsumerProxyProvider = detectionConsumerProxyProvider;
@@ -143,13 +125,13 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
     }
 
     @Override
-    protected ExecutionResult innerProcess(final AnalyticRuleDoc doc,
-                                           final Trigger trigger,
-                                           final Instant executionTime,
-                                           final Instant effectiveExecutionTime,
-                                           final ExecutionSchedule executionSchedule,
-                                           final ExecutionTracker currentTracker,
-                                           ExecutionResult executionResult) {
+    public ExecutionResult run(final AnalyticRuleDoc doc,
+                               final Trigger trigger,
+                               final Instant executionTime,
+                               final Instant effectiveExecutionTime,
+                               final ExecutionSchedule executionSchedule,
+                               final ExecutionTracker currentTracker,
+                               ExecutionResult executionResult) {
         try {
             final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
 
@@ -321,7 +303,7 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
     }
 
     @Override
-    protected void postExecuteTidyUp(final List<AnalyticRuleDoc> analyticDocs) {
+    public void postExecuteTidyUp(final List<AnalyticRuleDoc> analyticDocs) {
         // Start by finding a set of UUIDs for existing rule checking stores.
         final List<String> duplicateStoreUuids = duplicateCheckDirs.getAnalyticRuleUUIDList();
 
@@ -330,18 +312,23 @@ public class ScheduledQueryAnalyticExecutor extends AbstractScheduledQueryExecut
     }
 
     @Override
-    protected DocRef getDocRef(final AnalyticRuleDoc doc) {
+    public DocRef getDocRef(final AnalyticRuleDoc doc) {
         return doc.asDocRef();
     }
 
     @Override
-    protected AnalyticRuleDoc reload(final AnalyticRuleDoc doc) {
+    public AnalyticRuleDoc reload(final AnalyticRuleDoc doc) {
         return analyticRuleStore.readDocument(doc.asDocRef());
     }
 
     @Override
     public String getIdentity(final AnalyticRuleDoc doc) {
         return RuleUtil.getRuleIdentity(doc);
+    }
+
+    @Override
+    public String getProcessType() {
+        return "analytic rule";
     }
 
     @Override

@@ -153,7 +153,8 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     }
 
     /**
-     * The includeRuleDocumentation field determines whether a rule's documentation will be included in any detections that it produces.
+     * The includeRuleDocumentation field determines whether a rule's documentation will be included in
+     * any detections that it produces.
      * @return boolean value of includeRuleDocumentation
      */
     public boolean isIncludeRuleDocumentation() {

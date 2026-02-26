@@ -17,6 +17,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.api.NotificationState;
+import stroom.analytics.impl.ScheduledExecutorService.ExecutionResult;
 import stroom.analytics.rule.impl.ReportStore;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionTracker;
@@ -36,9 +37,7 @@ import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.meta.api.MetaProperties;
-import stroom.node.api.NodeInfo;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.DestroyReason;
@@ -61,9 +60,6 @@ import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.ref.ErrorConsumer;
-import stroom.security.api.SecurityContext;
-import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.ReportUiDefaultConfig;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
@@ -84,7 +80,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.UncheckedIOException;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -93,7 +88,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
+public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReportExecutor.class);
 
@@ -112,13 +107,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
     private final Provider<EmailSender> emailSenderProvider;
 
     @Inject
-    public ReportExecutor(final ExecutorProvider executorProvider,
-                          final Provider<AnalyticErrorWriter> analyticErrorWriterProvider,
-                          final TaskContextFactory taskContextFactory,
-                          final NodeInfo nodeInfo,
-                          final SecurityContext securityContext,
-                          final ExecutionScheduleDao executionScheduleDao,
-                          final Provider<DocRefInfoService> docRefInfoServiceProvider,
+    public ReportExecutor(final Provider<AnalyticErrorWriter> analyticErrorWriterProvider,
                           final ReportStore reportStore,
                           final ResultStoreManager searchResponseCreatorManager,
                           final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
@@ -130,15 +119,7 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
                           final Store streamStore,
                           final NotificationStateService notificationStateService,
                           final Provider<EmailSender> emailSenderProvider) {
-        super(executorProvider,
-                analyticErrorWriterProvider,
-                taskContextFactory,
-                nodeInfo,
-                securityContext,
-                executionScheduleDao,
-                docRefInfoServiceProvider,
-                "report",
-                errorReceiverProxyProvider);
+        super(analyticErrorWriterProvider, errorReceiverProxyProvider);
         this.reportStore = reportStore;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
         this.searchRequestFactory = searchRequestFactory;
@@ -152,13 +133,13 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
     }
 
     @Override
-    protected ExecutionResult innerProcess(final ReportDoc doc,
-                                           final Trigger trigger,
-                                           final Instant executionTime,
-                                           final Instant effectiveExecutionTime,
-                                           final ExecutionSchedule executionSchedule,
-                                           final ExecutionTracker currentTracker,
-                                           final ExecutionResult executionResult) {
+    public ExecutionResult run(final ReportDoc doc,
+                               final Trigger trigger,
+                               final Instant executionTime,
+                               final Instant effectiveExecutionTime,
+                               final ExecutionSchedule executionSchedule,
+                               final ExecutionTracker currentTracker,
+                               final ExecutionResult executionResult) {
         final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
 
         final SearchRequestSource searchRequestSource = SearchRequestSource
@@ -247,18 +228,23 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
     }
 
     @Override
-    protected DocRef getDocRef(final ReportDoc doc) {
+    public DocRef getDocRef(final ReportDoc doc) {
         return doc.asDocRef();
     }
 
     @Override
-    protected ReportDoc reload(final ReportDoc doc) {
+    public ReportDoc reload(final ReportDoc doc) {
         return reportStore.readDocument(doc.asDocRef());
     }
 
     @Override
     public String getIdentity(final ReportDoc doc) {
         return RuleUtil.getRuleIdentity(doc);
+    }
+
+    @Override
+    public String getProcessType() {
+        return "report";
     }
 
     private ReportFile createFile(final ReportDoc reportDoc,

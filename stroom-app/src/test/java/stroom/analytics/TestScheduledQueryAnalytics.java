@@ -17,7 +17,8 @@
 package stroom.analytics;
 
 import stroom.analytics.impl.ExecutionScheduleDao;
-import stroom.analytics.impl.ScheduledQueryAnalyticExecutor;
+import stroom.analytics.impl.ScheduledExecutorService;
+import stroom.analytics.impl.ScheduledQueryAnalyticExecutable;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionHistory;
@@ -67,13 +68,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
 
     @Inject
-    private ScheduledQueryAnalyticExecutor analyticsExecutor;
+    private ScheduledQueryAnalyticExecutable analyticsExecutor;
     @Inject
     private AnalyticsDataSetup analyticsDataSetup;
     @Inject
     private NodeInfo nodeInfo;
     @Inject
     private ExecutionScheduleDao executionScheduleDao;
+    @Inject
+    private ScheduledExecutorService<AnalyticRuleDoc> scheduledExecutorService;
 
     @Test
     void testSingleEventScheduledQuery() {
@@ -117,7 +120,7 @@ class TestScheduledQueryAnalytics extends AbstractAnalyticsTest {
                 .build());
 
         // Now run the search process.
-        analyticsExecutor.exec();
+        scheduledExecutorService.exec(analyticsExecutor);
 
         // As we have created alerts ensure we now have more streams.
         testDetectionsStream(expectedStreams, expectedRecords);

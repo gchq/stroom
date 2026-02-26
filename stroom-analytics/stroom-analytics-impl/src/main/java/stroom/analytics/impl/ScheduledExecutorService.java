@@ -48,7 +48,9 @@ import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.scheduler.Schedule;
 
+import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
 
 import java.time.Instant;
 import java.util.List;
@@ -56,68 +58,176 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public abstract class ScheduledExecutorService<T> implements HasUserDependencies {
+/**
+ * Service responsible for executing {@link ScheduledExecutable} instances based on
+ * {@link stroom.analytics.shared.ExecutionSchedule}.
+ *
+ * <p>
+ * This service coordinates:
+ *     <ul>
+ *         <li>Loading scheduled documents</li>
+ *         <li>Evaluating schedules and execution bounds</li>
+ *         <li>Running executions under the correct security context</li>
+ *         <li>Recording execution history and tracker updates</li>
+ *     </ul>
+ * </p>
+ *
+ * <p>
+ *     Execution is performed asynchronously using a {@link stroom.task.api.ExecutorProvider}
+ *     but constrained to a single-threaded execution per document and per schedule to ensure
+ *     deterministic behaviour.
+ * </p>
+ *
+ * <p>
+ *     The service also implements {@link stroom.util.shared.HasUserDependencies} to expose
+ *     run-as user dependencies for user management and auditing.
+ * </p>
+ *
+ * @param <T> The document type being scheduled and executed.
+ */
+@Singleton
+public final class ScheduledExecutorService<T> implements HasUserDependencies {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ScheduledExecutorService.class);
 
     private final ExecutionScheduleDao executionScheduleDao;
-
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
     private final NodeInfo nodeInfo;
     private final SecurityContext securityContext;
     private final Provider<DocRefInfoService> docRefInfoServiceProvider;
-    private final String processType;
 
-    protected ScheduledExecutorService(final ExecutorProvider executorProvider,
-                                       final TaskContextFactory taskContextFactory,
-                                       final NodeInfo nodeInfo,
-                                       final SecurityContext securityContext,
-                                       final ExecutionScheduleDao executionScheduleDao,
-                                       final Provider<DocRefInfoService> docRefInfoServiceProvider,
-                                       final String processType) {
+    /**
+     * Creates a new scheduled executor service.
+     *
+     * @param executorProvider          Provider for executor services.
+     * @param taskContextFactory        Factory for creating task contexts.
+     * @param nodeInfo                  Information about the current node.
+     * @param securityContext           Security context used for permission checks and run-as execution.
+     * @param executionScheduleDao      DAO for execution schedules, trackers, and history.
+     * @param docRefInfoServiceProvider Provider for document reference decoration.
+     */
+    @Inject
+    ScheduledExecutorService(final ExecutorProvider executorProvider,
+                             final TaskContextFactory taskContextFactory,
+                             final NodeInfo nodeInfo,
+                             final SecurityContext securityContext,
+                             final ExecutionScheduleDao executionScheduleDao,
+                             final Provider<DocRefInfoService> docRefInfoServiceProvider) {
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.nodeInfo = nodeInfo;
         this.securityContext = securityContext;
         this.executionScheduleDao = executionScheduleDao;
         this.docRefInfoServiceProvider = docRefInfoServiceProvider;
-        this.processType = processType;
     }
 
-    void outerProcess(final T doc,
-                      final Trigger trigger,
-                      final Instant executionTime,
-                      final Instant effectiveExecutionTime,
-                      final ExecutionSchedule executionSchedule,
-                      final ExecutionTracker currentTracker,
-                      final TaskContext taskContext) {
-        process(doc, trigger, executionTime, effectiveExecutionTime, executionSchedule, currentTracker);
+    /**
+     * Executes all scheduled items for the supplied {@link ScheduledExecutable}
+     *
+     * <p>
+     * This method:
+     *     <ul>
+     *         <li>Loads all candidate documents</li>
+     *         <li>Processes each document sequentially</li>
+     *         <li>Delegates execution to schedule-specific tasks</li>
+     *         <li>Performs post-execution tidy-up</li>
+     *     </ul>
+     * </p>
+     *
+     * <p>
+     *     Execution is resilient to individual document failures and will continue
+     *     processing remaining documents where possible.
+     * </p>
+     *
+     * @param scheduledExecutable The executable providing scheduling logic and execution behaviour.
+     */
+    public void exec(final ScheduledExecutable<T> scheduledExecutable) {
+        final TaskContext taskContext = taskContextFactory.current();
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+        try {
+            info(() -> "Starting scheduled " + scheduledExecutable.getProcessType() + " processing");
+
+            // Load scheduled items.
+            final List<T> docs = loadScheduledItems(scheduledExecutable);
+
+            info(() -> "Processing " + LogUtil.namedCount("scheduled " + scheduledExecutable.getProcessType(),
+                    NullSafe.size(docs)));
+            final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
+            for (final T doc : docs) {
+                final Runnable runnable = createRunnable(doc, taskContext, scheduledExecutable);
+                try {
+                    workQueue.exec(runnable);
+                } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    throw e;
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
+                }
+            }
+
+            // Join.
+            workQueue.join();
+
+            scheduledExecutable.postExecuteTidyUp(docs);
+
+            info(() ->
+                    LogUtil.message("Finished scheduled {} processing in {}",
+                            scheduledExecutable.getProcessType(),
+                            logExecutionTime));
+        } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
+            LOGGER.debug("Task terminated", e);
+            LOGGER.debug(() ->
+                    LogUtil.message("Scheduled {} processing terminated after {}",
+                            scheduledExecutable.getProcessType(),
+                            logExecutionTime));
+        } catch (final RuntimeException e) {
+            LOGGER.error(() ->
+                    LogUtil.message("Error during scheduled {} processing: {}",
+                            scheduledExecutable.getProcessType(),
+                            e.getMessage()), e);
+        }
     }
 
-    protected abstract ExecutionResult innerProcess(final T doc,
-                                                    final Trigger trigger,
-                                                    final Instant executionTime,
-                                                    final Instant effectiveExecutionTime,
-                                                    final ExecutionSchedule executionSchedule,
-                                                    final ExecutionTracker currentTracker,
-                                                    final ExecutionResult executionResult);
-
-    final boolean process(final T doc,
-                          final Trigger trigger,
-                          final Instant executionTime,
-                          final Instant effectiveExecutionTime,
-                          final ExecutionSchedule executionSchedule,
-                          final ExecutionTracker currentTracker) {
+    /**
+     * Executes a single scheduled run for a document.
+     * <p>
+     * This method:
+     *     <ul>
+     *         <li>Invokes the executable's processing logic</li>
+     *         <li>Calculates and persists the next execution time</li>
+     *         <li>Updates execution trackers</li>
+     *         <li>Disables schedules on unrecoverable errors</li>
+     *         <li>Records execution history</li>
+     *     </ul>
+     * </p>
+     *
+     * @param doc                    The document being executed.
+     * @param trigger                The trigger defining the schedule.
+     * @param executionTime          The actual execution time.
+     * @param effectiveExecutionTime The logical execution time for the schedule.
+     * @param executionSchedule      The execution schedule.
+     * @param currentTracker         The current execution tracker, if any.
+     * @param scheduledExecutable    The executable implementation.
+     */
+    private void process(final T doc,
+                         final Trigger trigger,
+                         final Instant executionTime,
+                         final Instant effectiveExecutionTime,
+                         final ExecutionSchedule executionSchedule,
+                         final ExecutionTracker currentTracker,
+                         final ScheduledExecutable<T> scheduledExecutable) {
         LOGGER.debug(() -> LogUtil.message(
                 "Executing: {} with executionTime: {}, effectiveExecutionTime: {}, currentTracker: {}",
-                getDocRef(doc).toShortString(), executionTime, effectiveExecutionTime, currentTracker));
+                scheduledExecutable.getDocRef(doc).toShortString(),
+                executionTime,
+                effectiveExecutionTime,
+                currentTracker));
 
-        boolean success = false;
         ExecutionResult executionResult = new ExecutionResult(null, null);
 
         try {
-            executionResult = innerProcess(doc,
+            executionResult = scheduledExecutable.run(doc,
                     trigger,
                     executionTime,
                     effectiveExecutionTime,
@@ -147,7 +257,6 @@ public abstract class ScheduledExecutorService<T> implements HasUserDependencies
 
             if (executionResult.status() == null) {
                 executionResult = new ExecutionResult("Complete", executionResult.message());
-                success = true;
             }
 
         } catch (final Exception e) {
@@ -155,16 +264,15 @@ public abstract class ScheduledExecutorService<T> implements HasUserDependencies
 
             try {
                 LOGGER.debug(e::getMessage, e);
-                log(Severity.ERROR, e.getMessage(), e);
+                scheduledExecutable.log(Severity.ERROR, e.getMessage(), e);
             } catch (final RuntimeException e2) {
                 LOGGER.error(e2::getMessage, e2);
             }
 
             // Disable future execution if the error was not an interrupted exception.
-            if (!(e instanceof InterruptedException) &&
-                !(e instanceof UncheckedInterruptedException)) {
+            if (!(e instanceof UncheckedInterruptedException)) {
                 // Disable future execution.
-                LOGGER.info(() -> LogUtil.message("Disabling: {}", getIdentity(doc)));
+                LOGGER.info(() -> LogUtil.message("Disabling: {}", scheduledExecutable.getIdentity(doc)));
                 executionScheduleDao.updateExecutionSchedule(executionSchedule.copy().enabled(false).build());
             }
 
@@ -175,89 +283,52 @@ public abstract class ScheduledExecutorService<T> implements HasUserDependencies
                     effectiveExecutionTime,
                     executionResult);
         }
-
-        return success;
-    }
-
-    protected void log(final Severity severity,
-                       final String message,
-                       final Throwable e) {
-        LOGGER.error(message, e);
-    }
-
-    final public void exec() {
-        final TaskContext taskContext = taskContextFactory.current();
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        try {
-            info(() -> "Starting scheduled " + processType + " processing");
-
-            // Load scheduled items.
-            final List<T> docs = loadScheduledItems();
-
-            info(() -> "Processing " + LogUtil.namedCount("scheduled " + processType, NullSafe.size(docs)));
-            final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
-            for (final T doc : docs) {
-                final Runnable runnable = createRunnable(doc, taskContext);
-                try {
-                    workQueue.exec(runnable);
-                } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
-                    LOGGER.debug(e::getMessage, e);
-                    throw e;
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e::getMessage, e);
-                }
-            }
-
-            // Join.
-            workQueue.join();
-
-            postExecuteTidyUp(docs);
-
-            info(() ->
-                    LogUtil.message("Finished scheduled {} processing in {}", processType, logExecutionTime));
-        } catch (final TaskTerminatedException | UncheckedInterruptedException e) {
-            LOGGER.debug("Task terminated", e);
-            LOGGER.debug(() ->
-                    LogUtil.message("Scheduled {} processing terminated after {}", processType, logExecutionTime));
-        } catch (final RuntimeException e) {
-            LOGGER.error(() ->
-                    LogUtil.message("Error during scheduled {} processing: {}", processType, e.getMessage()), e);
-        }
     }
 
     /**
-     * Called at the end of execution to perform any tidy up operations.
+     * Creates a runnable task for executing a scheduled document.
      *
-     * @param analyticDocs The list of all known analyticDocs for this executor.
+     * @param doc                 The document to execute.
+     * @param parentTaskContext   The parent task context.
+     * @param scheduledExecutable The executable implementation.
+     * @return A runnable that performs scheduled execution.
      */
-    protected void postExecuteTidyUp(final List<T> analyticDocs) {
-
-    }
-
     private Runnable createRunnable(final T doc,
-                                    final TaskContext parentTaskContext) {
+                                    final TaskContext parentTaskContext,
+                                    final ScheduledExecutable<T> scheduledExecutable) {
         return () -> {
             if (!parentTaskContext.isTerminated()) {
                 try {
-                    execScheduledItem(doc, parentTaskContext);
+                    execScheduledItem(doc, parentTaskContext, scheduledExecutable);
                 } catch (final RuntimeException e) {
                     LOGGER.error(() ->
                             LogUtil.message("Error executing {}: {}",
-                                    processType,
-                                    getIdentity(doc)), e);
+                                    scheduledExecutable.getProcessType(),
+                                    scheduledExecutable.getIdentity(doc)), e);
                 }
             }
         };
     }
 
-    protected abstract DocRef getDocRef(T doc);
-
+    /**
+     * Executes all schedules associated with a single document.
+     *
+     * <p>
+     * Schedules are executed under their configured run-as user and
+     * within isolated task contexts.
+     * </p>
+     *
+     * @param doc                 The document being scheduled.
+     * @param parentTaskContext   The parent task context.
+     * @param scheduledExecutable The executable implementation.
+     */
     private void execScheduledItem(final T doc,
-                                   final TaskContext parentTaskContext) {
-        final DocRef docRef = getDocRef(doc);
+                                   final TaskContext parentTaskContext,
+                                   final ScheduledExecutable<T> scheduledExecutable) {
+        final DocRef docRef = scheduledExecutable.getDocRef(doc);
 
-        // Load schedules for the scheduled items. Do this as the processing user as permission is required to load associated
-        // users.
+        // Load schedules for the scheduled items. Do this as the processing user as permission is required to
+        // load associated users.
         final ResultPage<ExecutionSchedule> executionSchedules = securityContext.asProcessingUserResult(() -> {
             final ExecutionScheduleRequest request = ExecutionScheduleRequest
                     .builder()
@@ -280,14 +351,17 @@ public abstract class ScheduledExecutorService<T> implements HasUserDependencies
                     securityContext.asUser(executionSchedule.getRunAsUser(), () -> securityContext.useAsRead(() -> {
                         boolean success = true;
                         while (success && !parentTaskContext.isTerminated()) {
-                            success = executeIfScheduled(doc, parentTaskContext, executionSchedule);
+                            success = executeIfScheduled(doc,
+                                    parentTaskContext,
+                                    executionSchedule,
+                                    scheduledExecutable);
                         }
                     }));
                 } catch (final RuntimeException e) {
                     LOGGER.error(() ->
                             LogUtil.message("Error executing {}: {}",
-                                    processType,
-                                    getIdentity(doc)), e);
+                                    scheduledExecutable.getProcessType(),
+                                    scheduledExecutable.getIdentity(doc)), e);
                 }
             };
             workQueue.exec(runnable);
@@ -295,15 +369,19 @@ public abstract class ScheduledExecutorService<T> implements HasUserDependencies
         workQueue.join();
     }
 
-    protected abstract T reload(T doc);
-
-    boolean shouldRun(final T doc) {
-        return true;
-    }
-
+    /**
+     * Determines whether a schedule should execute and performs execution if required.
+     *
+     * @param doc                 The document being executed.
+     * @param parentTaskContext   The parent task context.
+     * @param executionSchedule   The execution schedule.
+     * @param scheduledExecutable The executable implementation.
+     * @return {@code true} if execution should continue, otherwise {@code false}.
+     */
     private boolean executeIfScheduled(final T doc,
                                        final TaskContext parentTaskContext,
-                                       final ExecutionSchedule executionSchedule) {
+                                       final ExecutionSchedule executionSchedule,
+                                       final ScheduledExecutable<T> scheduledExecutable) {
         final Optional<ExecutionSchedule> optionalSchedule = executionScheduleDao
                 .fetchScheduleById(executionSchedule.getId());
         if (optionalSchedule.isEmpty()) {
@@ -315,27 +393,36 @@ public abstract class ScheduledExecutorService<T> implements HasUserDependencies
         }
 
         // Reload the scheduled item in case it has changed since last executed.
-        final T reloaded = reload(doc);
+        final T reloaded = scheduledExecutable.reload(doc);
 
-        if (reloaded == null || !shouldRun(doc)) {
+        if (reloaded == null || !scheduledExecutable.shouldRun(doc)) {
             return false;
         }
 
         return taskContextFactory.childContextResult(
                 parentTaskContext,
-                "Scheduled " + processType + ": " +
-                getIdentity(reloaded),
+                "Scheduled " + scheduledExecutable.getProcessType() + ": " +
+                scheduledExecutable.getIdentity(reloaded),
                 taskContext -> execute(
                         reloaded,
                         schedule,
-                        taskContext)).get();
+                        taskContext,
+                        scheduledExecutable)).get();
     }
 
-    public abstract String getIdentity(final T doc);
-
+    /**
+     * Executes a schedule within a child task context.
+     *
+     * @param doc                 The document being executed.
+     * @param executionSchedule   The execution schedule.
+     * @param taskContext         The task context.
+     * @param scheduledExecutable The executable implementation.
+     * @return Always {@code false} to indicate no repeat execution within this invocation.
+     */
     private boolean execute(final T doc,
                             final ExecutionSchedule executionSchedule,
-                            final TaskContext taskContext) {
+                            final TaskContext taskContext,
+                            final ScheduledExecutable<T> scheduledExecutable) {
         final ExecutionTracker currentTracker = executionScheduleDao.getTracker(executionSchedule).orElse(null);
         final Schedule schedule = executionSchedule.getSchedule();
         final ScheduleBounds scheduleBounds = executionSchedule.getScheduleBounds();
@@ -367,26 +454,47 @@ public abstract class ScheduledExecutorService<T> implements HasUserDependencies
                                    "' with effective time: " +
                                    DateUtil.createNormalDateTimeString(effectiveExecutionTime.toEpochMilli()));
 
-            outerProcess(
-                    doc,
+            scheduledExecutable.beforeProcess(doc,
                     trigger,
                     executionTime,
                     effectiveExecutionTime,
                     executionSchedule,
                     currentTracker,
-                    taskContext);
+                    taskContext,
+                    (t) -> {
+                        process(doc,
+                                trigger,
+                                executionTime,
+                                effectiveExecutionTime,
+                                executionSchedule,
+                                currentTracker,
+                                scheduledExecutable);
+                        return doc;
+                    });
         }
         return false;
     }
 
-    final public List<UserDependency> getUserDependencies(final UserRef userRef) {
+    /**
+     * Returns user dependencies for scheduled executors configured to run as the given user.
+     *
+     * <p>
+     * Permission checks are enforced to ensure only authorised users may view dependencies.
+     * </p>
+     *
+     * @param userRef The user to check dependencies for.
+     * @return A list of user dependencies.
+     * @throws stroom.util.shared.PermissionException if the caller lacks permission.
+     */
+    @Override
+    public List<UserDependency> getUserDependencies(final UserRef userRef) {
         Objects.requireNonNull(userRef);
 
         if (!securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
             && !securityContext.isCurrentUser(userRef)) {
             throw new PermissionException(
                     userRef,
-                    "You do not have permission to view the " + processType + "s that have scheduled executors " +
+                    "You do not have permission to view scheduled executors " +
                     "configured to run-as user "
                     + userRef.toInfoString());
         }
@@ -412,10 +520,18 @@ public abstract class ScheduledExecutorService<T> implements HasUserDependencies
                 .toList();
     }
 
-    final void addExecutionHistory(final ExecutionSchedule executionSchedule,
-                                   final Instant executionTime,
-                                   final Instant effectiveExecutionTime,
-                                   final ExecutionResult executionResult) {
+    /**
+     * Records execution history for a completed execution.
+     *
+     * @param executionSchedule      The execution schedule.
+     * @param executionTime          The execution time.
+     * @param effectiveExecutionTime The effective execution time.
+     * @param executionResult        The execution result.
+     */
+    private void addExecutionHistory(final ExecutionSchedule executionSchedule,
+                                     final Instant executionTime,
+                                     final Instant effectiveExecutionTime,
+                                     final ExecutionResult executionResult) {
         try {
             final ExecutionHistory executionHistory = ExecutionHistory
                     .builder()
@@ -431,16 +547,27 @@ public abstract class ScheduledExecutorService<T> implements HasUserDependencies
         }
     }
 
-    protected abstract List<T> getDocs();
-
-    private List<T> loadScheduledItems() {
+    /**
+     * Loads all documents eligible for scheduled execution.
+     *
+     * @param scheduledExecutable The executable providing document access.
+     * @return The list of scheduled documents.
+     */
+    private List<T> loadScheduledItems(final ScheduledExecutable<T> scheduledExecutable) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        info(() -> LogUtil.message("Loading {}s", processType));
-        final List<T> list = getDocs();
-        info(() -> LogUtil.message("Finished loading {}s in {}", processType, logExecutionTime));
+        info(() -> LogUtil.message("Loading {}s", scheduledExecutable.getProcessType()));
+        final List<T> list = scheduledExecutable.getDocs();
+        info(() -> LogUtil.message("Finished loading {}s in {}",
+                scheduledExecutable.getProcessType(),
+                logExecutionTime));
         return list;
     }
 
+    /**
+     * Logs an informational message to both the logger and the current task context.
+     *
+     * @param messageSupplier Supplier providing the log message.
+     */
     private void info(final Supplier<String> messageSupplier) {
         LOGGER.info(messageSupplier);
         taskContextFactory.current().info(messageSupplier);
@@ -450,6 +577,12 @@ public abstract class ScheduledExecutorService<T> implements HasUserDependencies
     // --------------------------------------------------------------------------------
 
 
+    /**
+     * Represents the result of a single execution attempt.
+     *
+     * @param status  A short status string.
+     * @param message Optional descriptive message.
+     */
     public record ExecutionResult(String status, String message) {
 
         private static final ExecutionResult EMPTY = new ExecutionResult(null, null);
