@@ -29,6 +29,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Instant;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -80,6 +81,9 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
         this.defaultMimetype = config.getDefaultMimetype();
         this.assetCacheDir = pathCreator.toAppPath(config.getAssetCacheDir());
         this.clearAssetCacheOnStartup = config.isClearAssetCacheOnStartup();
+        if (clearAssetCacheOnStartup) {
+            LOGGER.info("Clearing visualisation asset cache on startup");
+        }
 
         try {
             if (!this.assetCacheDir.toFile().exists()) {
@@ -254,7 +258,7 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
         if (dotIndex != -1) {
             // Got an extension - look it up
             final String extension = path.substring(dotIndex + 1);
-            if (mimetypes.containsKey(extension)) {
+            if (mimetypes.containsKey(extension.toLowerCase(Locale.ROOT))) {
                 mimetype = mimetypes.get(extension);
             }
         }
@@ -302,7 +306,7 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
                         public @NonNull FileVisitResult visitFile(final @NonNull Path file,
                                                                   final @NonNull BasicFileAttributes attrs)
                                 throws IOException {
-
+                            LOGGER.info("Clearing file '{}' from visualisation asset cache", file);
                             Files.delete(file);
                             return FileVisitResult.CONTINUE;
                         }
@@ -312,7 +316,11 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
                                                                            final IOException exc)
                                 throws IOException {
 
-                            Files.delete(dir);
+                            // Don't delete the cache root directory
+                            if (!dir.toAbsolutePath().equals(assetCacheDir.toAbsolutePath())) {
+                                LOGGER.info("Clearing directory '{}' from visualisation asset cache", dir);
+                                Files.delete(dir);
+                            }
                             return FileVisitResult.CONTINUE;
                         }
                     });
@@ -325,8 +333,10 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
     public void init() throws ServletException {
         super.init();
         if (clearAssetCacheOnStartup) {
+            LOGGER.info("Clearing visualisation asset cache");
             clearCache();
         } else {
+            LOGGER.info("Deleting visualisation asset cache temporary files");
             deleteTempFiles();
         }
     }

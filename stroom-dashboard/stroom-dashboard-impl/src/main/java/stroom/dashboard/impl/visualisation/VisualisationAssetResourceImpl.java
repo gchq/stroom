@@ -30,6 +30,7 @@ import jakarta.inject.Provider;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.Locale;
 
 import static stroom.event.logging.rs.api.AutoLogged.OperationType.MANUALLY_LOGGED;
 
@@ -346,7 +347,7 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
                 .withSimpleLoggedResult(() -> {
                     try {
                         final String content = serviceProvider.get().getDraftContent(ownerDocId, path);
-                        final String extension = Files.getFileExtension(path);
+                        final String extension = Files.getFileExtension(path).toLowerCase(Locale.ROOT);
                         final VisualisationAssetConfig config = configProvider.get();
                         final String editorMode =
                                 config.getAceEditorModes().getOrDefault(extension, config.getDefaultAceEditorMode());
