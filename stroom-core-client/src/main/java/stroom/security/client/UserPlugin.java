@@ -19,7 +19,9 @@ package stroom.security.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.pathways.client.presenter.TracesPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserTabPresenter;
 import stroom.security.shared.AppPermission;
@@ -41,8 +43,9 @@ public class UserPlugin extends MonitoringPlugin<UserTabPresenter> {
     public UserPlugin(final EventBus eventBus,
                       final ContentManager contentManager,
                       final Provider<UserTabPresenter> presenterProvider,
-                      final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, presenterProvider, securityContext);
+                      final ClientSecurityContext securityContext,
+                      final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
         this.securityContext = securityContext;
     }
 
@@ -80,5 +83,10 @@ public class UserPlugin extends MonitoringPlugin<UserTabPresenter> {
                 .build();
         event.getMenuItems()
                 .addMenuItem(MenuKeys.USER_MENU, userProfileMenuItem);
+    }
+
+    @Override
+    public String getType() {
+        return UserTabPresenter.TAB_TYPE;
     }
 }

@@ -19,9 +19,11 @@ package stroom.monitoring.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.monitoring.client.presenter.DatabaseTablesMonitoringPresenter;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
@@ -40,8 +42,9 @@ public class DatabaseTablesMonitoringPlugin extends MonitoringPlugin<DatabaseTab
     @Inject
     public DatabaseTablesMonitoringPlugin(final EventBus eventBus, final ContentManager eventManager,
                                           final Provider<DatabaseTablesMonitoringPresenter> presenterProvider,
-                                          final ClientSecurityContext securityContext) {
-        super(eventBus, eventManager, presenterProvider, securityContext);
+                                          final ClientSecurityContext securityContext,
+                                          final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
     }
 
     @Override
@@ -66,5 +69,10 @@ public class DatabaseTablesMonitoringPlugin extends MonitoringPlugin<DatabaseTab
     @Override
     protected Action getOpenAction() {
         return null;
+    }
+
+    @Override
+    public String getType() {
+        return DatabaseTablesMonitoringPresenter.TAB_TYPE;
     }
 }

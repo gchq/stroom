@@ -20,8 +20,10 @@ import stroom.cache.client.presenter.CachePresenter;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
@@ -40,8 +42,9 @@ public class CacheMonitoringPlugin extends MonitoringPlugin<CachePresenter> {
     @Inject
     public CacheMonitoringPlugin(final EventBus eventBus, final ContentManager eventManager,
                                  final Provider<CachePresenter> presenterProvider,
-                                 final ClientSecurityContext securityContext) {
-        super(eventBus, eventManager, presenterProvider, securityContext);
+                                 final ClientSecurityContext securityContext,
+                                 final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
     }
 
     @Override
@@ -67,5 +70,10 @@ public class CacheMonitoringPlugin extends MonitoringPlugin<CachePresenter> {
     @Override
     protected Action getOpenAction() {
         return Action.GOTO_CACHES;
+    }
+
+    @Override
+    public String getType() {
+        return CachePresenter.TAB_TYPE;
     }
 }

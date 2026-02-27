@@ -19,7 +19,9 @@ package stroom.security.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.pathways.client.presenter.TracesPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
 import stroom.security.client.presenter.UserAndGroupsPresenter;
@@ -46,8 +48,9 @@ public class UsersAndGroupsPlugin extends MonitoringPlugin<UserAndGroupsPresente
     public UsersAndGroupsPlugin(final EventBus eventBus,
                                 final ContentManager contentManager,
                                 final Provider<UserAndGroupsPresenter> presenterProvider,
-                                final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, presenterProvider, securityContext);
+                                final ClientSecurityContext securityContext,
+                                final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
 
         registerHandler(getEventBus().addHandler(OpenUsersAndGroupsScreenEvent.getType(), event -> {
             open(userAndGroupsPresenter ->
@@ -86,5 +89,10 @@ public class UsersAndGroupsPlugin extends MonitoringPlugin<UserAndGroupsPresente
     @Override
     protected Action getOpenAction() {
         return Action.GOTO_USER_GROUPS;
+    }
+
+    @Override
+    public String getType() {
+        return UserAndGroupsPresenter.TAB_TYPE;
     }
 }

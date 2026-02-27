@@ -19,6 +19,7 @@ package stroom.monitoring.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.job.client.event.OpenJobNodeEvent;
 import stroom.job.client.presenter.JobPresenter;
 import stroom.job.shared.JobNode;
@@ -43,8 +44,9 @@ public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
     public JobListPlugin(final EventBus eventBus,
                          final ContentManager eventManager,
                          final Provider<JobPresenter> presenterProvider,
-                         final ClientSecurityContext securityContext) {
-        super(eventBus, eventManager, presenterProvider, securityContext);
+                         final ClientSecurityContext securityContext,
+                         final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
 
         registerHandler(getEventBus().addHandler(
                 OpenJobNodeEvent.getType(), openJobNodeEvent -> {
@@ -78,5 +80,10 @@ public class JobListPlugin extends MonitoringPlugin<JobPresenter> {
     @Override
     protected Action getOpenAction() {
         return Action.GOTO_JOBS;
+    }
+
+    @Override
+    public String getType() {
+        return JobPresenter.TAB_TYPE;
     }
 }

@@ -45,7 +45,7 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
     private static final String LABEL = "Content Store";
 
     /** Tab type for the content (what is this?) */
-    private static final String TAB_TYPE = "Content Store";
+    public static final String TAB_TYPE = "Content Store";
 
     /** ID of the presenter for the list of content packs */
     public static final String CONTENT_PACK_LIST = "CONTENT_PACK_LIST";

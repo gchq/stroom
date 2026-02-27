@@ -36,6 +36,7 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
     private final boolean fullScreen;
     private final CommonDocLinkTab selectedTab;
     private final Consumer<MyPresenterWidget<?>> callbackOnOpen;
+    private final Runnable callbackOnFailure;
     private final boolean duplicate;
 
     private OpenDocumentEvent(final DocRef docRef,
@@ -43,19 +44,21 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
                               final boolean fullScreen,
                               final CommonDocLinkTab selectedTab,
                               final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                              final Runnable callbackOnFailure,
                               final boolean duplicate) {
         this.docRef = docRef;
         this.forceOpen = forceOpen;
         this.fullScreen = fullScreen;
         this.selectedTab = selectedTab;
         this.callbackOnOpen = callbackOnOpen;
+        this.callbackOnFailure = callbackOnFailure;
         this.duplicate = duplicate;
     }
 
     public static void fire(final HasHandlers handlers,
                             final DocRef docRef,
                             final boolean forceOpen) {
-        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, false, null, null,
+        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, false, null, null, null,
                 false));
     }
 
@@ -63,7 +66,7 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
                             final DocRef docRef,
                             final boolean forceOpen,
                             final boolean fullScreen) {
-        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, null, null,
+        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, null, null, null,
                 false));
     }
 
@@ -72,7 +75,7 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
                             final boolean forceOpen,
                             final boolean fullScreen,
                             final CommonDocLinkTab selectedTab) {
-        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, selectedTab, null,
+        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, selectedTab, null, null,
                 false));
     }
 
@@ -82,7 +85,8 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
                             final boolean fullScreen,
                             final CommonDocLinkTab selectedTab,
                             final boolean duplicate) {
-        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, selectedTab, null, duplicate));
+        handlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, selectedTab, null, null,
+                duplicate));
     }
 
     public static Type<Handler> getType() {
@@ -120,6 +124,10 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
 
     public Consumer<MyPresenterWidget<?>> getCallbackOnOpen() {
         return callbackOnOpen;
+    }
+
+    public Optional<Runnable> getCallbackOnFailure() {
+        return Optional.ofNullable(callbackOnFailure);
     }
 
     public boolean isDuplicate() {
@@ -163,6 +171,7 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
         private boolean fullScreen = false;
         private CommonDocLinkTab selectedTab = null;
         private Consumer<MyPresenterWidget<?>> callbackOnOpen;
+        private Runnable callbackOnFailure;
         private boolean duplicate;
 
         private Builder(final HasHandlers hasHandlers, final DocRef docRef) {
@@ -185,6 +194,11 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
             return this;
         }
 
+        public Builder callbackOnFailure(final Runnable callbackOnFailure) {
+            this.callbackOnFailure = callbackOnFailure;
+            return this;
+        }
+
         /**
          * The sub/link tab to select on opening
          */
@@ -200,7 +214,7 @@ public class OpenDocumentEvent extends GwtEvent<Handler> {
 
         public void fire() {
             hasHandlers.fireEvent(new OpenDocumentEvent(docRef, forceOpen, fullScreen, selectedTab, callbackOnOpen,
-                    duplicate));
+                    callbackOnFailure, duplicate));
         }
     }
 
