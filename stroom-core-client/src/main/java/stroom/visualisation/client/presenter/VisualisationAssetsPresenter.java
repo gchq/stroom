@@ -585,7 +585,7 @@ public class VisualisationAssetsPresenter
                 doSelectionChangeAfterUpdateContentSuccess();
             }
         } else {
-            disableEditor();
+            doSelectionChangeAfterUpdateContentSuccess();
         }
     }
 

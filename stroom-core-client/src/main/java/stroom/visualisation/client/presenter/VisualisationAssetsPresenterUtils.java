@@ -223,7 +223,7 @@ public class VisualisationAssetsPresenterUtils {
     /**
      * Returns the path to the given item.
      * @param item The item to find the path to. Can be null if this is the root path.
-     * @return The path as a String, with / separators.
+     * @return The path as a String, with / separators. Never returns null.
      */
     static String getItemPath(final VisualisationAssetTreeItem item) {
         final List<String> pathList = new ArrayList<>();

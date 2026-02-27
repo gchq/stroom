@@ -18,6 +18,8 @@ package stroom.visualisation.client.presenter;
 
 import stroom.visualisation.client.presenter.assets.VisualisationAssetTreeItem;
 
+import java.util.Objects;
+
 /**
  * Holds the state of the asset content
  * and allows it to change based on the editor,
@@ -44,9 +46,14 @@ public class VisualisationAssetState {
     /**
      * Called when a new item is selected after the old one has
      * been saved.
+     * @param selectedItem The item that is selected. Can be null if nothing is selected.
+     * @param selectedItemPath The path to the selected item. Can be null if selectedItem is also null.
      */
     public void onSelectNewItemAfterSaveOldItem(final VisualisationAssetTreeItem selectedItem,
                                                 final String selectedItemPath) {
+        if (selectedItem != null) {
+            Objects.requireNonNull(selectedItemPath);
+        }
         editItem = selectedItem;
         pathToEditItem = selectedItemPath;
         dirtyAssetContent = false;
@@ -77,7 +84,7 @@ public class VisualisationAssetState {
 
     /**
      * Returns the tree item that is currently being edited.
-     * Can return null.
+     * Can return null, but never if isDirtyAndNeedsSaveToDraft() returns true.
      */
     public VisualisationAssetTreeItem getEditItem() {
         return editItem;
