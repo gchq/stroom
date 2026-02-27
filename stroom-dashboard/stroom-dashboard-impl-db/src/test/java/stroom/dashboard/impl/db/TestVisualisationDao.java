@@ -101,11 +101,31 @@ public class TestVisualisationDao {
             assertThat(timestamp).isNull();
             assertThat(Files.readString(tempFile)).isEqualTo("ABCDEFG");
             assertThat(timestamp).isNotEqualTo(Instant.EPOCH);
-
         } finally {
             Files.delete(tempFile);
         }
+    }
 
+    @Test
+    void testDelete() throws IOException {
+        final String ownerDocUuid = "doc123456";
+        final String userUuid = "user789";
+
+        VisualisationAssets assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
+        assertThat(assets.getAssets().size()).isEqualTo(0);
+        assertThat(assets.isDirty()).isEqualTo(false);
+
+        assetDao.updateNewFolder(userUuid, ownerDocUuid, "/folderToBeDeleted");
+        assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
+        assertThat(assets.getAssets().size()).isEqualTo(1);
+        assertThat(assets.getAssets().getFirst().getPath()).isEqualTo("/folderToBeDeleted/");
+
+        assetDao.updateDelete(userUuid, ownerDocUuid, "/folderToBeDeleted", true);
+        assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
+        if (!assets.getAssets().isEmpty()) {
+            System.err.println("Extra value is '" + assets.getAssets().getFirst().getPath() + "'");
+        }
+        assertThat(assets.getAssets().size()).isEqualTo(0);
     }
 
     @Test

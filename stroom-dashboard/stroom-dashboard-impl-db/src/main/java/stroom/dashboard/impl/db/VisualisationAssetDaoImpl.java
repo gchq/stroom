@@ -701,7 +701,7 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
 
                 // If deleting the root of a tree then more than 1 rows will be deleted
                 if (rowsDeleted < 1) {
-                    throw new DataAccessException("1 row should have been deleted for '"
+                    throw new DataAccessException("At least one row should have been deleted for '"
                                                   + deletedPath
                                                   + "' but " + rowsDeleted + " rows were deleted.");
                 }
@@ -711,34 +711,37 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                 // Make sure that an asset exists for the parent of the deleted asset.
                 // This will always be a folder.
                 final String parentPath = getParentPath(deletedPath);
+                if (!parentPath.isEmpty()) {
 
-                final byte[] hashParentPath = Hashing.sha256().hashString(parentPath, StandardCharsets.UTF_8).asBytes();
+                    final byte[] hashParentPath = Hashing.sha256().hashString(parentPath,
+                            StandardCharsets.UTF_8).asBytes();
 
-                final int rowsInserted = txnContext
-                        .insertInto(Tables.VISUALISATION_ASSETS_DRAFT)
-                        .columns(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID,
-                                Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID,
-                                Tables.VISUALISATION_ASSETS_DRAFT.ASSET_UUID,
-                                Tables.VISUALISATION_ASSETS_DRAFT.PATH,
-                                Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH,
-                                Tables.VISUALISATION_ASSETS_DRAFT.IS_FOLDER,
-                                Tables.VISUALISATION_ASSETS_DRAFT.DATA)
-                        .values(userUuid,
-                                ownerDocId,
-                                UUID.randomUUID().toString(),
-                                parentPath,
-                                hashParentPath,
-                                BYTE_TRUE,
-                                null)
-                        .onDuplicateKeyIgnore()
-                        .execute();
+                    final int rowsInserted = txnContext
+                            .insertInto(Tables.VISUALISATION_ASSETS_DRAFT)
+                            .columns(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID,
+                                    Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID,
+                                    Tables.VISUALISATION_ASSETS_DRAFT.ASSET_UUID,
+                                    Tables.VISUALISATION_ASSETS_DRAFT.PATH,
+                                    Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH,
+                                    Tables.VISUALISATION_ASSETS_DRAFT.IS_FOLDER,
+                                    Tables.VISUALISATION_ASSETS_DRAFT.DATA)
+                            .values(userUuid,
+                                    ownerDocId,
+                                    UUID.randomUUID().toString(),
+                                    parentPath,
+                                    hashParentPath,
+                                    BYTE_TRUE,
+                                    null)
+                            .onDuplicateKeyIgnore()
+                            .execute();
 
-                if (rowsInserted != 1) {
-                    throw new DataAccessException("1 row should have been inserted for '"
-                                                  + parentPath + "' but "
-                                                  + rowsInserted + " rows were inserted");
+
+                    if (rowsInserted != 1) {
+                        throw new DataAccessException("1 row should have been inserted for '"
+                                                      + parentPath + "' but "
+                                                      + rowsInserted + " rows were inserted");
+                    }
                 }
-
 
             });
         } catch (final DataAccessException e) {
