@@ -113,11 +113,11 @@ public class ProxyModule extends AbstractModule {
         ServletBinder.create(binder())
                 .bind(DebugServlet.class)
                 .bind(ProxyStatusServlet.class)
-                .bind(ProxyQueueMonitoringServlet.class)
                 .bind(ProxyWelcomeServlet.class)
                 .bind(ReceiveDataServlet.class);
 
         AdminServletBinder.create(binder())
+                .bind(ProxyQueueMonitoringServlet.class)
                 .bind(FilteredHealthCheckServlet.class);
 
         RestResourcesBinder.create(binder())
