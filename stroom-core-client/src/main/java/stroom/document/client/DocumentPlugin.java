@@ -48,17 +48,15 @@ import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
 
-    private final Map<DocRef, DocumentTabData> documentToTabDataMap = new HashMap<>();
-    private final Map<DocumentTabData, DocRef> tabDataToDocumentMap = new HashMap<>();
+    private final DocumentTabManager documentTabManager = new DocumentTabManager();
     private final ContentManager contentManager;
     private final ClientSecurityContext securityContext;
 
@@ -107,19 +105,28 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                                      final boolean forceOpen,
                                      final boolean fullScreen,
                                      final TaskMonitorFactory taskMonitorFactory) {
-        return open(docRef, forceOpen, fullScreen, null, null, taskMonitorFactory);
+        return open(docRef, forceOpen, fullScreen, null, null, false, taskMonitorFactory);
+    }
+
+    public MyPresenterWidget<?> open(final DocRef docRef,
+                                     final boolean forceOpen,
+                                     final boolean fullScreen,
+                                     final CommonDocLinkTab selectedLinkTab,
+                                     final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                     final TaskMonitorFactory taskMonitorFactory) {
+        return open(docRef, forceOpen, fullScreen, selectedLinkTab, callbackOnOpen, false, taskMonitorFactory);
     }
 
     /**
      * 4. This method will open a document and show it in the content pane with the desired
      * selectedTab
      */
-    @SuppressWarnings("unchecked")
     public MyPresenterWidget<?> open(final DocRef docRef,
                                      final boolean forceOpen,
                                      final boolean fullScreen,
                                      final CommonDocLinkTab selectedLinkTab,
                                      final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                     final boolean duplicate,
                                      final TaskMonitorFactory taskMonitorFactory) {
         MyPresenterWidget<?> presenter = null;
         final TaskMonitor taskMonitor = taskMonitorFactory.createTaskMonitor();
@@ -128,15 +135,16 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
             // Start spinning.
             taskMonitor.onStart(task);
 
-            final DocumentTabData existing = documentToTabDataMap.get(docRef);
+            final List<DocumentTabData> existing = documentTabManager.get(docRef);
             // If we already have a tab item for this document then make sure it is
             // visible.
-            if (existing != null) {
+            if (!existing.isEmpty() && !duplicate) {
+                final DocumentTabData existingTab = existing.get(0);
                 // Tell the content presenter to select this existing tab.
-                SelectContentTabEvent.fire(this, existing);
+                SelectContentTabEvent.fire(this, existingTab);
 
-                if (existing instanceof AbstractDocPresenter) {
-                    presenter = (AbstractDocPresenter<?, D>) existing;
+                if (existingTab instanceof AbstractDocPresenter) {
+                    presenter = (AbstractDocPresenter<?, D>) existingTab;
 
                     if (callbackOnOpen != null) {
                         callbackOnOpen.accept(presenter);
@@ -144,11 +152,11 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                 }
 
                 if (selectedLinkTab != null) {
-                    GWT.log("existing - " + existing.getClass().getName());
-                    if (existing instanceof DocTabPresenter<?, ?>) {
-                        ((DocTabPresenter<?, ?>) existing).selectCommonTab(selectedLinkTab);
-                    } else if (existing instanceof LinkTabPanelPresenter) {
-                        ((LinkTabPanelPresenter) existing).selectCommonTab(selectedLinkTab);
+                    GWT.log("existing - " + existingTab.getClass().getName());
+                    if (existingTab instanceof DocTabPresenter<?, ?>) {
+                        ((DocTabPresenter<?, ?>) existingTab).selectCommonTab(selectedLinkTab);
+                    } else if (existingTab instanceof LinkTabPanelPresenter) {
+                        ((LinkTabPanelPresenter) existingTab).selectCommonTab(selectedLinkTab);
                     }
                 }
             } else if (forceOpen) {
@@ -157,14 +165,27 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                 final MyPresenterWidget<?> documentEditPresenter = createEditor();
                 presenter = documentEditPresenter;
 
+                if (presenter instanceof final HasMultipleInstances hasMultipleInstances) {
+                    final List<DocumentTabData> tabs = documentTabManager.get(docRef);
+                    if (!tabs.isEmpty()) {
+                        final Optional<Integer> maxInstance = tabs.stream()
+                                .filter(t -> t instanceof HasMultipleInstances)
+                                .map(t -> (HasMultipleInstances) t)
+                                .map(HasMultipleInstances::getInstance)
+                                .max(Integer::compare);
+                        if (maxInstance.isPresent()) {
+                            hasMultipleInstances.setInstance(maxInstance.get() + 1);
+                        }
+                    }
+                }
+
                 if (documentEditPresenter != null) {
                     documentEditPresenter.setTaskMonitorFactory(taskMonitorFactory);
                 }
 
                 if (documentEditPresenter instanceof final DocumentTabData tabData) {
                     // Register the tab as being open.
-                    documentToTabDataMap.put(docRef, tabData);
-                    tabDataToDocumentMap.put(tabData, docRef);
+                    documentTabManager.put(docRef, tabData);
 
                     // Load the document and show the tab.
                     final CloseContentEvent.Handler closeHandler = new EntityCloseHandler(tabData);
@@ -192,14 +213,13 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                                 final MyPresenterWidget<?> documentEditPresenter,
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
-                                final boolean fullScreen,
                                 final TaskMonitorFactory taskMonitorFactory) {
         showDocument(
                 docRef,
                 documentEditPresenter,
                 closeHandler,
                 tabData,
-                fullScreen,
+                false,
                 null,
                 null,
                 taskMonitorFactory);
@@ -324,9 +344,8 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                     // Read the new document into this presenter.
                     presenter.read(newDocRef, saved, false);
                     // Record that the open document has been switched.
-                    documentToTabDataMap.remove(docRef);
-                    documentToTabDataMap.put(newDocRef, tabData);
-                    tabDataToDocumentMap.put(tabData, newDocRef);
+                    documentTabManager.remove(docRef, tabData);
+                    documentTabManager.put(newDocRef, tabData);
                 };
 
                 final Consumer<D> loadConsumer = document -> {
@@ -356,14 +375,14 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
 
     @Override
     public void save() {
-        for (final DocumentTabData tabData : tabDataToDocumentMap.keySet()) {
+        for (final DocumentTabData tabData : documentTabManager.getAll()) {
             save(tabData);
         }
     }
 
     @Override
     public boolean isDirty() {
-        for (final DocumentTabData tabData : tabDataToDocumentMap.keySet()) {
+        for (final DocumentTabData tabData : documentTabManager.getAll()) {
             if (tabData instanceof final AbstractDocPresenter<?, ?> presenter) {
                 if (presenter.isDirty()) {
                     return true;
@@ -374,9 +393,13 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
     }
 
     public boolean isDirty(final DocRef docRef) {
-        final DocumentTabData tabData = documentToTabDataMap.get(docRef);
-        if (tabData instanceof final AbstractDocPresenter<?, ?> presenter) {
-            return presenter.isDirty();
+        final List<DocumentTabData> tabDataList = documentTabManager.get(docRef);
+        for (final DocumentTabData tabData : tabDataList) {
+            if (tabData instanceof final AbstractDocPresenter<?, ?> presenter) {
+                if (presenter.isDirty()) {
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -564,27 +587,30 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
     @SuppressWarnings("unchecked")
     public void reload(final DocRef docRef) {
         // Get the existing tab data for this document.
-        final DocumentTabData tabData = documentToTabDataMap.get(docRef);
+        final List<DocumentTabData> tabDataList = documentTabManager.get(docRef);
         // If we have an document edit presenter then reload the document.
-        if (tabData instanceof AbstractDocPresenter<?, ?>) {
-            final AbstractDocPresenter<?, D> presenter = (AbstractDocPresenter<?, D>) tabData;
+        for (final DocumentTabData tabData : tabDataList) {
+            if (tabData instanceof AbstractDocPresenter<?, ?>) {
+                final AbstractDocPresenter<?, D> presenter = (AbstractDocPresenter<?, D>) tabData;
 
-            // Reload the document.
-            load(docRef,
-                    doc -> {
-                        // Read the reloaded document.
-                        presenter.read(getDocRef(doc), doc, presenter.isReadOnly());
-                    },
-                    throwable -> {
-                    },
-                    presenter);
+                // Reload the document.
+                load(docRef,
+                        doc -> {
+                            // Read the reloaded document.
+                            presenter.read(getDocRef(doc), doc, presenter.isReadOnly());
+                        },
+                        throwable -> {
+                        },
+                        presenter);
+            }
         }
     }
 
     public List<DocumentTabData> getOpenDocuments(final List<DocRef> docRefs) {
         return NullSafe.stream(docRefs)
-                .map(documentToTabDataMap::get)
+                .map(documentTabManager::get)
                 .filter(Objects::nonNull)
+                .flatMap(List::stream)
                 .collect(Collectors.toList());
     }
 
@@ -601,8 +627,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
 //    }
 
     private void removeTabData(final DocumentTabData tabData) {
-        final DocRef docRef = tabDataToDocumentMap.remove(tabData);
-        documentToTabDataMap.remove(docRef);
+        documentTabManager.remove(tabData.getDocRef(), tabData);
     }
 
     protected abstract MyPresenterWidget<?> createEditor();
