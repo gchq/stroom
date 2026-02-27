@@ -19,7 +19,9 @@ package stroom.task.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
+import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
@@ -42,8 +44,9 @@ public class TaskManagerPlugin extends MonitoringPlugin<TaskManagerPresenter> {
     public TaskManagerPlugin(final EventBus eventBus,
                              final ContentManager eventManager,
                              final Provider<TaskManagerPresenter> presenterProvider,
-                             final ClientSecurityContext securityContext) {
-        super(eventBus, eventManager, presenterProvider, securityContext);
+                             final ClientSecurityContext securityContext,
+                             final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
 
         registerHandler(getEventBus().addHandler(OpenTaskManagerEvent.getType(), event -> {
             open(taskManagerPresenter -> {
@@ -78,5 +81,10 @@ public class TaskManagerPlugin extends MonitoringPlugin<TaskManagerPresenter> {
     @Override
     protected Action getOpenAction() {
         return Action.GOTO_TASKS;
+    }
+
+    @Override
+    public String getType() {
+        return TaskManagerPresenter.TAB_TYPE;
     }
 }

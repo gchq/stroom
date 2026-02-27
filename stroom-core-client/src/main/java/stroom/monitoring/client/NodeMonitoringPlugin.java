@@ -19,11 +19,13 @@ package stroom.monitoring.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.job.shared.JobNode;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.event.OpenNodeEvent;
 import stroom.node.client.presenter.NodePresenter;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.presenter.BatchDocumentPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.IconColour;
 import stroom.svg.shared.SvgImage;
@@ -43,8 +45,9 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodePresenter> {
     public NodeMonitoringPlugin(final EventBus eventBus,
                                 final ContentManager eventManager,
                                 final Provider<NodePresenter> presenterProvider,
-                                final ClientSecurityContext securityContext) {
-        super(eventBus, eventManager, presenterProvider, securityContext);
+                                final ClientSecurityContext securityContext,
+                                final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
 
         registerHandler(getEventBus().addHandler(
                 OpenNodeEvent.getType(), openNodeEvent -> {
@@ -82,6 +85,11 @@ public class NodeMonitoringPlugin extends MonitoringPlugin<NodePresenter> {
     @Override
     protected Action getOpenAction() {
         return Action.GOTO_NODES;
+    }
+
+    @Override
+    public String getType() {
+        return NodePresenter.TAB_TYPE;
     }
 
 //    private void openNode(final String nodeName) {

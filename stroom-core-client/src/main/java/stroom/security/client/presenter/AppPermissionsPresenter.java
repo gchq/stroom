@@ -34,6 +34,8 @@ import javax.inject.Inject;
 public class AppPermissionsPresenter
         extends ContentTabPresenter<AppPermissionsView> {
 
+    public static final String TAB_TYPE = "ApplicationPermissions";
+
     private final AppUserPermissionsListPresenter appUserPermissionsListPresenter;
     private final AppPermissionsEditPresenter appPermissionsEditPresenter;
 
@@ -115,7 +117,7 @@ public class AppPermissionsPresenter
 
     @Override
     public String getType() {
-        return "ApplicationPermissions";
+        return TAB_TYPE;
     }
 
 

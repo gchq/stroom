@@ -19,10 +19,12 @@ package stroom.receive.rules.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.receive.content.client.presenter.ContentTemplateTabPresenter;
 import stroom.receive.content.shared.ContentTemplates;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.MenuItem;
@@ -41,8 +43,9 @@ public class ContentTemplatePlugin extends MonitoringPlugin<ContentTemplateTabPr
     public ContentTemplatePlugin(final EventBus eventBus,
                                  final ContentManager eventManager,
                                  final Provider<ContentTemplateTabPresenter> presenterProvider,
-                                 final ClientSecurityContext securityContext) {
-        super(eventBus, eventManager, presenterProvider, securityContext);
+                                 final ClientSecurityContext securityContext,
+                                 final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
     }
 
     @Override
@@ -73,5 +76,10 @@ public class ContentTemplatePlugin extends MonitoringPlugin<ContentTemplateTabPr
                 .command(this::open)
                 .tooltip("Manage the templated content that will be auto-created on data receipt.")
                 .build();
+    }
+
+    @Override
+    public String getType() {
+        return ContentTemplateTabPresenter.TAB_TYPE;
     }
 }

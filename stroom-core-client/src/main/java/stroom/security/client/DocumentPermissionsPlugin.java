@@ -21,6 +21,7 @@ import stroom.core.client.MenuKeys;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.Callback;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.document.client.event.ShowDocumentPermissionsEvent;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
@@ -28,6 +29,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.client.presenter.BatchDocumentPermissionsPresenter;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
 import stroom.security.shared.AppPermission;
@@ -54,8 +56,9 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
                                      final Provider<BatchDocumentPermissionsPresenter> presenterProvider,
                                      final AsyncProvider<DocumentUserPermissionsPresenter>
                                              documentPermissionsPresenterProvider,
-                                     final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, presenterProvider, securityContext);
+                                     final ClientSecurityContext securityContext,
+                                     final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
 
         // Add handler for showing the document permissions dialog in the explorer tree context menu
         eventBus.addHandler(ShowDocumentPermissionsEvent.getType(), event -> {
@@ -129,5 +132,10 @@ public class DocumentPermissionsPlugin extends MonitoringPlugin<BatchDocumentPer
     @Override
     protected Action getOpenAction() {
         return Action.GOTO_DOC_PERMS;
+    }
+
+    @Override
+    public String getType() {
+        return BatchDocumentPermissionsPresenter.TAB_TYPE;
     }
 }

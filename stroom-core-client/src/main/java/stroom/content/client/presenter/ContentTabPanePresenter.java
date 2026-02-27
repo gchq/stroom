@@ -29,6 +29,7 @@ import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent;
 import stroom.content.client.event.SelectContentTabEvent.SelectContentTabHandler;
 import stroom.data.table.client.Refreshable;
+import stroom.explorer.client.event.GetCurrentTabsEvent;
 import stroom.explorer.client.presenter.RecentItems;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.task.client.DefaultTaskMonitorFactory;
@@ -86,6 +87,11 @@ public class ContentTabPanePresenter
                         final Refreshable refreshable = (Refreshable) selectedTab;
                         refreshable.refresh();
                     }
+                }));
+
+        registerHandler(eventBus.addHandler(GetCurrentTabsEvent.getType(),
+                event -> {
+                    event.getCallback().accept(getTabs());
                 }));
 
         getView().setRightIndent(32);

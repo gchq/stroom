@@ -46,7 +46,7 @@ import java.util.List;
 public class UserTabPresenter
         extends ContentTabPresenter<LinkTabPanelView> {
 
-    private static final String TAB_TYPE = "User";
+    public static final String TAB_TYPE = "User";
 
     private static final TabData INFO_TAB = TabDataImpl.builder()
             .withLabel("Info")

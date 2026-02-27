@@ -20,8 +20,10 @@ import stroom.content.client.ContentPlugin;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.credentials.client.presenter.CredentialsPresenter;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -54,8 +56,9 @@ public class CredentialsPlugin extends ContentPlugin<CredentialsPresenter> {
     public CredentialsPlugin(final EventBus eventBus,
                              final ContentManager contentManager,
                              final Provider<CredentialsPresenter> presenterProvider,
-                             final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, presenterProvider);
+                             final ClientSecurityContext securityContext,
+                             final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, contentManager, presenterProvider, documentPluginRegistry);
         this.securityContext = securityContext;
     }
 
@@ -77,5 +80,10 @@ public class CredentialsPlugin extends ContentPlugin<CredentialsPresenter> {
                             .command(this::open)
                             .build());
         }
+    }
+
+    @Override
+    public String getType() {
+        return CredentialsPresenter.TAB_TYPE;
     }
 }
