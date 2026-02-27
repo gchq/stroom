@@ -184,7 +184,8 @@ public class TabSessionManager extends Plugin implements TaskMonitorFactory, Has
         final OpenDocumentEvent.Builder builder = OpenDocumentEvent.builder(this, docRefs.get(index));
         if (child != null) {
             builder.callbackOnOpen(p -> child.fire())
-                    .callbackOnFailure(child::fire);
+                    .callbackOnFailure(child::fire)
+                    .duplicate(true);
         }
 
         return buildOpenDocumentEvents(docRefs, index - 1, builder);
