@@ -119,6 +119,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                                      final boolean fullScreen,
                                      final CommonDocLinkTab selectedLinkTab,
                                      Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                     final boolean duplicate,
                                      final TaskMonitorFactory taskMonitorFactory) {
         if (callbackOnOpen == null) {
             callbackOnOpen = presenter -> {
@@ -128,7 +129,8 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
             };
         }
 
-        return super.open(docRef, forceOpen, fullScreen, selectedLinkTab, callbackOnOpen, taskMonitorFactory);
+        return super.open(docRef, forceOpen, fullScreen, selectedLinkTab, callbackOnOpen, duplicate,
+                taskMonitorFactory);
     }
 
     public void save(final DocumentTabData tabData) {
