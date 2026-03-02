@@ -268,6 +268,9 @@ public class PlanBFilter extends AbstractXMLFilter {
                     .orElse(metaHolder.getMeta().getCreateMs());
             effectiveTime = Instant.ofEpochMilli(ms);
             writer = shardWriters.createWriter(metaHolder.getMeta());
+            stagingValueOutputStream = new ByteBufferPoolOutput(byteBufferFactory,
+                    BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY, -1);
+            saxDocumentSerializer.setOutputStream(stagingValueOutputStream);
         } finally {
             super.startProcessing();
         }
@@ -276,10 +279,8 @@ public class PlanBFilter extends AbstractXMLFilter {
     @Override
     public void endProcessing() {
         try {
-            if (stagingValueOutputStream != null) {
-                LOGGER.debug("closing stagingValueOutputStream");
-                stagingValueOutputStream.close();
-            }
+            LOGGER.debug("closing stagingValueOutputStream");
+            stagingValueOutputStream.close();
         } finally {
             try {
                 writer.close();
@@ -320,7 +321,6 @@ public class PlanBFilter extends AbstractXMLFilter {
         }
     }
 
-
     @Override
     public void endPrefixMapping(final String prefix) throws SAXException {
         super.endPrefixMapping(prefix);
@@ -358,7 +358,7 @@ public class PlanBFilter extends AbstractXMLFilter {
      * @param atts      The element's attributes.
      * @throws SAXException The client may throw an exception during processing.
      * @see AbstractXMLFilter#startElement(String,
-     * String, String, Attributes)
+     *      String, String, Attributes)
      */
     @Override
     public void startElement(final String uri,
@@ -388,11 +388,9 @@ public class PlanBFilter extends AbstractXMLFilter {
             if (VALUE_ELEMENT.equals(elementName)) {
                 insideValueElement = true;
 
-                // Prepare to store new value.
-                stagingValueOutputStream =
-                        new ByteBufferPoolOutput(byteBufferFactory, BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY, -1);
+                // Reset the reusable staging stream ready for the new value.
+                stagingValueOutputStream.reset();
                 currentStringValue = null;
-                saxDocumentSerializer.setOutputStream(stagingValueOutputStream);
 
             } else if (insideValueElement) {
                 recordHavingSeenXmlContent();
@@ -429,7 +427,6 @@ public class PlanBFilter extends AbstractXMLFilter {
 
         super.startElement(uri, localName, qName, atts);
     }
-
 
     private void recordHavingSeenXmlContent() throws SAXException {
         // This is an xml element inside the <value></value> element so we need to treat it as XML content
@@ -468,7 +465,7 @@ public class PlanBFilter extends AbstractXMLFilter {
      * @param qName     The element's qualified (prefixed) key, or the empty string.
      * @throws SAXException The client may throw an exception during processing.
      * @see AbstractXMLFilter#endElement(String,
-     * String, String)
+     *      String, String)
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
@@ -512,10 +509,10 @@ public class PlanBFilter extends AbstractXMLFilter {
                     case MAP_ELEMENT ->
                         // capture the name of the map that the subsequent values will belong to. A ref
                         // stream can contain data for multiple maps
-                            mapName = contentBuffer.toString().toLowerCase(Locale.ROOT);
+                        mapName = contentBuffer.toString().toLowerCase(Locale.ROOT);
                     case KEY_ELEMENT ->
                         // the key for the KV pair
-                            key = contentBuffer.toString();
+                        key = contentBuffer.toString();
                     case FROM_ELEMENT -> {
                         // the start key for the key range
                         final String string = contentBuffer.toString();
@@ -747,7 +744,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                 error(LogUtil.message("Range state 'to' is null for {}", mapName));
             } else if (rangeFrom > rangeTo) {
                 error(LogUtil.message("Range 'from' must be less than or equal to range 'to' " +
-                                      "(from: {}, to: {}) for {}",
+                        "(from: {}, to: {}) for {}",
                         rangeFrom,
                         rangeTo,
                         mapName));
@@ -793,7 +790,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                             // prevent their use when using byteBuffer.putLong, -10, 0 & 10 will be
                             // stored in LMDB as 0, 10, -10
                             error(LogUtil.message("Temporal range state only supports non-negative numbers " +
-                                                  "(key: {}) for {}",
+                                    "(key: {}) for {}",
                                     longKey,
                                     mapName));
                         } else {
@@ -817,7 +814,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                     error(LogUtil.message("Temporal range 'to' is null for {}", mapName));
                 } else if (rangeFrom > rangeTo) {
                     error(LogUtil.message("Temporal range 'from' must be less than or equal to range 'to' " +
-                                          "(from: {}, to: {}) for {}",
+                            "(from: {}, to: {}) for {}",
                             rangeFrom,
                             rangeTo,
                             mapName));
@@ -826,7 +823,7 @@ public class PlanBFilter extends AbstractXMLFilter {
                     // use when using byteBuffer.putLong, -10, 0 & 10 will be stored in LMDB
                     // as 0, 10, -10
                     error(LogUtil.message("Temporal range only supports non-negative numbers " +
-                                          "(from: {}, to: {}) for {}",
+                            "(from: {}, to: {}) for {}",
                             rangeFrom,
                             rangeTo,
                             mapName));
@@ -943,7 +940,7 @@ public class PlanBFilter extends AbstractXMLFilter {
      * @param length The number of characters to use from the array.
      * @throws SAXException The client may throw an exception during processing.
      * @see AbstractXMLFilter#characters(char[],
-     * int, int)
+     *      int, int)
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
