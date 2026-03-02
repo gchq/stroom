@@ -119,9 +119,9 @@ public class AttributeMapFilterFactory {
             case RECEIPT_POLICY -> List.of(
                     dataReceiptPolicyAttrMapFilterFactoryProvider.get().create(),
                     feedExistenceAttributeMapFilterProvider.get());
+            case FEED_EXISTENCE -> List.of(feedExistenceAttributeMapFilterProvider.get());
             // Receiving everything
-            case RECEIVE_ALL -> List.of(
-                    feedExistenceAttributeMapFilterProvider.get());
+            case RECEIVE_ALL -> List.of(ReceiveAllAttributeMapFilter.getInstance());
             case REJECT_ALL -> List.of(RejectAllAttributeMapFilter.getInstance());
             case DROP_ALL -> List.of(DropAllAttributeMapFilter.getInstance());
         };

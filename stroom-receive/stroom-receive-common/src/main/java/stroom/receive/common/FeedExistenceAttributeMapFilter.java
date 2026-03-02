@@ -31,7 +31,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Checks whether the Feed in the {@link AttributeMap} exists or not.
- * If it does not exist then the filter will return false.
+ * If it does not exist then the filter will throw a {@link StroomStreamException} with
+ * statusCode {@link StroomStatusCode#FEED_IS_NOT_DEFINED}.
+ * <p>
  * If auto content creation is enabled on stroom, then when the check is performed,
  * the feed will be auto-created (if various conditions for that are met) and this
  * filter will then return true.
