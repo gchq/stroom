@@ -35,6 +35,7 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class PathTemplateConfig extends AbstractConfig implements IsProxyConfig {
 
+    public static final boolean DEFAULT_ENABLED_SATE = true;
     public static final TemplatingMode DEFAULT_TEMPLATING_MODE = TemplatingMode.REPLACE_UNKNOWN_PARAMS;
     public static final String DATE_AND_FEED_TEMPLATE = "${year}${month}${day}/${feed}";
     public static final PathTemplateConfig DEFAULT = new PathTemplateConfig(
@@ -50,18 +51,18 @@ public class PathTemplateConfig extends AbstractConfig implements IsProxyConfig 
     private final TemplatingMode templatingMode;
 
     public PathTemplateConfig(final String pathTemplate) {
-        this(true, pathTemplate, DEFAULT_TEMPLATING_MODE);
+        this(DEFAULT_ENABLED_SATE, pathTemplate, DEFAULT_TEMPLATING_MODE);
     }
 
     public PathTemplateConfig(final String pathTemplate,
                               final TemplatingMode templatingMode) {
-        this(true, pathTemplate, templatingMode);
+        this(DEFAULT_ENABLED_SATE, pathTemplate, templatingMode);
     }
 
-    public PathTemplateConfig(@JsonProperty("enabled") final boolean enabled,
+    public PathTemplateConfig(@JsonProperty("enabled") final Boolean enabled,
                               @JsonProperty("pathTemplate") final String pathTemplate,
                               @JsonProperty("templatingMode") final TemplatingMode templatingMode) {
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_ENABLED_SATE);
         this.templatingMode = Objects.requireNonNullElse(templatingMode, DEFAULT_TEMPLATING_MODE);
         this.pathTemplate = Objects.requireNonNullElse(pathTemplate, DATE_AND_FEED_TEMPLATE);
     }

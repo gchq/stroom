@@ -42,6 +42,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class ForwardFileDestinationImpl implements ForwardFileDestination {
 
@@ -104,7 +105,10 @@ public class ForwardFileDestinationImpl implements ForwardFileDestination {
             final String[] vars = pathCreator.findVars(pathTemplate);
             if (NullSafe.hasItems(vars)) {
                 staticBaseDir = null;
-                varsInTemplate = Set.of(vars);
+                // Do this rather than Set.of() because vars can be repeated in the arr
+                // which caused Set.of() to throw.
+                varsInTemplate = NullSafe.stream(vars)
+                        .collect(Collectors.toSet());
             } else {
                 staticBaseDir = resolveSubPath(pathTemplate);
                 FileUtil.ensureDirExists(staticBaseDir);
