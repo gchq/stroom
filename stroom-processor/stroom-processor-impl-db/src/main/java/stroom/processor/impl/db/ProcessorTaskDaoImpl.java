@@ -630,6 +630,20 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                 .fetchOne(0, int.class));
     }
 
+    @Override
+    public int countTasksForFilter(final int filterId, final String nodeName, final TaskStatus status) {
+        final Integer nodeId = processorNodeCache.getOrCreate(nodeName);
+        return JooqUtil.contextResult(
+                processorDbConnProvider, context ->
+                        context
+                                .selectCount()
+                                .from(PROCESSOR_TASK)
+                                .where(PROCESSOR_TASK.STATUS.eq(status.getPrimitiveValue()))
+                                .and(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(filterId))
+                                .and(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId))
+                                .fetchOne(0, int.class));
+    }
+
     private Result<Record> select(final DSLContext context,
                                   final Condition condition) {
         return context

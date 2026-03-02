@@ -139,6 +139,11 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
+    public int countTasksForFilter(final int filterId, final String nodeName, final TaskStatus status) {
+        return 0;
+    }
+
+    @Override
     public List<ProcessorTask> queueTasks(final Set<Long> idSet,
                                           final String thisNodeName) {
         return Collections.emptyList();

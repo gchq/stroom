@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-ext.moduleName = 'stroom.node.api'
+package stroom.node.api;
 
-dependencies {
-    implementation project(':stroom-core-shared')
-    implementation project(':stroom-util')
-    implementation project(':stroom-util-shared')
+import java.util.Optional;
+import java.util.Set;
 
-    implementation libs.jackson.annotations
-    implementation libs.ws.rs.api
+public interface NodeGroupCache {
+
+    Optional<Set<String>> getIncludedGroupNodes(String name);
 }

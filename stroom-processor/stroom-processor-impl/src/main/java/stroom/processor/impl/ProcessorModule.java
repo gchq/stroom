@@ -70,6 +70,7 @@ public class ProcessorModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(ProcessorFilterCache.class)
+                .addBinding(ProcessorProfileCache.class)
                 .addBinding(PrioritisedFilters.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)

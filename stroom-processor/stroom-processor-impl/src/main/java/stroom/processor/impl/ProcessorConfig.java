@@ -52,6 +52,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     private final CacheConfig processorFilterCache;
     private final CacheConfig processorNodeCache;
     private final CacheConfig processorFeedCache;
+    private final CacheConfig processorProfileCache;
 
     private final StroomDuration disownDeadTasksAfter;
 
@@ -86,6 +87,11 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
+        processorProfileCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterWrite(StroomDuration.ofHours(1))
+                .refreshAfterWrite(StroomDuration.ofSeconds(10))
+                .build();
         disownDeadTasksAfter = StroomDuration.ofMinutes(10);
         waitToQueueTasksDuration = StroomDuration.ofSeconds(10);
         skipNonProducingFiltersDuration = StroomDuration.ofSeconds(10);
@@ -106,6 +112,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                            @JsonProperty("processorFilterCache") final CacheConfig processorFilterCache,
                            @JsonProperty("processorNodeCache") final CacheConfig processorNodeCache,
                            @JsonProperty("processorFeedCache") final CacheConfig processorFeedCache,
+                           @JsonProperty("processorProfileCache") final CacheConfig processorProfileCache,
                            @JsonProperty("disownDeadTasksAfter") final StroomDuration disownDeadTasksAfter,
                            @JsonProperty("waitToQueueTasksDuration") final StroomDuration waitToQueueTasksDuration,
                            @JsonProperty("skipNonProducingFiltersDuration") final StroomDuration
@@ -123,6 +130,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         this.processorFilterCache = processorFilterCache;
         this.processorNodeCache = processorNodeCache;
         this.processorFeedCache = processorFeedCache;
+        this.processorProfileCache = processorProfileCache;
         this.disownDeadTasksAfter = disownDeadTasksAfter;
         this.waitToQueueTasksDuration = waitToQueueTasksDuration;
         this.skipNonProducingFiltersDuration = skipNonProducingFiltersDuration;
@@ -203,6 +211,10 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         return processorFeedCache;
     }
 
+    public CacheConfig getProcessorProfileCache() {
+        return processorProfileCache;
+    }
+
     @JsonPropertyDescription("How long to wait before we remove ownership of tasks from nodes that appear to have died")
     public StroomDuration getDisownDeadTasksAfter() {
         return disownDeadTasksAfter;
@@ -239,6 +251,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                ", processorFilterCache=" + processorFilterCache +
                ", processorNodeCache=" + processorNodeCache +
                ", processorFeedCache=" + processorFeedCache +
+               ", processorProfileCache=" + processorProfileCache +
                ", disownDeadTasksAfter=" + disownDeadTasksAfter +
                ", waitToQueueTasksDuration=" + waitToQueueTasksDuration +
                ", skipNonProducingFiltersDuration=" + skipNonProducingFiltersDuration +

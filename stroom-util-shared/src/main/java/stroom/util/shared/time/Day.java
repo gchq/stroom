@@ -19,25 +19,41 @@ package stroom.util.shared.time;
 import stroom.docref.HasDisplayValue;
 
 import java.util.List;
+import java.util.Map;
 
 public enum Day implements HasDisplayValue {
-    MONDAY("Monday", "Mon"),
-    TUESDAY("Tuesday", "Tue"),
-    WEDNESDAY("Wednesday", "Wed"),
-    THURSDAY("Thursday", "Thu"),
-    FRIDAY("Friday", "Fri"),
-    SATURDAY("Saturday", "Sat"),
-    SUNDAY("Sunday", "Sun");
+    MONDAY("Monday", "Mon", 1),
+    TUESDAY("Tuesday", "Tue", 2),
+    WEDNESDAY("Wednesday", "Wed", 3),
+    THURSDAY("Thursday", "Thu", 4),
+    FRIDAY("Friday", "Fri", 5),
+    SATURDAY("Saturday", "Sat", 6),
+    SUNDAY("Sunday", "Sun", 7);
 
     public static final List<Day> ALL = List.of(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY);
+    public static final Map<Integer, Day> DAY_MAP = Map.of(
+            MONDAY.value, MONDAY,
+            TUESDAY.value, TUESDAY,
+            WEDNESDAY.value, WEDNESDAY,
+            THURSDAY.value, THURSDAY,
+            FRIDAY.value, FRIDAY,
+            SATURDAY.value, SATURDAY,
+            SUNDAY.value, SUNDAY);
+
+    public static Day getDayByValue(final int value) {
+        return DAY_MAP.get(value);
+    }
 
     private final String displayValue;
     private final String shortForm;
+    private final int value;
 
     Day(final String displayValue,
-        final String shortForm) {
+        final String shortForm,
+        final int value) {
         this.displayValue = displayValue;
         this.shortForm = shortForm;
+        this.value = value;
     }
 
     @Override
@@ -47,5 +63,15 @@ public enum Day implements HasDisplayValue {
 
     public String getShortForm() {
         return shortForm;
+    }
+
+    /**
+     * Gets the day-of-week {@code int} value.
+     * The values are numbered following the ISO-8601 standard, from 1 (Monday) to 7 (Sunday).
+     *
+     * @return the day-of-week, from 1 (Monday) to 7 (Sunday)
+     */
+    public int getValue() {
+        return value;
     }
 }

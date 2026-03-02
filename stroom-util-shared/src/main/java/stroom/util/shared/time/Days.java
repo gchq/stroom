@@ -23,7 +23,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,22 +34,27 @@ import java.util.stream.Collectors;
 @JsonInclude(Include.NON_NULL)
 public class Days {
 
+    public static final Days EMPTY = new Days(Collections.emptySet());
+
     @JsonProperty
-    private final List<Day> days;
+    private final Set<Day> days;
 
     @JsonCreator
-    public Days(@JsonProperty("days") final List<Day> days) {
+    public Days(@JsonProperty("days") final Set<Day> days) {
         this.days = days;
     }
 
     public static Days create(final Set<Day> set) {
         if (NullSafe.isEmptyCollection(set)) {
-            return new Days(null);
+            return EMPTY;
         }
-        return new Days(set.stream().collect(Collectors.toList()));
+        return new Days(set
+                .stream()
+                .sorted(Comparator.comparing(Day::getValue))
+                .collect(Collectors.toCollection(LinkedHashSet::new)));
     }
 
-    public List<Day> getDays() {
+    public Set<Day> getDays() {
         return days;
     }
 

@@ -58,10 +58,20 @@ public interface ProcessorTaskDao {
      * Count the current number of tasks for a filter matching the specified status.
      *
      * @param filterId The filter to count tasks for.
-     * @param status Task status.
+     * @param status   Task status.
      * @return The number of tasks matching the specified status.
      */
     int countTasksForFilter(int filterId, TaskStatus status);
+
+    /**
+     * Count the current number of tasks for a filter matching the specified status.
+     *
+     * @param filterId The filter to count tasks for.
+     * @param nodeName The node to count tasks for.
+     * @param status   Task status.
+     * @return The number of tasks matching the specified status.
+     */
+    int countTasksForFilter(int filterId, String nodeName, TaskStatus status);
 
     /**
      * Create new tasks for the specified filter and add them to the queue.
