@@ -78,7 +78,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * This XML filter captures XML content that defines key, value maps to be
@@ -103,7 +102,6 @@ public class PlanBFilter extends AbstractXMLFilter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PlanBFilter.class);
 
-    private static final Pattern PREFIX_DELIMITER_PATTERN = Pattern.compile(":");
 
     /*
         Example xml data
@@ -446,12 +444,9 @@ public class PlanBFilter extends AbstractXMLFilter {
     private String getPrefix(final String qName) {
         if (qName == null) {
             return null;
-        } else if (!qName.contains(":")) {
-            return "";
-        } else {
-            final String[] parts = PREFIX_DELIMITER_PATTERN.split(qName);
-            return parts[0];
         }
+        final int colonIdx = qName.indexOf(':');
+        return colonIdx < 0 ? "" : qName.substring(0, colonIdx);
     }
 
     /**
@@ -1040,9 +1035,7 @@ public class PlanBFilter extends AbstractXMLFilter {
     }
 
     private boolean hasUriBeenApplied(final String prefix, final String uri) {
-        return appliedPrefixToUriMap.entrySet().stream().anyMatch(prefixToUriEntry ->
-                Objects.equals(prefixToUriEntry.getKey(),
-                        prefix) && Objects.equals(prefixToUriEntry.getValue(), uri));
+        return Objects.equals(appliedPrefixToUriMap.get(prefix), uri);
     }
 
     private boolean hasUriBeenApplied(final String prefix) {
