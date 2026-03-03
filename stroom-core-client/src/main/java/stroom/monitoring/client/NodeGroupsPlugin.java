@@ -19,6 +19,7 @@ package stroom.monitoring.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.node.client.presenter.NodeGroupPresenter;
 import stroom.security.client.api.ClientSecurityContext;
@@ -41,8 +42,9 @@ public class NodeGroupsPlugin extends MonitoringPlugin<NodeGroupPresenter> {
     NodeGroupsPlugin(final EventBus eventBus,
                      final ContentManager contentManager,
                      final Provider<NodeGroupPresenter> presenterProvider,
-                     final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, presenterProvider, securityContext);
+                     final ClientSecurityContext securityContext,
+                     final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, contentManager, presenterProvider, securityContext, documentPluginRegistry);
     }
 
     @Override
@@ -69,5 +71,10 @@ public class NodeGroupsPlugin extends MonitoringPlugin<NodeGroupPresenter> {
                             .command(this::open)
                             .build());
         }
+    }
+
+    @Override
+    public String getType() {
+        return NodeGroupPresenter.TAB_TYPE;
     }
 }
