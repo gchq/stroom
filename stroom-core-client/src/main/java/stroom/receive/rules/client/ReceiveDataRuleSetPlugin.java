@@ -19,9 +19,12 @@ package stroom.receive.rules.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.receive.rules.client.presenter.RuleSetPresenter;
+import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.presenter.BatchDocumentPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -41,8 +44,9 @@ public class ReceiveDataRuleSetPlugin extends MonitoringPlugin<RuleSetPresenter>
     public ReceiveDataRuleSetPlugin(final EventBus eventBus,
                                     final Provider<RuleSetPresenter> editorProvider,
                                     final ContentManager contentManager,
-                                    final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, editorProvider, securityContext);
+                                    final ClientSecurityContext securityContext,
+                                    final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, contentManager, editorProvider, securityContext, documentPluginRegistry);
     }
 
     @Override
@@ -76,5 +80,10 @@ public class ReceiveDataRuleSetPlugin extends MonitoringPlugin<RuleSetPresenter>
                 .action(getOpenAction())
                 .command(this::open)
                 .build();
+    }
+
+    @Override
+    public String getType() {
+        return ReceiveDataRules.TYPE;
     }
 }

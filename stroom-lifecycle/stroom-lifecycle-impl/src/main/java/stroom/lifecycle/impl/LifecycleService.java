@@ -62,13 +62,15 @@ class LifecycleService implements Managed {
 
         startPending = startupTaskMap.entrySet()
                 .stream()
-                .sorted((o1, o2) -> o2.getKey().getPriority() - o1.getKey().getPriority())
+                .sorted((o1, o2) ->
+                        o2.getKey().getPriority() - o1.getKey().getPriority())
                 .map(Entry::getValue)
                 .collect(Collectors.toCollection(ConcurrentLinkedDeque::new));
 
         stopPending = shutdownTaskMap.entrySet()
                 .stream()
-                .sorted((o1, o2) -> o2.getKey().getPriority() - o1.getKey().getPriority())
+                .sorted((o1, o2) ->
+                        o2.getKey().getPriority() - o1.getKey().getPriority())
                 .map(Entry::getValue)
                 .collect(Collectors.toCollection(ConcurrentLinkedDeque::new));
     }

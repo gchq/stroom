@@ -58,6 +58,8 @@ import stroom.explorer.client.presenter.NavigationPresenter.NavigationProxy;
 import stroom.explorer.client.presenter.NavigationPresenter.NavigationView;
 import stroom.explorer.client.presenter.RecentItemsPresenter;
 import stroom.explorer.client.presenter.RecentItemsPresenter.RecentItemsProxy;
+import stroom.explorer.client.presenter.TabSessionChooserPresenter;
+import stroom.explorer.client.presenter.TabSessionChooserPresenter.TabSessionChooserView;
 import stroom.explorer.client.presenter.TypeFilterPresenter;
 import stroom.explorer.client.presenter.TypeFilterPresenter.TypeFilterView;
 import stroom.explorer.client.presenter.TypeFilterViewImpl;
@@ -67,6 +69,7 @@ import stroom.explorer.client.view.ExplorerNodeEditTagsViewImpl;
 import stroom.explorer.client.view.ExplorerNodeRemoveTagsViewImpl;
 import stroom.explorer.client.view.FindInContentViewImpl;
 import stroom.explorer.client.view.NavigationViewImpl;
+import stroom.explorer.client.view.TabSessionChooserViewImpl;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFrameContentPresenter.IFrameContentView;
@@ -84,6 +87,9 @@ import stroom.widget.menu.client.presenter.MenuItems;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.menu.client.presenter.MenuPresenter.MenuView;
 import stroom.widget.menu.client.presenter.MenuViewImpl;
+import stroom.widget.popup.client.presenter.TextBoxPopup;
+import stroom.widget.popup.client.presenter.TextBoxPopup.TextBoxView;
+import stroom.widget.popup.client.view.TextBoxViewImpl;
 import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.view.CurveTabLayoutViewImpl;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
@@ -175,6 +181,8 @@ public class AppModule extends AbstractPresenterModule {
                 RecentItemsPresenter.class,
                 RecentItemsProxy.class);
 
+        bind(TabSessionChooserPresenter.class);
+
         // Menu
         bind(Menu.class).asEagerSingleton();
         bind(MenuItems.class).in(Singleton.class);
@@ -186,5 +194,8 @@ public class AppModule extends AbstractPresenterModule {
         bindSharedView(PagerView.class, PagerViewImpl.class);
         bindSharedView(PagerViewWithHeading.class, PagerViewWithHeadingImpl.class);
         bindSharedView(LinkTabPanelView.class, LinkTabPanelViewImpl.class);
+        bindSharedView(TabSessionChooserView.class, TabSessionChooserViewImpl.class);
+
+        bindPresenterWidget(TextBoxPopup.class, TextBoxView.class, TextBoxViewImpl.class);
     }
 }

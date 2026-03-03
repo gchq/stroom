@@ -17,10 +17,11 @@
 package stroom.content.client;
 
 import stroom.core.client.ContentManager;
+import stroom.core.client.TabPlugin;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.Callback;
-import stroom.core.client.presenter.Plugin;
 import stroom.data.table.client.Refreshable;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.inject.Inject;
@@ -30,7 +31,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.function.Consumer;
 
-public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plugin {
+public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends TabPlugin {
 
     private final ContentManager contentManager;
     private final Provider<P> presenterProvider;
@@ -39,10 +40,20 @@ public abstract class ContentPlugin<P extends MyPresenterWidget<?>> extends Plug
     @Inject
     public ContentPlugin(final EventBus eventBus,
                          final ContentManager contentManager,
-                         final Provider<P> presenterProvider) {
+                         final Provider<P> presenterProvider,
+                         final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus);
         this.contentManager = contentManager;
         this.presenterProvider = presenterProvider;
+
+        register(documentPluginRegistry);
+    }
+
+    private void register(final DocumentPluginRegistry documentPluginRegistry) {
+        final String type = getType();
+        if (type != null) {
+            documentPluginRegistry.register(getType(), this);
+        }
     }
 
     public void open() {

@@ -59,7 +59,8 @@ VOLUME /stroom-proxy/content/
 VOLUME /stroom-proxy/data/
 VOLUME /stroom-proxy/logs/
 VOLUME /stroom-proxy/failures/
-# sqlite_library mounted as tmpfs not a managed volumne
+VOLUME /stroom-proxy/zip_file_ingest/
+VOLUME /stroom-proxy/zip_file_ingest_failed/
 
 # run entrypoint script inside tini for better unix process handling, 
 # see https://github.com/krallin/tini/issues/8
@@ -92,6 +93,8 @@ RUN \
     mkdir -p /stroom-proxy/logs/app && \
     mkdir -p /stroom-proxy/data && \
     mkdir -p /stroom-proxy/failures && \
+    mkdir -p /stroom-proxy/zip_file_ingest && \
+    mkdir -p /stroom-proxy/zip_file_ingest_failed && \
     chown -R proxy:proxy /stroom-proxy
 
 # Copy all the fat jars for the application and connectors

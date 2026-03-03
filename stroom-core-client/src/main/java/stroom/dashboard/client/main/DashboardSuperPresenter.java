@@ -19,6 +19,7 @@ package stroom.dashboard.client.main;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.docref.DocRef;
+import stroom.document.client.HasMultipleInstances;
 import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.HasToolbar;
@@ -41,13 +42,14 @@ import javax.inject.Provider;
 
 public class DashboardSuperPresenter
         extends DocTabPresenter<LinkTabPanelView, DashboardDoc>
-        implements HasToolbar {
+        implements HasToolbar, HasMultipleInstances {
 
     private static final TabData DASHBOARD = new TabDataImpl("Dashboard", DashboardDoc.TYPE);
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private final DashboardPresenter dashboardPresenter;
+    private int instance;
 
     @Inject
     public DashboardSuperPresenter(final EventBus eventBus,
@@ -136,7 +138,16 @@ public class DashboardSuperPresenter
 
     @Override
     public String getLabel() {
-        return dashboardPresenter.getLabel();
+        return dashboardPresenter.getLabel() + getInstanceString();
+    }
+
+    public void setInstance(final int instance) {
+        this.instance = instance;
+    }
+
+    @Override
+    public int getInstance() {
+        return instance;
     }
 
     public void setParamsFromLink(final String params) {

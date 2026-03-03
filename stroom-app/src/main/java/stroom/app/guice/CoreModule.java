@@ -74,6 +74,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.dropwizard.common.DropwizardModule());
         install(new stroom.explorer.impl.ExplorerFavModule());
         install(new stroom.explorer.impl.db.ExplorerFavDbModule());
+        install(new stroom.explorer.impl.db.TabSessionDbModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.event.logging.rs.impl.RestResourceAutoLoggerModule());
         install(new stroom.explorer.impl.ExplorerModule());

@@ -56,6 +56,8 @@ public class BatchDocumentPermissionsPresenter
         extends ContentTabPresenter<QuickFilterPageView>
         implements QuickFilterUiHandlers {
 
+    public static final String TAB_TYPE = "DocumentPermissions";
+
     private final Provider<ExpressionPresenter> docFilterPresenterProvider;
     private final DocumentListPresenter documentListPresenter;
     private final Provider<BatchDocumentPermissionsEditPresenter> batchDocumentPermissionsEditPresenterProvider;
@@ -271,7 +273,7 @@ public class BatchDocumentPermissionsPresenter
 
     @Override
     public String getType() {
-        return "DocumentPermissions";
+        return TAB_TYPE;
     }
 
     public interface BatchDocumentPermissionsView extends View {

@@ -31,6 +31,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.metrics.Metrics;
 
 import com.codahale.metrics.Timer;
+import io.dropwizard.lifecycle.Managed;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -44,13 +45,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 @Singleton
-public class EventStore implements EventConsumer {
+public class EventStore implements EventConsumer, Managed {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EventStore.class);
     private static final String CACHE_NAME = "Event Store Open Appenders";
@@ -64,6 +66,7 @@ public class EventStore implements EventConsumer {
     private final EventSerialiser eventSerialiser;
     private final LinkedBlockingQueue<Path> forwardQueue;
     private final Timer handleTimer;
+    private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
     @Inject
     public EventStore(final ReceiverFactory receiverFactory,
@@ -102,6 +105,12 @@ public class EventStore implements EventConsumer {
                 .createAndRegister();
 
         forwardOldFiles();
+    }
+
+    private void checkState() {
+        if (shutdown.get()) {
+            throw new IllegalStateException("Event Store has been shut down");
+        }
     }
 
     private void ensureDirExists(final Path path) {
@@ -229,6 +238,7 @@ public class EventStore implements EventConsumer {
                         final UniqueId receiptId,
                         final String data) {
         try {
+            checkState();
             final FeedKey feedKey = FeedKey.from(attributeMap);
             final String string = eventSerialiser.serialise(
                     receiptId,
@@ -299,5 +309,21 @@ public class EventStore implements EventConsumer {
 
             return eventAppender;
         });
+    }
+
+    @Override
+    public void stop() throws Exception {
+        if (shutdown.compareAndSet(false, true)) {
+            stores.values()
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .forEach(eventAppender -> {
+                        try {
+                            eventAppender.close();
+                        } catch (final IOException e) {
+                            LOGGER.error("Error closing eventAppender {}", eventAppender, e);
+                        }
+                    });
+        }
     }
 }

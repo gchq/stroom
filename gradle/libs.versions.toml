@@ -7,10 +7,10 @@ stroomStats = "1.0-alpha.6"
 aws = "2.31.68"
 commons-io = "2.19.0"
 dropwizard = "4.0.14" # used to set the dropwizard-bom version, that controls lots of dependency versions
-elasticsearch = "9.2.1"
+elasticsearch = "9.3.2"
 flyway = "12.0.0"
 guice = "7.0.0"
-gwt = "2.12.2"
+gwt = "2.13.0"
 jgit = "7.5.0.202512021534-r"
 jmh = "1.37"
 jooq = "3.20.10"
@@ -174,7 +174,7 @@ saxon-he = { module = "net.sf.saxon:Saxon-HE", version = "9.9.1-8" }
 simple-java-mail = { module = "org.simplejavamail:simple-java-mail", version.ref = "simple-java-mail" }
 simple-java-mail-batch-module = { module = "org.simplejavamail:batch-module", version.ref = "simple-java-mail" }
 slf4j-api = { module = "org.slf4j:slf4j-api" } # version controlled by dropwizard-dependencies
-snake-yaml = { module = "org.yaml:snakeyaml", version = "2.3" }
+snake-yaml = { module = "org.yaml:snakeyaml", version = "2.6" }
 solrj = { module = "org.apache.solr:solr-solrj", version = "9.10.1" }
 stax-api = { module = "stax:stax-api", version = "1.0.1" }
 swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations-jakarta", version.ref = "swagger" }

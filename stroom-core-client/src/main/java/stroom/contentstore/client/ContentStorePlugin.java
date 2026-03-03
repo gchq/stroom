@@ -20,8 +20,10 @@ import stroom.content.client.ContentPlugin;
 import stroom.contentstore.client.presenter.ContentStorePresenter;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -55,8 +57,9 @@ public class ContentStorePlugin extends ContentPlugin<ContentStorePresenter> {
     public ContentStorePlugin(final EventBus eventBus,
                               final ContentManager contentManager,
                               final Provider<ContentStorePresenter> presenterProvider,
-                              final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, presenterProvider);
+                              final ClientSecurityContext securityContext,
+                              final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, contentManager, presenterProvider, documentPluginRegistry);
         this.securityContext = securityContext;
     }
 
@@ -77,4 +80,8 @@ public class ContentStorePlugin extends ContentPlugin<ContentStorePresenter> {
         }
     }
 
+    @Override
+    public String getType() {
+        return ContentStorePresenter.TAB_TYPE;
+    }
 }

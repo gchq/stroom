@@ -32,6 +32,7 @@ import stroom.proxy.app.DataDirProviderImpl;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.RemoteReceiveDataRuleSetServiceImpl;
 import stroom.proxy.app.cache.ProxyCacheServiceModule;
+import stroom.proxy.app.event.EventStoreModule;
 import stroom.proxy.app.handler.ProxyId;
 import stroom.proxy.app.handler.ProxyReceiptIdGenerator;
 import stroom.proxy.app.handler.ProxyRequestHandler;
@@ -77,6 +78,7 @@ public class ProxyCoreModule extends AbstractModule {
         // Allow discovery of feed status from other proxies.
         install(new RemoteFeedModule());
 
+        install(new EventStoreModule());
         install(new TaskContextModule());
         install(new ProxyJerseyModule());
         install(new ProxySecurityModule());
