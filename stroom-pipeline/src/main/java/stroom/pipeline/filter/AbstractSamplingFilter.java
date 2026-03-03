@@ -104,7 +104,11 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
      */
     @Override
     public void startDocument() throws SAXException {
-        this.outputStream = new ByteArrayOutputStream();
+        if (this.outputStream == null) {
+            this.outputStream = new ByteArrayOutputStream();
+        } else {
+            this.outputStream.reset();
+        }
         handler.setResult(new StreamResult(outputStream));
 
         handler.startDocument();
