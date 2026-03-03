@@ -71,6 +71,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
@@ -468,17 +469,17 @@ public class VisPresenter
                                 .create(VISUALISATION_ASSET_RESOURCE)
                                 .method(res -> res.indexAssetExists(visualisationDocRef.getUuid()))
                                 .onSuccess(indexAssetExists -> {
+                                    function.setFunctionName(result.getFunctionName());
                                     if (indexAssetExists) {
                                         final SafeUri safeDocRef = UriUtils.fromString(visualisationDocRef.getUuid());
-                                        Console.info("Setting vis docRef URL to '" + safeDocRef.asString() + "'");
+                                        final HandlerRegistration handlerRegistration = visFrame.addLoadHandler(event -> {
+                                            function.setStatus(LoadStatus.LOADED);
+                                        });
                                         visFrame.setUrl("/assets/"
                                                         + safeDocRef.asString()
                                                         + "/index.html");
-                                        Console.info("Setting status of function " + function.getFunctionName());
-                                        function.setStatus(LoadStatus.LOADED);
+                                        // TODO Delete handler registration
                                     } else {
-                                        function.setFunctionName(result.getFunctionName());
-
                                         // Do we have required scripts.
                                         if (result.getScriptRef() != null) {
                                             // Now we have loaded the visualisation, load all

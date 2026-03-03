@@ -26,6 +26,7 @@ import com.google.gwt.core.client.Callback;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
@@ -35,6 +36,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.List;
 
@@ -278,5 +280,9 @@ public class VisFrame extends Composite implements VisPane, HasTaskMonitorFactor
     @Override
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         messageSupport.setTaskMonitorFactory(taskMonitorFactory);
+    }
+
+    public HandlerRegistration addLoadHandler(final LoadHandler loadHandler) {
+        return frame.addLoadHandler(loadHandler);
     }
 }
