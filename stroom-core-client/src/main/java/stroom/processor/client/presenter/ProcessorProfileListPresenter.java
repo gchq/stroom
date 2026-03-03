@@ -22,10 +22,10 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
-import stroom.entity.shared.ExpressionCriteria;
-import stroom.node.shared.FindNodeStatusCriteria;
+import stroom.processor.shared.FindProcessorProfileRequest;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -56,17 +56,27 @@ public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerView> 
 
         initTableColumns();
 
-        final ExpressionCriteria criteria = new ExpressionCriteria();
+        final FindProcessorProfileRequest request = new FindProcessorProfileRequest(
+                PageRequest.createDefault(),
+                FindProcessorProfileRequest.DEFAULT_SORT_LIST,
+                null);
         dataProvider = new RestDataProvider<ProcessorProfile, ResultPage<ProcessorProfile>>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<ProcessorProfile>> dataConsumer,
                                 final RestErrorHandler errorHandler) {
-                CriteriaUtil.setRange(criteria, range);
-                processorProfileClient.list(criteria, dataConsumer, errorHandler, view);
+                CriteriaUtil.setRange(request, range);
+                CriteriaUtil.setSortList(request, dataGrid.getColumnSortList());
+                processorProfileClient.find(request, dataConsumer, errorHandler, view);
             }
         };
         dataProvider.addDataDisplay(dataGrid);
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(dataGrid.addColumnSortHandler(ignored -> refresh()));
     }
 
     /**
@@ -76,9 +86,9 @@ public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerView> 
         // Name.
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(ProcessorProfile::getName))
-//                        .withSorting(FindNodeStatusCriteria.FIELD_ID_NAME)
+                        .withSorting(FindProcessorProfileRequest.FIELD_ID_NAME)
                         .build(),
-                DataGridUtil.headingBuilder("Name")
+                DataGridUtil.headingBuilder(FindProcessorProfileRequest.FIELD_ID_NAME)
                         .withToolTip("The name of the processor profile.")
                         .build(),
                 300);
@@ -86,9 +96,9 @@ public class ProcessorProfileListPresenter extends MyPresenterWidget<PagerView> 
         // Node Group.
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(ProcessorProfile::getNodeGroupName))
-//                        .withSorting(FindNodeStatusCriteria.FIELD_ID_NAME)
+                        .withSorting(FindProcessorProfileRequest.FIELD_ID_NODE_GROUP)
                         .build(),
-                DataGridUtil.headingBuilder("Node Group")
+                DataGridUtil.headingBuilder(FindProcessorProfileRequest.FIELD_ID_NODE_GROUP)
                         .withToolTip("The name of the node group.")
                         .build(),
                 300);

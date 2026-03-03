@@ -16,6 +16,7 @@
 
 package stroom.processor.impl;
 
+import stroom.processor.shared.FindProcessorProfileRequest;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -25,6 +26,7 @@ import stroom.util.entityevent.EntityEventBus;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -60,8 +62,8 @@ public class ProcessorProfileServiceImpl implements ProcessorProfileService {
     }
 
     @Override
-    public List<ProcessorProfile> getAll() {
-        return securityContext.secureResult(processorProfileDao::getAll);
+    public ResultPage<ProcessorProfile> find(final FindProcessorProfileRequest request) {
+        return securityContext.secureResult(() -> processorProfileDao.find(request));
     }
 
     @Override

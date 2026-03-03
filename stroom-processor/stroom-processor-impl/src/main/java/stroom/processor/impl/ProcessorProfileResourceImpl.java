@@ -16,8 +16,8 @@
 
 package stroom.processor.impl;
 
-import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.processor.shared.FindProcessorProfileRequest;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.processor.shared.ProcessorProfileResource;
 import stroom.util.shared.ResultPage;
@@ -36,8 +36,8 @@ class ProcessorProfileResourceImpl implements ProcessorProfileResource {
     }
 
     @Override
-    public ResultPage<ProcessorProfile> find(final ExpressionCriteria request) {
-        return ResultPage.createUnboundedList(processorProfileServiceProvider.get().getAll());
+    public ResultPage<ProcessorProfile> find(final FindProcessorProfileRequest request) {
+        return processorProfileServiceProvider.get().find(request);
     }
 
     @Override

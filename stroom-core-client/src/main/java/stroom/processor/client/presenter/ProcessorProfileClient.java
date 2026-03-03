@@ -18,7 +18,7 @@ package stroom.processor.client.presenter;
 
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.entity.shared.ExpressionCriteria;
+import stroom.processor.shared.FindProcessorProfileRequest;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.processor.shared.ProcessorProfileResource;
 import stroom.task.client.TaskMonitorFactory;
@@ -43,23 +43,23 @@ public class ProcessorProfileClient {
         this.restFactory = restFactory;
     }
 
-    public void list(final ExpressionCriteria criteria,
+    public void find(final FindProcessorProfileRequest request,
                      final Consumer<ResultPage<ProcessorProfile>> dataConsumer,
-                     final RestErrorHandler errorHandler,
+                     final RestErrorHandler restErrorHandler,
                      final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(PROCESSOR_PROFILE_RESOURCE)
-                .method(res -> res.find(criteria))
+                .method(r -> r.find(request))
                 .onSuccess(dataConsumer)
-                .onFailure(errorHandler)
+                .onFailure(restErrorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     public void create(final ProcessorProfile processorProfile,
-                                final Consumer<ProcessorProfile> consumer,
-                                final RestErrorHandler errorHandler,
-                                final TaskMonitorFactory taskMonitorFactory) {
+                       final Consumer<ProcessorProfile> consumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(PROCESSOR_PROFILE_RESOURCE)
                 .method(res -> res.create(processorProfile))
@@ -70,8 +70,8 @@ public class ProcessorProfileClient {
     }
 
     public void fetchById(final int id,
-                      final Consumer<ProcessorProfile> consumer,
-                      final TaskMonitorFactory taskMonitorFactory) {
+                          final Consumer<ProcessorProfile> consumer,
+                          final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(PROCESSOR_PROFILE_RESOURCE)
                 .method(res -> res.fetchById(id))
@@ -81,9 +81,9 @@ public class ProcessorProfileClient {
     }
 
     public void fetchByName(final String name,
-                      final Consumer<ProcessorProfile> consumer,
+                            final Consumer<ProcessorProfile> consumer,
                             final RestErrorHandler errorHandler,
-                      final TaskMonitorFactory taskMonitorFactory) {
+                            final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(PROCESSOR_PROFILE_RESOURCE)
                 .method(res -> res.fetchByName(name))

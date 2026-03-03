@@ -28,8 +28,6 @@ public interface ProcessorProfileDao {
 
     List<String> getNames();
 
-    List<ProcessorProfile> getAll();
-
     ProcessorProfile create(ProcessorProfile nodeGroup);
 
     ProcessorProfile fetchById(int id);

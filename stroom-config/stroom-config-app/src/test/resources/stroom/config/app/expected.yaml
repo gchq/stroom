@@ -603,6 +603,12 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     name: "tba"
+    nodeGroupCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT1H"
+      maximumSize: 1000
+      refreshAfterWrite: "PT10S"
+      statisticsMode: "INTERNAL"
     status:
       heapHistogram:
         classNameMatchRegex: "^stroom\\..*$"
@@ -747,6 +753,12 @@ appConfig:
       expireAfterWrite: null
       maximumSize: 1000
       refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
+    processorProfileCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT1H"
+      maximumSize: 1000
+      refreshAfterWrite: "PT10S"
       statisticsMode: "INTERNAL"
     queueSize: 1000
     skipNonProducingFiltersDuration: "PT10S"

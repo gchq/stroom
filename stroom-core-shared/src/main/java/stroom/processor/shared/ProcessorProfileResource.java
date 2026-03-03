@@ -47,7 +47,7 @@ public interface ProcessorProfileResource extends RestResource, DirectRestServic
             summary = "Finds processor profiles matching request",
             operationId = "findProcessorProfiles")
     ResultPage<ProcessorProfile> find(
-            @Parameter(description = "request", required = true) ExpressionCriteria request);
+            @Parameter(description = "request", required = true) FindProcessorProfileRequest request);
 
     @POST
     @Operation(

@@ -29,11 +29,15 @@ import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.OrderField;
 import org.jooq.exception.DataAccessException;
 
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
@@ -44,6 +48,10 @@ public class NodeGroupDaoImpl implements NodeGroupDao {
 
     private static final RecordToNodeMapper RECORD_TO_NODE_MAPPER = new RecordToNodeMapper();
     private static final RecordToNodeGroupMapper RECORD_TO_NODE_GROUP_MAPPER = new RecordToNodeGroupMapper();
+
+    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
+            FindNodeGroupRequest.FIELD_ID_NAME, NODE_GROUP.NAME,
+            FindNodeGroupRequest.FIELD_ID_ENABLED, NODE_GROUP.ENABLED);
 
     private final NodeDbConnProvider nodeDbConnProvider;
 
@@ -58,6 +66,7 @@ public class NodeGroupDaoImpl implements NodeGroupDao {
         if (NullSafe.isNonBlankString(request.getFilter())) {
             conditions.add(NODE_GROUP.NAME.startsWith(request.getFilter()));
         }
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, request);
         final int offset = JooqUtil.getOffset(request.getPageRequest());
         final int limit = JooqUtil.getLimit(request.getPageRequest(), true);
 
@@ -65,7 +74,7 @@ public class NodeGroupDaoImpl implements NodeGroupDao {
                         .select()
                         .from(NODE_GROUP)
                         .where(conditions)
-                        .orderBy(NODE_GROUP.NAME)
+                        .orderBy(orderFields)
                         .offset(offset)
                         .limit(limit)
                         .fetch())

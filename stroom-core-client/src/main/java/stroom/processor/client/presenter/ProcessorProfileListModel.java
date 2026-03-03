@@ -1,11 +1,9 @@
-package stroom.node.client.presenter;
+package stroom.processor.client.presenter;
 
-import stroom.credentials.shared.Credential;
 import stroom.item.client.SelectionListModel;
 import stroom.item.client.SimpleSelectionItemWrapper;
-import stroom.node.client.NodeGroupClient;
-import stroom.node.shared.FindNodeGroupRequest;
 import stroom.node.shared.NodeGroup;
+import stroom.processor.shared.FindProcessorProfileRequest;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
@@ -22,49 +20,51 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public class NodeGroupListModel
+public class ProcessorProfileListModel
         implements
-        SelectionListModel<NodeGroup, SimpleSelectionItemWrapper<NodeGroup>>,
+        SelectionListModel<String, SimpleSelectionItemWrapper<String>>,
         HasTaskMonitorFactory,
         HasHandlers {
 
     private final EventBus eventBus;
-    private final NodeGroupClient nodeGroupClient;
-    private FindNodeGroupRequest lastRequest;
+    private final ProcessorProfileClient processorProfileClient;
+    private FindProcessorProfileRequest lastRequest;
     private TaskMonitorFactory taskMonitorFactory = new DefaultTaskMonitorFactory(this);
 
-    public NodeGroupListModel(final EventBus eventBus,
-                              final NodeGroupClient nodeGroupClient) {
+    public ProcessorProfileListModel(final EventBus eventBus,
+                                     final ProcessorProfileClient processorProfileClient) {
         this.eventBus = eventBus;
-        this.nodeGroupClient = nodeGroupClient;
+        this.processorProfileClient = processorProfileClient;
     }
 
     @Override
-    public void onRangeChange(final SimpleSelectionItemWrapper<NodeGroup> parent,
+    public void onRangeChange(final SimpleSelectionItemWrapper<String> parent,
                               final String filter,
                               final boolean filterChange,
                               final PageRequest pageRequest,
-                              final Consumer<ResultPage<SimpleSelectionItemWrapper<NodeGroup>>> consumer) {
-        final FindNodeGroupRequest request = new FindNodeGroupRequest(
+                              final Consumer<ResultPage<SimpleSelectionItemWrapper<String>>> consumer) {
+        final FindProcessorProfileRequest request = new FindProcessorProfileRequest(
                 pageRequest,
-                FindNodeGroupRequest.DEFAULT_SORT_LIST,
+                FindProcessorProfileRequest.DEFAULT_SORT_LIST,
                 filter);
 
         // Only fetch if the request has changed.
         if (!request.equals(lastRequest)) {
             lastRequest = request;
-            nodeGroupClient.find(request, response -> {
+            processorProfileClient.find(request, response -> {
                 // Only update if the request is still current.
                 if (request == lastRequest) {
-                    final ResultPage<SimpleSelectionItemWrapper<NodeGroup>> resultPage;
-                    final List<SimpleSelectionItemWrapper<NodeGroup>> items = response
+                    final ResultPage<SimpleSelectionItemWrapper<String>> resultPage;
+                    final List<SimpleSelectionItemWrapper<String>> items = response
                             .getValues()
                             .stream()
-                            .map(this::wrap)
+                            .map(processorProfile ->
+                                    new SimpleSelectionItemWrapper<>(processorProfile.getName(),
+                                            processorProfile.getName()))
                             .collect(Collectors.toList());
 
                     // Insert null select item.
-                    final List<SimpleSelectionItemWrapper<NodeGroup>> newList = new ArrayList<>();
+                    final List<SimpleSelectionItemWrapper<String>> newList = new ArrayList<>();
                     newList.add(new SimpleSelectionItemWrapper<>("[ none ]", null));
                     newList.addAll(items);
 
@@ -104,15 +104,15 @@ public class NodeGroupListModel
     }
 
     @Override
-    public SimpleSelectionItemWrapper<NodeGroup> wrap(final NodeGroup item) {
+    public SimpleSelectionItemWrapper<String> wrap(final String item) {
         if (item == null) {
             return null;
         }
-        return new SimpleSelectionItemWrapper<>(item.getName(), item);
+        return new SimpleSelectionItemWrapper<>(item, item);
     }
 
     @Override
-    public NodeGroup unwrap(final SimpleSelectionItemWrapper<NodeGroup> selectionItem) {
+    public String unwrap(final SimpleSelectionItemWrapper<String> selectionItem) {
         if (selectionItem == null) {
             return null;
         }
@@ -120,7 +120,7 @@ public class NodeGroupListModel
     }
 
     @Override
-    public boolean isEmptyItem(final SimpleSelectionItemWrapper<NodeGroup> selectionItem) {
+    public boolean isEmptyItem(final SimpleSelectionItemWrapper<String> selectionItem) {
         return unwrap(selectionItem) == null;
     }
 

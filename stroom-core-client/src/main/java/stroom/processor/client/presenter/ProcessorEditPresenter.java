@@ -85,7 +85,8 @@ public class ProcessorEditPresenter
                                   final DateTimeSettingsFactory dateTimeSettingsFactory,
                                   final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
                                   final ClientSecurityContext clientSecurityContext,
-                                  final Provider<FeedDependencyPresenter> feedDependencyPresenterProvider) {
+                                  final Provider<FeedDependencyPresenter> feedDependencyPresenterProvider,
+                                  final ProcessorProfileClient processorProfileClient) {
         super(eventBus, view);
         view.setUiHandlers(this);
 
@@ -98,6 +99,11 @@ public class ProcessorEditPresenter
         view.setExpressionView(editExpressionPresenter.getView());
         view.setRunAsUserView(userRefSelectionBoxPresenter.getView());
         userRefSelectionBoxPresenter.setContext(FindUserContext.RUN_AS);
+
+        final ProcessorProfileListModel processorProfileListModel =
+                new ProcessorProfileListModel(eventBus, processorProfileClient);
+        processorProfileListModel.setTaskMonitorFactory(this);
+        view.getProfile().setModel(processorProfileListModel);
     }
 
     private void read(final ExpressionOperator expression,
@@ -188,7 +194,7 @@ public class ProcessorEditPresenter
                 export);
 
         // Show the processor creation dialog.
-        final PopupSize popupSize = PopupSize.resizable(800, 700);
+        final PopupSize popupSize = PopupSize.resizable(800, 800);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)

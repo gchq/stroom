@@ -75,10 +75,17 @@ public class NodeGroupListPresenter extends MyPresenterWidget<PagerView> {
                                 final Consumer<ResultPage<NodeGroup>> dataConsumer,
                                 final RestErrorHandler errorHandler) {
                 CriteriaUtil.setRange(request, range);
+                CriteriaUtil.setSortList(request, dataGrid.getColumnSortList());
                 nodeGroupClient.find(request, dataConsumer, errorHandler, view);
             }
         };
         dataProvider.addDataDisplay(dataGrid);
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(dataGrid.addColumnSortHandler(ignored -> refresh()));
     }
 
     /**
@@ -88,10 +95,9 @@ public class NodeGroupListPresenter extends MyPresenterWidget<PagerView> {
         // Name.
         dataGrid.addResizableColumn(
                 DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(NodeGroup::getName))
-//                        .enabledWhen(NodeGroup::isEnabled)
-                        .withSorting(FindNodeStatusCriteria.FIELD_ID_NAME)
+                        .withSorting(FindNodeGroupRequest.FIELD_ID_NAME)
                         .build(),
-                DataGridUtil.headingBuilder("Name")
+                DataGridUtil.headingBuilder(FindNodeGroupRequest.FIELD_ID_NAME)
                         .withToolTip("The name of the node group.")
                         .build(),
                 300);
@@ -102,8 +108,7 @@ public class NodeGroupListPresenter extends MyPresenterWidget<PagerView> {
                                 (NodeGroup result) -> NullSafe.get(
                                         result,
                                         NodeGroup::isEnabled)))
-//                        .enabledWhen(NodeGroup::isEnabled)
-                        .withSorting(FindNodeStatusCriteria.FIELD_ID_ENABLED)
+                        .withSorting(FindNodeGroupRequest.FIELD_ID_ENABLED)
                         .withFieldUpdater((index, row, value) -> {
                             if (row != null) {
                                 setEnabled(

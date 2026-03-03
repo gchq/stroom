@@ -8969,7 +8969,7 @@
           "content" : {
             "application/json" : {
               "schema" : {
-                "$ref" : "#/components/schemas/ExpressionCriteria"
+                "$ref" : "#/components/schemas/FindProcessorProfileRequest"
               }
             }
           },
@@ -15679,7 +15679,8 @@
             "items" : {
               "type" : "string",
               "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ]
-            }
+            },
+            "uniqueItems" : true
           }
         }
       },
@@ -18076,6 +18077,27 @@
           },
           "queryable" : {
             "type" : "boolean"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
+      "FindProcessorProfileRequest" : {
+        "type" : "object",
+        "properties" : {
+          "filter" : {
+            "type" : "string"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
           },
           "sort" : {
             "type" : "string",

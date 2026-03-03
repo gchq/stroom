@@ -61,6 +61,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
                 .queryData(request.getQueryData())
                 .priority(request.getPriority())
                 .maxProcessingTasks(request.getMaxProcessingTasks())
+                .profileName(request.getProfileName())
                 .enabled(request.isEnabled())
                 .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
                 .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
@@ -94,6 +95,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
                 .queryData(request.getQueryData())
                 .priority(request.getPriority())
                 .maxProcessingTasks(request.getMaxProcessingTasks())
+                .profileName(request.getProfileName())
                 .enabled(request.isEnabled())
                 .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
                 .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
@@ -116,6 +118,7 @@ public class MockProcessorFilterService implements ProcessorFilterService {
                 .queryData(request.getQueryData())
                 .priority(request.getPriority())
                 .maxProcessingTasks(request.getMaxProcessingTasks())
+                .profileName(request.getProfileName())
                 .uuid(processorFilterDocRef.getUuid())
                 .enabled(request.isEnabled())
                 .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())

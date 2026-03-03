@@ -15,8 +15,11 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class FindProcessorProfileRequest extends BaseCriteria {
 
+    public static final String FIELD_ID_NAME = "Name";
+    public static final String FIELD_ID_NODE_GROUP = "Node Group";
+
     public static final CriteriaFieldSort DEFAULT_SORT =
-            new CriteriaFieldSort("Name", false, true);
+            new CriteriaFieldSort(FIELD_ID_NAME, false, true);
     public static final List<CriteriaFieldSort> DEFAULT_SORT_LIST =
             Collections.singletonList(DEFAULT_SORT);
 

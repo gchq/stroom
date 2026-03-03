@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Singleton
 class JobService {
@@ -86,7 +87,7 @@ class JobService {
     ResultPage<Job> find(final FindJobCriteria findJobCriteria) {
         ResultPage<Job> results = securityContext.secureResult(AppPermission.MANAGE_JOBS_PERMISSION,
                 () -> jobDao.find(findJobCriteria));
-        final List<Job> list = results.getValues().stream().map(this::decorate).toList();
+        final List<Job> list = results.getValues().stream().map(this::decorate).collect(Collectors.toList());
         results = new ResultPage<>(list, results.getPageResponse());
 
         if (!findJobCriteria.getSortList().isEmpty()) {

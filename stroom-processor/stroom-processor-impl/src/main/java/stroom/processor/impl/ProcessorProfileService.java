@@ -17,7 +17,9 @@
 package stroom.processor.impl;
 
 import stroom.docref.DocRef;
+import stroom.processor.shared.FindProcessorProfileRequest;
 import stroom.processor.shared.ProcessorProfile;
+import stroom.util.shared.ResultPage;
 
 import java.util.List;
 
@@ -28,7 +30,7 @@ public interface ProcessorProfileService {
 
     List<String> getNames();
 
-    List<ProcessorProfile> getAll();
+    ResultPage<ProcessorProfile> find(FindProcessorProfileRequest request);
 
     ProcessorProfile create(ProcessorProfile processorProfile);
 

@@ -26,10 +26,14 @@ import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
+import org.jooq.Field;
 import org.jooq.JSON;
+import org.jooq.OrderField;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static stroom.processor.impl.db.jooq.tables.ProcessorProfile.PROCESSOR_PROFILE;
@@ -38,6 +42,10 @@ class ProcessorProfileDaoImpl implements ProcessorProfileDao {
 
     private static final RecordToProcessorProfileMapper RECORD_TO_PROCESSOR_PROFILE_MAPPER =
             new RecordToProcessorProfileMapper();
+
+    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
+            FindProcessorProfileRequest.FIELD_ID_NAME, PROCESSOR_PROFILE.NAME,
+            FindProcessorProfileRequest.FIELD_ID_NODE_GROUP, PROCESSOR_PROFILE.NODE_GROUP_NAME);
 
     private final ProcessorDbConnProvider processorDbConnProvider;
 
@@ -52,6 +60,7 @@ class ProcessorProfileDaoImpl implements ProcessorProfileDao {
         if (NullSafe.isNonBlankString(request.getFilter())) {
             conditions.add(PROCESSOR_PROFILE.NAME.startsWith(request.getFilter()));
         }
+        final Collection<OrderField<?>> orderFields = JooqUtil.getOrderFields(FIELD_MAP, request);
         final int offset = JooqUtil.getOffset(request.getPageRequest());
         final int limit = JooqUtil.getLimit(request.getPageRequest(), true);
 
@@ -59,7 +68,7 @@ class ProcessorProfileDaoImpl implements ProcessorProfileDao {
                         .select()
                         .from(PROCESSOR_PROFILE)
                         .where(conditions)
-                        .orderBy(PROCESSOR_PROFILE.NAME)
+                        .orderBy(orderFields)
                         .offset(offset)
                         .limit(limit)
                         .fetch())
@@ -73,16 +82,6 @@ class ProcessorProfileDaoImpl implements ProcessorProfileDao {
                 .select(PROCESSOR_PROFILE.NAME)
                 .from(PROCESSOR_PROFILE)
                 .fetch(PROCESSOR_PROFILE.NAME));
-    }
-
-    @Override
-    public List<ProcessorProfile> getAll() {
-        return JooqUtil.contextResult(processorDbConnProvider, context -> context
-                        .select()
-                        .from(PROCESSOR_PROFILE)
-                        .orderBy(PROCESSOR_PROFILE.NAME)
-                        .fetch())
-                .map(RECORD_TO_PROCESSOR_PROFILE_MAPPER::apply);
     }
 
     @Override
