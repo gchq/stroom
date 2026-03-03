@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -48,11 +49,13 @@ import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
 import stroom.ui.config.shared.Theme;
+import stroom.util.client.Console;
 import stroom.util.client.JSONUtil;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
 import stroom.visualisation.client.presenter.VisFunctionCache;
+import stroom.visualisation.shared.VisualisationAssetResource;
 import stroom.visualisation.shared.VisualisationResource;
 
 import com.google.gwt.core.client.GWT;
@@ -60,6 +63,8 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -81,6 +86,8 @@ public class VisPresenter
     public static final String TAB_TYPE = "vis-component";
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
+    private static final VisualisationAssetResource VISUALISATION_ASSET_RESOURCE =
+            GWT.create(VisualisationAssetResource.class);
 
     public static final ComponentType TYPE = new ComponentType(4, "vis", "Visualisation", ComponentUse.PANEL);
     private static final long UPDATE_INTERVAL = 2000;
@@ -456,21 +463,45 @@ public class VisPresenter
                                               + getVisSettings().getVisualisation());
                         }
 
-                        function.setFunctionName(result.getFunctionName());
+                        // Is there an asset named index.html? If so load it. Otherwise, use old mechanism.
+                        restFactory
+                                .create(VISUALISATION_ASSET_RESOURCE)
+                                .method(res -> res.indexAssetExists(visualisationDocRef.getUuid()))
+                                .onSuccess(indexAssetExists -> {
+                                    if (indexAssetExists) {
+                                        final SafeUri safeDocRef = UriUtils.fromString(visualisationDocRef.getUuid());
+                                        Console.info("Setting vis docRef URL to '" + safeDocRef.asString() + "'");
+                                        visFrame.setUrl("/assets/"
+                                                        + safeDocRef.asString()
+                                                        + "/index.html");
+                                        Console.info("Setting status of function " + function.getFunctionName());
+                                        function.setStatus(LoadStatus.LOADED);
+                                    } else {
+                                        function.setFunctionName(result.getFunctionName());
 
-                        // Do we have required scripts.
-                        if (result.getScriptRef() != null) {
-                            // Now we have loaded the visualisation, load all
-                            // associated scripts.
-                            loadScripts(function, result.getScriptRef());
+                                        // Do we have required scripts.
+                                        if (result.getScriptRef() != null) {
+                                            // Now we have loaded the visualisation, load all
+                                            // associated scripts.
+                                            loadScripts(function, result.getScriptRef());
 
-                        } else {
-                            // Set the function status to loaded. This will tell all
-                            // handlers that the function is ready for use.
-                            if (!LoadStatus.FAILURE.equals(function.getStatus())) {
-                                function.setStatus(LoadStatus.LOADED);
-                            }
-                        }
+                                        } else {
+                                            // Set the function status to loaded. This will tell all
+                                            // handlers that the function is ready for use.
+                                            if (!LoadStatus.FAILURE.equals(function.getStatus())) {
+                                                function.setStatus(LoadStatus.LOADED);
+                                            }
+                                        }
+                                    }
+                                })
+                                .onFailure(caught -> {
+                                    AlertEvent.fireError(this,
+                                            "There was an error checking if the visualisation document "
+                                            + "has an index.html asset: " + caught.getMessage(),
+                                            null);
+                                })
+                                .taskMonitorFactory(getView().getRefreshButton())
+                                .exec();
                     } else {
                         failure(function,
                                 "No visualisation found for: " + getVisSettings().getVisualisation());
@@ -500,13 +531,17 @@ public class VisPresenter
 
     @Override
     public void onChange(final VisFunction function) {
+        Console.info("VisPresenter.onChange: " + function);
+
         // Ensure this is a load event for the current function.
         if (function.equals(currentFunction)) {
             if (LoadStatus.LOADED.equals(function.getStatus())) {
                 try {
-                    if (loadedFunction == null || !loadedFunction.equals(function)) {
-                        loadedFunction = function;
-                        visFrame.setVisType(function.getFunctionName(), getClassName(currentPreferences.getTheme()));
+                    if (function.getFunctionName() != null) {
+                        if (loadedFunction == null || !loadedFunction.equals(function)) {
+                            loadedFunction = function;
+                            visFrame.setVisType(function.getFunctionName(), getClassName(currentPreferences.getTheme()));
+                        }
                     }
 
                     currentError = null;

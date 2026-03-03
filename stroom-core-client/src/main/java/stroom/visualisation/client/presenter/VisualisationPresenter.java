@@ -23,7 +23,6 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
-import stroom.util.client.Console;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -127,12 +126,16 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
      * @param callback Thing to call when the assets have been saved.
      */
     public void saveAssets(final VisualisationDoc document, final Consumer<VisualisationDoc> callback) {
-        Console.info("PostSaveCallback: VisualisationAssetsPresenter.onSave() ");
         visualisationAssetsPresenter.onSave(document, callback);
     }
 
+    /**
+     * Called by DocumentPlugin to do a SaveAs to a new document.
+     * Specified in getPostSaveAsCallback().
+     * @param document The new document to save to.
+     * @param callback Thing to call when the assets have been saved.
+     */
     public void saveAsAssets(final VisualisationDoc document, final Consumer<VisualisationDoc> callback) {
-        Console.info("PostSaveAsCallback: VisualisationAssetsPresenter.onSaveAs()");
         visualisationAssetsPresenter.onSaveAs(document, callback);
     }
 }

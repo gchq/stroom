@@ -221,4 +221,11 @@ public interface VisualisationAssetDao {
      */
     void deleteAssetsForDoc(String ownerDocId) throws IOException;
 
+    /**
+     * Determines whether an asset named '/index.html' exists.
+     * @param ownerDocId The document that owns the assets.
+     * @return true if the asset exists; false if not.
+     */
+    boolean indexAssetExists(String ownerDocId) throws IOException;
+
 }

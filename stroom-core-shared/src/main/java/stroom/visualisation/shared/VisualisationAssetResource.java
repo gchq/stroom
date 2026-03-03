@@ -121,4 +121,11 @@ public interface VisualisationAssetResource extends RestResource, DirectRestServ
                    @Parameter(description="SaveAs parameters", required = true)
                    VisualisationAssetSaveAsParameters updateParameters);
 
+    @GET
+    @Path("/saveAs/{ownerDocId}")
+    @Operation(
+            summary = "Check if an index.html asset exists for the document ID",
+            operationId = "indexAssetExists")
+    Boolean indexAssetExists(@PathParam("ownerDocId") String ownerDocId);
+
 }

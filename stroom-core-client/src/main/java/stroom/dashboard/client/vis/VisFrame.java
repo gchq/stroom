@@ -56,6 +56,15 @@ public class VisFrame extends Composite implements VisPane, HasTaskMonitorFactor
         initWidget(container);
     }
 
+    /**
+     * Allows the URL for the iframe to be set. Called when the visualisation is
+     * running from Assets rather than Scripts.
+     * @param url The URL to set.
+     */
+    public void setUrl(final String url) {
+        frame.setUrl(url);
+    }
+
     public void setContainerPositionAndSize(final double left,
                                             final double top,
                                             final double width,

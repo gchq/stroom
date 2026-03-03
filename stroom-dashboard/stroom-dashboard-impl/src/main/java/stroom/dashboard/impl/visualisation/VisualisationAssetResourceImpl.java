@@ -455,4 +455,28 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
                 .getResultAndLog();
     }
 
+    @Override
+    public Boolean indexAssetExists(final String ownerDocId) {
+        final StroomEventLoggingService eventLoggingService = eventLoggingServiceProvider.get();
+
+        final ViewEventAction viewEventAction = ViewEventAction.builder()
+                .addDocument(Document.builder().withId(ownerDocId).build())
+                .build();
+
+        return eventLoggingService.loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "indexAssetExists"))
+                .withDescription("Check if an asset named 'index.html' exists")
+                .withDefaultEventAction(viewEventAction)
+                .withSimpleLoggedResult(() -> {
+                    try {
+                        return serviceProvider.get().indexAssetExists(ownerDocId);
+                    } catch (final IOException e) {
+                        throw new RuntimeException(e);
+                    } catch (final Throwable t) {
+                        LOGGER.error("Error in indexAssetExists: {}", t.getMessage(), t);
+                        throw t;
+                    }
+                })
+                .getResultAndLog();
+    }
 }

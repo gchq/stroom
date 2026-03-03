@@ -208,4 +208,29 @@ public class TestVisualisationDao {
         assertThat(path0).isEqualTo("");
     }
 
+    @Test
+    void testIndexAssetExists() throws IOException {
+        final String ownerDocUuid = "iaeDoc";
+        final String userUuid = "iaeUser";
+
+        final VisualisationAssets assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
+        assertThat(assets.getAssets().size()).isEqualTo(0);
+        assertThat(assets.isDirty()).isEqualTo(false);
+        boolean indexAssetExists = assetDao.indexAssetExists(ownerDocUuid);
+        assertThat(indexAssetExists).isEqualTo(false);
+
+        // Add the index asset
+        assetDao.updateNewFile(userUuid, ownerDocUuid, "/index.html");
+
+        // Not saved yet so still doesn't exist
+        indexAssetExists = assetDao.indexAssetExists(ownerDocUuid);
+        assertThat(indexAssetExists).isEqualTo(false);
+
+        // Save it and check the asset now exists
+        assetDao.saveDraftToLive(userUuid, ownerDocUuid);
+        indexAssetExists = assetDao.indexAssetExists(ownerDocUuid);
+        assertThat(indexAssetExists).isEqualTo(true);
+
+    }
+
 }

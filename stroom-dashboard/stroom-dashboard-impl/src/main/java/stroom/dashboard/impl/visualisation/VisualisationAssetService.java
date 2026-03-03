@@ -453,4 +453,21 @@ public class VisualisationAssetService {
         }
     }
 
+    /**
+     * Called by the Dashboard to check if an asset named index.html exists.
+     * @param ownerDocId The document that owns the assets
+     * @return true if index.html exists; false if not
+     * @throws IOException If something goes wrong
+     * @throws PermissionException If the user does not have VIEW permission
+     */
+    boolean indexAssetExists(final String ownerDocId) throws IOException, PermissionException {
+        final DocRef docRef = new DocRef(VisualisationDoc.TYPE, ownerDocId);
+        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+            return dao.indexAssetExists(ownerDocId);
+        } else {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to view these assets");
+        }
+    }
+
 }

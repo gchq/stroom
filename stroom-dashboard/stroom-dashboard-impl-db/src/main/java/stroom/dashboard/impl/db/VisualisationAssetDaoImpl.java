@@ -1167,10 +1167,42 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
         } catch (final DataAccessException e) {
             LOGGER.error("Error deleting assets for document '{}': {}",
                     ownerDocId, e.getMessage(), e);
-            throw new IOException("Error deleing assets for document '" + ownerDocId
+            throw new IOException("Error deleting assets for document '" + ownerDocId
                                   + "': " + e.getMessage(), e);
         } catch (final Throwable t) {
             LOGGER.error("Error deleting assets for document '{}': {}",
+                    ownerDocId, t.getMessage(), t);
+            throw t;
+        }
+    }
+
+    @Override
+    public boolean indexAssetExists(final String ownerDocId) throws IOException {
+        Objects.requireNonNull(ownerDocId);
+
+        final String path = "/index.html";
+        final byte[] pathHash = Hashing.sha256().hashString(path, StandardCharsets.UTF_8).asBytes();
+
+        try {
+            final boolean[] exists = new boolean[1];
+            JooqUtil.transaction(connProvider, txnContext -> {
+                final int rowCount = txnContext.selectOne()
+                        .from(Tables.VISUALISATION_ASSETS)
+                        .where(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(ownerDocId)
+                                .and(Tables.VISUALISATION_ASSETS.PATH.eq(path))
+                                .and(Tables.VISUALISATION_ASSETS.PATH_HASH.eq(pathHash)))
+                        .execute();
+                exists[0] = rowCount > 0;
+            });
+            return exists[0];
+
+        } catch (final DataAccessException e) {
+            LOGGER.error("Error checking for index.html for document: '{}': {}",
+                    ownerDocId, e.getMessage(), e);
+            throw new IOException("Error checking for index.html for document '" + ownerDocId
+                                  + "': " + e.getMessage(), e);
+        } catch (final Throwable t) {
+            LOGGER.error("Error checking for index.html for document '{}': {}",
                     ownerDocId, t.getMessage(), t);
             throw t;
         }
