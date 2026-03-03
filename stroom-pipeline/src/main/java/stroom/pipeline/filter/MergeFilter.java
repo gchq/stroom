@@ -24,9 +24,9 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.xml.event.simple.StartElement;
 import stroom.pipeline.xml.event.simple.StartPrefixMapping;
 import stroom.svg.shared.SvgImage;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
@@ -48,7 +48,8 @@ import java.util.Deque;
         icon = SvgImage.PIPELINE_MERGE)
 public class MergeFilter extends AbstractXMLFilter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SplitFilter.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MergeFilter.class);
+
     private final Deque<StartPrefixMapping> prefixDeque = new ArrayDeque<>();
     private boolean started;
     private StartElement root;
@@ -92,7 +93,7 @@ public class MergeFilter extends AbstractXMLFilter {
             if (started) {
                 // End root element.
                 if (root != null) {
-                    System.out.println("ending root element: " + root.getLocalName());
+                    LOGGER.debug("ending root element: {}", root.getLocalName());
                     super.endElement(root.getUri(), root.getLocalName(), root.getQName());
                 }
 
