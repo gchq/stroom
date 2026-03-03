@@ -49,7 +49,6 @@ import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
 import stroom.ui.config.shared.Theme;
-import stroom.util.client.Console;
 import stroom.util.client.JSONUtil;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
@@ -130,6 +129,8 @@ public class VisPresenter
 
     private final VisSelectionModel visSelectionModel;
     private boolean pause;
+
+    private HandlerRegistration loadIframeHandlerRegistration;
 
     @Inject
     public VisPresenter(final EventBus eventBus, final VisView view,
@@ -453,6 +454,8 @@ public class VisPresenter
                 .method(res -> res.fetch(visualisationDocRef.getUuid()))
                 .onSuccess(result -> {
                     if (result != null) {
+                        function.setFunctionName(result.getFunctionName());
+
                         // Get all possible settings for this visualisation.
                         possibleSettings = null;
                         try {
@@ -469,16 +472,23 @@ public class VisPresenter
                                 .create(VISUALISATION_ASSET_RESOURCE)
                                 .method(res -> res.indexAssetExists(visualisationDocRef.getUuid()))
                                 .onSuccess(indexAssetExists -> {
-                                    function.setFunctionName(result.getFunctionName());
                                     if (indexAssetExists) {
-                                        final SafeUri safeDocRef = UriUtils.fromString(visualisationDocRef.getUuid());
-                                        final HandlerRegistration handlerRegistration = visFrame.addLoadHandler(event -> {
+                                        loadIframeHandlerRegistration = visFrame.addLoadHandler(event -> {
                                             function.setStatus(LoadStatus.LOADED);
+
+                                            // Remove the load handler again
+                                            if (loadIframeHandlerRegistration != null) {
+                                                loadIframeHandlerRegistration.removeHandler();
+                                                loadIframeHandlerRegistration = null;
+                                            }
                                         });
+
+                                        // Load the index.html into the iframe
+                                        final SafeUri safeDocRef = UriUtils.fromString(visualisationDocRef.getUuid());
                                         visFrame.setUrl("/assets/"
                                                         + safeDocRef.asString()
                                                         + "/index.html");
-                                        // TODO Delete handler registration
+
                                     } else {
                                         // Do we have required scripts.
                                         if (result.getScriptRef() != null) {
@@ -532,7 +542,6 @@ public class VisPresenter
 
     @Override
     public void onChange(final VisFunction function) {
-        Console.info("VisPresenter.onChange: " + function);
 
         // Ensure this is a load event for the current function.
         if (function.equals(currentFunction)) {
