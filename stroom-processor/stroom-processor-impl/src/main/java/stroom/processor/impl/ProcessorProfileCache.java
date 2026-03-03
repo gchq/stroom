@@ -93,6 +93,19 @@ public class ProcessorProfileCache implements Clearable {
             return ZERO;
         }
 
+        return getProfile(processorProfile);
+    }
+
+    public ProfileResult getProfile(final String profileName) {
+        final Optional<ProcessorProfile> optionalProcessorProfile = get(profileName);
+        final ProcessorProfile processorProfile = optionalProcessorProfile.orElseThrow(() ->
+                new RuntimeException("Processor profile called '" +
+                                     profileName +
+                                     "' not found"));
+        return getProfile(processorProfile);
+    }
+
+    public ProfileResult getProfile(final ProcessorProfile processorProfile) {
         // If there are no periods defined then return zero.
         final List<ProfilePeriod> periods = processorProfile.getProfilePeriods();
         if (NullSafe.isEmptyCollection(periods)) {
@@ -109,12 +122,17 @@ public class ProcessorProfileCache implements Clearable {
         for (final ProfilePeriod period : periods) {
             // Ignore periods that do not include the current day.
             if (period.getDays().isIncluded(day)) {
-                // Check start time is before or equal.
+                // Calculate the start time.
                 final ZonedDateTime startTime = setTime(zonedDateTime, period.getStartTime());
-                if (startTime.isBefore(zonedDateTime) || startTime.equals(zonedDateTime)) {
+                // Check start time is before or equal.
+                if (!startTime.isAfter(zonedDateTime)) {
+                    // Calculate the end time and ensure it is after the start time.
+                    ZonedDateTime endTime = setTime(zonedDateTime, period.getEndTime());
+                    if (!endTime.isAfter(startTime)) {
+                        endTime = endTime.plusDays(1);
+                    }
                     // Check end time is after or equal.
-                    final ZonedDateTime endTime = setTime(zonedDateTime, period.getEndTime());
-                    if (endTime.isAfter(zonedDateTime) || endTime.equals(zonedDateTime)) {
+                    if (!endTime.isBefore(zonedDateTime)) {
                         int maxNodeTasks = Integer.MAX_VALUE;
                         if (period.isLimitNodeThreads()) {
                             maxNodeTasks = period.getMaxNodeThreads();
@@ -133,7 +151,11 @@ public class ProcessorProfileCache implements Clearable {
     }
 
     private ZonedDateTime setTime(final ZonedDateTime zonedDateTime, final Time time) {
-        return zonedDateTime.withHour(time.getHour()).withMinute(time.getMinute()).withSecond(time.getSecond());
+        return zonedDateTime
+                .withHour(time.getHour())
+                .withMinute(time.getMinute())
+                .withSecond(time.getSecond())
+                .withNano(0);
     }
 
     public record ProfileResult(int maxNodeTasks, int maxClusterTasks) {
