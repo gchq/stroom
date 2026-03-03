@@ -553,8 +553,9 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
             sb.append("\"");
             final CharBuffer namespaces = new CharBuffer(100);
             final CharBuffer locations = new CharBuffer(100);
-            for (final String prefix : prefixes.keySet()) {
-                final String namespace = prefixes.get(prefix);
+            for (final Entry<String, String> entry : prefixes.entrySet()) {
+                final String prefix = entry.getKey();
+                final String namespace = entry.getValue();
                 final String location = schemaLocations.get(namespace);
                 if (location != null) {
                     namespaces.append(" xmlns");
@@ -607,8 +608,8 @@ public class SchemaFilter extends AbstractXMLFilter implements Locator {
                 validatorHandler.setErrorHandler(errorHandler);
 
                 validatorHandler.startDocument();
-                for (final String prefix : prefixes.keySet()) {
-                    validatorHandler.startPrefixMapping(prefix, prefixes.get(prefix));
+                for (final Entry<String, String> entry : prefixes.entrySet()) {
+                    validatorHandler.startPrefixMapping(entry.getKey(), entry.getValue());
                 }
             }
         }
