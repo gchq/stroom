@@ -24,10 +24,10 @@ import stroom.pipeline.state.Incrementor;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.state.RecordCountService;
 import stroom.svg.shared.SvgImage;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
@@ -49,7 +49,7 @@ import org.xml.sax.SAXException;
         icon = SvgImage.PIPELINE_RECORD_COUNT)
 public class RecordCountFilter extends AbstractXMLFilter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RecordCountFilter.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RecordCountFilter.class);
     private static final int LOG_COUNT = 10000;
 
     /**
@@ -164,9 +164,9 @@ public class RecordCountFilter extends AbstractXMLFilter {
                 logCounter++;
                 if (logCounter % LOG_COUNT == 0) {
                     if (countRead) {
-                        LOGGER.debug("Records read = " + logCounter);
+                        LOGGER.debug("Records read = {}", logCounter);
                     } else {
-                        LOGGER.debug("Records written = " + logCounter);
+                        LOGGER.debug("Records written = {}", logCounter);
                     }
                 }
             }
