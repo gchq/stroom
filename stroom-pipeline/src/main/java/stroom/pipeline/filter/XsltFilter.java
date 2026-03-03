@@ -118,6 +118,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
      */
     private PoolItem<StoredXsltExecutable> poolItem;
     private XsltExecutable xsltExecutable;
+    private TemplatesImpl cachedTemplates;
     private TransformerHandler handler;
     private Locator locator;
     private boolean xsltRequired = false;
@@ -201,6 +202,9 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                         final String msg = sb.toString();
                         throw ProcessException.create(msg);
                     }
+
+                    // Cache the TemplatesImpl so we don't recreate it per document.
+                    cachedTemplates = new TemplatesImpl(xsltExecutable);
                 }
             }
 
@@ -261,8 +265,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
 //                configuration.setLineNumbering(!pipelineContext.isStepping());
 
                 // Create a handler to receive all SAX events.
-                final TemplatesImpl templates = new TemplatesImpl(xsltExecutable);
-                final TransformerImpl transformer = (TransformerImpl) templates.newTransformer();
+                final TransformerImpl transformer = (TransformerImpl) cachedTemplates.newTransformer();
                 transformer.setErrorListener(errorListener);
                 configureMessageListener(transformer);
 
