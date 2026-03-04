@@ -342,6 +342,11 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
     }
 
     @Override
+    protected boolean hasAssociatedDirty() {
+        return !steppingPresenter.getDirtyDocs().isEmpty();
+    }
+
+    @Override
     protected PipelineDoc onWrite(final PipelineDoc document) {
         return pipelineStructurePresenter.onWrite(document);
     }

@@ -118,19 +118,29 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                                      final boolean forceOpen,
                                      final boolean fullScreen,
                                      final CommonDocLinkTab selectedLinkTab,
-                                     Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                     final Consumer<MyPresenterWidget<?>> callbackOnOpen,
                                      final boolean duplicate,
                                      final TaskMonitorFactory taskMonitorFactory) {
+        final Consumer<MyPresenterWidget<?>> callback;
         if (callbackOnOpen == null) {
-            callbackOnOpen = presenter -> {
-                final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;
-                pipelinePresenter.setMetaListExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION);
-                pipelinePresenter.initPipelineModel(docRef);
+            callback = presenter -> {
+                initPipelineModel(presenter, docRef);
+            };
+        } else {
+            callback = presenter -> {
+                initPipelineModel(presenter, docRef);
+                callbackOnOpen.accept(presenter);
             };
         }
 
-        return super.open(docRef, forceOpen, fullScreen, selectedLinkTab, callbackOnOpen, duplicate,
+        return super.open(docRef, forceOpen, fullScreen, selectedLinkTab, callback, duplicate,
                 taskMonitorFactory);
+    }
+
+    private void initPipelineModel(final MyPresenterWidget<?> presenter, final DocRef docRef) {
+        final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;
+        pipelinePresenter.setMetaListExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION);
+        pipelinePresenter.initPipelineModel(docRef);
     }
 
     public void save(final DocumentTabData tabData) {
@@ -158,9 +168,8 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                                     super.save(tabData);
                                 }
 
-                                if (dirtyDocs.size() != selectedDocRefs.size()) {
-                                    pipelinePresenter.onChange();
-                                }
+                                //TODO: This cant be done until all the docs have been saved
+                                pipelinePresenter.onChange();
                             }
                             e.hide();
                         })

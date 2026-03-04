@@ -230,7 +230,9 @@ public class PropertyListPresenter
                                                final PipelineProperty defaultProperty) {
         if (properties != null && !properties.isEmpty()) {
             for (final PipelineProperty property : properties) {
-                if (property.equals(defaultProperty)) {
+                // Compare by element+name only
+                if (property.getElement().equals(defaultProperty.getElement())
+                        && property.getName().equals(defaultProperty.getName())) {
                     return property;
                 }
             }
@@ -259,9 +261,9 @@ public class PropertyListPresenter
         }
 
         final String className;
-        if (pipelineModel.getPipelineData().getAddedProperties().contains(property)) {
+        if (getActualProperty(pipelineModel.getPipelineData().getAddedProperties(), property) != null) {
             className = ADDED;
-        } else if (pipelineModel.getPipelineData().getRemovedProperties().contains(property)) {
+        } else if (getActualProperty(pipelineModel.getPipelineData().getRemovedProperties(), property) != null) {
             if (showRemovedAsDefault) {
                 className = DEFAULT;
             } else {
@@ -287,9 +289,9 @@ public class PropertyListPresenter
     private String getStateCssClass(final PipelineProperty property,
                                     final boolean showRemovedAsDefault) {
         final String className;
-        if (pipelineModel.getPipelineData().getAddedProperties().contains(property)) {
+        if (getActualProperty(pipelineModel.getPipelineData().getAddedProperties(), property) != null) {
             className = ADDED;
-        } else if (pipelineModel.getPipelineData().getRemovedProperties().contains(property)) {
+        } else if (getActualProperty(pipelineModel.getPipelineData().getRemovedProperties(), property) != null) {
             if (showRemovedAsDefault) {
                 className = DEFAULT;
             } else {
@@ -399,9 +401,13 @@ public class PropertyListPresenter
 
                         final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineModel.getPipelineData());
 
-                        // Remove the property locally.
-                        builder.getProperties().getAddList().remove(editing);
-                        builder.getProperties().getRemoveList().remove(editing);
+                        // Remove the property locally (compare by element+name only).
+                        builder.getProperties().getAddList().removeIf(p ->
+                                p.getElement().equals(editing.getElement())
+                                        && p.getName().equals(editing.getName()));
+                        builder.getProperties().getRemoveList().removeIf(p ->
+                                p.getElement().equals(editing.getElement())
+                                        && p.getName().equals(editing.getName()));
 
                         // Write new property.
                         final PipelinePropertyValue value = editor.writeValue();
