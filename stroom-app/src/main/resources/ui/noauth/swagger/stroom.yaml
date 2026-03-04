@@ -19090,8 +19090,6 @@ components:
             $ref: "#/components/schemas/DocRef"
         name:
           type: string
-        sessionId:
-          type: string
     TabSessionDeleteRequest:
       type: object
       properties:

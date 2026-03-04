@@ -25749,9 +25749,6 @@
           },
           "name" : {
             "type" : "string"
-          },
-          "sessionId" : {
-            "type" : "string"
           }
         }
       },
