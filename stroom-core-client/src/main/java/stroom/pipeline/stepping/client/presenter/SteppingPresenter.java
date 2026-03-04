@@ -800,14 +800,11 @@ public class SteppingPresenter
         pipelineChangeHandlers.forEach(handler -> handler.accept(pipelineModel));
     }
 
-    public void save(final List<DocRef> docsToSave) {
+    public void save(final List<DocRef> docsToSave, final Runnable onComplete) {
         // Tell editors to save if they are in the list.
-        for (final Entry<ElementId, ElementPresenter> entry : elementPresenterMap.entrySet()) {
-            final ElementPresenter elementPresenter = entry.getValue();
-            if (docsToSave.contains(elementPresenter.getDocRef())) {
-                elementPresenter.save();
-            }
-        }
+        elementPresenterMap.values().stream()
+                .filter(ep -> docsToSave.contains(ep.getDocRef()))
+                .forEach(ep -> ep.save(onComplete));
     }
 
     public List<DocRef> getDirtyDocs() {

@@ -59,6 +59,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import javax.inject.Singleton;
 
@@ -143,6 +144,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
         pipelinePresenter.initPipelineModel(docRef);
     }
 
+    @Override
     public void save(final DocumentTabData tabData) {
         if (tabData instanceof final PipelinePresenter pipelinePresenter) {
             final List<DocRef> dirtyDocs = pipelinePresenter.getDirtyDocs();
@@ -162,14 +164,16 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                         .onHideRequest(e -> {
                             if (e.isOk()) {
                                 final List<DocRef> selectedDocRefs = docRefSelectionPresenter.getSelectedItems();
-                                pipelinePresenter.saveDocs(selectedDocRefs);
-
+                                final AtomicInteger remaining = new AtomicInteger(selectedDocRefs.size());
+                                final Runnable onSaved = () -> {
+                                    if (remaining.decrementAndGet() == 0) {
+                                        pipelinePresenter.onChange();
+                                    }
+                                };
+                                pipelinePresenter.saveDocs(selectedDocRefs, onSaved);
                                 if (selectedDocRefs.contains(pipeline)) {
-                                    super.save(tabData);
+                                    super.save(tabData, onSaved);
                                 }
-
-                                //TODO: This cant be done until all the docs have been saved
-                                pipelinePresenter.onChange();
                             }
                             e.hide();
                         })

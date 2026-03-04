@@ -337,8 +337,8 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
         return dirtyDocs;
     }
 
-    public void saveDocs(final List<DocRef> docRefs) {
-        steppingPresenter.save(docRefs);
+    public void saveDocs(final List<DocRef> docRefs, final Runnable onComplete) {
+        steppingPresenter.save(docRefs, onComplete);
     }
 
     @Override
