@@ -276,6 +276,17 @@ public class SteppingPresenter
                 final MetaRow metaRow = event.getData().getFirst();
                 steppingMetaListPresenter.getSelectionModel().setSelected(metaRow, new SelectionType(), false);
                 stepLocationLinkPresenter.setStepLocation(new StepLocation(metaRow.getMeta().getId(), 0, 0));
+                // If not already stepping on this stream, auto-begin stepping.
+                // This handles the case where the user changes the filter expression and a single
+                // result is auto-selected, but beginStepping was not called directly (e.g. from
+                // the filter dialog path). In the openSteppingMode path, busyTranslating will be
+                // true (step already in flight) or the meta ID will match, preventing a double-step.
+                if (!busyTranslating && (meta == null || meta.getId() != metaRow.getMeta().getId())) {
+                    beginStepping(StepType.REFRESH,
+                            new StepLocation(metaRow.getMeta().getId(), 0, 0),
+                            metaRow.getMeta(),
+                            null);
+                }
             }
         }));
 
@@ -1065,8 +1076,9 @@ public class SteppingPresenter
         } finally {
             if (pipelineModel.getCombinedData().getElements().size() > 1) {
                 final MetaRow selectedRow = steppingMetaListPresenter.getSelected();
-                final boolean isFirstStream = steppingMetaListPresenter.getResultPage().isFirst(selectedRow);
-                final boolean isLastStream = steppingMetaListPresenter.getResultPage().isLast(selectedRow);
+                final ResultPage<MetaRow> metaResultPage = steppingMetaListPresenter.getResultPage();
+                final boolean isFirstStream = metaResultPage != null && metaResultPage.isFirst(selectedRow);
+                final boolean isLastStream = metaResultPage != null && metaResultPage.isLast(selectedRow);
 
                 stepControlPresenter.setEnabledButtons(
                         requestBuilder.build().getStepType(),

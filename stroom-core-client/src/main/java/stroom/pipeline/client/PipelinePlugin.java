@@ -138,10 +138,10 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                 taskMonitorFactory);
     }
 
-    private void initPipelineModel(final MyPresenterWidget<?> presenter, final DocRef docRef) {
+    private void initPipelineModel(final MyPresenterWidget<?> presenter, final DocRef pipeline) {
         final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;
         pipelinePresenter.setMetaListExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION);
-        pipelinePresenter.initPipelineModel(docRef);
+        pipelinePresenter.initPipelineModel(pipeline);
     }
 
     @Override
@@ -164,9 +164,9 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                         .onHideRequest(e -> {
                             if (e.isOk()) {
                                 final List<DocRef> selectedDocRefs = docRefSelectionPresenter.getSelectedItems();
-                                final AtomicInteger remaining = new AtomicInteger(selectedDocRefs.size());
+                                final AtomicInteger completedSaves = new AtomicInteger(0);
                                 final Runnable onSaved = () -> {
-                                    if (remaining.decrementAndGet() == 0) {
+                                    if (completedSaves.incrementAndGet() == selectedDocRefs.size()) {
                                         pipelinePresenter.onChange();
                                     }
                                 };
