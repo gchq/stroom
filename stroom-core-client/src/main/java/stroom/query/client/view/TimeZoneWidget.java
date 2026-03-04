@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.planb.client.view;
+package stroom.query.client.view;
 
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.UserTimeZone;
 import stroom.query.api.UserTimeZone.Use;
@@ -27,14 +28,11 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
-public final class TimeZoneWidget
-        extends AbstractSettingsWidget
-        implements TimeZoneView {
-
-    private final Widget widget;
+public final class TimeZoneWidget extends Composite {
 
     @UiField
     FormGroup userPreferencesTimeZoneId;
@@ -49,9 +47,11 @@ public final class TimeZoneWidget
     @UiField
     ValueSpinner timeZoneOffsetMinutes;
 
+    private ChangeUiHandlers uiHandlers;
+
     @Inject
     public TimeZoneWidget(final Binder binder) {
-        widget = binder.createAndBindUi(this);
+        final Widget widget = binder.createAndBindUi(this);
 
         timeZoneUse.addItem(Use.LOCAL);
         timeZoneUse.addItem(Use.UTC);
@@ -80,11 +80,8 @@ public final class TimeZoneWidget
         timeZoneOffsetMinutes.setVisible(false);
 
         changeVisible();
-    }
 
-    @Override
-    public Widget asWidget() {
-        return widget;
+        initWidget(widget);
     }
 
     public UserTimeZone getUserTimeZone() {
@@ -106,28 +103,23 @@ public final class TimeZoneWidget
         }
     }
 
-    @Override
     public Use getTimeZoneUse() {
         return this.timeZoneUse.getValue();
     }
 
-    @Override
     public void setTimeZoneUse(final Use use) {
         this.timeZoneUse.setValue(use);
         changeVisible();
     }
 
-    @Override
     public String getTimeZoneId() {
         return this.timeZoneId.getValue();
     }
 
-    @Override
     public void setTimeZoneId(final String timeZoneId) {
         this.timeZoneId.setValue(timeZoneId);
     }
 
-    @Override
     public Integer getTimeZoneOffsetHours() {
         final int val = this.timeZoneOffsetHours.getIntValue();
         if (val == 0) {
@@ -136,7 +128,6 @@ public final class TimeZoneWidget
         return val;
     }
 
-    @Override
     public void setTimeZoneOffsetHours(final Integer timeZoneOffsetHours) {
         if (timeZoneOffsetHours == null) {
             this.timeZoneOffsetHours.setValue(0);
@@ -145,7 +136,6 @@ public final class TimeZoneWidget
         }
     }
 
-    @Override
     public Integer getTimeZoneOffsetMinutes() {
         final int val = this.timeZoneOffsetMinutes.getIntValue();
         if (val == 0) {
@@ -154,7 +144,6 @@ public final class TimeZoneWidget
         return val;
     }
 
-    @Override
     public void setTimeZoneOffsetMinutes(final Integer timeZoneOffsetMinutes) {
         if (timeZoneOffsetMinutes == null) {
             this.timeZoneOffsetMinutes.setValue(0);
@@ -168,7 +157,6 @@ public final class TimeZoneWidget
         userPreferencesTimeZoneOffset.setVisible(Use.OFFSET.equals(this.timeZoneUse.getValue()));
     }
 
-    @Override
     public void onReadOnly(final boolean readOnly) {
         timeZoneUse.setEnabled(!readOnly);
         timeZoneId.setEnabled(!readOnly);
@@ -179,25 +167,35 @@ public final class TimeZoneWidget
     @UiHandler("timeZoneUse")
     public void onTimeZoneUse(final ValueChangeEvent<Use> event) {
         changeVisible();
-        getUiHandlers().onChange();
+        fireChange();
     }
 
     @UiHandler("timeZoneId")
     public void onTimeZoneId(final ValueChangeEvent<String> event) {
         changeVisible();
-        getUiHandlers().onChange();
+        fireChange();
     }
 
     @UiHandler("timeZoneOffsetHours")
     public void onTimeZoneOffsetHours(final ValueChangeEvent<Long> event) {
         changeVisible();
-        getUiHandlers().onChange();
+        fireChange();
     }
 
     @UiHandler("timeZoneOffsetMinutes")
     public void onTimeZoneOffsetMinutes(final ValueChangeEvent<Long> event) {
         changeVisible();
-        getUiHandlers().onChange();
+        fireChange();
+    }
+
+    private void fireChange() {
+        if (uiHandlers != null) {
+            uiHandlers.onChange();
+        }
+    }
+
+    public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
+        this.uiHandlers = uiHandlers;
     }
 
     public interface Binder extends UiBinder<Widget, TimeZoneWidget> {

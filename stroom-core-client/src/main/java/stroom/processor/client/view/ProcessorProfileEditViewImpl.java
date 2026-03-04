@@ -18,9 +18,9 @@ package stroom.processor.client.view;
 
 import stroom.item.client.SelectionBox;
 import stroom.node.shared.NodeGroup;
-import stroom.planb.client.view.TimeZoneWidget;
 import stroom.processor.client.presenter.ProcessorProfileEditPresenter.ProcessorProfileEditView;
 import stroom.query.api.UserTimeZone;
+import stroom.query.client.view.TimeZoneWidget;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;

@@ -23,6 +23,7 @@ import stroom.planb.shared.HistogramKeySchema;
 import stroom.planb.shared.KeyType;
 import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.UserTimeZone;
+import stroom.query.client.view.TimeZoneWidget;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
