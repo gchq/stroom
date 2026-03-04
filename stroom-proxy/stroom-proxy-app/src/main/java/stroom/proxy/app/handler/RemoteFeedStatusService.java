@@ -156,7 +156,7 @@ public class RemoteFeedStatusService implements FeedStatusService, Managed {
     private FeedStatus getDefaultFeedStatus() {
         final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
         return switch (receiveDataConfig.getReceiptCheckMode()) {
-            case FEED_STATUS, RECEIPT_POLICY -> switch (receiveDataConfig.getFallbackReceiveAction()) {
+            case FEED_STATUS, RECEIPT_POLICY, FEED_EXISTENCE -> switch (receiveDataConfig.getFallbackReceiveAction()) {
                 case RECEIVE -> FeedStatus.Receive;
                 case REJECT -> FeedStatus.Reject;
                 case DROP -> FeedStatus.Drop;

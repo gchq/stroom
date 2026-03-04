@@ -13,6 +13,25 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11.0] - 2026-03-04
+
+* Bug : Change proxy event store to close its appenders on app shutdown.
+
+* Bug : Fix missing docker managed volues for proxy `zip_file_ingest` and `zip_file_ingest_failed` directories.
+
+* Bug : Fix NPE in downstreamHostConfig ctor if there is no hostname, which is a possibility.
+
+* Bug : Fix incorrect path for /datafeed in the ProxyWelcomeServlet response.
+
+* Bug : Move the `/queues` proxy endpoint from the app port to the admin port.
+
+* Bug **#5424** : Change the `receiptCheckMode` `RECEIVE_ALL` to no longer check for the existence of the feed. Add the `receiptCheckMode` `FEED_EXISTENCE` to perform a feed existence check.
+
+* Bug : Fix `subPathTemplate.enabled` defaulting to `false` if subPathTemplate has been set in the yaml, but enabled has not.
+
+* Bug : Fix bug in proxy which will throw an error if subPathTemplate contains repeated vars, e.g. `${year}/${year}-${month}`.
+
+
 ## [v7.11-beta.25] - 2026-02-13
 
 * Bug **#5392** : Fix PlanB segfault.
@@ -2014,7 +2033,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.25...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.0...HEAD
+[v7.11.0]: https://github.com/gchq/stroom/compare/v7.11-beta.25...v7.11.0
 [v7.11-beta.25]: https://github.com/gchq/stroom/compare/v7.11-beta.24...v7.11-beta.25
 [v7.11-beta.24]: https://github.com/gchq/stroom/compare/v7.11-beta.23...v7.11-beta.24
 [v7.11-beta.23]: https://github.com/gchq/stroom/compare/v7.11-beta.22...v7.11-beta.23
