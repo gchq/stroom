@@ -140,7 +140,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
 
     private void initPipelineModel(final MyPresenterWidget<?> presenter, final DocRef pipeline) {
         final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;
-        pipelinePresenter.setMetaListExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION);
+        pipelinePresenter.setMetaListExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION, null);
         pipelinePresenter.initPipelineModel(pipeline);
     }
 
@@ -303,10 +303,10 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                     final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;
                     // Only begin stepping when the pipeline model has been set up
                     pipelinePresenter.addChangeDataHandler(event -> {
-                        pipelinePresenter.setMetaListExpression(
-                                MetaExpressionUtil.createDataIdExpression(meta.getId()));
                         pipelinePresenter.setSteppingMode(true);
-                        pipelinePresenter.beginStepping(stepType, stepLocation, meta, childStreamType);
+                        pipelinePresenter.setMetaListExpression(
+                                MetaExpressionUtil.createDataIdExpression(meta.getId()),
+                                () -> pipelinePresenter.beginStepping(stepType, stepLocation, meta, childStreamType));
                     });
 
                     pipelinePresenter.initPipelineModel(pipeline);

@@ -351,8 +351,8 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
         return pipelineStructurePresenter.onWrite(document);
     }
 
-    public void setMetaListExpression(final ExpressionOperator expressionOperator) {
-        steppingPresenter.setMetaListExpression(expressionOperator);
+    public void setMetaListExpression(final ExpressionOperator expressionOperator, final Runnable afterSet) {
+        steppingPresenter.setMetaListExpression(expressionOperator, afterSet);
     }
 
     @Override
