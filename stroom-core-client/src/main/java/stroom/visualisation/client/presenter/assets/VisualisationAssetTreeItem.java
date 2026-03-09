@@ -8,6 +8,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.TreeItem;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -84,7 +85,7 @@ public class VisualisationAssetTreeItem extends TreeItem {
             final int dotIndex = text.lastIndexOf('.');
             if (dotIndex != -1) {
                 // Got an extension - look it up
-                final String extension = text.substring(dotIndex + 1);
+                final String extension = text.substring(dotIndex + 1).toLowerCase(Locale.ROOT);
                 icon = ICONS.get(extension);
                 if (icon == null) {
                     // Default - extension not recognised
