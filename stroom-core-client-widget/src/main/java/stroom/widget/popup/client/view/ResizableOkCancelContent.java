@@ -61,7 +61,7 @@ public class ResizableOkCancelContent extends Composite implements DialogButtons
     @Override
     public void onDialogAction(final DialogAction action) {
         setEnabled(false);
-        if (action.getType() == DialogActionType.OK) {
+        if (action == DialogAction.OK) {
             ok.setLoading(true);
         } else {
             cancel.setLoading(true);
@@ -75,12 +75,12 @@ public class ResizableOkCancelContent extends Composite implements DialogButtons
 
     @UiHandler("ok")
     public void onOkClick(final ClickEvent event) {
-        onDialogAction(DialogAction.builder().type(DialogActionType.OK).build());
+        onDialogAction(DialogAction.OK);
     }
 
     @UiHandler("cancel")
     public void onCancelClick(final ClickEvent event) {
-        onDialogAction(DialogAction.builder().type(DialogActionType.CANCEL).build());
+        onDialogAction(DialogAction.CANCEL);
     }
 
     @Override
