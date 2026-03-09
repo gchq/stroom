@@ -538,8 +538,9 @@ class TestStringUtil {
                 .withSimpleEqualityAssertion()
                 .addCase(Tuple.of(1, 3), "001")
                 .addCase(Tuple.of(123, 5), "00123")
-                .addThrowsCase(Tuple.of(123_456, 5), IllegalArgumentException.class)
+                .addCase(Tuple.of(123_456, 2), "123456")
                 .addThrowsCase(Tuple.of(123, 99), IllegalArgumentException.class)
+                .addThrowsCase(Tuple.of(123, -1), IllegalArgumentException.class)
                 .build();
     }
 

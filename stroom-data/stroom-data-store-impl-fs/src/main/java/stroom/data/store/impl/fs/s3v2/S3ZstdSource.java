@@ -275,8 +275,10 @@ final class S3ZstdSource implements Source {
     }
 
     private ZstdDictionary getZstdDictionary(final ZstdSeekTable zstdSeekTable) {
-        if (zstdSeekTable != null && zstdSeekTable.hasDictionary()) {
-            final String uuid = zstdSeekTable.getDictionaryUuid().map(UUID::toString).orElse(null);
+        if (NullSafe.test(zstdSeekTable, ZstdSeekTable::hasDictionary)) {
+            final String uuid = zstdSeekTable.getDictionaryUuid()
+                    .map(UUID::toString)
+                    .orElse(null);
             return s3ZstdStore.getZstdDictionaryService()
                     .getZstdDictionary(uuid, dataVolume)
                     .orElseThrow();

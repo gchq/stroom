@@ -58,14 +58,13 @@ class S3ZstdDictionaryStoreImpl implements ZstdDictionaryStore {
     public Optional<ZstdDictionary> getZstdDictionary(final String uuid,
                                                       final DataVolume dataVolume) {
         Objects.requireNonNull(uuid);
-        final S3ClientConfig s3ClientConfig = NullSafe.get(dataVolume,
+        final S3ClientConfig s3ClientConfig = NullSafe.get(
+                dataVolume,
                 DataVolume::volume,
                 FsVolume::getS3ClientConfig);
         Objects.requireNonNull(s3ClientConfig, "Expecting s3ClientConfig to be non null");
         final S3Manager s3Manager = s3ManagerFactory.createS3Manager(s3ClientConfig);
-        final Optional<ZstdDictionary> optDict = Optional.ofNullable(fetchByUuid(uuid,
-                s3Manager,
-                s3ClientConfig));
+        final Optional<ZstdDictionary> optDict = Optional.ofNullable(fetchByUuid(uuid, s3Manager, s3ClientConfig));
 
         LOGGER.debug("getZstdDictionary() - uuid: {}, dataVolume: {}, optDict: {}", uuid, dataVolume, optDict);
         return optDict;
@@ -84,7 +83,7 @@ class S3ZstdDictionaryStoreImpl implements ZstdDictionaryStore {
 
         // bucketName is validated in FsVolumeService to ensure it is static
         final String bucket = s3ClientConfig.getBucketName();
-        final String key = s3StreamTypeExtensions.getDictkey(dictionaryUuid);
+        final String key = S3StreamTypeExtensions.getDictkey(dictionaryUuid);
         try {
             LOGGER.debug("fetchByUuid() - dictionaryUuid: {}, bucketName: {}, key: {}",
                     dictionaryUuid, bucket, key);
