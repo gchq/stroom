@@ -165,7 +165,7 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
             // Need to know the file size because S3 range requests don't support negative ranges,
             // i.e. to get the last N bytes.
             final long actualFileSize = fileSize == null
-                    ? getFileSize(s3Manager, meta, childStreamType)
+                    ? getFileSize(s3Manager, fileKey, meta, childStreamType)
                     : fileSize;
 
             // We don't know how many frames there are, so we don't know how big a chunk of the
@@ -225,7 +225,7 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
     }
 
     private long getFileSize(final S3Manager s3Manager,
-                             final Meta meta,
+                             final FileKey fileKey, final Meta meta,
                              final String childStreamType) {
         Long fileSize = null;
         // Attribute will only be present for the main stream, not the child ones.
@@ -243,7 +243,8 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
             }
         }
         if (fileSize == null) {
-            fileSize = s3Manager.getFileSize(meta, childStreamType);
+            final String key = s3StreamTypeExtensions.getkey(fileKey);
+            fileSize = s3Manager.getFileSize(meta, childStreamType, key);
         }
         return fileSize;
     }
