@@ -81,8 +81,8 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
     /** First character in a SQL SUBSTRING function */
     private static final int START_OF_SUBSTRING = 1;
 
-    /** Maximum length of content that users can edit = 128KiB */
-    private static final int MAX_EDITABLE_CONTENT_LENGTH = 1024 * 128;
+    /** Maximum length of content that users can edit = 512KiB */
+    private static final int MAX_EDITABLE_CONTENT_LENGTH = 1024 * 512;
 
     /** Bootstraps connection */
     private final VisualisationAssetDbConnProvider connProvider;
