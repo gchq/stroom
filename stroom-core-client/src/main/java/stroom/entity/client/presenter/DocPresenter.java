@@ -45,9 +45,16 @@ public abstract class DocPresenter<V extends View, D>
         if (!isReadOnly()) {
             final D original = entity;
             final D updated = write(original);
-            final boolean dirty = !Objects.equals(original, updated);
+            final boolean dirty = !Objects.equals(original, updated) || hasAssociatedDirty();
             setDirty(dirty);
         }
+    }
+
+    /**
+     * Can be overridden if the Doc has associated components that could be dirty e.g. PipelineDoc
+     */
+    protected boolean hasAssociatedDirty() {
+        return false;
     }
 
     private void setDirty(final boolean dirty) {

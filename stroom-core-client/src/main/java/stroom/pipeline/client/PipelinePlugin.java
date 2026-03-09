@@ -59,6 +59,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import javax.inject.Singleton;
 
@@ -118,21 +119,32 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                                      final boolean forceOpen,
                                      final boolean fullScreen,
                                      final CommonDocLinkTab selectedLinkTab,
-                                     Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                     final Consumer<MyPresenterWidget<?>> callbackOnOpen,
                                      final boolean duplicate,
                                      final TaskMonitorFactory taskMonitorFactory) {
+        final Consumer<MyPresenterWidget<?>> callback;
         if (callbackOnOpen == null) {
-            callbackOnOpen = presenter -> {
-                final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;
-                pipelinePresenter.setMetaListExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION);
-                pipelinePresenter.initPipelineModel(docRef);
+            callback = presenter -> {
+                initPipelineModel(presenter, docRef);
+            };
+        } else {
+            callback = presenter -> {
+                initPipelineModel(presenter, docRef);
+                callbackOnOpen.accept(presenter);
             };
         }
 
-        return super.open(docRef, forceOpen, fullScreen, selectedLinkTab, callbackOnOpen, duplicate,
+        return super.open(docRef, forceOpen, fullScreen, selectedLinkTab, callback, duplicate,
                 taskMonitorFactory);
     }
 
+    private void initPipelineModel(final MyPresenterWidget<?> presenter, final DocRef pipeline) {
+        final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;
+        pipelinePresenter.setMetaListExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION, null);
+        pipelinePresenter.initPipelineModel(pipeline);
+    }
+
+    @Override
     public void save(final DocumentTabData tabData) {
         if (tabData instanceof final PipelinePresenter pipelinePresenter) {
             final List<DocRef> dirtyDocs = pipelinePresenter.getDirtyDocs();
@@ -152,14 +164,15 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                         .onHideRequest(e -> {
                             if (e.isOk()) {
                                 final List<DocRef> selectedDocRefs = docRefSelectionPresenter.getSelectedItems();
-                                pipelinePresenter.saveDocs(selectedDocRefs);
-
+                                final AtomicInteger completedSaves = new AtomicInteger(0);
+                                final Runnable onSaved = () -> {
+                                    if (completedSaves.incrementAndGet() == selectedDocRefs.size()) {
+                                        pipelinePresenter.onChange();
+                                    }
+                                };
+                                pipelinePresenter.saveDocs(selectedDocRefs, onSaved);
                                 if (selectedDocRefs.contains(pipeline)) {
-                                    super.save(tabData);
-                                }
-
-                                if (dirtyDocs.size() != selectedDocRefs.size()) {
-                                    pipelinePresenter.onChange();
+                                    super.save(tabData, onSaved);
                                 }
                             }
                             e.hide();
@@ -290,10 +303,10 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                     final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;
                     // Only begin stepping when the pipeline model has been set up
                     pipelinePresenter.addChangeDataHandler(event -> {
-                        pipelinePresenter.setMetaListExpression(
-                                MetaExpressionUtil.createDataIdExpression(meta.getId()));
                         pipelinePresenter.setSteppingMode(true);
-                        pipelinePresenter.beginStepping(stepType, stepLocation, meta, childStreamType);
+                        pipelinePresenter.setMetaListExpression(
+                                MetaExpressionUtil.createDataIdExpression(meta.getId()),
+                                () -> pipelinePresenter.beginStepping(stepType, stepLocation, meta, childStreamType));
                     });
 
                     pipelinePresenter.initPipelineModel(pipeline);

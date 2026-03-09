@@ -337,8 +337,13 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
         return dirtyDocs;
     }
 
-    public void saveDocs(final List<DocRef> docRefs) {
-        steppingPresenter.save(docRefs);
+    public void saveDocs(final List<DocRef> docRefs, final Runnable onComplete) {
+        steppingPresenter.save(docRefs, onComplete);
+    }
+
+    @Override
+    protected boolean hasAssociatedDirty() {
+        return !steppingPresenter.getDirtyDocs().isEmpty();
     }
 
     @Override
@@ -346,8 +351,8 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
         return pipelineStructurePresenter.onWrite(document);
     }
 
-    public void setMetaListExpression(final ExpressionOperator expressionOperator) {
-        steppingPresenter.setMetaListExpression(expressionOperator);
+    public void setMetaListExpression(final ExpressionOperator expressionOperator, final Runnable afterSet) {
+        steppingPresenter.setMetaListExpression(expressionOperator, afterSet);
     }
 
     @Override

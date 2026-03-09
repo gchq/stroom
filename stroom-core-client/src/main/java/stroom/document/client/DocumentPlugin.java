@@ -300,6 +300,10 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
      */
     @SuppressWarnings("unchecked")
     public void save(final DocumentTabData tabData) {
+        save(tabData, () -> {});
+    }
+
+    public void save(final DocumentTabData tabData, final Runnable onComplete) {
         if (tabData instanceof AbstractDocPresenter<?, ?>) {
             final AbstractDocPresenter<?, D> presenter = (AbstractDocPresenter<?, D>) tabData;
             if (presenter.isDirty()) {
@@ -309,15 +313,23 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                     final D finalDocument = document;
 
                     save(getDocRef(document), document,
-                            doc -> presenter.read(getDocRef(doc), doc, presenter.isReadOnly()),
-                            throwable -> AlertEvent.fireError(
-                                    this,
-                                    "Unable to save document " + finalDocument,
-                                    throwable.getMessage(), null),
+                            doc -> {
+                                presenter.read(getDocRef(doc), doc, presenter.isReadOnly());
+                                onComplete.run();
+                            },
+                            throwable -> {
+                                AlertEvent.fireError(
+                                        this,
+                                        "Unable to save document " + finalDocument,
+                                        throwable.getMessage(), null);
+                                onComplete.run();
+                            },
                             presenter);
+                    return;
                 }
             }
         }
+        onComplete.run();
     }
 
     /**
