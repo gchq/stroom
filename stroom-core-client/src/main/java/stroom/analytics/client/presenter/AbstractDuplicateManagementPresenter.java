@@ -16,11 +16,12 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.presenter.AbstractDuplicateManagementPresenter.DuplicateManagementView;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.DuplicateNotificationConfig;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyUiHandlers;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.document.client.event.ChangeUiHandlers;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.util.shared.NullSafe;
 
 import com.google.inject.Inject;
@@ -33,8 +34,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAnalyticRuleDoc>
-        extends DocumentEditPresenter<AbstractDuplicateManagementPresenter.DuplicateManagementView, D>
-        implements DirtyUiHandlers {
+        extends DocPresenter<DuplicateManagementView, D> {
 
     private final DuplicateManagementListPresenter duplicateManagementListPresenter;
 
@@ -47,11 +47,6 @@ public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAna
         view.setUiHandlers(this);
         this.duplicateManagementListPresenter = duplicateManagementListPresenter;
         view.setListView(duplicateManagementListPresenter.getView());
-    }
-
-    @Override
-    public void onDirty() {
-        setDirty(true);
     }
 
     @Override
@@ -81,7 +76,7 @@ public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAna
     // --------------------------------------------------------------------------------
 
 
-    public interface DuplicateManagementView extends View, HasUiHandlers<DirtyUiHandlers> {
+    public interface DuplicateManagementView extends View, HasUiHandlers<ChangeUiHandlers> {
 
         void setRememberNotifications(boolean rememberNotifications);
 

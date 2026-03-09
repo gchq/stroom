@@ -33,7 +33,7 @@ import stroom.job.shared.JobNodeAndInfo;
 import stroom.job.shared.JobNodeAndInfoListResponse;
 import stroom.job.shared.JobNodeResource;
 import stroom.node.client.JobNodeListHelper;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.node.client.event.NodeChangeEvent;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.schedule.client.SchedulePopup;
@@ -74,7 +74,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
     private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
     private final InlineSvgToggleButton showEnabledToggleBtn;
     private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
     private final InlineSvgToggleButton autoRefreshButton;
 
     private boolean autoRefresh;
@@ -86,9 +86,9 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
                                 final SchedulePopup schedulePresenter,
                                 final MenuPresenter menuPresenter,
                                 final DateTimeFormatter dateTimeFormatter,
-                                final NodeManager nodeManager) {
+                                final NodeClient nodeClient) {
         super(eventBus, view);
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
         this.dataGrid = new MyDataGrid<>(this);
         this.selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
@@ -120,7 +120,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
     }
 
     private void refreshNodeStates() {
-        nodeManager.listEnabledNodes(enabledNodeNames -> {
+        nodeClient.listEnabledNodes(enabledNodeNames -> {
             jobNodeListHelper.setEnabledNodeNames(enabledNodeNames);
             // Redraw the grid in case any node states have changed which impacts enabled state of rows
             // Don't need to refresh as the grid doesn't use the node table

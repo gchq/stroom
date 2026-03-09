@@ -13,6 +13,66 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11.0] - 2026-03-04
+
+* Bug : Change proxy event store to close its appenders on app shutdown.
+
+* Bug : Fix missing docker managed volues for proxy `zip_file_ingest` and `zip_file_ingest_failed` directories.
+
+* Bug : Fix NPE in downstreamHostConfig ctor if there is no hostname, which is a possibility.
+
+* Bug : Fix incorrect path for /datafeed in the ProxyWelcomeServlet response.
+
+* Bug : Move the `/queues` proxy endpoint from the app port to the admin port.
+
+* Bug **#5424** : Change the `receiptCheckMode` `RECEIVE_ALL` to no longer check for the existence of the feed. Add the `receiptCheckMode` `FEED_EXISTENCE` to perform a feed existence check.
+
+* Bug : Fix `subPathTemplate.enabled` defaulting to `false` if subPathTemplate has been set in the yaml, but enabled has not.
+
+* Bug : Fix bug in proxy which will throw an error if subPathTemplate contains repeated vars, e.g. `${year}/${year}-${month}`.
+
+
+## [v7.11-beta.25] - 2026-02-13
+
+* Bug **#5392** : Fix PlanB segfault.
+
+
+## [v7.11-beta.24] - 2026-02-12
+
+* Bug **#5391** : Fix folder DocRef NPE.
+
+* Bug **#5392** : Fix PlanB segfault.
+
+* Bug **#5300** : Fix path `millis` parameter.
+
+
+## [v7.11-beta.23] - 2026-02-09
+
+* Feature **#5313** : Allow users to prevent empty reports from being sent on a per report basis.
+
+
+## [v7.11-beta.22] - 2026-02-07
+
+* Feature **#5314** : Add `rowCount`, `fileType` (EXCEL|CSV|TSV), `fileName` to the templating context when generating email reports.
+
+* Feature **#5313** : Allow users to prevent empty reports from being sent on a per report basis.
+
+* Feature : Add enabled/disabled styling to table rows in the Report screens.
+
+* Feature : Add column header tool tips to tables in the Report screens.
+
+* Feature : Change the Report > Notifications _Max_ column to be right aligned.
+
+* Feature : Add red/green sytling to the Report > Notifications _Status_ column (Complete/Error).
+
+* Bug : Fix Reports not respecting the start date during execution. It was executing from the last tracker time rather than from the start date, if the start date is later.
+
+
+## [v7.11-beta.21] - 2026-02-04
+
+* Bug **#5384** : Improvements to annotations database code.
+
+
 ## [v7.11-beta.20] - 2026-01-28
 
 * Bug **#5360** : Fix NPE when annotation data retention fires change events.
@@ -1973,7 +2033,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.20...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.0...HEAD
+[v7.11.0]: https://github.com/gchq/stroom/compare/v7.11-beta.25...v7.11.0
+[v7.11-beta.25]: https://github.com/gchq/stroom/compare/v7.11-beta.24...v7.11-beta.25
+[v7.11-beta.24]: https://github.com/gchq/stroom/compare/v7.11-beta.23...v7.11-beta.24
+[v7.11-beta.23]: https://github.com/gchq/stroom/compare/v7.11-beta.22...v7.11-beta.23
+[v7.11-beta.22]: https://github.com/gchq/stroom/compare/v7.11-beta.21...v7.11-beta.22
+[v7.11-beta.21]: https://github.com/gchq/stroom/compare/v7.11-beta.20...v7.11-beta.21
 [v7.11-beta.20]: https://github.com/gchq/stroom/compare/v7.11-beta.19...v7.11-beta.20
 [v7.11-beta.19]: https://github.com/gchq/stroom/compare/v7.11-beta.18...v7.11-beta.19
 [v7.11-beta.18]: https://github.com/gchq/stroom/compare/v7.11-beta.17...v7.11-beta.18

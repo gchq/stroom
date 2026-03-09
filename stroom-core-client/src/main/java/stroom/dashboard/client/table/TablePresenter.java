@@ -485,7 +485,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .copy()
                 .applyValueFilters(applyValueFilters)
                 .build());
-        setDirty(true);
+        onChange();
         refresh();
         setApplyValueFilters(applyValueFilters);
     }
@@ -920,7 +920,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                             }
                         });
                 if (wasModified.get()) {
-                    setDirty(true);
+                    onChange();
                 }
             }
         }
@@ -963,8 +963,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         if (currentSearchModel != null) {
-            searchModelHandlerRegistrations
-                    .add(currentSearchModel.getIndexLoader().addChangeDataHandler(event -> updateFields()));
+            searchModelHandlerRegistrations.add(currentSearchModel.getIndexLoader()
+                    .addChangeDataHandler(event -> updateFields()));
         }
 
         updateFields();
@@ -1050,9 +1050,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         if (getTableComponentSettings().showDetail() || maxGroup.isEmpty()) {
             // Add special fields.
-            getTableComponentSettings().getColumns().add(SpecialColumns.RESERVED_ID_COLUMN);
             getTableComponentSettings().getColumns().add(SpecialColumns.RESERVED_STREAM_ID_COLUMN);
             getTableComponentSettings().getColumns().add(SpecialColumns.RESERVED_EVENT_ID_COLUMN);
+            getTableComponentSettings().getColumns().add(SpecialColumns.RESERVED_ANNOTATION_ID_COLUMN);
         }
 
 //        GWT.log(tableSettings.getFields().stream()

@@ -34,7 +34,7 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCES
 
 class ProcessorFilterTrackerDaoImpl implements ProcessorFilterTrackerDao {
 
-    private static final LambdaLogger LAMBDA_LOGGER =
+    private static final LambdaLogger LOGGER =
             LambdaLoggerFactory.getLogger(ProcessorFilterTrackerDaoImpl.class);
 
     private static final Function<Record, ProcessorFilterTracker> RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER =
@@ -75,7 +75,7 @@ class ProcessorFilterTrackerDaoImpl implements ProcessorFilterTrackerDao {
 
     public int update(final DSLContext context,
                       final ProcessorFilterTracker processorFilterTracker) {
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
+        LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
                 PROCESSOR_FILTER_TRACKER.getName(),
                 processorFilterTracker.getId()));
         final int count = context

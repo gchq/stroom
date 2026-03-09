@@ -349,9 +349,9 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
         return "id=" + meta.getId();
     }
 
-    // ///////////////////////////////
+    // ---------------------------------------------------------------------
     // START INTERNAL TARGET
-    // ///////////////////////////////
+    // ---------------------------------------------------------------------
 
     /**
      * Gets the output stream for this stream target.
@@ -402,7 +402,7 @@ public final class FsTarget implements InternalTarget, SegmentOutputStreamProvid
         return null;
     }
 
-    // ///////////////////////////////
+    // ---------------------------------------------------------------------
     // END INTERNAL TARGET
-    // ///////////////////////////////
+    // ---------------------------------------------------------------------
 }

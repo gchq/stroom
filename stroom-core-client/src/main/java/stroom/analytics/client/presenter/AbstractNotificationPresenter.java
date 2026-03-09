@@ -16,12 +16,13 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.presenter.AbstractNotificationPresenter.AnalyticNotificationView;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.ReportDoc;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyUiHandlers;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.document.client.event.ChangeUiHandlers;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.client.event.ChangeDataEvent;
@@ -37,8 +38,8 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRuleDoc>
-        extends DocumentEditPresenter<AbstractNotificationPresenter.AnalyticNotificationView, D>
-        implements DirtyUiHandlers, HasChangeDataHandlers<AnalyticProcessType> {
+        extends DocPresenter<AnalyticNotificationView, D>
+        implements HasChangeDataHandlers<AnalyticProcessType> {
 
     final DocSelectionBoxPresenter errorFeedPresenter;
     private final AbstractNotificationListPresenter<D> notificationList;
@@ -64,8 +65,8 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onDirty()));
-        registerHandler(notificationList.addDirtyHandler(event -> setDirty(true)));
+        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onChange()));
+        registerHandler(notificationList.addDirtyHandler(event -> onChange()));
     }
 
     @Override
@@ -95,11 +96,6 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
     }
 
     @Override
-    public void onDirty() {
-        setDirty(true);
-    }
-
-    @Override
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         super.setTaskMonitorFactory(taskMonitorFactory);
         this.notificationList.setTaskMonitorFactory(taskMonitorFactory);
@@ -109,7 +105,7 @@ public abstract class AbstractNotificationPresenter<D extends AbstractAnalyticRu
     // --------------------------------------------------------------------------------
 
 
-    public interface AnalyticNotificationView extends View, HasUiHandlers<DirtyUiHandlers> {
+    public interface AnalyticNotificationView extends View, HasUiHandlers<ChangeUiHandlers> {
 
         void setErrorFeedView(View view);
 

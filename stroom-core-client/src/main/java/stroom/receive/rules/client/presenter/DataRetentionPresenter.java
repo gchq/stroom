@@ -161,11 +161,9 @@ public class DataRetentionPresenter
 
     @Override
     public String getLabel() {
-
         if (isDirty()) {
             return "* " + TAB_LABEL;
         }
-
         return TAB_LABEL;
     }
 

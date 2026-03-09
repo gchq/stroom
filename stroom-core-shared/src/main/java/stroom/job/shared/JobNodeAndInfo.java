@@ -30,7 +30,7 @@ import java.util.Objects;
 public class JobNodeAndInfo {
 
     @JsonProperty
-    private final JobNode jobNode;
+    private JobNode jobNode;
 
     @JsonProperty
     // Can be set lazily
@@ -53,6 +53,10 @@ public class JobNodeAndInfo {
 
     public JobNode getJobNode() {
         return jobNode;
+    }
+
+    public void setJobNode(final JobNode jobNode) {
+        this.jobNode = jobNode;
     }
 
     /**

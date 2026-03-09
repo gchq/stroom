@@ -113,13 +113,13 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
         // TODO: We need to use the cached TextConverter service ideally but
         // before we do it needs to be aware cluster wide when TextConverter has
         // been updated.
-        final TextConverterDoc tc = loadTextConverterDoc();
+        TextConverterDoc tc = loadTextConverterDoc();
 
         // If we are in stepping mode and have made code changes then we want to
         // add them to the newly loaded text
         // converter.
         if (injectedCode != null) {
-            tc.setData(injectedCode);
+            tc = tc.copy().data(injectedCode).build();
             usePool = false;
         }
 
@@ -161,7 +161,7 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
     @PipelineProperty(
             description = "The data splitter configuration that should be used to parse the input data.",
             displayPriority = 1)
-    @PipelinePropertyDocRef(types = TextConverterDoc.TYPE)
+    @PipelinePropertyDocRef(types = TextConverterDoc.TYPE, canEmbed = true)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }
@@ -212,8 +212,8 @@ public class DSParser extends AbstractParser implements SupportsCodeInjection {
             final TextConverterDoc tc = textConverterStore.readDocument(docRef);
             if (tc == null) {
                 final String message = "Data splitter \"" +
-                        docRef.getName() +
-                        "\" appears to have been deleted";
+                                       docRef.getName() +
+                                       "\" appears to have been deleted";
                 throw ProcessException.create(message);
             }
 

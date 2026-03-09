@@ -22,6 +22,7 @@ import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.item.client.SelectionBox;
 import stroom.meta.shared.MetaFields;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.shared.CreateProcessFilterRequest;
@@ -84,7 +85,8 @@ public class ProcessorEditPresenter
                                   final DateTimeSettingsFactory dateTimeSettingsFactory,
                                   final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
                                   final ClientSecurityContext clientSecurityContext,
-                                  final Provider<FeedDependencyPresenter> feedDependencyPresenterProvider) {
+                                  final Provider<FeedDependencyPresenter> feedDependencyPresenterProvider,
+                                  final ProcessorProfileClient processorProfileClient) {
         super(eventBus, view);
         view.setUiHandlers(this);
 
@@ -97,6 +99,11 @@ public class ProcessorEditPresenter
         view.setExpressionView(editExpressionPresenter.getView());
         view.setRunAsUserView(userRefSelectionBoxPresenter.getView());
         userRefSelectionBoxPresenter.setContext(FindUserContext.RUN_AS);
+
+        final ProcessorProfileListModel processorProfileListModel =
+                new ProcessorProfileListModel(eventBus, processorProfileClient);
+        processorProfileListModel.setTaskMonitorFactory(this);
+        view.getProfile().setModel(processorProfileListModel);
     }
 
     private void read(final ExpressionOperator expression,
@@ -104,6 +111,8 @@ public class ProcessorEditPresenter
                       final List<QueryField> fields,
                       final Long minMetaCreateTimeMs,
                       final Long maxMetaCreateTimeMs,
+                      final Integer maxProcessingTasks,
+                      final String profileName,
                       final boolean export) {
 
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
@@ -113,6 +122,8 @@ public class ProcessorEditPresenter
 
         getView().setMinMetaCreateTimeMs(minMetaCreateTimeMs);
         getView().setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
+        getView().setMaxProcessingTasks(maxProcessingTasks);
+        getView().getProfile().setValue(profileName);
         getView().setExport(export);
     }
 
@@ -123,20 +134,35 @@ public class ProcessorEditPresenter
                      final Consumer<ProcessorFilter> consumer) {
         final Long minMetaCreateTimeMs;
         final Long maxMetaCreateTimeMs;
+        final Integer maxProcessingTasks;
+        final String profileName;
         if (filter == null) {
             minMetaCreateTimeMs = null;
             maxMetaCreateTimeMs = null;
+            maxProcessingTasks = null;
+            profileName = null;
             userRefSelectionBoxPresenter.setSelected(clientSecurityContext.getUserRef());
         } else {
             minMetaCreateTimeMs = filter.getMinMetaCreateTimeMs();
             maxMetaCreateTimeMs = filter.getMaxMetaCreateTimeMs();
+            maxProcessingTasks = filter.getMaxProcessingTasks();
+            profileName = filter.getProfileName();
             if (filter.getRunAsUser() == null) {
                 userRefSelectionBoxPresenter.setSelected(clientSecurityContext.getUserRef());
             } else {
                 userRefSelectionBoxPresenter.setSelected(filter.getRunAsUser());
             }
         }
-        show(processorType, pipelineRef, filter, defaultExpression, minMetaCreateTimeMs, maxMetaCreateTimeMs, consumer);
+        show(
+                processorType,
+                pipelineRef,
+                filter,
+                defaultExpression,
+                minMetaCreateTimeMs,
+                maxMetaCreateTimeMs,
+                maxProcessingTasks,
+                profileName,
+                consumer);
     }
 
     public void show(final ProcessorType processorType,
@@ -145,6 +171,8 @@ public class ProcessorEditPresenter
                      final ExpressionOperator defaultExpression,
                      final Long minMetaCreateTimeMs,
                      final Long maxMetaCreateTimeMs,
+                     final Integer maxProcessingTasks,
+                     final String profileName,
                      final Consumer<ProcessorFilter> consumer) {
         this.processorType = processorType;
         this.pipelineRef = pipelineRef;
@@ -161,10 +189,12 @@ public class ProcessorEditPresenter
                 fields,
                 minMetaCreateTimeMs,
                 maxMetaCreateTimeMs,
+                maxProcessingTasks,
+                profileName,
                 export);
 
         // Show the processor creation dialog.
-        final PopupSize popupSize = PopupSize.resizable(800, 700);
+        final PopupSize popupSize = PopupSize.resizable(800, 800);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -178,6 +208,8 @@ public class ProcessorEditPresenter
                         final ExpressionOperator expression = editExpressionPresenter.write();
                         final Long minMetaCreateTime = getView().getMinMetaCreateTimeMs();
                         final Long maxMetaCreateTime = getView().getMaxMetaCreateTimeMs();
+                        final Integer maxTasks = getView().getMaxProcessingTasks();
+                        final String profile = getView().getProfile().getValue();
                         final boolean exportRead = getView().isExport();
 
                         validateExpression(fields, expression, () -> {
@@ -202,6 +234,8 @@ public class ProcessorEditPresenter
                                                             qd,
                                                             minMetaCreateTime,
                                                             maxMetaCreateTime,
+                                                            maxTasks,
+                                                            profile,
                                                             exportRead,
                                                             e);
                                                 } else {
@@ -213,6 +247,8 @@ public class ProcessorEditPresenter
                                             qd,
                                             minMetaCreateTime,
                                             maxMetaCreateTime,
+                                            maxTasks,
+                                            profile,
                                             exportRead,
                                             e);
                                 }
@@ -274,6 +310,8 @@ public class ProcessorEditPresenter
                               final QueryData queryData,
                               final Long minMetaCreateTimeMs,
                               final Long maxMetaCreateTimeMs,
+                              final Integer maxProcessingTasks,
+                              final String profileName,
                               final boolean export,
                               final HidePopupRequestEvent event) {
 
@@ -292,6 +330,8 @@ public class ProcessorEditPresenter
                                     queryData,
                                     minMetaCreateTimeMs,
                                     maxMetaCreateTimeMs,
+                                    maxProcessingTasks,
+                                    profileName,
                                     export,
                                     event);
                         } else {
@@ -299,7 +339,15 @@ public class ProcessorEditPresenter
                         }
                     });
         } else {
-            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs, export, event);
+            createOrUpdateProcessor(
+                    filter,
+                    queryData,
+                    minMetaCreateTimeMs,
+                    maxMetaCreateTimeMs,
+                    maxProcessingTasks,
+                    profileName,
+                    export,
+                    event);
         }
     }
 
@@ -307,6 +355,8 @@ public class ProcessorEditPresenter
                                     final QueryData queryData,
                                     final Long minMetaCreateTimeMs,
                                     final Long maxMetaCreateTimeMs,
+                                    final Integer maxProcessingTasks,
+                                    final String profileName,
                                     final boolean export,
                                     final HidePopupRequestEvent event) {
         final int streamTypeCount = termCount(queryData, MetaFields.TYPE);
@@ -325,6 +375,8 @@ public class ProcessorEditPresenter
                                     queryData,
                                     minMetaCreateTimeMs,
                                     maxMetaCreateTimeMs,
+                                    maxProcessingTasks,
+                                    profileName,
                                     export,
                                     event);
                         } else {
@@ -332,7 +384,15 @@ public class ProcessorEditPresenter
                         }
                     });
         } else {
-            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs, export, event);
+            createOrUpdateProcessor(
+                    filter,
+                    queryData,
+                    minMetaCreateTimeMs,
+                    maxMetaCreateTimeMs,
+                    maxProcessingTasks,
+                    profileName,
+                    export,
+                    event);
         }
     }
 
@@ -347,19 +407,25 @@ public class ProcessorEditPresenter
                                          final QueryData queryData,
                                          final Long minMetaCreateTimeMs,
                                          final Long maxMetaCreateTimeMs,
+                                         final Integer maxProcessingTasks,
+                                         final String profileName,
                                          final boolean export,
                                          final HidePopupRequestEvent event) {
         if (filter != null) {
             // Now update the processor filter using the find stream criteria.
-            filter.setQueryData(queryData.copy().feedDependencies(feedDependencies).build());
-            filter.setMinMetaCreateTimeMs(minMetaCreateTimeMs);
-            filter.setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
-            filter.setExport(export);
-            filter.setRunAsUser(userRefSelectionBoxPresenter.getSelected());
+            final ProcessorFilter updated = filter.copy()
+                    .queryData(queryData.copy().feedDependencies(feedDependencies).build())
+                    .minMetaCreateTimeMs(minMetaCreateTimeMs)
+                    .maxMetaCreateTimeMs(maxMetaCreateTimeMs)
+                    .maxProcessingTasks(maxProcessingTasks)
+                    .profileName(profileName)
+                    .export(export)
+                    .runAsUser(userRefSelectionBoxPresenter.getSelected())
+                    .build();
 
             restFactory
                     .create(PROCESSOR_FILTER_RESOURCE)
-                    .method(res -> res.update(filter.getId(), filter))
+                    .method(res -> res.update(updated.getId(), updated))
                     .onSuccess(r -> hide(r, event))
                     .onFailure(RestErrorHandler.forPopup(this, event))
                     .taskMonitorFactory(this)
@@ -377,6 +443,8 @@ public class ProcessorEditPresenter
                     .export(export)
                     .minMetaCreateTimeMs(minMetaCreateTimeMs)
                     .maxMetaCreateTimeMs(maxMetaCreateTimeMs)
+                    .maxProcessingTasks(maxProcessingTasks)
+                    .profileName(profileName)
                     .runAsUser(userRefSelectionBoxPresenter.getSelected())
                     .build();
             restFactory
@@ -403,6 +471,12 @@ public class ProcessorEditPresenter
         Long getMaxMetaCreateTimeMs();
 
         void setMaxMetaCreateTimeMs(Long maxMetaCreateTimeMs);
+
+        Integer getMaxProcessingTasks();
+
+        void setMaxProcessingTasks(Integer maxProcessingTasks);
+
+        SelectionBox<String> getProfile();
 
         boolean isExport();
 

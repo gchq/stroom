@@ -96,7 +96,7 @@ public class StripedGuard implements Guard {
      * Creates a new striped guard with the default stripe count (64).
      *
      * @param destroyRunnable callback to run when all stripes are destroyed and all
-     *                       acquisitions complete. Must not be null.
+     *                        acquisitions complete. Must not be null.
      * @throws NullPointerException if destroyRunnable is null
      */
     public StripedGuard(final Runnable destroyRunnable) {
@@ -111,13 +111,13 @@ public class StripedGuard implements Guard {
      * contention but have diminishing returns beyond ~64 stripes.
      *
      * @param destroyRunnable callback to run when all stripes are destroyed and all
-     *                       acquisitions complete. Runs exactly once, guaranteed to
-     *                       happen-after all acquisitions complete. Must not be null.
-     * @param stripeCount    number of independent stripes. Must be a positive power of 2
-     *                       and not exceed {@link #MAX_STRIPES}.
+     *                        acquisitions complete. Runs exactly once, guaranteed to
+     *                        happen-after all acquisitions complete. Must not be null.
+     * @param stripeCount     number of independent stripes. Must be a positive power of 2
+     *                        and not exceed {@link #MAX_STRIPES}.
      * @throws NullPointerException     if destroyRunnable is null
      * @throws IllegalArgumentException if stripeCount is not positive, not a power of 2,
-     *                                 or exceeds MAX_STRIPES
+     *                                  or exceeds MAX_STRIPES
      */
     public StripedGuard(final Runnable destroyRunnable, final int stripeCount) {
         Objects.requireNonNull(destroyRunnable, "destroyRunnable must not be null");
@@ -150,23 +150,30 @@ public class StripedGuard implements Guard {
     }
 
     /**
-     * Computes the stripe index for the current thread using XOR-fold hashing.
+     * Computes the stripe index for the current thread using Stafford variant 13 mixing.
      * <p>
-     * This method combines the upper and lower 32 bits of the thread ID using XOR,
-     * then masks to the stripe count using bitwise AND. This provides:
+     * This method applies a high-quality 64-bit hash function (MurmurHash3 finalizer)
+     * to the thread ID before masking to the stripe count. This provides:
      * <ul>
-     *   <li>Even distribution across stripes</li>
-     *   <li>Same thread always maps to same stripe</li>
-     *   <li>Guaranteed non-negative result</li>
-     *   <li>O(1) performance (~3ns)</li>
+     *   <li>Excellent distribution for sequential thread IDs</li>
+     *   <li>Same thread always maps to same stripe (deterministic)</li>
+     *   <li>Strong avalanche properties (input bit changes affect all output bits)</li>
+     *   <li>O(1) performance</li>
      * </ul>
+     * <p>
+     * The Stafford13 mixing function is used internally by {@link java.util.SplittableRandom}
+     * for seed initialization. See:
+     * <a href="http://zimbry.blogspot.com/2011/09/better-bit-mixing-improving-on.html">
+     * Better Bit Mixing</a>
      *
-     * @return stripe index in range [0, stripeCount), guaranteed non-negative
+     * @return stripe index from 0 to stripeCount - 1 (inclusive)
      */
     private int getStripeIdx() {
-        final long tid = Thread.currentThread().threadId();
-        // XOR-fold upper and lower 32 bits for better distribution
-        return (int) ((tid ^ (tid >>> 32)) & stripeMask);
+        long threadId = Thread.currentThread().threadId();
+        // Stafford13 for sequential inputs
+        threadId = (threadId ^ (threadId >>> 30)) * 0xbf58476d1ce4e5b9L;
+        threadId = (threadId ^ (threadId >>> 27)) * 0x94d049bb133111ebL;
+        return (int) ((threadId ^ (threadId >>> 31)) & stripeMask);
     }
 
     /**

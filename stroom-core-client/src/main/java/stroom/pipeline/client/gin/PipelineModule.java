@@ -21,11 +21,14 @@ import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.TextConverterPlugin;
 import stroom.pipeline.client.XsltPlugin;
+import stroom.pipeline.client.presenter.DocRefSelectionPresenter;
+import stroom.pipeline.client.presenter.DocRefSelectionPresenter.DocRefSelectionView;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.client.presenter.TextConverterPresenter;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.client.presenter.XsltPresenter;
+import stroom.pipeline.client.view.DocRefSelectionViewImpl;
 import stroom.pipeline.client.view.TextConverterSettingsViewImpl;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
@@ -73,11 +76,17 @@ import stroom.processor.client.presenter.ProcessorEditPresenter;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
+import stroom.processor.client.presenter.ProcessorProfileEditPresenter;
+import stroom.processor.client.presenter.ProcessorProfileEditPresenter.ProcessorProfileEditView;
+import stroom.processor.client.presenter.ProfilePeriodEditPresenter;
+import stroom.processor.client.presenter.ProfilePeriodEditPresenter.ProfilePeriodEditView;
 import stroom.processor.client.view.BatchProcessorFilterEditViewImpl;
 import stroom.processor.client.view.EditFeedDependencyViewImpl;
 import stroom.processor.client.view.FeedDependencyViewImpl;
 import stroom.processor.client.view.ProcessorEditViewImpl;
+import stroom.processor.client.view.ProcessorProfileEditViewImpl;
 import stroom.processor.client.view.ProcessorViewImpl;
+import stroom.processor.client.view.ProfilePeriodEditViewImpl;
 import stroom.processor.task.client.ProcessorTaskPlugin;
 import stroom.processor.task.client.presenter.ProcessorTaskPresenter;
 import stroom.processor.task.client.presenter.ProcessorTaskPresenter.ProcessorTaskView;
@@ -110,6 +119,8 @@ public class PipelineModule extends PluginModule {
         bindPresenterWidget(PipelineStructurePresenter.class, PipelineStructureView.class,
                 PipelineStructureViewImpl.class);
 
+        bindPresenterWidget(DocRefSelectionPresenter.class, DocRefSelectionView.class, DocRefSelectionViewImpl.class);
+
         bindPresenterWidget(NewElementPresenter.class, NewElementView.class, NewElementViewImpl.class);
         bindPresenterWidget(NewPropertyPresenter.class, NewPropertyView.class, NewPropertyViewImpl.class);
         bindPresenterWidget(NewPipelineReferencePresenter.class, NewPipelineReferenceView.class,
@@ -137,6 +148,14 @@ public class PipelineModule extends PluginModule {
                 EditFeedDependencyPresenter.class,
                 EditFeedDependencyView.class,
                 EditFeedDependencyViewImpl.class);
+        bindPresenterWidget(
+                ProcessorProfileEditPresenter.class,
+                ProcessorProfileEditView.class,
+                ProcessorProfileEditViewImpl.class);
+        bindPresenterWidget(
+                ProfilePeriodEditPresenter.class,
+                ProfilePeriodEditView.class,
+                ProfilePeriodEditViewImpl.class);
 
         bindPlugin(ProcessorTaskPlugin.class);
         bindPresenterWidget(ProcessorTaskPresenter.class, ProcessorTaskView.class,

@@ -28,20 +28,41 @@ import jakarta.inject.Inject;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.OrderField;
+import org.jooq.Record;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
 
 public class NodeDaoImpl implements NodeDao {
+
+    private static final BiFunction<Node, NodeRecord, NodeRecord> NODE_TO_RECORD_MAPPER =
+            (node, record) -> {
+                record.set(NODE.ID, node.getId());
+                record.set(NODE.VERSION, node.getVersion());
+                record.set(NODE.CREATE_TIME_MS, node.getCreateTimeMs());
+                record.set(NODE.CREATE_USER, node.getCreateUser());
+                record.set(NODE.UPDATE_TIME_MS, node.getUpdateTimeMs());
+                record.set(NODE.UPDATE_USER, node.getUpdateUser());
+                record.set(NODE.NAME, node.getName());
+                record.set(NODE.URL, node.getUrl());
+                record.set(NODE.PRIORITY, (short) node.getPriority());
+                record.set(NODE.ENABLED, node.isEnabled());
+                record.set(NODE.BUILD_VERSION, node.getBuildVersion());
+                record.set(NODE.LAST_BOOT_MS, node.getLastBootMs());
+                return record;
+            };
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindNodeCriteria.FIELD_ID, NODE.ID,
             FindNodeCriteria.FIELD_LAST_BOOT_MS, NODE.LAST_BOOT_MS,
             FindNodeCriteria.FIELD_BUILD_VERSION, NODE.BUILD_VERSION,
             FindNodeCriteria.FIELD_NAME, NODE.NAME);
+    private static final RecordToNodeMapper RECORD_TO_NODE_MAPPER = new RecordToNodeMapper();
 
     private final GenericDao<NodeRecord, Node, Integer> genericDao;
     private final NodeDbConnProvider nodeDbConnProvider;
@@ -49,7 +70,12 @@ public class NodeDaoImpl implements NodeDao {
     @Inject
     NodeDaoImpl(final NodeDbConnProvider nodeDbConnProvider) {
         this.nodeDbConnProvider = nodeDbConnProvider;
-        this.genericDao = new GenericDao<>(nodeDbConnProvider, NODE, NODE.ID, Node.class);
+        this.genericDao = new GenericDao<>(
+                nodeDbConnProvider,
+                NODE,
+                NODE.ID,
+                NODE_TO_RECORD_MAPPER,
+                RECORD_TO_NODE_MAPPER);
     }
 
     @Override
@@ -73,12 +99,24 @@ public class NodeDaoImpl implements NodeDao {
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
         final List<Node> list = JooqUtil.contextResult(nodeDbConnProvider, context ->
                         context
-                                .selectFrom(NODE)
+                                .select(NODE.ID,
+                                        NODE.VERSION,
+                                        NODE.CREATE_TIME_MS,
+                                        NODE.CREATE_USER,
+                                        NODE.UPDATE_TIME_MS,
+                                        NODE.UPDATE_USER,
+                                        NODE.NAME,
+                                        NODE.URL,
+                                        NODE.PRIORITY,
+                                        NODE.ENABLED,
+                                        NODE.BUILD_VERSION,
+                                        NODE.LAST_BOOT_MS)
+                                .from(NODE)
                                 .where(conditions)
                                 .orderBy(orderFields)
                                 .limit(offset, limit)
                                 .fetch())
-                .map(r -> r.into(Node.class));
+                .map(RECORD_TO_NODE_MAPPER::apply);
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 

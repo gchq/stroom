@@ -146,6 +146,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private int currentDocPropertyCount = 0;
     private boolean inOuterArray = false;
     private int currentDepth = 0;
+    private int maxNestedElementDepth;
     private JsonGenerator jsonGenerator;
     private int currentRetry;
 
@@ -215,6 +216,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             jsonGenerator = JSON_FACTORY.createGenerator(currentDocument);
 
             populateIndexNameVariableNames();
+
+            // Cache config value to avoid Provider lookup on every element.
+            maxNestedElementDepth = elasticConfigProvider.get().getIndexingConfig().getMaxNestedElementDepth();
 
         } catch (final IOException e) {
             fatalError("Failed to initialise JsonGenerator", e);
@@ -307,12 +311,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     private void incrementDepth() {
-        final int maxDepth = elasticConfigProvider.get().getIndexingConfig().getMaxNestedElementDepth();
-
         currentDepth++;
 
-        if (currentDepth > maxDepth) {
-            fatalError("Maximum nested element depth of " + maxDepth + " exceeded", new RuntimeException());
+        if (currentDepth > maxNestedElementDepth) {
+            fatalError("Maximum nested element depth of " + maxNestedElementDepth + " exceeded",
+                    new RuntimeException());
         }
     }
 
@@ -789,6 +792,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
      * index name.
      */
     private String formatIndexName() {
+        if (indexNameVariables.isEmpty()) {
+            return indexName;
+        }
         final Matcher indexNameVariableMatcher = INDEX_NAME_VALUE_PATTERN.matcher(indexName);
         return indexNameVariableMatcher.replaceAll(matchResult -> {
             final String fieldNameMatch = matchResult.group();

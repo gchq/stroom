@@ -16,12 +16,14 @@
 
 package stroom.processor.client.view;
 
+import stroom.item.client.SelectionBox;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.client.presenter.ProcessorEditUiHandlers;
 import stroom.widget.button.client.Button;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
+import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -33,7 +35,9 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class ProcessorEditViewImpl extends ViewWithUiHandlers<ProcessorEditUiHandlers> implements ProcessorEditView {
+public class ProcessorEditViewImpl
+        extends ViewWithUiHandlers<ProcessorEditUiHandlers>
+        implements ProcessorEditView {
 
     private final Widget widget;
 
@@ -43,6 +47,10 @@ public class ProcessorEditViewImpl extends ViewWithUiHandlers<ProcessorEditUiHan
     MyDateBox minMetaCreateTimeMs;
     @UiField
     MyDateBox maxMetaCreateTimeMs;
+    @UiField
+    ValueSpinner maxProcessingTasks;
+    @UiField
+    SelectionBox<String> profile;
     @UiField
     CustomCheckBox export;
     @UiField
@@ -56,6 +64,8 @@ public class ProcessorEditViewImpl extends ViewWithUiHandlers<ProcessorEditUiHan
         widget = binder.createAndBindUi(this);
         minMetaCreateTimeMs.setUtc(userPreferencesManager.isUtc());
         maxMetaCreateTimeMs.setUtc(userPreferencesManager.isUtc());
+        maxProcessingTasks.setMin(1);
+        maxProcessingTasks.setMax(1000);
     }
 
     @Override
@@ -86,6 +96,21 @@ public class ProcessorEditViewImpl extends ViewWithUiHandlers<ProcessorEditUiHan
     @Override
     public void setMaxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
         this.maxMetaCreateTimeMs.setMilliseconds(maxMetaCreateTimeMs);
+    }
+
+    @Override
+    public Integer getMaxProcessingTasks() {
+        return maxProcessingTasks.getIntValue();
+    }
+
+    @Override
+    public void setMaxProcessingTasks(final Integer maxProcessingTasks) {
+        this.maxProcessingTasks.setValue(maxProcessingTasks);
+    }
+
+    @Override
+    public SelectionBox<String> getProfile() {
+        return profile;
     }
 
     @Override

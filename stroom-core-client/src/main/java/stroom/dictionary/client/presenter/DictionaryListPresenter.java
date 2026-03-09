@@ -135,14 +135,15 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
 
     @Override
     public DictionaryDoc write(final DictionaryDoc document) {
+        final DictionaryDoc.Builder builder = document.copy();
         if (imports.isEmpty()) {
-            document.setImports(null);
+            builder.imports(null);
         } else {
-            document.setImports(imports);
+            builder.imports(imports);
             // Select first item
             docRefListPresenter.getSelectionModel().setSelected(imports.get(0));
         }
-        return document;
+        return builder.build();
     }
 
     public void registerDictionarySelectionHandler(final Consumer<DocRef> docRefConsumer) {
@@ -150,7 +151,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
             final MultiSelectionModel<DocRef> selectionModel = docRefListPresenter.getSelectionModel();
             registerHandler(selectionModel.addSelectionHandler(event -> {
                 if (!event.getSelectionType().isDoubleSelect()
-                        && !event.getSelectionType().isMultiSelect()) {
+                    && !event.getSelectionType().isMultiSelect()) {
                     if (selectionModel.getSelectedCount() == 1) {
                         docRefConsumer.accept(selectionModel.getSelected());
                     }

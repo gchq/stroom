@@ -1,0 +1,114 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.processor.impl;
+
+import stroom.processor.shared.FindProcessorProfileRequest;
+import stroom.processor.shared.ProcessorProfile;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.AppPermission;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBus;
+import stroom.util.entityevent.EntityEventHandler;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ResultPage;
+
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
+import java.util.List;
+
+@Singleton
+@EntityEventHandler(type = ProcessorProfileService.ENTITY_TYPE, action = {
+        EntityAction.UPDATE,
+        EntityAction.CREATE,
+        EntityAction.DELETE})
+public class ProcessorProfileServiceImpl implements ProcessorProfileService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorProfileServiceImpl.class);
+
+    private final ProcessorProfileDao processorProfileDao;
+    private final SecurityContext securityContext;
+    private final Provider<EntityEventBus> entityEventBusProvider;
+
+    @Inject
+    public ProcessorProfileServiceImpl(final ProcessorProfileDao processorProfileDao,
+                                       final SecurityContext securityContext,
+                                       final Provider<EntityEventBus> entityEventBusProvider) {
+        this.processorProfileDao = processorProfileDao;
+        this.securityContext = securityContext;
+        this.entityEventBusProvider = entityEventBusProvider;
+    }
+
+    @Override
+    public List<String> getNames() {
+        return securityContext.secureResult(processorProfileDao::getNames);
+    }
+
+    @Override
+    public ResultPage<ProcessorProfile> find(final FindProcessorProfileRequest request) {
+        return securityContext.secureResult(() -> processorProfileDao.find(request));
+    }
+
+    @Override
+    public ProcessorProfile create(final ProcessorProfile processorProfile) {
+        final ProcessorProfile result = securityContext.secureResult(AppPermission.MANAGE_PROCESSORS_PERMISSION, () ->
+                processorProfileDao.create(processorProfile.copy().stampAudit(securityContext).build()));
+        fireChange(EntityAction.CREATE);
+        return result;
+    }
+
+    @Override
+    public ProcessorProfile fetchByName(final String name) {
+        return securityContext.secureResult(() -> processorProfileDao.fetchByName(name));
+    }
+
+    @Override
+    public ProcessorProfile fetchById(final int id) {
+        return securityContext.secureResult(() -> processorProfileDao.fetchById(id));
+    }
+
+    @Override
+    public ProcessorProfile update(final ProcessorProfile processorProfile) {
+        final ProcessorProfile result = securityContext.secureResult(AppPermission.MANAGE_PROCESSORS_PERMISSION, () ->
+                processorProfileDao.update(processorProfile.copy().stampAudit(securityContext).build()));
+        fireChange(EntityAction.UPDATE);
+        return result;
+    }
+
+    @Override
+    public void delete(final int id) {
+        securityContext.secure(AppPermission.MANAGE_PROCESSORS_PERMISSION,
+                () -> processorProfileDao.delete(id));
+        fireChange(EntityAction.DELETE);
+    }
+
+    private void fireChange(final EntityAction action) {
+        if (entityEventBusProvider != null) {
+            try {
+                final EntityEventBus entityEventBus = entityEventBusProvider.get();
+                if (entityEventBus != null) {
+                    entityEventBus.fire(new EntityEvent(EVENT_DOCREF, action));
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        }
+    }
+}

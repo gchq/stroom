@@ -57,8 +57,12 @@ public final class IncludeExcludeFilter {
                                 @JsonProperty("excludeDictionaries") final List<DocRef> excludeDictionaries) {
         this.includes = includes;
         this.excludes = excludes;
-        this.includeDictionaries = includeDictionaries == null ? new ArrayList<>() : includeDictionaries;
-        this.excludeDictionaries = excludeDictionaries == null ? new ArrayList<>() : excludeDictionaries;
+        this.includeDictionaries = includeDictionaries == null
+                ? new ArrayList<>()
+                : includeDictionaries;
+        this.excludeDictionaries = excludeDictionaries == null
+                ? new ArrayList<>()
+                : excludeDictionaries;
     }
 
     public String getIncludes() {
@@ -86,6 +90,13 @@ public final class IncludeExcludeFilter {
             return false;
         }
         final IncludeExcludeFilter filter = (IncludeExcludeFilter) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(includes, filter.includes);
+//        final boolean b2 = Objects.equals(excludes, filter.excludes);
+//        final boolean b3 = Objects.equals(includeDictionaries, filter.includeDictionaries);
+//        final boolean b4 = Objects.equals(excludeDictionaries, filter.excludeDictionaries);
+
         return Objects.equals(includes, filter.includes) &&
                Objects.equals(excludes, filter.excludes) &&
                Objects.equals(includeDictionaries, filter.includeDictionaries) &&

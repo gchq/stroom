@@ -17,6 +17,7 @@
 package stroom.node.impl.db;
 
 import stroom.node.impl.NodeDao;
+import stroom.node.impl.NodeGroupDao;
 
 import com.google.inject.AbstractModule;
 
@@ -27,5 +28,6 @@ public class NodeDaoModule extends AbstractModule {
         super.configure();
 
         bind(NodeDao.class).to(NodeDaoImpl.class);
+        bind(NodeGroupDao.class).to(NodeGroupDaoImpl.class);
     }
 }

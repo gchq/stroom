@@ -40,27 +40,16 @@ public class ScriptSerialiser implements DocumentSerialiser2<ScriptDoc> {
 
     @Override
     public ScriptDoc read(final Map<String, byte[]> data) throws IOException {
-        final ScriptDoc document = delegate.read(data);
-
-        final String js = EncodingUtil.asString(data.get(JS));
-        if (js != null) {
-            document.setData(js);
-        }
-        return document;
+        return delegate.read(data).copy().data(EncodingUtil.asString(data.get(JS))).build();
     }
 
     @Override
     public Map<String, byte[]> write(final ScriptDoc document) throws IOException {
         final String js = document.getData();
-        document.setData(null);
-
-        final Map<String, byte[]> data = delegate.write(document);
-
+        final Map<String, byte[]> data = delegate.write(document.copy().data(null).build());
         if (js != null) {
             data.put(JS, EncodingUtil.asBytes(js));
-            document.setData(js);
         }
-
         return data;
     }
 }

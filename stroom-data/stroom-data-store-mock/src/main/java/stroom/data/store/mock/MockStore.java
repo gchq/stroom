@@ -401,9 +401,9 @@ public class MockStore implements Store, Clearable, AttributeMapFactory {
 //        }
 
 
-        /////////////////////////////////
+        // ---------------------------------------------------------------------
         // START INTERNAL TARGET
-        /////////////////////////////////
+        // ---------------------------------------------------------------------
 
         /**
          * Gets the output stream for this stream target.
@@ -427,9 +427,9 @@ public class MockStore implements Store, Clearable, AttributeMapFactory {
             return null;
         }
 
-        /////////////////////////////////
+        // ---------------------------------------------------------------------
         // END INTERNAL TARGET
-        /////////////////////////////////
+        // ---------------------------------------------------------------------
 
 //        MockStreamTarget add(final String streamTypeName) {
 //            final Map<String, ByteArrayOutputStream> typeMap = getOpenOutputStream().get(meta.getId());
@@ -511,10 +511,9 @@ public class MockStore implements Store, Clearable, AttributeMapFactory {
             }
         }
 
-        /////////////////////////////////
+        // ---------------------------------------------------------------------
         // START INTERNAL SOURCE
-
-        /// //////////////////////////////
+        // ---------------------------------------------------------------------
         @Override
         public InputStream getInputStream() {
             if (inputStream == null) {
@@ -539,10 +538,9 @@ public class MockStore implements Store, Clearable, AttributeMapFactory {
             return null;
         }
 
-        /////////////////////////////////
+        // ---------------------------------------------------------------------
         // END INTERNAL SOURCE
-
-        /// //////////////////////////////
+        // ---------------------------------------------------------------------
 
         @Override
         public SegmentInputStreamProvider getSegmentInputStreamProvider(final String streamTypeName) {

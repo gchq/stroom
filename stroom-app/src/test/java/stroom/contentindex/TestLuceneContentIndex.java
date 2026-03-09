@@ -88,8 +88,7 @@ public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
     @BeforeEach
     void setup() {
         docRef = xsltStore.createDocument("Test");
-        xsltDoc = xsltStore.readDocument(docRef);
-        xsltDoc.setData(TEXT);
+        xsltDoc = xsltStore.readDocument(docRef).copy().data(TEXT).build();
         xsltStore.writeDocument(xsltDoc);
     }
 

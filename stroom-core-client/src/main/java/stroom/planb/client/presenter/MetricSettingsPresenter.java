@@ -16,6 +16,7 @@
 
 package stroom.planb.client.presenter;
 
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.MetricSettingsPresenter.MetricSettingsView;
 import stroom.planb.client.view.GeneralSettingsView;
@@ -81,6 +82,6 @@ public class MetricSettingsPresenter
             MetricKeySchemaSettingsView,
             MetricValueSchemaSettingsView,
             ReadOnlyChangeHandler,
-            HasUiHandlers<PlanBSettingsUiHandlers> {
+            HasUiHandlers<ChangeUiHandlers> {
     }
 }

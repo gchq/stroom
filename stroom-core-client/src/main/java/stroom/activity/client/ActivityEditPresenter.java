@@ -27,6 +27,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -124,7 +125,7 @@ public class ActivityEditPresenter
                     final InputElement inputElement = element.cast();
 
                     if ("checkbox".equalsIgnoreCase(inputElement.getType())
-                            || "radio".equalsIgnoreCase(inputElement.getType())) {
+                        || "radio".equalsIgnoreCase(inputElement.getType())) {
                         try {
                             inputElement.setChecked(Boolean.parseBoolean(value));
                         } catch (final RuntimeException e) {
@@ -188,7 +189,7 @@ public class ActivityEditPresenter
             if ("input".equalsIgnoreCase(tagName)) {
                 final InputElement inputElement = element.cast();
                 if ("checkbox".equalsIgnoreCase(inputElement.getType())
-                        || "radio".equalsIgnoreCase(inputElement.getType())) {
+                    || "radio".equalsIgnoreCase(inputElement.getType())) {
                     properties.add(createProp(element, Boolean.toString(inputElement.isChecked())));
                 } else {
                     properties.add(createProp(element, inputElement.getValue()));
@@ -206,12 +207,12 @@ public class ActivityEditPresenter
         }
 
         final ActivityDetails details = new ActivityDetails(properties);
-        activity.setDetails(details);
+        final Activity updated = activity.copy().details(details).build();
 
         // Validate the activity.
         restFactory
                 .create(ACTIVITY_RESOURCE)
-                .method(res -> res.validate(activity))
+                .method(res -> res.validate(updated))
                 .onSuccess(result -> afterValidation(result, details, consumer, event))
                 .onFailure(RestErrorHandler.forPopup(this, event))
                 .taskMonitorFactory(this)
@@ -236,22 +237,18 @@ public class ActivityEditPresenter
                         .create(ACTIVITY_RESOURCE)
                         .method(ActivityResource::create)
                         .onSuccess(result -> {
-                            activity = result;
-                            activity.setDetails(details);
-
-                            update(activity, details, consumer, event);
+                            update(result.copy().details(details).build(), consumer, event);
                         })
                         .onFailure(RestErrorHandler.forPopup(this, event))
                         .taskMonitorFactory(this)
                         .exec();
             } else {
-                update(activity, details, consumer, event);
+                update(activity, consumer, event);
             }
         }
     }
 
     private void update(final Activity activity,
-                        final ActivityDetails details,
                         final Consumer<Activity> consumer,
                         final HidePopupRequestEvent event) {
         restFactory
@@ -301,31 +298,27 @@ public class ActivityEditPresenter
     }
 
     private Prop createProp(final Element element) {
-        final Prop prop = new Prop();
-        prop.setId(getId(element));
-        prop.setName(getName(element));
-        prop.setValidation(getValidation(element));
-        prop.setValidationMessage(getValidationMessage(element));
-        prop.setShowInSelection(isShowInSelection(element));
-        prop.setShowInList(isShowInList(element));
-
-        if (prop.getId() == null) {
-            // Fall back to using name.
-            prop.setId(prop.getName());
-        }
-
-        if (prop.getName() == null) {
-            // Fall back to using id.
-            prop.setName(prop.getId());
-        }
-
-        return prop;
+        return createProp(element, null);
     }
 
     private Prop createProp(final Element element, final String value) {
-        final Prop prop = createProp(element);
-        prop.setValue(value);
-        return prop;
+        String id = getId(element);
+        String name = getName(element);
+        // Fall back to using name.
+        id = NullSafe.requireNonNullElse(id, name);
+        // Fall back to using id.
+        name = NullSafe.requireNonNullElse(name, id);
+
+        return Prop
+                .builder()
+                .id(id)
+                .name(name)
+                .value(value)
+                .validation(getValidation(element))
+                .validationMessage(getValidationMessage(element))
+                .showInSelection(isShowInSelection(element))
+                .showInList(isShowInList(element))
+                .build();
     }
 
     private String getId(final Element element) {

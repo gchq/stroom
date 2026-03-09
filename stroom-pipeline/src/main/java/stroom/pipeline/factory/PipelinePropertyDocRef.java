@@ -29,4 +29,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface PipelinePropertyDocRef {
     String[] types();
+    boolean canEmbed() default false;
 }

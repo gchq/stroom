@@ -19,7 +19,7 @@ package stroom.search.elastic.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.search.elastic.client.presenter.ElasticClusterSettingsPresenter.ElasticClusterSettingsView;
 import stroom.search.elastic.shared.ElasticClusterDoc;
@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class ElasticClusterSettingsPresenter
-        extends DocumentEditPresenter<ElasticClusterSettingsView, ElasticClusterDoc>
+        extends DocPresenter<ElasticClusterSettingsView, ElasticClusterDoc>
         implements ElasticClusterSettingsUiHandlers {
 
     private static final ElasticClusterResource ELASTIC_CLUSTER_RESOURCE = GWT.create(ElasticClusterResource.class);
@@ -58,11 +58,6 @@ public class ElasticClusterSettingsPresenter
 
     @Override
     protected void onBind() {
-    }
-
-    @Override
-    public void onChange() {
-        setDirty(true);
     }
 
     @Override
@@ -111,8 +106,7 @@ public class ElasticClusterSettingsPresenter
         connectionConfig.setConnectionTimeoutMillis(getView().getConnectionTimeoutMillis());
         connectionConfig.setResponseTimeoutMillis(getView().getResponseTimeoutMillis());
 
-        cluster.setConnection(connectionConfig);
-        return cluster;
+        return cluster.copy().connection(connectionConfig).build();
     }
 
     public interface ElasticClusterSettingsView

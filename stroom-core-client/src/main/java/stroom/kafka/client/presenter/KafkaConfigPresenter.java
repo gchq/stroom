@@ -22,7 +22,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.AbstractTabProvider;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -42,7 +42,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import javax.inject.Provider;
 
-public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelView, KafkaConfigDoc> {
+public class KafkaConfigPresenter extends DocTabPresenter<LinkTabPanelView, KafkaConfigDoc> {
 
     private static final KafkaConfigResource KAFKA_CONFIG_RESOURCE = GWT.create(KafkaConfigResource.class);
     private static final TabData CONFIG = new TabDataImpl("Config");
@@ -76,8 +76,8 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
             protected EditorPresenter createPresenter() {
                 final EditorPresenter editorPresenter = editorPresenterProvider.get();
                 editorPresenter.setMode(AceEditorMode.PROPERTIES);
-                registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
-                registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
+                registerHandler(editorPresenter.addValueChangeHandler(event -> onChange()));
+                registerHandler(editorPresenter.addFormatHandler(event -> onChange()));
                 return editorPresenter;
             }
 
@@ -96,8 +96,7 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
 
             @Override
             public KafkaConfigDoc onWrite(final EditorPresenter presenter, final KafkaConfigDoc document) {
-                document.setData(presenter.getText());
-                return document;
+                return document.copy().data(presenter.getText()).build();
             }
         });
         addTab(DOCUMENTATION, new MarkdownTabProvider<KafkaConfigDoc>(eventBus, markdownEditPresenterProvider) {
@@ -113,8 +112,7 @@ public class KafkaConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelV
             @Override
             public KafkaConfigDoc onWrite(final MarkdownEditPresenter presenter,
                                           final KafkaConfigDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

@@ -91,9 +91,9 @@ public abstract class AbstractStroomBaseCommand extends ConfiguredCommand<Config
                 runCommand(bootstrap, namespace, config, childInjector);
             } catch (final Exception e) {
                 final String msg = "Error running command "
-                        + commandName
-                        + ": " + e.getMessage()
-                        + ". Check logs for more detail.";
+                                   + commandName
+                                   + ": " + e.getMessage()
+                                   + ". Check logs for more detail.";
                 error(LOGGER, msg, e);
                 System.exit(1);
             }
@@ -243,19 +243,29 @@ public abstract class AbstractStroomBaseCommand extends ConfiguredCommand<Config
                     })
                     .sorted(Entry.comparingByKey())
                     .map(entry ->
-                            "--" + entry.getKey() + " " + argValueToString(entry.getValue()))
+                            "--" + entry.getKey() + " " + argValueToString(entry.getKey(), entry.getValue()))
                     .collect(Collectors.joining(" "));
         }
     }
 
-    final String argValueToString(final Object value) {
+    protected String obfuscateArgValue(final String argName, final String value) {
+        if ("password".equals(argName)) {
+            return "*****";
+        } else {
+            return value;
+        }
+    }
+
+    final String argValueToString(final String argName, final Object value) {
+        final String str;
         if (value instanceof final List<?> listVal) {
-            return listVal.stream()
+            str = listVal.stream()
                     .map(item -> "'" + item.toString() + "'")
                     .collect(Collectors.joining(" "));
         } else {
-            return value.toString();
+            str = value.toString();
         }
+        return obfuscateArgValue(argName, str);
     }
 
     /**

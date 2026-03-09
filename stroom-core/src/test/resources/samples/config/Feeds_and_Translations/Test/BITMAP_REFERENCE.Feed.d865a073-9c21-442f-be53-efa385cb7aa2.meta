@@ -3,9 +3,16 @@
   "uuid" : "d865a073-9c21-442f-be53-efa385cb7aa2",
   "name" : "BITMAP-REFERENCE",
   "version" : "ff05f476-e0df-4251-99d5-8a724d869da6",
+  "description" : "",
+  "classification" : "",
   "encoding" : "UTF-16LE",
   "contextEncoding" : "UTF-8",
   "reference" : true,
   "streamType" : "Raw Reference",
-  "status" : "RECEIVE"
+  "dataFormat" : "",
+  "contextFormat" : "",
+  "schema" : "",
+  "schemaVersion" : "",
+  "status" : "RECEIVE",
+  "volumeGroup" : "Default Volume Group"
 }

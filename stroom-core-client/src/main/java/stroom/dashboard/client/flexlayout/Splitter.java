@@ -17,7 +17,6 @@
 package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.shared.Dimension;
-import stroom.dashboard.shared.SplitLayoutConfig;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
@@ -53,15 +52,16 @@ public class Splitter extends Widget {
     }
 
     public static class SplitInfo {
-        private final SplitLayoutConfig layoutConfig;
+
+        private final MutableSplitLayoutConfig layoutConfig;
         private final int index;
 
-        public SplitInfo(final SplitLayoutConfig layoutConfig, final int index) {
+        public SplitInfo(final MutableSplitLayoutConfig layoutConfig, final int index) {
             this.layoutConfig = layoutConfig;
             this.index = index;
         }
 
-        public SplitLayoutConfig getLayoutConfig() {
+        public MutableSplitLayoutConfig getLayoutConfig() {
             return layoutConfig;
         }
 

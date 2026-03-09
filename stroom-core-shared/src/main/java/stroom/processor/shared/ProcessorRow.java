@@ -31,7 +31,7 @@ import java.util.Objects;
 public final class ProcessorRow extends ProcessorListRow {
 
     @JsonProperty
-    private final Processor processor;
+    private Processor processor;
     @JsonProperty
     private final Expander expander;
 
@@ -44,6 +44,10 @@ public final class ProcessorRow extends ProcessorListRow {
 
     public Processor getProcessor() {
         return processor;
+    }
+
+    public void setProcessor(final Processor processor) {
+        this.processor = processor;
     }
 
     @Override

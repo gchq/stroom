@@ -16,13 +16,14 @@
 
 package stroom.planb.client.view;
 
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.item.client.SelectionBox;
-import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.HistogramKeySchema;
 import stroom.planb.shared.KeyType;
 import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.UserTimeZone;
+import stroom.query.client.view.TimeZoneWidget;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -67,7 +68,7 @@ public class HistogramKeySchemaSettingsWidget
     }
 
     @Override
-    public void setUiHandlers(final PlanBSettingsUiHandlers uiHandlers) {
+    public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
         timeZoneWidget.setUiHandlers(uiHandlers);
     }

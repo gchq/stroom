@@ -20,8 +20,8 @@ import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.AbstractTabProvider;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -37,7 +37,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, FeedDoc> {
+public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData DATA = new TabDataImpl("Data");
@@ -96,7 +96,7 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
             });
         }
 
-        addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
+        addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<FeedDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -110,8 +110,7 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
             @Override
             public FeedDoc onWrite(final MarkdownEditPresenter presenter,
                                    final FeedDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
@@ -145,16 +144,4 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
     protected TabData getDocumentationTab() {
         return DOCUMENTATION;
     }
-
-    //    @Override
-//    public boolean handleKeyAction(final Action action) {
-//        if (Action.DOCUMENTATION == action) {
-//            selectTab(DOCUMENTATION);
-//            return true;
-//        } else if (Action.SETTINGS == action) {
-//            selectTab(SETTINGS);
-//            return true;
-//        }
-//        return false;
-//    }
 }

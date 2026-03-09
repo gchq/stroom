@@ -20,7 +20,7 @@ import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface ExpressionUiHandlers extends UiHandlers {
 
-    void fireDirty();
+    void onChange();
 
     void search();
 }

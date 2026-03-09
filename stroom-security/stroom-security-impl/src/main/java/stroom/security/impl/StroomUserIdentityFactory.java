@@ -261,13 +261,16 @@ public class StroomUserIdentityFactory
                             final String currentDisplayName = persistedUser.getDisplayName();
                             final String currentFullName = persistedUser.getFullName();
 
-                            persistedUser.setDisplayName(displayName);
-                            persistedUser.setFullName(fullName);
+                            User updatedUser = persistedUser
+                                    .copy()
+                                    .displayName(displayName)
+                                    .fullName(fullName)
+                                    .build();
                             try {
                                 // It is possible for another node to do this, so OCC would throw
                                 // an exception
-                                final User updatedUser = userService.update(persistedUser);
-                                logNameChange(persistedUser,
+                                updatedUser = userService.update(updatedUser);
+                                logNameChange(updatedUser,
                                         currentDisplayName,
                                         currentFullName,
                                         displayName,
@@ -551,9 +554,7 @@ public class StroomUserIdentityFactory
 
             LOGGER.debug("Updating user {} with displayName: '{}' and fullName: '{}'",
                     user, newDisplayName, newFullName);
-            user.setDisplayName(newDisplayName);
-            user.setFullName(newFullName);
-            userService.update(user);
+            userService.update(user.copy().displayName(newDisplayName).fullName(newFullName).build());
         }
     }
 

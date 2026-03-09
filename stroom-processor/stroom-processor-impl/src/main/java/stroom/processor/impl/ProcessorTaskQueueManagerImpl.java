@@ -21,6 +21,7 @@ import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.meta.api.MetaService;
 import stroom.node.api.NodeInfo;
+import stroom.processor.impl.ProcessorProfileCache.ProfileResult;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.impl.ProgressMonitor.Phase;
 import stroom.processor.shared.ProcessorFilter;
@@ -93,6 +94,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
     private final SecurityContext securityContext;
     private final TargetNodeSetFactory targetNodeSetFactory;
     private final PrioritisedFilters prioritisedFilters;
+    private final ProcessorProfileCache processorProfileCache;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
 
@@ -123,7 +125,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                                   final MetaService metaService,
                                   final SecurityContext securityContext,
                                   final TargetNodeSetFactory targetNodeSetFactory,
-                                  final PrioritisedFilters prioritisedFilters) {
+                                  final PrioritisedFilters prioritisedFilters,
+                                  final ProcessorProfileCache processorProfileCache) {
         this.taskContextFactory = taskContextFactory;
         this.nodeInfo = nodeInfo;
         this.processorTaskDao = processorTaskDao;
@@ -133,6 +136,7 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
         this.securityContext = securityContext;
         this.targetNodeSetFactory = targetNodeSetFactory;
         this.prioritisedFilters = prioritisedFilters;
+        this.processorProfileCache = processorProfileCache;
 
         executor = executorProvider.get(THREAD_POOL);
     }
@@ -253,18 +257,76 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
                     final ProcessorTaskQueue queue = queueMap.get(filter);
                     if (queue != null) {
                         int filterTasksAssigned = 0;
-
-                        // Maximum number of tasks to assign for this filter. If the filter task limit is
-                        // unbounded, assign as many tasks up to the specified `count`. Otherwise, only assign
-                        // tasks up to the filter's configured limit.
                         int maxFilterTasks = count - assignedStreamTasks.size();
-                        if (filter.isProcessingTaskCountBounded()) {
-                            final int maxFilterTasksToCreate = filter.getMaxProcessingTasks() -
-                                                               processorTaskDao.countTasksForFilter(filter.getId(),
-                                                                       TaskStatus.PROCESSING);
-                            maxFilterTasks = Math.min(
-                                    maxFilterTasks,
-                                    Math.max(0, maxFilterTasksToCreate));
+
+                        boolean usedProfile = false;
+                        if (filter.getProfileName() != null) {
+                            try {
+                                final ProfileResult profileResult = processorProfileCache
+                                        .getProfile(nodeName, filter.getProfileName());
+                                Objects.requireNonNull(profileResult, "No processing profile found (filter=" +
+                                                                      filter +
+                                                                      ", profileName=" +
+                                                                      filter.getProfileName() +
+                                                                      ")");
+
+                                // If either max node or max cluster tasks is 0 then add 0 tasks.
+                                if (profileResult.maxNodeTasks() == 0 ||
+                                    profileResult.maxClusterTasks() == 0) {
+                                    maxFilterTasks = 0;
+                                }
+
+                                // If the max node tasks is constrained then figure out the remaining max filter
+                                // tasks.
+                                if (maxFilterTasks > 0) {
+                                    int maxNodeTasks = profileResult.maxNodeTasks();
+                                    if (maxNodeTasks < Integer.MAX_VALUE) {
+                                        final int currentNodeTasks = processorTaskDao.countTasksForFilter(
+                                                filter.getId(),
+                                                nodeName,
+                                                TaskStatus.PROCESSING);
+                                        maxNodeTasks = Math.max(0, maxNodeTasks - currentNodeTasks);
+                                        maxFilterTasks = Math.min(maxFilterTasks, maxNodeTasks);
+                                    }
+                                }
+
+                                // If the max cluster tasks is constrained then figure out the remaining max filter
+                                // tasks.
+                                if (maxFilterTasks > 0) {
+                                    int maxClusterTasks = profileResult.maxClusterTasks();
+                                    if (maxClusterTasks < Integer.MAX_VALUE) {
+                                        final int currentClusterTasks = processorTaskDao.countTasksForFilter(
+                                                filter.getId(),
+                                                TaskStatus.PROCESSING);
+                                        maxClusterTasks = Math.max(0, maxClusterTasks - currentClusterTasks);
+                                        maxFilterTasks = Math.min(maxFilterTasks, maxClusterTasks);
+                                    }
+                                }
+
+                                usedProfile = true;
+
+                            } catch (final RuntimeException e) {
+                                throw new RuntimeException("Error getting processing profile for filter (filter=" +
+                                                           filter +
+                                                           ", profileName=" +
+                                                           filter.getProfileName() +
+                                                           ")", e);
+                            }
+                        }
+
+                        // If we didn't manage to use a profile then continue with the non profile code.
+                        if (!usedProfile) {
+                            // Maximum number of tasks to assign for this filter. If the filter task limit is
+                            // unbounded, assign as many tasks up to the specified `count`. Otherwise, only assign
+                            // tasks up to the filter's configured limit.
+                            if (filter.isProcessingTaskCountBounded()) {
+                                final int maxFilterTasksToCreate = filter.getMaxProcessingTasks() -
+                                                                   processorTaskDao.countTasksForFilter(filter.getId(),
+                                                                           TaskStatus.PROCESSING);
+                                maxFilterTasks = Math.min(
+                                        maxFilterTasks,
+                                        Math.max(0, maxFilterTasksToCreate));
+                            }
                         }
 
                         if (maxFilterTasks > 0) {

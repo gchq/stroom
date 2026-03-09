@@ -49,7 +49,7 @@ public class V07_08_00_001__IndexFields extends BaseJavaMigration {
     @Override
     public void migrate(final Context context) throws Exception {
         final List<LuceneIndexDoc> docs = getDocs(context);
-        for (final LuceneIndexDoc doc : docs) {
+        for (LuceneIndexDoc doc : docs) {
             if (NullSafe.hasItems(doc, LuceneIndexDoc::getFields)) {
                 final DocRef docRef = doc.asDocRef();
 
@@ -63,7 +63,7 @@ public class V07_08_00_001__IndexFields extends BaseJavaMigration {
                 addFieldsToDb(context, fieldSourceId, doc.getFields());
 
                 // Remove all fields from doc
-                doc.setFields(null);
+                doc = doc.copy().fields(null).build();
 
                 // Write the updated doc
                 writeDoc(context, doc);

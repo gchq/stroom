@@ -21,8 +21,9 @@ import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.ReportSettings;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyUiHandlers;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.document.client.event.ChangeUiHandlers;
+import stroom.entity.client.presenter.DocPresenter;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -31,8 +32,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 public class ReportSettingsPresenter
-        extends DocumentEditPresenter<ReportSettingsView, ReportDoc>
-        implements DirtyUiHandlers {
+        extends DocPresenter<ReportSettingsView, ReportDoc> {
 
     @Inject
     public ReportSettingsPresenter(final EventBus eventBus, final ReportSettingsView view) {
@@ -44,11 +44,16 @@ public class ReportSettingsPresenter
     protected void onRead(final DocRef docRef,
                           final ReportDoc document,
                           final boolean readOnly) {
-        if (document != null &&
-            document.getReportSettings() != null &&
-            document.getReportSettings().getFileType() != null) {
-            getView().setFileType(document.getReportSettings().getFileType());
-        }
+        getView().setFileType(NullSafe.getOrElse(
+                document,
+                ReportDoc::getReportSettings,
+                ReportSettings::getFileType,
+                DownloadSearchResultFileType.EXCEL));
+        getView().setSendEmptyReports(NullSafe.getOrElse(
+                document,
+                ReportDoc::getReportSettings,
+                ReportSettings::isSendEmptyReports,
+                false));
     }
 
     @Override
@@ -56,45 +61,24 @@ public class ReportSettingsPresenter
         final ReportSettings reportSettings = ReportSettings
                 .builder()
                 .fileType(getView().getFileType())
+                .sendEmptyReports(getView().isSendEmptyReports())
                 .build();
-        return document.copy().reportSettings(reportSettings).build();
+        return document.copy()
+                .reportSettings(reportSettings)
+                .build();
     }
 
-    //
-//    public boolean downloadAllTables() {
-//        return getView().downloadAllTables();
-//    }
-//
-//    public void setShowDownloadAll(final boolean show) {
-//        getView().setShowDownloadAll(show);
-//    }
-//
-//    public boolean isSample() {
-//        return getView().isSample();
-//    }
-//
-//    public int getPercent() {
-//        return getView().getPercent();
-//    }
+    // --------------------------------------------------------------------------------
 
 
-    @Override
-    public void onDirty() {
-        setDirty(true);
-    }
-
-    public interface ReportSettingsView extends View, Focus, HasUiHandlers<DirtyUiHandlers> {
+    public interface ReportSettingsView extends View, Focus, HasUiHandlers<ChangeUiHandlers> {
 
         DownloadSearchResultFileType getFileType();
 
         void setFileType(DownloadSearchResultFileType fileType);
 
-//        boolean downloadAllTables();
-//
-//        void setShowDownloadAll(boolean show);
-//
-//        boolean isSample();
-//
-//        int getPercent();
+        boolean isSendEmptyReports();
+
+        void setSendEmptyReports(boolean sendEmptyReports);
     }
 }

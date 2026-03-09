@@ -25,6 +25,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
 import stroom.processor.api.InclusiveRanges;
 import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.impl.ProcessorProfileCache.ProfileResult;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.impl.ProgressMonitor.Phase;
 import stroom.processor.shared.FeedDependencies;
@@ -107,6 +108,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
     private final EventSearch eventSearch;
     private final SecurityContext securityContext;
     private final ClusterLockService clusterLockService;
+    private final ProcessorProfileCache processorProfileCache;
 
     /**
      * Our filter cache
@@ -124,7 +126,8 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                              final EventSearch eventSearch,
                              final SecurityContext securityContext,
                              final ClusterLockService clusterLockService,
-                             final PrioritisedFilters prioritisedFilters) {
+                             final PrioritisedFilters prioritisedFilters,
+                             final ProcessorProfileCache processorProfileCache) {
         this.processorFilterService = processorFilterService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
         this.executorProvider = executorProvider;
@@ -136,6 +139,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         this.securityContext = securityContext;
         this.clusterLockService = clusterLockService;
         this.prioritisedFilters = prioritisedFilters;
+        this.processorProfileCache = processorProfileCache;
     }
 
     @Override
@@ -324,10 +328,38 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
             totalTasksCreated.add(currentCreatedTasks);
 
             int maxTasks = remaining - currentCreatedTasks;
-            if (filter.isProcessingTaskCountBounded() &&
-                !processorConfigProvider.get().isCreateTasksBeyondProcessLimit()) {
-                // The max concurrent tasks for this filter is bounded, so only create tasks up to that limit
-                maxTasks = Math.min(remaining, filter.getMaxProcessingTasks()) - currentCreatedTasks;
+
+            // See if we are allowing tasks to be created eagerly beyond the process limit.
+            if (!processorConfigProvider.get().isCreateTasksBeyondProcessLimit()) {
+                boolean usedProfile = false;
+
+                // We are limiting task creation so see if there is a profile that will limit total cluster tasks.
+                if (filter.getProfileName() != null) {
+                    try {
+                        final ProfileResult profileResult = processorProfileCache
+                                .getProfile(filter.getProfileName());
+                        Objects.requireNonNull(profileResult, "No processing profile found (filter=" +
+                                                              filter +
+                                                              ", profileName=" +
+                                                              filter.getProfileName() +
+                                                              ")");
+                        maxTasks = Math.min(remaining, profileResult.maxClusterTasks()) - currentCreatedTasks;
+                        usedProfile = true;
+
+                    } catch (final RuntimeException e) {
+                        throw new RuntimeException("Error getting processing profile for filter (filter=" +
+                                                   filter +
+                                                   ", profileName=" +
+                                                   filter.getProfileName() +
+                                                   ")", e);
+                    }
+                }
+
+                // We didn't find a profile to limit tasks so see if the filter has a direct limit.
+                if (!usedProfile && filter.isProcessingTaskCountBounded()) {
+                    // The max concurrent tasks for this filter is bounded, so only create tasks up to that limit
+                    maxTasks = Math.min(remaining, filter.getMaxProcessingTasks()) - currentCreatedTasks;
+                }
             }
 
             // Skip filters that already have enough tasks.

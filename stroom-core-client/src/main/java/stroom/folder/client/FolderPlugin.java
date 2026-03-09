@@ -104,7 +104,7 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
         }
 
         // Open the tab.
-        contentManager.open(closeHandler, tabData, myPresenterWidget);
+        contentManager.open(closeHandler, tabData, myPresenterWidget, myPresenterWidget, callbackOnOpen);
     }
 
     @Override

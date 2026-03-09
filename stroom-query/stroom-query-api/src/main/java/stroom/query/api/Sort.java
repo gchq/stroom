@@ -69,6 +69,11 @@ public final class Sort {
             return false;
         }
         final Sort sort = (Sort) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(order, sort.order);
+//        final boolean b2 = direction == sort.direction;
+
         return Objects.equals(order, sort.order) &&
                 direction == sort.direction;
     }

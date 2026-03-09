@@ -36,7 +36,7 @@ import javax.sql.DataSource;
 public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TYPE, T_ID_TYPE>
         implements HasCrud<T_OBJ_TYPE, T_ID_TYPE> {
 
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(GenericDao.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GenericDao.class);
 
     private final DataSource connectionProvider;
     final Table<T_REC_TYPE> table;
@@ -57,22 +57,6 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
         this.idField = idField;
         this.objectToRecordMapper = objectToRecordMapper;
         this.recordToObjectMapper = recordToObjectMapper;
-    }
-
-    public GenericDao(final DataSource connectionProvider,
-                      final Table<T_REC_TYPE> table,
-                      final TableField<T_REC_TYPE, T_ID_TYPE> idField,
-                      final Class<T_OBJ_TYPE> objectTypeClass) {
-        this(
-                connectionProvider,
-                table,
-                idField,
-                (object, record) -> {
-                    record.from(object);
-                    return record;
-                },
-                record ->
-                        record.into(objectTypeClass));
     }
 
     /**
@@ -105,35 +89,6 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
      *
      * @return The persisted record
      */
-    public <T_FIELD1, T_FIELD2> T_OBJ_TYPE tryCreate(final T_OBJ_TYPE object,
-                                                     final TableField<T_REC_TYPE, T_FIELD1> keyField1,
-                                                     final TableField<T_REC_TYPE, T_FIELD2> keyField2) {
-        return tryCreate(object, keyField1, keyField2, null, null);
-    }
-
-    /**
-     * Will try to insert the record, but will fail silently if it already exists.
-     * It will use keyField1 and keyField2 (a compound key) to retrieve the persisted
-     * record if it already exists.
-     *
-     * @return The persisted record
-     */
-    public <T_FIELD1, T_FIELD2> T_OBJ_TYPE tryCreate(final T_OBJ_TYPE object,
-                                                     final TableField<T_REC_TYPE, T_FIELD1> keyField1,
-                                                     final TableField<T_REC_TYPE, T_FIELD2> keyField2,
-                                                     final Consumer<T_OBJ_TYPE> onCreateAction) {
-
-        return JooqUtil.contextResult(connectionProvider, context ->
-                tryCreate(context, object, keyField1, keyField2, null, onCreateAction));
-    }
-
-    /**
-     * Will try to insert the record, but will fail silently if it already exists.
-     * It will use keyField1 and keyField2 (a compound key) to retrieve the persisted
-     * record if it already exists.
-     *
-     * @return The persisted record
-     */
     public <T_FIELD1, T_FIELD2, T_FIELD3> T_OBJ_TYPE tryCreate(final T_OBJ_TYPE object,
                                                                final TableField<T_REC_TYPE, T_FIELD1> keyField1,
                                                                final TableField<T_REC_TYPE, T_FIELD2> keyField2,
@@ -151,28 +106,13 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
      *
      * @return The persisted record
      */
-    public <T_FIELD1, T_FIELD2> T_OBJ_TYPE tryCreate(final DSLContext context,
-                                                     final T_OBJ_TYPE object,
-                                                     final TableField<T_REC_TYPE, T_FIELD1> keyField1,
-                                                     final TableField<T_REC_TYPE, T_FIELD2> keyField2,
-                                                     final Consumer<T_OBJ_TYPE> onCreateAction) {
-        return tryCreate(context, object, keyField1, keyField2, null, onCreateAction);
-    }
-
-    /**
-     * Will try to insert the record, but will fail silently if it already exists.
-     * It will use keyField1 and keyField2 (a compound key) to retrieve the persisted
-     * record if it already exists.
-     *
-     * @return The persisted record
-     */
     public <T_FIELD1, T_FIELD2, T_FIELD3> T_OBJ_TYPE tryCreate(final DSLContext context,
                                                                final T_OBJ_TYPE object,
                                                                final TableField<T_REC_TYPE, T_FIELD1> keyField1,
                                                                final TableField<T_REC_TYPE, T_FIELD2> keyField2,
                                                                final TableField<T_REC_TYPE, T_FIELD3> keyField3,
                                                                final Consumer<T_OBJ_TYPE> onCreateAction) {
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
+        LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
         final T_REC_TYPE record = objectToRecord(object);
 
         final Consumer<T_REC_TYPE> onCreateRecAction;
@@ -197,7 +137,7 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
 
     @Override
     public T_OBJ_TYPE create(final T_OBJ_TYPE object) {
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
+        LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
         final T_REC_TYPE record = objectToRecord(object);
         final T_REC_TYPE persistedRecord = JooqUtil.contextResult(connectionProvider, context ->
                 createRecord(context, record));
@@ -205,7 +145,7 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
     }
 
     public T_OBJ_TYPE create(final DSLContext context, final T_OBJ_TYPE object) {
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
+        LOGGER.debug(() -> LogUtil.message("Creating a {}", table.getName()));
         final T_REC_TYPE record = objectToRecord(object);
         final T_REC_TYPE persistedRecord = createRecord(context, record);
         return recordToObjectMapper.apply(persistedRecord);
@@ -213,7 +153,7 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
 
     @Override
     public Optional<T_OBJ_TYPE> fetch(final T_ID_TYPE id) {
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Fetching {} with id {}", table.getName(), id));
+        LOGGER.debug(() -> LogUtil.message("Fetching {} with id {}", table.getName(), id));
         final Optional<T_REC_TYPE> optional = JooqUtil.contextResult(connectionProvider, context -> context
                 .selectFrom(table)
                 .where(idField.eq(id))
@@ -224,7 +164,7 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
     public <T_KEY_TYPE> Optional<T_OBJ_TYPE> fetchBy(final TableField<T_REC_TYPE, T_KEY_TYPE> keyField,
                                                      final T_KEY_TYPE key) {
 
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Fetching {} with {} {}",
+        LOGGER.debug(() -> LogUtil.message("Fetching {} with {} {}",
                 table.getName(), keyField.getName(), key));
 
         final Optional<T_REC_TYPE> optional = JooqUtil.contextResult(connectionProvider, context -> context
@@ -236,7 +176,7 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
 
     public T_OBJ_TYPE update(final DSLContext context, final T_OBJ_TYPE object) {
         final T_REC_TYPE record = objectToRecord(object);
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
+        LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
                 table.getName(),
                 record.get(idField)));
         final T_REC_TYPE persistedRecord = updateRecord(context, record);
@@ -246,7 +186,7 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
     @Override
     public T_OBJ_TYPE update(final T_OBJ_TYPE object) {
         final T_REC_TYPE record = objectToRecord(object);
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
+        LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
                 table.getName(),
                 record.get(idField)));
         final T_REC_TYPE persistedRecord = JooqUtil.contextResultWithOptimisticLocking(connectionProvider, context ->
@@ -261,7 +201,7 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
      */
     public T_OBJ_TYPE updateWithoutOptimisticLocking(final T_OBJ_TYPE object) {
         final T_REC_TYPE record = objectToRecordMapper.apply(object, table.newRecord());
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
+        LOGGER.debug(() -> LogUtil.message("Updating a {} with id {}",
                 table.getName(),
                 record.get(idField)));
         final T_REC_TYPE persistedRecord = JooqUtil.contextResult(connectionProvider, context ->
@@ -271,17 +211,17 @@ public class GenericDao<T_REC_TYPE extends UpdatableRecord<T_REC_TYPE>, T_OBJ_TY
 
     @Override
     public boolean delete(final T_ID_TYPE id) {
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Deleting a {} with id {}", table.getName(), id));
+        LOGGER.debug(() -> LogUtil.message("Deleting a {} with id {}", table.getName(), id));
         return JooqUtil.contextResult(connectionProvider, context ->
                 delete(context, id));
     }
 
     public boolean delete(final DSLContext context, final T_ID_TYPE id) {
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Deleting a {} with id {}", table.getName(), id));
+        LOGGER.debug(() -> LogUtil.message("Deleting a {} with id {}", table.getName(), id));
         return context
-                .deleteFrom(table)
-                .where(idField.eq(id))
-                .execute() > 0;
+                       .deleteFrom(table)
+                       .where(idField.eq(id))
+                       .execute() > 0;
     }
 
     T_REC_TYPE objectToRecord(final T_OBJ_TYPE object) {

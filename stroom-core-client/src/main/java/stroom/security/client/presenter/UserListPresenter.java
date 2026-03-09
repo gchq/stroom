@@ -136,9 +136,11 @@ public class UserListPresenter
 //                        .enabledWhen(this::isJobNodeEnabled)
                             .withFieldUpdater((final int index, final User user, final TickBoxState value) -> {
                                 if (user != null) {
-                                    user.setEnabled(value.toBoolean());
                                     restFactory.create(USER_RESOURCE)
-                                            .method(userResource -> userResource.update(user))
+                                            .method(userResource -> userResource.update(user
+                                                    .copy()
+                                                    .enabled(value.toBoolean())
+                                                    .build()))
                                             .onSuccess(UserAndGroupHelper.createAfterChangeConsumer(
                                                     this))
                                             .taskMonitorFactory(this)

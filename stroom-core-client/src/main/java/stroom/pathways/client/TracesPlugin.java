@@ -20,12 +20,14 @@ import stroom.content.client.ContentPlugin;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.event.CloseContentEvent;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.pathways.client.presenter.ShowTracesEvent;
 import stroom.pathways.client.presenter.TracesPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
+import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 import com.google.inject.Inject;
@@ -45,8 +47,9 @@ public class TracesPlugin extends ContentPlugin<TracesPresenter> {
     public TracesPlugin(final EventBus eventBus,
                         final Provider<TracesPresenter> tracesPresenterProvider,
                         final ContentManager contentManager,
-                        final ClientSecurityContext securityContext) {
-        super(eventBus, contentManager, tracesPresenterProvider);
+                        final ClientSecurityContext securityContext,
+                        final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, contentManager, tracesPresenterProvider, documentPluginRegistry);
         this.securityContext = securityContext;
         this.tracesPresenterProvider = tracesPresenterProvider;
         this.contentManager = contentManager;
@@ -123,6 +126,11 @@ public class TracesPlugin extends ContentPlugin<TracesPresenter> {
                                 contentManager.open(closeHandler, tracesPresenter, tracesPresenter);
                             }).build());
         }
+    }
+
+    @Override
+    public String getType() {
+        return TracesPresenter.TAB_TYPE;
     }
 }
 

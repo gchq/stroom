@@ -3,7 +3,16 @@
   "uuid" : "03ee992c-6ee6-491f-92b1-76e0f6e8e7ab",
   "name" : "OTEL_METRICS",
   "version" : "91820bed-bd8e-457f-80b8-856637ac484e",
+  "description" : "",
+  "classification" : "",
+  "encoding" : "UTF-8",
+  "contextEncoding" : "UTF-8",
   "reference" : false,
   "streamType" : "Raw Events",
-  "status" : "RECEIVE"
+  "dataFormat" : "",
+  "contextFormat" : "",
+  "schema" : "",
+  "schemaVersion" : "",
+  "status" : "RECEIVE",
+  "volumeGroup" : "Default Volume Group"
 }

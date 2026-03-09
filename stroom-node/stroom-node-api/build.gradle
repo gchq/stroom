@@ -17,6 +17,7 @@
 ext.moduleName = 'stroom.node.api'
 
 dependencies {
+    implementation project(':stroom-core-shared')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 

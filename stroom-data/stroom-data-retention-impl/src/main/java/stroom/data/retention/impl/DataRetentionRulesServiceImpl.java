@@ -21,8 +21,7 @@ import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
@@ -42,7 +41,6 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -61,12 +59,16 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
         this.securityContext = securityContext;
         final DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(
                 DataRetentionRules.class);
-        this.store = storeFactory.createStore(serialiser, DataRetentionRules.TYPE, DataRetentionRules::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                DataRetentionRules.TYPE,
+                DataRetentionRules::builder,
+                DataRetentionRules::copy);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public DocRef createDocument(final String name) {
@@ -102,13 +104,13 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
         return store.info(docRef);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -126,7 +128,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<DataRetentionRules, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<DataRetentionRules> createMapper() {
         return (doc, dependencyRemapper) -> {
             final List<DataRetentionRule> rules = doc.getRules();
             if (rules != null && rules.size() > 0) {
@@ -136,16 +138,17 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
                     }
                 });
             }
+            return doc;
         };
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public DataRetentionRules readDocument(final DocRef docRef) {
@@ -162,13 +165,13 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
 
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -187,10 +190,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override
@@ -203,9 +203,9 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
         return null;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public DataRetentionRules getOrCreate() {

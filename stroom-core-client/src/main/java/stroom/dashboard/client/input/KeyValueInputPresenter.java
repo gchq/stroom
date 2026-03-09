@@ -58,7 +58,7 @@ public class KeyValueInputPresenter
     public void onValueChanged(final String value) {
         setSettings(getKeyValueInputSettings().copy().text(value).build());
         ComponentChangeEvent.fire(this, this);
-        setDirty(true);
+        onChange();
     }
 
     @Override

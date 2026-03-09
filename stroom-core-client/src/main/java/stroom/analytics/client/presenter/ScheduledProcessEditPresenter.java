@@ -27,7 +27,7 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.job.shared.ScheduleReferenceTime;
 import stroom.job.shared.ScheduleRestriction;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.schedule.client.SchedulePopup;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
@@ -65,7 +65,7 @@ public class ScheduledProcessEditPresenter
     public ScheduledProcessEditPresenter(final EventBus eventBus,
                                          final ScheduledProcessEditView view,
                                          final DocSelectionBoxPresenter errorFeedPresenter,
-                                         final NodeManager nodeManager,
+                                         final NodeClient nodeClient,
                                          final Provider<SchedulePopup> schedulePresenterProvider,
                                          final Provider<DateTimePopup> dateTimePopupProvider,
                                          final RestFactory restFactory,
@@ -106,7 +106,7 @@ public class ScheduledProcessEditPresenter
                 .taskMonitorFactory(this)
                 .exec());
 
-        nodeManager.listAllNodes(
+        nodeClient.listAllNodes(
                 list -> {
                     if (NullSafe.hasItems(list)) {
                         getView().setNodes(list);

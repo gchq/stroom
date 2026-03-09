@@ -79,9 +79,14 @@ public final class ColumnRef implements HasDisplayValue {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final ColumnRef field = (ColumnRef) o;
-        return Objects.equals(id, field.id) &&
-                Objects.equals(name, field.name);
+        final ColumnRef that = (ColumnRef) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(id, that.id);
+//        final boolean b2 = Objects.equals(name, that.name);
+
+        return Objects.equals(id, that.id) &&
+                Objects.equals(name, that.name);
     }
 
     @Override

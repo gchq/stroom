@@ -22,6 +22,7 @@ import stroom.activity.impl.ActivityDao;
 import stroom.activity.impl.ActivityServiceImpl;
 import stroom.activity.impl.db.ActivityConfig.ActivityDbConfig;
 import stroom.activity.shared.Activity;
+import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.query.common.v2.ExpressionPredicateFactory;
@@ -39,6 +40,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -69,13 +71,13 @@ class TestActivityServiceImpl {
 
         // Create 1
         Activity activity1 = activityService.create();
-        activity1.getDetails().add(createProp("foo"), "bar");
-        activity1.getDetails().add(createProp("this"), "that");
+        activity1.getDetails().add(createProp("foo", "bar"));
+        activity1.getDetails().add(createProp("this", "that"));
         activity1 = activityService.update(activity1);
 
         // Update 1
-        activity1.getDetails().add(createProp("foo"), "bar");
-        activity1.getDetails().add(createProp("this"), "that");
+        activity1.getDetails().add(createProp("foo", "bar"));
+        activity1.getDetails().add(createProp("this", "that"));
         final Activity updatedActivity1 = activityService.update(activity1);
 
         final Activity oldActivity = activity1;
@@ -91,7 +93,7 @@ class TestActivityServiceImpl {
 
         // Save 2
         Activity activity2 = activityService.create();
-        activity2.getDetails().add(createProp("lorem"), "ipsum");
+        activity2.getDetails().add(createProp("lorem", "ipsum"));
         activity2 = activityService.update(activity2);
 
         // Find both
@@ -123,30 +125,41 @@ class TestActivityServiceImpl {
         final UserRef userRef = UserRef.builder().uuid(UUID.randomUUID().toString()).subjectId("test").build();
 
         // Save 1
-        final Activity activity1 = Activity.create();
-        activity1.getDetails().add(createProp("foo", "\\w{3,}"), "bar");
-        activity1.getDetails().add(createProp("this", "\\w{4,}"), "that");
-        activity1.setUserRef(userRef);
+        final Activity activity1 = Activity
+                .builder()
+                .details(new ActivityDetails(List.of(
+                        createProp("foo", "bar", "\\w{3,}"),
+                        createProp("this", "that", "\\w{4,}"))))
+                .userRef(userRef)
+                .build();
         final ActivityValidationResult activityValidationResult1 = activityService.validate(activity1);
         assertThat(activityValidationResult1.isValid()).isTrue();
 
-        final Activity activity2 = Activity.create();
-        activity2.getDetails().add(createProp("foo", ".{3,}"), "bar");
-        activity2.getDetails().add(createProp("this", ".{80,}"), "that");
-        activity2.setUserRef(userRef);
+        final Activity activity2 = Activity
+                .builder()
+                .details(new ActivityDetails(List.of(
+                        createProp("foo", "bar", ".{3,}"),
+                        createProp("this", "that", ".{80,}"))))
+                .userRef(userRef)
+                .build();
         final ActivityValidationResult activityValidationResult2 = activityService.validate(activity2);
         assertThat(activityValidationResult2.isValid()).isFalse();
     }
 
-    private Prop createProp(final String name) {
-        return createProp(name, null);
+    private Prop createProp(final String name,
+                            final String value) {
+        return createProp(name, value, null);
     }
 
-    private Prop createProp(final String name, final String validation) {
-        final Prop prop = new Prop();
-        prop.setId(name);
-        prop.setName(name);
-        prop.setValidation(validation);
-        return prop;
+    private Prop createProp(final String name,
+                            final String value,
+                            final String validation) {
+        return Prop
+                .builder()
+                .id(name)
+                .name(name)
+                .value(value)
+                .validation(validation)
+                .build();
     }
 }

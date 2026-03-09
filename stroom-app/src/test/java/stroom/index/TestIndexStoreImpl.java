@@ -52,8 +52,7 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
         indexFields.add(LuceneIndexField.createDateField("TimeCreated"));
         indexFields.add(LuceneIndexField.createField("User"));
 
-        final LuceneIndexDoc index = indexStore.readDocument(testIndex);
-        index.setFields(indexFields);
+        final LuceneIndexDoc index = indexStore.readDocument(testIndex).copy().fields(indexFields).build();
         indexStore.writeDocument(index);
     }
 

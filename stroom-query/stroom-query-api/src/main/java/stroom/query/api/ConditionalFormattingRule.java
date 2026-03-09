@@ -142,6 +142,17 @@ public class ConditionalFormattingRule {
             return false;
         }
         final ConditionalFormattingRule that = (ConditionalFormattingRule) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(hide, that.hide);
+//        final boolean b2 = Objects.equals(enabled, that.enabled);
+//        final boolean b3 = Objects.equals(id, that.id);
+//        final boolean b4 = Objects.equals(expression, that.expression);
+//        final boolean b5 = Objects.equals(formattingType, that.formattingType);
+//        final boolean b6 = Objects.equals(formattingStyle, that.formattingStyle);
+//        final boolean b7 = Objects.equals(customStyle, that.customStyle);
+//        final boolean b8 = Objects.equals(textAttributes, that.textAttributes);
+
         return hide == that.hide &&
                enabled == that.enabled &&
                Objects.equals(id, that.id) &&

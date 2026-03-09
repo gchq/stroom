@@ -36,9 +36,6 @@ import java.util.Objects;
 
 public class KeyValueStoreKeySerde implements Serde<KeyValueStoreKey> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(KeyValueStoreKeySerde.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(KeyValueStoreKeySerde.class);
-
     private static final int UID_OFFSET = 0;
     private static final int KEY_OFFSET = UID_OFFSET + UID.UID_ARRAY_LENGTH;
 

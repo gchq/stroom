@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.query.api.Param;
 import stroom.query.api.TimeRange;
+import stroom.query.api.TimeRanges;
 import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -46,7 +47,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     @JsonProperty
     private final TimeRange timeRange;
     @JsonProperty
-    private String query;
+    private final String query;
     @JsonProperty
     private final AnalyticProcessType analyticProcessType;
     @JsonProperty
@@ -91,11 +92,11 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                                    @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
                                    @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
-        this.description = description;
-        this.languageVersion = languageVersion;
+        this.description = NullSafe.string(description);
+        this.languageVersion = NullSafe.requireNonNullElse(languageVersion, QueryLanguageVersion.STROOM_QL_VERSION_0_1);
         this.parameters = parameters;
-        this.timeRange = timeRange;
-        this.query = query;
+        this.timeRange = NullSafe.requireNonNullElse(timeRange, TimeRanges.ALL_TIME);
+        this.query = NullSafe.string(query);
         this.analyticProcessType = analyticProcessType;
         this.analyticProcessConfig = analyticProcessConfig;
         this.analyticNotificationConfig = null;
@@ -137,10 +138,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
         return query;
     }
 
-    public void setQuery(final String query) {
-        this.query = query;
-    }
-
     public AnalyticProcessType getAnalyticProcessType() {
         return analyticProcessType;
     }
@@ -148,12 +145,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     public AnalyticProcessConfig getAnalyticProcessConfig() {
         return analyticProcessConfig;
     }
-
-//    @Deprecated
-//    public AnalyticNotificationConfig getAnalyticNotificationConfig() {
-//        return analyticNotificationConfig;
-//    }
-
 
     public List<NotificationConfig> getNotifications() {
         return notifications;
@@ -249,11 +240,13 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
         String query;
         AnalyticProcessType analyticProcessType;
         AnalyticProcessConfig analyticProcessConfig;
-        List<NotificationConfig> notifications = new ArrayList<>();
+        List<NotificationConfig> notifications;
         DocRef errorFeed;
         DuplicateNotificationConfig duplicateNotificationConfig;
 
         public AbstractAnalyticRuleDocBuilder() {
+            languageVersion = QueryLanguageVersion.STROOM_QL_VERSION_0_1;
+            notifications = new ArrayList<>();
         }
 
         public AbstractAnalyticRuleDocBuilder(final AbstractAnalyticRuleDoc doc) {

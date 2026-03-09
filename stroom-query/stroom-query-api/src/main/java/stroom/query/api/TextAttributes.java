@@ -60,6 +60,11 @@ public class TextAttributes {
             return false;
         }
         final TextAttributes that = (TextAttributes) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = bold == that.bold;
+//        final boolean b2 = italic == that.italic;
+
         return bold == that.bold &&
                italic == that.italic;
     }

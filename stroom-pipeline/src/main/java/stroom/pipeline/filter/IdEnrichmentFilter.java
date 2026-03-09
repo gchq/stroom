@@ -75,6 +75,7 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
 
     private int depth;
     private long count;
+    private String cachedStreamIdStr;
 
     @Inject
     public IdEnrichmentFilter(final MetaHolder metaHolder,
@@ -203,7 +204,10 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
                 }
 
                 // Add the ids to the element.
-                idAtts.addAttribute(URI, STREAM_ID, STREAM_ID, STRING, String.valueOf(streamId));
+                if (cachedStreamIdStr == null) {
+                    cachedStreamIdStr = String.valueOf(streamId);
+                }
+                idAtts.addAttribute(URI, STREAM_ID, STREAM_ID, STRING, cachedStreamIdStr);
                 idAtts.addAttribute(URI, EVENT_ID, EVENT_ID, STRING, eventId);
 
                 newAtts = idAtts;

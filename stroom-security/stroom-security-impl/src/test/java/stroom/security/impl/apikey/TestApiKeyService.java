@@ -329,8 +329,8 @@ class TestApiKeyService {
 
         final List<HashedApiKey> apiKeys = List.of(
                 HashedApiKey.builder()
-                        .withOwner(ownerRef)
-                        .withApiKeyHash(hash)
+                        .owner(ownerRef)
+                        .apiKeyHash(hash)
                         .build());
 
         Mockito.when(mockApiKeyDao.fetchValidApiKeysByPrefix(Mockito.anyString()))
@@ -384,8 +384,8 @@ class TestApiKeyService {
 
         final List<HashedApiKey> apiKeys = List.of(
                 HashedApiKey.builder()
-                        .withOwner(ownerRef)
-                        .withApiKeyHash(hash)
+                        .owner(ownerRef)
+                        .apiKeyHash(hash)
                         .build());
 
         Mockito.when(mockApiKeyDao.fetchValidApiKeysByPrefix(Mockito.anyString()))
@@ -415,19 +415,19 @@ class TestApiKeyService {
 
         final List<HashedApiKey> apiKeys = List.of(
                 HashedApiKey.builder()
-                        .withOwner(owner1.asRef())
-                        .withApiKeyHash("another hash")
-                        .withHashAlgorithm(HashAlgorithm.BCRYPT)
+                        .owner(owner1.asRef())
+                        .apiKeyHash("another hash")
+                        .hashAlgorithm(HashAlgorithm.BCRYPT)
                         .build(),
                 HashedApiKey.builder()
-                        .withOwner(owner2.asRef())
-                        .withApiKeyHash("and another hash")
-                        .withHashAlgorithm(HashAlgorithm.ARGON_2)
+                        .owner(owner2.asRef())
+                        .apiKeyHash("and another hash")
+                        .hashAlgorithm(HashAlgorithm.ARGON_2)
                         .build(),
                 HashedApiKey.builder()
-                        .withOwner(owner3.asRef())
-                        .withApiKeyHash(hash)
-                        .withHashAlgorithm(HashAlgorithm.SHA3_256)
+                        .owner(owner3.asRef())
+                        .apiKeyHash(hash)
+                        .hashAlgorithm(HashAlgorithm.SHA3_256)
                         .build());
 
         Mockito.when(mockApiKeyDao.fetchValidApiKeysByPrefix(Mockito.anyString()))
@@ -483,19 +483,19 @@ class TestApiKeyService {
 
         final List<HashedApiKey> apiKeys = List.of(
                 HashedApiKey.builder()
-                        .withOwner(owner1)
-                        .withApiKeyHash("another hash")
-                        .withHashAlgorithm(HashAlgorithm.BCRYPT)
+                        .owner(owner1)
+                        .apiKeyHash("another hash")
+                        .hashAlgorithm(HashAlgorithm.BCRYPT)
                         .build(),
                 HashedApiKey.builder()
-                        .withOwner(owner2)
-                        .withApiKeyHash("and another hash")
-                        .withHashAlgorithm(HashAlgorithm.ARGON_2)
+                        .owner(owner2)
+                        .apiKeyHash("and another hash")
+                        .hashAlgorithm(HashAlgorithm.ARGON_2)
                         .build(),
                 HashedApiKey.builder()
-                        .withOwner(owner3)
-                        .withApiKeyHash("and yet another hash")
-                        .withHashAlgorithm(HashAlgorithm.SHA3_256)
+                        .owner(owner3)
+                        .apiKeyHash("and yet another hash")
+                        .hashAlgorithm(HashAlgorithm.SHA3_256)
                         .build());
 
         Mockito.when(mockApiKeyDao.fetchValidApiKeysByPrefix(Mockito.anyString()))

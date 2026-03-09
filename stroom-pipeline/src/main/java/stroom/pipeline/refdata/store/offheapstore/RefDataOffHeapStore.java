@@ -1073,7 +1073,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             } while (optMapUid.isPresent());
         }
 
-//        LAMBDA_LOGGER.info("Purged data for {} map(s) for {}", cnt, refStreamDefinition);
+//        LOGGER.info("Purged data for {} map(s) for {}", cnt, refStreamDefinition);
         return summaryInfo;
     }
 

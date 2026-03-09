@@ -20,7 +20,7 @@ import stroom.core.client.UrlParameters;
 import stroom.core.client.event.ShowFullScreenEvent;
 import stroom.core.client.presenter.FullScreenPresenter.FullScreenProxy;
 import stroom.core.client.presenter.FullScreenPresenter.FullScreenView;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocTabPresenter;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.user.client.Window;
@@ -67,13 +67,12 @@ public class FullScreenPresenter
         if (title != null && title.trim().length() > 0) {
             Window.setTitle(title.trim());
         } else {
-            if (presenterWidget instanceof DocumentEditTabPresenter<?, ?>) {
-                final DocumentEditTabPresenter<?, ?> tabPresenter = (DocumentEditTabPresenter<?, ?>) presenterWidget;
+            if (presenterWidget instanceof final DocTabPresenter<?, ?> tabPresenter) {
                 tabPresenter.addDirtyHandler(event -> Window.setTitle(tabPresenter.getLabel()));
                 Window.addWindowClosingHandler(event -> {
                     if (tabPresenter.isDirty()) {
                         event.setMessage(tabPresenter.getType() + " '" + tabPresenter.getLabel() + "' " +
-                                "has unsaved changes. Are you sure you want to close it?");
+                                         "has unsaved changes. Are you sure you want to close it?");
                     }
                 });
             }

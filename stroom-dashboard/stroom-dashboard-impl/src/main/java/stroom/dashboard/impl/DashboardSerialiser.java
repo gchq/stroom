@@ -48,12 +48,12 @@ public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
 
     @Override
     public DashboardDoc read(final Map<String, byte[]> data) throws IOException {
-        final DashboardDoc document = delegate.read(data);
+        DashboardDoc document = delegate.read(data);
         final byte[] jsonData = data.get(JSON);
         if (jsonData != null) {
             try {
                 final DashboardConfig dashboardConfig = getDashboardConfigFromJson(jsonData);
-                document.setDashboardConfig(dashboardConfig);
+                document = document.copy().dashboardConfig(dashboardConfig).build();
             } catch (final RuntimeException e) {
                 LOGGER.error("Unable to unmarshal dashboard config", e);
             }
@@ -64,18 +64,12 @@ public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
     @Override
     public Map<String, byte[]> write(final DashboardDoc document) throws IOException {
         final DashboardConfig dashboardConfig = document.getDashboardConfig();
-        document.setDashboardConfig(null);
-
-        final Map<String, byte[]> data = delegate.write(document);
-
+        final Map<String, byte[]> data = delegate.write(document.copy().dashboardConfig(null).build());
         if (dashboardConfig != null) {
             final StringWriter stringWriter = new StringWriter();
             dashboardConfigSerialiser.write(stringWriter, dashboardConfig);
             data.put(JSON, EncodingUtil.asBytes(stringWriter.toString()));
-            document.setDashboardConfig(dashboardConfig);
         }
-
-
         return data;
     }
 

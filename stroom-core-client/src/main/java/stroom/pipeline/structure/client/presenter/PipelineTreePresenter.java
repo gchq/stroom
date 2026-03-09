@@ -17,9 +17,9 @@
 package stroom.pipeline.structure.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineLayer;
@@ -44,8 +44,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresenter.PipelineTreeView>
-        implements HasDirtyHandlers, PipelineTreeUiHandlers, HasContextMenuHandlers {
+public class PipelineTreePresenter
+        extends MyPresenterWidget<PipelineTreePresenter.PipelineTreeView>
+        implements HasChangeHandlers, PipelineTreeUiHandlers, HasContextMenuHandlers {
 
     private final MySingleSelectionModel<PipelineElement> selectionModel;
     private PipelineModel pipelineModel;
@@ -69,7 +70,6 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
     @Override
     protected void onBind() {
         super.onBind();
-
         if (selectionModel != null) {
             registerHandler(selectionModel.addSelectionChangeHandler(event -> getView().refresh()));
         }
@@ -86,7 +86,7 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
         if (pipelineModel != null && pipelineModel.getParentMap() != null) {
             try {
                 if (pipelineModel.moveElement(parent, child)) {
-                    setDirty(true);
+                    onChange();
                 }
             } catch (final RuntimeException e) {
                 AlertEvent.fireError(PipelineTreePresenter.this, e.getMessage(), null);
@@ -99,8 +99,7 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
             final DefaultTreeForTreeLayout<PipelineElement> tree = pipelineTreeBuilder.getTree(pipelineModel);
             final PipelineElement selectedElement = selectionModel.getSelectedObject();
             if (selectedElement != null) {
-                // If the selected element no longer exists then
-                // deselect it.
+                // If the selected element no longer exists then deselect it.
                 if (tree.getParent(selectedElement) == null && tree.getChildren(selectedElement) == null) {
                     selectionModel.clear();
                 } else {
@@ -131,14 +130,12 @@ public class PipelineTreePresenter extends MyPresenterWidget<PipelineTreePresent
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
-    private void setDirty(final boolean dirty) {
-        if (dirty) {
-            DirtyEvent.fire(this, dirty);
-        }
+    private void onChange() {
+        ChangeEvent.fire(this);
     }
 
     @Override

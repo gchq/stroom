@@ -31,7 +31,6 @@ import stroom.processor.shared.ProcessorFilterTrackerStatus;
 import stroom.processor.shared.TaskStatus;
 import stroom.security.api.SecurityContext;
 import stroom.security.user.api.UserRefLookup;
-import stroom.util.AuditUtil;
 import stroom.util.exception.DataChangedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -70,7 +69,6 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
 
     private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             ProcessorFilterFields.FIELD_ID, PROCESSOR_FILTER.ID);
@@ -126,14 +124,13 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
-        LAMBDA_LOGGER.debug(() -> LogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
+        LOGGER.debug(() -> LogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
 
         return JooqUtil.transactionResult(
                 processorDbConnProvider,
                 context -> {
                     final ProcessorFilterTracker tracker = createTracker(context);
-                    processorFilter.setProcessorFilterTracker(tracker);
-                    return createFilter(context, processorFilter);
+                    return createFilter(context, processorFilter.copy().processorFilterTracker(tracker).build());
                 });
     }
 
@@ -182,7 +179,6 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     private ProcessorFilter createFilter(final DSLContext context, final ProcessorFilter filter) {
-        filter.setVersion(1);
         final String data = queryDataSerialiser.serialise(filter.getQueryData());
         final Integer id = context
                 .insertInto(PROCESSOR_FILTER)
@@ -203,8 +199,9 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS,
                         PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS,
                         PROCESSOR_FILTER.MAX_PROCESSING_TASKS,
+                        PROCESSOR_FILTER.PROFILE_NAME,
                         PROCESSOR_FILTER.RUN_AS_USER_UUID)
-                .values(filter.getVersion(),
+                .values(1,
                         filter.getCreateTimeMs(),
                         filter.getCreateUser(),
                         filter.getUpdateTimeMs(),
@@ -221,12 +218,12 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                         filter.getMinMetaCreateTimeMs(),
                         filter.getMaxMetaCreateTimeMs(),
                         filter.getMaxProcessingTasks(),
+                        filter.getProfileName(),
                         NullSafe.get(filter.getRunAsUser(), UserRef::getUuid))
                 .returning(PROCESSOR_FILTER.ID)
                 .fetchOne(PROCESSOR_FILTER.ID);
         Objects.requireNonNull(id);
-        filter.setId(id);
-        return filter;
+        return filter.copy().id(id).version(1).build();
     }
 
     private ProcessorFilter updateFilter(final DSLContext context, final ProcessorFilter filter) {
@@ -245,6 +242,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 .set(PROCESSOR_FILTER.MIN_META_CREATE_TIME_MS, filter.getMinMetaCreateTimeMs())
                 .set(PROCESSOR_FILTER.MAX_META_CREATE_TIME_MS, filter.getMaxMetaCreateTimeMs())
                 .set(PROCESSOR_FILTER.MAX_PROCESSING_TASKS, filter.getMaxProcessingTasks())
+                .set(PROCESSOR_FILTER.PROFILE_NAME, filter.getProfileName())
                 .set(PROCESSOR_FILTER.RUN_AS_USER_UUID, NullSafe.get(filter.getRunAsUser(), UserRef::getUuid))
                 .where(PROCESSOR_FILTER.ID.eq(filter.getId()))
                 .and(PROCESSOR_FILTER.VERSION.eq(filter.getVersion()))
@@ -325,6 +323,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
         return JooqUtil.transactionResult(processorDbConnProvider, txnContext -> {
             if (processorFilter.isDeleted()) {
+                final ProcessorFilter.Builder builder = processorFilter.copy();
                 final Integer processorFilterTrackerId = NullSafe.get(processorFilter,
                         ProcessorFilter::getProcessorFilterTracker,
                         ProcessorFilterTracker::getId);
@@ -332,19 +331,18 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 // Un-delete the parent processor if needs be
                 Processor processor = processorFilter.getProcessor();
                 if (processor.isDeleted()) {
-                    processor.setDeleted(false);
                     processor = processorDaoImplProvider.get()
-                            .update(processor, txnContext);
-                    processorFilter.setProcessor(processor);
+                            .update(processor.copy().deleted(false).build(), txnContext);
+                    builder.processor(processor);
                 }
 
                 // We are un-deleting the filter so reset the tracker back to clean slate
                 if (processorFilterTrackerId != null && resetTracker) {
                     resetTracker(processorFilter, txnContext);
                 }
-                processorFilter.setDeleted(false);
-                AuditUtil.stamp(securityContext.getUserIdentity(), processorFilter);
-                return updateFilter(txnContext, processorFilter);
+                builder.deleted(false);
+                builder.stampAudit(securityContext);
+                return updateFilter(txnContext, builder.build());
             } else {
                 LOGGER.debug("restoreProcessorFilter() - Processor filter is not in a deleted state {}",
                         processorFilter);
@@ -436,7 +434,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                                 rec.get(PROCESSOR_FILTER.UUID),
                                 rec.get(PROCESSOR_FILTER_TRACKER.ID))));
 
-        LAMBDA_LOGGER.debug(() ->
+        LOGGER.debug(() ->
                 LogUtil.message("Found {} logically deleted filters with an update time older than {}",
                         result.size(), deleteThreshold));
 
@@ -470,15 +468,15 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                 }
             } catch (final DataAccessException e) {
                 if (e.getCause() instanceof final SQLIntegrityConstraintViolationException sqlEx) {
-                    LAMBDA_LOGGER.debug(() -> LogUtil.message("Expected constraint violation, dbKeys: {} - {}",
+                    LOGGER.debug(() -> LogUtil.message("Expected constraint violation, dbKeys: {} - {}",
                             dbKeys, LogUtil.exceptionMessage(e)), e);
                 } else {
                     throw e;
                 }
             }
         });
-        LAMBDA_LOGGER.debug(() -> "physicalDeleteOldProcessorFilters returning: "
-                                  + processorFilterUuids.size() + " UUIDs");
+        LOGGER.debug(() -> "physicalDeleteOldProcessorFilters returning: "
+                           + processorFilterUuids.size() + " UUIDs");
         return processorFilterUuids;
     }
 
@@ -558,9 +556,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         final ProcessorFilter processorFilter = recordToProcessorFilterMapper.apply(record);
         final ProcessorFilterTracker processorFilterTracker =
                 RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER.apply(record);
-        processorFilter.setProcessor(processor);
-        processorFilter.setProcessorFilterTracker(processorFilterTracker);
-        return processorFilter;
+        return processorFilter.copy().processor(processor).processorFilterTracker(processorFilterTracker).build();
     }
 
 

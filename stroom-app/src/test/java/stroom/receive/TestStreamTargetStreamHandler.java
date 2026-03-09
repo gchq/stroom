@@ -67,8 +67,7 @@ class TestStreamTargetStreamHandler extends AbstractProcessIntegrationTest {
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
         final DocRef feedRef = feedStore.createDocument(feedName);
-        final FeedDoc feedDoc = feedStore.readDocument(feedRef);
-        feedDoc.setReference(true);
+        final FeedDoc feedDoc = feedStore.readDocument(feedRef).copy().reference(true).build();
         feedStore.writeDocument(feedDoc);
 
         final AttributeMap attributeMap = new AttributeMap();

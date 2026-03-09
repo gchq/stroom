@@ -28,6 +28,7 @@ import stroom.util.entityevent.EntityEventBus;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class StoreFactoryImpl implements StoreFactory {
@@ -49,9 +50,11 @@ public class StoreFactoryImpl implements StoreFactory {
     }
 
     @Override
-    public <D extends AbstractDoc> Store<D> createStore(final DocumentSerialiser2<D> serialiser,
-                                                        final String type,
-                                                        final Supplier<AbstractBuilder<D, ?>> builderSupplier) {
+    public <D extends AbstractDoc, B extends AbstractBuilder<D, ?>> Store<D> createStore(
+            final DocumentSerialiser2<D> serialiser,
+            final String type,
+            final Supplier<B> builderSupplier,
+            final Function<D, B> builderFunction) {
         return new StoreImpl<>(
                 persistence,
                 entityEventBus,
@@ -59,6 +62,7 @@ public class StoreFactoryImpl implements StoreFactory {
                 docRefInfoServiceProvider,
                 serialiser,
                 type,
-                builderSupplier);
+                builderSupplier,
+                builderFunction);
     }
 }

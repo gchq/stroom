@@ -121,7 +121,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         // TODO: We need to use the cached TextConverter service ideally but
         // before we do it needs to be aware cluster wide when TextConverter has
         // been updated.
-        final TextConverterDoc tc = loadTextConverterDoc();
+        TextConverterDoc tc = loadTextConverterDoc();
         if (!TextConverterType.XML_FRAGMENT.equals(tc.getConverterType())) {
             throw ProcessException.create("The assigned text converter is not an XML fragment.");
         }
@@ -130,7 +130,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
         // add them to the newly loaded text
         // converter.
         if (injectedCode != null) {
-            tc.setData(injectedCode);
+            tc = tc.copy().data(injectedCode).build();
             usePool = false;
         }
 
@@ -180,7 +180,7 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
     @PipelineProperty(
             description = "The XML fragment wrapper that should be used to wrap the input XML.",
             displayPriority = 1)
-    @PipelinePropertyDocRef(types = TextConverterDoc.TYPE)
+    @PipelinePropertyDocRef(types = TextConverterDoc.TYPE, canEmbed = true)
     public void setTextConverter(final DocRef textConverterRef) {
         this.textConverterRef = textConverterRef;
     }
@@ -212,8 +212,8 @@ public class XMLFragmentParser extends AbstractParser implements SupportsCodeInj
             final TextConverterDoc tc = textConverterStore.readDocument(docRef);
             if (tc == null) {
                 final String message = "Text converter \"" +
-                        docRef.getName() +
-                        "\" appears to have been deleted";
+                                       docRef.getName() +
+                                       "\" appears to have been deleted";
                 throw ProcessException.create(message);
             }
 

@@ -40,7 +40,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.feed.shared.FeedDoc;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeStatusResult;
@@ -120,7 +120,7 @@ public class TaskManagerListPresenter
     private final Set<TaskProgress> selectedTaskProgress = new HashSet<>();
     private final TooltipPresenter tooltipPresenter;
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
     private final NameFilterTimer timer = new NameFilterTimer();
     private final Map<String, List<TaskProgress>> responseMap = new HashMap<>();
     private final Map<String, List<String>> errorMap = new HashMap<>();
@@ -149,13 +149,13 @@ public class TaskManagerListPresenter
                                     final PagerView view,
                                     final TooltipPresenter tooltipPresenter,
                                     final RestFactory restFactory,
-                                    final NodeManager nodeManager,
+                                    final NodeClient nodeClient,
                                     final DateTimeFormatter dateTimeFormatter,
                                     final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
         this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, true, false);
         this.dateTimeFormatter = dateTimeFormatter;
         this.securityContext = securityContext;
@@ -546,7 +546,7 @@ public class TaskManagerListPresenter
     public void fetchNodes(final Range range,
                            final Consumer<TaskProgressResponse> dataConsumer,
                            final RestErrorHandler errorConsumer) {
-        nodeManager.fetchNodeStatus(
+        nodeClient.fetchNodeStatus(
                 fetchNodeStatusResponse -> {
                     final List<String> allNodeNames = fetchNodeStatusResponse.stream()
                             .map(NodeStatusResult::getNode)

@@ -40,22 +40,16 @@ public class TextConverterSerialiser implements DocumentSerialiser2<TextConverte
 
     @Override
     public TextConverterDoc read(final Map<String, byte[]> data) throws IOException {
-        final TextConverterDoc document = delegate.read(data);
-        document.setData(EncodingUtil.asString(data.get(XML)));
-        return document;
+        return delegate.read(data).copy().data(EncodingUtil.asString(data.get(XML))).build();
     }
 
     @Override
     public Map<String, byte[]> write(final TextConverterDoc document) throws IOException {
         final String xml = document.getData();
-        document.setData(null);
-
-        final Map<String, byte[]> map = delegate.write(document);
+        final Map<String, byte[]> map = delegate.write(document.copy().data(null).build());
         if (xml != null) {
             map.put(XML, EncodingUtil.asBytes(xml));
-            document.setData(xml);
         }
-
         return map;
     }
 }

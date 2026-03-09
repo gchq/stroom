@@ -428,6 +428,8 @@ public class ProcessorPresenter
                                 defaultExpression,
                                 System.currentTimeMillis(),
                                 null,
+                                null,
+                                null,
                                 result -> {
                                     if (result != null) {
                                         // The runAsUser can't be changed in the editor

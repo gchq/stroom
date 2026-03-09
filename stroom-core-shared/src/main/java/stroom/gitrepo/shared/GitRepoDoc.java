@@ -22,6 +22,7 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -64,7 +65,7 @@ public class GitRepoDoc extends AbstractDoc {
      * contentStoreMeta is null.
      */
     @JsonProperty
-    private ContentStoreMetadata contentStoreMetadata;
+    private final ContentStoreMetadata contentStoreMetadata;
 
     /**
      * If this is from a content store then this holds
@@ -72,28 +73,28 @@ public class GitRepoDoc extends AbstractDoc {
      * is null.
      */
     @JsonProperty
-    private String contentStoreContentPackId;
+    private final String contentStoreContentPackId;
 
     @JsonProperty
-    private String description = "";
+    private final String description;
 
     @JsonProperty
-    private String url = "";
+    private final String url;
 
     @JsonProperty
-    private String credentialName = "";
+    private final String credentialName;
 
     @JsonProperty
-    private String branch = "";
+    private final String branch;
 
     @JsonProperty
-    private String path = "";
+    private final String path;
 
     @JsonProperty
-    private String commit = "";
+    private final String commit;
 
     @JsonProperty
-    private Boolean autoPush = Boolean.FALSE;
+    private final Boolean autoPush;
 
     @JsonCreator
     public GitRepoDoc(@JsonProperty("uuid") final String uuid,
@@ -120,32 +121,12 @@ public class GitRepoDoc extends AbstractDoc {
         this.contentStoreContentPackId = contentStoreContentPackId;
 
         // Git settings
-        this.url = url;
-        this.credentialName = credentialName;
-        this.branch = branch;
-        this.path = path;
-        this.commit = commit;
-        this.autoPush = autoPush;
-
-        // Make sure none of the settings are null
-        if (this.url == null) {
-            this.url = "";
-        }
-        if (this.credentialName == null) {
-            this.credentialName = "";
-        }
-        if (this.branch == null) {
-            this.branch = "";
-        }
-        if (this.path == null) {
-            this.path = "";
-        }
-        if (this.commit == null) {
-            this.commit = "";
-        }
-        if (this.autoPush == null) {
-            this.autoPush = Boolean.FALSE;
-        }
+        this.url = NullSafe.requireNonNullElse(url, "");
+        this.credentialName = NullSafe.requireNonNullElse(credentialName, "");
+        this.branch = NullSafe.requireNonNullElse(branch, "");
+        this.path = NullSafe.requireNonNullElse(path, "");
+        this.commit = NullSafe.requireNonNullElse(commit, "");
+        this.autoPush = NullSafe.requireNonNullElse(autoPush, Boolean.FALSE);
     }
 
     /**
@@ -202,24 +183,12 @@ public class GitRepoDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     /**
      * @return The metadata associated with the content store, if this is a content pack.
      * If not a content pack then this returns null.
      */
     public ContentStoreMetadata getContentStoreMetadata() {
         return this.contentStoreMetadata;
-    }
-
-    /**
-     * Sets the metadata associated with the content store. Set to null if not
-     * a content store.
-     */
-    public void setContentStoreMetadata(final ContentStoreMetadata meta) {
-        this.contentStoreMetadata = meta;
     }
 
     /**
@@ -230,30 +199,12 @@ public class GitRepoDoc extends AbstractDoc {
         return this.contentStoreContentPackId;
     }
 
-    /**
-     * Sets the ID associated with the content pack. Set to null if not
-     * derived from a content store content pack.
-     *
-     * @param id The Content Pack ID.
-     */
-    public void setContentStoreContentPackId(final String id) {
-        this.contentStoreContentPackId = id;
-    }
-
     public String getUrl() {
         return this.url;
     }
 
-    public void setUrl(final String url) {
-        this.url = url;
-    }
-
     public String getCredentialName() {
         return credentialName;
-    }
-
-    public void setCredentialName(final String name) {
-        this.credentialName = name;
     }
 
     /**
@@ -267,36 +218,16 @@ public class GitRepoDoc extends AbstractDoc {
         return branch;
     }
 
-    public void setBranch(final String branch) {
-        this.branch = branch;
-    }
-
     public String getPath() {
         return path;
-    }
-
-    public void setPath(final String path) {
-        this.path = path;
     }
 
     public String getCommit() {
         return commit;
     }
 
-    public void setCommit(final String commit) {
-        this.commit = commit;
-    }
-
     public Boolean isAutoPush() {
         return autoPush;
-    }
-
-    public void setAutoPush(final Boolean autoPush) {
-        if (autoPush == null) {
-            this.autoPush = Boolean.FALSE;
-        } else {
-            this.autoPush = autoPush;
-        }
     }
 
     /**
@@ -325,7 +256,7 @@ public class GitRepoDoc extends AbstractDoc {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDoc.AbstractBuilder<GitRepoDoc, GitRepoDoc.Builder> {
+    public static final class Builder extends AbstractBuilder<GitRepoDoc, Builder> {
 
         private String description = "";
         private ContentStoreMetadata contentStoreMetadata;

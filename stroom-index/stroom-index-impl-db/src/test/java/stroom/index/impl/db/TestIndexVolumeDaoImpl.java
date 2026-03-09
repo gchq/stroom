@@ -20,7 +20,6 @@ import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
-import stroom.util.AuditUtil;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -80,13 +79,15 @@ class TestIndexVolumeDaoImpl {
         final String nodeName = TestData.createNodeName();
         final String path = TestData.createPath();
         final IndexVolumeGroup indexVolumeGroup = createGroup(TestData.createVolumeGroupName());
-        final IndexVolume indexVolume = createVolume(nodeName, path, indexVolumeGroup.getId());
 
         final String newNodeName = TestData.createNodeName();
         final String newPath = TestData.createPath();
 
-        indexVolume.setNodeName(newNodeName);
-        indexVolume.setPath(newPath);
+        final IndexVolume indexVolume = createVolume(nodeName, path, indexVolumeGroup.getId())
+                .copy()
+                .nodeName(newNodeName)
+                .path(newPath)
+                .build();
 
         // When
         final IndexVolume updatedIndexVolume = indexVolumeDao.update(indexVolume);
@@ -158,10 +159,10 @@ class TestIndexVolumeDaoImpl {
     void testMustHaveGroup() {
         // Given
         final IndexVolumeGroup indexVolumeGroup01 = createGroup(TestData.createVolumeGroupName());
-        final IndexVolume indexVolume = createVolume(indexVolumeGroup01.getId());
+        final IndexVolume indexVolume = createVolume(indexVolumeGroup01.getId())
+                .copy().indexVolumeGroupId(null).build();
 
         // When / then
-        indexVolume.setIndexVolumeGroupId(null);
         Assertions.assertThatThrownBy(() -> indexVolumeDao.update(indexVolume))
                 .isInstanceOf(DataAccessException.class);
     }
@@ -173,18 +174,22 @@ class TestIndexVolumeDaoImpl {
     }
 
     private IndexVolume createVolume(final String nodeName, final String path, final int indexVolumeGroupId) {
-        final IndexVolume indexVolume = new IndexVolume();
-        indexVolume.setNodeName(nodeName);
-        indexVolume.setPath(path);
-        indexVolume.setIndexVolumeGroupId(indexVolumeGroupId);
-        AuditUtil.stamp(() -> "test", indexVolume);
+        final IndexVolume indexVolume = IndexVolume
+                .builder()
+                .nodeName(nodeName)
+                .path(path)
+                .indexVolumeGroupId(indexVolumeGroupId)
+                .stampAudit("test")
+                .build();
         return indexVolumeDao.create(indexVolume);
     }
 
     private IndexVolumeGroup createGroup(final String name) {
-        final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
-        indexVolumeGroup.setName(name);
-        AuditUtil.stamp(() -> "test", indexVolumeGroup);
+        final IndexVolumeGroup indexVolumeGroup = IndexVolumeGroup
+                .builder()
+                .name(name)
+                .stampAudit("test")
+                .build();
         return indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
     }
 }

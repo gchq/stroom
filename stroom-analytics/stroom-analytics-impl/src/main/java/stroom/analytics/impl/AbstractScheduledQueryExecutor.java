@@ -230,32 +230,55 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
     private boolean execute(final T doc,
                             final ExecutionSchedule executionSchedule,
                             final TaskContext taskContext) {
-        final ExecutionTracker currentTracker = executionScheduleDao.getTracker(executionSchedule).orElse(null);
+        final ExecutionTracker currentTracker = executionScheduleDao.getTracker(executionSchedule)
+                .orElse(null);
         final Schedule schedule = executionSchedule.getSchedule();
         final ScheduleBounds scheduleBounds = executionSchedule.getScheduleBounds();
-
         // See if it is time to execute this query.
         final Instant executionTime = Instant.now();
         final Trigger trigger = TriggerFactory.create(schedule);
 
         final Instant effectiveExecutionTime;
         if (currentTracker != null) {
-            effectiveExecutionTime = Instant.ofEpochMilli(currentTracker.getNextEffectiveExecutionTimeMs());
+            final Instant startTime = NullSafe.get(
+                    scheduleBounds,
+                    ScheduleBounds::getStartTimeMs,
+                    Instant::ofEpochMilli);
+            final Instant trackerTime = Instant.ofEpochMilli(currentTracker.getNextEffectiveExecutionTimeMs());
+            // User may have changed the start bound since the tracker was last updated, so if the new start
+            // time is later, work from there
+            effectiveExecutionTime = startTime != null && startTime.isAfter(trackerTime)
+                    ? trigger.getNextExecutionTimeAfter(startTime)
+                    : trackerTime;
         } else {
-            if (scheduleBounds != null && scheduleBounds.getStartTimeMs() != null) {
-                effectiveExecutionTime = Instant.ofEpochMilli(scheduleBounds.getStartTimeMs());
-            } else {
-                effectiveExecutionTime = trigger.getNextExecutionTimeAfter(executionTime);
-            }
+            // No tracker so base the next eff time off now
+            effectiveExecutionTime = NullSafe.getOrElseGet(
+                    scheduleBounds,
+                    ScheduleBounds::getStartTimeMs,
+                    Instant::ofEpochMilli,
+                    () -> trigger.getNextExecutionTimeAfter(executionTime));
         }
 
         // Calculate end bounds.
-        Instant endTime = Instant.MAX;
-        if (scheduleBounds != null && scheduleBounds.getEndTimeMs() != null) {
-            endTime = Instant.ofEpochMilli(scheduleBounds.getEndTimeMs());
-        }
+        final Instant endTime = NullSafe.getOrElse(
+                scheduleBounds,
+                ScheduleBounds::getEndTimeMs,
+                Instant::ofEpochMilli,
+                Instant.MAX);
 
-        if (!effectiveExecutionTime.isAfter(executionTime) && !effectiveExecutionTime.isAfter(endTime)) {
+        LOGGER.debug("execute() - endTime: {}, executionTime: {}, " +
+                     "effectiveExecutionTime: {}, schedule: {}",
+                endTime, executionTime, effectiveExecutionTime, schedule);
+
+        // bounds are inclusive
+        if (effectiveExecutionTime != null
+            && !effectiveExecutionTime.isAfter(executionTime)
+            && !effectiveExecutionTime.isAfter(endTime)) {
+
+            LOGGER.debug("execute() - Executing - endTime: {}, executionTime: {}, " +
+                         "effectiveExecutionTime: {}, schedule: {}",
+                    endTime, executionTime, effectiveExecutionTime, schedule);
+
             taskContext.info(() -> "Executing schedule '" +
                                    executionSchedule.getName() +
                                    "' with effective time: " +
@@ -273,6 +296,10 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
                             effectiveExecutionTime,
                             executionSchedule,
                             currentTracker));
+        } else {
+            LOGGER.debug("execute() - Skipping execution - endTime: {}, executionTime: {}, " +
+                         "effectiveExecutionTime: {}, schedule: {}",
+                    endTime, executionTime, effectiveExecutionTime, schedule);
         }
         return false;
     }
@@ -368,5 +395,33 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
 
     public record ExecutionResult(String status, String message) {
 
+        private static final ExecutionResult EMPTY = new ExecutionResult(null, null);
+
+        public static final String STATUS_COMPLETE = ExecutionHistory.STATUS_COMPLETE;
+        public static final String STATUS_ERROR = ExecutionHistory.STATUS_ERROR;
+
+        public ExecutionResult {
+            if (status != null) {
+                if (!STATUS_COMPLETE.equals(status) && !STATUS_ERROR.equals(status)) {
+                    throw new IllegalArgumentException("Invalid status: " + status);
+                }
+            }
+            if (message != null && status == null) {
+                throw new IllegalArgumentException(LogUtil.message(
+                        "Can't have non-null message '{}' with no status", message));
+            }
+        }
+
+        public static ExecutionResult empty() {
+            return EMPTY;
+        }
+
+        public static ExecutionResult complete(final String message) {
+            return new ExecutionResult(STATUS_COMPLETE, message);
+        }
+
+        public static ExecutionResult error(final String message) {
+            return new ExecutionResult(STATUS_ERROR, message);
+        }
     }
 }

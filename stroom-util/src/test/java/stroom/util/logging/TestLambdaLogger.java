@@ -17,8 +17,6 @@
 package stroom.util.logging;
 
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -28,8 +26,7 @@ import java.util.stream.Stream;
 
 class TestLambdaLogger {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestLambdaLogger.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestLambdaLogger.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestLambdaLogger.class);
 
     @Test
     void compareLambdaToIfBlock() {
@@ -44,18 +41,18 @@ class TestLambdaLogger {
                     final Instant lambdaLoggerStartTime = Instant.now();
                     for (int i = 0; i < iterations; i++) {
                         // Use a complex msg
-                        LAMBDA_LOGGER.trace(() -> LogUtil.message("This is my msg {} {}",
+                        LOGGER.trace(() -> LogUtil.message("This is my msg {} {}",
                                 iterations, lambdaLoggerStartTime.atOffset(ZoneOffset.MIN)));
 
-                        LAMBDA_LOGGER.trace(() -> LogUtil.message("This is another msg {} {} {}",
+                        LOGGER.trace(() -> LogUtil.message("This is another msg {} {} {}",
                                 someStr, iterations, lambdaLoggerStartTime.atOffset(ZoneOffset.MIN)));
 
-                        LAMBDA_LOGGER.trace(() -> LogUtil.message("This is yet another msg {}",
+                        LOGGER.trace(() -> LogUtil.message("This is yet another msg {}",
                                 iterations));
                     }
                     final Duration lambdaLoggerDuration = Duration.between(lambdaLoggerStartTime, Instant.now());
 
-                    LOGGER.info("Duration for LAMBDA_LOGGER trace(() -> LogUtil.message(...)) {} ({}ms)",
+                    LOGGER.info("Duration for LOGGER trace(() -> LogUtil.message(...)) {} ({}ms)",
                             lambdaLoggerDuration, lambdaLoggerDuration.toMillis());
 
                     final Instant loggerStartTime = Instant.now();
@@ -94,7 +91,7 @@ class TestLambdaLogger {
         try {
             throw new NullPointerException();
         } catch (final RuntimeException e) {
-            LAMBDA_LOGGER.error(e::getMessage, e);
+            LOGGER.error(e::getMessage, e);
         }
     }
 
@@ -103,7 +100,7 @@ class TestLambdaLogger {
         try {
             throw new NullPointerException();
         } catch (final RuntimeException e) {
-            LAMBDA_LOGGER.error((Supplier<String>) null, e);
+            LOGGER.error((Supplier<String>) null, e);
         }
     }
 
@@ -112,17 +109,17 @@ class TestLambdaLogger {
         try {
             throw new NullPointerException();
         } catch (final RuntimeException e) {
-            LAMBDA_LOGGER.error(() -> null, e);
+            LOGGER.error(() -> null, e);
         }
     }
 
     @Test
     void testNull4() {
-        LAMBDA_LOGGER.error(() -> null, null);
+        LOGGER.error(() -> null, null);
     }
 
     @Test
     void testNull5() {
-        LAMBDA_LOGGER.error((Supplier<String>) null, null);
+        LOGGER.error((Supplier<String>) null, null);
     }
 }

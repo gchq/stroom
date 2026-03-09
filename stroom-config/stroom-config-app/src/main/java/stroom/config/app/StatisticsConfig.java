@@ -17,7 +17,6 @@
 package stroom.config.app;
 
 import stroom.statistics.impl.InternalStatisticsConfig;
-import stroom.statistics.impl.hbase.internal.HBaseStatisticsConfig;
 import stroom.statistics.impl.sql.SQLStatisticsConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -31,16 +30,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class StatisticsConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_SQL = "sql";
-    public static final String PROP_NAME_HBASE = "hbase";
     public static final String PROP_NAME_INTERNAL = "internal";
 
     private final SQLStatisticsConfig sqlStatisticsConfig;
-    private final HBaseStatisticsConfig hbaseStatisticsConfig;
     private final InternalStatisticsConfig internalStatisticsConfig;
 
     public StatisticsConfig() {
         sqlStatisticsConfig = new SQLStatisticsConfig();
-        hbaseStatisticsConfig = new HBaseStatisticsConfig();
         internalStatisticsConfig = new InternalStatisticsConfig();
     }
 
@@ -48,21 +44,14 @@ public class StatisticsConfig extends AbstractConfig implements IsStroomConfig {
     @JsonCreator
     public StatisticsConfig(
             @JsonProperty(PROP_NAME_SQL) final SQLStatisticsConfig sqlStatisticsConfig,
-            @JsonProperty(PROP_NAME_HBASE) final HBaseStatisticsConfig hbaseStatisticsConfig,
             @JsonProperty(PROP_NAME_INTERNAL) final InternalStatisticsConfig internalStatisticsConfig) {
         this.sqlStatisticsConfig = sqlStatisticsConfig;
-        this.hbaseStatisticsConfig = hbaseStatisticsConfig;
         this.internalStatisticsConfig = internalStatisticsConfig;
     }
 
     @JsonProperty(PROP_NAME_SQL)
     public SQLStatisticsConfig getSqlStatisticsConfig() {
         return sqlStatisticsConfig;
-    }
-
-    @JsonProperty(PROP_NAME_HBASE)
-    public HBaseStatisticsConfig getHbaseStatisticsConfig() {
-        return hbaseStatisticsConfig;
     }
 
     @JsonProperty(PROP_NAME_INTERNAL)
@@ -73,9 +62,8 @@ public class StatisticsConfig extends AbstractConfig implements IsStroomConfig {
     @Override
     public String toString() {
         return "StatisticsConfig{" +
-                "sqlStatisticsConfig=" + sqlStatisticsConfig +
-                ", hbaseStatisticsConfig=" + hbaseStatisticsConfig +
-                ", internalStatisticsConfig=" + internalStatisticsConfig +
-                '}';
+               "sqlStatisticsConfig=" + sqlStatisticsConfig +
+               ", internalStatisticsConfig=" + internalStatisticsConfig +
+               '}';
     }
 }

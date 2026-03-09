@@ -62,7 +62,8 @@ jooq {
                                 "processor_feed|" +
                                 "processor_filter|" +
                                 "processor_filter_tracker|" +
-                                "processor_task"
+                                "processor_task|" +
+                                "processor_profile"
                         // We don't want to include flyway versioning
                         excludes = 'processor_schema_history'
                         // Specify 'version' for use in optimistic concurrency control

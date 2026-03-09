@@ -19,7 +19,6 @@ package stroom.feed.impl;
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -79,15 +78,19 @@ public class FeedStoreImpl implements FeedStore {
                          final SecurityContext securityContext,
                          final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider) {
         this.fsVolumeGroupServiceProvider = fsVolumeGroupServiceProvider;
-        this.store = storeFactory.createStore(serialiser, FeedDoc.TYPE, FeedDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                FeedDoc.TYPE,
+                FeedDoc::builder,
+                FeedDoc::copy);
         this.feedNameValidator = feedNameValidator;
         this.securityContext = securityContext;
         this.serialiser = serialiser;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public DocRef createDocument(final String name) {
@@ -154,13 +157,13 @@ public class FeedStoreImpl implements FeedStore {
         return store.info(docRef);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -178,13 +181,13 @@ public class FeedStoreImpl implements FeedStore {
         store.remapDependencies(docRef, remappings, null);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public FeedDoc readDocument(final DocRef docRef) {
@@ -196,13 +199,13 @@ public class FeedStoreImpl implements FeedStore {
         return store.writeDocument(document);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -234,12 +237,13 @@ public class FeedStoreImpl implements FeedStore {
                 if (!allVolumeGroups.contains(volumeGroup)) {
                     LOGGER.debug("Volume group '{}' in imported feed {} is not a valid volume group",
                             volumeGroup, docRef);
+                    final FeedDoc.Builder builder = feedDoc.copy();
                     fsVolumeGroupService.getDefaultVolumeGroup()
                             .ifPresentOrElse(
-                                    feedDoc::setVolumeGroup,
-                                    () -> feedDoc.setVolumeGroup(null));
+                                    builder::volumeGroup,
+                                    () -> builder.volumeGroup(null));
 
-                    effectiveDataMap = serialiser.write(feedDoc);
+                    effectiveDataMap = serialiser.write(builder.build());
                 }
             }
         } catch (final IOException e) {
@@ -254,10 +258,7 @@ public class FeedStoreImpl implements FeedStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override
@@ -270,9 +271,9 @@ public class FeedStoreImpl implements FeedStore {
         return null;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public List<DocRef> findByNames(final List<String> name, final boolean allowWildCards) {

@@ -18,8 +18,7 @@ package stroom.gitrepo.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -35,7 +34,6 @@ import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 public class GitRepoStoreImpl implements GitRepoStore {
@@ -45,12 +43,16 @@ public class GitRepoStoreImpl implements GitRepoStore {
     @Inject
     GitRepoStoreImpl(final StoreFactory storeFactory,
                      final GitRepoSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, GitRepoDoc.TYPE, GitRepoDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                GitRepoDoc.TYPE,
+                GitRepoDoc::builder,
+                GitRepoDoc::copy);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public DocRef createDocument(final String name) {
@@ -86,13 +88,13 @@ public class GitRepoStoreImpl implements GitRepoStore {
         return store.info(docRef);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -110,19 +112,20 @@ public class GitRepoStoreImpl implements GitRepoStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<GitRepoDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<GitRepoDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
             // No dependencies to map
+            return doc;
         };
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public GitRepoDoc readDocument(final DocRef docRef) {
@@ -134,13 +137,13 @@ public class GitRepoStoreImpl implements GitRepoStore {
         return store.writeDocument(document);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -159,10 +162,7 @@ public class GitRepoStoreImpl implements GitRepoStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override
@@ -175,9 +175,9 @@ public class GitRepoStoreImpl implements GitRepoStore {
         return null;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public List<DocRef> list() {

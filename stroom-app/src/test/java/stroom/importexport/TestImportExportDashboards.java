@@ -140,8 +140,10 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
                     "Test Script",
                     folder2,
                     null);
-            final ScriptDoc script = scriptStore.readDocument(scriptNode.getDocRef());
-            script.setData("Test Data");
+            final ScriptDoc script = scriptStore.readDocument(scriptNode.getDocRef())
+                    .copy()
+                    .data("Test Data")
+                    .build();
             scriptStore.writeDocument(script);
             assertThat(scriptStore.list().size()).isEqualTo(1);
 
@@ -150,8 +152,10 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
                     "Test Vis",
                     folder2,
                     null);
-            final VisualisationDoc vis = visualisationStore.readDocument(visNode.getDocRef());
-            vis.setScriptRef(scriptNode.getDocRef());
+            final VisualisationDoc vis = visualisationStore.readDocument(visNode.getDocRef())
+                    .copy()
+                    .scriptRef(scriptNode.getDocRef())
+                    .build();
             visualisationStore.writeDocument(vis);
             assertThat(visualisationStore.list().size()).isEqualTo(1);
         }
@@ -229,16 +233,15 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         components.add(visualisation);
 
         // Create dashboard.
-        final DashboardConfig dashboardData = new DashboardConfig();
-        dashboardData.setComponents(components);
+        final DashboardConfig dashboardConfig = DashboardConfig.builder().components(components).build();
 
         final ExplorerNode dashboardNode = explorerService.create(
                 DashboardDoc.TYPE,
                 "Test Dashboard",
                 folder1,
                 null);
-        DashboardDoc dashboard = dashboardStore.readDocument(dashboardNode.getDocRef());
-        dashboard.setDashboardConfig(dashboardData);
+        DashboardDoc dashboard = dashboardStore.readDocument(dashboardNode.getDocRef())
+                .copy().dashboardConfig(dashboardConfig).build();
         dashboard = dashboardStore.writeDocument(dashboard);
         assertThat(dashboardStore.list().size()).isEqualTo(1);
 

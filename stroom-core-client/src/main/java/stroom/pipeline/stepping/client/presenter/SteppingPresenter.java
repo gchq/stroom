@@ -24,6 +24,7 @@ import stroom.data.client.presenter.ExpressionValidator;
 import stroom.data.client.presenter.SourcePresenter;
 import stroom.data.client.presenter.SteppingMetaListPresenter;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -104,6 +105,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class SteppingPresenter
@@ -135,6 +137,7 @@ public class SteppingPresenter
     private SteppingResult lastFoundResult;
     private SteppingResult currentResult;
     private final ButtonPanel leftButtons;
+    private boolean runStepping = true;
 
     final ButtonView streamListFilter;
 
@@ -255,11 +258,16 @@ public class SteppingPresenter
         }));
 
         registerHandler(steppingMetaListPresenter.getSelectionModel().addSelectionHandler(event -> {
-            final MetaRow selectedRow = steppingMetaListPresenter.getSelected();
-            if (selectedRow != null) {
-                final Meta selectedMeta = steppingMetaListPresenter.getSelected().getMeta();
-                beginStepping(StepType.REFRESH, new StepLocation(selectedMeta.getId(), 0, 0),
-                        selectedMeta, null);
+            if (runStepping) {
+                final MetaRow selectedRow = steppingMetaListPresenter.getSelected();
+                if (selectedRow != null) {
+
+                    final Meta selectedMeta = selectedRow.getMeta();
+                    beginStepping(StepType.REFRESH, new StepLocation(selectedMeta.getId(), 0, 0),
+                            selectedMeta, null);
+                }
+            } else {
+                runStepping = true;
             }
         }));
 
@@ -268,7 +276,17 @@ public class SteppingPresenter
                 final MetaRow metaRow = event.getData().getFirst();
                 steppingMetaListPresenter.getSelectionModel().setSelected(metaRow, new SelectionType(), false);
                 stepLocationLinkPresenter.setStepLocation(new StepLocation(metaRow.getMeta().getId(), 0, 0));
+                // Begin stepping if not already stepping on this stream. This handles the case where the user
+                // changes the filter expression and a single result is auto-selected
+                if (!busyTranslating && (meta == null || meta.getId() != metaRow.getMeta().getId())) {
+                    beginStepping(StepType.REFRESH,
+                            new StepLocation(metaRow.getMeta().getId(), 0, 0),
+                            metaRow.getMeta(),
+                            null);
+                }
             }
+            // Update button state in case the meta list loaded after the last step result arrived
+            updateStepControlButtons();
         }));
 
         registerHandler(pipelineTreePresenter.addContextMenuHandler(event -> {
@@ -350,8 +368,11 @@ public class SteppingPresenter
         refreshMetaList();
     }
 
-    public void setMetaListExpression(final ExpressionOperator expressionOperator) {
-        steppingMetaListPresenter.setExpression(expressionOperator, this::refreshMetaList);
+    public void setMetaListExpression(final ExpressionOperator expressionOperator, final Runnable afterSet) {
+        steppingMetaListPresenter.setExpression(expressionOperator, () -> {
+            refreshMetaList();
+            NullSafe.run(afterSet);
+        });
     }
 
     public ResultPage<MetaRow> getMetaList() {
@@ -499,7 +520,9 @@ public class SteppingPresenter
                 presenter.setTaskMonitorFactory(this);
                 presenter.setElement(element);
                 presenter.setProperties(properties);
-                presenter.setFeedName(meta == null ? "" : meta.getFeedName());
+                presenter.setFeedName(meta == null
+                        ? ""
+                        : meta.getFeedName());
                 presenter.setPipelineName(pipelineDoc.getName());
                 presenter.setClassification(classification);
                 elementPresenterMap.put(elementId, presenter);
@@ -667,9 +690,9 @@ public class SteppingPresenter
     }
 
     public void beginStepping(final StepType stepType,
-                     final StepLocation stepLocation,
-                     final Meta meta,
-                     final String childStreamType) {
+                              final StepLocation stepLocation,
+                              final Meta meta,
+                              final String childStreamType) {
         Objects.requireNonNull(meta);
         Objects.requireNonNull(stepLocation);
 
@@ -689,6 +712,8 @@ public class SteppingPresenter
 
         // Set the stream id on the stepping action.
         final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromMeta(this.meta);
+        findMetaCriteria.setSortList(steppingMetaListPresenter.getCriteria().getSortList());
+        findMetaCriteria.setExpression(steppingMetaListPresenter.getCriteria().getExpression());
         requestBuilder.criteria(findMetaCriteria);
 
         requestBuilder.childStreamType(childStreamType);
@@ -753,7 +778,7 @@ public class SteppingPresenter
     }
 
     private boolean compareProperties(final List<PipelineProperty> properties,
-                                     final List<PipelineProperty> otherProperties) {
+                                      final List<PipelineProperty> otherProperties) {
         final ArrayList<PipelineProperty> someProperties = new ArrayList<>(properties);
         for (final PipelineProperty otherProperty : otherProperties) {
 
@@ -788,11 +813,18 @@ public class SteppingPresenter
         pipelineChangeHandlers.forEach(handler -> handler.accept(pipelineModel));
     }
 
-    public void save() {
-        // Tell all editors to save.
-        for (final Entry<ElementId, ElementPresenter> entry : elementPresenterMap.entrySet()) {
-            entry.getValue().save();
-        }
+    public void save(final List<DocRef> docsToSave, final Runnable onComplete) {
+        // Tell editors to save if they are in the list.
+        elementPresenterMap.values().stream()
+                .filter(ep -> docsToSave.contains(ep.getDocRef()))
+                .forEach(ep -> ep.save(onComplete));
+    }
+
+    public List<DocRef> getDirtyDocs() {
+        return elementPresenterMap.values().stream()
+                .filter(ElementPresenter::isDirty)
+                .map(ElementPresenter::getDocRef)
+                .collect(Collectors.toList());
     }
 
     private void step(final StepType stepType,
@@ -809,7 +841,7 @@ public class SteppingPresenter
             requestBuilder.sessionUuid(null);
 
             final PipelineData pipelineData = pipelineModel.diff();
-            pipelineDoc.setPipelineData(pipelineData);
+            pipelineDoc = pipelineDoc.copy().pipelineData(pipelineData).build();
             requestBuilder.pipelineDoc(pipelineDoc);
 
             // If we are stepping to the first or last record then clear all
@@ -832,7 +864,7 @@ public class SteppingPresenter
             // Set dirty code on action.
             final Map<String, String> codeMap = new HashMap<>();
             for (final ElementPresenter editorPresenter : elementPresenterMap.values()) {
-                if (editorPresenter.isDirtyCode()) {
+                if (editorPresenter.isDirty()) {
                     final String elementId = editorPresenter.getElement().getId();
                     final String code = editorPresenter.getCode();
                     codeMap.put(elementId, code);
@@ -842,6 +874,12 @@ public class SteppingPresenter
             requestBuilder.code(codeMap);
             requestBuilder.stepType(stepType);
             requestBuilder.stepFilterMap(pipelineModel.getStepFilterMap());
+
+            if (StepType.REFRESH.equals(stepType)) {
+                elementPresenterMap.values().stream()
+                        .filter(Predicate.not(ElementPresenter::isDirty))
+                        .forEach(e -> e.setLoaded(false));
+            }
 
             poll();
         }
@@ -1011,6 +1049,16 @@ public class SteppingPresenter
                 // position ready for the next step.
                 requestBuilder.stepLocation(result.getFoundLocation());
                 stepLocationLinkPresenter.setStepLocation(result.getFoundLocation());
+
+                final Meta meta = Meta.builder().id(result.getFoundLocation().getMetaId()).build();
+                // If the returned meta doesnt match the current selected meta then make sure the stepping doesnt run
+                // again when we change the selected meta list row
+                final MetaRow selectedMetaRow = steppingMetaListPresenter.getSelectionModel().getSelected();
+                if (selectedMetaRow != null && !selectedMetaRow.getMeta().equals(meta)) {
+                    runStepping = false;
+                }
+                steppingMetaListPresenter.getSelectionModel().setSelected(
+                        new MetaRow(meta, null, null));
             }
 
             // Sync step filters.
@@ -1028,15 +1076,27 @@ public class SteppingPresenter
                 });
             }
         } finally {
-            if (pipelineModel.getCombinedData().getElements().size() > 1) {
-                stepControlPresenter.setEnabledButtons(
-                        requestBuilder.build().getStepType(),
-                        foundRecord,
-                        result.hasActiveFilter(),
-                        result.getFoundLocation());
-            }
-
+            updateStepControlButtons();
             busyTranslating = false;
+        }
+    }
+
+    private void updateStepControlButtons() {
+        if (currentResult == null || pipelineModel == null) {
+            return;
+        }
+        if (pipelineModel.getCombinedData().getElements().size() > 1) {
+            final MetaRow selectedRow = steppingMetaListPresenter.getSelected();
+            final ResultPage<MetaRow> metaResultPage = steppingMetaListPresenter.getResultPage();
+            final boolean isFirstStream = metaResultPage != null && metaResultPage.isFirst(selectedRow);
+            final boolean isLastStream = metaResultPage != null && metaResultPage.isLast(selectedRow);
+            stepControlPresenter.setEnabledButtons(
+                    requestBuilder.build().getStepType(),
+                    foundRecord,
+                    currentResult.hasActiveFilter(),
+                    currentResult.getFoundLocation(),
+                    isFirstStream,
+                    isLastStream);
         }
     }
 

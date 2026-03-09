@@ -21,6 +21,7 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -77,40 +78,40 @@ public class ElasticIndexDoc extends AbstractDoc {
      * Reference to the `ElasticCluster` containing common Elasticsearch cluster connection properties
      */
     @JsonProperty
-    private DocRef clusterRef;
+    private final DocRef clusterRef;
 
     @JsonProperty
-    private String description;
+    private final String description;
 
     /**
      * Name or pattern of the Elasticsearch index(es) to query
      */
     @JsonProperty
-    private String indexName;
+    private final String indexName;
 
     /**
      * Number of slices to query concurrently when searching
      */
     @JsonProperty
-    private Integer searchSlices;
+    private final Integer searchSlices;
 
     /**
      * Number of documents to retrieve at a time in each search scroll batch request
      */
     @JsonProperty
-    private Integer searchScrollSize;
+    private final Integer searchScrollSize;
 
     /**
      * Reference to the `OpenAIModel` used to generate vector embeddings from search query expressions
      */
     @JsonProperty
-    private DocRef vectorGenerationModelRef;
+    private final DocRef vectorGenerationModelRef;
 
     /**
      * Reference to the `OpenAIModel` used for reranking vector search results
      */
     @JsonProperty
-    private DocRef rerankModelRef;
+    private final DocRef rerankModelRef;
 
     /**
      * Suffix used to identify the original text equivalent of dense_vector fields.
@@ -119,23 +120,23 @@ public class ElasticIndexDoc extends AbstractDoc {
      * Example: `.text`
      */
     @JsonProperty
-    private String rerankTextFieldSuffix;
+    private final String rerankTextFieldSuffix;
 
     /**
      * Minimum rerank score for documents to be included in search hits
      */
     @JsonProperty
-    private Float rerankScoreMinimum;
+    private final Float rerankScoreMinimum;
 
     /**
      * Array of fields, populated at query time
      */
     @JsonProperty
-    private List<ElasticIndexField> fields;
+    private final List<ElasticIndexField> fields;
     @JsonProperty
-    private String timeField;
+    private final String timeField;
     @JsonProperty
-    private DocRef defaultExtractionPipeline;
+    private final DocRef defaultExtractionPipeline;
 
     @JsonCreator
     public ElasticIndexDoc(
@@ -161,32 +162,28 @@ public class ElasticIndexDoc extends AbstractDoc {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.clusterRef = clusterRef;
-        this.indexName = indexName;
-        this.searchSlices = searchSlices;
-        this.searchScrollSize = searchScrollSize;
+        if (NullSafe.isBlankString(indexName)) {
+            this.indexName = null;
+        } else {
+            this.indexName = indexName;
+        }
+        this.searchSlices = NullSafe.requireNonNullElse(searchSlices, DEFAULT_SEARCH_SLICES);
+        this.searchScrollSize = NullSafe.requireNonNullElse(searchScrollSize, DEFAULT_SEARCH_SCROLL_SIZE);
         this.fields = fields;
-        this.timeField = timeField;
+        if (NullSafe.isEmptyString(timeField)) {
+            this.timeField = DEFAULT_TIME_FIELD;
+        } else {
+            this.timeField = timeField;
+        }
         this.vectorGenerationModelRef = vectorGenerationModelRef;
         this.rerankModelRef = rerankModelRef;
-        this.rerankTextFieldSuffix = rerankTextFieldSuffix;
-        this.rerankScoreMinimum = rerankScoreMinimum;
-        this.defaultExtractionPipeline = defaultExtractionPipeline;
-
-        if (this.searchSlices == null) {
-            this.searchSlices = DEFAULT_SEARCH_SLICES;
-        }
-        if (this.searchScrollSize == null) {
-            this.searchScrollSize = DEFAULT_SEARCH_SCROLL_SIZE;
-        }
-        if (this.timeField == null || this.timeField.isEmpty()) {
-            this.timeField = DEFAULT_TIME_FIELD;
-        }
-        if (this.rerankTextFieldSuffix == null || this.rerankTextFieldSuffix.isEmpty()) {
+        if (NullSafe.isEmptyString(rerankTextFieldSuffix)) {
             this.rerankTextFieldSuffix = DEFAULT_TEXT_FIELD_SUFFIX;
+        } else {
+            this.rerankTextFieldSuffix = rerankTextFieldSuffix;
         }
-        if (this.rerankScoreMinimum == null) {
-            this.rerankScoreMinimum = DEFAULT_RERANK_SCORE_MINIMUM;
-        }
+        this.rerankScoreMinimum = NullSafe.requireNonNullElse(rerankScoreMinimum, DEFAULT_RERANK_SCORE_MINIMUM);
+        this.defaultExtractionPipeline = defaultExtractionPipeline;
     }
 
     /**
@@ -200,152 +197,105 @@ public class ElasticIndexDoc extends AbstractDoc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public DocRef getClusterRef() {
         return clusterRef;
-    }
-
-    public void setClusterRef(final DocRef clusterRef) {
-        this.clusterRef = clusterRef;
     }
 
     public String getIndexName() {
         return indexName;
     }
 
-    public void setIndexName(final String indexName) {
-        if (indexName == null || indexName.trim().isEmpty()) {
-            this.indexName = null;
-        } else {
-            this.indexName = indexName;
-        }
-    }
-
     public Integer getSearchSlices() {
         return searchSlices;
-    }
-
-    public void setSearchSlices(final Integer searchSlices) {
-        this.searchSlices = searchSlices;
     }
 
     public Integer getSearchScrollSize() {
         return searchScrollSize;
     }
 
-    public void setSearchScrollSize(final Integer searchScrollSize) {
-        this.searchScrollSize = searchScrollSize;
-    }
-
     public List<ElasticIndexField> getFields() {
         return fields;
-    }
-
-    public void setFields(final List<ElasticIndexField> fields) {
-        this.fields = fields;
     }
 
     public String getTimeField() {
         return timeField;
     }
 
-    public void setTimeField(final String timeField) {
-        this.timeField = timeField;
-    }
-
     public DocRef getVectorGenerationModelRef() {
         return vectorGenerationModelRef;
-    }
-
-    public void setVectorGenerationModelRef(final DocRef vectorGenerationModelRef) {
-        this.vectorGenerationModelRef = vectorGenerationModelRef;
     }
 
     public DocRef getRerankModelRef() {
         return rerankModelRef;
     }
 
-    public void setRerankModelRef(final DocRef rerankModelRef) {
-        this.rerankModelRef = rerankModelRef;
-    }
-
     public String getRerankTextFieldSuffix() {
         return rerankTextFieldSuffix;
-    }
-
-    public void setRerankTextFieldSuffix(final String rerankTextFieldSuffix) {
-        this.rerankTextFieldSuffix = rerankTextFieldSuffix;
     }
 
     public Float getRerankScoreMinimum() {
         return rerankScoreMinimum;
     }
 
-    public void setRerankScoreMinimum(final Float rerankScoreMinimum) {
-        this.rerankScoreMinimum = rerankScoreMinimum;
-    }
-
     public DocRef getDefaultExtractionPipeline() {
         return defaultExtractionPipeline;
     }
 
-    public void setDefaultExtractionPipeline(final DocRef defaultExtractionPipeline) {
-        this.defaultExtractionPipeline = defaultExtractionPipeline;
-    }
-
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof ElasticIndexDoc)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
         if (!super.equals(o)) {
             return false;
         }
-        final ElasticIndexDoc elasticIndex = (ElasticIndexDoc) o;
-        return Objects.equals(description, elasticIndex.description) &&
-               Objects.equals(clusterRef, elasticIndex.clusterRef) &&
-               Objects.equals(indexName, elasticIndex.indexName) &&
-               Objects.equals(searchSlices, elasticIndex.searchSlices) &&
-               Objects.equals(searchScrollSize, elasticIndex.searchScrollSize) &&
-               Objects.equals(fields, elasticIndex.fields) &&
-               Objects.equals(timeField, elasticIndex.timeField) &&
-               Objects.equals(vectorGenerationModelRef, elasticIndex.vectorGenerationModelRef) &&
-               Objects.equals(rerankModelRef, elasticIndex.rerankModelRef) &&
-               Objects.equals(rerankTextFieldSuffix, elasticIndex.rerankTextFieldSuffix) &&
-               Objects.equals(rerankScoreMinimum, elasticIndex.rerankScoreMinimum) &&
-               Objects.equals(defaultExtractionPipeline, elasticIndex.defaultExtractionPipeline);
+        final ElasticIndexDoc that = (ElasticIndexDoc) o;
+        return Objects.equals(clusterRef, that.clusterRef) &&
+               Objects.equals(description, that.description) &&
+               Objects.equals(indexName, that.indexName) &&
+               Objects.equals(searchSlices, that.searchSlices) &&
+               Objects.equals(searchScrollSize, that.searchScrollSize) &&
+               Objects.equals(vectorGenerationModelRef, that.vectorGenerationModelRef) &&
+               Objects.equals(rerankModelRef, that.rerankModelRef) &&
+               Objects.equals(rerankTextFieldSuffix, that.rerankTextFieldSuffix) &&
+               Objects.equals(rerankScoreMinimum, that.rerankScoreMinimum) &&
+               Objects.equals(fields, that.fields) &&
+               Objects.equals(timeField, that.timeField) &&
+               Objects.equals(defaultExtractionPipeline, that.defaultExtractionPipeline);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                super.hashCode(),
+        return Objects.hash(super.hashCode(),
+                clusterRef,
                 description,
                 indexName,
                 searchSlices,
                 searchScrollSize,
-                clusterRef,
-                fields,
-                timeField,
                 vectorGenerationModelRef,
                 rerankModelRef,
                 rerankTextFieldSuffix,
                 rerankScoreMinimum,
+                fields,
+                timeField,
                 defaultExtractionPipeline);
     }
 
     @Override
     public String toString() {
-        return "ElasticIndex{" +
-               "description='" + description + '\'' +
-               ", clusterRef='" + clusterRef + '\'' +
+        return "ElasticIndexDoc{" +
+               "clusterRef=" + clusterRef +
+               ", description='" + description + '\'' +
                ", indexName='" + indexName + '\'' +
+               ", searchSlices=" + searchSlices +
+               ", searchScrollSize=" + searchScrollSize +
+               ", vectorGenerationModelRef=" + vectorGenerationModelRef +
+               ", rerankModelRef=" + rerankModelRef +
+               ", rerankTextFieldSuffix='" + rerankTextFieldSuffix + '\'' +
+               ", rerankScoreMinimum=" + rerankScoreMinimum +
+               ", fields=" + fields +
+               ", timeField='" + timeField + '\'' +
+               ", defaultExtractionPipeline=" + defaultExtractionPipeline +
                '}';
     }
 
@@ -357,7 +307,7 @@ public class ElasticIndexDoc extends AbstractDoc {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDoc.AbstractBuilder<ElasticIndexDoc, ElasticIndexDoc.Builder> {
+    public static final class Builder extends AbstractBuilder<ElasticIndexDoc, Builder> {
 
         private DocRef clusterRef;
         private String description;
@@ -402,7 +352,11 @@ public class ElasticIndexDoc extends AbstractDoc {
         }
 
         public Builder indexName(final String indexName) {
-            this.indexName = indexName;
+            if (indexName == null || indexName.trim().isEmpty()) {
+                this.indexName = null;
+            } else {
+                this.indexName = indexName;
+            }
             return self();
         }
 

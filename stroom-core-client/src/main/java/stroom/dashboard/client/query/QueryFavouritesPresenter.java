@@ -109,13 +109,14 @@ public class QueryFavouritesPresenter
                         .dataSource(currentDataSource)
                         .expression(currentExpression)
                         .build();
-                final StoredQuery queryEntity = new StoredQuery();
-                queryEntity.setQuery(query);
-                queryEntity.setDashboardUuid(currentDashboardUuid);
-                queryEntity.setComponentId(queryPresenter.getId());
-                queryEntity.setName("");
-                queryEntity.setFavourite(true);
-
+                final StoredQuery queryEntity = StoredQuery
+                        .builder()
+                        .query(query)
+                        .dashboardUuid(currentDashboardUuid)
+                        .componentId(queryPresenter.getId())
+                        .name("")
+                        .favourite(true)
+                        .build();
                 namePresenter.show(queryEntity, result -> refresh(false));
             }
         }));

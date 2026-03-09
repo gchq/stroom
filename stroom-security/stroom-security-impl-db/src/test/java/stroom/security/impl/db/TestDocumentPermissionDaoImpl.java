@@ -24,7 +24,6 @@ import stroom.security.impl.TestModule;
 import stroom.security.impl.UserDao;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.User;
-import stroom.util.AuditUtil;
 import stroom.util.shared.UserRef;
 
 import com.google.inject.Guice;
@@ -150,8 +149,8 @@ class TestDocumentPermissionDaoImpl {
                 .displayName(name)
                 .uuid(UUID.randomUUID().toString())
                 .group(group)
+                .stampAudit("test")
                 .build();
-        AuditUtil.stamp(() -> "test", user);
         return userDao.create(user).asRef();
     }
 }

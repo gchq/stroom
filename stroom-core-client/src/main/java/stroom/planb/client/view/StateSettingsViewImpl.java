@@ -16,7 +16,7 @@
 
 package stroom.planb.client.view;
 
-import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.planb.client.presenter.StateSettingsPresenter.StateSettingsView;
 import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.SnapshotSettings;
@@ -30,7 +30,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class StateSettingsViewImpl
-        extends ViewWithUiHandlers<PlanBSettingsUiHandlers>
+        extends ViewWithUiHandlers<ChangeUiHandlers>
         implements StateSettingsView {
 
     private final Widget widget;
@@ -72,7 +72,7 @@ public class StateSettingsViewImpl
     }
 
     @Override
-    public void setUiHandlers(final PlanBSettingsUiHandlers uiHandlers) {
+    public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
         generalSettingsWidget.setUiHandlers(uiHandlers);
         snapshotSettingsWidget.setUiHandlers(uiHandlers);

@@ -19,6 +19,7 @@ package stroom.processor.impl.db;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.ProcessorFilterTrackerDao;
+import stroom.processor.impl.ProcessorProfileDao;
 import stroom.processor.impl.ProcessorTaskDao;
 import stroom.processor.impl.ProcessorTaskDeleteExecutor;
 import stroom.util.guice.GuiceUtil;
@@ -37,6 +38,7 @@ public class ProcessorDaoModule extends AbstractModule {
         bind(ProcessorTaskDao.class).to(ProcessorTaskDaoImpl.class);
         bind(ProcessorTaskDeleteExecutor.class).to(ProcessorTaskDeleteExecutorImpl.class);
         bind(ProcessorFilterTrackerDao.class).to(ProcessorFilterTrackerDaoImpl.class);
+        bind(ProcessorProfileDao.class).to(ProcessorProfileDaoImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(ProcessorNodeCache.class)

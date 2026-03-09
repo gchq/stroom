@@ -46,7 +46,6 @@ import stroom.security.api.UserService;
 import stroom.security.mock.MockSecurityContext;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.shared.User;
-import stroom.state.impl.MockStateModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.impl.MockTaskModule;
 import stroom.test.common.MockMetricsModule;
@@ -118,7 +117,6 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.test.MockTestControlModule());
         install(new MockServletModule());
         install(new MockXmlSchemaModule());
-        install(new MockStateModule());
         install(new MockPlanBModule());
         install(new MockClusterLockModule());
         install(new MockOpenAIModule());

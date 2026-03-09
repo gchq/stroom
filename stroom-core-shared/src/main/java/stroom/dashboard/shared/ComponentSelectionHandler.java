@@ -81,8 +81,17 @@ public class ComponentSelectionHandler {
             return false;
         }
         final ComponentSelectionHandler that = (ComponentSelectionHandler) o;
-        return enabled == that.enabled && Objects.equals(id, that.id) && Objects.equals(componentId,
-                that.componentId) && Objects.equals(expression, that.expression);
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = enabled == that.enabled;
+//        final boolean b2 = Objects.equals(id, that.id);
+//        final boolean b3 = Objects.equals(componentId, that.componentId);
+//        final boolean b4 = Objects.equals(expression, that.expression);
+
+        return enabled == that.enabled &&
+               Objects.equals(id, that.id) &&
+               Objects.equals(componentId, that.componentId) &&
+               Objects.equals(expression, that.expression);
     }
 
     @Override
@@ -93,11 +102,11 @@ public class ComponentSelectionHandler {
     @Override
     public String toString() {
         return "ComponentSelectionListener{" +
-                "id='" + id + '\'' +
-                ", componentId='" + componentId + '\'' +
-                ", expression=" + expression +
-                ", enabled=" + enabled +
-                '}';
+               "id='" + id + '\'' +
+               ", componentId='" + componentId + '\'' +
+               ", expression=" + expression +
+               ", enabled=" + enabled +
+               '}';
     }
 
     public static Builder builder() {

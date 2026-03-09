@@ -23,7 +23,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.pipeline.client.presenter.XsltPresenter;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.XsltResource;
@@ -59,7 +59,7 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
     }
 
     @Override
-    protected DocumentEditPresenter<?, ?> createEditor() {
+    protected DocPresenter<?, ?> createEditor() {
         return editorProvider.get();
     }
 
@@ -86,6 +86,20 @@ public class XsltPlugin extends DocumentPlugin<XsltDoc> {
         restFactory
                 .create(XSLT_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
+                .onSuccess(resultConsumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    @Override
+    public void create(final String documentName,
+                         final Consumer<XsltDoc> resultConsumer,
+                         final RestErrorHandler errorHandler,
+                         final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(XSLT_RESOURCE)
+                .method(res -> res.create(documentName))
                 .onSuccess(resultConsumer)
                 .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)

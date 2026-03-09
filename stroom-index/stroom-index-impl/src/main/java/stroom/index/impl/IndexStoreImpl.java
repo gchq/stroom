@@ -18,7 +18,6 @@ package stroom.index.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -62,14 +61,18 @@ public class IndexStoreImpl implements IndexStore {
                    final Provider<IndexFieldService> indexFieldServiceProvider,
                    final Provider<IndexVolumeGroupService> indexVolumeGroupServiceProvider) {
         this.indexVolumeGroupServiceProvider = indexVolumeGroupServiceProvider;
-        this.store = storeFactory.createStore(serialiser, LuceneIndexDoc.TYPE, LuceneIndexDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                LuceneIndexDoc.TYPE,
+                LuceneIndexDoc::builder,
+                LuceneIndexDoc::copy);
         this.indexFieldServiceProvider = indexFieldServiceProvider;
         this.serialiser = serialiser;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public DocRef createDocument(final String name) {
@@ -108,13 +111,13 @@ public class IndexStoreImpl implements IndexStore {
         return store.info(docRef);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -132,13 +135,13 @@ public class IndexStoreImpl implements IndexStore {
         store.remapDependencies(docRef, remappings, null);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public LuceneIndexDoc readDocument(final DocRef docRef) {
@@ -150,13 +153,13 @@ public class IndexStoreImpl implements IndexStore {
         return store.writeDocument(document);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -173,6 +176,7 @@ public class IndexStoreImpl implements IndexStore {
         try {
             boolean altered = false;
             final LuceneIndexDoc doc = serialiser.read(dataMap);
+            final LuceneIndexDoc.Builder builder = doc.copy();
 
             // If the imported feed's vol grp doesn't exist in this env use our default
             // or null it out
@@ -185,8 +189,8 @@ public class IndexStoreImpl implements IndexStore {
                             volumeGroup, docRef);
                     fsVolumeGroupService.getDefaultVolumeGroup()
                             .ifPresentOrElse(
-                                    doc::setVolumeGroupName,
-                                    () -> doc.setVolumeGroupName(null));
+                                    builder::volumeGroupName,
+                                    () -> builder.volumeGroupName(null));
                     altered = true;
                 }
             }
@@ -194,18 +198,17 @@ public class IndexStoreImpl implements IndexStore {
             // Transfer fields to the database.
             if (NullSafe.hasItems(doc.getFields())) {
                 // Make sure we transfer all fields to the DB and remove them from the doc.
-                final List<IndexField> fields = doc
-                        .getFields()
+                final List<IndexField> fields = doc.getFields()
                         .stream()
                         .map(field -> (IndexField) field)
                         .toList();
                 indexFieldServiceProvider.get().addFields(doc.asDocRef(), fields);
-                doc.setFields(null);
+                builder.fields(null);
                 altered = true;
             }
 
             if (altered) {
-                effectiveDataMap = serialiser.write(doc);
+                effectiveDataMap = serialiser.write(builder.build());
             }
 
         } catch (final IOException e) {
@@ -222,17 +225,7 @@ public class IndexStoreImpl implements IndexStore {
                                               final List<Message> messageList) {
         // Get the first 1000 fields.
         final List<LuceneIndexField> fields = getFieldsForExport(docRef);
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, d -> {
-                new AuditFieldFilter<>().apply(d);
-                d.setFields(fields);
-                return d;
-            });
-        }
-        return store.exportDocument(docRef, messageList, d -> {
-            d.setFields(fields);
-            return d;
-        });
+        return store.exportDocument(docRef, omitAuditFields, messageList, d -> d.copy().fields(fields).build());
     }
 
     private List<LuceneIndexField> getFieldsForExport(final DocRef docRef) {
@@ -265,9 +258,9 @@ public class IndexStoreImpl implements IndexStore {
         return null;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public List<DocRef> list() {

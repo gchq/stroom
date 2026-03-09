@@ -225,8 +225,6 @@ appConfig:
   statistics:
 
 {% if distribution == "docker" %}
-    hbase:
-      kafkaConfigUuid:
     internal:
       enabledStoreTypes: {{ '[ \"StatisticStore\" ]' | envVar('STROOM_ENABLED_STAT_STORE_TYPES') }}
 {% endif %}

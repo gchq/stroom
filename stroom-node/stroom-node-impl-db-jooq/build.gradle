@@ -56,7 +56,7 @@ jooq {
                         outputSchema = 'stroom'
                         // Add anything you want included in generation below, whitespace ignored
                         // and comments allowed. Each one is a java regex
-                        includes = 'node'
+                        includes = 'node|node_group|node_group_link'
                         // We don't want to include flyway versioning
                         excludes = 'node_schema_history'
                         // Specify 'version' for use in optimistic concurrency control
@@ -66,7 +66,8 @@ jooq {
                             forcedType {
                                 name = 'BOOLEAN'
                                 includeExpression = '' +
-                                    '.*\\.node\\.enabled'
+                                    '.*\\.node\\.enabled|' +
+                                    '.*\\.node_group\\.enabled'
                                 // see https://github.com/jOOQ/jOOQ/issues/9405
                                 includeTypes = '(?i:tinyint)(\\(1\\))?'
                             }

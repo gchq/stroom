@@ -33,14 +33,14 @@ import java.util.function.Function;
 @Schema(description = DocRef.CLASS_DESC)
 @JsonPropertyOrder({"type", "uuid", "name"})
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, HasUuid {
+public class DocRef implements Comparable<DocRef>, HasDisplayValue, HasType, HasUuid {
 
     public static final String CLASS_DESC = "A class for describing a unique reference to a 'document' in stroom.  " +
                                             "A 'document' is an entity in stroom such as a data source dictionary " +
                                             "or pipeline.";
 
     @Schema(description = "The type of the 'document' that this DocRef refers to",
-            example = "StroomStatsStore")
+            example = "StatisticStore")
     @JsonProperty
     private final String type;
 

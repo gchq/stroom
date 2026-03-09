@@ -18,7 +18,6 @@ package stroom.statistics.impl;
 
 import stroom.docref.DocRef;
 import stroom.statistics.api.InternalStatisticKey;
-import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
@@ -83,68 +82,52 @@ public class InternalStatisticsConfig extends AbstractConfig implements IsStroom
         // Set up the associations from internal stat to the doc refs of the stores for that stat
         // These docs are all defined in the stroom-content repo
         benchmarkClusterDocRefs = buildDocRefs(InternalStatisticKey.BENCHMARK_CLUSTER, Map.of(
-                StatisticStoreDoc.TYPE, "946a88c6-a59a-11e6-bdc4-0242ac110002",
-                StroomStatsStoreDoc.TYPE, "2503f703-5ce0-4432-b9d4-e3272178f47e"));
+                StatisticStoreDoc.TYPE, "946a88c6-a59a-11e6-bdc4-0242ac110002"));
 
         cpuDocRefs = buildDocRefs(InternalStatisticKey.CPU, Map.of(
-                StatisticStoreDoc.TYPE, "af08c4a7-ee7c-44e4-8f5e-e9c6be280434",
-                StroomStatsStoreDoc.TYPE, "1edfd582-5e60-413a-b91c-151bd544da47"));
+                StatisticStoreDoc.TYPE, "af08c4a7-ee7c-44e4-8f5e-e9c6be280434"));
 
         eventsPerSecondDocRefs = buildDocRefs(InternalStatisticKey.EVENTS_PER_SECOND, Map.of(
-                StatisticStoreDoc.TYPE, "a9936548-2572-448b-9d5b-8543052c4d92",
-                StroomStatsStoreDoc.TYPE, "cde67df0-0f77-45d3-b2c0-ee8bb7b3c9c6"));
+                StatisticStoreDoc.TYPE, "a9936548-2572-448b-9d5b-8543052c4d92"));
 
         heapHistogramBytesDocRefs = buildDocRefs(InternalStatisticKey.HEAP_HISTOGRAM_BYTES, Map.of(
-                StatisticStoreDoc.TYPE, "934a1600-b456-49bf-9aea-f1e84025febd",
-                StroomStatsStoreDoc.TYPE, "b0110ab4-ac25-4b73-b4f6-96f2b50b456a"));
+                StatisticStoreDoc.TYPE, "934a1600-b456-49bf-9aea-f1e84025febd"));
 
         heapHistogramInstancesDocRefs = buildDocRefs(InternalStatisticKey.HEAP_HISTOGRAM_INSTANCES, Map.of(
-                StatisticStoreDoc.TYPE, "e4f243b8-2c70-4d6e-9d5a-16466bf8764f",
-                StroomStatsStoreDoc.TYPE, "bdd933a4-4309-47fd-98f6-1bc2eb555f20"));
+                StatisticStoreDoc.TYPE, "e4f243b8-2c70-4d6e-9d5a-16466bf8764f"));
 
         memoryDocRefs = buildDocRefs(InternalStatisticKey.MEMORY, Map.of(
-                StatisticStoreDoc.TYPE, "77c09ccb-e251-4ca5-bca0-56a842654397",
-                StroomStatsStoreDoc.TYPE, "d8a7da4f-ef6d-47e0-b16a-af26367a2798"));
+                StatisticStoreDoc.TYPE, "77c09ccb-e251-4ca5-bca0-56a842654397"));
 
         metaDataStreamSizeDocRefs = buildDocRefs(InternalStatisticKey.METADATA_STREAM_SIZE, Map.of(
-                StatisticStoreDoc.TYPE, "946a8814-a59a-11e6-bdc4-0242ac110002",
-                StroomStatsStoreDoc.TYPE, "3b25d63b-5472-44d0-80e8-8eea94f40f14"));
+                StatisticStoreDoc.TYPE, "946a8814-a59a-11e6-bdc4-0242ac110002"));
 
         metaDataStreamsReceivedDocRefs = buildDocRefs(InternalStatisticKey.METADATA_STREAMS_RECEIVED, Map.of(
-                StatisticStoreDoc.TYPE, "946a87bc-a59a-11e6-bdc4-0242ac110002",
-                StroomStatsStoreDoc.TYPE, "5535f493-29ae-4ee6-bba6-735aa3104136"));
+                StatisticStoreDoc.TYPE, "946a87bc-a59a-11e6-bdc4-0242ac110002"));
 
         refDataStoreEntryCount = buildDocRefs(InternalStatisticKey.REF_DATA_STORE_ENTRY_COUNT, Map.of(
-                StatisticStoreDoc.TYPE, "f1587262-9cbc-46b4-80eb-51deb011b2c1",
-                StroomStatsStoreDoc.TYPE, "TODO"));
+                StatisticStoreDoc.TYPE, "f1587262-9cbc-46b4-80eb-51deb011b2c1"));
 
         refDataStoreSize = buildDocRefs(InternalStatisticKey.REF_DATA_STORE_SIZE, Map.of(
-                StatisticStoreDoc.TYPE, "e57959bf-0b2d-4008-98a7-ffcae4bbc4bb",
-                StroomStatsStoreDoc.TYPE, "TODO"));
+                StatisticStoreDoc.TYPE, "e57959bf-0b2d-4008-98a7-ffcae4bbc4bb"));
 
         refDataStoreStreamCount = buildDocRefs(InternalStatisticKey.REF_DATA_STORE_STREAM_COUNT, Map.of(
-                StatisticStoreDoc.TYPE, "0dfd4e00-e068-4667-9c60-d3f6163a6c04",
-                StroomStatsStoreDoc.TYPE, "TODO"));
+                StatisticStoreDoc.TYPE, "0dfd4e00-e068-4667-9c60-d3f6163a6c04"));
 
         pipelineStreamProcessorDocRefs = buildDocRefs(InternalStatisticKey.PIPELINE_STREAM_PROCESSOR, Map.of(
-                StatisticStoreDoc.TYPE, "946a80fc-a59a-11e6-bdc4-0242ac110002",
-                StroomStatsStoreDoc.TYPE, "efd9bad4-0bab-460f-ae98-79e9717deeaf"));
+                StatisticStoreDoc.TYPE, "946a80fc-a59a-11e6-bdc4-0242ac110002"));
 
         searchResultsStoreSize = buildDocRefs(InternalStatisticKey.SEARCH_RESULTS_STORE_SIZE, Map.of(
-                StatisticStoreDoc.TYPE, "de5b831d-3b7e-4bb5-836f-2f438ec30568",
-                StroomStatsStoreDoc.TYPE, "TODO"));
+                StatisticStoreDoc.TYPE, "de5b831d-3b7e-4bb5-836f-2f438ec30568"));
 
         searchResultsStoreCount = buildDocRefs(InternalStatisticKey.SEARCH_RESULTS_STORE_COUNT, Map.of(
-                StatisticStoreDoc.TYPE, "35d60e7d-f11a-45c9-981d-16d8ddda081e",
-                StroomStatsStoreDoc.TYPE, "TODO"));
+                StatisticStoreDoc.TYPE, "35d60e7d-f11a-45c9-981d-16d8ddda081e"));
 
         streamTaskQueueSizeDocRefs = buildDocRefs(InternalStatisticKey.STREAM_TASK_QUEUE_SIZE, Map.of(
-                StatisticStoreDoc.TYPE, "946a7f0f-a59a-11e6-bdc4-0242ac110002",
-                StroomStatsStoreDoc.TYPE, "4ce8d6e7-94be-40e1-8294-bf29dd089962"));
+                StatisticStoreDoc.TYPE, "946a7f0f-a59a-11e6-bdc4-0242ac110002"));
 
         volumesDocRefs = buildDocRefs(InternalStatisticKey.VOLUMES, Map.of(
-                StatisticStoreDoc.TYPE, "ac4d8d10-6f75-4946-9708-18b8cb42a5a3",
-                StroomStatsStoreDoc.TYPE, "60f4f5f0-4cc3-42d6-8fe7-21a7cec30f8e"));
+                StatisticStoreDoc.TYPE, "ac4d8d10-6f75-4946-9708-18b8cb42a5a3"));
     }
 
     @JsonCreator
@@ -259,12 +242,11 @@ public class InternalStatisticsConfig extends AbstractConfig implements IsStroom
     }
 
     @JsonPropertyDescription("Determines which statistic store(s) internal statistic events will be sent to. " +
-                             "Valid values are \"" + StatisticStoreDoc.TYPE + "\" and \"" + StroomStatsStoreDoc.TYPE +
+                             "Valid values are \"" + StatisticStoreDoc.TYPE +
                              "\". An empty list means all internal statistic events will be dropped.")
     @JsonProperty("enabledStoreTypes")
     @IsSubsetOf(allowedValues = {
-            StatisticStoreDoc.TYPE,
-            StroomStatsStoreDoc.TYPE})
+            StatisticStoreDoc.TYPE})
     public List<String> getEnabledStoreTypes() {
         return enabledStoreTypes;
     }

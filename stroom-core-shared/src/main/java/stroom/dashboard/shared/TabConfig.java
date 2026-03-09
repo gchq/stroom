@@ -17,27 +17,21 @@
 package stroom.dashboard.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({"id", "visible", "settings"})
+import java.util.Objects;
+
+@JsonPropertyOrder({"id", "visible"})
 @JsonInclude(Include.NON_NULL)
 public class TabConfig {
 
     @JsonProperty("id")
-    private String id;
-
+    private final String id;
     @JsonProperty("visible")
-    private Boolean visible;
-
-    @JsonIgnore
-    private transient TabLayoutConfig parent;
-
-    public TabConfig() {
-    }
+    private final Boolean visible;
 
     @JsonCreator
     public TabConfig(@JsonProperty("id") final String id,
@@ -54,26 +48,27 @@ public class TabConfig {
         return visible;
     }
 
-    public void setVisible(final Boolean visible) {
-        if (visible == null || Boolean.TRUE.equals(visible)) {
-            this.visible = null;
-        } else {
-            this.visible = visible;
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
         }
+        final TabConfig tabConfig = (TabConfig) o;
+        return Objects.equals(id, tabConfig.id) &&
+               Objects.equals(visible, tabConfig.visible);
     }
 
-    public boolean visible() {
-        return visible == null || visible;
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, visible);
     }
 
-    @JsonIgnore
-    public TabLayoutConfig getParent() {
-        return parent;
-    }
-
-    @JsonIgnore
-    public void setParent(final TabLayoutConfig parent) {
-        this.parent = parent;
+    @Override
+    public String toString() {
+        return "TabConfig{" +
+               "id='" + id + '\'' +
+               ", visible=" + visible +
+               '}';
     }
 
     public Builder copy() {

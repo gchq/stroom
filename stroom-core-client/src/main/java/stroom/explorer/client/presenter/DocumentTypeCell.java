@@ -65,7 +65,7 @@ public class DocumentTypeCell extends AbstractCell<DocumentType> {
             final SafeHtml iconHtml = SvgImageUtil.toSafeHtml(item.getIcon(), "explorerCell-icon");
 
             final SafeHtml textHtml = Templates.div("explorerCell-text",
-                    SafeHtmlUtils.fromString(item.getType()));
+                    SafeHtmlUtils.fromString(item.getDisplayType()));
 
             final SafeHtmlBuilder content = new SafeHtmlBuilder();
             tickBoxCell.render(context, selectionModel.getState(item), content);

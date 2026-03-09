@@ -4,9 +4,15 @@
   "name" : "USER-DETAILS-REFERENCE",
   "version" : "d18eb9e8-2d35-49b7-ac40-b7097e4996ee",
   "description" : "USER-DETAILS-REFERENCE",
+  "classification" : "",
   "encoding" : "UTF-8",
   "contextEncoding" : "UTF-8",
   "reference" : true,
   "streamType" : "Raw Reference",
-  "status" : "RECEIVE"
+  "dataFormat" : "",
+  "contextFormat" : "",
+  "schema" : "",
+  "schemaVersion" : "",
+  "status" : "RECEIVE",
+  "volumeGroup" : "Default Volume Group"
 }

@@ -60,6 +60,11 @@ public final class TextInputComponentSettings implements ComponentSettings {
             return false;
         }
         final TextInputComponentSettings that = (TextInputComponentSettings) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(key, that.key);
+//        final boolean b2 = Objects.equals(value, that.value);
+
         return Objects.equals(key, that.key) &&
                 Objects.equals(value, that.value);
     }

@@ -44,7 +44,10 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Top pane of JobPresenter (Jobs tab). Lists jobs (i.e. the parent job)
@@ -53,8 +56,7 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
     private static final JobResource JOB_RESOURCE = GWT.create(JobResource.class);
 
-    private final MultiSelectionModelImpl<Job> selectionModel;
-    private Consumer<Job> changeHandler = null;
+    private final MultiSelectionModelImpl<JobWrapper> selectionModel;
 
     @Inject
     public JobListPresenter(final EventBus eventBus,
@@ -63,12 +65,12 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                             final UiConfigCache uiConfigCache) {
         super(eventBus, view);
 
-        final MyDataGrid<Job> dataGrid = new MyDataGrid<>(this);
+        final MyDataGrid<JobWrapper> dataGrid = new MyDataGrid<>(this);
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
-        final RestDataProvider<Job, ResultPage<Job>> dataProvider = createDataProvider(
+        final RestDataProvider<JobWrapper, ResultPage<JobWrapper>> dataProvider = createDataProvider(
                 eventBus,
                 view,
                 restFactory);
@@ -78,37 +80,45 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
         dataProvider.addDataDisplay(dataGrid);
     }
 
-    private static RestDataProvider<Job, ResultPage<Job>> createDataProvider(final EventBus eventBus,
-                                                                             final PagerView view,
-                                                                             final RestFactory restFactory) {
-        return new RestDataProvider<Job, ResultPage<Job>>(eventBus) {
+    private static RestDataProvider<JobWrapper, ResultPage<JobWrapper>> createDataProvider(
+            final EventBus eventBus,
+            final PagerView view,
+            final RestFactory restFactory) {
+        return new RestDataProvider<JobWrapper, ResultPage<JobWrapper>>(eventBus) {
             @Override
             protected void exec(final Range range,
-                                final Consumer<ResultPage<Job>> dataConsumer,
+                                final Consumer<ResultPage<JobWrapper>> dataConsumer,
                                 final RestErrorHandler restErrorHandler) {
                 restFactory
                         .create(JOB_RESOURCE)
                         .method(JobResource::list)
-                        .onSuccess(dataConsumer)
+                        .onSuccess(result -> {
+                            final List<JobWrapper> values = result
+                                    .getValues()
+                                    .stream()
+                                    .map(JobWrapper::new)
+                                    .collect(Collectors.toList());
+                            dataConsumer.accept(new ResultPage<JobWrapper>(values, result.getPageResponse()));
+                        })
                         .onFailure(restErrorHandler)
                         .taskMonitorFactory(view)
                         .exec();
             }
 
             @Override
-            protected void changeData(final ResultPage<Job> data) {
-                final List<Job> rtnList = new ArrayList<>();
+            protected void changeData(final ResultPage<JobWrapper> data) {
+                final List<JobWrapper> rtnList = new ArrayList<>();
                 boolean addedGap = false;
                 for (int i = 0; i < data.size(); i++) {
                     rtnList.add(data.getValues().get(i));
-                    if (data.getValues().get(i).isAdvanced() && !addedGap) {
+                    if (data.getValues().get(i).getJob().isAdvanced() && !addedGap) {
                         // Add a gap between the non-advanced and advanced jobs
                         rtnList.add(i, null);
                         addedGap = true;
                     }
                 }
 
-                final ResultPage<Job> modifiedData = new ResultPage<>(rtnList);
+                final ResultPage<JobWrapper> modifiedData = new ResultPage<>(rtnList);
                 super.changeData(modifiedData);
             }
         };
@@ -116,21 +126,24 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
     private void initColumns(final RestFactory restFactory,
                              final UiConfigCache uiConfigCache,
-                             final MyDataGrid<Job> dataGrid) {
-        // Enabled.
+                             final MyDataGrid<JobWrapper> dataGrid) {
+        final Function<JobWrapper, Boolean> function = ref -> ref.getJob().isEnabled();
+        final Function<JobWrapper, TickBoxState> stateFunction = TickBoxState.createTickBoxFunc(function);
+
         dataGrid.addResizableColumn(
-                DataGridUtil.updatableTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(Job::isEnabled))
+                DataGridUtil.updatableTickBoxColumnBuilder(stateFunction)
                         .withFieldUpdater(
-                                (rowIndex, job, tickBoxState) -> {
-                                    job.setEnabled(tickBoxState.toBoolean());
+                                (rowIndex, ref, tickBoxState) -> {
+                                    final Job updated = ref.getJob().copy().enabled(tickBoxState.toBoolean()).build();
+                                    ref.setJob(updated);
                                     restFactory
                                             .create(JOB_RESOURCE)
                                             .call(res -> {
-                                                res.setEnabled(job.getId(), tickBoxState.toBoolean());
+                                                res.setEnabled(updated.getId(), tickBoxState.toBoolean());
                                             })
                                             .onSuccess(aVoid -> {
                                                 dataGrid.redrawRow(rowIndex);
-                                                JobChangeEvent.fire(JobListPresenter.this, job);
+                                                JobChangeEvent.fire(JobListPresenter.this, updated);
 //                                                if (changeHandler != null) {
 //                                                    changeHandler.accept(job);
 //                                                }
@@ -148,8 +161,10 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
         // Job name, allow for null rows
         dataGrid.addResizableColumn(
-                DataGridUtil.textColumnBuilder((Job job) -> NullSafe.get(job, Job::getName))
-                        .enabledWhen(job -> NullSafe.isTrue(job, Job::isEnabled))
+                DataGridUtil.textColumnBuilder((JobWrapper job) ->
+                                NullSafe.get(job, JobWrapper::getJob, Job::getName))
+                        .enabledWhen(job ->
+                                NullSafe.getOrElse(job, JobWrapper::getJob, Job::isEnabled, false))
                         .build(),
                 DataGridUtil.headingBuilder("Job")
                         .withToolTip("The name of the job")
@@ -158,8 +173,10 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
         // Help
         dataGrid.addColumn(
-                DataGridUtil.svgPresetColumnBuilder(true, (Job job) -> SvgPresets.HELP)
-                        .enabledWhen(job -> NullSafe.isTrue(job, Job::isEnabled))
+                DataGridUtil.svgPresetColumnBuilder(true, (JobWrapper job) ->
+                                SvgPresets.HELP)
+                        .enabledWhen(job ->
+                                NullSafe.getOrElse(job, JobWrapper::getJob, Job::isEnabled, false))
                         .withBrowserEventHandler((context, elem, row, event) -> {
                             showHelp(uiConfigCache, row);
                         })
@@ -168,8 +185,10 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
         // Description col, allow for null rows
         dataGrid.addAutoResizableColumn(
-                DataGridUtil.textColumnBuilder((Job job) -> NullSafe.get(job, Job::getDescription))
-                        .enabledWhen(job -> NullSafe.isTrue(job, Job::isEnabled))
+                DataGridUtil.textColumnBuilder((JobWrapper job) ->
+                                NullSafe.get(job, JobWrapper::getJob, Job::getDescription))
+                        .enabledWhen(job ->
+                                NullSafe.getOrElse(job, JobWrapper::getJob, Job::isEnabled, false))
                         .build(),
                 DataGridUtil.headingBuilder("Description")
                         .withToolTip("The description of the job")
@@ -179,14 +198,9 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
         DataGridUtil.addEndColumn(dataGrid);
     }
 
-    public MultiSelectionModel<Job> getSelectionModel() {
+    public MultiSelectionModel<JobWrapper> getSelectionModel() {
         return selectionModel;
     }
-
-    public void setChangeHandler(final Consumer<Job> changeHandler) {
-        this.changeHandler = changeHandler;
-    }
-
 
     /**
      * @param name The name of the job
@@ -197,14 +211,14 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
                 .toLowerCase();
     }
 
-    private void showHelp(final UiConfigCache uiConfigCache, final Job row) {
+    private void showHelp(final UiConfigCache uiConfigCache, final JobWrapper row) {
         uiConfigCache.get(result -> {
             if (result != null) {
                 final String helpUrl = result.getHelpUrlJobs();
                 if (!NullSafe.isBlankString(helpUrl)) {
                     // This is a bit fragile as if the headings change in the docs then the anchors
-                    // wont work
-                    final String url = helpUrl + formatAnchor(row.getName());
+                    // won't work
+                    final String url = helpUrl + formatAnchor(row.getJob().getName());
                     Window.open(url, "_blank", "");
                 } else {
                     AlertEvent.fireError(
@@ -218,10 +232,40 @@ public class JobListPresenter extends MyPresenterWidget<PagerView> {
 
     public void setSelected(final Job job) {
         if (job != null) {
-            selectionModel.setSelected(job);
+            selectionModel.setSelected(new JobWrapper(job));
         } else {
             selectionModel.clear();
         }
     }
 
+    public static class JobWrapper {
+
+        private Job job;
+
+        public JobWrapper(final Job job) {
+            this.job = job;
+        }
+
+        public Job getJob() {
+            return job;
+        }
+
+        public void setJob(final Job job) {
+            this.job = job;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final JobWrapper that = (JobWrapper) o;
+            return Objects.equals(job.getId(), that.job.getId());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(job.getId());
+        }
+    }
 }

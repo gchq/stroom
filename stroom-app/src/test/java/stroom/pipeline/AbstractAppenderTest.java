@@ -116,7 +116,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         // Load the pipeline config.
         final String data = StroomPipelineTestFileUtil.getString(pipelineFile);
         final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
         final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineDoc.getPipelineData());
 
         if (textConverterRef != null) {
@@ -128,7 +128,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
                     PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
         }
 
-        pipelineDoc.setPipelineData(builder.build());
+        pipelineDoc = pipelineDoc.copy().pipelineData(builder.build()).build();
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
     }
@@ -138,9 +138,11 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         // Create a record for the TextConverter.
         final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(textConverterFile);
         final DocRef textConverterRef = textConverterStore.createDocument(name);
-        final TextConverterDoc textConverter = textConverterStore.readDocument(textConverterRef);
-        textConverter.setConverterType(textConverterType);
-        textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
+        final TextConverterDoc textConverter = textConverterStore.readDocument(textConverterRef)
+                .copy()
+                .converterType(textConverterType)
+                .data(StreamUtil.streamToString(textConverterInputStream))
+                .build();
         textConverterStore.writeDocument(textConverter);
         return textConverterRef;
     }
@@ -149,8 +151,8 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         // Create a record for the XSLT.
         final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(xsltPath);
         final DocRef xsltRef = xsltStore.createDocument(name);
-        final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
-        xsltDoc.setData(StreamUtil.streamToString(xsltInputStream));
+        final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef)
+                .copy().data(StreamUtil.streamToString(xsltInputStream)).build();
         xsltStore.writeDocument(xsltDoc);
         return xsltRef;
     }

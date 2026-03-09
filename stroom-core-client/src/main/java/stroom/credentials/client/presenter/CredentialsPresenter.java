@@ -34,7 +34,7 @@ public class CredentialsPresenter
     private static final String LABEL = "Credentials";
 
     /** Tab type for the content (what is this?) */
-    private static final String TAB_TYPE = "Credentials";
+    public static final String TAB_TYPE = "Credentials";
 
     /**
      * Injected constructor.

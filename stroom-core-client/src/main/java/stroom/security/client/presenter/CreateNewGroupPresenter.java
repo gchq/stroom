@@ -55,9 +55,11 @@ public class CreateNewGroupPresenter extends MyPresenterWidget<NameDocumentView>
                               final Consumer<User> consumer,
                               final HidePopupRequestEvent event,
                               final TaskMonitorFactory taskMonitorFactory) {
-        user.setSubjectId(getView().getName());
-        user.setDisplayName(getView().getName());
-        update(user, consumer, event, taskMonitorFactory);
+        final String name = getView().getName();
+        update(user.copy()
+                .subjectId(name)
+                .displayName(name)
+                .build(), consumer, event, taskMonitorFactory);
     }
 
     public void create(final Consumer<User> consumer,
@@ -88,8 +90,7 @@ public class CreateNewGroupPresenter extends MyPresenterWidget<NameDocumentView>
                 "would you like to restore the existing group?",
                 ok -> {
                     if (ok) {
-                        user.setEnabled(true);
-                        update(user, consumer, event, taskMonitorFactory);
+                        update(user.copy().enabled(true).build(), consumer, event, taskMonitorFactory);
                     } else {
                         consumer.accept(user);
                         event.hide();

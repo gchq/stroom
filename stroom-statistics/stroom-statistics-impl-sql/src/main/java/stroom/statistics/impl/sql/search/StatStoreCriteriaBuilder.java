@@ -73,7 +73,8 @@ public class StatStoreCriteriaBuilder {
         // ensure the value field is not used in the query terms
         if (contains(expression, StatisticStoreDoc.FIELD_NAME_VALUE)) {
             throw RestUtil.badRequest("Search queries containing the field '"
-                    + StatisticStoreDoc.FIELD_NAME_VALUE + "' are not supported.  Please remove it from the query");
+                                      + StatisticStoreDoc.FIELD_NAME_VALUE +
+                                      "' are not supported.  Please remove it from the query");
         }
 
         // if we have got here then we have a single BETWEEN date term, so parse
@@ -102,10 +103,11 @@ public class StatStoreCriteriaBuilder {
                 throw RestUtil.badRequest(
                         "Query contains rolled up terms but the Statistic Data Source does not support any roll-ups");
             } else if (dataSource.getRollUpType().equals(StatisticRollUpType.CUSTOM)) {
-                if (!dataSource.isRollUpCombinationSupported(rolledUpFieldNames)) {
+                if (!StatisticStoreDocUtil.isRollUpCombinationSupported(dataSource, rolledUpFieldNames)) {
                     throw RestUtil.badRequest(String.format("The query contains a combination of rolled up " +
-                            "fields %s that is not in the list of custom roll-ups for the statistic data " +
-                            "source", rolledUpFieldNames));
+                                                            "fields %s that is not in the list of custom roll-ups " +
+                                                            "for the statistic data " +
+                                                            "source", rolledUpFieldNames));
                 }
             }
         }

@@ -41,19 +41,15 @@ public class DictionarySerialiser implements DocumentSerialiser2<DictionaryDoc> 
     @Override
     public DictionaryDoc read(final Map<String, byte[]> data) throws IOException {
         final DictionaryDoc document = delegate.read(data);
-        document.setData(EncodingUtil.asString(data.get(TEXT)));
-        return document;
+        return document.copy().data(EncodingUtil.asString(data.get(TEXT))).build();
     }
 
     @Override
     public Map<String, byte[]> write(final DictionaryDoc document) throws IOException {
         final String text = document.getData();
-        document.setData(null);
-
-        final Map<String, byte[]> data = delegate.write(document);
+        final Map<String, byte[]> data = delegate.write(document.copy().data(null).build());
         if (text != null) {
             data.put(TEXT, EncodingUtil.asBytes(text));
-            document.setData(text);
         }
 
         return data;

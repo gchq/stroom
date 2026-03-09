@@ -74,6 +74,7 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.Range;
 import com.google.web.bindery.event.shared.EventBus;
@@ -152,7 +153,12 @@ public abstract class AbstractMetaListPresenter
                                 final RestErrorHandler errorHandler) {
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
-                    CriteriaUtil.setSortList(criteria, dataGrid.getColumnSortList());
+                    final ColumnSortList columnSortList = dataGrid.getColumnSortList();
+                    // Add the meta id to the sort list otherwise we are never guaranteed rows returned in same order
+                    if (!CriteriaUtil.hasSortColumn(columnSortList, MetaFields.FIELD_ID)) {
+                        criteria.addSort(MetaFields.FIELD_ID);
+                    }
+                    CriteriaUtil.setSortList(criteria, columnSortList);
                     restFactory
                             .create(META_RESOURCE)
                             .method(res -> res.findMetaRow(criteria))

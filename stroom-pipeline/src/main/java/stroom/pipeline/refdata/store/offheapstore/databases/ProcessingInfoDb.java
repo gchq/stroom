@@ -37,8 +37,6 @@ import jakarta.inject.Inject;
 import org.lmdbjava.CursorIterable;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -48,8 +46,7 @@ import java.util.function.Predicate;
 
 public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDataProcessingInfo> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessingInfoDb.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessingInfoDb.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessingInfoDb.class);
 
     public static final String DB_NAME = "ProcessingInfo";
     private final RefStreamDefinitionSerde keySerde;
@@ -152,7 +149,7 @@ public class ProcessingInfoDb extends AbstractLmdbDb<RefStreamDefinition, RefDat
             LOGGER.debug("Scanning from start of DB");
             keyRange = KeyRange.all();
         } else {
-            LAMBDA_LOGGER.debug(() -> LogUtil.message(
+            LOGGER.debug(() -> LogUtil.message(
                     "Scanning from {}", ByteBufferUtils.byteBufferInfo(startKeyBuffer)));
             keyRange = KeyRange.atLeast(startKeyBuffer);
         }

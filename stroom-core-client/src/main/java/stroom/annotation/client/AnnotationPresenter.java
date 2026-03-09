@@ -20,8 +20,8 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.ChangeDescription;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -40,7 +40,7 @@ import java.util.Collections;
 import javax.inject.Provider;
 
 public class AnnotationPresenter
-        extends DocumentEditTabPresenter<LinkTabPanelView, Annotation> {
+        extends DocTabPresenter<LinkTabPanelView, Annotation> {
 
     private static final TabData ANNOTATION = new TabDataImpl("Annotation");
     private static final TabData EVENTS = new TabDataImpl("Events");
@@ -87,10 +87,10 @@ public class AnnotationPresenter
             saveButton.setEnabled(false);
         }));
 
-        addTab(ANNOTATION, new DocumentEditTabProvider<>(() -> annotationEditPresenter));
-        addTab(EVENTS, new DocumentEditTabProvider<>(() -> linkedEventPresenter));
-        addTab(LINK_TO, new DocumentEditTabProvider<>(() -> linkTo));
-        addTab(LINK_FROM, new DocumentEditTabProvider<>(() -> linkFrom));
+        addTab(ANNOTATION, new DocTabProvider<>(() -> annotationEditPresenter));
+        addTab(EVENTS, new DocTabProvider<>(() -> linkedEventPresenter));
+        addTab(LINK_TO, new DocTabProvider<>(() -> linkTo));
+        addTab(LINK_FROM, new DocTabProvider<>(() -> linkFrom));
         addTab(DOCUMENTATION, new MarkdownTabProvider<Annotation>(eventBus, () -> {
             if (markdownEditPresenter == null) {
                 markdownEditPresenter = markdownEditPresenterProvider.get();

@@ -16,9 +16,10 @@
 
 package stroom.planb.client.presenter;
 
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.ChangeUiHandlers;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.planb.shared.AbstractPlanBSettings;
 
 import com.google.web.bindery.event.shared.EventBus;
@@ -28,10 +29,8 @@ import com.gwtplatform.mvp.client.View;
 
 public abstract class AbstractPlanBSettingsPresenter<V extends View>
         extends MyPresenterWidget<V>
-        implements PlanBSettingsUiHandlers, HasDirtyHandlers {
+        implements ChangeUiHandlers, HasChangeHandlers {
 
-    private boolean dirty;
-    private boolean reading;
     private boolean readOnly = true;
 
     public AbstractPlanBSettingsPresenter(
@@ -50,22 +49,13 @@ public abstract class AbstractPlanBSettingsPresenter<V extends View>
 
     @Override
     public void onChange() {
-        setDirty(true);
-    }
-
-    private void setDirty(final boolean dirty) {
-        if (!reading && this.dirty != dirty) {
-            this.dirty = dirty;
-            DirtyEvent.fire(this, dirty);
+        if (!readOnly) {
+            ChangeEvent.fire(this);
         }
     }
 
-    public boolean isDirty() {
-        return !readOnly && dirty;
-    }
-
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 }

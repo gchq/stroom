@@ -108,6 +108,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
     private TransformerHandler xmlValueHandler;
     private ByteArrayOutputStream outputStream;
     private int xmlValueDepth = -1;
+    private ErrorListener errorListener;
 
     @Inject
     StandardKafkaProducer(final ErrorReceiverProxy errorReceiverProxy,
@@ -203,6 +204,31 @@ class StandardKafkaProducer extends AbstractXMLFilter {
         }
     }
 
+    private ErrorListener getOrCreateErrorListener() {
+        if (errorListener == null) {
+            errorListener = new ErrorListener() {
+                @Override
+                public void warning(final TransformerException exception) {
+                    errorReceiverProxy.log(Severity.WARNING, locationFactory.create(locator), getElementId(),
+                            "Kafka XML value parse error", exception);
+                }
+
+                @Override
+                public void error(final TransformerException exception) {
+                    errorReceiverProxy.log(Severity.ERROR, locationFactory.create(locator), getElementId(),
+                            "Kafka XML value parse error", exception);
+                }
+
+                @Override
+                public void fatalError(final TransformerException exception) {
+                    errorReceiverProxy.log(Severity.FATAL_ERROR, locationFactory.create(locator), getElementId(),
+                            "Kafka XML value parse error", exception);
+                }
+            };
+        }
+        return errorListener;
+    }
+
 
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
@@ -211,28 +237,8 @@ class StandardKafkaProducer extends AbstractXMLFilter {
         if (state != null && VALUE_ELEMENT_LOCAL_NAME.equals(state.lastElement) && !state.inHeader) {
             //This is an XML value element
             if (xmlValueDepth == -1) {
-                final ErrorListener errorListener = new ErrorListener() {
-                    @Override
-                    public void warning(final TransformerException exception) {
-                        errorReceiverProxy.log(Severity.WARNING, locationFactory.create(locator), getElementId(),
-                                "Kafka XML value parse error", exception);
-                    }
-
-                    @Override
-                    public void error(final TransformerException exception) {
-                        errorReceiverProxy.log(Severity.ERROR, locationFactory.create(locator), getElementId(),
-                                "Kafka XML value parse error", exception);
-                    }
-
-                    @Override
-                    public void fatalError(final TransformerException exception) {
-                        errorReceiverProxy.log(Severity.FATAL_ERROR, locationFactory.create(locator), getElementId(),
-                                "Kafka XML value parse error", exception);
-                    }
-                };
-
                 try {
-                    this.xmlValueHandler = XMLUtil.createTransformerHandler(errorListener, false);
+                    this.xmlValueHandler = XMLUtil.createTransformerHandler(getOrCreateErrorListener(), false);
                     outputStream = new ByteArrayOutputStream();
                     xmlValueHandler.setResult(new StreamResult(outputStream));
                     xmlValueHandler.startDocument();

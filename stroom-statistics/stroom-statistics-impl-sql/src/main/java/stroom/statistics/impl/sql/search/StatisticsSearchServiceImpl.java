@@ -41,8 +41,6 @@ import stroom.util.shared.NullSafe;
 
 import com.google.common.base.Preconditions;
 import jakarta.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -64,8 +62,7 @@ import java.util.stream.Collectors;
 //TODO rename to StatisticsDatabaseSearchServiceImpl
 class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
 
     private static final String KEY_TABLE_ALIAS = "K";
     private static final String VALUE_TABLE_ALIAS = "V";
@@ -107,11 +104,12 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
         final RollUpBitMask result;
 
-        if (rolledUpTagsFound.size() > 0) {
+        if (!rolledUpTagsFound.isEmpty()) {
             final List<Integer> rollUpTagPositionList = new ArrayList<>();
-
+            final Map<String, Integer> fieldPositionMap =
+                    StatisticStoreDocUtil.createFieldPositionMap(statisticsDataSource);
             for (final String tag : rolledUpTagsFound) {
-                final Integer position = statisticsDataSource.getPositionInFieldList(tag);
+                final Integer position = fieldPositionMap.get(tag);
                 if (position == null) {
                     throw new RuntimeException(String.format("No field position found for tag %s", tag));
                 }
@@ -168,7 +166,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             }
 
             //now add in all the dynamic tag field mappings
-            statisticStoreEntity.getFieldNames().forEach(tagField ->
+            StatisticStoreDocUtil.getFieldNames(statisticStoreEntity).forEach(tagField ->
                     fieldToColumnsMap.computeIfAbsent(tagField, k -> new ArrayList<>())
                             .add(KEY_TABLE_ALIAS + "." + SQLStatisticNames.NAME));
 
@@ -269,8 +267,11 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             final FieldIndex fieldIndex,
             final StatisticStoreDoc statisticStoreEntity) {
 
-        LAMBDA_LOGGER.debug(() -> String.format("Building mapper for fieldIndexMap %s, entity %s",
+        LOGGER.debug(() -> String.format("Building mapper for fieldIndexMap %s, entity %s",
                 fieldIndex, statisticStoreEntity.getUuid()));
+
+        final Map<String, Integer> fieldPositionMap =
+                StatisticStoreDocUtil.createFieldPositionMap(statisticStoreEntity);
 
         // construct a list of field extractors that can populate the appropriate bit of the data arr
         // when given a resultSet row
@@ -295,7 +296,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                         } else {
                             throw new RuntimeException(String.format("Unexpected type %s", statisticType));
                         }
-                    } else if (statisticStoreEntity.getFieldNames().contains(fieldName)) {
+                    } else if (fieldPositionMap.containsKey(fieldName)) {
                         // this is a tag field so need to extract the tags/values from the NAME col.
                         // We only want to do this extraction once so we cache the values
                         extractor = buildTagFieldValueExtractor(fieldName, idx);
@@ -303,7 +304,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                         extractor = null;
 //                        throw new RuntimeException(String.format("Unexpected fieldName %s", fieldName));
                     }
-                    LAMBDA_LOGGER.debug(() ->
+                    LOGGER.debug(() ->
                             String.format("Adding extraction function for field %s, idx %s", fieldName, idx));
                     return extractor;
                 })
@@ -334,7 +335,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                 }
             });
 
-            LAMBDA_LOGGER.trace(() -> {
+            LOGGER.trace(() -> {
                 try {
                     return String.format("Mapped resultSet row %s to %s", rs.getRow(), Arrays.toString(data));
                 } catch (final SQLException e) {
@@ -455,11 +456,11 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                 preparedStatement.setFetchSize(fetchSize);
 
                 PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
-                LAMBDA_LOGGER.debug(() -> String.format("Created preparedStatement %s", preparedStatement));
+                LOGGER.debug(() -> String.format("Created preparedStatement %s", preparedStatement));
 
                 final String message = String.format("Executing query %s", sql);
                 taskContext.info(() -> message);
-                LAMBDA_LOGGER.debug(() -> message);
+                LOGGER.debug(() -> message);
 
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
 
