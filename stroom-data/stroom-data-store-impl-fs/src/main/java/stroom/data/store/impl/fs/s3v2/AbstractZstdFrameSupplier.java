@@ -25,6 +25,7 @@ import it.unimi.dsi.fastutil.ints.IntSortedSets;
 
 import java.io.InputStream;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
 public abstract class AbstractZstdFrameSupplier implements ZstdFrameSupplier {
@@ -49,7 +50,8 @@ public abstract class AbstractZstdFrameSupplier implements ZstdFrameSupplier {
                            final IntSortedSet includedFrameIndexes,
                            final boolean includeAll) {
 
-        LOGGER.debug("initialise() - zstdSeekTable: {}, includeAll: {}", zstdSeekTable, includeAll);
+        LOGGER.debug("initialise() - zstdSeekTable: {}, includeAll: {}, includedFrameIndexes: {}",
+                zstdSeekTable, includeAll, includedFrameIndexes);
         if (includeAll) {
             if (NullSafe.hasItems(includedFrameIndexes)) {
                 throw new IllegalArgumentException("Cannot set includeAll and includedFrameIndexes");
@@ -83,8 +85,14 @@ public abstract class AbstractZstdFrameSupplier implements ZstdFrameSupplier {
     }
 
     protected FrameLocation nextFrameLocation() {
+        if (!frameLocationIterator.hasNext()) {
+            LOGGER.debug("nextFrameLocation() - currentFrameLocation: {}, NoSuchElementException",
+                    currentFrameLocation);
+            throw new NoSuchElementException();
+        }
         final FrameLocation frameLocation = frameLocationIterator.next();
-        LOGGER.debug("nextFrameLocation() - frameLocation: {}", frameLocation);
+        LOGGER.debug("nextFrameLocation() - currentFrameLocation: {}, frameLocation: {}",
+                currentFrameLocation, frameLocation);
         this.currentFrameLocation = frameLocation;
         return frameLocation;
     }
@@ -98,7 +106,6 @@ public abstract class AbstractZstdFrameSupplier implements ZstdFrameSupplier {
     }
 
     public abstract void close() throws Exception;
-
 
     protected long getTotalUncompressedSize(final IntSortedSet includedFrameIndexes,
                                             final boolean includeAll) {

@@ -49,6 +49,8 @@ class TestZstdSeekTableCacheImpl {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestZstdSeekTableCacheImpl.class);
 
     @Mock
+    private S3StreamTypeExtensions mockS3StreamTypeExtensions;
+    @Mock
     private MetaService mockMetaService;
     @Mock
     private S3Manager mockS3Manager;
@@ -60,6 +62,7 @@ class TestZstdSeekTableCacheImpl {
     @Test
     void test_unknownSize1() throws IOException {
         final ZstdSeekTableCacheImpl zstdSeekTableCache = new ZstdSeekTableCacheImpl(
+                mockS3StreamTypeExtensions,
                 mockMetaService,
                 new CacheManagerImpl());
 
@@ -74,6 +77,8 @@ class TestZstdSeekTableCacheImpl {
 
         final byte[] compressedData = makeData(iterations);
 
+        Mockito.when(mockS3StreamTypeExtensions.getkey(Mockito.any()))
+                .thenReturn("my/key");
         Mockito.when(mockS3Manager.getFileSize(Mockito.any(), Mockito.any()))
                 .thenReturn((long) compressedData.length);
         Mockito.when(mockDataVolume.getVolumeId())
@@ -83,7 +88,7 @@ class TestZstdSeekTableCacheImpl {
 
         Mockito.doAnswer(invocation -> {
             fetchCount.incrementAndGet();
-            final Range<Long> range = invocation.getArgument(2, Range.class);
+            final Range<Long> range = invocation.getArgument(3, Range.class);
             LOGGER.debug("range: {}", range);
             final int from = Math.toIntExact(range.getFrom());
             final int to = Math.toIntExact(range.getTo());
@@ -92,7 +97,7 @@ class TestZstdSeekTableCacheImpl {
                     .thenReturn(Arrays.copyOfRange(compressedData, from, to));
 
             return mockResponseInputStream;
-        }).when(mockS3Manager).getByteRange(Mockito.any(Meta.class), Mockito.anyString(), Mockito.any());
+        }).when(mockS3Manager).getByteRange(Mockito.any(Meta.class), Mockito.anyString(), Mockito.any(), Mockito.any());
 
         final ZstdSeekTable seekTable = zstdSeekTableCache.getSeekTable(
                         mockS3Manager,
@@ -110,6 +115,7 @@ class TestZstdSeekTableCacheImpl {
     @Test
     void test_unknownSize2() throws IOException {
         final ZstdSeekTableCacheImpl zstdSeekTableCache = new ZstdSeekTableCacheImpl(
+                mockS3StreamTypeExtensions,
                 mockMetaService,
                 new CacheManagerImpl());
 
@@ -127,6 +133,8 @@ class TestZstdSeekTableCacheImpl {
 //        Mockito.when(mockMetaService.getAttributes(Mockito.any(Meta.class)))
 //                .thenReturn(attributeMap);
 
+        Mockito.when(mockS3StreamTypeExtensions.getkey(Mockito.any()))
+                .thenReturn("my/key");
         Mockito.when(mockS3Manager.getFileSize(Mockito.any(), Mockito.any()))
                 .thenReturn((long) compressedData.length);
         Mockito.when(mockDataVolume.getVolumeId())
@@ -136,7 +144,7 @@ class TestZstdSeekTableCacheImpl {
 
         Mockito.doAnswer(invocation -> {
             fetchCount.incrementAndGet();
-            final Range<Long> range = invocation.getArgument(2, Range.class);
+            final Range<Long> range = invocation.getArgument(3, Range.class);
             LOGGER.debug("range: {}", range);
             final int from = Math.toIntExact(range.getFrom());
             final int to = Math.toIntExact(range.getTo());
@@ -145,7 +153,7 @@ class TestZstdSeekTableCacheImpl {
                     .thenReturn(Arrays.copyOfRange(compressedData, from, to));
 
             return mockResponseInputStream;
-        }).when(mockS3Manager).getByteRange(Mockito.any(Meta.class), Mockito.anyString(), Mockito.any());
+        }).when(mockS3Manager).getByteRange(Mockito.any(Meta.class), Mockito.anyString(), Mockito.any(), Mockito.any());
 
         final ZstdSeekTable seekTable = zstdSeekTableCache.getSeekTable(
                         mockS3Manager,
@@ -164,6 +172,7 @@ class TestZstdSeekTableCacheImpl {
     @Test
     void test_unknownSize_unknownMeta() throws IOException {
         final ZstdSeekTableCacheImpl zstdSeekTableCache = new ZstdSeekTableCacheImpl(
+                mockS3StreamTypeExtensions,
                 mockMetaService,
                 new CacheManagerImpl());
 
@@ -190,6 +199,7 @@ class TestZstdSeekTableCacheImpl {
     @Test
     void test_knownSize() throws IOException {
         final ZstdSeekTableCacheImpl zstdSeekTableCache = new ZstdSeekTableCacheImpl(
+                mockS3StreamTypeExtensions,
                 mockMetaService,
                 new CacheManagerImpl());
 
@@ -204,9 +214,11 @@ class TestZstdSeekTableCacheImpl {
 
         final AtomicInteger fetchCount = new AtomicInteger(0);
 
+        Mockito.when(mockS3StreamTypeExtensions.getkey(Mockito.any()))
+                .thenReturn("my/key");
         Mockito.doAnswer(invocation -> {
             fetchCount.incrementAndGet();
-            final Range<Long> range = invocation.getArgument(2, Range.class);
+            final Range<Long> range = invocation.getArgument(3, Range.class);
             LOGGER.debug("range: {}", range);
             final int from = Math.toIntExact(range.getFrom());
             final int to = Math.toIntExact(range.getTo());
@@ -215,7 +227,7 @@ class TestZstdSeekTableCacheImpl {
                     .thenReturn(Arrays.copyOfRange(compressedData, from, to));
 
             return mockResponseInputStream;
-        }).when(mockS3Manager).getByteRange(Mockito.any(Meta.class), Mockito.anyString(), Mockito.any());
+        }).when(mockS3Manager).getByteRange(Mockito.any(Meta.class), Mockito.anyString(), Mockito.any(), Mockito.any());
 
         final ZstdSeekTable seekTable = zstdSeekTableCache.getSeekTable(
                         mockS3Manager,
@@ -234,6 +246,7 @@ class TestZstdSeekTableCacheImpl {
     @Test
     void test_knownSize_unknownMeta() throws IOException {
         final ZstdSeekTableCacheImpl zstdSeekTableCache = new ZstdSeekTableCacheImpl(
+                mockS3StreamTypeExtensions,
                 mockMetaService,
                 new CacheManagerImpl());
 
@@ -243,8 +256,13 @@ class TestZstdSeekTableCacheImpl {
 
         final int iterations = 10;
         final byte[] compressedData = makeData(iterations);
+        Mockito.when(mockS3StreamTypeExtensions.getkey(Mockito.any()))
+                .thenReturn("my/key");
 
-        Mockito.when(mockS3Manager.getByteRange(Mockito.any(Meta.class), Mockito.anyString(), Mockito.any()))
+        Mockito.when(mockS3Manager.getByteRange(Mockito.any(Meta.class),
+                        Mockito.anyString(),
+                        Mockito.any(),
+                        Mockito.any()))
                 .thenThrow(NoSuchKeyException.builder()
                         .message("key not found")
                         .build());

@@ -90,8 +90,8 @@ class S3StreamTypeExtensions {
         }
         parts.add(ZSTD_EXTENSION);
         final String extension = "." + String.join(".", parts);
-        LOGGER.debug("getExtension() - streamType: {}, streamType, childStreamType: {}, returning: {}",
-                streamType, streamTypeExt, childStreamType);
+        LOGGER.debug("getExtension() - streamType: {}, streamTypeExt: {}, childStreamType: {}, returning: '{}'",
+                streamType, streamTypeExt, childStreamType, extension);
         return extension;
     }
 

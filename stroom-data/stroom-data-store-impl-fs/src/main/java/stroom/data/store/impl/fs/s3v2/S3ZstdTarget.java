@@ -76,6 +76,8 @@ public final class S3ZstdTarget implements Target {
     private final Path tempFilePath;
     private final Path tempDir;
     private final S3ZstdTarget parentTarget;
+    private final boolean isRootTarget;
+
     /**
      * childStreamTypeName => {@link S3ZstdTarget}
      */
@@ -87,6 +89,7 @@ public final class S3ZstdTarget implements Target {
     private Meta meta;
     private boolean closed;
     private boolean deleted;
+    private boolean wasFileUploaded;
     /**
      * One based
      */
@@ -112,6 +115,7 @@ public final class S3ZstdTarget implements Target {
         // This is specific to the metaId
         this.tempDir = tempDir;
         this.parentTarget = parentTarget;
+        this.isRootTarget = parentTarget == null;
         this.fileKey = FileKey.of(dataVolume, meta, childStreamType);
         this.s3Key = s3StreamTypeExtensions.getkey(fileKey);
         this.s3Bucket = s3Manager.getBucketNamePattern();
@@ -237,6 +241,46 @@ public final class S3ZstdTarget implements Target {
         }
     }
 
+    private S3ZstdTarget getRootTarget() {
+        // Walk up the chain till we hit the parent.
+        if (isRootTarget) {
+            return this;
+        } else {
+            return parentTarget.getRootTarget();
+        }
+    }
+
+    /**
+     * Any actions to perform to clean up after an error, e.g. deleting any files
+     * already uploaded to s3.
+     */
+    private void cleanUp() {
+        if (isRootTarget) {
+            // We are the root target so run the cleanup
+            doCleanUp();
+            childMap.values().forEach(S3ZstdTarget::doCleanUp);
+        } else {
+            // we are not the parent, so run it on the parent
+            getRootTarget().cleanUp();
+        }
+    }
+
+    private void doCleanUp() {
+        LOGGER.debug("cleanUp() - fileKey: {}, s3Key: {}", fileKey, s3Key);
+        if (wasFileUploaded) {
+            try {
+                deletedFileOnS3();
+            } catch (final Exception e) {
+                LOGGER.error("Error deleting file from S3 - fileKey: {}, s3Bucket: {}, s3Key: {} - {}",
+                        fileKey, s3Bucket, s3Key, LogUtil.exceptionMessage(e), e);
+            }
+        }
+    }
+
+    private void deletedFileOnS3() {
+
+    }
+
     @Override
     public void close() {
         LOGGER.debug(() -> LogUtil.message("close() - fileKey: {}, parentFileKey: {}",
@@ -265,7 +309,7 @@ public final class S3ZstdTarget implements Target {
                         ByteCountOutputStream::getCount,
                         0L);
 
-                if (parentTarget == null) {
+                if (isRootTarget) {
                     // These only get set on the parent
                     updateAttribute(this, MetaFields.RAW_SIZE, String.valueOf(rawSize));
                     updateAttribute(this, MetaFields.FILE_SIZE, String.valueOf(fileSize));
@@ -287,8 +331,14 @@ public final class S3ZstdTarget implements Target {
                         final AttributeMap attributeMap = uploadFile();
                         // Unlock will update the meta-data so set it back on the stream
                         // target so the client has the up to date copy
-                        unlock(getMeta(), attributeMap);
+                        if (isRootTarget) {
+                            // Don't unlock the meta for the children
+                            unlock(getMeta(), attributeMap);
+                        }
                     } catch (final RuntimeException e) {
+                        // Something went wrong so clean up anything we have already uploaded across all
+                        // related targets
+                        cleanUp();
                         LOGGER.error(e::getMessage, e);
                         throw e;
                     }
@@ -299,11 +349,15 @@ public final class S3ZstdTarget implements Target {
         } finally {
             closed = true;
 
-            try {
-                LOGGER.debug("close() - Deleting tempDir: {}", tempDir);
-                FileUtil.deleteDir(tempDir);
-            } catch (final RuntimeException e) {
-                LOGGER.debug(e::getMessage, e);
+            // Only the parent should delete the dir else, a child will delete it before
+            // the parent or other children have finished with it.
+            if (isRootTarget) {
+                try {
+                    LOGGER.debug("close() - Deleting tempDir: {}", tempDir);
+                    FileUtil.deleteDir(tempDir);
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(e::getMessage, e);
+                }
             }
         }
     }
@@ -321,7 +375,7 @@ public final class S3ZstdTarget implements Target {
      * @return This target plus any children.
      */
     private List<S3ZstdTarget> getAllTargets() {
-        if (parentTarget != null) {
+        if (!isRootTarget) {
             throw new RuntimeException("Should only be called on the parent target");
         }
         return Stream.concat(Stream.of(this), childMap.values().stream())
@@ -346,13 +400,11 @@ public final class S3ZstdTarget implements Target {
         this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.UNLOCKED);
     }
 
-    public void delete() {
+    @Override
+    public void logicallyDelete() {
         if (deleted) {
             throw new DataException("Target already deleted");
         }
-//        if (closed) {
-//            throw new DataException("Target already closed");
-//        }
 
         try {
             // Close the stream target.
@@ -368,9 +420,10 @@ public final class S3ZstdTarget implements Target {
                 LOGGER.debug(e::getMessage, e);
             }
 
-            // Mark the target meta as deleted.
-            this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.DELETED);
-
+            if (isRootTarget) {
+                // Mark the target meta as logically deleted.
+                this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.DELETED);
+            }
         } finally {
             deleted = true;
         }
@@ -464,12 +517,20 @@ public final class S3ZstdTarget implements Target {
 
     private ZstdSegmentationType getZstdSegmentationType() {
         // This is the last pertNo we have dealt with, i.e. the part count
+        final ZstdSegmentationType type;
+        final int segmentCount = zstdSegmentOutputStream.getSegmentCount();
         if (partNo <= 1) {
-            // This may be a single part non-segmented stream, but we have no way of knowing
-            return ZstdSegmentationType.SEGMENTS;
+            if (segmentCount > 1) {
+                type = ZstdSegmentationType.SEGMENTS;
+            } else {
+                type = ZstdSegmentationType.NONE;
+            }
         } else {
-            return ZstdSegmentationType.PARTS;
+            type = ZstdSegmentationType.PARTS;
         }
+        LOGGER.debug("getZstdSegmentationType() - partNo: {}, segmentCount: {}, type: {}",
+                partNo, segmentCount, type);
+        return type;
     }
 
     private ZstdSegmentOutputStream getInternalOutputStream() {

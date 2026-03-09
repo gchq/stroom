@@ -139,7 +139,9 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
 
     @Override
     public int read(final byte @NonNull [] bytes, final int off, final int len) throws IOException {
-        LOGGER.trace(() -> LogUtil.message("read() - bytes.length: {}, off: {}, len: {}", bytes.length, off, len));
+        LOGGER.trace(() -> LogUtil.message(
+                "read() - bytes.length: {}, off: {}, len: {}, currentFrameLocation: {}, currentFrameReadCount: {}",
+                bytes.length, off, len, currentFrameLocation, currentFrameReadCount));
         if (startedReading.compareAndSet(false, true)) {
             final boolean success = initialiseForReading();
             if (!success) {
@@ -157,6 +159,9 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
         int currOffset = off;
 
         while (remainingUncompressedToRead > 0) {
+            if (currentFrameReadCount == currentFrameLocation.originalSize()) {
+                currentFrameAllRead = true;
+            }
             if (currentFrameAllRead) {
                 // This will set complete field
                 final boolean success = advanceFrame();
@@ -173,13 +178,14 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
                     }
                 }
             }
-            LOGGER.trace("read() - totalUncompressedBytesRead: {}, remainingUncompressedToRead: {}",
-                    totalUncompressedBytesRead, remainingUncompressedToRead);
             if (totalUncompressedBytesRead > len) {
                 throw new IllegalStateException(LogUtil.message("totalUncompressedBytesRead {} is > len {}",
                         totalUncompressedBytesRead, len));
             }
             final long remainingUncompressedBytesInFrame = currentFrameLocation.originalSize() - currentFrameReadCount;
+            LOGGER.trace("read() - totalUncompressedBytesRead: {}, remainingUncompressedToRead: {}, " +
+                         "remainingUncompressedBytesInFrame: {}",
+                    totalUncompressedBytesRead, remainingUncompressedToRead, remainingUncompressedBytesInFrame);
             final int amountToReadInFrame = Math.toIntExact(
                     Math.min(remainingUncompressedToRead, remainingUncompressedBytesInFrame));
             final int uncompressedBytesRead = currentZstdInputStream.read(bytes, currOffset, amountToReadInFrame);
@@ -190,9 +196,14 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
                 remainingUncompressedToRead -= uncompressedBytesRead;
                 totalUncompressedBytesRead += uncompressedBytesRead;
                 currOffset += uncompressedBytesRead;
+                currentFrameReadCount += uncompressedBytesRead;
             }
         }
-        LOGGER.debug("read() - Returning {}", totalUncompressedBytesRead);
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("read() - bytes.length: {}, off: {}, len: {}, " +
+                         "currentFrameLocation: {}, currentFrameReadCount: {}, returning: {}",
+                    bytes.length, off, len, currentFrameLocation, currentFrameReadCount, totalUncompressedBytesRead);
+        }
         return totalUncompressedBytesRead;
     }
 
@@ -233,7 +244,9 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
 //            currentFrameLocation = zstdSeekTable.getFrameLocation(nextFrameIdx);
 
             // Will get closed on close()
-            final InputStream compressedFrameInputStream = zstdFrameSupplier.next();
+            final InputStream compressedFrameInputStream = frameIterator.next();
+            Objects.requireNonNull(compressedFrameInputStream, () ->
+                    "null compressedFrameInputStream, previous frameLocation: " + currentFrameLocation);
             final FrameLocation frameLocation = zstdFrameSupplier.getCurrentFrameLocation();
 
             // Iterator should ensure we have a valid frameIdx.
@@ -291,5 +304,17 @@ public class ZstdSegmentInputStream extends SegmentInputStream {
         if (startedReading.get()) {
             throw new RuntimeException("Cannot include a new segment as reading is in progress");
         }
+    }
+
+    @Override
+    public String toString() {
+        return "ZstdSegmentInputStream{" +
+               "zstdDictionary=" + zstdDictionary +
+               ", startedReading=" + startedReading +
+               ", includeAllSegments=" + includeAllSegments +
+               ", complete=" + complete +
+               ", currentFrameAllRead=" + currentFrameAllRead +
+               ", currentFrameReadCount=" + currentFrameReadCount +
+               '}';
     }
 }

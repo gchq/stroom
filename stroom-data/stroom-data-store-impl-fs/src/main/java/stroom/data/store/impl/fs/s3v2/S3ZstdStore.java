@@ -18,8 +18,11 @@ package stroom.data.store.impl.fs.s3v2;
 
 import stroom.aws.s3.impl.S3Manager;
 import stroom.aws.s3.impl.S3ManagerFactory;
+import stroom.data.store.api.DataException;
 import stroom.data.store.api.Source;
+import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.StreamStore;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.task.api.ExecutorProvider;
@@ -37,6 +40,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -48,7 +52,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Singleton
-public class S3ZstdStore {
+public class S3ZstdStore implements StreamStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ZstdStore.class);
 
@@ -105,7 +109,22 @@ public class S3ZstdStore {
         }
     }
 
-    public Source getSource(final DataVolume dataVolume, final Meta meta) {
+    public Target openTarget(final Meta meta, final DataVolume dataVolume) throws DataException {
+        LOGGER.debug("getTarget() - dataVolume: {}, meta: {}", dataVolume, meta);
+        final Path tempDir = createTempDir(meta.getId());
+        final S3Manager s3Manager = createS3Manager(dataVolume);
+        return S3ZstdTarget.create(
+                metaService,
+                this,
+                s3Manager,
+                s3StreamTypeExtensions,
+                heapBufferPool,
+                tempDir,
+                dataVolume,
+                meta);
+    }
+
+    public Source openSource(final Meta meta, final DataVolume dataVolume) throws DataException {
         LOGGER.debug("getSource() - dataVolume: {}, meta: {}", dataVolume, meta);
         final S3Manager s3Manager = createS3Manager(dataVolume);
         final TrackedSource trackedSource = cache.compute(
@@ -141,19 +160,10 @@ public class S3ZstdStore {
                 executorProvider);
     }
 
-    public S3ZstdTarget getTarget(final DataVolume dataVolume, final Meta meta) {
-        LOGGER.debug("getTarget() - dataVolume: {}, meta: {}", dataVolume, meta);
-        final Path tempDir = createTempDir(meta.getId());
-        final S3Manager s3Manager = createS3Manager(dataVolume);
-        return S3ZstdTarget.create(
-                metaService,
-                this,
-                s3Manager,
-                s3StreamTypeExtensions,
-                heapBufferPool,
-                tempDir,
-                dataVolume,
-                meta);
+    @Override
+    public void physicallyDelete(final Collection<DataVolume> dataVolumes) {
+        // TODO
+        throw new UnsupportedOperationException("TODO");
     }
 
     /**
@@ -175,7 +185,7 @@ public class S3ZstdStore {
     public void release(final Meta meta, final Path path) {
         cache.compute(meta.getId(), (k, v) -> {
             if (v == null) {
-                deleteDir("Release deleting: ", path);
+                deleteLocalDir("Release deleting: ", path);
             } else {
                 final int count = v.useCount().decrementAndGet();
                 assert count >= 0;
@@ -203,7 +213,7 @@ public class S3ZstdStore {
                 if (cache.size() > MAX_CACHED_ITEMS) {
                     cache.compute(trackedSource.metaId, (k, v) -> {
                         if (v == null || v.useCount().get() == 0) {
-                            deleteDir("Evict delete dir: ", trackedSource.path());
+                            deleteLocalDir("Evict delete dir: ", trackedSource.path());
                             synchronized (S3ZstdStore.this) {
                                 evictable.remove(trackedSource);
                             }
@@ -254,7 +264,7 @@ public class S3ZstdStore {
         }
     }
 
-    private void deleteDir(final String message, final Path dir) {
+    private void deleteLocalDir(final String message, final Path dir) {
         if (dir != null) {
             try {
                 LOGGER.debug(() -> message + FileUtil.getCanonicalPath(dir));
@@ -265,7 +275,7 @@ public class S3ZstdStore {
         }
     }
 
-    private void deleteFile(final String message, final Path file) {
+    private void deleteLocalFile(final String message, final Path file) {
         if (file != null) {
             try {
                 LOGGER.debug(() -> message + FileUtil.getCanonicalPath(file));

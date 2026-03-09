@@ -37,6 +37,7 @@ import stroom.util.shared.Range;
 import stroom.util.shared.string.CIKey;
 import stroom.util.shared.string.CIKeys;
 import stroom.util.string.StringIdUtil;
+import stroom.util.string.TemplateUtil;
 import stroom.util.string.TemplateUtil.Template;
 
 import software.amazon.awssdk.auth.credentials.AnonymousCredentialsProvider;
@@ -68,7 +69,9 @@ import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest.Builder;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
@@ -500,18 +503,18 @@ public class S3Manager {
             return tryUpload(bucketName, key, meta, attributeMap, source);
         } catch (final RuntimeException e) {
             if (s3ClientConfig.isCreateBuckets()) {
-                debug("Error uploading: ", bucketName, key, e);
+                debug("Error uploading: ", bucketName, key, source, e);
 
                 // If we are creating buckets then try to create the bucket and upload again.
                 try {
                     createBucket(bucketName);
                     return tryUpload(bucketName, key, meta, attributeMap, source);
                 } catch (final RuntimeException e2) {
-                    error("Error uploading: ", bucketName, key, e2);
+                    error("Error uploading: ", bucketName, key, source, e2);
                     throw e2;
                 }
             } else {
-                error("Error uploading: ", bucketName, key, e);
+                error("Error uploading: ", bucketName, key, source, e);
                 throw e;
             }
         }
@@ -522,7 +525,7 @@ public class S3Manager {
                                         final Meta meta,
                                         final AttributeMap attributeMap,
                                         final Path source) {
-        final PutObjectRequest request = createPutObjectRequest(bucketName, key, meta, attributeMap);
+        final PutObjectRequest request = createPutObjectRequest(bucketName, key, meta, attributeMap, source);
         logRequest("Uploading: ", bucketName, key, request);
 
         final PutObjectResponse response;
@@ -549,15 +552,37 @@ public class S3Manager {
                                            ", result=" +
                                            uploadResult);
                         return uploadResult.response();
+                    } catch (final RuntimeException e) {
+                        debug("Error putting object (async, multi-part)", bucketName, key, source, e);
+                        throw e;
                     }
-
                 } else {
-                    return s3AsyncClient.putObject(request, source).join();
+                    try {
+                        return s3AsyncClient.putObject(request, source).join();
+                    } catch (final Exception e) {
+                        debug("Error putting object (async)", bucketName, key, source, e);
+                        throw e;
+                    }
                 }
             });
         } else {
-            response = s3ClientPool.getWithS3Client(s3ClientConfig, s3Client ->
-                    s3Client.putObject(request, source));
+            response = s3ClientPool.getWithS3Client(s3ClientConfig, s3Client -> {
+                try {
+                    LOGGER.debug(() -> LogUtil.message(
+                            "tryUpload() - Putting Object (sync) - bucketName: {}, key: {}, source: {}, meta: {}, " +
+                            "requestMeta: {}, tags: {}",
+                            bucketName,
+                            key,
+                            source.toAbsolutePath(),
+                            meta,
+                            request.metadata(),
+                            request.tagging()));
+                    return s3Client.putObject(request, source);
+                } catch (final Exception e) {
+                    debug("Error putting object (sync)", bucketName, key, source, e);
+                    throw e;
+                }
+            });
         }
 
         logResponse("Uploaded: ", bucketName, key, response);
@@ -721,10 +746,12 @@ public class S3Manager {
         }
     }
 
-    public S3ObjectInfo getObjectInfo(final Meta meta, final String childStreamType) {
+    public S3ObjectInfo getObjectInfo(final Meta meta,
+                                      final String keyNamePattern) {
         Objects.requireNonNull(meta);
         final String bucketName = createBucketName(getBucketNamePattern(), meta);
-        final String key = createKey(getKeyNamePattern(), meta);
+        final String key = createKey(keyNamePattern, meta);
+        Objects.requireNonNull(key, "key must not be null. keyNamePattern: " + keyNamePattern);
         final HeadObjectRequest request = HeadObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
@@ -760,8 +787,12 @@ public class S3Manager {
                     attributeMaps,
                     manifest,
                     false);
+        } catch (final NoSuchKeyException e) {
+            error("Error getting object info: ", bucketName, key, e);
+            throw new RuntimeException(LogUtil.message("No data found for meta: {} using key: {}, bucket: {}",
+                    meta, key, bucketName), e);
         } catch (final RuntimeException e) {
-            error("Error downloading: ", bucketName, key, e);
+            error("Error getting object info: ", bucketName, key, e);
             throw e;
         }
     }
@@ -832,12 +863,16 @@ public class S3Manager {
                             key = key.substring(MANIFEST_METADATA_KEY_PREFIX.length());
                             final CIKey originalCiKey = s3MetaFieldsMapper.getOriginalKey(CIKey.of(key))
                                     .orElse(null);
+                            final String effectiveKey;
                             if (originalCiKey == null) {
                                 // TODO how do we handle un-reversable keys??
                                 LOGGER.warn("readManifest() - Unknown manifest key '{}' with value '{}'",
                                         key, value);
+                                effectiveKey = key;
+                            } else {
+                                effectiveKey = originalCiKey.get();
                             }
-                            return Map.entry(key, value);
+                            return Map.entry(effectiveKey, value);
                         } else {
                             return null;
                         }
@@ -968,8 +1003,14 @@ public class S3Manager {
     }
 
     public DeleteObjectResponse delete(final Meta meta) {
-        final String bucketName = createBucketName(getBucketNamePattern(), meta);
-        final String key = createKey(getKeyNamePattern(), meta);
+        return delete(meta, getBucketNamePattern(), getKeyNamePattern());
+    }
+
+    public DeleteObjectResponse delete(final Meta meta,
+                                       final String bucketNamePattern,
+                                       final String keyNamePattern) {
+        final String bucketName = createBucketName(bucketNamePattern, meta);
+        final String key = createKey(keyNamePattern, meta);
         final DeleteObjectRequest request = DeleteObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
@@ -1012,7 +1053,14 @@ public class S3Manager {
     }
 
     public String createKey(final String keyPattern, final Meta meta, final String childStreamType) {
-        final Template template = templateCache.getTemplate(keyPattern);
+        final Template template;
+        if (TemplateUtil.isStaticTemplate(keyPattern)) {
+            // No point hitting the cache if our keyPattern is a static one containing something
+            // with high cardinality like a meta id.
+            template = TemplateUtil.parseTemplate(keyPattern);
+        } else {
+            template = templateCache.getTemplate(keyPattern);
+        }
         final ZonedDateTime zonedDateTime =
                 ZonedDateTime.ofInstant(Instant.ofEpochMilli(meta.getCreateMs()), ZoneOffset.UTC);
 
@@ -1093,22 +1141,32 @@ public class S3Manager {
     private PutObjectRequest createPutObjectRequest(final String bucketName,
                                                     final String key,
                                                     final Meta meta,
-                                                    final AttributeMap attributeMap) {
+                                                    final AttributeMap attributeMap,
+                                                    final Path source) {
+
         // Convert the manifest attributeMap into s3 metadata key/value pairs to save
         // creating a tiny file for them.
         final Map<String, String> metadata = NullSafe.map(attributeMap)
                 .entrySet()
                 .stream()
+                .filter(entry -> NullSafe.isNonBlankString(entry.getKey()))
+                .map(entry -> Map.entry(
+                        createManifestKey(entry.getKey()),
+                        entry.getValue()))
+                .filter(entry -> entry.getKey() != null)
                 .collect(Collectors.toMap(
-                        entry -> createManifestKey(entry.getKey()),
+                        Entry::getKey,
                         Entry::getValue));
 
-        return PutObjectRequest.builder()
+        final Builder builder = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)
                 .tagging(createTags(meta))
-                .metadata(metadata)
-                .build();
+                .metadata(metadata);
+        if (source.getFileName().toString().endsWith(".zst")) {
+            builder.contentEncoding("zstd");
+        }
+        return builder.build();
     }
 
     private void logRequest(final String message,
@@ -1146,6 +1204,18 @@ public class S3Manager {
                            e.getMessage(), e);
     }
 
+    private void debug(final String message,
+                       final String bucketName,
+                       final String key,
+                       final Path path,
+                       final Exception e) {
+        LOGGER.debug(() -> LogUtil.message("{} {}, path: {}, message: {}",
+                message,
+                getDebugIdentity(bucketName, key),
+                NullSafe.get(path, Path::toAbsolutePath),
+                LogUtil.exceptionMessage(e)), e);
+    }
+
     private void error(final String message,
                        final String bucketName,
                        final String key,
@@ -1154,6 +1224,18 @@ public class S3Manager {
                            getDebugIdentity(bucketName, key) +
                            ", message=" +
                            e.getMessage(), e);
+    }
+
+    private void error(final String message,
+                       final String bucketName,
+                       final String key,
+                       final Path path,
+                       final Exception e) {
+        LOGGER.error(() -> LogUtil.message("{} {}, path: {}, message: {}",
+                message,
+                getDebugIdentity(bucketName, key),
+                NullSafe.get(path, Path::toAbsolutePath),
+                LogUtil.exceptionMessage(e)), e);
     }
 
     private void error(final String message,

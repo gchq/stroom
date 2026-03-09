@@ -71,6 +71,7 @@ final class S3ZstdSource implements Source {
      * The {@link FileKey} of the main stream type
      */
     private final FileKey parentFileKey;
+    private final String parentS3Key;
 
     private boolean closed;
     private AttributeMap attributeMap;
@@ -97,6 +98,7 @@ final class S3ZstdSource implements Source {
         this.dataVolume = dataVolume;
 //        this.counts = countTypes();
         this.parentFileKey = FileKey.of(dataVolume, meta);
+        this.parentS3Key = s3StreamTypeExtensions.getkey(parentFileKey);
     }
 
     @Override
@@ -134,7 +136,7 @@ final class S3ZstdSource implements Source {
 
     private void readManifest(final AttributeMap attributeMap) {
         LOGGER.debug("readManifest() - attributeMap: {}", attributeMap);
-        final S3ObjectInfo objectInfo = s3Manager.getObjectInfo(meta, null);
+        final S3ObjectInfo objectInfo = s3Manager.getObjectInfo(meta, parentS3Key);
         final AttributeMap manifest = objectInfo.manifest();
         LOGGER.debug("readManifest() - manifest: {}", manifest);
         attributeMap.putAll(manifest);
@@ -298,6 +300,20 @@ final class S3ZstdSource implements Source {
         return parentFileKey.withChildStreamType(childStreamType);
     }
 
+    @Override
+    public String toString() {
+        return "S3ZstdSource{" +
+               "tempDir=" + tempDir +
+               ", s3Location='" + s3Location + '\'' +
+               ", meta=" + meta +
+               ", dataVolume=" + dataVolume +
+               ", parentFileKey=" + parentFileKey +
+               ", parentS3Key='" + parentS3Key + '\'' +
+               ", closed=" + closed +
+               ", childTypes=" + childTypes +
+               ", zstdSegmentationType=" + zstdSegmentationType +
+               '}';
+    }
 
     // --------------------------------------------------------------------------------
 
@@ -339,7 +355,7 @@ final class S3ZstdSource implements Source {
 
         @Override
         public SegmentInputStream get(final String childStreamType) {
-            LOGGER.debug("get() - meta: {}, childStreamType: {}, dir: {}, partIdx: {}",
+            LOGGER.debug("get(childStreamType) - meta: {}, childStreamType: {}, dir: {}, partIdx: {}",
                     meta, childStreamType, dir, partIdx);
             if (childStreamType == null) {
                 return get();
@@ -363,7 +379,7 @@ final class S3ZstdSource implements Source {
                     meta, childStreamType, segmentationType);
 
             final SegmentInputStream segmentInputStream;
-            if (ZstdSegmentationType.PARTS == segmentationType) {
+            if (ZstdSegmentationType.SEGMENTS != segmentationType) {
                 zstdSegmentInputStream.include(partIdx);
                 // Wrap the stream to prevent the caller from trying to access segments in within the
                 // part.
@@ -390,18 +406,30 @@ final class S3ZstdSource implements Source {
         public void close() throws IOException {
             IOException exception = null;
             for (final SegmentInputStream segmentInputStream : getAllInputStreams()) {
-                try {
-                    segmentInputStream.close();
-                } catch (final IOException e) {
-                    LOGGER.debug(e::getMessage, e);
-                    if (exception == null) {
-                        exception = e;
+                if (segmentInputStream != null) {
+                    try {
+                        segmentInputStream.close();
+                    } catch (final IOException e) {
+                        LOGGER.debug(e::getMessage, e);
+                        if (exception == null) {
+                            exception = e;
+                        }
                     }
                 }
             }
             if (exception != null) {
                 throw exception;
             }
+        }
+
+        @Override
+        public String toString() {
+            return "S3InputStreamProvider{" +
+                   "dir=" + dir +
+                   ", partIdx=" + partIdx +
+                   ", partNo=" + partNo +
+                   ", meta=" + meta +
+                   '}';
         }
     }
 
@@ -476,6 +504,15 @@ final class S3ZstdSource implements Source {
         @Override
         public int read(final byte @NonNull [] b, final int off, final int len) throws IOException {
             return delegate.read(b, off, len);
+        }
+
+        @Override
+        public String toString() {
+            return "WrappedInputStream{" +
+                   "partNo=" + partNo +
+                   ", delegate=" + delegate +
+                   ", allowSegments=" + allowSegments +
+                   '}';
         }
     }
 }

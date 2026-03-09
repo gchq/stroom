@@ -45,6 +45,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.io.capacity.HasCapacitySelector;
 import stroom.util.io.capacity.HasCapacitySelectorFactory;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
@@ -217,8 +218,18 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         });
     }
 
+    private S3ClientConfig readS3ClientConfig(final FsVolume fileVolume) {
+        final String s3ClientConfigData = fileVolume.getS3ClientConfigData();
+        if (NullSafe.isNonBlankString(s3ClientConfigData)) {
+            return JsonUtil
+                    .readValue(s3ClientConfigData, S3ClientConfig.class);
+        } else {
+            return null;
+        }
+    }
+
     private void validateS3V2Volume(final FsVolume fileVolume) {
-        final S3ClientConfig s3ClientConfig = fileVolume.getS3ClientConfig();
+        final S3ClientConfig s3ClientConfig = readS3ClientConfig(fileVolume);
         Objects.requireNonNull(s3ClientConfig, "S3 Client Configuration must be provided.");
 
         if (NullSafe.isNonBlankString(s3ClientConfig.getBucketName())) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -302,7 +302,8 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id,
+        return Objects.hash(
+                id,
                 version,
                 createTimeMs,
                 createUser,
@@ -317,7 +318,6 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
                 volumeGroupId);
     }
 
-
     public FsVolume copy() {
         final FsVolume volume = new FsVolume();
         volume.path = path;
@@ -331,6 +331,15 @@ public class FsVolume implements HasAuditInfo, HasIntegerId, HasCapacity {
         return volume;
     }
 
+    @Override
+    public String toString() {
+        return "FsVolume{" +
+               "id=" + id +
+               ", path='" + path + '\'' +
+               ", volumeType=" + volumeType +
+               ", volumeGroupId=" + volumeGroupId +
+               '}';
+    }
 
     // --------------------------------------------------------------------------------
 

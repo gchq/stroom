@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,10 @@ package stroom.data.store.impl.fs;
 import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.api.Store;
+import stroom.data.store.impl.fs.s3v1.S3Store;
+import stroom.data.store.impl.fs.s3v2.S3ZstdStore;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.data.store.impl.fs.standard.EchoServlet;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.util.guice.GuiceUtil;
@@ -34,9 +37,14 @@ public class FsDataStoreModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(Store.class).to(FsStore.class);
-        bind(AttributeMapFactory.class).to(FsStore.class);
+        bind(Store.class).to(StoreImpl.class);
+        bind(AttributeMapFactory.class).to(StoreImpl.class);
         bind(FsVolumeGroupService.class).to(FsVolumeGroupServiceImpl.class);
+
+        GuiceUtil.buildMapBinder(binder(), FsVolumeType.class, StreamStore.class)
+                .addBinding(FsVolumeType.STANDARD, FsStore.class)
+                .addBinding(FsVolumeType.S3_V1, S3Store.class)
+                .addBinding(FsVolumeType.S3_V2, S3ZstdStore.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(FsVolumeService.class)

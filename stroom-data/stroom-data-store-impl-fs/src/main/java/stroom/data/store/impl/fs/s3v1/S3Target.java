@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -209,7 +209,8 @@ public final class S3Target implements Target {
         this.meta = metaService.updateStatus(meta, Status.LOCKED, Status.UNLOCKED);
     }
 
-    public void delete() {
+    @Override
+    public void logicallyDelete() {
         if (deleted) {
             throw new DataException("Target already deleted");
         }

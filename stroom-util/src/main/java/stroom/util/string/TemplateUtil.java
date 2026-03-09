@@ -150,49 +150,64 @@ public class TemplateUtil {
                     ? str -> replacementFormatter.apply(NullSafe.string(str))
                     : NullSafe::string;
 
-            // 'Compile' the template into a list of PartExtractor instances, with each one
-            // representing either a chunk of static text or a named variable for replacement.
-            for (final char chr : template.toCharArray()) {
-                if (chr == '{' && lastChar == '$') {
-                    inVariable = true;
-                    if (!sb.isEmpty()) {
-                        // Stuff before must be static text
-                        final String staticText = format(sb.toString(), staticTextFormatter);
-                        funcList.add(StaticTextPart.of(staticText));
-                        LOGGER.debug("Adding static text func for '{}'", staticText);
+            final Template templateObj;
+            if (isStaticTemplate(template)) {
+                final String formattedText = format(template, staticTextFormatter);
+                templateObj = Template.staticTemplate(template, formattedText);
+            } else {
+                // 'Compile' the template into a list of PartExtractor instances, with each one
+                // representing either a chunk of static text or a named variable for replacement.
+                for (final char chr : template.toCharArray()) {
+                    if (chr == '{' && lastChar == '$') {
+                        inVariable = true;
+                        if (!sb.isEmpty()) {
+                            // Stuff before must be static text
+                            final String staticText = format(sb.toString(), staticTextFormatter);
+                            funcList.add(StaticTextPart.of(staticText));
+                            LOGGER.debug("Adding static text func for '{}'", staticText);
+                            sb.setLength(0);
+                        }
+                    } else if (inVariable && chr == '}') {
+                        inVariable = false;
+                        // Because we may use the var to lookup system props or env vars, we MUST
+                        // retain the original case inside the CIKey, so can't user CIKey.ofIgnoringCase()
+                        final CIKey var = CIKey.of(sb.toString());
+                        varsInTemplate.add(var);
+                        final TemplatePart templatePart = varToPartExtractorMap.computeIfAbsent(var, aVar ->
+                                new VariablePart(aVar, effectiveParamFormatter));
+                        funcList.add(templatePart);
+                        LOGGER.debug("Adding replacement func for var '{}'", var);
                         sb.setLength(0);
+                    } else if (chr != '$') {
+                        // might be static text or the name of the key
+                        sb.append(chr);
                     }
-                } else if (inVariable && chr == '}') {
-                    inVariable = false;
-                    // Because we may use the var to lookup system props or env vars, we MUST
-                    // retain the original case inside the CIKey, so can't user CIKey.ofIgnoringCase()
-                    final CIKey var = CIKey.of(sb.toString());
-                    varsInTemplate.add(var);
-                    final TemplatePart templatePart = varToPartExtractorMap.computeIfAbsent(var, aVar ->
-                            new VariablePart(aVar, effectiveParamFormatter));
-                    funcList.add(templatePart);
-                    LOGGER.debug("Adding replacement func for var '{}'", var);
-                    sb.setLength(0);
-                } else if (chr != '$') {
-                    // might be static text or the name of the key
-                    sb.append(chr);
+                    lastChar = chr;
                 }
-                lastChar = chr;
-            }
-            if (inVariable) {
-                throw new IllegalArgumentException(LogUtil.message(
-                        "Unclosed variable in template '{}'", template));
-            }
+                if (inVariable) {
+                    throw new IllegalArgumentException(LogUtil.message(
+                            "Unclosed variable in template '{}'", template));
+                }
 
-            // Pick up any trailing static text
-            if (!sb.isEmpty()) {
-                // Stuff before must be static text
-                final String staticText = format(sb.toString(), staticTextFormatter);
-                funcList.add(StaticTextPart.of(staticText));
-                sb.setLength(0);
+                // Pick up any trailing static text
+                if (!sb.isEmpty()) {
+                    // Stuff before must be static text
+                    final String staticText = format(sb.toString(), staticTextFormatter);
+                    funcList.add(StaticTextPart.of(staticText));
+                    sb.setLength(0);
+                }
+                templateObj = new Template(template, varsInTemplate, funcList);
             }
-            return new Template(template, varsInTemplate, funcList);
+            return templateObj;
         }
+    }
+
+    /**
+     * @return True if the supplied template is all static text with no variable placeholders.
+     */
+    public static boolean isStaticTemplate(final String template) {
+        return NullSafe.isBlankString(template)
+               || !template.contains("{");
     }
 
     private static String format(final String str,
@@ -249,6 +264,10 @@ public class TemplateUtil {
             // Cache this
             this.partExtractorCount = this.templateParts.size();
             this.isAllStaticText = isAllStatic(templateParts);
+        }
+
+        private static Template staticTemplate(final String template, final String formattedText) {
+            return new Template(template, Collections.emptySet(), List.of(StaticTextPart.of(formattedText)));
         }
 
         private boolean isAllStatic(final List<TemplatePart> templateParts) {

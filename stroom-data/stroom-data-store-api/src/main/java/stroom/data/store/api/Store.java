@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package stroom.data.store.api;
 
 import stroom.meta.api.MetaProperties;
 
+import java.util.Collection;
+
 /**
  * <p>
  * API to the data store.
@@ -35,7 +37,9 @@ import stroom.meta.api.MetaProperties;
  */
 public interface Store {
 
-    Target openTarget(MetaProperties metaProperties) throws DataException;
+    default Target openTarget(MetaProperties metaProperties) throws DataException {
+        return openTarget(metaProperties, null);
+    }
 
     /**
      * <p>
@@ -48,12 +52,17 @@ public interface Store {
 
     /**
      * <p>
-     * Delete a open stream.
+     * Logically delete a open stream.
      * </p>
      *
      * @return items deleted
      */
-    void deleteTarget(Target target);
+    void logicallyDeleteTarget(Target target);
+
+    /**
+     * Physically delete all data associated with the passed meta IDs.
+     */
+    void physicallyDelete(final Collection<Long> metaIds);
 
     /**
      * <p>
@@ -65,7 +74,9 @@ public interface Store {
      * @throws DataException in case of a IO error or stream volume not visible or non
      *                       existent.
      */
-    Source openSource(long streamId) throws DataException;
+    default Source openSource(long streamId) throws DataException {
+        return openSource(streamId, false);
+    }
 
     /**
      * <p>

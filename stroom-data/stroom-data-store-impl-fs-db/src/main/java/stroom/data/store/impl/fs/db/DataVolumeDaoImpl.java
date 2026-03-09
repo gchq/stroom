@@ -21,16 +21,18 @@ import stroom.data.store.impl.fs.FindDataVolumeCriteria;
 import stroom.data.store.impl.fs.FsVolumeCache;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.db.util.JooqUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import org.jooq.Condition;
+import org.jooq.Record2;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume.FS_META_VOLUME;
 
@@ -53,18 +55,13 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
                 JooqUtil.getSetCondition(FS_META_VOLUME.META_ID, criteria.getMetaIdSet()));
         final int offset = JooqUtil.getOffset(criteria.getPageRequest());
         final int limit = JooqUtil.getLimit(criteria.getPageRequest(), true);
-        final Map<Integer, FsVolume> volumeCache = new HashMap<>();
         final List<DataVolume> list = JooqUtil.contextResult(fsDataStoreDbConnProvider, context ->
                         context.select(FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
                                 .from(FS_META_VOLUME)
                                 .where(conditions)
                                 .limit(offset, limit)
                                 .fetch())
-                .map(r -> {
-                    final Integer volumeId = r.get(FS_META_VOLUME.FS_VOLUME_ID);
-                    final FsVolume volume = volumeCache.computeIfAbsent(volumeId, fsVolumeCache::get);
-                    return new DataVolumeImpl(r.get(FS_META_VOLUME.META_ID), volume);
-                });
+                .map(this::mapRecordToDataVolume);
         return ResultPage.createCriterialBasedList(list, criteria);
     }
 
@@ -73,18 +70,34 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
      */
     @Override
     public DataVolume findDataVolume(final long metaId) {
-        final Map<Integer, FsVolume> volumeCache = new HashMap<>();
-        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
-                        .select(FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
-                        .from(FS_META_VOLUME)
-                        .where(FS_META_VOLUME.META_ID.eq(metaId))
-                        .fetchOptional())
-                .map(r -> {
-                    final Integer volumeId = r.get(FS_META_VOLUME.FS_VOLUME_ID);
-                    final FsVolume volume = volumeCache.computeIfAbsent(volumeId, fsVolumeCache::get);
-                    return new DataVolumeImpl(r.get(FS_META_VOLUME.META_ID), volume);
-                })
-                .orElse(null);
+        final List<DataVolume> dataVolumes = findDataVolumes(List.of(metaId));
+        if (dataVolumes.isEmpty()) {
+            throw new RuntimeException(LogUtil.message("No DataVolume found for metaId {}", metaId));
+        }
+        return dataVolumes.getFirst();
+    }
+
+    @Override
+    public List<DataVolume> findDataVolumes(final Collection<Long> metaIds) {
+        if (NullSafe.hasItems(metaIds)) {
+            return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+                            .select(FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
+                            .from(FS_META_VOLUME)
+                            .where(FS_META_VOLUME.META_ID.in(metaIds))
+                            .fetch())
+                    .map(this::mapRecordToDataVolume);
+        } else {
+            return Collections.emptyList();
+        }
+    }
+
+    private DataVolume mapRecordToDataVolume(final Record2<Long, Integer> rec) {
+        final long metaId = rec.get(FS_META_VOLUME.META_ID); // NOT_NULL
+        final int volumeId = rec.get(FS_META_VOLUME.FS_VOLUME_ID); // NOT_NULL
+        final FsVolume volume = fsVolumeCache.get(volumeId);
+        Objects.requireNonNull(volume, () -> LogUtil.message(
+                "Volume not found for volumeId: {}, metaId: {}", volumeId, metaId));
+        return new DataVolumeImpl(metaId, volume);
     }
 
     @Override
@@ -115,5 +128,23 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
 
     private record DataVolumeImpl(long metaId, FsVolume volume) implements DataVolume {
 
+        private DataVolumeImpl {
+            Objects.requireNonNull(volume);
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final DataVolumeImpl that = (DataVolumeImpl) o;
+            return metaId == that.metaId
+                   && Objects.equals(volume.getId(), that.volume.getId());
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(metaId, volume.getId());
+        }
     }
 }

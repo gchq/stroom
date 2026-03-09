@@ -37,8 +37,8 @@ public class ZstdDictionaryServiceImpl implements ZstdDictionaryService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ZstdDictionaryServiceImpl.class);
 
-    public static final String UUID_TO_DICT_CACHE_NAME = "ZStandard Dictionary Cache";
-    public static final String KEY_TO_UUID_CACHE_NAME = "ZStandard Dictionary Cache";
+    public static final String UUID_TO_DICT_CACHE_NAME = "ZStandard Dictionary Cache (by UUID)";
+    public static final String KEY_TO_UUID_CACHE_NAME = "ZStandard Dictionary Cache (by key)";
 
     private final SecurityContext securityContext;
     private final ZstdDictionaryDao zstdDictionaryDao;

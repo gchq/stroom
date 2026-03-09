@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,10 +55,10 @@ public final class FsSource implements InternalSource, SegmentInputStreamProvide
     private final Path volumePath;
     private final String streamType;
     private final FsSource parent;
+
     private AttributeMap attributeMap;
     private InputStream inputStream;
     private Path file;
-
     private final Meta meta;
     private boolean closed;
     private Long count;
@@ -263,7 +263,18 @@ public final class FsSource implements InternalSource, SegmentInputStreamProvide
         }
     }
 
-//    Source getParent() {
+    @Override
+    public String toString() {
+        return "FsSource{" +
+               "volumePath=" + volumePath +
+               ", streamType='" + streamType + '\'' +
+               ", parent=" + parent +
+               ", file=" + file +
+               ", meta=" + meta +
+               '}';
+    }
+
+    //    Source getParent() {
 //        return parent;
 //    }
 

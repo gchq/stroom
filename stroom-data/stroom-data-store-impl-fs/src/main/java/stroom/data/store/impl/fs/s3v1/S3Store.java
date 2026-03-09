@@ -19,8 +19,11 @@ package stroom.data.store.impl.fs.s3v1;
 import stroom.aws.s3.impl.S3FileExtensions;
 import stroom.aws.s3.impl.S3Manager;
 import stroom.aws.s3.impl.S3ManagerFactory;
+import stroom.data.store.api.DataException;
 import stroom.data.store.api.Source;
+import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.fs.StreamStore;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
@@ -41,6 +44,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -52,7 +56,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Singleton
-public class S3Store {
+public class S3Store implements StreamStore {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3Store.class);
 
@@ -80,7 +84,13 @@ public class S3Store {
         }
     }
 
-    public Source getSource(final DataVolume dataVolume, final Meta meta) {
+    @Override
+    public void physicallyDelete(final Collection<DataVolume> dataVolumes) {
+        // TODO
+        throw new UnsupportedOperationException("TODO");
+    }
+
+    public Source openSource(final Meta meta, final DataVolume dataVolume) throws DataException {
         final TrackedSource trackedSource = cache.compute(meta.getId(), (k, v) -> {
             if (v == null) {
                 final Path tempPath = createTempPath(meta.getId());
@@ -120,7 +130,7 @@ public class S3Store {
         return new S3Source(this, trackedSource.getPath(), getS3Path(dataVolume, meta), meta);
     }
 
-    public S3Target getTarget(final DataVolume dataVolume, final Meta meta) {
+    public Target openTarget(final Meta meta, final DataVolume dataVolume) throws DataException {
         final Path tempDir = createTempPath(meta.getId());
         return new S3Target(metaService, this, tempDir, dataVolume, meta);
     }

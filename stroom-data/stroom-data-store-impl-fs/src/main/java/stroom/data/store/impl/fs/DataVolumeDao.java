@@ -17,16 +17,20 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface DataVolumeDao {
 
     ResultPage<DataVolume> find(FindDataVolumeCriteria criteria);
 
     DataVolume findDataVolume(long metaId);
+
+    List<DataVolume> findDataVolumes(Collection<Long> metaIds);
 
     DataVolume createDataVolume(long metaId, FsVolume volume);
 
@@ -44,6 +48,10 @@ public interface DataVolumeDao {
 
         default Integer getVolumeId() {
             return NullSafe.get(volume(), FsVolume::getId);
+        }
+
+        default FsVolumeType getVolumeType() {
+            return NullSafe.get(volume(), FsVolume::getVolumeType);
         }
     }
 }

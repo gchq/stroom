@@ -23,6 +23,9 @@ import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 
+import java.util.Collection;
+import java.util.List;
+
 public class DataVolumeService {
 
     private final DataVolumeDao dataVolumeDao;
@@ -53,6 +56,11 @@ public class DataVolumeService {
     public DataVolume findDataVolume(final long metaId) {
         return securityContext.secureResult(() ->
                 dataVolumeDao.findDataVolume(metaId));
+    }
+
+    public List<DataVolume> findDataVolumes(final Collection<Long> metaIds) {
+        return securityContext.secureResult(() ->
+                dataVolumeDao.findDataVolumes(metaIds));
     }
 
     public DataVolume createDataVolume(final long metaId, final FsVolume volume) {

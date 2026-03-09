@@ -227,6 +227,19 @@ public class S3FrameSupplierImpl extends AbstractZstdFrameSupplier {
     }
 
     @Override
+    public boolean hasNext() {
+        checkInitialised();
+        final boolean result;
+        if (downloadAll) {
+            result = fileFrameSupplier.hasNext();
+        } else {
+            result = super.hasNext();
+        }
+        LOGGER.debug("hasNext() - downloadAll: {}, returning {}", downloadAll, result);
+        return result;
+    }
+
+    @Override
     public InputStream next() {
         checkInitialised();
         final InputStream frameInputStream;

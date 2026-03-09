@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -460,7 +460,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void doTestDeleteTarget(final DeleteTestStyle style) throws IOException {
+    private void doTestLogicallyDeleteTarget(final DeleteTestStyle style) throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
         final MetaProperties metaProperties = MetaProperties.builder()
@@ -479,19 +479,19 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         } else if (DeleteTestStyle.OPEN.equals(style)) {
             try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
                 meta = streamTarget.getMeta();
-                streamStore.deleteTarget(streamTarget);
+                streamStore.logicallyDeleteTarget(streamTarget);
             }
         } else if (DeleteTestStyle.OPEN_TOUCHED.equals(style)) {
             try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
                 meta = streamTarget.getMeta();
                 TargetUtil.write(streamTarget, testString);
-                streamStore.deleteTarget(streamTarget);
+                streamStore.logicallyDeleteTarget(streamTarget);
             }
         } else if (DeleteTestStyle.OPEN_TOUCHED_CLOSED.equals(style)) {
             try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
                 meta = streamTarget.getMeta();
                 TargetUtil.write(streamTarget, testString);
-                streamStore.deleteTarget(streamTarget);
+                streamStore.logicallyDeleteTarget(streamTarget);
             }
         }
 
@@ -512,17 +512,17 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testDelete4() throws IOException {
-        doTestDeleteTarget(DeleteTestStyle.META);
+        doTestLogicallyDeleteTarget(DeleteTestStyle.META);
     }
 
     @Test
     void testDelete5() throws IOException {
-        doTestDeleteTarget(DeleteTestStyle.OPEN);
+        doTestLogicallyDeleteTarget(DeleteTestStyle.OPEN);
     }
 
     @Test
     void testDelete6() throws IOException {
-        doTestDeleteTarget(DeleteTestStyle.OPEN_TOUCHED);
+        doTestLogicallyDeleteTarget(DeleteTestStyle.OPEN_TOUCHED);
     }
 
     @Test
@@ -532,7 +532,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testDelete8() throws IOException {
-        doTestDeleteTarget(DeleteTestStyle.OPEN_TOUCHED_CLOSED);
+        doTestLogicallyDeleteTarget(DeleteTestStyle.OPEN_TOUCHED_CLOSED);
     }
 
     @Test
@@ -706,7 +706,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             meta = streamTarget.getMeta();
             t = streamTarget;
             TargetUtil.write(streamTarget, testString);
-            streamStore.deleteTarget(t);
+            streamStore.logicallyDeleteTarget(t);
         }
 
         // We shouldn't be able to close a stream target again.
@@ -715,7 +715,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         Meta reloadedMeta = metaService.find(FindMetaCriteria.createFromMeta(meta)).getFirst();
         assertThat(reloadedMeta).isNull();
 
-        streamStore.deleteTarget(t);
+        streamStore.logicallyDeleteTarget(t);
 
         reloadedMeta = metaService.find(FindMetaCriteria.createFromMeta(meta)).getFirst();
         assertThat(reloadedMeta).isNull();

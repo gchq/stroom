@@ -80,12 +80,15 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
 
     public static final String CACHE_NAME = "Zstandard Seek Table Cache";
 
+    private final S3StreamTypeExtensions s3StreamTypeExtensions;
     private final MetaService metaService;
     private final StroomCache<FileKey, Optional<ZstdSeekTable>> cache;
 
     @Inject
-    public ZstdSeekTableCacheImpl(final MetaService metaService,
-                                  final CacheManager cacheManager) {
+    ZstdSeekTableCacheImpl(final S3StreamTypeExtensions s3StreamTypeExtensions,
+                           final MetaService metaService,
+                           final CacheManager cacheManager) {
+        this.s3StreamTypeExtensions = s3StreamTypeExtensions;
         this.metaService = metaService;
         // TODO add config for cache
         // Seek tables are immutable things, so no expiry needed
@@ -107,8 +110,8 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
                                                 final int segmentCount,
                                                 final long fileSize) {
         final FileKey fileKey = FileKey.of(dataVolume, meta, childStreamType);
-        return cache.get(fileKey, ignored ->
-                fetchSeekTable(s3Manager, meta, childStreamType, segmentCount, fileSize));
+        return cache.get(fileKey, fileKey2 ->
+                fetchSeekTable(s3Manager, fileKey2, meta, childStreamType, segmentCount, fileSize));
     }
 
     @Override
@@ -118,8 +121,8 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
                                                 final String childStreamType,
                                                 final long fileSize) {
         final FileKey fileKey = FileKey.of(dataVolume, meta, childStreamType);
-        return cache.get(fileKey, ignored ->
-                fetchSeekTable(s3Manager, meta, childStreamType, fileSize));
+        return cache.get(fileKey, fileKey2 ->
+                fetchSeekTable(s3Manager, fileKey2, meta, childStreamType, fileSize));
     }
 
     @Override
@@ -128,8 +131,8 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
                                                 final Meta meta,
                                                 final String childStreamType) {
         final FileKey fileKey = FileKey.of(dataVolume, meta, childStreamType);
-        return cache.get(fileKey, ignored ->
-                fetchSeekTable(s3Manager, meta, childStreamType, null));
+        return cache.get(fileKey, fileKey2 ->
+                fetchSeekTable(s3Manager, fileKey2, meta, childStreamType, null));
     }
 
 //    @Override
@@ -150,6 +153,7 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
     }
 
     private Optional<ZstdSeekTable> fetchSeekTable(final S3Manager s3Manager,
+                                                   final FileKey fileKey,
                                                    final Meta meta,
                                                    final String childStreamType,
                                                    final Long fileSize) {
@@ -176,7 +180,8 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
                 try {
                     // If we have a speculative range we want to copy the buffer as we may have fetched
                     // way more data than we need, so don't want pointless bytes in our cache.
-                    optZstdSeekTable = fetchSeekTable(s3Manager, meta, childStreamType, range, isSpeculativeRange);
+                    optZstdSeekTable = fetchSeekTable(
+                            s3Manager, fileKey, meta, childStreamType, range, isSpeculativeRange);
                     break;
                 } catch (final InsufficientSeekTableDataException e) {
                     if (isSpeculativeRange) {
@@ -244,6 +249,7 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
     }
 
     private Optional<ZstdSeekTable> fetchSeekTable(final S3Manager s3Manager,
+                                                   final FileKey fileKey,
                                                    final Meta meta,
                                                    final String childStreamType,
                                                    final int segmentCount,
@@ -251,19 +257,23 @@ public class ZstdSeekTableCacheImpl implements ZstdSeekTableCache {
         LOGGER.debug("fetchSeekTable() - meta: {}, segmentCount: {}, fileSize: {}", meta, segmentCount, fileSize);
         final Range<Long> frameRange = ZstdSegmentUtil.createSeekTableFrameRange(segmentCount, fileSize);
         // We have an exact size for the range fetch so don't copy the byte array returned.
-        return fetchSeekTable(s3Manager, meta, childStreamType, frameRange, false);
+        return fetchSeekTable(s3Manager, fileKey, meta, childStreamType, frameRange, false);
     }
 
     private Optional<ZstdSeekTable> fetchSeekTable(final S3Manager s3Manager,
+                                                   final FileKey fileKey,
                                                    final Meta meta,
                                                    final String childStreamType,
                                                    final Range<Long> range,
                                                    final boolean copyBufferContents) {
-        LOGGER.debug("fetchSeekTable() - meta: {}, childStreamType: {}, range: {}", meta, childStreamType, range);
         try {
             final byte[] rangeBytes;
+            final String key = s3StreamTypeExtensions.getkey(fileKey);
+            Objects.requireNonNull(key);
+            LOGGER.debug("fetchSeekTable() - meta: {}, childStreamType: {}, key: {}, range: {}",
+                    meta, childStreamType, key, range);
             try (final ResponseInputStream<GetObjectResponse> response = s3Manager.getByteRange(
-                    meta, childStreamType, range)) {
+                    meta, childStreamType, key, range)) {
                 // Seek table should not be massive so read it all into memory
                 rangeBytes = response.readAllBytes();
             }

@@ -132,8 +132,11 @@ public class MetaFields {
         EXTENDED_FIELDS.add(REC_FATAL);
 
         // Sizes
+        EXTENDED_FIELDS.add(CHILD_TYPES);
         EXTENDED_FIELDS.add(FILE_SIZE);
         EXTENDED_FIELDS.add(RAW_SIZE);
+        EXTENDED_FIELDS.add(SEGMENTATION_TYPE);
+        EXTENDED_FIELDS.add(ZSTD_DICTIONARY_UUID);
 
         ALL_FIELDS.addAll(FIELDS);
         ALL_FIELDS.addAll(EXTENDED_FIELDS);

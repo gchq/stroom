@@ -523,7 +523,7 @@ public final class LogUtil {
      *
      * @param sampleSize The number of items in the collection to output,
      *                   taken in iteration order.
-     * @return null if collection is null, else something like '[X, Y, Z]'
+     * @return null if collection is null, else something like '[X, Y, Z, ...]'
      */
     public static <T> String getSample(final Collection<T> collection,
                                        final int sampleSize) {
@@ -537,7 +537,7 @@ public final class LogUtil {
      * @param sampleSize       The number of items in the collection to output,
      *                         taken in iteration order.
      * @param toStringFunction The function to use to convert each item to a string.
-     * @return null if collection is null, else something like '[X, Y, Z]'
+     * @return null if collection is null, else something like '[X, Y, Z, ...]'
      */
     public static <T> String getSample(final Collection<T> collection,
                                        final int sampleSize,
@@ -545,14 +545,20 @@ public final class LogUtil {
         if (collection == null) {
             return null;
         } else {
+            final int count = collection.size();
+            final boolean isTruncated = sampleSize < count;
             final Function<T, String> func = Objects.requireNonNullElse(
                     toStringFunction,
                     Objects::toString);
-            final String str = NullSafe.stream(collection)
+            final String str = collection.stream()
                     .limit(sampleSize)
                     .map(func)
                     .collect(Collectors.joining(", "));
-            return "[" + str + "]";
+            return "[" + str
+                   + (isTruncated
+                    ? ", ..."
+                    : "")
+                   + "]";
         }
     }
 }

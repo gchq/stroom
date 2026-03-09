@@ -17,6 +17,12 @@
 package stroom.data.store.impl.fs.s3v2;
 
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
+
+import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public enum ZstdSegmentationType {
     /**
@@ -24,23 +30,31 @@ public enum ZstdSegmentationType {
      */
     PARTS,
     /**
-     * The file is one single part, which is divided up into one or more segments.
+     * The file is one single part, which is divided up into multiple segments.
      *
      */
     SEGMENTS,
+    /**
+     * The file is neither multipart nor multi-segment. It is one single Zstd frame.
+     */
+    NONE,
     ;
+
+    private static final Map<CIKey, ZstdSegmentationType> FROM_STRING_MAP = Arrays.stream(values())
+            .collect(Collectors.toMap(
+                    type ->
+                            CIKey.internStaticKey(type.toString()),
+                    Function.identity()));
 
     public static ZstdSegmentationType fromString(final String value) {
         if (NullSafe.isBlankString(value)) {
-            return null;
+            throw new IllegalArgumentException("Value must not be blank");
         } else {
-            if (value.equalsIgnoreCase(SEGMENTS.toString())) {
-                return SEGMENTS;
-            } else if (value.equalsIgnoreCase(PARTS.toString())) {
-                return PARTS;
-            } else {
+            final ZstdSegmentationType zstdSegmentationType = FROM_STRING_MAP.get(CIKey.of(value));
+            if (zstdSegmentationType == null) {
                 throw new IllegalArgumentException("Unrecognized segmentation type: " + value);
             }
+            return zstdSegmentationType;
         }
     }
 }

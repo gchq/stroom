@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -248,12 +248,12 @@ public class StreamTargetStreamHandler implements StreamHandler, Closeable {
     }
 
     void error() {
-        targetMap.values().forEach(store::deleteTarget);
+        targetMap.values().forEach(Target::logicallyDelete);
         targetMap.clear();
     }
 
     public void closeDelete() {
-        targetMap.values().forEach(store::deleteTarget);
+        targetMap.values().forEach(Target::logicallyDelete);
         targetMap.clear();
     }
 

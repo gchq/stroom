@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.CIKey;
-import stroom.util.shared.string.CIKeys;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -54,7 +53,7 @@ public class S3MetaFieldsMapper {
         forwardMap = new HashMap<>(fieldNames.size());
         reverseMap = new HashMap<>(fieldNames.size());
         fieldNames.forEach(fieldName -> {
-            final CIKey fieldCIKey = CIKeys.getCommonKey(fieldName);
+            final CIKey fieldCIKey = CIKey.internStaticKey(fieldName);
             final String cleaned = S3Util.cleanS3MetaDataKey(fieldName);
             final CIKey cleanedCIKey = Objects.equals(fieldName, cleaned)
                     ? fieldCIKey

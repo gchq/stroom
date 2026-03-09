@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,12 @@ import stroom.data.store.api.SegmentInputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import com.google.common.base.Strings;
 import com.google.common.io.CountingOutputStream;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -32,38 +35,59 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestZstdSegmentInputStream {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestZstdSegmentInputStream.class);
+    private static final String PADDING = Strings.repeat("#", 20);
+    private static final int BUFFER_SIZE = 1;
 
     private final List<String> data = new ArrayList<>();
     private final List<byte[]> dataBytes = new ArrayList<>();
 
-    @Test
-    void test1() throws IOException {
-        doTest(
-                SegmentInputStream::includeAll,
-                "Item-0Item-1Item-2Item-3Item-4Item-5Item-6Item-7Item-8Item-9");
+    /**
+     * Make sure we can handle a variety of buffer sizes when consuming the stream
+     */
+    public static Stream<Arguments> getArguments() {
+        return Stream.of(
+                Arguments.of(1),
+                Arguments.of(7),
+                Arguments.of(1000)
+        );
     }
 
-    @Test
-    void test2() throws IOException {
+    @ParameterizedTest
+    @MethodSource("getArguments")
+    void test1(final int bufferSize) throws IOException {
+        doTest(
+                SegmentInputStream::includeAll,
+                new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+                bufferSize);
+    }
+
+    @ParameterizedTest
+    @MethodSource("getArguments")
+    void test2(final int bufferSize) throws IOException {
         doTest(
                 segmentInputStream -> {
                     segmentInputStream.include(0);
                     segmentInputStream.include(3);
                     segmentInputStream.includeAll();
                 },
-                "Item-0Item-1Item-2Item-3Item-4Item-5Item-6Item-7Item-8Item-9");
+                new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+                bufferSize);
     }
 
-    @Test
-    void test3() throws IOException {
+    @ParameterizedTest
+    @MethodSource("getArguments")
+    void test3(final int bufferSize) throws IOException {
         doTest(
                 segmentInputStream -> {
                     segmentInputStream.include(9);
@@ -72,46 +96,54 @@ class TestZstdSegmentInputStream {
                     segmentInputStream.include(3);
                     segmentInputStream.include(5);
                 },
-                "Item-0Item-3Item-5Item-9");
+                new int[]{0, 3, 5, 9},
+                bufferSize);
     }
 
-    @Test
-    void test4() throws IOException {
+    @ParameterizedTest
+    @MethodSource("getArguments")
+    void test4(final int bufferSize) throws IOException {
         doTest(
                 segmentInputStream -> {
                     segmentInputStream.include(3);
                 },
-                "Item-3");
+                new int[]{3},
+                bufferSize);
     }
 
-    @Test
-    void test5() {
+    @ParameterizedTest
+    @MethodSource("getArguments")
+    void test5(final int bufferSize) {
         Assertions.assertThatThrownBy(
                 () -> {
                     doTest(
                             segmentInputStream -> {
                                 segmentInputStream.include(99);
                             },
-                            null);
+                            null,
+                            bufferSize);
                 }
         ).isInstanceOf(IllegalArgumentException.class);
     }
 
-    @Test
-    void test6() {
+    @ParameterizedTest
+    @MethodSource("getArguments")
+    void test6(final int bufferSize) {
         Assertions.assertThatThrownBy(
                 () -> {
                     doTest(
                             segmentInputStream -> {
                                 segmentInputStream.include(-1);
                             },
-                            null);
+                            null,
+                            bufferSize);
                 }
         ).isInstanceOf(IllegalArgumentException.class);
     }
 
     private void doTest(final Consumer<SegmentInputStream> inputStreamConsumer,
-                        final String expectedOutput) throws IOException {
+                        final int[] expectedItemIndexes,
+                        final int bufferSize) throws IOException {
         final int iterations = 10;
 
         final byte[] compressedBytes = makeData(iterations);
@@ -137,8 +169,9 @@ class TestZstdSegmentInputStream {
 
         // Use a tiny buffer to consume the input stream to make sure we test repeated read calls
         // rather than just reading it all into an 8k buffer.
-        final byte[] uncompressedBytes = toBytes(zstdSegmentInputStream, 7);
+        final byte[] uncompressedBytes = toBytes(zstdSegmentInputStream, bufferSize);
         final String uncompressedStr = new String(uncompressedBytes, StandardCharsets.UTF_8);
+        final String expectedOutput = createExpectedOutput(expectedItemIndexes);
 
         LOGGER.debug("str: {}", uncompressedStr);
 
@@ -172,8 +205,9 @@ class TestZstdSegmentInputStream {
                 if (i != 0) {
                     zstdSegmentOutputStream.addSegment();
                 }
-                final String str = "Item-" + i;
-                final byte[] strBytes = ("Item-" + i).getBytes(StandardCharsets.UTF_8);
+                // Pad out the string so we have something bigger than our read buffer to read
+                final String str = "Item-" + i + "_" + PADDING;
+                final byte[] strBytes = (str).getBytes(StandardCharsets.UTF_8);
                 zstdSegmentOutputStream.write(strBytes);
                 zstdSegmentOutputStream.flush();
                 data.add(str);
@@ -187,6 +221,13 @@ class TestZstdSegmentInputStream {
         final byte[] bytes = byteArrayOutputStream.toByteArray();
         LOGGER.debug("bytes.length: {}", bytes.length);
         return bytes;
+    }
+
+    private static String createExpectedOutput(final int[] itemIndexes) {
+        return Arrays.stream(itemIndexes)
+                .boxed()
+                .map(idx -> "Item-" + idx + "_" + PADDING)
+                .collect(Collectors.joining(""));
     }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.util.io.SeekableInputStream;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -51,6 +52,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -93,11 +95,18 @@ public class MockStore implements Store, Clearable, AttributeMapFactory {
     }
 
     @Override
-    public void deleteTarget(final Target target) {
+    public void logicallyDeleteTarget(final Target target) {
         final long streamId = target.getMeta().getId();
         openOutputStream.remove(streamId);
+        // TODO should this be deleting the file data?
         fileData.remove(streamId);
-        ((MockTarget) target).delete();
+        target.logicallyDelete();
+    }
+
+    @Override
+    public void physicallyDelete(final Collection<Long> metaIds) {
+        NullSafe.stream(metaIds)
+                .forEach(fileData::remove);
     }
 
     @Override
@@ -322,7 +331,8 @@ public class MockStore implements Store, Clearable, AttributeMapFactory {
             }
         }
 
-        public void delete() {
+        @Override
+        public void logicallyDelete() {
             if (deleted) {
                 throw new DataException("Target already deleted");
             }

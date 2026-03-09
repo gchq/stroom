@@ -593,6 +593,10 @@ public class ZstdSeekTable implements Iterable<FrameLocation> {
 
         @Override
         public FrameLocation next() {
+            if (!frameIdxIterator.hasNext()) {
+                throw new NoSuchElementException("No more frames, frameIdxIterator: " + frameIdxIterator);
+            }
+
             final int nextFrameIdx = frameIdxIterator.nextInt();
             if (isValidFrame(nextFrameIdx)) {
                 final FrameLocation frameLocation = getFrameLocation(nextFrameIdx);
