@@ -943,7 +943,7 @@ public class VisualisationAssetsPresenter
                 .onFailure(error -> {
                     AlertEvent.fireError(this,
                             "There was an error getting content for '"
-                            + path + "':" + error.getMessage(),
+                            + path + "': \n" + error.getMessage(),
                             failureCallback);
                 })
                 .taskMonitorFactory(this)

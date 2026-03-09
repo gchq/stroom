@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
@@ -801,37 +800,60 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                         "LENGTH({0})",
                         Integer.class,
                         Tables.VISUALISATION_ASSETS_DRAFT.DATA);
-                Result<Record1<byte[]>> result = txnContext.select(Tables.VISUALISATION_ASSETS_DRAFT.DATA)
+                final Field<Integer> liveDataLength = DSL.field(
+                        "LENGTH({0})",
+                        Integer.class,
+                        Tables.VISUALISATION_ASSETS.DATA);
+
+                boolean dataInDraft = false;
+                boolean dataInLive = false;
+                int dataLength = 0;
+
+                final Result<Record1<Integer>> resultDraftLength =
+                        txnContext.select(draftDataLength)
                         .from(Tables.VISUALISATION_ASSETS_DRAFT)
                         .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
                                 .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId))
                                 .and(Tables.VISUALISATION_ASSETS_DRAFT.PATH.eq(slashedPath))
-                                .and(Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH.eq(pathHash))
-                                .and(draftDataLength.lt(MAX_EDITABLE_CONTENT_LENGTH)))
+                                .and(Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH.eq(pathHash)))
                         .fetch();
-                if (result.isEmpty()) {
-                    final Field<Integer> liveDataLength = DSL.field(
-                            "LENGTH({0})",
-                            Integer.class,
-                            Tables.VISUALISATION_ASSETS.DATA);
-                    result = txnContext.select(Tables.VISUALISATION_ASSETS.DATA)
+                if (resultDraftLength.isNotEmpty()) {
+                    dataInDraft = true;
+                    dataLength = resultDraftLength.getFirst().value1();
+                } else {
+                    final Result<Record1<Integer>> resultLiveLength =
+                            txnContext.select(liveDataLength)
                             .from(Tables.VISUALISATION_ASSETS)
                             .where(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(ownerDocId)
                                     .and(Tables.VISUALISATION_ASSETS.PATH.eq(slashedPath))
-                                    .and(Tables.VISUALISATION_ASSETS.PATH_HASH.eq(pathHash))
-                                    .and(liveDataLength.lt(MAX_EDITABLE_CONTENT_LENGTH)))
+                                    .and(Tables.VISUALISATION_ASSETS.PATH_HASH.eq(pathHash)))
                             .fetch();
+                    if (resultLiveLength.isNotEmpty()) {
+                        dataInLive = true;
+                        dataLength = resultLiveLength.getFirst().value1();
+                    }
                 }
 
-                if (result.isEmpty()) {
-                    content[0] = null;
+                if (dataLength > MAX_EDITABLE_CONTENT_LENGTH) {
+                    throw new DataTooBigException();
                 } else {
-                    try {
+                    if (dataInDraft) {
+                        final Result<Record1<byte[]>> result = txnContext.select(Tables.VISUALISATION_ASSETS_DRAFT.DATA)
+                                .from(Tables.VISUALISATION_ASSETS_DRAFT)
+                                .where(Tables.VISUALISATION_ASSETS_DRAFT.DRAFT_USER_UUID.eq(userUuid)
+                                        .and(Tables.VISUALISATION_ASSETS_DRAFT.OWNER_DOC_UUID.eq(ownerDocId))
+                                        .and(Tables.VISUALISATION_ASSETS_DRAFT.PATH.eq(slashedPath))
+                                        .and(Tables.VISUALISATION_ASSETS_DRAFT.PATH_HASH.eq(pathHash)))
+                                .fetch();
                         content[0] = decodeToUtf8String(result.getFirst().value1());
-                    } catch (final CharacterCodingException e) {
-                        // We expect errors here as things like PNG cannot be converted to UTF-8 Strings.
-                        LOGGER.debug("Cannot convert asset data '{}' to UTF-8: {}", path, e.getMessage());
-                        content[0] = null;
+                    } else if (dataInLive) {
+                        final Result<Record1<byte[]>> result = txnContext.select(Tables.VISUALISATION_ASSETS.DATA)
+                            .from(Tables.VISUALISATION_ASSETS)
+                            .where(Tables.VISUALISATION_ASSETS.OWNER_DOC_UUID.eq(ownerDocId)
+                                    .and(Tables.VISUALISATION_ASSETS.PATH.eq(slashedPath))
+                                    .and(Tables.VISUALISATION_ASSETS.PATH_HASH.eq(pathHash)))
+                            .fetch();
+                        content[0] = decodeToUtf8String(result.getFirst().value1());
                     }
                 }
             });
@@ -852,11 +874,9 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
      * Method to try to convert the given byte array to UTF-8 String, throwing an error if
      * the string cannot be converted.
      * @param input The byte array to convert.
-     * @return The input as a String
-     * @throws CharacterCodingException if the data cannot be converted to UTF-8 string.
+     * @return The input as a String, or null if the data cannot be converted to UTF-8 string.
      */
-    private String decodeToUtf8String(final byte[] input)
-            throws CharacterCodingException {
+    private String decodeToUtf8String(final byte[] input) {
 
         final CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
         decoder.onMalformedInput(CodingErrorAction.REPORT);
@@ -865,7 +885,7 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
         final CharBuffer buf = CharBuffer.allocate(input.length);
         final CoderResult result = decoder.decode(ByteBuffer.wrap(input), buf, true);
         if (result.isError()) {
-            result.throwException();
+            return null;
         }
         decoder.flush(buf);
         buf.flip(); // Set positions for reading
@@ -1297,6 +1317,17 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
             } else {
                 return "";
             }
+        }
+    }
+
+    /**
+     * Exception type to be used when the content data held in the database is too big
+     * to be loaded into RAM and passed to the UI.
+     */
+    public static class DataTooBigException extends RuntimeException {
+
+        public DataTooBigException() {
+            super("The content of this asset is too big to be displayed in the user-interface");
         }
     }
 

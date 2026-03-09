@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Arrays;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -233,4 +234,67 @@ public class TestVisualisationDao {
 
     }
 
+    @Test
+    void testGetDraftContent() throws IOException {
+        final String ownerDocUuid = "draftContentDoc";
+        final String userUuid = "draftContentUser";
+
+        // 1. File doesn't exist
+        final String missingContent = assetDao.getDraftContent(userUuid, ownerDocUuid, "/missing.txt");
+        assertThat(missingContent).isNull();
+
+        // 2. Normal file size
+        assetDao.updateNewFile(userUuid, ownerDocUuid, "/small.txt");
+        final String testStr = "small content";
+        assetDao.updateContent(userUuid, ownerDocUuid, "/small.txt", testStr.getBytes(StandardCharsets.UTF_8));
+        final String fetchedContent = assetDao.getDraftContent(userUuid, ownerDocUuid, "/small.txt");
+        assertThat(fetchedContent).isEqualTo(testStr);
+
+        // 3. File too big
+        assetDao.updateNewFile(userUuid, ownerDocUuid, "/big.txt");
+        final byte[] bigData = new byte[(1024 * 512) + 1]; // Just over the 512KiB limit
+        // 'A'
+        Arrays.fill(bigData, (byte) 65);
+        assetDao.updateContent(userUuid, ownerDocUuid, "/big.txt", bigData);
+        
+        try {
+            assetDao.getDraftContent(userUuid, ownerDocUuid, "/big.txt");
+            assertThat(false).as("Expected DataTooBigException").isTrue();
+        } catch (final RuntimeException e) {
+            // Success
+        }
+    }
+
+    @Test
+    void testGetDraftContentFromLive() throws IOException {
+        final String ownerDocUuid = "draftContentDoc";
+        final String userUuid = "draftContentUser";
+
+        // 1. File doesn't exist
+        final String missingContent = assetDao.getDraftContent(userUuid, ownerDocUuid, "/missing.txt");
+        assertThat(missingContent).isNull();
+
+        // 2. Normal file size
+        assetDao.updateNewFile(userUuid, ownerDocUuid, "/small.txt");
+        final String testStr = "small content";
+        assetDao.updateContent(userUuid, ownerDocUuid, "/small.txt", testStr.getBytes(StandardCharsets.UTF_8));
+        assetDao.saveDraftToLive(userUuid, ownerDocUuid);
+        final String fetchedContent = assetDao.getDraftContent(userUuid, ownerDocUuid, "/small.txt");
+        assertThat(fetchedContent).isEqualTo(testStr);
+
+        // 3. File too big
+        assetDao.updateNewFile(userUuid, ownerDocUuid, "/big.txt");
+        final byte[] bigData = new byte[(1024 * 512) + 1]; // Just over the 512KiB limit
+        // 'A'
+        Arrays.fill(bigData, (byte) 65);
+        assetDao.updateContent(userUuid, ownerDocUuid, "/big.txt", bigData);
+        assetDao.saveDraftToLive(userUuid, ownerDocUuid);
+
+        try {
+            assetDao.getDraftContent(userUuid, ownerDocUuid, "/big.txt");
+            assertThat(false).as("Expected DataTooBigException").isTrue();
+        } catch (final RuntimeException e) {
+            // Success
+        }
+    }
 }
