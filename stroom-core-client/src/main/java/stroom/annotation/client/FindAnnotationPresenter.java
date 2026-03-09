@@ -26,7 +26,6 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.popup.client.view.DialogActionType;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -102,7 +101,7 @@ public class FindAnnotationPresenter
 
     @Override
     public void openDocument(final Annotation match) {
-        HidePopupRequestEvent.builder(this).action(DialogAction.builder().type(DialogActionType.OK).build()).fire();
+        HidePopupRequestEvent.builder(this).action(DialogAction.OK).fire();
     }
 
     @Override

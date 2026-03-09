@@ -16,52 +16,10 @@
 
 package stroom.widget.popup.client.view;
 
-public class DialogAction {
-    private final DialogActionType type;
-    private final boolean applyToFiltered;
-
-    public DialogAction(final DialogActionType type, final boolean applyToFiltered) {
-        this.type = type;
-        this.applyToFiltered = applyToFiltered;
-    }
-
-    public static DialogAction.Builder builder() {
-        return new DialogAction.Builder();
-    }
-
-    public DialogActionType getType() {
-        return type;
-    }
-
-    public boolean isApplyToFiltered() {
-        return applyToFiltered;
-    }
-
-
-
-    public static class Builder {
-        private DialogActionType type;
-        private boolean applyToFiltered;
-
-        public Builder() {
-            applyToFiltered = false;
-        }
-
-        public DialogAction.Builder type(final DialogActionType type) {
-            this.type = type;
-            return this;
-        }
-
-        public DialogAction.Builder applyToFiltered(final boolean applyToFiltered) {
-            this.applyToFiltered = applyToFiltered;
-            return this;
-        }
-
-        public DialogAction build() {
-            return new DialogAction(
-                    type,
-                    applyToFiltered
-            );
-        }
-    }
+public enum DialogAction {
+    CREATE,
+    OK,
+    CANCEL,
+    CLOSE,
+    AUTO_CLOSE
 }

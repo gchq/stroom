@@ -74,13 +74,13 @@ public class ExecutionScheduleRunNowPresenter
                 .build();
 
         ShowPopupEvent.builder(this)
-                .popupType(PopupType.SELECTED_AND_FILTERED_DIALOG)
+                .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(popupSize)
                 .onShow(e -> getView().focus())
                 .caption("Run Now")
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        consumer.accept(e.getAction().isApplyToFiltered());
+                        consumer.accept(false);
                         e.hide();
                     } else {
                         e.hide();

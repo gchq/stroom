@@ -20,7 +20,6 @@ import stroom.security.identity.client.presenter.CurrentPasswordPresenter.Curren
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.popup.client.view.DialogActionType;
 import stroom.widget.popup.client.view.HideRequest;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
@@ -95,13 +94,11 @@ public class CurrentPasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHan
 
     private void onKeyDown(final KeyDownEvent e) {
         if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-            getUiHandlers().hideRequest(
-                    new HideRequest(DialogAction.builder().type(DialogActionType.OK).build(), () -> {})
-            );
+            getUiHandlers().hideRequest(new HideRequest(DialogAction.OK, () -> {
+            }));
         } else if (e.getNativeKeyCode() == KeyCodes.KEY_ESCAPE) {
-            getUiHandlers().hideRequest(
-                    new HideRequest(DialogAction.builder().type(DialogActionType.CANCEL).build(), () -> {})
-            );
+            getUiHandlers().hideRequest(new HideRequest(DialogAction.CANCEL, () -> {
+            }));
         }
     }
 

@@ -121,7 +121,7 @@ public class BatchExecutionScheduleEditPresenter
                 .build();
 
         ShowPopupEvent.builder(this)
-                .popupType(PopupType.SELECTED_AND_FILTERED_DIALOG)
+                .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(popupSize)
                 .onShow(e -> {
                     getView().focus();
@@ -154,7 +154,7 @@ public class BatchExecutionScheduleEditPresenter
                 } else if (getView().getEndTime().isEnabled() && !getView().getEndTime().isValid()) {
                     AlertEvent.fireWarn(this, "Invalid end time", event::reset);
                 } else {
-                    consumer.accept(event.getAction().isApplyToFiltered());
+                    consumer.accept(false);
                 }
             }
         });

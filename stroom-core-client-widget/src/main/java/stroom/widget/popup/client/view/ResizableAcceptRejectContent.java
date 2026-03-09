@@ -66,7 +66,7 @@ public class ResizableAcceptRejectContent extends Composite implements DialogBut
     @Override
     public void onDialogAction(final DialogAction action) {
         setEnabled(false);
-        if (action.getType() == DialogActionType.OK) {
+        if (action == DialogAction.OK) {
             accept.setLoading(true);
         } else {
             reject.setLoading(true);
@@ -80,12 +80,12 @@ public class ResizableAcceptRejectContent extends Composite implements DialogBut
 
     @UiHandler("accept")
     public void onAcceptClick(final ClickEvent event) {
-        onDialogAction(DialogAction.builder().type(DialogActionType.OK).build());
+        onDialogAction(DialogAction.OK);
     }
 
     @UiHandler("reject")
     public void onRejectClick(final ClickEvent event) {
-        onDialogAction(DialogAction.builder().type(DialogActionType.CANCEL).build());
+        onDialogAction(DialogAction.CANCEL);
     }
 
     @Override

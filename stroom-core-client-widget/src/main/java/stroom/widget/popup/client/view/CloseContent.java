@@ -65,7 +65,7 @@ public class CloseContent extends Composite implements DialogButtons {
 
     @UiHandler("close")
     public void onCloseClick(final ClickEvent event) {
-        onDialogAction(DialogAction.builder().type(DialogActionType.CLOSE).build());
+        onDialogAction(DialogAction.CLOSE);
     }
 
     @Override

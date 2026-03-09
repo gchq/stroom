@@ -23,7 +23,6 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.popup.client.view.DialogActionType;
 import stroom.widget.util.client.BasicSelectionEventManager;
 import stroom.widget.util.client.MySingleSelectionModel;
 
@@ -72,7 +71,7 @@ public class ChooserPresenter<T>
             protected void onClose(final CellPreviewEvent<T> e) {
                 super.onClose(e);
                 HidePopupRequestEvent.builder(ChooserPresenter.this).autoClose(true)
-                        .action(DialogAction.builder().type(DialogActionType.CLOSE).build())
+                        .action(DialogAction.CLOSE)
                         .fire();
             }
 

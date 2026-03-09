@@ -91,13 +91,13 @@ public abstract class AbstractPopupPanel extends PopupPanel implements Popup {
 
     private void onCloseAction() {
         if (dialogActionHandler != null) {
-            dialogActionHandler.onDialogAction(DialogAction.builder().type(DialogActionType.CLOSE).build());
+            dialogActionHandler.onDialogAction(DialogAction.CLOSE);
         }
     }
 
     private void onOkAction() {
         if (dialogActionHandler != null) {
-            dialogActionHandler.onDialogAction(DialogAction.builder().type(DialogActionType.OK).build());
+            dialogActionHandler.onDialogAction(DialogAction.OK);
         }
     }
 }
