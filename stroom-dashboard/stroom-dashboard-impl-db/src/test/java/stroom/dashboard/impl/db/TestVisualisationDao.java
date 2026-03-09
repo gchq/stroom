@@ -62,7 +62,7 @@ public class TestVisualisationDao {
         assetDao.updateDelete(userUuid, ownerDocUuid, "/assetOne", true);
         assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
         assertThat(assets.isDirty()).isEqualTo(true);
-        assertThat(assets.getAssets().size()).isEqualTo(2);
+        assertThat(assets.getAssets().size()).isEqualTo(1);
 
         assetDao.updateRename(userUuid,
                 ownerDocUuid,
@@ -71,7 +71,7 @@ public class TestVisualisationDao {
                 true);
         assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
         assertThat(assets.isDirty()).isEqualTo(true);
-        assertThat(assets.getAssets().size()).isEqualTo(2);
+        assertThat(assets.getAssets().size()).isEqualTo(1);
         assertThat(assets.getAssets().getFirst().getPath()).isEqualTo("/root/NewFile.txt");
 
         assetDao.updateContent(userUuid, ownerDocUuid, "/root/NewFile.txt",
@@ -244,21 +244,21 @@ public class TestVisualisationDao {
         assertThat(missingContent).isNull();
 
         // 2. Normal file size
-        assetDao.updateNewFile(userUuid, ownerDocUuid, "/small.txt");
+        assetDao.updateNewFile(userUuid, ownerDocUuid, "/smalld.txt");
         final String testStr = "small content";
-        assetDao.updateContent(userUuid, ownerDocUuid, "/small.txt", testStr.getBytes(StandardCharsets.UTF_8));
-        final String fetchedContent = assetDao.getDraftContent(userUuid, ownerDocUuid, "/small.txt");
+        assetDao.updateContent(userUuid, ownerDocUuid, "/smalld.txt", testStr.getBytes(StandardCharsets.UTF_8));
+        final String fetchedContent = assetDao.getDraftContent(userUuid, ownerDocUuid, "/smalld.txt");
         assertThat(fetchedContent).isEqualTo(testStr);
 
         // 3. File too big
-        assetDao.updateNewFile(userUuid, ownerDocUuid, "/big.txt");
+        assetDao.updateNewFile(userUuid, ownerDocUuid, "/bigd.txt");
         final byte[] bigData = new byte[(1024 * 512) + 1]; // Just over the 512KiB limit
         // 'A'
         Arrays.fill(bigData, (byte) 65);
-        assetDao.updateContent(userUuid, ownerDocUuid, "/big.txt", bigData);
+        assetDao.updateContent(userUuid, ownerDocUuid, "/bigd.txt", bigData);
         
         try {
-            assetDao.getDraftContent(userUuid, ownerDocUuid, "/big.txt");
+            assetDao.getDraftContent(userUuid, ownerDocUuid, "/bigd.txt");
             assertThat(false).as("Expected DataTooBigException").isTrue();
         } catch (final RuntimeException e) {
             // Success
@@ -275,23 +275,23 @@ public class TestVisualisationDao {
         assertThat(missingContent).isNull();
 
         // 2. Normal file size
-        assetDao.updateNewFile(userUuid, ownerDocUuid, "/small.txt");
+        assetDao.updateNewFile(userUuid, ownerDocUuid, "/smalll.txt");
         final String testStr = "small content";
-        assetDao.updateContent(userUuid, ownerDocUuid, "/small.txt", testStr.getBytes(StandardCharsets.UTF_8));
+        assetDao.updateContent(userUuid, ownerDocUuid, "/smalll.txt", testStr.getBytes(StandardCharsets.UTF_8));
         assetDao.saveDraftToLive(userUuid, ownerDocUuid);
-        final String fetchedContent = assetDao.getDraftContent(userUuid, ownerDocUuid, "/small.txt");
+        final String fetchedContent = assetDao.getDraftContent(userUuid, ownerDocUuid, "/smalll.txt");
         assertThat(fetchedContent).isEqualTo(testStr);
 
         // 3. File too big
-        assetDao.updateNewFile(userUuid, ownerDocUuid, "/big.txt");
+        assetDao.updateNewFile(userUuid, ownerDocUuid, "/bigl.txt");
         final byte[] bigData = new byte[(1024 * 512) + 1]; // Just over the 512KiB limit
         // 'A'
         Arrays.fill(bigData, (byte) 65);
-        assetDao.updateContent(userUuid, ownerDocUuid, "/big.txt", bigData);
+        assetDao.updateContent(userUuid, ownerDocUuid, "/bigl.txt", bigData);
         assetDao.saveDraftToLive(userUuid, ownerDocUuid);
 
         try {
-            assetDao.getDraftContent(userUuid, ownerDocUuid, "/big.txt");
+            assetDao.getDraftContent(userUuid, ownerDocUuid, "/bigl.txt");
             assertThat(false).as("Expected DataTooBigException").isTrue();
         } catch (final RuntimeException e) {
             // Success
