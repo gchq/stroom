@@ -93,12 +93,7 @@ public enum ConditionSet {
             Condition.NOT_EQUALS_CASE_SENSITIVE,
             Condition.IN,
             Condition.IN_DICTIONARY),
-    SCHEDULE_TYPE(
-            Condition.IS_SCHEDULE_TYPE,
-            Condition.IS_NOT_SCHEDULE_TYPE),
-    SCHEDULE_PARENT_TYPE(
-            Condition.IS_PARENT_DOC_TYPE,
-            Condition.IS_NOT_PARENT_DOC_TYPE),
+
 
     // Receipt Policy Rules
     /**

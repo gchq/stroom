@@ -55,7 +55,7 @@ public class ExecutionScheduleFields {
     public static final QueryField FIELD_ENABLED = QueryField.createBoolean(ENABLED);
     public static final QueryField FIELD_NODE_NAME = QueryField.createText(NODE_NAME);
     public static final QueryField FIELD_SCHEDULE = QueryField.createText(SCHEDULE);
-    public static final QueryField FIELD_SCHEDULE_TYPE = QueryField.createScheduleTypeSelect(SCHEDULE_TYPE);
+    public static final QueryField FIELD_SCHEDULE_TYPE = QueryField.createText(SCHEDULE_TYPE);
     public static final QueryField FIELD_RUN_AS_USER = QueryField.createUserRef(RUN_AS_USER);
     public static final QueryField FIELD_START_TIME = QueryField.createDate(START_TIME);
     public static final QueryField FIELD_END_TIME = QueryField.createDate(END_TIME);
@@ -64,7 +64,7 @@ public class ExecutionScheduleFields {
     public static final QueryField FIELD_PARENT_REPORT
             = QueryField.createDocRefByUniqueName(ReportDoc.TYPE, PARENT_REPORT);
     public static final QueryField FIELD_PARENT_DOC_TYPE
-            = QueryField.createScheduleParentDocTypeSelect(PARENT_DOC_TYPE);
+            = QueryField.createText(PARENT_DOC_TYPE);
 
     static {
         FIELDS.add(FIELD_ID);

@@ -58,7 +58,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-
 public class TermEditor extends Composite {
 
     private static final String ITEM_CLASS_NAME = "termEditor-item";
@@ -76,8 +75,9 @@ public class TermEditor extends Composite {
     private final MyDateBox date;
     private final MyDateBox dateFrom;
     private final MyDateBox dateTo;
-    //Should be possible to unify the multiple uses of termlistbox so that the only difference
-    //is the values supplied.
+    // Should be possible to unify the multiple uses of termlistbox so that the only
+    // difference
+    // is the values supplied.
     private final SelectionBox<String> termListBox;
     private final Widget docRefWidget;
     private final Widget userRefWidget;
@@ -96,13 +96,12 @@ public class TermEditor extends Composite {
     private FieldSelectionListModel fieldSelectionListModel;
 
     public TermEditor(final Provider<DocSelectionBoxPresenter> docRefProvider,
-                      final Provider<UserRefSelectionBoxPresenter> userRefProvider,
-                      final UiConfigCache uiConfigCache) {
+            final Provider<UserRefSelectionBoxPresenter> userRefProvider,
+            final UiConfigCache uiConfigCache) {
         final DocSelectionBoxPresenter docRefPresenter = docRefProvider.get();
         docRefPresenter.setRequiredPermissions(DocumentPermission.USE);
         docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
         suggestOracle = new AsyncSuggestOracle(docRefPresenter);
-
 
         this.docSelectionBoxPresenter = docRefPresenter;
         this.userRefSelectionBoxPresenter = userRefProvider.get();
@@ -177,8 +176,8 @@ public class TermEditor extends Composite {
     }
 
     public void init(final RestFactory restFactory,
-                     final DocRef dataSource,
-                     final FieldSelectionListModel fieldSelectionListModel) {
+            final DocRef dataSource,
+            final FieldSelectionListModel fieldSelectionListModel) {
         suggestOracle.setRestFactory(restFactory);
         suggestOracle.setDataSource(dataSource);
 
@@ -333,13 +332,12 @@ public class TermEditor extends Composite {
                         fieldType = field.getFldType();
                     }
                     return ConditionSet.getUiDefaultConditions(fieldType);
-                }
-        );
+                });
         return conditions.getConditionList();
     }
 
     private void changeCondition(final QueryField field,
-                                 final Condition condition) {
+            final Condition condition) {
         final QueryField selectedField = fieldListBox.getValue();
         final FieldType indexFieldType = NullSafe.get(selectedField, QueryField::getFldType);
 
@@ -348,41 +346,34 @@ public class TermEditor extends Composite {
         } else {
             switch (condition) {
                 case EQUALS,
-                        NOT_EQUALS,
-                        LESS_THAN,
-                        LESS_THAN_OR_EQUAL_TO,
-                        GREATER_THAN,
-                        GREATER_THAN_OR_EQUAL_TO:
-                    enterTextOrDateOrBooleanMode(indexFieldType);
+                     NOT_EQUALS,
+                     LESS_THAN,
+                     LESS_THAN_OR_EQUAL_TO,
+                     GREATER_THAN,
+                     GREATER_THAN_OR_EQUAL_TO:
+                    enterTextOrDateMode(indexFieldType);
                     break;
                 case BETWEEN:
                     enterTextOrDateRangeMode(indexFieldType);
                     break;
                 case IN_DICTIONARY,
                         IN_FOLDER,
-                         IS_DOC_REF,
-                         IS_NOT_DOC_REF,
+                        IS_DOC_REF,
+                        IS_NOT_DOC_REF,
                         OF_DOC_REF:
                     enterDocRefMode(field, condition);
                     break;
                 case IS_USER_REF,
-                     IS_NOT_USER_REF,
-                     USER_HAS_PERM,
-                     USER_HAS_OWNER,
-                     USER_HAS_DELETE,
-                     USER_HAS_EDIT,
-                     USER_HAS_VIEW,
-                     USER_HAS_USE:
+                        IS_NOT_USER_REF,
+                        USER_HAS_PERM,
+                        USER_HAS_OWNER,
+                        USER_HAS_DELETE,
+                        USER_HAS_EDIT,
+                        USER_HAS_VIEW,
+                        USER_HAS_USE:
                     enterUserRefMode(field, condition);
                     break;
-                case IS_SCHEDULE_TYPE,
-                     IS_NOT_SCHEDULE_TYPE:
-                    enterScheduleTypeMode();
-                    break;
-                case IS_PARENT_DOC_TYPE,
-                     IS_NOT_PARENT_DOC_TYPE:
-                    enterParentDocTypeMode();
-                    break;
+
                 default:
                     enterTextMode();
                     break;
@@ -390,10 +381,8 @@ public class TermEditor extends Composite {
         }
     }
 
-    private void enterTextOrDateOrBooleanMode(final FieldType indexFieldType) {
-        if (FieldType.BOOLEAN.equals(indexFieldType)) {
-            enterBooleanMode();
-        } else if (FieldType.DATE.equals(indexFieldType)) {
+    private void enterTextOrDateMode(final FieldType indexFieldType) {
+        if (FieldType.DATE.equals(indexFieldType)) {
             enterDateMode();
         } else {
             enterTextMode();
@@ -421,30 +410,6 @@ public class TermEditor extends Composite {
     private void enterDateMode() {
         setActiveWidgets(date);
         updateDateBoxes();
-    }
-
-    private void enterBooleanMode() {
-        termListBox.clear();
-        termListBox.addItem("true");
-        termListBox.addItem("false");
-        setActiveWidgets(termListBox);
-        updateTermListBox();
-    }
-
-    private void enterScheduleTypeMode() {
-        termListBox.clear();
-        termListBox.addItem(ScheduleType.CRON.getDisplayValue());
-        termListBox.addItem(ScheduleType.FREQUENCY.getDisplayValue());
-        setActiveWidgets(termListBox);
-        updateTermListBox();
-    }
-
-    private void enterParentDocTypeMode() {
-        termListBox.clear();
-        termListBox.addItem(AnalyticRuleDoc.TYPE);
-        termListBox.addItem(ReportDoc.TYPE);
-        setActiveWidgets(termListBox);
-        updateTermListBox();
     }
 
     private void enterDateRangeMode() {
@@ -605,16 +570,13 @@ public class TermEditor extends Composite {
     }
 
     private BaseSelectionBox<QueryField, FieldInfoSelectionItem> createFieldBox(final UiConfigCache uiConfigCache) {
-        final BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox =
-                new BaseSelectionBox<QueryField, FieldInfoSelectionItem>();
+        final BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox = new BaseSelectionBox<>();
         fieldListBox.addStyleName(ITEM_CLASS_NAME);
         fieldListBox.addStyleName(DROPDOWN_CLASS_NAME);
         fieldListBox.addStyleName("field");
         fieldListBox.addStyleName("termEditor-item");
-        uiConfigCache.get(uiConfig ->
-                NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl ->
-                        fieldListBox.registerPopupTextProvider(() ->
-                                QuickFilterTooltipUtil.createTooltip("Field Filter", helpUrl))));
+        uiConfigCache.get(uiConfig -> NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl -> fieldListBox
+                .registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip("Field Filter", helpUrl))));
         return fieldListBox;
     }
 

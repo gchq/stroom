@@ -256,33 +256,6 @@ public class QueryField implements Field, HasDisplayValue {
                 .build();
     }
 
-    public static QueryField createScheduleTypeSelect(final String name) {
-        return createScheduleTypeSelect(name, true);
-    }
-
-    public static QueryField createScheduleTypeSelect(final String name,
-                                                      final Boolean queryable) {
-        return builder()
-                .fldName(name)
-                .fldType(FieldType.TEXT)
-                .conditionSet(ConditionSet.SCHEDULE_TYPE)
-                .queryable(queryable)
-                .build();
-    }
-
-    public static QueryField createScheduleParentDocTypeSelect(final String name) {
-        return createScheduleParentDocTypeSelect(name, true);
-    }
-
-    public static QueryField createScheduleParentDocTypeSelect(final String name,
-                                                      final Boolean queryable) {
-        return builder()
-                .fldName(name)
-                .fldType(FieldType.TEXT)
-                .conditionSet(ConditionSet.SCHEDULE_PARENT_TYPE)
-                .queryable(queryable)
-                .build();
-    }
 
 
     /**

@@ -18,14 +18,18 @@ package stroom.analytics.impl;
 
 import stroom.analytics.api.AnalyticsService;
 import stroom.analytics.shared.DuplicateCheckResource;
+import stroom.analytics.shared.ExecutionScheduleFields;
+import stroom.core.meta.MetaSuggestionsQueryHandler;
 import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.meta.shared.MetaFields;
 import stroom.processor.api.ProcessorTaskExecutorBinder;
 import stroom.processor.shared.ProcessorType;
 import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.SearchProvider;
 import stroom.search.impl.NodeSearchTaskHandlerProvider;
+import stroom.suggestions.api.SuggestionsServiceBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
@@ -105,6 +109,11 @@ public class AnalyticsModule extends AbstractModule {
 
         ProcessorTaskExecutorBinder.create(binder())
                 .bind(ProcessorType.STREAMING_ANALYTIC, StreamingAnalyticProcessorExecutor.class);
+
+        SuggestionsServiceBinder.create(binder())
+                .bind(ExecutionScheduleFields.TYPE, ExecutionScheduleSuggestionsQueryHandler.class);
+
+
 
         GuiceUtil.buildMapBinder(binder(), String.class, HasUserDependencies.class)
                 .addBinding(ScheduledQueryAnalyticExecutor.class.getName(), ScheduledQueryAnalyticExecutor.class);
