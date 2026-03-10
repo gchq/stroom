@@ -676,11 +676,10 @@ public class ExpressionPredicateFactory {
         return ScoringPredicate.matchNone();
     }
 
-    private static <T> Optional<ScoringPredicate<T>> ifValue(final ExpressionTerm term,
-                                                             final Supplier<ScoringPredicate<T>> supplier) {
-//        if (NullSafe.isBlankString(term.getValue())) {
-//            return Optional.empty();
-//        }
+    private static <T> Optional<ScoringPredicate<T>> ifValue(final ExpressionTerm term, final Supplier<ScoringPredicate<T>> supplier) {
+        if (term.getValue() == null) {
+            return Optional.empty();
+        }
         return Optional.of(supplier.get());
     }
 
