@@ -35,9 +35,6 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRuleDoc>
         extends DocumentEditPresenter<AbstractProcessingPresenter.AnalyticProcessingView, D>
         implements AnalyticProcessingUiHandlers, HasChangeDataHandlers<AnalyticProcessType> {
