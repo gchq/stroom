@@ -46,7 +46,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
-class TestDataFeedKeyServiceImpl {
+class TestDataFeedIdentityServiceImpl {
 
     private static final Set<DataFeedKeyHasher> DATA_FEED_KEY_HASHERS = Set.of(
             new Argon2DataFeedKeyHasher(),
@@ -58,7 +58,7 @@ class TestDataFeedKeyServiceImpl {
 
     @Test
     void authenticate_noKey() {
-        final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
+        final DataFeedIdentityServiceImpl dataFeedKeyService = new DataFeedIdentityServiceImpl(
                 this::getReceiveDataConfig,
                 DATA_FEED_KEY_HASHERS,
                 new CacheManagerImpl());
@@ -74,7 +74,7 @@ class TestDataFeedKeyServiceImpl {
 
     @Test
     void authenticate_invalidKey1() {
-        final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
+        final DataFeedIdentityServiceImpl dataFeedKeyService = new DataFeedIdentityServiceImpl(
                 this::getReceiveDataConfig,
                 DATA_FEED_KEY_HASHERS,
                 new CacheManagerImpl());
@@ -92,11 +92,11 @@ class TestDataFeedKeyServiceImpl {
 
     @Test
     void authenticate_invalidKey2() {
-        final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
+        final DataFeedIdentityServiceImpl dataFeedKeyService = new DataFeedIdentityServiceImpl(
                 this::getReceiveDataConfig,
                 DATA_FEED_KEY_HASHERS,
                 new CacheManagerImpl());
-        setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + "foo");
+        setAuthHeaderOnMock(DataFeedIdentityServiceImpl.BEARER_PREFIX + "foo");
         final AttributeMap attributeMap = new AttributeMap(Map.of(
                 StandardHeaderArguments.ACCOUNT_ID, "1234"
         ));
@@ -110,13 +110,13 @@ class TestDataFeedKeyServiceImpl {
 
     @Test
     void authenticate_validButUnknownKey() {
-        final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
+        final DataFeedIdentityServiceImpl dataFeedKeyService = new DataFeedIdentityServiceImpl(
                 this::getReceiveDataConfig,
                 DATA_FEED_KEY_HASHERS,
                 new CacheManagerImpl());
         final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateFixedTestKey1();
         final HashedDataFeedKey hashedDataFeedKey = keyWithHash.hashedDataFeedKey();
-        setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + keyWithHash.key());
+        setAuthHeaderOnMock(DataFeedIdentityServiceImpl.BEARER_PREFIX + keyWithHash.key());
         final AttributeMap attributeMap = new AttributeMap(Map.of(
                 StandardHeaderArguments.ACCOUNT_ID,
                 hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID)
@@ -138,7 +138,7 @@ class TestDataFeedKeyServiceImpl {
 
     @Test
     void authenticate_validButExpiredKey() {
-        final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
+        final DataFeedIdentityServiceImpl dataFeedKeyService = new DataFeedIdentityServiceImpl(
                 this::getReceiveDataConfig,
                 DATA_FEED_KEY_HASHERS,
                 new CacheManagerImpl());
@@ -146,7 +146,7 @@ class TestDataFeedKeyServiceImpl {
         final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateRandomKey(
                 "1234", Map.of(), Instant.now().plus(expiryDuration));
         final HashedDataFeedKey hashedDataFeedKey = keyWithHash.hashedDataFeedKey();
-        setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + keyWithHash.key());
+        setAuthHeaderOnMock(DataFeedIdentityServiceImpl.BEARER_PREFIX + keyWithHash.key());
         final AttributeMap attributeMap = new AttributeMap(Map.of(
                 StandardHeaderArguments.ACCOUNT_ID,
                 hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID)
@@ -175,13 +175,13 @@ class TestDataFeedKeyServiceImpl {
     @Test
     void authenticate_validAndKnownKey() {
         final ReceiveDataConfig receiveDataConfig = getReceiveDataConfig();
-        final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
+        final DataFeedIdentityServiceImpl dataFeedKeyService = new DataFeedIdentityServiceImpl(
                 () -> receiveDataConfig,
                 DATA_FEED_KEY_HASHERS,
                 new CacheManagerImpl());
         final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateFixedTestKey1();
         final HashedDataFeedKey hashedDataFeedKey = keyWithHash.hashedDataFeedKey();
-        setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + keyWithHash.key());
+        setAuthHeaderOnMock(DataFeedIdentityServiceImpl.BEARER_PREFIX + keyWithHash.key());
         final AttributeMap attributeMap = new AttributeMap(Map.of(
                 StandardHeaderArguments.ACCOUNT_ID,
                 hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID)
@@ -206,7 +206,7 @@ class TestDataFeedKeyServiceImpl {
     @Test
     void authenticate_multipleValidKnownKeys() {
         final ReceiveDataConfig receiveDataConfig = getReceiveDataConfig();
-        final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
+        final DataFeedIdentityServiceImpl dataFeedKeyService = new DataFeedIdentityServiceImpl(
                 () -> receiveDataConfig,
                 DATA_FEED_KEY_HASHERS,
                 new CacheManagerImpl());
@@ -231,7 +231,7 @@ class TestDataFeedKeyServiceImpl {
             final HashedDataFeedKey hashedDataFeedKey = key.hashedDataFeedKey();
             final String accId = hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID);
 
-            setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + plainKey);
+            setAuthHeaderOnMock(DataFeedIdentityServiceImpl.BEARER_PREFIX + plainKey);
             final AttributeMap attributeMap = hashedDataFeedKey.getAttributeMap();
 
             final Optional<UserIdentity> optUserIdentity = dataFeedKeyService.authenticate(
@@ -250,7 +250,7 @@ class TestDataFeedKeyServiceImpl {
     @Test
     void authenticate_duplicateValidKnownKeys() {
         final ReceiveDataConfig receiveDataConfig = getReceiveDataConfig();
-        final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
+        final DataFeedIdentityServiceImpl dataFeedKeyService = new DataFeedIdentityServiceImpl(
                 () -> receiveDataConfig,
                 DATA_FEED_KEY_HASHERS,
                 new CacheManagerImpl());
@@ -281,7 +281,7 @@ class TestDataFeedKeyServiceImpl {
                 final HashedDataFeedKey hashedDataFeedKey = key.hashedDataFeedKey();
                 final String accId2 = hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID);
 
-                setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + plainKey);
+                setAuthHeaderOnMock(DataFeedIdentityServiceImpl.BEARER_PREFIX + plainKey);
                 final AttributeMap attributeMap = hashedDataFeedKey.getAttributeMap();
 
                 final Optional<UserIdentity> optUserIdentity = dataFeedKeyService.authenticate(
@@ -300,13 +300,13 @@ class TestDataFeedKeyServiceImpl {
 
     @Test
     void authenticate_badAccountId() {
-        final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
+        final DataFeedIdentityServiceImpl dataFeedKeyService = new DataFeedIdentityServiceImpl(
                 this::getReceiveDataConfig,
                 DATA_FEED_KEY_HASHERS,
                 new CacheManagerImpl());
         final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateFixedTestKey1();
         final HashedDataFeedKey hashedDataFeedKey = keyWithHash.hashedDataFeedKey();
-        setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + keyWithHash.key());
+        setAuthHeaderOnMock(DataFeedIdentityServiceImpl.BEARER_PREFIX + keyWithHash.key());
         final AttributeMap attributeMap = new AttributeMap(Map.of(
                 StandardHeaderArguments.ACCOUNT_ID, "foo"));
 
@@ -325,7 +325,7 @@ class TestDataFeedKeyServiceImpl {
     }
 
     private void setAuthHeaderOnMock(final String value) {
-        Mockito.when(mockHttpServletRequest.getHeader(DataFeedKeyServiceImpl.AUTHORIZATION_HEADER))
+        Mockito.when(mockHttpServletRequest.getHeader(DataFeedIdentityServiceImpl.AUTHORIZATION_HEADER))
                 .thenReturn(value);
     }
 

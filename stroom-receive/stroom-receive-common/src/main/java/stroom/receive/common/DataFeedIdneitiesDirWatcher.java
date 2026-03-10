@@ -41,21 +41,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 @Singleton
-public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
+public class DataFeedIdneitiesDirWatcher extends AbstractDirChangeMonitor {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataFeedKeyDirWatcher.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataFeedIdneitiesDirWatcher.class);
 
     private static final Predicate<Path> FILE_INCLUDE_FILTER = path ->
             path != null
             && Files.isRegularFile(path)
             && path.getFileName().toString().endsWith(".json");
 
-    private final Provider<DataFeedKeyService> dataFeedKeyServiceProvider;
+    private final Provider<DataFeedIdentityService> dataFeedKeyServiceProvider;
 
     @Inject
-    public DataFeedKeyDirWatcher(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
-                                 final SimplePathCreator simplePathCreator,
-                                 final Provider<DataFeedKeyService> dataFeedKeyServiceProvider) {
+    public DataFeedIdneitiesDirWatcher(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                                       final SimplePathCreator simplePathCreator,
+                                       final Provider<DataFeedIdentityService> dataFeedKeyServiceProvider) {
         super(
                 getDataFeedDir(receiveDataConfigProvider, simplePathCreator),
                 FILE_INCLUDE_FILTER,

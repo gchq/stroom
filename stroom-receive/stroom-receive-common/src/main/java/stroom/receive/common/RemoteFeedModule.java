@@ -29,7 +29,7 @@ public class RemoteFeedModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(RequestAuthenticator.class).to(RequestAuthenticatorImpl.class);
-        bind(DataFeedKeyService.class).to(DataFeedKeyServiceImpl.class);
+        bind(DataFeedIdentityService.class).to(DataFeedIdentityServiceImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(FeedStatusResourceImpl.class)
@@ -39,11 +39,11 @@ public class RemoteFeedModule extends AbstractModule {
 //                .bind(RemoteFeedServiceRPC.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
-                .addBinding(DataFeedKeyDirWatcher.class)
-                .addBinding(DataFeedKeyServiceImpl.class);
+                .addBinding(DataFeedIdneitiesDirWatcher.class)
+                .addBinding(DataFeedIdentityServiceImpl.class);
 
         HasSystemInfoBinder.create(binder())
-                .bind(DataFeedKeyServiceImpl.class);
+                .bind(DataFeedIdentityServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataFeedKeyHasher.class)
                 .addBinding(Argon2DataFeedKeyHasher.class)
