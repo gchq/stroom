@@ -95,7 +95,7 @@ class TestRequestAuthenticatorImpl {
                 .withOutputTypes(UserIdentity.class, StroomStatusCode.class)
                 .withTestFunction(testCase -> {
                     final HttpServletRequest mockHttpServletRequest = Mockito.mock(HttpServletRequest.class);
-                    final DataFeedKeyService mockDataFeedKeyService = Mockito.mock(DataFeedKeyService.class);
+                    final DataFeedIdentityService mockDataFeedIdentityService = Mockito.mock(DataFeedIdentityService.class);
                     final OidcTokenAuthenticator mockOidcTokenAuthenticator = Mockito.mock(
                             OidcTokenAuthenticator.class);
                     final CertificateAuthenticator mockCertificateAuthenticator = Mockito.mock(
@@ -105,7 +105,7 @@ class TestRequestAuthenticatorImpl {
                     final RequestAuthenticator requestAuthenticator = new RequestAuthenticatorImpl(
                             mockUserIdentityFactory,
                             () -> testCase.getInput().receiveDataConfig,
-                            () -> mockDataFeedKeyService,
+                            () -> mockDataFeedIdentityService,
                             () -> mockOidcTokenAuthenticator,
                             () -> mockCertificateAuthenticator,
                             () -> mockAllowUnauthenticatedAuthenticator);
@@ -139,10 +139,10 @@ class TestRequestAuthenticatorImpl {
                     }
                     if (receiveDataConfig.isAuthenticationTypeEnabled(AuthenticationType.DATA_FEED_KEY)) {
                         if (errorCode != null) {
-                            Mockito.when(mockDataFeedKeyService.authenticate(Mockito.any(), Mockito.any()))
+                            Mockito.when(mockDataFeedIdentityService.authenticate(Mockito.any(), Mockito.any()))
                                     .thenThrow(new StroomStreamException(errorCode, null));
                         } else {
-                            Mockito.when(mockDataFeedKeyService.authenticate(Mockito.any(), Mockito.any()))
+                            Mockito.when(mockDataFeedIdentityService.authenticate(Mockito.any(), Mockito.any()))
                                     .thenReturn(authMethodsInReq.contains(AuthMethod.DATA_FEED_KEY)
                                             ? Optional.of(dataFeedKeyUser)
                                             : Optional.empty());

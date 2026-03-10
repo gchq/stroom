@@ -61,9 +61,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Singleton
-public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasSystemInfo {
+public class DataFeedIdentityServiceImpl implements DataFeedIdentityService, Managed, HasSystemInfo {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataFeedKeyServiceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataFeedIdentityServiceImpl.class);
     private static final String CACHE_NAME = "Authenticated Data Feed Key Cache";
 
     static final String AUTHORIZATION_HEADER = "Authorization";
@@ -97,9 +97,9 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Managed, HasS
     private final Timer timer;
 
     @Inject
-    DataFeedKeyServiceImpl(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
-                           final Set<DataFeedKeyHasher> dataFeedKeyHashers,
-                           final CacheManager cacheManager) {
+    DataFeedIdentityServiceImpl(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                                final Set<DataFeedKeyHasher> dataFeedKeyHashers,
+                                final CacheManager cacheManager) {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
         this.hashFunctionMap = buildHashFunctionMap(dataFeedKeyHashers);
         this.unHashedKeyToDataFeedKeyCache = cacheManager.createLoadingCache(
