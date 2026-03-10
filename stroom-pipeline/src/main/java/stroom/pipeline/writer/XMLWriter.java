@@ -103,6 +103,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     private String rootElement;
 
     private boolean indentOutput = false;
+    private boolean preventEscapeSwitching = false;
 
     //XSL related props in order to support <xsl:output>
     private final XsltStore xsltStore;
@@ -186,7 +187,8 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
             final ErrorListener errorListener = new ErrorListenerAdaptor(getElementId(), locationFactory,
                     getErrorReceiver());
-            final TransformerHandler th = XMLUtil.createTransformerHandler(errorListener, indentOutput);
+            final TransformerHandler th = XMLUtil
+                    .createTransformerHandler(errorListener, indentOutput, preventEscapeSwitching);
 
             if (outputProperties != null) {
                 th.getTransformer().setOutputProperties(outputProperties);
@@ -567,6 +569,15 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
             displayPriority = 3)
     public void setSuppressXSLTNotFoundWarnings(final boolean suppressXSLTNotFoundWarnings) {
         this.suppressXSLTNotFoundWarnings = suppressXSLTNotFoundWarnings;
+    }
+
+    @PipelineProperty(
+            description = "Some inputs might contain control character 0 which turns off output escaping. " +
+                          "Set this to true to prevent that behaviour.",
+            defaultValue = "false",
+            displayPriority = 4)
+    public void setPreventEscapeSwitching(final boolean preventEscapeSwitching) {
+        this.preventEscapeSwitching = preventEscapeSwitching;
     }
 
     /**

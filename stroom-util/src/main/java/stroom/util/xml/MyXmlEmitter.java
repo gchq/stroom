@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2015 Saxonica Limited.
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 package stroom.util.xml;
 
@@ -71,6 +71,15 @@ public class MyXmlEmitter extends XMLEmitter {
         IS_SPECIAL_IN_ATT['>'] = true;
         IS_SPECIAL_IN_ATT['&'] = true;
         IS_SPECIAL_IN_ATT['\"'] = true;
+    }
+
+    /**
+     * Use this flag to determine if we are going to let the control character 0 toggle escape switching.
+     */
+    private final boolean preventEscapeSwitching;
+
+    public MyXmlEmitter(final boolean preventEscapeSwitching) {
+        this.preventEscapeSwitching = preventEscapeSwitching;
     }
 
     /**
@@ -139,7 +148,7 @@ public class MyXmlEmitter extends XMLEmitter {
 
             // examine the special character that interrupted the scan
             final char c = chars.charAt(i);
-            if (c == 0) {
+            if (c == 0 && !preventEscapeSwitching) {
                 // used to switch escaping on and off
                 disabled = !disabled;
             } else if (disabled) {
