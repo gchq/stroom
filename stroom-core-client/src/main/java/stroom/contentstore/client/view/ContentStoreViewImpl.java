@@ -41,10 +41,6 @@ public class ContentStoreViewImpl extends ViewImpl implements ContentStoreView {
     @UiField
     public SimplePanel contentPackDetails;
 
-    /**
-     * Injected constructor.
-     * @param binder Links this to the XML UI spec.
-     */
     @SuppressWarnings("unused")
     @Inject
     public ContentStoreViewImpl(final Binder binder) {

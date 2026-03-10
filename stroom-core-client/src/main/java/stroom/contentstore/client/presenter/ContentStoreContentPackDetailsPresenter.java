@@ -42,14 +42,37 @@ import com.google.gwt.user.client.ui.Label;
 
 import javax.inject.Inject;
 
+/**
+ * Details panel of the content store UI.
+ */
 public class ContentStoreContentPackDetailsPresenter
         extends FlowPanel
         implements HasHandlers {
 
     /**
-     * Points to top level of this page. Needed for Alert dialogs.
+     * Used when we need an empty string
      */
-    private ContentStorePresenter contentStorePresenter = null;
+    private static final String EMPTY = "";
+
+    /**
+     * Target window of the licence URL
+     */
+    private static final String LICENCE_URL_TARGET = "stroom-content-pack-licence";
+
+    /**
+     * Title (hover-over) for the licence URL link
+     */
+    private static final String LICENCE_URL_TITLE = "Link to licence (opens in new window)";
+
+    /**
+     * Target window of the Git URL
+     */
+    private static final String GIT_URL_TARGET = "stroom-content-pack-git";
+
+    /**
+     * Title (hover-over) for the GIT URL link
+     */
+    private static final String GIT_URL_TITLE = "Link to Git repository (opens in new window)";
 
     /**
      * Converts markdown to HTML
@@ -137,38 +160,15 @@ public class ContentStoreContentPackDetailsPresenter
     private final Button btnUpgradeGitRepo = new Button();
 
     /**
+     * Points to top level of this page. Needed for Alert dialogs.
+     */
+    private ContentStorePresenter contentStorePresenter = null;
+
+    /**
      * Current content pack selected. Might be null
      */
     private ContentStoreContentPackWithDynamicState contentPackWithState = null;
 
-    /**
-     * Used when we need an empty string
-     */
-    private static final String EMPTY = "";
-
-    /**
-     * Target window of the licence URL
-     */
-    private static final String LICENCE_URL_TARGET = "stroom-content-pack-licence";
-
-    /**
-     * Title (hover-over) for the licence URL link
-     */
-    private static final String LICENCE_URL_TITLE = "Link to licence (opens in new window)";
-
-    /**
-     * Target window of the Git URL
-     */
-    private static final String GIT_URL_TARGET = "stroom-content-pack-git";
-
-    /**
-     * Title (hover-over) for the GIT URL link
-     */
-    private static final String GIT_URL_TITLE = "Link to Git repository (opens in new window)";
-
-    /**
-     * Injected constructor.
-     */
     @SuppressWarnings("unused")
     @Inject
     public ContentStoreContentPackDetailsPresenter(final MarkdownConverter markdownConverter,

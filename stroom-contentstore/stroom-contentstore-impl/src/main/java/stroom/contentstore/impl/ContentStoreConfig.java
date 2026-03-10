@@ -35,6 +35,9 @@ import java.util.List;
  */
 @JsonPropertyOrder(alphabetic = true)
 public class ContentStoreConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentStoreConfig.class);
+
     /**
      * Default location where the ContentStore config is stored.
      */
@@ -45,11 +48,6 @@ public class ContentStoreConfig extends AbstractConfig implements IsStroomConfig
      * List of App Store URLS
      */
     private final List<String> contentStores = new ArrayList<>();
-
-    /**
-     * Logger
-     */
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentStoreConfig.class);
 
     /**
      * Default constructor. Configuration created with default values.
