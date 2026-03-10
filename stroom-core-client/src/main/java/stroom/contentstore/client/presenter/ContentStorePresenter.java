@@ -48,10 +48,8 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
     /** Label for the content */
     private static final String LABEL = "Content Store";
 
-    /** Widget to show the list of available content packs */
     private final ContentStoreContentPackListPresenter contentPackListPresenter;
 
-    /** Widget to show the details of a particular content pack */
     public final ContentStoreContentPackDetailsPresenter contentPackDetailsPresenter;
 
     @SuppressWarnings("unused")
