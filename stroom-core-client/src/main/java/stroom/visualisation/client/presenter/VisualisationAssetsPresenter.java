@@ -126,11 +126,11 @@ public class VisualisationAssetsPresenter
     /** Items in the context menu */
     private final List<Item> menuItems = new ArrayList<>();
 
-    /** Current document - may be null */
-    private VisualisationDoc document;
-
     /** State of content edited in editor */
     private final VisualisationAssetState assetDirtyState = new VisualisationAssetState();
+
+    /** Current document - may be null */
+    private VisualisationDoc document;
 
     /** True if the UI is readonly, false if read-write */
     private boolean readOnly = false;
