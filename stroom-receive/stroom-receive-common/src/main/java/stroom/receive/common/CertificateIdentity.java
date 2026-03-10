@@ -26,9 +26,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
-public class CertificateIdentity implements DataFeedIdentity {
+/**
+ * Represents an X509 certificate (using the DN of the certificate) and the meta
+ * attributes that will be applied to any data receipt using that identity.
+ */
+public final class CertificateIdentity implements DataFeedIdentity {
 
     public static final DNFormat DEFAULT_X509_CERT_DN_FORMAT = DNFormat.LDAP;
 
@@ -53,13 +59,21 @@ public class CertificateIdentity implements DataFeedIdentity {
     @JsonIgnore
     private final int hashCode;
 
-    public CertificateIdentity(final String certificateDn,
-                               final DNFormat dnFormat,
-                               final Map<CIKey, String> streamMetaData,
-                               final long expiryDateEpochMs) {
+    public CertificateIdentity(@JsonProperty("certificateDn") final String certificateDn,
+                               @JsonProperty("dnFormat") final DNFormat dnFormat,
+                               @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,
+                               @JsonProperty("expiryDateEpochMs") final long expiryDateEpochMs) {
         this.certificateDn = Objects.requireNonNull(certificateDn);
         this.dnFormat = Objects.requireNonNullElse(dnFormat, DEFAULT_X509_CERT_DN_FORMAT);
-        this.streamMetaData = NullSafe.map(streamMetaData);
+        // No point holding blank keys or null values
+        this.streamMetaData = NullSafe.map(streamMetaData)
+                .entrySet()
+                .stream()
+                .filter(entry -> NullSafe.isNonBlankString(entry.getKey()))
+                .filter(entry -> entry.getValue() != null)
+                .collect(Collectors.toMap(
+                        entry -> CIKey.of(entry.getKey()),
+                        Entry::getValue));
         this.expiryDateEpochMs = expiryDateEpochMs;
         // Pre-compute the hash as we know we are putting each identity into a map
         this.hashCode = Objects.hash(certificateDn, dnFormat, streamMetaData, expiryDateEpochMs);
@@ -87,6 +101,12 @@ public class CertificateIdentity implements DataFeedIdentity {
     public long getExpiryDateEpochMs() {
         return expiryDateEpochMs;
     }
+
+//    @Override
+//    @JsonProperty("type")
+//    public IdentityType getType() {
+//        return IdentityType.CERTIFICATE_DN;
+//    }
 
     @Override
     public boolean equals(final Object o) {
