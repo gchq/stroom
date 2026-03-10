@@ -35,6 +35,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -814,6 +815,24 @@ public class NullSafe {
     }
 
     /**
+     * Returns a list containing only the non-null items from list.
+     * If list is null, an empty list will be returned.
+     *
+     * @return An immutable list containing no null values.
+     */
+    public static <L extends List<T>, T> List<T> removeNulls(final L list) {
+        if (list == null || list.stream().allMatch(Objects::isNull)) {
+            return Collections.emptyList();
+        } else if (list.stream().allMatch(Objects::nonNull)) {
+            return Collections.unmodifiableList(list);
+        } else {
+            return list.stream()
+                    .filter(Objects::nonNull)
+                    .toList();
+        }
+    }
+
+    /**
      * Returns an unmodifiable view of a new {@link ArrayList} instance that has been populated with the
      * contents of list in a null-safe way.
      * Allows null list elements.
@@ -870,6 +889,24 @@ public class NullSafe {
         return set != null
                 ? Collections.unmodifiableSet(set)
                 : Collections.emptySet();
+    }
+
+    /**
+     * Returns a set containing only the non-null items from set.
+     * If set is null, an empty set will be returned.
+     *
+     * @return An immutable set containing no null values.
+     */
+    public static <S extends Set<T>, T> Set<T> removeNulls(final S set) {
+        if (set == null || set.stream().allMatch(Objects::isNull)) {
+            return Collections.emptySet();
+        } else if (set.stream().allMatch(Objects::nonNull)) {
+            return Collections.unmodifiableSet(set);
+        } else {
+            return set.stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toUnmodifiableSet());
+        }
     }
 
     /**

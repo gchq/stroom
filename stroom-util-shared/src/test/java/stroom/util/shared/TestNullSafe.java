@@ -1576,6 +1576,31 @@ class TestNullSafe {
     }
 
     @TestFactory
+    Stream<DynamicTest> testRemoveNulls_List() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<List<String>>() {
+                })
+                .withSingleArgTestFunction(NullSafe::removeNulls)
+                .withAssertions(testOutcome -> {
+                    final List<String> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    assertThat(actual)
+                            .isUnmodifiable();
+                })
+                .addCase(null, Collections.emptyList())
+                .addCase(Collections.emptyList(), Collections.emptyList())
+                .addCase(Collections.singletonList((String) null), Collections.emptyList())
+                .addCase(Arrays.asList(null, null, null), Collections.emptyList())
+                .addCase(List.of("foo"), List.of("foo"))
+                .addCase(Arrays.asList(null, "foo"), List.of("foo"))
+                .addCase(Arrays.asList(null, "foo", null), List.of("foo"))
+                .addCase(List.of("foo", "bar"), List.of("foo", "bar"))
+                .addCase(Arrays.asList(null, "foo", null, "bar", null), List.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
     Stream<DynamicTest> testMutableSet() {
         return TestUtil.buildDynamicTestStream()
                 .withWrappedInputAndOutputType(new TypeLiteral<Set<String>>() {
@@ -1593,6 +1618,31 @@ class TestNullSafe {
                 .addCase(Collections.emptySet(), Collections.emptySet())
                 .addCase(Set.of("foo"), Set.of("foo"))
                 .addCase(Set.of("foo", "bar"), Set.of("foo", "bar"))
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testRemoveNulls_Set() {
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputAndOutputType(new TypeLiteral<Set<String>>() {
+                })
+                .withSingleArgTestFunction(NullSafe::removeNulls)
+                .withAssertions(testOutcome -> {
+                    final Set<String> actual = testOutcome.getActualOutput();
+                    assertThat(actual)
+                            .isEqualTo(testOutcome.getExpectedOutput());
+                    assertThat(actual)
+                            .isUnmodifiable();
+                })
+                .addCase(null, Collections.emptySet())
+                .addCase(Collections.emptySet(), Collections.emptySet())
+                .addCase(Collections.singleton(null), Collections.emptySet())
+                .addCase(new HashSet<>(Arrays.asList(null, null, null)), Collections.emptySet())
+                .addCase(Set.of("foo"), Set.of("foo"))
+                .addCase(new HashSet<>(Arrays.asList(null, "foo")), Set.of("foo"))
+                .addCase(new HashSet<>(Arrays.asList(null, "foo", null)), Set.of("foo"))
+                .addCase(Set.of("foo", "bar"), Set.of("foo", "bar"))
+                .addCase(new HashSet<>(Arrays.asList(null, "foo", null, "bar", null)), Set.of("foo", "bar"))
                 .build();
     }
 
