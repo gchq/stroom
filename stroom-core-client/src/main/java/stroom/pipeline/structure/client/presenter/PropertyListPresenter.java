@@ -172,9 +172,7 @@ public class PropertyListPresenter
                         final PipelinePropertyValue value = property.getValue();
                         if (value != null && value.getEntity() != null) {
                             return SafeHtmlUtils.fromString(value.getEntity()
-                                    .getDisplayValue(NullSafe.requireNonNullElse(
-                                            DisplayType.AUTO,
-                                            DisplayType.AUTO)));
+                                    .getDisplayValue(DisplayType.AUTO));
                         } else {
                             return SafeHtmlUtils.fromString(getVal(property));
                         }
@@ -232,7 +230,7 @@ public class PropertyListPresenter
             for (final PipelineProperty property : properties) {
                 // Compare by element+name only
                 if (property.getElement().equals(defaultProperty.getElement())
-                        && property.getName().equals(defaultProperty.getName())) {
+                    && property.getName().equals(defaultProperty.getName())) {
                     return property;
                 }
             }
@@ -404,10 +402,10 @@ public class PropertyListPresenter
                         // Remove the property locally (compare by element+name only).
                         builder.getProperties().getAddList().removeIf(p ->
                                 p.getElement().equals(editing.getElement())
-                                        && p.getName().equals(editing.getName()));
+                                && p.getName().equals(editing.getName()));
                         builder.getProperties().getRemoveList().removeIf(p ->
                                 p.getElement().equals(editing.getElement())
-                                        && p.getName().equals(editing.getName()));
+                                && p.getName().equals(editing.getName()));
 
                         // Write new property.
                         final PipelinePropertyValue value = editor.writeValue();

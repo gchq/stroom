@@ -40,7 +40,7 @@ public class HistogramValueSchema {
 
     @JsonCreator
     public HistogramValueSchema(@JsonProperty("valueType") final MaxValueSize valueType) {
-        this.valueType = NullSafe.requireNonNullElse(valueType, DEFAULT_VALUE_TYPE);
+        this.valueType = Objects.requireNonNullElse(valueType, DEFAULT_VALUE_TYPE);
     }
 
     public MaxValueSize getValueType() {

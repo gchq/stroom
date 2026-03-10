@@ -117,7 +117,7 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
         this.updateUser = updateUser;
         this.path = path;
         this.nodeName = nodeName;
-        this.state = NullSafe.requireNonNullElse(state, VolumeUseState.ACTIVE);
+        this.state = Objects.requireNonNullElse(state, VolumeUseState.ACTIVE);
         this.bytesLimit = bytesLimit;
         this.bytesUsed = bytesUsed;
         this.bytesFree = bytesFree;

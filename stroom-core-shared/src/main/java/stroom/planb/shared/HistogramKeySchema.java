@@ -58,10 +58,10 @@ public class HistogramKeySchema {
                               @JsonProperty("hashLength") final HashLength hashLength,
                               @JsonProperty("temporalResolution") final TemporalResolution temporalResolution,
                               @JsonProperty("timeZone") final UserTimeZone timeZone) {
-        this.keyType = NullSafe.requireNonNullElse(keyType, DEFAULT_KEY_TYPE);
-        this.hashLength = NullSafe.requireNonNullElse(hashLength, DEFAULT_HASH_LENGTH);
-        this.temporalResolution = NullSafe.requireNonNullElse(temporalResolution, DEFAULT_TEMPORAL_RESOLUTION);
-        this.timeZone = NullSafe.requireNonNullElse(timeZone, DEFAULT_TIME_ZONE);
+        this.keyType = Objects.requireNonNullElse(keyType, DEFAULT_KEY_TYPE);
+        this.hashLength = Objects.requireNonNullElse(hashLength, DEFAULT_HASH_LENGTH);
+        this.temporalResolution = Objects.requireNonNullElse(temporalResolution, DEFAULT_TEMPORAL_RESOLUTION);
+        this.timeZone = Objects.requireNonNullElse(timeZone, DEFAULT_TIME_ZONE);
     }
 
     public KeyType getKeyType() {

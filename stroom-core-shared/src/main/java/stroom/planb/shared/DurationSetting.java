@@ -49,7 +49,7 @@ public class DurationSetting {
     public DurationSetting(@JsonProperty("enabled") final boolean enabled,
                            @JsonProperty("duration") final SimpleDuration duration) {
         this.enabled = enabled;
-        this.duration = NullSafe.requireNonNullElse(duration, DEFAULT_DURATION);
+        this.duration = Objects.requireNonNullElse(duration, DEFAULT_DURATION);
     }
 
     public boolean isEnabled() {

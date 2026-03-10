@@ -40,7 +40,7 @@ public class RangeKeySchema {
 
     @JsonCreator
     public RangeKeySchema(@JsonProperty("rangeType") final RangeType rangeType) {
-        this.rangeType = NullSafe.requireNonNullElse(rangeType, DEFAULT_RANGE_TYPE);
+        this.rangeType = Objects.requireNonNullElse(rangeType, DEFAULT_RANGE_TYPE);
     }
 
     public RangeType getRangeType() {

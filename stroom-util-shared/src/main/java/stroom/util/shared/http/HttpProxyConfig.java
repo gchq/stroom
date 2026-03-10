@@ -49,9 +49,9 @@ public class HttpProxyConfig {
                            @JsonProperty("scheme") final String scheme,
                            @JsonProperty("auth") final HttpAuthConfig auth,
                            @JsonProperty("nonProxyHosts") final List<String> nonProxyHosts) {
-        this.host = NullSafe.requireNonNullElse(host, "");
-        this.port = NullSafe.requireNonNullElse(port, -1);
-        this.scheme = NullSafe.requireNonNullElse(scheme, "http");
+        this.host = Objects.requireNonNullElse(host, "");
+        this.port = Objects.requireNonNullElse(port, -1);
+        this.scheme = Objects.requireNonNullElse(scheme, "http");
         this.auth = auth;
         this.nonProxyHosts = nonProxyHosts;
     }

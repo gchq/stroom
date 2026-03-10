@@ -195,6 +195,6 @@ public enum AceEditorTheme {
 
     public static AceEditorTheme getDefaultEditorTheme(final ThemeType themeType) {
         return TYPE_TO_DEFAULT_THEME_MAP.get(
-                NullSafe.requireNonNullElse(themeType, Theme.DEFAULT_THEME_TYPE));
+                Objects.requireNonNullElse(themeType, Theme.DEFAULT_THEME_TYPE));
     }
 }

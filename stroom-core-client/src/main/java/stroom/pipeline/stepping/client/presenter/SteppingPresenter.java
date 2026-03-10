@@ -684,7 +684,7 @@ public class SteppingPresenter
         }
 
         beginStepping(StepType.REFRESH,
-                NullSafe.requireNonNullElse(requestBuilder.build().getStepLocation(),
+                Objects.requireNonNullElse(requestBuilder.build().getStepLocation(),
                         new StepLocation(meta.getId(), 0, 0)),
                 meta, childStreamType);
     }

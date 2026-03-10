@@ -142,8 +142,8 @@ public class UserPreferencesManager {
      */
     private String getPosixOffset(final UserTimeZone userTimeZone) {
 
-        final int hours = NullSafe.requireNonNullElse(userTimeZone.getOffsetHours(), 0);
-        int minutes = NullSafe.requireNonNullElse(userTimeZone.getOffsetMinutes(), 0);
+        final int hours = Objects.requireNonNullElse(userTimeZone.getOffsetHours(), 0);
+        int minutes = Objects.requireNonNullElse(userTimeZone.getOffsetMinutes(), 0);
 
         // FIXME:  Browsers don't support minute offsets so disable this for now.
         minutes = 0;
@@ -190,7 +190,7 @@ public class UserPreferencesManager {
     }
 
     public boolean isHideConditionalStyles() {
-        return NullSafe.requireNonNullElse(currentUserPreferences.getHideConditionalStyles(), false);
+        return Objects.requireNonNullElse(currentUserPreferences.getHideConditionalStyles(), false);
     }
 
     public List<String> getThemes() {

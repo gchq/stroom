@@ -17,7 +17,6 @@
 package stroom.item.client;
 
 import stroom.svg.shared.SvgImage;
-import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.SafeHtmlUtil;
 import stroom.widget.util.client.SvgImageUtil;
 import stroom.widget.util.client.Templates;
@@ -26,6 +25,8 @@ import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+
+import java.util.Objects;
 
 public class SelectionItemCell<I extends SelectionItem> extends AbstractCell<I> {
 
@@ -39,8 +40,7 @@ public class SelectionItemCell<I extends SelectionItem> extends AbstractCell<I> 
             final SafeHtmlBuilder content = new SafeHtmlBuilder();
             if (row.getIcon() != null) {
                 // Add icon
-                final String title = NullSafe.requireNonNullElseGet(
-                        row.getIconTooltip(),
+                final String title = Objects.requireNonNullElseGet(row.getIconTooltip(),
                         row::getLabel);
                 final SafeHtml iconSafeHtml = SvgImageUtil.toSafeHtml(
                         title,

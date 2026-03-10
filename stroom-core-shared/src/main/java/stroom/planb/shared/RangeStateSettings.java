@@ -53,8 +53,8 @@ public final class RangeStateSettings
                               @JsonProperty("keySchema") final RangeKeySchema keySchema,
                               @JsonProperty("valueSchema") final StateValueSchema valueSchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.keySchema = NullSafe.requireNonNullElse(keySchema, new RangeKeySchema.Builder().build());
-        this.valueSchema = NullSafe.requireNonNullElse(valueSchema, new StateValueSchema.Builder().build());
+        this.keySchema = Objects.requireNonNullElse(keySchema, new RangeKeySchema.Builder().build());
+        this.valueSchema = Objects.requireNonNullElse(valueSchema, new StateValueSchema.Builder().build());
     }
 
     public RangeKeySchema getKeySchema() {

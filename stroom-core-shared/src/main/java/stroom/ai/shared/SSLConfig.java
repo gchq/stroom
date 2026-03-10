@@ -47,9 +47,9 @@ public class SSLConfig extends AbstractConfig implements IsProxyConfig {
         // as the default config tree will not contain an SSLConfig to use as a reference.
         this.keyStore = keyStore;
         this.trustStore = trustStore;
-        this.hostnameVerificationEnabled = NullSafe.requireNonNullElse(
+        this.hostnameVerificationEnabled = Objects.requireNonNullElse(
                 hostnameVerificationEnabled, DEFAULT_HOSTNAME_VERIFICATION_ENABLED);
-        this.sslProtocol = NullSafe.requireNonNullElse(sslProtocol, DEFAULT_SSL_PROTOCOL);
+        this.sslProtocol = Objects.requireNonNullElse(sslProtocol, DEFAULT_SSL_PROTOCOL);
     }
 
     public KeyStore getKeyStore() {

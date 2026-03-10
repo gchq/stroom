@@ -27,6 +27,7 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public final class ErrorMessage {
+
     @JsonProperty
     private final Severity severity;
 
@@ -40,7 +41,7 @@ public final class ErrorMessage {
     public ErrorMessage(@JsonProperty("severity") final Severity severity,
                         @JsonProperty("message") final String message,
                         @JsonProperty("node") final String node) {
-        this.severity = NullSafe.requireNonNullElse(severity, Severity.ERROR);
+        this.severity = Objects.requireNonNullElse(severity, Severity.ERROR);
         this.message = message;
         this.node = node;
     }

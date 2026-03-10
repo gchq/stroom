@@ -124,10 +124,10 @@ public class LuceneIndexDoc extends AbstractDoc {
                           @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
-        this.maxDocsPerShard = NullSafe.requireNonNullElse(maxDocsPerShard, DEFAULT_MAX_DOCS_PER_SHARD);
-        this.partitionBy = NullSafe.requireNonNullElse(partitionBy, DEFAULT_PARTITION_BY);
-        this.partitionSize = NullSafe.requireNonNullElse(partitionSize, DEFAULT_PARTITION_SIZE);
-        this.shardsPerPartition = NullSafe.requireNonNullElse(shardsPerPartition, DEFAULT_SHARDS_PER_PARTITION);
+        this.maxDocsPerShard = Objects.requireNonNullElse(maxDocsPerShard, DEFAULT_MAX_DOCS_PER_SHARD);
+        this.partitionBy = Objects.requireNonNullElse(partitionBy, DEFAULT_PARTITION_BY);
+        this.partitionSize = Objects.requireNonNullElse(partitionSize, DEFAULT_PARTITION_SIZE);
+        this.shardsPerPartition = Objects.requireNonNullElse(shardsPerPartition, DEFAULT_SHARDS_PER_PARTITION);
         this.retentionDayAge = retentionDayAge;
         this.fields = fields;
         this.timeField = timeField;

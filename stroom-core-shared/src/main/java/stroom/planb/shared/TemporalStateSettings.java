@@ -58,9 +58,9 @@ public final class TemporalStateSettings
                                  @JsonProperty("keySchema") final TemporalStateKeySchema keySchema,
                                  @JsonProperty("valueSchema") final StateValueSchema valueSchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.condense = NullSafe.requireNonNullElse(condense, new DurationSetting.Builder().build());
-        this.keySchema = NullSafe.requireNonNullElse(keySchema, new TemporalStateKeySchema.Builder().build());
-        this.valueSchema = NullSafe.requireNonNullElse(valueSchema, new StateValueSchema.Builder().build());
+        this.condense = Objects.requireNonNullElse(condense, new DurationSetting.Builder().build());
+        this.keySchema = Objects.requireNonNullElse(keySchema, new TemporalStateKeySchema.Builder().build());
+        this.valueSchema = Objects.requireNonNullElse(valueSchema, new StateValueSchema.Builder().build());
     }
 
     @Override

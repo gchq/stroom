@@ -395,7 +395,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
             } else if (ping == null || ping < 0) {
                 ping = Long.MAX_VALUE;
                 pingMsg = "Invalid ping value: "
-                          + NullSafe.requireNonNullElse(ping, "null");
+                          + Objects.requireNonNullElse(ping, "null");
             }
 
             return buildPingBar(ping, pingMsg, pingResult.getNodeMonitoringConfig());

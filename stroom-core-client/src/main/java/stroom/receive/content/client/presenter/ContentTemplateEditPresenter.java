@@ -30,7 +30,6 @@ import stroom.receive.content.shared.ContentTemplateResource;
 import stroom.receive.content.shared.TemplateType;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
@@ -38,6 +37,8 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.Objects;
 
 public class ContentTemplateEditPresenter
         extends MyPresenterWidget<ContentTemplateEditView>
@@ -98,8 +99,7 @@ public class ContentTemplateEditPresenter
     void read(final ContentTemplate contentTemplate) {
         this.originalTemplate = contentTemplate;
         getView().setName(contentTemplate.getName());
-        editExpressionPresenter.read(NullSafe.requireNonNullElseGet(
-                contentTemplate.getExpression(),
+        editExpressionPresenter.read(Objects.requireNonNullElseGet(contentTemplate.getExpression(),
                 () -> ExpressionOperator.builder().build()));
 
         final ContentTemplateEditView view = getView();

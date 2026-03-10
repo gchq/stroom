@@ -167,8 +167,8 @@ public class ElasticIndexDoc extends AbstractDoc {
         } else {
             this.indexName = indexName;
         }
-        this.searchSlices = NullSafe.requireNonNullElse(searchSlices, DEFAULT_SEARCH_SLICES);
-        this.searchScrollSize = NullSafe.requireNonNullElse(searchScrollSize, DEFAULT_SEARCH_SCROLL_SIZE);
+        this.searchSlices = Objects.requireNonNullElse(searchSlices, DEFAULT_SEARCH_SLICES);
+        this.searchScrollSize = Objects.requireNonNullElse(searchScrollSize, DEFAULT_SEARCH_SCROLL_SIZE);
         this.fields = fields;
         if (NullSafe.isEmptyString(timeField)) {
             this.timeField = DEFAULT_TIME_FIELD;
@@ -182,7 +182,7 @@ public class ElasticIndexDoc extends AbstractDoc {
         } else {
             this.rerankTextFieldSuffix = rerankTextFieldSuffix;
         }
-        this.rerankScoreMinimum = NullSafe.requireNonNullElse(rerankScoreMinimum, DEFAULT_RERANK_SCORE_MINIMUM);
+        this.rerankScoreMinimum = Objects.requireNonNullElse(rerankScoreMinimum, DEFAULT_RERANK_SCORE_MINIMUM);
         this.defaultExtractionPipeline = defaultExtractionPipeline;
     }
 
