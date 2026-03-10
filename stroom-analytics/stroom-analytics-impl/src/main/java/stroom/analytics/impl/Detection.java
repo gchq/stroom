@@ -103,7 +103,7 @@ public class Detection {
      * A rule's status denotes how reliable it is. There are several stages:
      * <ul>
      *     <li>Experimental: An early-stage rule that may be incomplete. Expect more false positives.</li>
-     *     <li>Testing: More mature than experimental rules. Actively being validated in rela environments.
+     *     <li>Testing: More mature than experimental rules. Actively being validated in real environments.
      *     Expect some false positives.</li>
      *     <li>Stable: Considered production-ready. Has been thoroughly tested across multiple environments.
      *     Expect a reasonable false positive rate.</li>
