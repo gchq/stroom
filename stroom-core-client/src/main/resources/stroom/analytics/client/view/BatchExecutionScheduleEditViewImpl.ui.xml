@@ -5,6 +5,7 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:schedule="urn:import:stroom.schedule.client"
              xmlns:l="urn:import:stroom.item.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:datetimebox="urn:import:stroom.widget.datepicker.client">
     <g:FlowPanel styleName="documentPermissions form max dock-container-vertical overflow-hidden">
 
@@ -72,5 +73,15 @@
             </form:FormGroup>
         </g:HorizontalPanel>
 
+        <g:FlowPanel styleName="dialog-buttons">
+            <g:SimplePanel width="45%">
+                <b:Button ui:field="applySelectionButton" addStyleNames="allow-focus Button--contained-primary w-100" text="Apply to Selection"/>
+            </g:SimplePanel>
+            <g:SimplePanel width="45%">
+                <b:Button ui:field="applyFilteredButton" addStyleNames="allow-focus Button--contained-green w-100" text="Apply to Filtered"/>
+            </g:SimplePanel>
+        </g:FlowPanel>
+
     </g:FlowPanel>
 </ui:UiBinder>
+
