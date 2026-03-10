@@ -81,9 +81,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
     @Override
     public Condition apply(final ExpressionTerm term) {
         switch (term.getCondition()) {
-            case EQUALS,
-                 IS_SCHEDULE_TYPE,
-                 IS_PARENT_DOC_TYPE -> {
+            case EQUALS -> {
                 // TODO : Currently equality is used for wild carding with `*` but should probably use the
                 //  `MATCHES_REGEX` condition.
                 //  Also `is null` is being assumed if the value is null when we probably want to change this to
@@ -99,9 +97,7 @@ public final class TermHandler<T> implements Function<ExpressionTerm, Condition>
 //                    return getCondition(term, field::eq);
 //                }
             }
-            case NOT_EQUALS,
-                 IS_NOT_SCHEDULE_TYPE,
-                 IS_NOT_PARENT_DOC_TYPE -> {
+            case NOT_EQUALS -> {
                 return neq(term);
             }
             case EQUALS_CASE_SENSITIVE -> {

@@ -58,7 +58,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-
 public class TermEditor extends Composite {
 
     private static final String ITEM_CLASS_NAME = "termEditor-item";
@@ -76,8 +75,9 @@ public class TermEditor extends Composite {
     private final MyDateBox date;
     private final MyDateBox dateFrom;
     private final MyDateBox dateTo;
-    //Should be possible to unify the multiple uses of termlistbox so that the only difference
-    //is the values supplied.
+    // Should be possible to uni y the multiple uses of termlistbox so that the only
+    // difference
+    // is the values supplied.
     private final SelectionBox<String> termListBox;
     private final Widget docRefWidget;
     private final Widget userRefWidget;
@@ -102,7 +102,6 @@ public class TermEditor extends Composite {
         docRefPresenter.setRequiredPermissions(DocumentPermission.USE);
         docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
         suggestOracle = new AsyncSuggestOracle(docRefPresenter);
-
 
         this.docSelectionBoxPresenter = docRefPresenter;
         this.userRefSelectionBoxPresenter = userRefProvider.get();
@@ -353,7 +352,7 @@ public class TermEditor extends Composite {
                      LESS_THAN_OR_EQUAL_TO,
                      GREATER_THAN,
                      GREATER_THAN_OR_EQUAL_TO:
-                    enterTextOrDateOrBooleanMode(indexFieldType);
+                    enterTextOrDateMode(indexFieldType);
                     break;
                 case BETWEEN:
                     enterTextOrDateRangeMode(indexFieldType);
@@ -375,14 +374,6 @@ public class TermEditor extends Composite {
                      USER_HAS_USE:
                     enterUserRefMode(field, condition);
                     break;
-                case IS_SCHEDULE_TYPE,
-                     IS_NOT_SCHEDULE_TYPE:
-                    enterScheduleTypeMode();
-                    break;
-                case IS_PARENT_DOC_TYPE,
-                     IS_NOT_PARENT_DOC_TYPE:
-                    enterParentDocTypeMode();
-                    break;
                 default:
                     enterTextMode();
                     break;
@@ -390,10 +381,8 @@ public class TermEditor extends Composite {
         }
     }
 
-    private void enterTextOrDateOrBooleanMode(final FieldType indexFieldType) {
-        if (FieldType.BOOLEAN.equals(indexFieldType)) {
-            enterBooleanMode();
-        } else if (FieldType.DATE.equals(indexFieldType)) {
+    private void enterTextOrDateMode(final FieldType indexFieldType) {
+        if (FieldType.DATE.equals(indexFieldType)) {
             enterDateMode();
         } else {
             enterTextMode();
@@ -421,30 +410,6 @@ public class TermEditor extends Composite {
     private void enterDateMode() {
         setActiveWidgets(date);
         updateDateBoxes();
-    }
-
-    private void enterBooleanMode() {
-        termListBox.clear();
-        termListBox.addItem("true");
-        termListBox.addItem("false");
-        setActiveWidgets(termListBox);
-        updateTermListBox();
-    }
-
-    private void enterScheduleTypeMode() {
-        termListBox.clear();
-        termListBox.addItem(ScheduleType.CRON.getDisplayValue());
-        termListBox.addItem(ScheduleType.FREQUENCY.getDisplayValue());
-        setActiveWidgets(termListBox);
-        updateTermListBox();
-    }
-
-    private void enterParentDocTypeMode() {
-        termListBox.clear();
-        termListBox.addItem(AnalyticRuleDoc.TYPE);
-        termListBox.addItem(ReportDoc.TYPE);
-        setActiveWidgets(termListBox);
-        updateTermListBox();
     }
 
     private void enterDateRangeMode() {
@@ -605,16 +570,13 @@ public class TermEditor extends Composite {
     }
 
     private BaseSelectionBox<QueryField, FieldInfoSelectionItem> createFieldBox(final UiConfigCache uiConfigCache) {
-        final BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox =
-                new BaseSelectionBox<QueryField, FieldInfoSelectionItem>();
+        final BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox = new BaseSelectionBox<>();
         fieldListBox.addStyleName(ITEM_CLASS_NAME);
         fieldListBox.addStyleName(DROPDOWN_CLASS_NAME);
         fieldListBox.addStyleName("field");
         fieldListBox.addStyleName("termEditor-item");
-        uiConfigCache.get(uiConfig ->
-                NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl ->
-                        fieldListBox.registerPopupTextProvider(() ->
-                                QuickFilterTooltipUtil.createTooltip("Field Filter", helpUrl))));
+        uiConfigCache.get(uiConfig -> NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl -> fieldListBox
+                .registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip("Field Filter", helpUrl))));
         return fieldListBox;
     }
 
