@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
  * hash of the key and not the key itself.
  */
 @JsonPropertyOrder(alphabetic = true)
-public class HashedDataFeedKey {
+public class HashedDataFeedKey implements DataFeedIdentity {
 
     @JsonProperty
     @JsonPropertyDescription("The hash of the datafeed key. Hashed using hashAlgorithm.")
