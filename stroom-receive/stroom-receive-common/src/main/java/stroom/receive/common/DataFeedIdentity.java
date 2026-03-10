@@ -20,6 +20,10 @@ package stroom.receive.common;
 import stroom.meta.api.AttributeMap;
 import stroom.util.shared.string.CIKey;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import java.time.Instant;
 import java.util.Map;
 
@@ -27,7 +31,15 @@ import java.util.Map;
  * An identity for using the datafeed interface.
  * Each identity is associated with a set of meta attributes that will be set on data receipt.
  */
-public interface DataFeedIdentity {
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = HashedDataFeedKey.class, name = "DATA_FEED_KEY"),
+        @JsonSubTypes.Type(value = CertificateIdentity.class, name = "CERTIFICATE_DN")
+})
+public sealed interface DataFeedIdentity
+        permits CertificateIdentity, HashedDataFeedKey {
 
     /**
      * @return The meta attributes associated with this identity.
@@ -45,6 +57,7 @@ public interface DataFeedIdentity {
      * @return The meta attributes associated with this identity.
      * These trump any headers.
      */
+    @JsonIgnore
     default AttributeMap getAttributeMap() {
         return new AttributeMap(getStreamMetaData());
     }
@@ -57,7 +70,22 @@ public interface DataFeedIdentity {
     /**
      * @return The expiry date of this identity.
      */
+    @JsonIgnore
     default Instant getExpiryDate() {
         return Instant.ofEpochMilli(getExpiryDateEpochMs());
     }
+
+//    @JsonProperty("identityType")
+//    IdentityType getType();
+
+
+    // --------------------------------------------------------------------------------
+
+
+//    enum IdentityType {
+//        // Names used in (de)serialisation so don't change
+//        DATA_FEED_KEY,
+//        CERTIFICATE_DN,
+//        ;
+//    }
 }

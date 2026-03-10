@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
  * hash of the key and not the key itself.
  */
 @JsonPropertyOrder(alphabetic = true)
-public class HashedDataFeedKey implements DataFeedIdentity {
+public final class HashedDataFeedKey implements DataFeedIdentity {
 
     @JsonProperty
     @JsonPropertyDescription("The hash of the datafeed key. Hashed using hashAlgorithm.")
@@ -149,6 +149,12 @@ public class HashedDataFeedKey implements DataFeedIdentity {
     public boolean isExpired() {
         return Instant.now().isAfter(getExpiryDate());
     }
+
+//    @Override
+//    @JsonProperty("type")
+//    public IdentityType getType() {
+//        return IdentityType.DATA_FEED_KEY;
+//    }
 
     @Override
     public boolean equals(final Object object) {
