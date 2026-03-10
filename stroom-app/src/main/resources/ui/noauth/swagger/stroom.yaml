@@ -12661,6 +12661,7 @@ components:
           enum:
           - FEED_STATUS
           - RECEIPT_POLICY
+          - FEED_EXISTENCE
           - RECEIVE_ALL
           - DROP_ALL
           - REJECT_ALL

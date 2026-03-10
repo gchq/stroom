@@ -20,6 +20,7 @@ import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionUtil;
 import stroom.query.api.ParamUtil;
 import stroom.util.shared.NullSafe;
 
@@ -78,13 +79,16 @@ public class SelectionHandlerExpressionBuilder {
                             }
                         }
                         final String replaced = ParamUtil.replaceParameters(value, replacements::get);
-                        builder.addTerm(ExpressionTerm.builder()
+                        final ExpressionTerm expressionTerm = ExpressionTerm.builder()
                                 .enabled(term.enabled())
                                 .field(term.getField())
                                 .condition(term.getCondition())
                                 .value(replaced)
                                 .docRef(term.getDocRef())
-                                .build());
+                                .build();
+                        if (ExpressionUtil.isValidTerm(expressionTerm, false)) {
+                            builder.addTerm(expressionTerm);
+                        }
                     } else {
                         builder.addTerm(term);
                     }

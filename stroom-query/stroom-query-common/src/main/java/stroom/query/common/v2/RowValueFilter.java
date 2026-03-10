@@ -91,30 +91,42 @@ public class RowValueFilter {
 
             final ColumnValueSelection columnValueSelection = column.getColumnValueSelection();
             if (columnValueSelection != null && columnValueSelection.isEnabled()) {
-                final List<ExpressionTerm> terms = columnValueSelection
-                        .getValues()
-                        .stream()
-                        .map(value -> ExpressionTerm
-                                .builder()
-                                .field(column.getId())
-                                .condition(Condition.EQUALS)
-                                .value(value)
-                                .build())
-                        .toList();
-
-                ExpressionOperator expressionOperator = ExpressionOperator
-                        .builder()
-                        .op(Op.OR)
-                        .addTerms(terms)
-                        .build();
                 if (columnValueSelection.isInvert()) {
-                    expressionOperator = ExpressionOperator
+                    final List<ExpressionTerm> terms = columnValueSelection
+                            .getValues()
+                            .stream()
+                            .map(value -> ExpressionTerm
+                                    .builder()
+                                    .field(column.getId())
+                                    .condition(Condition.NOT_EQUALS)
+                                    .value(value)
+                                    .build())
+                            .toList();
+                    final ExpressionOperator expressionOperator = ExpressionOperator
                             .builder()
-                            .op(Op.NOT)
-                            .addOperators(expressionOperator)
+                            .op(Op.AND)
+                            .addTerms(terms)
                             .build();
+                    valueFilterBuilder.addOperator(expressionOperator);
+
+                } else {
+                    final List<ExpressionTerm> terms = columnValueSelection
+                            .getValues()
+                            .stream()
+                            .map(value -> ExpressionTerm
+                                    .builder()
+                                    .field(column.getId())
+                                    .condition(Condition.EQUALS)
+                                    .value(value)
+                                    .build())
+                            .toList();
+                    final ExpressionOperator expressionOperator = ExpressionOperator
+                            .builder()
+                            .op(Op.OR)
+                            .addTerms(terms)
+                            .build();
+                    valueFilterBuilder.addOperator(expressionOperator);
                 }
-                valueFilterBuilder.addOperator(expressionOperator);
             }
         });
         final ExpressionOperator valueFilter = valueFilterBuilder.build();
