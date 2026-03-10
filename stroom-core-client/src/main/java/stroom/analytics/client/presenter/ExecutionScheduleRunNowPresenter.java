@@ -21,6 +21,7 @@ import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.widget.button.client.Button;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -60,7 +61,7 @@ public class ExecutionScheduleRunNowPresenter
         super.onBind();
     }
 
-    public void show(final Consumer<Boolean> consumer) {
+    public void show() {
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size
                         .builder()
@@ -78,15 +79,6 @@ public class ExecutionScheduleRunNowPresenter
                 .popupSize(popupSize)
                 .onShow(e -> getView().focus())
                 .caption("Run Now")
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        consumer.accept(false);
-                        e.hide();
-                    } else {
-                        e.hide();
-                    }
-                    e.hide();
-                })
                 .fire();
     }
 
@@ -110,5 +102,9 @@ public class ExecutionScheduleRunNowPresenter
             Focus {
 
         void setText(final String text);
+
+        Button getApplySelectionButton();
+
+        Button getApplyFilteredButton();
     }
 }

@@ -177,7 +177,7 @@ public class ExecutionScheduleManager
                 clickEvent -> {
                     batchExecutionScheduleEditPresenter.validate(valid -> {
                         if (valid) {
-                            attemptBatchEdit(false);
+                            onBatchEdit(false);
                         }
                     });
                 }
@@ -187,10 +187,18 @@ public class ExecutionScheduleManager
                 clickEvent -> {
                     batchExecutionScheduleEditPresenter.validate(valid -> {
                         if (valid) {
-                            attemptBatchEdit(true);
+                            onBatchEdit(true);
                         }
                     });
                 }
+        );
+
+        executionScheduleRunNowPresenter.getView().getApplySelectionButton().addClickHandler(
+                clickEvent -> onRunNow(false)
+        );
+
+        executionScheduleRunNowPresenter.getView().getApplyFilteredButton().addClickHandler(
+                clickEvent -> onRunNow(true)
         );
     }
 
@@ -212,7 +220,7 @@ public class ExecutionScheduleManager
                 true));
         registerHandler(batchEditButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
-                onBatchEdit();
+                batchExecutionScheduleEditPresenter.show();
             }
         }));
 
@@ -242,7 +250,7 @@ public class ExecutionScheduleManager
                 true));
         registerHandler(runJobNowButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
-                onRunNow();
+                executionScheduleRunNowPresenter.show();
             }
         }));
 
@@ -521,13 +529,7 @@ public class ExecutionScheduleManager
         }
     }
 
-
-    private void onBatchEdit() {
-        batchExecutionScheduleEditPresenter.setTaskMonitorFactory(this);
-        batchExecutionScheduleEditPresenter.show();
-    }
-
-    private void attemptBatchEdit(final boolean applyToFiltered) {
+    private void onBatchEdit(final boolean applyToFiltered) {
         if (applyToFiltered) {
             restFactory
                     .create(EXECUTION_SCHEDULE_RESOURCE)
@@ -664,28 +666,25 @@ public class ExecutionScheduleManager
         setExpression(expression);
     }
 
-
-    private void onRunNow() {
-        executionScheduleRunNowPresenter.show(applyFiltered -> {
-            if (applyFiltered) {
-                final ExecutionScheduleRequest requestAll = request.copy().pageRequest(PageRequest.unlimited()).build();
-                restFactory.create(EXECUTION_SCHEDULE_RESOURCE)
-                        .method(resource -> resource.fetchExecutionSchedule(requestAll))
-                        .onSuccess(result -> checkRunNow(result.getValues(), true))
-                        .onFailure(cause -> AlertEvent.fireError(this, cause.getMessage(), null))
-                        .taskMonitorFactory(this)
-                        .exec();
-            } else {
-                checkRunNow(selectionModel.getSelectedItems(), false);
-            }
-        });
+    private void onRunNow(final boolean applyToFiltered) {
+        if (applyToFiltered) {
+            final ExecutionScheduleRequest requestAll = request.copy().pageRequest(PageRequest.unlimited()).build();
+            restFactory.create(EXECUTION_SCHEDULE_RESOURCE)
+                    .method(resource -> resource.fetchExecutionSchedule(requestAll))
+                    .onSuccess(result -> checkRunNow(result.getValues(), true))
+                    .onFailure(cause -> AlertEvent.fireError(this, cause.getMessage(), null))
+                    .taskMonitorFactory(this)
+                    .exec();
+        } else {
+            checkRunNow(selectionModel.getSelectedItems(), false);
+        }
     }
 
-    private void checkRunNow(final List<ExecutionSchedule> executionSchedules, final boolean isApplyToFiltered) {
+    private void checkRunNow(final List<ExecutionSchedule> executionSchedules, final boolean applyToFiltered) {
         if (executionSchedules.isEmpty()) {
             AlertEvent.fireWarn(
                     this,
-                    isApplyToFiltered ? "No schedules filtered." : "No schedules selected.",
+                    applyToFiltered ? "No schedules filtered." : "No schedules selected.",
                     null
             );
             return;
@@ -703,14 +702,14 @@ public class ExecutionScheduleManager
         if (enabledSchedules.isEmpty()) {
             AlertEvent.fireError(
                     this,
-                    isApplyToFiltered
+                    applyToFiltered
                             ? "None of the filtered schedules are enabled."
                             : "None of the selected schedules are enabled.",
                     null);
         } else if (disabledCount > 0) {
             AlertEvent.fireWarn(
                     this,
-                    isApplyToFiltered
+                    applyToFiltered
                             ? "Some of the filtered schedules are disabled and will not be run."
                             : "Some of the selected schedules are disabled and will not be run.",
                     () -> confirmRunNow(enabledSchedules));
