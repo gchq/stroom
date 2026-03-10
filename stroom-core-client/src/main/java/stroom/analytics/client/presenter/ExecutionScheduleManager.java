@@ -172,6 +172,26 @@ public class ExecutionScheduleManager
                 onSingleEdit();
             }
         }));
+
+        batchExecutionScheduleEditPresenter.getView().getApplySelectionButton().addClickHandler(
+                clickEvent -> {
+                    batchExecutionScheduleEditPresenter.validate(valid -> {
+                        if (valid) {
+                            attemptBatchEdit(false);
+                        }
+                    });
+                }
+        );
+
+        batchExecutionScheduleEditPresenter.getView().getApplyFilteredButton().addClickHandler(
+                clickEvent -> {
+                    batchExecutionScheduleEditPresenter.validate(valid -> {
+                        if (valid) {
+                            attemptBatchEdit(true);
+                        }
+                    });
+                }
+        );
     }
 
 
@@ -504,35 +524,34 @@ public class ExecutionScheduleManager
 
     private void onBatchEdit() {
         batchExecutionScheduleEditPresenter.setTaskMonitorFactory(this);
-        batchExecutionScheduleEditPresenter.show(applyToFiltered -> {
-            if (applyToFiltered == null) {
-                return;
-            }
-            if (applyToFiltered) {
-                restFactory
+        batchExecutionScheduleEditPresenter.show();
+    }
+
+    private void attemptBatchEdit(final boolean applyToFiltered) {
+        if (applyToFiltered) {
+            restFactory
                     .create(EXECUTION_SCHEDULE_RESOURCE)
                     .method(res -> res.fetchExecutionSchedule(
-                            request
-                                    .copy()
-                                    .pageRequest(PageRequest.unlimited())
-                                    .build()
+                                    request
+                                            .copy()
+                                            .pageRequest(PageRequest.unlimited())
+                                            .build()
                             )
                     )
                     .onSuccess(result -> checkBatchEdit(result.getValues(), true))
                     .onFailure(e -> AlertEvent.fireError(this, e.getMessage(), null))
                     .taskMonitorFactory(getView())
                     .exec();
-            } else {
-                checkBatchEdit(selectionModel.getSelectedItems(), false);
-            }
-        });
+        } else {
+            checkBatchEdit(selectionModel.getSelectedItems(), false);
+        }
     }
 
-    private void checkBatchEdit(final List<ExecutionSchedule> executionSchedules, final boolean isApplyToAll) {
+    private void checkBatchEdit(final List<ExecutionSchedule> executionSchedules, final boolean applyToFiltered) {
         if (executionSchedules.isEmpty()) {
             AlertEvent.fireWarn(
                     this,
-                    isApplyToAll ? "No schedules filtered." : "No schedules selected.",
+                    applyToFiltered ? "No schedules filtered." : "No schedules selected.",
                     null
             );
             return;
