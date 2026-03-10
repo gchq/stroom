@@ -25,8 +25,7 @@ import java.util.Map;
 
 /**
  * An identity for using the datafeed interface.
- * Each identity is associated with a set of meta attributes
- * that will be set on data receipt.
+ * Each identity is associated with a set of meta attributes that will be set on data receipt.
  */
 public interface DataFeedIdentity {
 
