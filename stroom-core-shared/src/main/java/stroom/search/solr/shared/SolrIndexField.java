@@ -147,7 +147,7 @@ public class SolrIndexField implements IndexField {
             @JsonProperty("sortMissingLast") final boolean sortMissingLast,
             @JsonProperty("denseVectorFieldConfig") final DenseVectorFieldConfig denseVectorFieldConfig) {
         this.fldName = convertLegacyName(fldName, fieldName);
-        this.fldType = NullSafe.requireNonNullElse(convertLegacyType(fldType, fieldUse), FieldType.TEXT);
+        this.fldType = Objects.requireNonNullElse(convertLegacyType(fldType, fieldUse), FieldType.TEXT);
         this.nativeType = convertLegacyNativeType(nativeType, fieldType);
         this.stored = stored;
         this.indexed = indexed;

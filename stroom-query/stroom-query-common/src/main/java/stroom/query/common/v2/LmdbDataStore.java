@@ -345,8 +345,8 @@ public class LmdbDataStore implements DataStore {
                                         uncommittedCount++;
                                     }
                                     case final CurrentDbStateLmdbQueueItem currentDbStateLmdbQueueItem ->
-                                        currentDbState = currentDbStateLmdbQueueItem.getCurrentDbState()
-                                                .mergeExisting(currentDbState);
+                                            currentDbState = currentDbStateLmdbQueueItem.getCurrentDbState()
+                                                    .mergeExisting(currentDbState);
                                     case final Sync sync -> {
                                         commit(writeTxn, currentDbState);
                                         sync.sync();
@@ -745,7 +745,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     private void putLong(final ByteBuffer valueBuffer, final Long l) {
-        valueBuffer.putLong(NullSafe.requireNonNullElse(l, -1L));
+        valueBuffer.putLong(Objects.requireNonNullElse(l, -1L));
     }
 
     public CurrentDbState sync() {

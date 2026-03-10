@@ -99,7 +99,7 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
         this.status = status;
         this.byteLimit = byteLimit;
         this.volumeState = volumeState;
-        this.volumeType = NullSafe.requireNonNullElse(volumeType, FsVolumeType.STANDARD);
+        this.volumeType = Objects.requireNonNullElse(volumeType, FsVolumeType.STANDARD);
         this.s3ClientConfig = s3ClientConfig;
         this.s3ClientConfigData = s3ClientConfigData;
         this.volumeGroupId = volumeGroupId;

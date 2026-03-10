@@ -42,7 +42,7 @@ public class ReportSettings {
     @JsonCreator
     public ReportSettings(@JsonProperty("fileType") final DownloadSearchResultFileType fileType,
                           @JsonProperty("sendEmptyReports") final Boolean sendEmptyReports) {
-        this.fileType = NullSafe.requireNonNullElse(fileType, DEFAULT_FILE_TYPE);
+        this.fileType = Objects.requireNonNullElse(fileType, DEFAULT_FILE_TYPE);
         this.sendEmptyReports = sendEmptyReports == null || sendEmptyReports;
     }
 

@@ -89,7 +89,7 @@ public class TextConverterDoc extends AbstractEmbeddableDoc implements HasData {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser, embeddedIn);
         this.description = description;
         this.data = data;
-        this.converterType = NullSafe.requireNonNullElse(converterType, TextConverterType.NONE);
+        this.converterType = Objects.requireNonNullElse(converterType, TextConverterType.NONE);
     }
 
     /**

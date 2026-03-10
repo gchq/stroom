@@ -42,7 +42,6 @@ import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.widget.menu.client.presenter.Item;
@@ -65,6 +64,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -299,8 +299,7 @@ public class DependenciesPresenter
         final DocRef docRef = docRefExtractor.apply(row);
         if (docRef != null) {
             if (from || (openableTypes.contains(docRef.getType()) && row.isOk())) {
-                final String name = NullSafe.requireNonNullElseGet(
-                        docRef.getName(),
+                final String name = Objects.requireNonNullElseGet(docRef.getName(),
                         docRef::getUuid);
                 return new CommandLink(
                         docRef.getName(),

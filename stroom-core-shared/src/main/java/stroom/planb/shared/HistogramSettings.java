@@ -53,8 +53,8 @@ public final class HistogramSettings
                              @JsonProperty("keySchema") final HistogramKeySchema keySchema,
                              @JsonProperty("valueSchema") final HistogramValueSchema valueSchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.keySchema = NullSafe.requireNonNullElse(keySchema, new HistogramKeySchema.Builder().build());
-        this.valueSchema = NullSafe.requireNonNullElse(valueSchema, new HistogramValueSchema.Builder().build());
+        this.keySchema = Objects.requireNonNullElse(keySchema, new HistogramKeySchema.Builder().build());
+        this.valueSchema = Objects.requireNonNullElse(valueSchema, new HistogramValueSchema.Builder().build());
     }
 
     public HistogramKeySchema getKeySchema() {

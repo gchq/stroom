@@ -168,9 +168,7 @@ public class PipelineReferenceListPresenter
                         return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     } else {
                         return SafeHtmlUtils.fromString(pipelineReference.getPipeline()
-                                .getDisplayValue(NullSafe.requireNonNullElse(
-                                        DisplayType.AUTO,
-                                        DisplayType.AUTO)));
+                                .getDisplayValue(DisplayType.AUTO));
                     }
                 })
                 .docRefFunction(pipelineProperty -> NullSafe.get(
@@ -194,9 +192,7 @@ public class PipelineReferenceListPresenter
                         return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     } else {
                         return SafeHtmlUtils.fromString(pipelineReference.getFeed()
-                                .getDisplayValue(NullSafe.requireNonNullElse(
-                                        DisplayType.AUTO,
-                                        DisplayType.AUTO)));
+                                .getDisplayValue(DisplayType.AUTO));
                     }
                 })
                 .docRefFunction(pipelineProperty -> NullSafe.get(
@@ -236,10 +232,7 @@ public class PipelineReferenceListPresenter
                         pipeline.getUuid().equals(source.getUuid())) {
                         return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     } else {
-                        return SafeHtmlUtils.fromString(source
-                                .getDisplayValue(NullSafe.requireNonNullElse(
-                                        DisplayType.AUTO,
-                                        DisplayType.AUTO)));
+                        return SafeHtmlUtils.fromString(source.getDisplayValue(DisplayType.AUTO));
                     }
                 })
                 .docRefFunction(pipelineReference ->

@@ -80,7 +80,7 @@ public enum Theme {
 
     public static Theme fromName(final String themeName) {
         final Theme theme = THEME_NAME_TO_THEME_MAP.get(themeName);
-        return NullSafe.requireNonNullElse(theme, DEFAULT_THEME);
+        return Objects.requireNonNullElse(theme, DEFAULT_THEME);
     }
 
     public static List<String> getThemeNames() {

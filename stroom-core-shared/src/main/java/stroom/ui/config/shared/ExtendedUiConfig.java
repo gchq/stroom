@@ -116,7 +116,7 @@ public class ExtendedUiConfig {
         this.maxApiKeyExpiryAgeMs = maxApiKeyExpiryAgeMs;
         // Ensures serialisation tests work
         this.obfuscatedFields = GwtCollectionUtil.asUnmodifiabledConsistentOrderSet(obfuscatedFields);
-        this.receiptCheckMode = NullSafe.requireNonNullElse(receiptCheckMode, ReceiptCheckMode.getDefault());
+        this.receiptCheckMode = Objects.requireNonNullElse(receiptCheckMode, ReceiptCheckMode.getDefault());
         this.lastAnnotationChangeTime = lastAnnotationChangeTime;
     }
 

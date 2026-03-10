@@ -48,8 +48,8 @@ public class StateKeySchema {
     @JsonCreator
     public StateKeySchema(@JsonProperty("keyType") final KeyType keyType,
                           @JsonProperty("hashLength") final HashLength hashLength) {
-        this.keyType = NullSafe.requireNonNullElse(keyType, DEFAULT_KEY_TYPE);
-        this.hashLength = NullSafe.requireNonNullElse(hashLength, DEFAULT_HASH_LENGTH);
+        this.keyType = Objects.requireNonNullElse(keyType, DEFAULT_KEY_TYPE);
+        this.hashLength = Objects.requireNonNullElse(hashLength, DEFAULT_HASH_LENGTH);
     }
 
     public KeyType getKeyType() {

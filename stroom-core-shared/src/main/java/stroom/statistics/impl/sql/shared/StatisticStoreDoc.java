@@ -103,9 +103,9 @@ public class StatisticStoreDoc extends AbstractDoc implements StatisticStore {
                              @JsonProperty("config") final StatisticsDataSourceData config) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
-        this.statisticType = NullSafe.requireNonNullElse(statisticType, StatisticType.COUNT);
-        this.rollUpType = NullSafe.requireNonNullElse(rollUpType, StatisticRollUpType.NONE);
-        this.precision = NullSafe.requireNonNullElse(precision, DEFAULT_PRECISION);
+        this.statisticType = Objects.requireNonNullElse(statisticType, StatisticType.COUNT);
+        this.rollUpType = Objects.requireNonNullElse(rollUpType, StatisticRollUpType.NONE);
+        this.precision = Objects.requireNonNullElse(precision, DEFAULT_PRECISION);
         this.enabled = enabled;
         this.config = config;
     }

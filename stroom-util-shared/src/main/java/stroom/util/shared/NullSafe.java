@@ -1084,14 +1084,14 @@ public class NullSafe {
     public static <T1, R> R getOrElse(final T1 value,
                                       final Function<T1, R> getter,
                                       final R other) {
-        return requireNonNullElse(get(value, getter), other);
+        return Objects.requireNonNullElse(get(value, getter), other);
     }
 
     public static <T1, T2, R> R getOrElse(final T1 value,
                                           final Function<T1, T2> getter1,
                                           final Function<T2, R> getter2,
                                           final R other) {
-        return requireNonNullElse(get(value, getter1, getter2), other);
+        return Objects.requireNonNullElse(get(value, getter1, getter2), other);
     }
 
     public static <T1, T2, T3, R> R getOrElse(final T1 value,
@@ -1099,7 +1099,7 @@ public class NullSafe {
                                               final Function<T2, T3> getter2,
                                               final Function<T3, R> getter3,
                                               final R other) {
-        return requireNonNullElse(get(value, getter1, getter2, getter3), other);
+        return Objects.requireNonNullElse(get(value, getter1, getter2, getter3), other);
     }
 
     public static <T1, T2, T3, T4, R> R getOrElse(final T1 value,
@@ -1108,7 +1108,7 @@ public class NullSafe {
                                                   final Function<T3, T4> getter3,
                                                   final Function<T4, R> getter4,
                                                   final R other) {
-        return requireNonNullElse(get(value, getter1, getter2, getter3, getter4), other);
+        return Objects.requireNonNullElse(get(value, getter1, getter2, getter3, getter4), other);
     }
 
     public static <T1> String toStringOrElse(final T1 value,
@@ -1127,14 +1127,14 @@ public class NullSafe {
     public static <T1, R> R getOrElseGet(final T1 value,
                                          final Function<T1, R> getter,
                                          final Supplier<R> otherSupplier) {
-        return requireNonNullElseGet(get(value, getter), otherSupplier);
+        return Objects.requireNonNullElseGet(get(value, getter), otherSupplier);
     }
 
     public static <T1, T2, R> R getOrElseGet(final T1 value,
                                              final Function<T1, T2> getter1,
                                              final Function<T2, R> getter2,
                                              final Supplier<R> otherSupplier) {
-        return requireNonNullElseGet(get(value, getter1, getter2), otherSupplier);
+        return Objects.requireNonNullElseGet(get(value, getter1, getter2), otherSupplier);
     }
 
     public static <T1, T2, T3, R> R getOrElseGet(final T1 value,
@@ -1142,7 +1142,7 @@ public class NullSafe {
                                                  final Function<T2, T3> getter2,
                                                  final Function<T3, R> getter3,
                                                  final Supplier<R> otherSupplier) {
-        return requireNonNullElseGet(get(value, getter1, getter2, getter3), otherSupplier);
+        return Objects.requireNonNullElseGet(get(value, getter1, getter2, getter3), otherSupplier);
     }
 
     public static <T1, T2, T3, T4, R> R getOrElseGet(final T1 value,
@@ -1151,7 +1151,7 @@ public class NullSafe {
                                                      final Function<T3, T4> getter3,
                                                      final Function<T4, R> getter4,
                                                      final Supplier<R> otherSupplier) {
-        return requireNonNullElseGet(get(value, getter1, getter2, getter3, getter4), otherSupplier);
+        return Objects.requireNonNullElseGet(get(value, getter1, getter2, getter3, getter4), otherSupplier);
     }
 
     /**
@@ -1771,26 +1771,6 @@ public class NullSafe {
                 }
             }
         }
-    }
-
-    /**
-     * GWT currently doesn't emulate requireNonNullElse
-     */
-    public static <T> T requireNonNullElse(final T obj, final T other) {
-        return (obj != null)
-                ? obj
-                : Objects.requireNonNull(other, "other");
-    }
-
-    /**
-     * GWT currently doesn't emulate requireNonNullElse
-     */
-    public static <T> T requireNonNullElseGet(final T obj, final Supplier<? extends T> supplier) {
-        return (obj != null)
-                ? obj
-                : Objects.requireNonNull(
-                        Objects.requireNonNull(supplier, "supplier").get(),
-                        "supplier.get()");
     }
 
     /**

@@ -97,16 +97,16 @@ public class UserPreferences {
                            @JsonProperty("hideConditionalStyles") final Boolean hideConditionalStyles) {
         this.theme = theme;
         this.editorTheme = editorTheme;
-        this.editorKeyBindings = NullSafe.requireNonNullElse(
+        this.editorKeyBindings = Objects.requireNonNullElse(
                 editorKeyBindings, DEFAULT_EDITOR_KEY_BINDINGS);
-        this.editorLiveAutoCompletion = NullSafe.requireNonNullElse(
+        this.editorLiveAutoCompletion = Objects.requireNonNullElse(
                 editorLiveAutoCompletion, DEFAULT_EDITOR_LIVE_AUTO_COMPLETION);
         this.density = density;
         this.font = font;
         this.fontSize = fontSize;
         this.dateTimePattern = dateTimePattern;
         this.timeZone = timeZone;
-        this.enableTransparency = NullSafe.requireNonNullElse(enableTransparency, true);
+        this.enableTransparency = Objects.requireNonNullElse(enableTransparency, true);
         this.hideConditionalStyles = hideConditionalStyles;
     }
 

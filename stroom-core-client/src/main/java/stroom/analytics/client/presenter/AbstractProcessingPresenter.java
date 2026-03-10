@@ -28,13 +28,14 @@ import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.NullSafe;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.Objects;
 
 public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRuleDoc>
         extends DocPresenter<AnalyticProcessingView, D>
@@ -89,7 +90,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
                 final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
-                final AnalyticProcessType analyticProcessType = NullSafe.requireNonNullElse(
+                final AnalyticProcessType analyticProcessType = Objects.requireNonNullElse(
                         analyticRuleDoc.getAnalyticProcessType(),
                         AnalyticProcessType.SCHEDULED_QUERY);
                 setProcessType(analyticProcessType);

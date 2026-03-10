@@ -93,9 +93,9 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                                    @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = NullSafe.string(description);
-        this.languageVersion = NullSafe.requireNonNullElse(languageVersion, QueryLanguageVersion.STROOM_QL_VERSION_0_1);
+        this.languageVersion = Objects.requireNonNullElse(languageVersion, QueryLanguageVersion.STROOM_QL_VERSION_0_1);
         this.parameters = parameters;
-        this.timeRange = NullSafe.requireNonNullElse(timeRange, TimeRanges.ALL_TIME);
+        this.timeRange = Objects.requireNonNullElse(timeRange, TimeRanges.ALL_TIME);
         this.query = NullSafe.string(query);
         this.analyticProcessType = analyticProcessType;
         this.analyticProcessConfig = analyticProcessConfig;
@@ -110,7 +110,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
         this.errorFeed = errorFeed;
         this.rememberNotifications = rememberNotifications;
         this.suppressDuplicateNotifications = suppressDuplicateNotifications;
-        this.duplicateNotificationConfig = NullSafe.requireNonNullElseGet(duplicateNotificationConfig,
+        this.duplicateNotificationConfig = Objects.requireNonNullElseGet(duplicateNotificationConfig,
                 () -> new DuplicateNotificationConfig(
                         rememberNotifications,
                         suppressDuplicateNotifications,

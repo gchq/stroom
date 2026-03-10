@@ -45,7 +45,7 @@ public class SessionKeySchema extends StateKeySchema {
                             @JsonProperty("hashLength") final HashLength hashLength,
                             @JsonProperty("temporalPrecision") final TemporalPrecision temporalPrecision) {
         super(keyType, hashLength);
-        this.temporalPrecision = NullSafe.requireNonNullElse(temporalPrecision, DEFAULT_TEMPORAL_PRECISION);
+        this.temporalPrecision = Objects.requireNonNullElse(temporalPrecision, DEFAULT_TEMPORAL_PRECISION);
     }
 
     public TemporalPrecision getTemporalPrecision() {

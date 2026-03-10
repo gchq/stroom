@@ -288,8 +288,7 @@ public class UserListPresenter
                                 (User user) -> UserAndGroupHelper.buildUserActionMenu(
                                         NullSafe.get(user, User::asRef),
                                         isExternalIdp(),
-                                        NullSafe.requireNonNullElseGet(
-                                                validUserScreensForActionMenu, UserScreen::all),
+                                        Objects.requireNonNullElseGet(validUserScreensForActionMenu, UserScreen::all),
                                         this,
                                         copyPermissionsPopupFunction),
                                 this))

@@ -17,7 +17,6 @@
 package stroom.util.shared.http;
 
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 
@@ -141,22 +140,22 @@ public class HttpClientConfig {
             @JsonProperty("proxy") final HttpProxyConfig proxy,
             @JsonProperty("validateAfterInactivityPeriod") final SimpleDuration validateAfterInactivityPeriod,
             @JsonProperty("tls") final HttpTlsConfig tls) {
-        this.timeout = NullSafe.requireNonNullElse(timeout, DEFAULT_TIMEOUT);
-        this.connectionTimeout = NullSafe.requireNonNullElse(connectionTimeout, DEFAULT_CONNECTION_TIMEOUT);
-        this.connectionRequestTimeout = NullSafe.requireNonNullElse(
+        this.timeout = Objects.requireNonNullElse(timeout, DEFAULT_TIMEOUT);
+        this.connectionTimeout = Objects.requireNonNullElse(connectionTimeout, DEFAULT_CONNECTION_TIMEOUT);
+        this.connectionRequestTimeout = Objects.requireNonNullElse(
                 connectionRequestTimeout, DEFAULT_CONNECTION_REQUEST_TIMEOUT);
-        this.timeToLive = NullSafe.requireNonNullElse(timeToLive, DEFAULT_TIME_TO_LIVE);
-        this.cookiesEnabled = NullSafe.requireNonNullElse(cookiesEnabled, DEFAULT_COOKIES_ENABLED);
-        this.maxConnections = NullSafe.requireNonNullElse(maxConnections, DEFAULT_MAX_CONNECTIONS);
-        this.maxConnectionsPerRoute = NullSafe.requireNonNullElse(
+        this.timeToLive = Objects.requireNonNullElse(timeToLive, DEFAULT_TIME_TO_LIVE);
+        this.cookiesEnabled = Objects.requireNonNullElse(cookiesEnabled, DEFAULT_COOKIES_ENABLED);
+        this.maxConnections = Objects.requireNonNullElse(maxConnections, DEFAULT_MAX_CONNECTIONS);
+        this.maxConnectionsPerRoute = Objects.requireNonNullElse(
                 maxConnectionsPerRoute, DEFAULT_MAX_CONNECTIONS_PER_ROUTE);
-        this.keepAlive = NullSafe.requireNonNullElse(keepAlive, DEFAULT_KEEP_ALIVE);
+        this.keepAlive = Objects.requireNonNullElse(keepAlive, DEFAULT_KEEP_ALIVE);
         this.retries = retries;
         this.userAgent = userAgent;
         this.proxy = proxy;
-        this.validateAfterInactivityPeriod = NullSafe.requireNonNullElse(
+        this.validateAfterInactivityPeriod = Objects.requireNonNullElse(
                 validateAfterInactivityPeriod, DEFAULT_VALIDATE_AFTER_INACTIVITY_PERIOD);
-        this.tls = NullSafe.requireNonNullElseGet(tls, () -> HttpTlsConfig.builder().build());
+        this.tls = Objects.requireNonNullElseGet(tls, () -> HttpTlsConfig.builder().build());
     }
 
     public SimpleDuration getKeepAlive() {

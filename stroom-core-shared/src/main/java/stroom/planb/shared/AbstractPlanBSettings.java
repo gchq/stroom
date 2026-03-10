@@ -80,11 +80,11 @@ public abstract sealed class AbstractPlanBSettings permits
                                  final Boolean overwrite,
                                  final RetentionSettings retention,
                                  final SnapshotSettings snapshotSettings) {
-        this.maxStoreSize = NullSafe.requireNonNullElse(maxStoreSize, DEFAULT_MAX_STORE_SIZE);
-        this.synchroniseMerge = NullSafe.requireNonNullElse(synchroniseMerge, false);
-        this.overwrite = NullSafe.requireNonNullElse(overwrite, true);
-        this.retention = NullSafe.requireNonNullElse(retention, new RetentionSettings.Builder().build());
-        this.snapshotSettings = NullSafe.requireNonNullElse(snapshotSettings, new SnapshotSettings());
+        this.maxStoreSize = Objects.requireNonNullElse(maxStoreSize, DEFAULT_MAX_STORE_SIZE);
+        this.synchroniseMerge = Objects.requireNonNullElse(synchroniseMerge, false);
+        this.overwrite = Objects.requireNonNullElse(overwrite, true);
+        this.retention = Objects.requireNonNullElse(retention, new RetentionSettings.Builder().build());
+        this.snapshotSettings = Objects.requireNonNullElse(snapshotSettings, new SnapshotSettings());
     }
 
     public Long getMaxStoreSize() {

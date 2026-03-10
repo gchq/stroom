@@ -450,8 +450,8 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
             this.hashAlgorithm = Objects.requireNonNull(hashAlgorithm);
             this.prefix = Objects.requireNonNull(prefix);
             this.hashedApiKey = Objects.requireNonNull(hashedApiKey);
-            this.requiredAppPermissions = NullSafe.requireNonNullElseGet(
-                    requiredAppPermissions, AppPermissionSet::empty);
+            this.requiredAppPermissions = Objects.requireNonNullElseGet(requiredAppPermissions,
+                    AppPermissionSet::empty);
             this.lastVerifiedEpochMs = lastVerifiedEpochMs;
             this.userDesc = userDesc;
         }

@@ -24,6 +24,8 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.cellview.client.SafeHtmlHeader;
 
+import java.util.Objects;
+
 public class HeadingBuilder {
 
     private HeadingAlignment headingAlignment = null;
@@ -40,7 +42,7 @@ public class HeadingBuilder {
     }
 
     public HeadingBuilder headingText(final SafeHtml headingText) {
-        this.headingText = NullSafe.requireNonNullElse(headingText, SafeHtmlUtils.EMPTY_SAFE_HTML);
+        this.headingText = Objects.requireNonNullElse(headingText, SafeHtmlUtils.EMPTY_SAFE_HTML);
         return this;
     }
 
