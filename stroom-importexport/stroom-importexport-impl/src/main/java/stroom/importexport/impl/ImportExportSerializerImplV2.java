@@ -1528,13 +1528,16 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
                             }
                         }
                     } catch (final PermissionException e) {
-                        LOGGER.error("Permission exception exporting asset '{}': {}", asset.getKey(), e.getMessage(), e);
+                        LOGGER.error("Permission exception exporting asset '{}': {}",
+                                asset.getKey(), e.getMessage(), e);
                         throw e;
                     } catch (final IOException e) {
-                        LOGGER.error("Error exporting asset '{}': {}", asset.getKey(), e.getMessage(), e);
+                        LOGGER.error("Error exporting asset '{}': {}",
+                                asset.getKey(), e.getMessage(), e);
                         throw e;
                     } catch (final NullPointerException e) {
-                        LOGGER.error("NullPointerException exporting asset '{}': {}", asset.getKey(), e.getMessage(), e);
+                        LOGGER.error("NullPointerException exporting asset '{}': {}",
+                                asset.getKey(), e.getMessage(), e);
                         throw e;
                     }
 

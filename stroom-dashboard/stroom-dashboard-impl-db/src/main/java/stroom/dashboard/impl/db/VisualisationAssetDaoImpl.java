@@ -1,5 +1,6 @@
 package stroom.dashboard.impl.db;
 
+import stroom.dashboard.impl.db.jooq.Tables;
 import stroom.dashboard.impl.visualisation.VisualisationAssetDao;
 import stroom.db.util.JooqUtil;
 import stroom.importexport.api.ByteArrayImportExportAsset;
@@ -8,7 +9,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.visualisation.shared.VisualisationAsset;
 import stroom.visualisation.shared.VisualisationAssets;
-import stroom.dashboard.impl.db.jooq.Tables;
 
 import com.google.common.hash.Hashing;
 import com.google.inject.Inject;
@@ -97,8 +97,7 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
      * @param result The result from Jooq
      * @return A list of assets;
      */
-    private List<VisualisationAsset>
-    resultToAssets(final Result<Record3<String, String, Byte>> result) {
+    private List<VisualisationAsset> resultToAssets(final Result<Record3<String, String, Byte>> result) {
         final List<VisualisationAsset> assets = new ArrayList<>(result.size());
         for (final Record3<String, String, Byte> record : result) {
             final VisualisationAsset asset = new VisualisationAsset(record.value1(),
@@ -113,10 +112,9 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
     /**
      * Utility method to convert a Result into a list of ImportExportAssets.
      */
-    private List<ImportExportAsset>
-    resultToImportExportAssets(final Result<Record2<String, byte[]>> result) {
+    private List<ImportExportAsset> resultToImportExportAssets(final Result<Record2<String, byte[]>> result) {
         final List<ImportExportAsset> assets = new ArrayList<>(result.size());
-        for (final Record2<String, byte[]> record: result) {
+        for (final Record2<String, byte[]> record : result) {
             final ImportExportAsset asset = new ByteArrayImportExportAsset(record.value1(), record.value2());
             assets.add(asset);
         }

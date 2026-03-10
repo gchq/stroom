@@ -550,7 +550,8 @@ public class VisPresenter
                     if (function.getFunctionName() != null) {
                         if (loadedFunction == null || !loadedFunction.equals(function)) {
                             loadedFunction = function;
-                            visFrame.setVisType(function.getFunctionName(), getClassName(currentPreferences.getTheme()));
+                            visFrame.setVisType(function.getFunctionName(),
+                                    getClassName(currentPreferences.getTheme()));
                         }
                     }
 

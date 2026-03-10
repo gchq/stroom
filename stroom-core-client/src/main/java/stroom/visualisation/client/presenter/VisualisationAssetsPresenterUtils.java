@@ -36,7 +36,7 @@ import java.util.Set;
 public class VisualisationAssetsPresenterUtils {
 
     /** Slash / character */
-    private final static String SLASH = "/";
+    private static final String SLASH = "/";
 
     /**
      * Convert the paths in the VisualisationAssets into the tree model.

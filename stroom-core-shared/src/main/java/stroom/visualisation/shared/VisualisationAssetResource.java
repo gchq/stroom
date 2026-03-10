@@ -48,7 +48,7 @@ public interface VisualisationAssetResource extends RestResource, DirectRestServ
             summary = "Creates a new text file",
             operationId = "updateNewFile")
     Boolean updateNewFile(@PathParam("ownerDocId") String ownerDocId,
-                          @Parameter(description="Path and Mimetype", required = false)
+                          @Parameter(description = "Path and Mimetype", required = false)
                           VisualisationAssetUpdateNewFile update);
 
     @PUT
@@ -57,7 +57,7 @@ public interface VisualisationAssetResource extends RestResource, DirectRestServ
             summary = "Creates a new uploaded file",
             operationId = "updateNewUploadedFile")
     Boolean updateNewUploadedFile(@PathParam("ownerDocId") String ownerDocId,
-                                  @Parameter(description="Path, ResourceKey and Mimetype", required = true)
+                                  @Parameter(description = "Path, ResourceKey and Mimetype", required = true)
                                   VisualisationAssetUpdateNewFile update);
 
     @PUT
@@ -66,7 +66,7 @@ public interface VisualisationAssetResource extends RestResource, DirectRestServ
             summary = "Deletes an asset",
             operationId = "updateDelete")
     Boolean updateDelete(@PathParam("ownerDocId") String ownerDocId,
-                         @Parameter(description="Path and isFolder", required = true)
+                         @Parameter(description = "Path and isFolder", required = true)
                          VisualisationAssetUpdateDelete update);
 
     @PUT
@@ -84,7 +84,7 @@ public interface VisualisationAssetResource extends RestResource, DirectRestServ
             summary = "Updates the content of an asset",
             operationId = "updateContent")
     Boolean updateContent(@PathParam("ownerDocId") String ownerDocId,
-                          @Parameter(description="Path and Content", required = true)
+                          @Parameter(description = "Path and Content", required = true)
                           VisualisationAssetUpdateContent update);
 
     @GET
@@ -118,7 +118,7 @@ public interface VisualisationAssetResource extends RestResource, DirectRestServ
             summary = "Save the document's assets to another document",
             operationId = "saveAs")
     Boolean saveAs(@PathParam("fromOwnerDocId") String fromOwnerDocId,
-                   @Parameter(description="SaveAs parameters", required = true)
+                   @Parameter(description = "SaveAs parameters", required = true)
                    VisualisationAssetSaveAsParameters updateParameters);
 
     @GET

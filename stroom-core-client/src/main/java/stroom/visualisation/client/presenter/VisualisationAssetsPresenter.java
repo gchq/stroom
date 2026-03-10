@@ -78,13 +78,13 @@ public class VisualisationAssetsPresenter
         implements HasToolbar, VisualisationAssetsAddFileCallback {
 
     /** Illegal asset name characters - not allowed in any file or folder name */
-    private final static String ILLEGAL_ASSET_NAME_CHARACTERS = "/:";
+    private static final String ILLEGAL_ASSET_NAME_CHARACTERS = "/:";
 
     /** Servlet path - start of the URL for the asset as retrieved via the Servlet */
-    private final static String ASSET_SERVLET_PATH_PREFIX = "/assets/";
+    private static final String ASSET_SERVLET_PATH_PREFIX = "/assets/";
 
     /** REST interface */
-    private final static VisualisationAssetResource VISUALISATION_ASSET_RESOURCE =
+    private static final VisualisationAssetResource VISUALISATION_ASSET_RESOURCE =
             GWT.create(VisualisationAssetResource.class);
 
     /** Rest factory to trigger storing file uploads */
@@ -129,11 +129,11 @@ public class VisualisationAssetsPresenter
     /** Current document - may be null */
     private VisualisationDoc document;
 
-    /** True if the UI is readonly, false if read-write */
-    private boolean readOnly = false;
-
     /** State of content edited in editor */
     private final VisualisationAssetState assetDirtyState = new VisualisationAssetState();
+
+    /** True if the UI is readonly, false if read-write */
+    private boolean readOnly = false;
 
     @Inject
     public VisualisationAssetsPresenter(final EventBus eventBus,
@@ -411,32 +411,31 @@ public class VisualisationAssetsPresenter
             addItemDialog.setupPopup(popupEventBuilder, path, ILLEGAL_ASSET_NAME_CHARACTERS, dialogType);
             popupEventBuilder
                     .onHideRequest(event -> {
-                                if (event.isOk()) {
-                                    // Ok pressed
-                                    if (addItemDialog.isValid()) {
-                                        final String itemName = getNonClashingLabel(parentItem,
-                                                addItemDialog.getView().getName(),
-                                                null);
-                                        VisualisationAssetsPresenterUtils.
-                                                markOpenClosedStateOpen(parentItem, treeItemPathToOpenState);
-                                        final String newItemPath =
-                                                VisualisationAssetsPresenterUtils.getNewItemPath(parentItem, itemName);
-                                        final VisualisationAssetUpdateNewFile update;
-                                        if (addFile) {
-                                            doUpdateNewFile(newItemPath);
-                                        } else {
-                                            doUpdateNewFolder(newItemPath);
-                                        }
-                                        event.hide();
-                                    } else {
-                                        AlertEvent.fireWarn(this, "Item name not set", event::reset);
-                                    }
+                        if (event.isOk()) {
+                            // Ok pressed
+                            if (addItemDialog.isValid()) {
+                                final String itemName = getNonClashingLabel(parentItem,
+                                        addItemDialog.getView().getName(),
+                                        null);
+                                VisualisationAssetsPresenterUtils
+                                        .markOpenClosedStateOpen(parentItem, treeItemPathToOpenState);
+                                final String newItemPath =
+                                        VisualisationAssetsPresenterUtils.getNewItemPath(parentItem, itemName);
+                                final VisualisationAssetUpdateNewFile update;
+                                if (addFile) {
+                                    doUpdateNewFile(newItemPath);
                                 } else {
-                                    // Cancel pressed
-                                    event.hide();
+                                    doUpdateNewFolder(newItemPath);
                                 }
+                                event.hide();
+                            } else {
+                                AlertEvent.fireWarn(this, "Item name not set", event::reset);
                             }
-                    )
+                        } else {
+                            // Cancel pressed
+                            event.hide();
+                        }
+                    })
                     .fire();
         }
 
@@ -490,30 +489,29 @@ public class VisualisationAssetsPresenter
                 editAssetDialog.setupPopup(popupEventBuilder, selectedItem, ILLEGAL_ASSET_NAME_CHARACTERS);
                 popupEventBuilder
                         .onHideRequest(event -> {
-                                    if (event.isOk()) {
-                                        if (editAssetDialog.isValid()) {
-                                            final String oldPath =
-                                                    VisualisationAssetsPresenterUtils.getItemPath(selectedItem);
-                                            final VisualisationAssetTreeItem parentItem =
-                                                    (VisualisationAssetTreeItem) selectedItem.getParentItem();
-                                            final String text = getNonClashingLabel(parentItem,
-                                                    editAssetDialog.getView().getText(),
-                                                    editAssetDialog.getView().getId());
-                                            final String newPath =
-                                                    VisualisationAssetsPresenterUtils.getNewItemPath(parentItem, text);
-                                            doUpdateRename(oldPath, newPath, !selectedItem.isLeaf());
-                                            event.hide();
-                                        } else {
-                                            AlertEvent.fireWarn(this,
-                                                    editAssetDialog.getValidationErrorMessage(),
-                                                    event::reset);
-                                        }
-                                    } else {
-                                        // Cancel pressed
-                                        event.hide();
-                                    }
+                            if (event.isOk()) {
+                                if (editAssetDialog.isValid()) {
+                                    final String oldPath =
+                                            VisualisationAssetsPresenterUtils.getItemPath(selectedItem);
+                                    final VisualisationAssetTreeItem parentItem =
+                                            (VisualisationAssetTreeItem) selectedItem.getParentItem();
+                                    final String text = getNonClashingLabel(parentItem,
+                                            editAssetDialog.getView().getText(),
+                                            editAssetDialog.getView().getId());
+                                    final String newPath =
+                                            VisualisationAssetsPresenterUtils.getNewItemPath(parentItem, text);
+                                    doUpdateRename(oldPath, newPath, !selectedItem.isLeaf());
+                                    event.hide();
+                                } else {
+                                    AlertEvent.fireWarn(this,
+                                            editAssetDialog.getValidationErrorMessage(),
+                                            event::reset);
                                 }
-                        )
+                            } else {
+                                // Cancel pressed
+                                event.hide();
+                            }
+                        })
                         .fire();
             }
         }

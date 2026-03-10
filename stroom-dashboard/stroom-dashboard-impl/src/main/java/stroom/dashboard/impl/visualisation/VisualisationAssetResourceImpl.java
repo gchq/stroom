@@ -3,6 +3,7 @@ package stroom.dashboard.impl.visualisation;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.visualisation.shared.VisualisationAssetContent;
@@ -32,12 +33,10 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Locale;
 
-import static stroom.event.logging.rs.api.AutoLogged.OperationType.MANUALLY_LOGGED;
-
 /**
  * Serverside REST handling for Visualisation Assets.
  */
-@AutoLogged(MANUALLY_LOGGED)
+@AutoLogged(OperationType.MANUALLY_LOGGED)
 public class VisualisationAssetResourceImpl implements VisualisationAssetResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(VisualisationAssetResourceImpl.class);

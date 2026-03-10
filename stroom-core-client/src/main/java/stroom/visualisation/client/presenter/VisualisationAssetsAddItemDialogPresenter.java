@@ -39,9 +39,11 @@ public class VisualisationAssetsAddItemDialogPresenter
         DialogType(final String name) {
             this.name = name;
         }
+
         public String toString() {
             return name;
         }
+
         public String toTitleCaseString() {
             return name.substring(0, 1).toUpperCase() +
                    name.substring(1);

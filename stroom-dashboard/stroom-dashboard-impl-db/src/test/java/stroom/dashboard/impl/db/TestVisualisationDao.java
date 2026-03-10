@@ -4,10 +4,10 @@ import stroom.dashboard.impl.visualisation.VisualisationAssetDao;
 import stroom.visualisation.shared.VisualisationAssets;
 
 import com.google.inject.Guice;
+import jakarta.inject.Inject;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import jakarta.inject.Inject;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -17,8 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Arrays;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 /**
  * Tests the Visualisation DAO.
@@ -41,28 +39,28 @@ public class TestVisualisationDao {
         final String userUuid = "abcdef";
 
         VisualisationAssets assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
-        assertThat(assets.getAssets().size()).isEqualTo(0);
-        assertThat(assets.isDirty()).isEqualTo(false);
+        AssertionsForClassTypes.assertThat(assets.getAssets().size()).isEqualTo(0);
+        AssertionsForClassTypes.assertThat(assets.isDirty()).isEqualTo(false);
 
         assetDao.updateNewFolder(userUuid, ownerDocUuid, "/assetOne");
         assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
-        assertThat(assets.getAssets().size()).isEqualTo(1);
-        assertThat(assets.isDirty()).isEqualTo(true);
+        AssertionsForClassTypes.assertThat(assets.getAssets().size()).isEqualTo(1);
+        AssertionsForClassTypes.assertThat(assets.isDirty()).isEqualTo(true);
 
         assetDao.updateNewFile(userUuid, ownerDocUuid, "/assetTwo/NewFile.txt");
         assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
-        assertThat(assets.getAssets().size()).isEqualTo(2);
-        assertThat(assets.isDirty()).isEqualTo(true);
+        AssertionsForClassTypes.assertThat(assets.getAssets().size()).isEqualTo(2);
+        AssertionsForClassTypes.assertThat(assets.isDirty()).isEqualTo(true);
 
         assetDao.saveDraftToLive(userUuid, ownerDocUuid);
         assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
-        assertThat(assets.getAssets().size()).isEqualTo(2);
-        assertThat(assets.isDirty()).isEqualTo(false);
+        AssertionsForClassTypes.assertThat(assets.getAssets().size()).isEqualTo(2);
+        AssertionsForClassTypes.assertThat(assets.isDirty()).isEqualTo(false);
 
         assetDao.updateDelete(userUuid, ownerDocUuid, "/assetOne", true);
         assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
-        assertThat(assets.isDirty()).isEqualTo(true);
-        assertThat(assets.getAssets().size()).isEqualTo(1);
+        AssertionsForClassTypes.assertThat(assets.isDirty()).isEqualTo(true);
+        AssertionsForClassTypes.assertThat(assets.getAssets().size()).isEqualTo(1);
 
         assetDao.updateRename(userUuid,
                 ownerDocUuid,
@@ -70,28 +68,28 @@ public class TestVisualisationDao {
                 "/root",
                 true);
         assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
-        assertThat(assets.isDirty()).isEqualTo(true);
-        assertThat(assets.getAssets().size()).isEqualTo(1);
-        assertThat(assets.getAssets().getFirst().getPath()).isEqualTo("/root/NewFile.txt");
+        AssertionsForClassTypes.assertThat(assets.isDirty()).isEqualTo(true);
+        AssertionsForClassTypes.assertThat(assets.getAssets().size()).isEqualTo(1);
+        AssertionsForClassTypes.assertThat(assets.getAssets().getFirst().getPath()).isEqualTo("/root/NewFile.txt");
 
         assetDao.updateContent(userUuid, ownerDocUuid, "/root/NewFile.txt",
                 "ABCDEFG".getBytes(StandardCharsets.UTF_8));
         assetDao.saveDraftToLive(userUuid, ownerDocUuid);
         assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
-        assertThat(assets.isDirty()).isEqualTo(false);
-        assertThat(assets.getAssets().size()).isEqualTo(1);
-        assertThat(assets.getAssets().getFirst().getPath()).isEqualTo("/root/NewFile.txt");
+        AssertionsForClassTypes.assertThat(assets.isDirty()).isEqualTo(false);
+        AssertionsForClassTypes.assertThat(assets.getAssets().size()).isEqualTo(1);
+        AssertionsForClassTypes.assertThat(assets.getAssets().getFirst().getPath()).isEqualTo("/root/NewFile.txt");
         final Path tempFile = Files.createTempFile("TestVisualisationDao", ".tmp");
         try {
             Instant timestamp = assetDao.writeLiveToServletCache("foo",
-            "bar",
+                    "bar",
                     ownerDocUuid,
                     "/root/NewFile.txt",
                     Instant.EPOCH,
                     tempFile);
             final String fileContents = Files.readString(tempFile);
-            assertThat(fileContents).isEqualTo("ABCDEFG");
-            assertThat(timestamp).isNotEqualTo(Instant.EPOCH);
+            AssertionsForClassTypes.assertThat(fileContents).isEqualTo("ABCDEFG");
+            AssertionsForClassTypes.assertThat(timestamp).isNotEqualTo(Instant.EPOCH);
 
             timestamp = assetDao.writeLiveToServletCache("foo",
                     "bar",
@@ -99,9 +97,9 @@ public class TestVisualisationDao {
                     "/does/not/exist.txt",
                     Instant.EPOCH,
                     tempFile);
-            assertThat(timestamp).isNull();
-            assertThat(Files.readString(tempFile)).isEqualTo("ABCDEFG");
-            assertThat(timestamp).isNotEqualTo(Instant.EPOCH);
+            AssertionsForClassTypes.assertThat(timestamp).isNull();
+            AssertionsForClassTypes.assertThat(Files.readString(tempFile)).isEqualTo("ABCDEFG");
+            AssertionsForClassTypes.assertThat(timestamp).isNotEqualTo(Instant.EPOCH);
         } finally {
             Files.delete(tempFile);
         }
@@ -113,20 +111,20 @@ public class TestVisualisationDao {
         final String userUuid = "user789";
 
         VisualisationAssets assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
-        assertThat(assets.getAssets().size()).isEqualTo(0);
-        assertThat(assets.isDirty()).isEqualTo(false);
+        AssertionsForClassTypes.assertThat(assets.getAssets().size()).isEqualTo(0);
+        AssertionsForClassTypes.assertThat(assets.isDirty()).isEqualTo(false);
 
         assetDao.updateNewFolder(userUuid, ownerDocUuid, "/folderToBeDeleted");
         assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
-        assertThat(assets.getAssets().size()).isEqualTo(1);
-        assertThat(assets.getAssets().getFirst().getPath()).isEqualTo("/folderToBeDeleted/");
+        AssertionsForClassTypes.assertThat(assets.getAssets().size()).isEqualTo(1);
+        AssertionsForClassTypes.assertThat(assets.getAssets().getFirst().getPath()).isEqualTo("/folderToBeDeleted/");
 
         assetDao.updateDelete(userUuid, ownerDocUuid, "/folderToBeDeleted", true);
         assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
         if (!assets.getAssets().isEmpty()) {
             System.err.println("Extra value is '" + assets.getAssets().getFirst().getPath() + "'");
         }
-        assertThat(assets.getAssets().size()).isEqualTo(0);
+        AssertionsForClassTypes.assertThat(assets.getAssets().size()).isEqualTo(0);
     }
 
     @Test
@@ -136,30 +134,30 @@ public class TestVisualisationDao {
         final String toDocUuid = "toDocId";
 
         VisualisationAssets assets = assetDao.fetchDraftAssets(fromUserUuid, fromDocUuid);
-        assertThat(assets.getAssets().size()).isEqualTo(0);
-        assertThat(assets.isDirty()).isEqualTo(false);
+        AssertionsForClassTypes.assertThat(assets.getAssets().size()).isEqualTo(0);
+        AssertionsForClassTypes.assertThat(assets.isDirty()).isEqualTo(false);
 
         assetDao.updateNewFolder(fromUserUuid, fromDocUuid, "/assetOne");
         assets = assetDao.fetchDraftAssets(fromUserUuid, fromDocUuid);
-        assertThat(assets.getAssets().size()).isEqualTo(1);
-        assertThat(assets.isDirty()).isEqualTo(true);
+        AssertionsForClassTypes.assertThat(assets.getAssets().size()).isEqualTo(1);
+        AssertionsForClassTypes.assertThat(assets.isDirty()).isEqualTo(true);
 
         assetDao.updateNewFile(fromUserUuid, fromDocUuid, "/assetTwo/NewFile.txt");
         assets = assetDao.fetchDraftAssets(fromUserUuid, fromDocUuid);
-        assertThat(assets.getAssets().size()).isEqualTo(2);
-        assertThat(assets.isDirty()).isEqualTo(true);
+        AssertionsForClassTypes.assertThat(assets.getAssets().size()).isEqualTo(2);
+        AssertionsForClassTypes.assertThat(assets.isDirty()).isEqualTo(true);
 
         assetDao.saveDraftToLive(fromUserUuid, fromDocUuid);
         assetDao.copyLiveAssets(fromDocUuid, toDocUuid);
 
         final VisualisationAssets copiedAssets = assetDao.fetchDraftAssets(fromUserUuid, toDocUuid);
-        assertThat(copiedAssets.getAssets().size()).isEqualTo(2);
-        assertThat(copiedAssets.isDirty()).isEqualTo(false);
+        AssertionsForClassTypes.assertThat(copiedAssets.getAssets().size()).isEqualTo(2);
+        AssertionsForClassTypes.assertThat(copiedAssets.isDirty()).isEqualTo(false);
 
         // Try copying again - should blow up
         try {
             assetDao.copyLiveAssets(fromDocUuid, toDocUuid);
-            assertThat(false).isEqualTo(true);
+            AssertionsForClassTypes.assertThat(false).isEqualTo(true);
         } catch (final IOException e) {
             // OK it worked as expected
         }
@@ -171,8 +169,8 @@ public class TestVisualisationDao {
         final String userUuid = "dedupUser";
 
         VisualisationAssets assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
-        assertThat(assets.getAssets().size()).isEqualTo(0);
-        assertThat(assets.isDirty()).isEqualTo(false);
+        AssertionsForClassTypes.assertThat(assets.getAssets().size()).isEqualTo(0);
+        AssertionsForClassTypes.assertThat(assets.isDirty()).isEqualTo(false);
 
         // Add in duplicated assets
         assetDao.updateNewFolder(userUuid, ownerDocUuid, "folder");
@@ -181,32 +179,33 @@ public class TestVisualisationDao {
 
         // Draft table contains duplicates
         assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
-        assertThat(assets.isDirty()).isEqualTo(true);
-        assertThat(assets.getAssets().size()).isEqualTo(3);
+        AssertionsForClassTypes.assertThat(assets.isDirty()).isEqualTo(true);
+        AssertionsForClassTypes.assertThat(assets.getAssets().size()).isEqualTo(3);
 
         // Save to live
         assetDao.saveDraftToLive(userUuid, ownerDocUuid);
         assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
-        assertThat(assets.isDirty()).isEqualTo(false);
-        assertThat(assets.getAssets().size()).isEqualTo(1);
-        assertThat(assets.getAssets().getFirst().getPath()).isEqualTo("/folder/subfolder/file.ext");
+        AssertionsForClassTypes.assertThat(assets.isDirty()).isEqualTo(false);
+        AssertionsForClassTypes.assertThat(assets.getAssets().size()).isEqualTo(1);
+        AssertionsForClassTypes.assertThat(assets.getAssets().getFirst().getPath())
+                .isEqualTo("/folder/subfolder/file.ext");
     }
 
     @Test
     void testParentPath() {
         final String fullPath = "/1/2/3/4/5/6.ext";
         final String path5 = VisualisationAssetDaoImpl.getParentPath(fullPath);
-        assertThat(path5).isEqualTo("/1/2/3/4/5/");
+        AssertionsForClassTypes.assertThat(path5).isEqualTo("/1/2/3/4/5/");
         final String path4 = VisualisationAssetDaoImpl.getParentPath(path5);
-        assertThat(path4).isEqualTo("/1/2/3/4/");
+        AssertionsForClassTypes.assertThat(path4).isEqualTo("/1/2/3/4/");
         final String path3 = VisualisationAssetDaoImpl.getParentPath(path4);
-        assertThat(path3).isEqualTo("/1/2/3/");
+        AssertionsForClassTypes.assertThat(path3).isEqualTo("/1/2/3/");
         final String path2 = VisualisationAssetDaoImpl.getParentPath(path3);
-        assertThat(path2).isEqualTo("/1/2/");
+        AssertionsForClassTypes.assertThat(path2).isEqualTo("/1/2/");
         final String path1 = VisualisationAssetDaoImpl.getParentPath(path2);
-        assertThat(path1).isEqualTo("/1/");
+        AssertionsForClassTypes.assertThat(path1).isEqualTo("/1/");
         final String path0 = VisualisationAssetDaoImpl.getParentPath(path1);
-        assertThat(path0).isEqualTo("");
+        AssertionsForClassTypes.assertThat(path0).isEqualTo("");
     }
 
     @Test
@@ -215,22 +214,22 @@ public class TestVisualisationDao {
         final String userUuid = "iaeUser";
 
         final VisualisationAssets assets = assetDao.fetchDraftAssets(userUuid, ownerDocUuid);
-        assertThat(assets.getAssets().size()).isEqualTo(0);
-        assertThat(assets.isDirty()).isEqualTo(false);
+        AssertionsForClassTypes.assertThat(assets.getAssets().size()).isEqualTo(0);
+        AssertionsForClassTypes.assertThat(assets.isDirty()).isEqualTo(false);
         boolean indexAssetExists = assetDao.indexAssetExists(ownerDocUuid);
-        assertThat(indexAssetExists).isEqualTo(false);
+        AssertionsForClassTypes.assertThat(indexAssetExists).isEqualTo(false);
 
         // Add the index asset
         assetDao.updateNewFile(userUuid, ownerDocUuid, "/index.html");
 
         // Not saved yet so still doesn't exist
         indexAssetExists = assetDao.indexAssetExists(ownerDocUuid);
-        assertThat(indexAssetExists).isEqualTo(false);
+        AssertionsForClassTypes.assertThat(indexAssetExists).isEqualTo(false);
 
         // Save it and check the asset now exists
         assetDao.saveDraftToLive(userUuid, ownerDocUuid);
         indexAssetExists = assetDao.indexAssetExists(ownerDocUuid);
-        assertThat(indexAssetExists).isEqualTo(true);
+        AssertionsForClassTypes.assertThat(indexAssetExists).isEqualTo(true);
 
     }
 
@@ -241,14 +240,14 @@ public class TestVisualisationDao {
 
         // 1. File doesn't exist
         final String missingContent = assetDao.getDraftContent(userUuid, ownerDocUuid, "/missing.txt");
-        assertThat(missingContent).isNull();
+        AssertionsForClassTypes.assertThat(missingContent).isNull();
 
         // 2. Normal file size
         assetDao.updateNewFile(userUuid, ownerDocUuid, "/smalld.txt");
         final String testStr = "small content";
         assetDao.updateContent(userUuid, ownerDocUuid, "/smalld.txt", testStr.getBytes(StandardCharsets.UTF_8));
         final String fetchedContent = assetDao.getDraftContent(userUuid, ownerDocUuid, "/smalld.txt");
-        assertThat(fetchedContent).isEqualTo(testStr);
+        AssertionsForClassTypes.assertThat(fetchedContent).isEqualTo(testStr);
 
         // 3. File too big
         assetDao.updateNewFile(userUuid, ownerDocUuid, "/bigd.txt");
@@ -256,10 +255,10 @@ public class TestVisualisationDao {
         // 'A'
         Arrays.fill(bigData, (byte) 65);
         assetDao.updateContent(userUuid, ownerDocUuid, "/bigd.txt", bigData);
-        
+
         try {
             assetDao.getDraftContent(userUuid, ownerDocUuid, "/bigd.txt");
-            assertThat(false).as("Expected DataTooBigException").isTrue();
+            AssertionsForClassTypes.assertThat(false).as("Expected DataTooBigException").isTrue();
         } catch (final RuntimeException e) {
             // Success
         }
@@ -272,7 +271,7 @@ public class TestVisualisationDao {
 
         // 1. File doesn't exist
         final String missingContent = assetDao.getDraftContent(userUuid, ownerDocUuid, "/missing.txt");
-        assertThat(missingContent).isNull();
+        AssertionsForClassTypes.assertThat(missingContent).isNull();
 
         // 2. Normal file size
         assetDao.updateNewFile(userUuid, ownerDocUuid, "/smalll.txt");
@@ -280,7 +279,7 @@ public class TestVisualisationDao {
         assetDao.updateContent(userUuid, ownerDocUuid, "/smalll.txt", testStr.getBytes(StandardCharsets.UTF_8));
         assetDao.saveDraftToLive(userUuid, ownerDocUuid);
         final String fetchedContent = assetDao.getDraftContent(userUuid, ownerDocUuid, "/smalll.txt");
-        assertThat(fetchedContent).isEqualTo(testStr);
+        AssertionsForClassTypes.assertThat(fetchedContent).isEqualTo(testStr);
 
         // 3. File too big
         assetDao.updateNewFile(userUuid, ownerDocUuid, "/bigl.txt");
@@ -292,7 +291,7 @@ public class TestVisualisationDao {
 
         try {
             assetDao.getDraftContent(userUuid, ownerDocUuid, "/bigl.txt");
-            assertThat(false).as("Expected DataTooBigException").isTrue();
+            AssertionsForClassTypes.assertThat(false).as("Expected DataTooBigException").isTrue();
         } catch (final RuntimeException e) {
             // Success
         }
