@@ -222,7 +222,7 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
 
     /**
      * Get the implicit join path to the
-     * <code>stroom_v7_11.index_volume_group</code> table.
+     * <code>stroom_master.index_volume_group</code> table.
      */
     public IndexVolumeGroupPath indexVolumeGroup() {
         if (_indexVolumeGroup == null)
@@ -235,7 +235,7 @@ public class IndexVolume extends TableImpl<IndexVolumeRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>stroom_v7_11.index_shard</code> table
+     * <code>stroom_master.index_shard</code> table
      */
     public IndexShardPath indexShard() {
         if (_indexShard == null)

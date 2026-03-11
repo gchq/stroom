@@ -181,7 +181,7 @@ public class IndexField extends TableImpl<IndexFieldRecord> {
 
     /**
      * Get the implicit join path to the
-     * <code>stroom_v7_11.index_field_source</code> table.
+     * <code>stroom_master.index_field_source</code> table.
      */
     public IndexFieldSourcePath indexFieldSource() {
         if (_indexFieldSource == null)

@@ -165,8 +165,8 @@ public class ExplorerFavourite extends TableImpl<ExplorerFavouriteRecord> {
     private transient ExplorerNodePath _explorerNode;
 
     /**
-     * Get the implicit join path to the <code>stroom.explorer_node</code>
-     * table.
+     * Get the implicit join path to the
+     * <code>stroom_master.explorer_node</code> table.
      */
     public ExplorerNodePath explorerNode() {
         if (_explorerNode == null)

@@ -154,7 +154,8 @@ public class TabSessionDocRef extends TableImpl<TabSessionDocRefRecord> {
     private transient TabSessionPath _tabSession;
 
     /**
-     * Get the implicit join path to the <code>stroom.tab_session</code> table.
+     * Get the implicit join path to the <code>stroom_master.tab_session</code>
+     * table.
      */
     public TabSessionPath tabSession() {
         if (_tabSession == null)

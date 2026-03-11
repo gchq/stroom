@@ -166,7 +166,7 @@ public class ExplorerNode extends TableImpl<ExplorerNodeRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>stroom.explorer_favourite</code> table
+     * <code>stroom_master.explorer_favourite</code> table
      */
     public ExplorerFavouritePath explorerFavourite() {
         if (_explorerFavourite == null)

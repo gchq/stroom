@@ -156,7 +156,7 @@ public class TabSession extends TableImpl<TabSessionRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>stroom.tab_session_doc_ref</code> table
+     * <code>stroom_master.tab_session_doc_ref</code> table
      */
     public TabSessionDocRefPath tabSessionDocRef() {
         if (_tabSessionDocRef == null)

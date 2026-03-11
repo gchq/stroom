@@ -156,7 +156,7 @@ public class NodeGroupLink extends TableImpl<NodeGroupLinkRecord> {
     private transient NodePath _node;
 
     /**
-     * Get the implicit join path to the <code>stroom_v7_11.node</code> table.
+     * Get the implicit join path to the <code>stroom_master.node</code> table.
      */
     public NodePath node() {
         if (_node == null)
@@ -168,7 +168,7 @@ public class NodeGroupLink extends TableImpl<NodeGroupLinkRecord> {
     private transient NodeGroupPath _nodeGroup;
 
     /**
-     * Get the implicit join path to the <code>stroom_v7_11.node_group</code>
+     * Get the implicit join path to the <code>stroom_master.node_group</code>
      * table.
      */
     public NodeGroupPath nodeGroup() {

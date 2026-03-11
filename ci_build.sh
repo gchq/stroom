@@ -64,7 +64,7 @@ LATEST_SUFFIX="-LATEST"
 # As 7 is still in beta, this is currently 6.1
 
 # The version of stroom-resources used for running the DB, should be a tag really
-STROOM_RESOURCES_GIT_TAG="7.7-stroom-7.0-proxy"
+STROOM_RESOURCES_GIT_TAG="7.11-stroom-7.11-proxy"
 SWAGGER_UI_GIT_TAG="v3.49.0"
 doDockerBuild=false
 STROOM_RESOURCES_DIR="${BUILD_DIR}/stroom-resources"

@@ -210,7 +210,7 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
 
     /**
      * Get the implicit join path to the
-     * <code>stroom_v7_11.processor_filter</code> table.
+     * <code>stroom_master.processor_filter</code> table.
      */
     public ProcessorFilterPath processorFilter() {
         if (_processorFilter == null)
@@ -223,7 +223,7 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
 
     /**
      * Get the implicit join path to the
-     * <code>stroom_v7_11.processor_node</code> table.
+     * <code>stroom_master.processor_node</code> table.
      */
     public ProcessorNodePath processorNode() {
         if (_processorNode == null)
@@ -236,7 +236,7 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
 
     /**
      * Get the implicit join path to the
-     * <code>stroom_v7_11.processor_feed</code> table.
+     * <code>stroom_master.processor_feed</code> table.
      */
     public ProcessorFeedPath processorFeed() {
         if (_processorFeed == null)

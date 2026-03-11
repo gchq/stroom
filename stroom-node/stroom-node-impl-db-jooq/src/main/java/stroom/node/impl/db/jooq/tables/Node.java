@@ -201,7 +201,7 @@ public class Node extends TableImpl<NodeRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>stroom_v7_11.node_group_link</code> table
+     * <code>stroom_master.node_group_link</code> table
      */
     public NodeGroupLinkPath nodeGroupLink() {
         if (_nodeGroupLink == null)

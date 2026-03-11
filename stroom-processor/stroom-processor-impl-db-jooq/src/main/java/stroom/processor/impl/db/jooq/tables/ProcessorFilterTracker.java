@@ -204,7 +204,7 @@ public class ProcessorFilterTracker extends TableImpl<ProcessorFilterTrackerReco
 
     /**
      * Get the implicit to-many join path to the
-     * <code>stroom_v7_11.processor_filter</code> table
+     * <code>stroom_master.processor_filter</code> table
      */
     public ProcessorFilterPath processorFilter() {
         if (_processorFilter == null)

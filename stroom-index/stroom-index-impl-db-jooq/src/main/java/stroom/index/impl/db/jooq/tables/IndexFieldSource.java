@@ -161,7 +161,7 @@ public class IndexFieldSource extends TableImpl<IndexFieldSourceRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>stroom_v7_11.index_field</code> table
+     * <code>stroom_master.index_field</code> table
      */
     public IndexFieldPath indexField() {
         if (_indexField == null)

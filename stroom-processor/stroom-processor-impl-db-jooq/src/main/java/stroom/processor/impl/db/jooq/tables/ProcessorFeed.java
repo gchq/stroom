@@ -151,7 +151,7 @@ public class ProcessorFeed extends TableImpl<ProcessorFeedRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>stroom_v7_11.processor_task</code> table
+     * <code>stroom_master.processor_task</code> table
      */
     public ProcessorTaskPath processorTask() {
         if (_processorTask == null)

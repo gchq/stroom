@@ -248,7 +248,7 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
     private transient ProcessorPath _processor;
 
     /**
-     * Get the implicit join path to the <code>stroom_v7_11.processor</code>
+     * Get the implicit join path to the <code>stroom_master.processor</code>
      * table.
      */
     public ProcessorPath processor() {
@@ -262,7 +262,7 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
 
     /**
      * Get the implicit join path to the
-     * <code>stroom_v7_11.processor_filter_tracker</code> table.
+     * <code>stroom_master.processor_filter_tracker</code> table.
      */
     public ProcessorFilterTrackerPath processorFilterTracker() {
         if (_processorFilterTracker == null)
@@ -275,7 +275,7 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
 
     /**
      * Get the implicit to-many join path to the
-     * <code>stroom_v7_11.processor_task</code> table
+     * <code>stroom_master.processor_task</code> table
      */
     public ProcessorTaskPath processorTask() {
         if (_processorTask == null)
