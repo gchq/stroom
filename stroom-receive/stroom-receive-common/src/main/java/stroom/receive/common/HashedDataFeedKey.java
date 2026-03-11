@@ -123,18 +123,6 @@ public final class HashedDataFeedKey implements DataFeedIdentity {
         return new AttributeMap(getStreamMetaData());
     }
 
-    @JsonIgnore
-    public String getStreamMetaValue(final String metaKey) {
-        return NullSafe.isNonBlankString(metaKey)
-                ? streamMetaData.get(CIKey.of(metaKey))
-                : null;
-    }
-
-    @JsonIgnore
-    public String getStreamMetaValue(final CIKey metaKey) {
-        return NullSafe.get(metaKey, streamMetaData::get);
-    }
-
     @Min(0)
     public long getExpiryDateEpochMs() {
         return expiryDateEpochMs;
@@ -143,11 +131,6 @@ public final class HashedDataFeedKey implements DataFeedIdentity {
     @JsonIgnore
     public Instant getExpiryDate() {
         return Instant.ofEpochMilli(expiryDateEpochMs);
-    }
-
-    @JsonIgnore
-    public boolean isExpired() {
-        return Instant.now().isAfter(getExpiryDate());
     }
 
 //    @Override

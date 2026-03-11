@@ -70,7 +70,7 @@ public class DataFeedIdneitiesDirWatcher extends AbstractDirChangeMonitor {
                                        final SimplePathCreator simplePathCreator) {
         final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
         return NullSafe.get(
-                receiveDataConfig.getDataFeedKeysDir(),
+                receiveDataConfig.getDataFeedIdentitiesDir(),
                 simplePathCreator::toAppPath);
     }
 
