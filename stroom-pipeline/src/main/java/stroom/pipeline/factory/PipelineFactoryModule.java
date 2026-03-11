@@ -16,7 +16,6 @@
 
 package stroom.pipeline.factory;
 
-import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
@@ -33,6 +32,5 @@ public class PipelineFactoryModule extends AbstractModule {
         bind(ProcessorFactory.class).to(ProcessorFactoryImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(PipelineDataCacheImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class).addBinding(PipelineDataCacheImpl.class);
     }
 }
