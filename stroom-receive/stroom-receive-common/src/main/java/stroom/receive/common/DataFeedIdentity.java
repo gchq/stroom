@@ -88,4 +88,11 @@ public sealed interface DataFeedIdentity
 //        CERTIFICATE_DN,
 //        ;
 //    }
+
+    enum IdentityStatus {
+        ADDED,
+        DUPLICATE,
+        INVALID,
+        ;
+    }
 }

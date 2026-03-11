@@ -46,7 +46,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
     private final UserIdentityFactory userIdentityFactory;
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     // Inject this so we can mock it for testing
-    private final Provider<DataFeedIdentityService> dataFeedKeyServiceProvider;
+    private final Provider<DataFeedKeyService> dataFeedKeyServiceProvider;
     private final Provider<OidcTokenAuthenticator> oidcTokenAuthenticatorProvider;
     private final Provider<CertificateAuthenticator> certificateAuthenticatorProvider;
     private final Provider<AllowUnauthenticatedAuthenticator> allowUnauthenticatedAuthenticatorProvider;
@@ -57,7 +57,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
     public RequestAuthenticatorImpl(
             final UserIdentityFactory userIdentityFactory,
             final Provider<ReceiveDataConfig> receiveDataConfigProvider,
-            final Provider<DataFeedIdentityService> dataFeedKeyServiceProvider,
+            final Provider<DataFeedKeyService> dataFeedKeyServiceProvider,
             final Provider<OidcTokenAuthenticator> oidcTokenAuthenticatorProvider,
             final Provider<CertificateAuthenticator> certificateAuthenticatorProvider,
             final Provider<AllowUnauthenticatedAuthenticator> allowUnauthenticatedAuthenticatorProvider) {

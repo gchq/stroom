@@ -17,13 +17,14 @@
 package stroom.receive.common;
 
 
+import stroom.receive.common.DataFeedIdentity.IdentityStatus;
+
 import java.nio.file.Path;
-import java.util.List;
 
-public interface DataFeedIdentityService {
+public interface CertificateIdentityService {
 
-    int addDataFeedKeys(List<DataFeedIdentity> hashedDataFeedKeys,
-                        Path sourceFile);
+    IdentityStatus addCertificateIdentity(CertificateIdentity certificateIdentity,
+                                          Path sourceFile);
 
     void removeKeysForFile(Path sourceFile);
 }
