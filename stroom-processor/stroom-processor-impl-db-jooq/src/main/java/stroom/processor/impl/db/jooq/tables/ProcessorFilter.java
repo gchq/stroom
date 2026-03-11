@@ -12,12 +12,9 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,9 +29,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.processor.impl.db.jooq.Keys;
 import stroom.processor.impl.db.jooq.Stroom;
-import stroom.processor.impl.db.jooq.tables.Processor.ProcessorPath;
-import stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.ProcessorFilterTrackerPath;
-import stroom.processor.impl.db.jooq.tables.ProcessorTask.ProcessorTaskPath;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 
 
@@ -189,37 +183,6 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
         this(DSL.name("processor_filter"), null);
     }
 
-    public <O extends Record> ProcessorFilter(Table<O> path, ForeignKey<O, ProcessorFilterRecord> childPath, InverseForeignKey<O, ProcessorFilterRecord> parentPath) {
-        super(path, childPath, parentPath, PROCESSOR_FILTER);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class ProcessorFilterPath extends ProcessorFilter implements Path<ProcessorFilterRecord> {
-        public <O extends Record> ProcessorFilterPath(Table<O> path, ForeignKey<O, ProcessorFilterRecord> childPath, InverseForeignKey<O, ProcessorFilterRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private ProcessorFilterPath(Name alias, Table<ProcessorFilterRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public ProcessorFilterPath as(String alias) {
-            return new ProcessorFilterPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public ProcessorFilterPath as(Name alias) {
-            return new ProcessorFilterPath(alias, this);
-        }
-
-        @Override
-        public ProcessorFilterPath as(Table<?> alias) {
-            return new ProcessorFilterPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -243,45 +206,6 @@ public class ProcessorFilter extends TableImpl<ProcessorFilterRecord> {
     @Override
     public List<ForeignKey<ProcessorFilterRecord, ?>> getReferences() {
         return Arrays.asList(Keys.PROCESSOR_FILTER_FK_PROCESSOR_ID, Keys.PROCESSOR_FILTER_FK_PROCESSOR_FILTER_TRACKER_ID);
-    }
-
-    private transient ProcessorPath _processor;
-
-    /**
-     * Get the implicit join path to the <code>stroom_v7_11.processor</code>
-     * table.
-     */
-    public ProcessorPath processor() {
-        if (_processor == null)
-            _processor = new ProcessorPath(this, Keys.PROCESSOR_FILTER_FK_PROCESSOR_ID, null);
-
-        return _processor;
-    }
-
-    private transient ProcessorFilterTrackerPath _processorFilterTracker;
-
-    /**
-     * Get the implicit join path to the
-     * <code>stroom_v7_11.processor_filter_tracker</code> table.
-     */
-    public ProcessorFilterTrackerPath processorFilterTracker() {
-        if (_processorFilterTracker == null)
-            _processorFilterTracker = new ProcessorFilterTrackerPath(this, Keys.PROCESSOR_FILTER_FK_PROCESSOR_FILTER_TRACKER_ID, null);
-
-        return _processorFilterTracker;
-    }
-
-    private transient ProcessorTaskPath _processorTask;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_v7_11.processor_task</code> table
-     */
-    public ProcessorTaskPath processorTask() {
-        if (_processorTask == null)
-            _processorTask = new ProcessorTaskPath(this, null, Keys.PROCESSOR_TASK_FK_PROCESSOR_FILTER_ID.getInverseKey());
-
-        return _processorTask;
     }
 
     @Override

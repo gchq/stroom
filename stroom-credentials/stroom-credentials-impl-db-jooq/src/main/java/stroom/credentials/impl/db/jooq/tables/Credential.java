@@ -105,7 +105,7 @@ public class Credential extends TableImpl<CredentialRecord> {
     /**
      * The column <code>stroom.credential.key_store</code>.
      */
-    public final TableField<CredentialRecord, byte[]> KEY_STORE = createField(DSL.name("key_store"), SQLDataType.BLOB.nullable(false), this, "");
+    public final TableField<CredentialRecord, byte[]> KEY_STORE = createField(DSL.name("key_store"), SQLDataType.BLOB, this, "");
 
     private Credential(Name alias, Table<CredentialRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);

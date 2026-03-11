@@ -10,14 +10,10 @@ import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,7 +28,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.processor.impl.db.jooq.Keys;
 import stroom.processor.impl.db.jooq.Stroom;
-import stroom.processor.impl.db.jooq.tables.ProcessorFilter.ProcessorFilterPath;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
 
 
@@ -141,37 +136,6 @@ public class Processor extends TableImpl<ProcessorRecord> {
         this(DSL.name("processor"), null);
     }
 
-    public <O extends Record> Processor(Table<O> path, ForeignKey<O, ProcessorRecord> childPath, InverseForeignKey<O, ProcessorRecord> parentPath) {
-        super(path, childPath, parentPath, PROCESSOR);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class ProcessorPath extends Processor implements Path<ProcessorRecord> {
-        public <O extends Record> ProcessorPath(Table<O> path, ForeignKey<O, ProcessorRecord> childPath, InverseForeignKey<O, ProcessorRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private ProcessorPath(Name alias, Table<ProcessorRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public ProcessorPath as(String alias) {
-            return new ProcessorPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public ProcessorPath as(Name alias) {
-            return new ProcessorPath(alias, this);
-        }
-
-        @Override
-        public ProcessorPath as(Table<?> alias) {
-            return new ProcessorPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -190,19 +154,6 @@ public class Processor extends TableImpl<ProcessorRecord> {
     @Override
     public List<UniqueKey<ProcessorRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.KEY_PROCESSOR_PROCESSOR_UUID, Keys.KEY_PROCESSOR_PROCESSOR_TASK_TYPE_PIPELINE_UUID);
-    }
-
-    private transient ProcessorFilterPath _processorFilter;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_v7_11.processor_filter</code> table
-     */
-    public ProcessorFilterPath processorFilter() {
-        if (_processorFilter == null)
-            _processorFilter = new ProcessorFilterPath(this, null, Keys.PROCESSOR_FILTER_FK_PROCESSOR_ID.getInverseKey());
-
-        return _processorFilter;
     }
 
     @Override

@@ -40,7 +40,7 @@ public class Keys {
     public static final UniqueKey<ExplorerPathRecord> KEY_EXPLORER_PATH_PRIMARY = Internal.createUniqueKey(ExplorerPath.EXPLORER_PATH, DSL.name("KEY_explorer_path_PRIMARY"), new TableField[] { ExplorerPath.EXPLORER_PATH.ANCESTOR, ExplorerPath.EXPLORER_PATH.DESCENDANT }, true);
     public static final UniqueKey<TabSessionRecord> KEY_TAB_SESSION_PRIMARY = Internal.createUniqueKey(TabSession.TAB_SESSION, DSL.name("KEY_tab_session_PRIMARY"), new TableField[] { TabSession.TAB_SESSION.ID }, true);
     public static final UniqueKey<TabSessionRecord> KEY_TAB_SESSION_TAB_SESSION_NAME_USER_UUID_IDX = Internal.createUniqueKey(TabSession.TAB_SESSION, DSL.name("KEY_tab_session_tab_session_name_user_uuid_idx"), new TableField[] { TabSession.TAB_SESSION.NAME, TabSession.TAB_SESSION.USER_UUID }, true);
-    public static final UniqueKey<TabSessionDocRefRecord> KEY_TAB_SESSION_DOC_REF_PRIMARY = Internal.createUniqueKey(TabSessionDocRef.TAB_SESSION_DOC_REF, DSL.name("KEY_tab_session_doc_ref_PRIMARY"), new TableField[] { TabSessionDocRef.TAB_SESSION_DOC_REF.TAB_SESSION_ID, TabSessionDocRef.TAB_SESSION_DOC_REF.DOC_REF_TYPE, TabSessionDocRef.TAB_SESSION_DOC_REF.DOC_REF_ID }, true);
+    public static final UniqueKey<TabSessionDocRefRecord> KEY_TAB_SESSION_DOC_REF_PRIMARY = Internal.createUniqueKey(TabSessionDocRef.TAB_SESSION_DOC_REF, DSL.name("KEY_tab_session_doc_ref_PRIMARY"), new TableField[] { TabSessionDocRef.TAB_SESSION_DOC_REF.TAB_SESSION_ID, TabSessionDocRef.TAB_SESSION_DOC_REF.TAB_INDEX }, true);
 
     // -------------------------------------------------------------------------
     // FOREIGN KEY definitions

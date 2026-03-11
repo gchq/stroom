@@ -10,14 +10,10 @@ import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,7 +28,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.node.impl.db.jooq.Keys;
 import stroom.node.impl.db.jooq.Stroom;
-import stroom.node.impl.db.jooq.tables.NodeGroupLink.NodeGroupLinkPath;
 import stroom.node.impl.db.jooq.tables.records.NodeRecord;
 
 
@@ -146,37 +141,6 @@ public class Node extends TableImpl<NodeRecord> {
         this(DSL.name("node"), null);
     }
 
-    public <O extends Record> Node(Table<O> path, ForeignKey<O, NodeRecord> childPath, InverseForeignKey<O, NodeRecord> parentPath) {
-        super(path, childPath, parentPath, NODE);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class NodePath extends Node implements Path<NodeRecord> {
-        public <O extends Record> NodePath(Table<O> path, ForeignKey<O, NodeRecord> childPath, InverseForeignKey<O, NodeRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private NodePath(Name alias, Table<NodeRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public NodePath as(String alias) {
-            return new NodePath(DSL.name(alias), this);
-        }
-
-        @Override
-        public NodePath as(Name alias) {
-            return new NodePath(alias, this);
-        }
-
-        @Override
-        public NodePath as(Table<?> alias) {
-            return new NodePath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -195,19 +159,6 @@ public class Node extends TableImpl<NodeRecord> {
     @Override
     public List<UniqueKey<NodeRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.KEY_NODE_NAME);
-    }
-
-    private transient NodeGroupLinkPath _nodeGroupLink;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_v7_11.node_group_link</code> table
-     */
-    public NodeGroupLinkPath nodeGroupLink() {
-        if (_nodeGroupLink == null)
-            _nodeGroupLink = new NodeGroupLinkPath(this, null, Keys.NODE_GROUP_LINK_FK_NODE_ID.getInverseKey());
-
-        return _nodeGroupLink;
     }
 
     @Override
