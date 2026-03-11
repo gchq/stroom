@@ -132,14 +132,6 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
             protected PipelineStructurePresenter createPresenter() {
                 return pipelineStructurePresenter;
             }
-
-            @Override
-            public void onRead(final PipelineStructurePresenter presenter,
-                               final DocRef docRef,
-                               final PipelineDoc document,
-                               final boolean readOnly) {
-                presenter.read(docRef, document, readOnly);
-            }
         };
         addTab(STRUCTURE, structureTabProvider);
 
@@ -310,6 +302,7 @@ public class PipelinePresenter extends DocumentEditTabPresenter<LinkTabPanelView
     @Override
     protected void onRead(final DocRef docRef, final PipelineDoc document, final boolean readOnly) {
         super.onRead(docRef, document, readOnly);
+        pipelineStructurePresenter.read(docRef, document, readOnly);
         steppingPresenter.setPipelineDoc(document);
     }
 
