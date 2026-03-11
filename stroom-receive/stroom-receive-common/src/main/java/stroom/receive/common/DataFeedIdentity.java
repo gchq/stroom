@@ -18,6 +18,7 @@ package stroom.receive.common;
 
 
 import stroom.meta.api.AttributeMap;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.CIKey;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -53,6 +54,19 @@ public sealed interface DataFeedIdentity
      */
     Map<CIKey, String> getCIStreamMetaData();
 
+
+    @JsonIgnore
+    default String getStreamMetaValue(final String metaKey) {
+        return NullSafe.isNonBlankString(metaKey)
+                ? getCIStreamMetaData().get(CIKey.of(metaKey))
+                : null;
+    }
+
+    @JsonIgnore
+    default String getStreamMetaValue(final CIKey metaKey) {
+        return NullSafe.get(metaKey, getCIStreamMetaData()::get);
+    }
+
     /**
      * @return The meta attributes associated with this identity.
      * These trump any headers.
@@ -73,6 +87,14 @@ public sealed interface DataFeedIdentity
     @JsonIgnore
     default Instant getExpiryDate() {
         return Instant.ofEpochMilli(getExpiryDateEpochMs());
+    }
+
+    /**
+     * @return True if this identity has expired.
+     */
+    @JsonIgnore
+    default boolean isExpired() {
+        return System.currentTimeMillis() > getExpiryDateEpochMs();
     }
 
 //    @JsonProperty("identityType")

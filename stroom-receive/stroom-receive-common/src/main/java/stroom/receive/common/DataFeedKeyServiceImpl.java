@@ -106,7 +106,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
                 CACHE_NAME,
                 () -> receiveDataConfigProvider.get().getAuthenticatedDataFeedKeyCache(),
                 this::createHashedDataFeedKey);
-        this.timer = new Timer("DataFeedKeyTimer");
+        this.timer = new Timer("DataFeedKeyEvictionTimer");
     }
 
     private Map<DataFeedKeyHashAlgorithm, DataFeedKeyHasher> buildHashFunctionMap(
@@ -228,7 +228,8 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
                                        final CIKey ownerMetaKey) {
 
         if (dataFeedKey.isExpired()) {
-            LOGGER.debug("Ignoring expired Data Feed Key in sourceFile: {}", dataFeedKey.getSourceFile());
+            LOGGER.debug(() -> LogUtil.message(
+                    "Ignoring expired Data Feed Key in sourceFile: {}", dataFeedKey.getSourceFile()));
             return false;
         }
         final String value = dataFeedKey.getStreamMetaValue(ownerMetaKey);
@@ -262,19 +263,6 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
         final Predicate<CachedHashedDataFeedKey> isExpiredPredicate = PredicateUtil.countingPredicate(
                 counter,
                 CachedHashedDataFeedKey::isExpired);
-
-//        counter.set(0);
-//        cacheKeyToDataFeedKeyMap.entrySet().removeIf(
-//                entry -> {
-//                    final List<CachedHashedDataFeedKey> hashedKeys = entry.getValue();
-//                    hashedKeys.removeIf(isExpiredPredicate);
-//                    // If we have removed the last one then remove the whole entry
-//                    return hashedKeys.isEmpty();
-//                });
-//        LOGGER.debug("Removed {} CachedHashedDataFeedKeys from cacheKeyToDataFeedKeyMap", counter);
-//        if (counter.get() > 0) {
-//            LOGGER.info("Evicted {} expired data feed keys", counter);
-//        }
 
         counter.reset();
         keyOwnerToDataFeedKeyMap.forEach((keyOwner, cachedHashedDataFeedKeys) ->
@@ -618,7 +606,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
     public SystemInfoResult getSystemInfo() {
         // sourcePath => accountId => Map
         final Map<String, Map<String, List<Map<String, String>>>> map = new HashMap<>();
-        final String keyOwnerMetaKey = receiveDataConfigProvider.get().getDataFeedKeyOwnerMetaKey();
+        final String keyOwnerMetaKey = receiveDataConfigProvider.get().getDataFeedOwnerMetaKey();
         keyOwnerToDataFeedKeyMap.values()
                 .forEach(dataFeedKeys -> {
                     for (final CachedHashedDataFeedKey dataFeedKey : dataFeedKeys) {
@@ -646,7 +634,7 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
     }
 
     private CIKey getOwnerMetaKey(final ReceiveDataConfig receiveDataConfig) {
-        return CIKey.of(receiveDataConfig.getDataFeedKeyOwnerMetaKey());
+        return CIKey.of(receiveDataConfig.getDataFeedOwnerMetaKey());
     }
 
 // --------------------------------------------------------------------------------

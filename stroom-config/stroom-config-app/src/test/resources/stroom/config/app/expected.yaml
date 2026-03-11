@@ -863,8 +863,8 @@ appConfig:
       refreshAfterWrite: null
       statisticsMode: "DROPWIZARD_METRICS"
     authenticationRequired: true
-    dataFeedKeyOwnerMetaKey: "AccountId"
-    dataFeedKeysDir: "data_feed_keys"
+    dataFeedIdentitiesDir: "data_feed_identities"
+    dataFeedOwnerMetaKey: "AccountId"
     enabledAuthenticationTypes:
     - "TOKEN"
     - "CERTIFICATE"

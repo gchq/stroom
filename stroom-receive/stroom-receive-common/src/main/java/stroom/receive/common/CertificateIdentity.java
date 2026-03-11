@@ -102,12 +102,6 @@ public final class CertificateIdentity implements DataFeedIdentity {
         return expiryDateEpochMs;
     }
 
-//    @Override
-//    @JsonProperty("type")
-//    public IdentityType getType() {
-//        return IdentityType.CERTIFICATE_DN;
-//    }
-
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {

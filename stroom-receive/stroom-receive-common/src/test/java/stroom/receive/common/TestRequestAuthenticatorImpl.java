@@ -95,6 +95,8 @@ class TestRequestAuthenticatorImpl {
                 .withOutputTypes(UserIdentity.class, StroomStatusCode.class)
                 .withTestFunction(testCase -> {
                     final HttpServletRequest mockHttpServletRequest = Mockito.mock(HttpServletRequest.class);
+                    final CertificateIdentityService mockCertificateIdentityService = Mockito.mock(
+                            CertificateIdentityService.class);
                     final DataFeedKeyService mockDataFeedKeyService = Mockito.mock(DataFeedKeyService.class);
                     final OidcTokenAuthenticator mockOidcTokenAuthenticator = Mockito.mock(
                             OidcTokenAuthenticator.class);
@@ -106,6 +108,7 @@ class TestRequestAuthenticatorImpl {
                             mockUserIdentityFactory,
                             () -> testCase.getInput().receiveDataConfig,
                             () -> mockDataFeedKeyService,
+                            () -> mockCertificateIdentityService,
                             () -> mockOidcTokenAuthenticator,
                             () -> mockCertificateAuthenticator,
                             () -> mockAllowUnauthenticatedAuthenticator);
