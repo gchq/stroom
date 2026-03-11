@@ -72,6 +72,11 @@ jooq {
                             }
                         }
                     }
+                    generate {
+                        // Implicit join seem like syntactic sugar that we don't need
+                        implicitJoinPathsToOne = false
+                        implicitJoinPathsToMany = false
+                    }
                     target {
                         packageName = 'stroom.storedquery.impl.db.jooq'
                         directory = 'src/main/java'

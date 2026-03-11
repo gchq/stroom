@@ -12,12 +12,9 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,7 +29,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.security.identity.db.jooq.Keys;
 import stroom.security.identity.db.jooq.Stroom;
-import stroom.security.identity.db.jooq.tables.TokenType.TokenTypePath;
 import stroom.security.identity.db.jooq.tables.records.JsonWebKeyRecord;
 
 
@@ -146,37 +142,6 @@ public class JsonWebKey extends TableImpl<JsonWebKeyRecord> {
         this(DSL.name("json_web_key"), null);
     }
 
-    public <O extends Record> JsonWebKey(Table<O> path, ForeignKey<O, JsonWebKeyRecord> childPath, InverseForeignKey<O, JsonWebKeyRecord> parentPath) {
-        super(path, childPath, parentPath, JSON_WEB_KEY);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class JsonWebKeyPath extends JsonWebKey implements Path<JsonWebKeyRecord> {
-        public <O extends Record> JsonWebKeyPath(Table<O> path, ForeignKey<O, JsonWebKeyRecord> childPath, InverseForeignKey<O, JsonWebKeyRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private JsonWebKeyPath(Name alias, Table<JsonWebKeyRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public JsonWebKeyPath as(String alias) {
-            return new JsonWebKeyPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public JsonWebKeyPath as(Name alias) {
-            return new JsonWebKeyPath(alias, this);
-        }
-
-        @Override
-        public JsonWebKeyPath as(Table<?> alias) {
-            return new JsonWebKeyPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -195,19 +160,6 @@ public class JsonWebKey extends TableImpl<JsonWebKeyRecord> {
     @Override
     public List<ForeignKey<JsonWebKeyRecord, ?>> getReferences() {
         return Arrays.asList(Keys.JSON_WEB_KEY_FK_TOKEN_TYPE_ID);
-    }
-
-    private transient TokenTypePath _tokenType;
-
-    /**
-     * Get the implicit join path to the <code>stroom_master.token_type</code>
-     * table.
-     */
-    public TokenTypePath tokenType() {
-        if (_tokenType == null)
-            _tokenType = new TokenTypePath(this, Keys.JSON_WEB_KEY_FK_TOKEN_TYPE_ID, null);
-
-        return _tokenType;
     }
 
     @Override

@@ -11,12 +11,9 @@ import java.util.List;
 import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -31,7 +28,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.explorer.impl.db.jooq.Keys;
 import stroom.explorer.impl.db.jooq.Stroom;
-import stroom.explorer.impl.db.jooq.tables.TabSession.TabSessionPath;
 import stroom.explorer.impl.db.jooq.tables.records.TabSessionDocRefRecord;
 
 
@@ -105,37 +101,6 @@ public class TabSessionDocRef extends TableImpl<TabSessionDocRefRecord> {
         this(DSL.name("tab_session_doc_ref"), null);
     }
 
-    public <O extends Record> TabSessionDocRef(Table<O> path, ForeignKey<O, TabSessionDocRefRecord> childPath, InverseForeignKey<O, TabSessionDocRefRecord> parentPath) {
-        super(path, childPath, parentPath, TAB_SESSION_DOC_REF);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class TabSessionDocRefPath extends TabSessionDocRef implements Path<TabSessionDocRefRecord> {
-        public <O extends Record> TabSessionDocRefPath(Table<O> path, ForeignKey<O, TabSessionDocRefRecord> childPath, InverseForeignKey<O, TabSessionDocRefRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private TabSessionDocRefPath(Name alias, Table<TabSessionDocRefRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public TabSessionDocRefPath as(String alias) {
-            return new TabSessionDocRefPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public TabSessionDocRefPath as(Name alias) {
-            return new TabSessionDocRefPath(alias, this);
-        }
-
-        @Override
-        public TabSessionDocRefPath as(Table<?> alias) {
-            return new TabSessionDocRefPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -149,19 +114,6 @@ public class TabSessionDocRef extends TableImpl<TabSessionDocRefRecord> {
     @Override
     public List<ForeignKey<TabSessionDocRefRecord, ?>> getReferences() {
         return Arrays.asList(Keys.TAB_SESSION_DOC_REF_TAB_SESSION_ID);
-    }
-
-    private transient TabSessionPath _tabSession;
-
-    /**
-     * Get the implicit join path to the <code>stroom_master.tab_session</code>
-     * table.
-     */
-    public TabSessionPath tabSession() {
-        if (_tabSession == null)
-            _tabSession = new TabSessionPath(this, Keys.TAB_SESSION_DOC_REF_TAB_SESSION_ID, null);
-
-        return _tabSession;
     }
 
     @Override

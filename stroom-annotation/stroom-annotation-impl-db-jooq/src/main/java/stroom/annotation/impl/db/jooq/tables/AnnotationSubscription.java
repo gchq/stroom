@@ -12,12 +12,9 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,7 +29,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.annotation.impl.db.jooq.Keys;
 import stroom.annotation.impl.db.jooq.Stroom;
-import stroom.annotation.impl.db.jooq.tables.Annotation.AnnotationPath;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationSubscriptionRecord;
 
 
@@ -103,37 +99,6 @@ public class AnnotationSubscription extends TableImpl<AnnotationSubscriptionReco
         this(DSL.name("annotation_subscription"), null);
     }
 
-    public <O extends Record> AnnotationSubscription(Table<O> path, ForeignKey<O, AnnotationSubscriptionRecord> childPath, InverseForeignKey<O, AnnotationSubscriptionRecord> parentPath) {
-        super(path, childPath, parentPath, ANNOTATION_SUBSCRIPTION);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class AnnotationSubscriptionPath extends AnnotationSubscription implements Path<AnnotationSubscriptionRecord> {
-        public <O extends Record> AnnotationSubscriptionPath(Table<O> path, ForeignKey<O, AnnotationSubscriptionRecord> childPath, InverseForeignKey<O, AnnotationSubscriptionRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private AnnotationSubscriptionPath(Name alias, Table<AnnotationSubscriptionRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public AnnotationSubscriptionPath as(String alias) {
-            return new AnnotationSubscriptionPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public AnnotationSubscriptionPath as(Name alias) {
-            return new AnnotationSubscriptionPath(alias, this);
-        }
-
-        @Override
-        public AnnotationSubscriptionPath as(Table<?> alias) {
-            return new AnnotationSubscriptionPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -157,19 +122,6 @@ public class AnnotationSubscription extends TableImpl<AnnotationSubscriptionReco
     @Override
     public List<ForeignKey<AnnotationSubscriptionRecord, ?>> getReferences() {
         return Arrays.asList(Keys.ANNOTATION_SUBSCRIPTION_FK_ANNOTATION_ID);
-    }
-
-    private transient AnnotationPath _annotation;
-
-    /**
-     * Get the implicit join path to the <code>stroom_master.annotation</code>
-     * table.
-     */
-    public AnnotationPath annotation() {
-        if (_annotation == null)
-            _annotation = new AnnotationPath(this, Keys.ANNOTATION_SUBSCRIPTION_FK_ANNOTATION_ID, null);
-
-        return _annotation;
     }
 
     @Override

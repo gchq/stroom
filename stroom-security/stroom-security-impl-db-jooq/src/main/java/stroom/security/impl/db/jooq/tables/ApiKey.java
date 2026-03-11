@@ -13,12 +13,9 @@ import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Index;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -34,7 +31,6 @@ import org.jooq.impl.TableImpl;
 import stroom.security.impl.db.jooq.Indexes;
 import stroom.security.impl.db.jooq.Keys;
 import stroom.security.impl.db.jooq.Stroom;
-import stroom.security.impl.db.jooq.tables.StroomUser.StroomUserPath;
 import stroom.security.impl.db.jooq.tables.records.ApiKeyRecord;
 
 
@@ -158,37 +154,6 @@ public class ApiKey extends TableImpl<ApiKeyRecord> {
         this(DSL.name("api_key"), null);
     }
 
-    public <O extends Record> ApiKey(Table<O> path, ForeignKey<O, ApiKeyRecord> childPath, InverseForeignKey<O, ApiKeyRecord> parentPath) {
-        super(path, childPath, parentPath, API_KEY);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class ApiKeyPath extends ApiKey implements Path<ApiKeyRecord> {
-        public <O extends Record> ApiKeyPath(Table<O> path, ForeignKey<O, ApiKeyRecord> childPath, InverseForeignKey<O, ApiKeyRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private ApiKeyPath(Name alias, Table<ApiKeyRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public ApiKeyPath as(String alias) {
-            return new ApiKeyPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public ApiKeyPath as(Name alias) {
-            return new ApiKeyPath(alias, this);
-        }
-
-        @Override
-        public ApiKeyPath as(Table<?> alias) {
-            return new ApiKeyPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -217,19 +182,6 @@ public class ApiKey extends TableImpl<ApiKeyRecord> {
     @Override
     public List<ForeignKey<ApiKeyRecord, ?>> getReferences() {
         return Arrays.asList(Keys.API_KEY_FK_OWNER_UUID);
-    }
-
-    private transient StroomUserPath _stroomUser;
-
-    /**
-     * Get the implicit join path to the <code>stroom_master.stroom_user</code>
-     * table.
-     */
-    public StroomUserPath stroomUser() {
-        if (_stroomUser == null)
-            _stroomUser = new StroomUserPath(this, Keys.API_KEY_FK_OWNER_UUID, null);
-
-        return _stroomUser;
     }
 
     @Override

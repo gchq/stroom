@@ -10,14 +10,10 @@ import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,7 +28,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.meta.impl.db.jooq.Keys;
 import stroom.meta.impl.db.jooq.Stroom;
-import stroom.meta.impl.db.jooq.tables.Meta.MetaPath;
 import stroom.meta.impl.db.jooq.tables.records.MetaFeedRecord;
 
 
@@ -96,37 +91,6 @@ public class MetaFeed extends TableImpl<MetaFeedRecord> {
         this(DSL.name("meta_feed"), null);
     }
 
-    public <O extends Record> MetaFeed(Table<O> path, ForeignKey<O, MetaFeedRecord> childPath, InverseForeignKey<O, MetaFeedRecord> parentPath) {
-        super(path, childPath, parentPath, META_FEED);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class MetaFeedPath extends MetaFeed implements Path<MetaFeedRecord> {
-        public <O extends Record> MetaFeedPath(Table<O> path, ForeignKey<O, MetaFeedRecord> childPath, InverseForeignKey<O, MetaFeedRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private MetaFeedPath(Name alias, Table<MetaFeedRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public MetaFeedPath as(String alias) {
-            return new MetaFeedPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public MetaFeedPath as(Name alias) {
-            return new MetaFeedPath(alias, this);
-        }
-
-        @Override
-        public MetaFeedPath as(Table<?> alias) {
-            return new MetaFeedPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -145,19 +109,6 @@ public class MetaFeed extends TableImpl<MetaFeedRecord> {
     @Override
     public List<UniqueKey<MetaFeedRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.KEY_META_FEED_NAME);
-    }
-
-    private transient MetaPath _meta;
-
-    /**
-     * Get the implicit to-many join path to the <code>stroom_master.meta</code>
-     * table
-     */
-    public MetaPath meta() {
-        if (_meta == null)
-            _meta = new MetaPath(this, null, Keys.META_FEED_ID.getInverseKey());
-
-        return _meta;
     }
 
     @Override

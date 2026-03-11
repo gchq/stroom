@@ -10,14 +10,10 @@ import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,7 +28,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.meta.impl.db.jooq.Keys;
 import stroom.meta.impl.db.jooq.Stroom;
-import stroom.meta.impl.db.jooq.tables.Meta.MetaPath;
 import stroom.meta.impl.db.jooq.tables.records.MetaProcessorRecord;
 
 
@@ -101,37 +96,6 @@ public class MetaProcessor extends TableImpl<MetaProcessorRecord> {
         this(DSL.name("meta_processor"), null);
     }
 
-    public <O extends Record> MetaProcessor(Table<O> path, ForeignKey<O, MetaProcessorRecord> childPath, InverseForeignKey<O, MetaProcessorRecord> parentPath) {
-        super(path, childPath, parentPath, META_PROCESSOR);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class MetaProcessorPath extends MetaProcessor implements Path<MetaProcessorRecord> {
-        public <O extends Record> MetaProcessorPath(Table<O> path, ForeignKey<O, MetaProcessorRecord> childPath, InverseForeignKey<O, MetaProcessorRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private MetaProcessorPath(Name alias, Table<MetaProcessorRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public MetaProcessorPath as(String alias) {
-            return new MetaProcessorPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public MetaProcessorPath as(Name alias) {
-            return new MetaProcessorPath(alias, this);
-        }
-
-        @Override
-        public MetaProcessorPath as(Table<?> alias) {
-            return new MetaProcessorPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -150,19 +114,6 @@ public class MetaProcessor extends TableImpl<MetaProcessorRecord> {
     @Override
     public List<UniqueKey<MetaProcessorRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.KEY_META_PROCESSOR_PROCESSOR_UUID, Keys.KEY_META_PROCESSOR_PIPELINE_UUID_IDX);
-    }
-
-    private transient MetaPath _meta;
-
-    /**
-     * Get the implicit to-many join path to the <code>stroom_master.meta</code>
-     * table
-     */
-    public MetaPath meta() {
-        if (_meta == null)
-            _meta = new MetaPath(this, null, Keys.META_PROCESSOR_ID.getInverseKey());
-
-        return _meta;
     }
 
     @Override

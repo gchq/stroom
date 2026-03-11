@@ -10,14 +10,10 @@ import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,12 +28,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.annotation.impl.db.jooq.Keys;
 import stroom.annotation.impl.db.jooq.Stroom;
-import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink.AnnotationDataLinkPath;
-import stroom.annotation.impl.db.jooq.tables.AnnotationEntry.AnnotationEntryPath;
-import stroom.annotation.impl.db.jooq.tables.AnnotationLink.AnnotationLinkPath;
-import stroom.annotation.impl.db.jooq.tables.AnnotationSubscription.AnnotationSubscriptionPath;
-import stroom.annotation.impl.db.jooq.tables.AnnotationTag.AnnotationTagPath;
-import stroom.annotation.impl.db.jooq.tables.AnnotationTagLink.AnnotationTagLinkPath;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 
 
@@ -171,37 +161,6 @@ public class Annotation extends TableImpl<AnnotationRecord> {
         this(DSL.name("annotation"), null);
     }
 
-    public <O extends Record> Annotation(Table<O> path, ForeignKey<O, AnnotationRecord> childPath, InverseForeignKey<O, AnnotationRecord> parentPath) {
-        super(path, childPath, parentPath, ANNOTATION);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class AnnotationPath extends Annotation implements Path<AnnotationRecord> {
-        public <O extends Record> AnnotationPath(Table<O> path, ForeignKey<O, AnnotationRecord> childPath, InverseForeignKey<O, AnnotationRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private AnnotationPath(Name alias, Table<AnnotationRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public AnnotationPath as(String alias) {
-            return new AnnotationPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public AnnotationPath as(Name alias) {
-            return new AnnotationPath(alias, this);
-        }
-
-        @Override
-        public AnnotationPath as(Table<?> alias) {
-            return new AnnotationPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -220,94 +179,6 @@ public class Annotation extends TableImpl<AnnotationRecord> {
     @Override
     public List<UniqueKey<AnnotationRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.KEY_ANNOTATION_ANNOTATION_UUID);
-    }
-
-    private transient AnnotationDataLinkPath _annotationDataLink;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_master.annotation_data_link</code> table
-     */
-    public AnnotationDataLinkPath annotationDataLink() {
-        if (_annotationDataLink == null)
-            _annotationDataLink = new AnnotationDataLinkPath(this, null, Keys.ANNOTATION_DATA_LINK_FK_ANNOTATION_ID.getInverseKey());
-
-        return _annotationDataLink;
-    }
-
-    private transient AnnotationEntryPath _annotationEntry;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_master.annotation_entry</code> table
-     */
-    public AnnotationEntryPath annotationEntry() {
-        if (_annotationEntry == null)
-            _annotationEntry = new AnnotationEntryPath(this, null, Keys.ANNOTATION_ENTRY_FK_ANNOTATION_ID.getInverseKey());
-
-        return _annotationEntry;
-    }
-
-    private transient AnnotationLinkPath _annotationLinkFkAnnotationDstId;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_master.annotation_link</code> table, via the
-     * <code>annotation_link_fk_annotation_dst_id</code> key
-     */
-    public AnnotationLinkPath annotationLinkFkAnnotationDstId() {
-        if (_annotationLinkFkAnnotationDstId == null)
-            _annotationLinkFkAnnotationDstId = new AnnotationLinkPath(this, null, Keys.ANNOTATION_LINK_FK_ANNOTATION_DST_ID.getInverseKey());
-
-        return _annotationLinkFkAnnotationDstId;
-    }
-
-    private transient AnnotationLinkPath _annotationLinkFkAnnotationSrcId;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_master.annotation_link</code> table, via the
-     * <code>annotation_link_fk_annotation_src_id</code> key
-     */
-    public AnnotationLinkPath annotationLinkFkAnnotationSrcId() {
-        if (_annotationLinkFkAnnotationSrcId == null)
-            _annotationLinkFkAnnotationSrcId = new AnnotationLinkPath(this, null, Keys.ANNOTATION_LINK_FK_ANNOTATION_SRC_ID.getInverseKey());
-
-        return _annotationLinkFkAnnotationSrcId;
-    }
-
-    private transient AnnotationSubscriptionPath _annotationSubscription;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_master.annotation_subscription</code> table
-     */
-    public AnnotationSubscriptionPath annotationSubscription() {
-        if (_annotationSubscription == null)
-            _annotationSubscription = new AnnotationSubscriptionPath(this, null, Keys.ANNOTATION_SUBSCRIPTION_FK_ANNOTATION_ID.getInverseKey());
-
-        return _annotationSubscription;
-    }
-
-    private transient AnnotationTagLinkPath _annotationTagLink;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_master.annotation_tag_link</code> table
-     */
-    public AnnotationTagLinkPath annotationTagLink() {
-        if (_annotationTagLink == null)
-            _annotationTagLink = new AnnotationTagLinkPath(this, null, Keys.ANNOTATION_TAG_LINK_FK_ANNOTATION_ID.getInverseKey());
-
-        return _annotationTagLink;
-    }
-
-    /**
-     * Get the implicit many-to-many join path to the
-     * <code>stroom_master.annotation_tag</code> table
-     */
-    public AnnotationTagPath annotationTag() {
-        return annotationTagLink().annotationTag();
     }
 
     @Override

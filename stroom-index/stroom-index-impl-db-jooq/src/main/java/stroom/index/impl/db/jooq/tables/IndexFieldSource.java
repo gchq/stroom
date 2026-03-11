@@ -10,14 +10,10 @@ import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,7 +28,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.index.impl.db.jooq.Keys;
 import stroom.index.impl.db.jooq.Stroom;
-import stroom.index.impl.db.jooq.tables.IndexField.IndexFieldPath;
 import stroom.index.impl.db.jooq.tables.records.IndexFieldSourceRecord;
 
 
@@ -106,37 +101,6 @@ public class IndexFieldSource extends TableImpl<IndexFieldSourceRecord> {
         this(DSL.name("index_field_source"), null);
     }
 
-    public <O extends Record> IndexFieldSource(Table<O> path, ForeignKey<O, IndexFieldSourceRecord> childPath, InverseForeignKey<O, IndexFieldSourceRecord> parentPath) {
-        super(path, childPath, parentPath, INDEX_FIELD_SOURCE);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class IndexFieldSourcePath extends IndexFieldSource implements Path<IndexFieldSourceRecord> {
-        public <O extends Record> IndexFieldSourcePath(Table<O> path, ForeignKey<O, IndexFieldSourceRecord> childPath, InverseForeignKey<O, IndexFieldSourceRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private IndexFieldSourcePath(Name alias, Table<IndexFieldSourceRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public IndexFieldSourcePath as(String alias) {
-            return new IndexFieldSourcePath(DSL.name(alias), this);
-        }
-
-        @Override
-        public IndexFieldSourcePath as(Name alias) {
-            return new IndexFieldSourcePath(alias, this);
-        }
-
-        @Override
-        public IndexFieldSourcePath as(Table<?> alias) {
-            return new IndexFieldSourcePath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -155,19 +119,6 @@ public class IndexFieldSource extends TableImpl<IndexFieldSourceRecord> {
     @Override
     public List<UniqueKey<IndexFieldSourceRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.KEY_INDEX_FIELD_SOURCE_INDEX_FIELD_SOURCE_TYPE_UUID);
-    }
-
-    private transient IndexFieldPath _indexField;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_master.index_field</code> table
-     */
-    public IndexFieldPath indexField() {
-        if (_indexField == null)
-            _indexField = new IndexFieldPath(this, null, Keys.INDEX_FIELD_FK_INDEX_FIELD_SOURCE_ID.getInverseKey());
-
-        return _indexField;
     }
 
     @Override

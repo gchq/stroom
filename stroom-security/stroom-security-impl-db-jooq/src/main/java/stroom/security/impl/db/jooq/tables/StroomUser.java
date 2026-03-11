@@ -10,14 +10,10 @@ import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,12 +28,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.security.impl.db.jooq.Keys;
 import stroom.security.impl.db.jooq.Stroom;
-import stroom.security.impl.db.jooq.tables.ApiKey.ApiKeyPath;
-import stroom.security.impl.db.jooq.tables.PermissionApp.PermissionAppPath;
-import stroom.security.impl.db.jooq.tables.PermissionAppId.PermissionAppIdPath;
-import stroom.security.impl.db.jooq.tables.PermissionDoc.PermissionDocPath;
-import stroom.security.impl.db.jooq.tables.PermissionDocCreate.PermissionDocCreatePath;
-import stroom.security.impl.db.jooq.tables.StroomUserGroup.StroomUserGroupPath;
 import stroom.security.impl.db.jooq.tables.records.StroomUserRecord;
 
 
@@ -151,37 +141,6 @@ public class StroomUser extends TableImpl<StroomUserRecord> {
         this(DSL.name("stroom_user"), null);
     }
 
-    public <O extends Record> StroomUser(Table<O> path, ForeignKey<O, StroomUserRecord> childPath, InverseForeignKey<O, StroomUserRecord> parentPath) {
-        super(path, childPath, parentPath, STROOM_USER);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class StroomUserPath extends StroomUser implements Path<StroomUserRecord> {
-        public <O extends Record> StroomUserPath(Table<O> path, ForeignKey<O, StroomUserRecord> childPath, InverseForeignKey<O, StroomUserRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private StroomUserPath(Name alias, Table<StroomUserRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public StroomUserPath as(String alias) {
-            return new StroomUserPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public StroomUserPath as(Name alias) {
-            return new StroomUserPath(alias, this);
-        }
-
-        @Override
-        public StroomUserPath as(Table<?> alias) {
-            return new StroomUserPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -200,94 +159,6 @@ public class StroomUser extends TableImpl<StroomUserRecord> {
     @Override
     public List<UniqueKey<StroomUserRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.KEY_STROOM_USER_STROOM_USER_NAME_IS_GROUP_IDX, Keys.KEY_STROOM_USER_STROOM_USER_UUID_IDX);
-    }
-
-    private transient ApiKeyPath _apiKey;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_master.api_key</code> table
-     */
-    public ApiKeyPath apiKey() {
-        if (_apiKey == null)
-            _apiKey = new ApiKeyPath(this, null, Keys.API_KEY_FK_OWNER_UUID.getInverseKey());
-
-        return _apiKey;
-    }
-
-    private transient PermissionAppPath _permissionApp;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_master.permission_app</code> table
-     */
-    public PermissionAppPath permissionApp() {
-        if (_permissionApp == null)
-            _permissionApp = new PermissionAppPath(this, null, Keys.PERMISSION_APP_USER_UUID.getInverseKey());
-
-        return _permissionApp;
-    }
-
-    private transient PermissionDocCreatePath _permissionDocCreate;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_master.permission_doc_create</code> table
-     */
-    public PermissionDocCreatePath permissionDocCreate() {
-        if (_permissionDocCreate == null)
-            _permissionDocCreate = new PermissionDocCreatePath(this, null, Keys.PERMISSION_DOC_CREATE_USER_UUID.getInverseKey());
-
-        return _permissionDocCreate;
-    }
-
-    private transient PermissionDocPath _permissionDoc;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_master.permission_doc</code> table
-     */
-    public PermissionDocPath permissionDoc() {
-        if (_permissionDoc == null)
-            _permissionDoc = new PermissionDocPath(this, null, Keys.PERMISSION_DOC_USER_UUID.getInverseKey());
-
-        return _permissionDoc;
-    }
-
-    private transient StroomUserGroupPath _stroomUserGroupFkGroupUuid;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_master.stroom_user_group</code> table, via the
-     * <code>stroom_user_group_fk_group_uuid</code> key
-     */
-    public StroomUserGroupPath stroomUserGroupFkGroupUuid() {
-        if (_stroomUserGroupFkGroupUuid == null)
-            _stroomUserGroupFkGroupUuid = new StroomUserGroupPath(this, null, Keys.STROOM_USER_GROUP_FK_GROUP_UUID.getInverseKey());
-
-        return _stroomUserGroupFkGroupUuid;
-    }
-
-    private transient StroomUserGroupPath _stroomUserGroupFkUserUuid;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_master.stroom_user_group</code> table, via the
-     * <code>stroom_user_group_fk_user_uuid</code> key
-     */
-    public StroomUserGroupPath stroomUserGroupFkUserUuid() {
-        if (_stroomUserGroupFkUserUuid == null)
-            _stroomUserGroupFkUserUuid = new StroomUserGroupPath(this, null, Keys.STROOM_USER_GROUP_FK_USER_UUID.getInverseKey());
-
-        return _stroomUserGroupFkUserUuid;
-    }
-
-    /**
-     * Get the implicit many-to-many join path to the
-     * <code>stroom_master.permission_app_id</code> table
-     */
-    public PermissionAppIdPath permissionAppId() {
-        return permissionApp().permissionAppId();
     }
 
     @Override

@@ -10,14 +10,10 @@ import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,8 +28,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.annotation.impl.db.jooq.Keys;
 import stroom.annotation.impl.db.jooq.Stroom;
-import stroom.annotation.impl.db.jooq.tables.Annotation.AnnotationPath;
-import stroom.annotation.impl.db.jooq.tables.AnnotationTagLink.AnnotationTagLinkPath;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationTagRecord;
 
 
@@ -117,37 +111,6 @@ public class AnnotationTag extends TableImpl<AnnotationTagRecord> {
         this(DSL.name("annotation_tag"), null);
     }
 
-    public <O extends Record> AnnotationTag(Table<O> path, ForeignKey<O, AnnotationTagRecord> childPath, InverseForeignKey<O, AnnotationTagRecord> parentPath) {
-        super(path, childPath, parentPath, ANNOTATION_TAG);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class AnnotationTagPath extends AnnotationTag implements Path<AnnotationTagRecord> {
-        public <O extends Record> AnnotationTagPath(Table<O> path, ForeignKey<O, AnnotationTagRecord> childPath, InverseForeignKey<O, AnnotationTagRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private AnnotationTagPath(Name alias, Table<AnnotationTagRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public AnnotationTagPath as(String alias) {
-            return new AnnotationTagPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public AnnotationTagPath as(Name alias) {
-            return new AnnotationTagPath(alias, this);
-        }
-
-        @Override
-        public AnnotationTagPath as(Table<?> alias) {
-            return new AnnotationTagPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -166,27 +129,6 @@ public class AnnotationTag extends TableImpl<AnnotationTagRecord> {
     @Override
     public List<UniqueKey<AnnotationTagRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.KEY_ANNOTATION_TAG_ANNOTATION_TAG_UUID_IDX, Keys.KEY_ANNOTATION_TAG_ANNOTATION_TAG_TYPE_ID_NAME_IDX);
-    }
-
-    private transient AnnotationTagLinkPath _annotationTagLink;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_master.annotation_tag_link</code> table
-     */
-    public AnnotationTagLinkPath annotationTagLink() {
-        if (_annotationTagLink == null)
-            _annotationTagLink = new AnnotationTagLinkPath(this, null, Keys.ANNOTATION_TAG_LINK_FK_ANNOTATION_TAG_ID.getInverseKey());
-
-        return _annotationTagLink;
-    }
-
-    /**
-     * Get the implicit many-to-many join path to the
-     * <code>stroom_master.annotation</code> table
-     */
-    public AnnotationPath annotation() {
-        return annotationTagLink().annotation();
     }
 
     @Override

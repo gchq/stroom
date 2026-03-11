@@ -12,12 +12,9 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,7 +29,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.job.impl.db.jooq.Keys;
 import stroom.job.impl.db.jooq.Stroom;
-import stroom.job.impl.db.jooq.tables.Job.JobPath;
 import stroom.job.impl.db.jooq.tables.records.JobNodeRecord;
 
 
@@ -146,37 +142,6 @@ public class JobNode extends TableImpl<JobNodeRecord> {
         this(DSL.name("job_node"), null);
     }
 
-    public <O extends Record> JobNode(Table<O> path, ForeignKey<O, JobNodeRecord> childPath, InverseForeignKey<O, JobNodeRecord> parentPath) {
-        super(path, childPath, parentPath, JOB_NODE);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class JobNodePath extends JobNode implements Path<JobNodeRecord> {
-        public <O extends Record> JobNodePath(Table<O> path, ForeignKey<O, JobNodeRecord> childPath, InverseForeignKey<O, JobNodeRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private JobNodePath(Name alias, Table<JobNodeRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public JobNodePath as(String alias) {
-            return new JobNodePath(DSL.name(alias), this);
-        }
-
-        @Override
-        public JobNodePath as(Name alias) {
-            return new JobNodePath(alias, this);
-        }
-
-        @Override
-        public JobNodePath as(Table<?> alias) {
-            return new JobNodePath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -195,18 +160,6 @@ public class JobNode extends TableImpl<JobNodeRecord> {
     @Override
     public List<ForeignKey<JobNodeRecord, ?>> getReferences() {
         return Arrays.asList(Keys.JOB_ID);
-    }
-
-    private transient JobPath _job;
-
-    /**
-     * Get the implicit join path to the <code>stroom_master.job</code> table.
-     */
-    public JobPath job() {
-        if (_job == null)
-            _job = new JobPath(this, Keys.JOB_ID, null);
-
-        return _job;
     }
 
     @Override

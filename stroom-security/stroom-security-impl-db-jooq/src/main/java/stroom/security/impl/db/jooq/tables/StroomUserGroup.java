@@ -12,12 +12,9 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,7 +29,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.security.impl.db.jooq.Keys;
 import stroom.security.impl.db.jooq.Stroom;
-import stroom.security.impl.db.jooq.tables.StroomUser.StroomUserPath;
 import stroom.security.impl.db.jooq.tables.records.StroomUserGroupRecord;
 
 
@@ -101,37 +97,6 @@ public class StroomUserGroup extends TableImpl<StroomUserGroupRecord> {
         this(DSL.name("stroom_user_group"), null);
     }
 
-    public <O extends Record> StroomUserGroup(Table<O> path, ForeignKey<O, StroomUserGroupRecord> childPath, InverseForeignKey<O, StroomUserGroupRecord> parentPath) {
-        super(path, childPath, parentPath, STROOM_USER_GROUP);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class StroomUserGroupPath extends StroomUserGroup implements Path<StroomUserGroupRecord> {
-        public <O extends Record> StroomUserGroupPath(Table<O> path, ForeignKey<O, StroomUserGroupRecord> childPath, InverseForeignKey<O, StroomUserGroupRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private StroomUserGroupPath(Name alias, Table<StroomUserGroupRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public StroomUserGroupPath as(String alias) {
-            return new StroomUserGroupPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public StroomUserGroupPath as(Name alias) {
-            return new StroomUserGroupPath(alias, this);
-        }
-
-        @Override
-        public StroomUserGroupPath as(Table<?> alias) {
-            return new StroomUserGroupPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -154,33 +119,7 @@ public class StroomUserGroup extends TableImpl<StroomUserGroupRecord> {
 
     @Override
     public List<ForeignKey<StroomUserGroupRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.STROOM_USER_GROUP_FK_USER_UUID, Keys.STROOM_USER_GROUP_FK_GROUP_UUID);
-    }
-
-    private transient StroomUserPath _stroomUserGroupFkUserUuid;
-
-    /**
-     * Get the implicit join path to the <code>stroom_master.stroom_user</code>
-     * table, via the <code>stroom_user_group_fk_user_uuid</code> key.
-     */
-    public StroomUserPath stroomUserGroupFkUserUuid() {
-        if (_stroomUserGroupFkUserUuid == null)
-            _stroomUserGroupFkUserUuid = new StroomUserPath(this, Keys.STROOM_USER_GROUP_FK_USER_UUID, null);
-
-        return _stroomUserGroupFkUserUuid;
-    }
-
-    private transient StroomUserPath _stroomUserGroupFkGroupUuid;
-
-    /**
-     * Get the implicit join path to the <code>stroom_master.stroom_user</code>
-     * table, via the <code>stroom_user_group_fk_group_uuid</code> key.
-     */
-    public StroomUserPath stroomUserGroupFkGroupUuid() {
-        if (_stroomUserGroupFkGroupUuid == null)
-            _stroomUserGroupFkGroupUuid = new StroomUserPath(this, Keys.STROOM_USER_GROUP_FK_GROUP_UUID, null);
-
-        return _stroomUserGroupFkGroupUuid;
+        return Arrays.asList(Keys.FK_STROOM_USER_GROUP_USER_UUID, Keys.FK_STROOM_USER_GROUP_GROUP_UUID);
     }
 
     @Override
