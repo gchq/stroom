@@ -50,17 +50,20 @@ public class DataFeedIdneitiesDirWatcher extends AbstractDirChangeMonitor {
             && Files.isRegularFile(path)
             && path.getFileName().toString().endsWith(".json");
 
-    private final Provider<DataFeedIdentityService> dataFeedKeyServiceProvider;
+    private final Provider<DataFeedKeyService> dataFeedKeyServiceProvider;
+    private final Provider<DataFeedIdentityService> dataFeedIdentityServiceProvider;
 
     @Inject
     public DataFeedIdneitiesDirWatcher(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
                                        final SimplePathCreator simplePathCreator,
-                                       final Provider<DataFeedIdentityService> dataFeedKeyServiceProvider) {
+                                       final Provider<DataFeedKeyService> dataFeedKeyServiceProvider,
+                                       final Provider<DataFeedIdentityService> dataFeedIdentityServiceProvider) {
         super(
                 getDataFeedDir(receiveDataConfigProvider, simplePathCreator),
                 FILE_INCLUDE_FILTER,
                 EnumSet.allOf(EventType.class));
         this.dataFeedKeyServiceProvider = dataFeedKeyServiceProvider;
+        this.dataFeedIdentityServiceProvider = dataFeedIdentityServiceProvider;
     }
 
     private static Path getDataFeedDir(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
@@ -132,11 +135,11 @@ public class DataFeedIdneitiesDirWatcher extends AbstractDirChangeMonitor {
                     .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
             try (final InputStream fileStream = new FileInputStream(path.toFile())) {
                 try {
-                    final HashedDataFeedKeys hashedDataFeedKeys = reader.readValue(fileStream,
-                            HashedDataFeedKeys.class);
-                    if (hashedDataFeedKeys != null && NullSafe.hasItems(hashedDataFeedKeys.getDataFeedKeys())) {
-                        final int addedCount = dataFeedKeyServiceProvider.get().addDataFeedKeys(hashedDataFeedKeys,
-                                path);
+                    final DataFeedIdentities dataFeedIdentities = reader.readValue(fileStream,
+                            DataFeedIdentities.class);
+                    if (dataFeedIdentities != null && !dataFeedIdentities.isEmpty()) {
+                        final int addedCount = dataFeedIdentityServiceProvider.get()
+                                .addDataFeedKeys(dataFeedIdentities.getDataFeedIdentities(), path);
                         LOGGER.info("Loaded {} datafeed keys found in {}",
                                 addedCount,
                                 path.toAbsolutePath().normalize());

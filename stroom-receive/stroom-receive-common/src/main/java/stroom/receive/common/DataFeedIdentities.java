@@ -19,6 +19,7 @@ package stroom.receive.common;
 
 import stroom.util.shared.NullSafe;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -59,6 +60,11 @@ public class DataFeedIdentities {
 
     public List<DataFeedIdentity> getDataFeedIdentities() {
         return dataFeedIdentities;
+    }
+
+    @JsonIgnore
+    public boolean isEmpty() {
+        return dataFeedIdentities.isEmpty();
     }
 
     @Override

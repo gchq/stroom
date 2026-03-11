@@ -38,7 +38,7 @@ public class DataFeedKeyGenerator {
                 "sdk_"
                 + StringUtil.createRandomCode(
                         new SecureRandom(),
-                        DataFeedIdentityServiceImpl.DATA_FEED_KEY_RANDOM_PART_LENGTH,
+                        DataFeedKeyServiceImpl.DATA_FEED_KEY_RANDOM_PART_LENGTH,
                         StringUtil.ALLOWED_CHARS_BASE_58_STYLE);
 
         final Map<String, String> attrMap = new HashMap<>(NullSafe.map(attributeMap));
