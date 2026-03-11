@@ -17272,7 +17272,7 @@
           },
           "receiptCheckMode" : {
             "type" : "string",
-            "enum" : [ "FEED_STATUS", "RECEIPT_POLICY", "RECEIVE_ALL", "DROP_ALL", "REJECT_ALL" ]
+            "enum" : [ "FEED_STATUS", "RECEIPT_POLICY", "FEED_EXISTENCE", "RECEIVE_ALL", "DROP_ALL", "REJECT_ALL" ]
           },
           "uiConfig" : {
             "$ref" : "#/components/schemas/UiConfig"

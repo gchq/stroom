@@ -13,6 +13,22 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11.2] - 2026-03-11
+
+* Bug **#5445** : Revert cache in PipelineDataCacheImpl to be keyed by PipelineDoc.
+
+* Bug **#5444** : Initialise pipelineStructurePresenter when opening in stepping mode.
+
+
+## [v7.11.1] - 2026-03-10
+
+* Bug **#5434** : Fix dense vector token limit to be 1024 for Lucene indexing.
+
+* Bug **#5413** : Fix column value selection.
+
+* Bug **#5275** : Add option to XMLWriter to prevent char 0 disabling output escaping.
+
+
 ## [v7.11.0] - 2026-03-04
 
 * Bug : Change proxy event store to close its appenders on app shutdown.
@@ -2033,7 +2049,9 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.0...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.2...HEAD
+[v7.11.2]: https://github.com/gchq/stroom/compare/v7.11.1...v7.11.2
+[v7.11.1]: https://github.com/gchq/stroom/compare/v7.11.0...v7.11.1
 [v7.11.0]: https://github.com/gchq/stroom/compare/v7.11-beta.25...v7.11.0
 [v7.11-beta.25]: https://github.com/gchq/stroom/compare/v7.11-beta.24...v7.11-beta.25
 [v7.11-beta.24]: https://github.com/gchq/stroom/compare/v7.11-beta.23...v7.11-beta.24

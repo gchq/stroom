@@ -80,6 +80,11 @@ class TestJSONParser extends StroomUnitTest {
         positiveTest("Multi");
     }
 
+    @Test
+    void testEmbeddedXml() throws IOException {
+        positiveTest("EmbeddedXml");
+    }
+
     private void negativeTest(final String stem, final String type) throws IOException {
         test(stem, "~" + type, true);
     }
@@ -299,6 +304,7 @@ class TestJSONParser extends StroomUnitTest {
 
         final XMLWriter xmlWriter = new XMLWriter(errorReceiverProxy, null, null, null, null, null, null, null);
         xmlWriter.setIndentOutput(true);
+        xmlWriter.setPreventEscapeSwitching(true);
         xmlWriter.setTarget(xmlAppender);
 
         final JSONWriter jsonWriter = new JSONWriter(errorReceiverProxy);
