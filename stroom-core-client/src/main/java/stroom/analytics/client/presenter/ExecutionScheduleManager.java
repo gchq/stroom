@@ -82,8 +82,11 @@ import java.util.function.Consumer;
 public class ExecutionScheduleManager
         extends ContentTabPresenter<PagerView> {
 
+
     private static final ExecutionScheduleResource EXECUTION_SCHEDULE_RESOURCE =
             GWT.create(ExecutionScheduleResource.class);
+
+    public static final String TAB_TYPE = "ExecutionScheduleManager";
 
     private final MyDataGrid<ExecutionSchedule> dataGrid;
     private final MultiSelectionModelImpl<ExecutionSchedule> selectionModel;

@@ -17,15 +17,13 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticProcessConfig;
-import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.ReportDoc.Builder;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -48,7 +46,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 class ReportStoreImpl implements ReportStore {
@@ -60,24 +57,31 @@ class ReportStoreImpl implements ReportStore {
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
     private final SearchRequestFactory searchRequestFactory;
     private final Provider<ExecutionScheduleDao> executionScheduleDaoProvider;
+    private final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider;
 
     @Inject
     ReportStoreImpl(final StoreFactory storeFactory,
                     final ReportSerialiser serialiser,
                     final SecurityContext securityContext,
                     final Provider<ExecutionScheduleDao> executionScheduleDaoProvider,
+                    final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
                     final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                     final SearchRequestFactory searchRequestFactory) {
-        this.store = storeFactory.createStore(serialiser, ReportDoc.TYPE, ReportDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                ReportDoc.TYPE,
+                ReportDoc::builder,
+                ReportDoc::copy);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
         this.executionScheduleDaoProvider = executionScheduleDaoProvider;
+        this.analyticRuleProcessorsProvider = analyticRuleProcessorsProvider;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public DocRef createDocument(final String name) {
@@ -132,7 +136,7 @@ class ReportStoreImpl implements ReportStore {
 
     @Override
     public void deleteDocument(final DocRef docRef) {
-//        deleteProcessorFilter(docRef);
+        deleteProcessorFilter(docRef);
         deleteExecutionSchedules(docRef);
         store.deleteDocument(docRef);
     }
@@ -142,13 +146,13 @@ class ReportStoreImpl implements ReportStore {
         return store.info(docRef);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -166,8 +170,9 @@ class ReportStoreImpl implements ReportStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<ReportDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<ReportDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
+            final ReportDoc.Builder builder = doc.copy();
             try {
                 if (doc.getQuery() != null) {
                     searchRequestFactory.extractDataSourceOnly(doc.getQuery(), docRef -> {
@@ -194,7 +199,7 @@ class ReportStoreImpl implements ReportStore {
                                             !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
                                             query = query.replaceFirst(docRef.getUuid(), remapped.getUuid());
                                         }
-                                        doc.setQuery(query);
+                                        builder.query(query);
                                     }
                                 });
                             }
@@ -206,16 +211,17 @@ class ReportStoreImpl implements ReportStore {
             } catch (final RuntimeException e) {
                 LOGGER.debug(e::getMessage, e);
             }
+            return builder.build();
         };
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public ReportDoc readDocument(final DocRef docRef) {
@@ -227,13 +233,13 @@ class ReportStoreImpl implements ReportStore {
         return store.writeDocument(document);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -252,10 +258,7 @@ class ReportStoreImpl implements ReportStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override
@@ -268,9 +271,9 @@ class ReportStoreImpl implements ReportStore {
         return null;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public List<DocRef> list() {
@@ -287,14 +290,14 @@ class ReportStoreImpl implements ReportStore {
         return store.getIndexableData(docRef);
     }
 
-//    private void deleteProcessorFilter(final DocRef docRef) {
+    private void deleteProcessorFilter(final DocRef docRef) {
 //        try {
 //            final ReportDoc analyticRuleDoc = readDocument(docRef);
 //            analyticRuleProcessorsProvider.get().deleteProcessorFilters(analyticRuleDoc);
 //        } catch (final RuntimeException e) {
 //            LOGGER.debug(e::getMessage, e);
 //        }
-//    }
+    }
 
     private void deleteExecutionSchedules(final DocRef docRef) {
         try {

@@ -16,8 +16,6 @@
 
 package stroom.query.client;
 
-import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.analytics.shared.ReportDoc;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
@@ -37,7 +35,6 @@ import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.StringUtil;
 import stroom.util.shared.UserRef;
-import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
@@ -75,10 +72,6 @@ public class TermEditor extends Composite {
     private final MyDateBox date;
     private final MyDateBox dateFrom;
     private final MyDateBox dateTo;
-    // Should be possible to uni y the multiple uses of termlistbox so that the only
-    // difference
-    // is the values supplied.
-    private final SelectionBox<String> termListBox;
     private final Widget docRefWidget;
     private final Widget userRefWidget;
     private final Label fieldTypeLabel;
@@ -140,9 +133,6 @@ public class TermEditor extends Composite {
         dateTo = createDateBox(NARROW_CLASS_NAME);
         dateTo.setVisible(false);
 
-        termListBox = createTermSelectionListBox(NARROW_CLASS_NAME);
-        termListBox.setVisible(false);
-
         fieldTypeLabel = createFieldTypeLabel();
 
         final FlowPanel inner = new FlowPanel();
@@ -156,7 +146,6 @@ public class TermEditor extends Composite {
         inner.add(andLabel);
         inner.add(valueTo);
         inner.add(dateTo);
-        inner.add(termListBox);
         inner.add(docRefWidget);
         inner.add(userRefWidget);
 
@@ -243,9 +232,6 @@ public class TermEditor extends Composite {
                     sb.append(",");
                 } else if (widget instanceof MyDateBox) {
                     sb.append(((MyDateBox) widget).getValue());
-                    sb.append(",");
-                } else if (widget instanceof SelectionBox<?>) {
-                    sb.append(((SelectionBox<?>) widget).getValue());
                     sb.append(",");
                 } else if (widget.equals(docRefWidget)) {
                     if (docSelectionBoxPresenter != null) {
@@ -497,13 +483,6 @@ public class TermEditor extends Composite {
         }
     }
 
-    private void updateTermListBox() {
-        if (term.getValue() != null) {
-            // Set the current data.
-            termListBox.setValue(term.getValue());
-        }
-    }
-
     private void bind() {
         final KeyDownHandler keyDownHandler = event -> {
             if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
@@ -570,13 +549,16 @@ public class TermEditor extends Composite {
     }
 
     private BaseSelectionBox<QueryField, FieldInfoSelectionItem> createFieldBox(final UiConfigCache uiConfigCache) {
-        final BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox = new BaseSelectionBox<>();
+        final BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox =
+                new BaseSelectionBox<QueryField, FieldInfoSelectionItem>();
         fieldListBox.addStyleName(ITEM_CLASS_NAME);
         fieldListBox.addStyleName(DROPDOWN_CLASS_NAME);
         fieldListBox.addStyleName("field");
         fieldListBox.addStyleName("termEditor-item");
-        uiConfigCache.get(uiConfig -> NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl -> fieldListBox
-                .registerPopupTextProvider(() -> QuickFilterTooltipUtil.createTooltip("Field Filter", helpUrl))));
+        uiConfigCache.get(uiConfig ->
+                NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl ->
+                        fieldListBox.registerPopupTextProvider(() ->
+                                QuickFilterTooltipUtil.createTooltip("Field Filter", helpUrl))));
         return fieldListBox;
     }
 
@@ -606,13 +588,6 @@ public class TermEditor extends Composite {
         dateBox.addStyleName(ITEM_CLASS_NAME);
         dateBox.addStyleName(widthClassName);
         return dateBox;
-    }
-
-    private SelectionBox<String> createTermSelectionListBox(final String widthClassName) {
-        final SelectionBox<String> termSelectionListBox = new SelectionBox<String>();
-        termSelectionListBox.addStyleName(ITEM_CLASS_NAME);
-        termSelectionListBox.addStyleName(widthClassName);
-        return termSelectionListBox;
     }
 
     private Label createLabel(final String text) {

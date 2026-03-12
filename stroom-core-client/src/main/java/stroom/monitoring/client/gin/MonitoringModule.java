@@ -72,8 +72,6 @@ public class MonitoringModule extends PluginModule {
         bindPlugin(JobListPlugin.class);
         bindPlugin(ExecutionScheduleManagerPlugin.class);
 
-
-
         bindPresenterWidget(
                 SchedulePopup.class,
                 ScheduleView.class,

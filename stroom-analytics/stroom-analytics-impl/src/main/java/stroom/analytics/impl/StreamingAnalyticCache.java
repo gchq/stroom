@@ -16,7 +16,6 @@
 
 package stroom.analytics.impl;
 
-import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;

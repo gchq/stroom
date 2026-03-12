@@ -25,7 +25,7 @@ import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.job.shared.ScheduleRestriction;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.schedule.client.ScheduleBox;
 import stroom.schedule.client.SchedulePopup;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
@@ -65,7 +65,7 @@ public class BatchExecutionScheduleEditPresenter
     public BatchExecutionScheduleEditPresenter(final EventBus eventBus,
                                                final BatchExecutionScheduleEditView view,
                                                final DocSelectionBoxPresenter errorFeedPresenter,
-                                               final NodeManager nodeManager,
+                                               final NodeClient nodeClient,
                                                final Provider<SchedulePopup> schedulePresenterProvider,
                                                final Provider<DateTimePopup> dateTimePopupProvider,
                                                final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter) {
@@ -81,7 +81,7 @@ public class BatchExecutionScheduleEditPresenter
         view.getScheduleBox().setScheduleRestriction(new ScheduleRestriction(false, false, true));
 
 
-        nodeManager.listAllNodes(
+        nodeClient.listAllNodes(
             list -> {
                 if (NullSafe.hasItems(list)) {
                     getView().setNodes(list);

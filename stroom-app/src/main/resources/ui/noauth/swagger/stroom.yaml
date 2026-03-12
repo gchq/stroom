@@ -16407,8 +16407,6 @@ components:
           - "'is', 'is not', 'in folder', '=', '!=', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary'"
           - "'=', '!=', '==', '!==', 'in', 'in dictionary'"
-          - "'is', 'is not'"
-          - "'is', 'is not'"
           - "'==', '!==', 'between', 'in', 'in dictionary'"
           - "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains',\
             \ 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches\

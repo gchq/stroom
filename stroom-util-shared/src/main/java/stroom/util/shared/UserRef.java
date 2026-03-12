@@ -129,7 +129,6 @@ public final class UserRef {
         return enabled;
     }
 
-
     @JsonIgnore
     public boolean isDisabled() {
         return !enabled;
