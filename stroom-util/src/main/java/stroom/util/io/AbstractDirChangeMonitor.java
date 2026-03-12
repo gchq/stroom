@@ -66,7 +66,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
     private Future<?> watcherFuture = null;
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final boolean isValidDir;
-    private final AtomicBoolean isBatchScheduled = new AtomicBoolean(false);
+    private final AtomicBoolean isBatchInProgress = new AtomicBoolean(false);
     private final List<String> errors = new ArrayList<>();
     private final BlockingQueue<SimpleWatchEvent> queue = new LinkedBlockingQueue<>();
 
@@ -154,11 +154,12 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
         watcherFuture = CompletableFuture.runAsync(() -> {
             WatchKey watchKey = null;
 
-            LOGGER.info("Starting file modification watcher for {}", dirToWatch.toAbsolutePath().normalize());
+            LOGGER.info(() -> LogUtil.message("Starting directory modification watcher for {}",
+                    dirToWatch.toAbsolutePath().normalize()));
             while (true) {
                 if (Thread.currentThread().isInterrupted()) {
-                    LOGGER.debug("Thread interrupted, stopping watching directory {}",
-                            dirToWatch.toAbsolutePath().normalize());
+                    LOGGER.debug(() -> LogUtil.message("Thread interrupted, stopping watching directory {}",
+                            dirToWatch.toAbsolutePath().normalize()));
                     break;
                 }
 
@@ -224,12 +225,9 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
 
         try {
             final EventType eventType = EventType.fromKind(kind);
-            if (eventType != null
-                && includedEventTypes.contains(eventType)) {
-
-                // Add the event to our batch.
-                queue.add(new SimpleWatchEvent(eventType, affectedFile));
-                scheduleBatchIfRequired();
+            if (NullSafe.test(eventType, includedEventTypes::contains)) {
+                final SimpleWatchEvent watchEvent = new SimpleWatchEvent(eventType, affectedFile);
+                queueEvent(watchEvent);
             } else {
                 LOGGER.debug("Ignoring eventType: {} on affectedFile: {}", eventType, affectedFile);
             }
@@ -239,55 +237,88 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
         }
     }
 
-    private synchronized void scheduleBatchIfRequired() {
+    private void queueEvent(final SimpleWatchEvent watchEvent) {
+        // Add the event to our batch.
+        synchronized (this) {
+            queue.add(watchEvent);
+            LOGGER.debug(() -> LogUtil.message("queueEvent() - watchEvent: {}, queue.size: {}",
+                    watchEvent, queue.size()));
+            scheduleBatchIfRequired();
+        }
+    }
 
+    private List<SimpleWatchEvent> drainQueuedEvents() {
+        final List<SimpleWatchEvent> allEvents = new ArrayList<>();
+        // Ensure
+        synchronized (this) {
+            try {
+                queue.drainTo(allEvents);
+            } finally {
+                // Once we have drained, any new items that go on the queue after we release the lock
+                // will need a new delayed execution, so mark as not in progress.
+                isBatchInProgress.set(false);
+            }
+        }
+        return allEvents;
+    }
+
+    private void scheduleBatchIfRequired() {
         // When a file is changed the filesystem can trigger two changes, one to change the file content
         // and another to change the file access time. To prevent a duplicate read we delay the read
         // a bit so we can have many changes during that delay period but with only one read of the file.
-        if (isBatchScheduled.compareAndSet(false, true)) {
-            LOGGER.info("Scheduling call to change listener for file {} in {}ms",
+        if (isBatchInProgress.compareAndSet(false, true)) {
+            LOGGER.info(() -> LogUtil.message("Scheduling call to change listener for file {} in {}ms",
                     dirToWatch.toAbsolutePath().normalize(),
-                    DELAY_BEFORE_FILE_READ_MS);
+                    DELAY_BEFORE_FILE_READ_MS));
 
-            CompletableFuture.delayedExecutor(DELAY_BEFORE_FILE_READ_MS, TimeUnit.MILLISECONDS)
-                    .execute(() -> {
-                        try {
-                            synchronized (this) {
-                                // Atomically swap out the set with an empty one
-                                final List<SimpleWatchEvent> allEvents = new ArrayList<>();
-                                queue.drainTo(allEvents);
+            try {
+                CompletableFuture.delayedExecutor(DELAY_BEFORE_FILE_READ_MS, TimeUnit.MILLISECONDS)
+                        .execute(() -> {
+                            try {
+                                final List<SimpleWatchEvent> allEvents = drainQueuedEvents();
 
-                                LOGGER.debug(() -> LogUtil.message("Draining batch of {} events", allEvents.size()));
-                                final Map<Path, List<SimpleWatchEvent>> groupedByPath = allEvents.stream()
-                                        .collect(Collectors.groupingBy(
-                                                SimpleWatchEvent::path,
-                                                Collectors.toList()));
+                                if (!allEvents.isEmpty()) {
+                                    LOGGER.info(() -> LogUtil.message("Processing batch of {} change events",
+                                            allEvents.size()));
+                                    final Map<Path, List<SimpleWatchEvent>> groupedByPath = allEvents.stream()
+                                            .collect(Collectors.groupingBy(
+                                                    SimpleWatchEvent::path,
+                                                    Collectors.toList()));
 
-                                for (final Entry<Path, List<SimpleWatchEvent>> entry : groupedByPath.entrySet()) {
-                                    final Path path = entry.getKey();
-                                    List<SimpleWatchEvent> eventsForPath = entry.getValue();
-                                    LOGGER.debug("path: {}, simpleWatchEvents: {}", path, eventsForPath);
+                                    for (final Entry<Path, List<SimpleWatchEvent>> entry : groupedByPath.entrySet()) {
+                                        final Path path = entry.getKey();
+                                        List<SimpleWatchEvent> eventsForPath = entry.getValue();
+                                        LOGGER.debug("path: {}, simpleWatchEvents: {}", path, eventsForPath);
 
-                                    if (NullSafe.hasItems(eventsForPath)) {
-                                        eventsForPath = deDupEvents(eventsForPath);
+                                        if (NullSafe.hasItems(eventsForPath)) {
+                                            eventsForPath = deDupEvents(eventsForPath);
 
-                                        // Now fire all the de-duped events
-                                        for (final SimpleWatchEvent event : eventsForPath) {
-                                            final Path affectedFile = event.path;
-                                            switch (event.eventType) {
-                                                case MODIFY -> onEntryModify(affectedFile);
-                                                case CREATE -> onEntryCreate(affectedFile);
-                                                case DELETE -> onEntryDelete(affectedFile);
+                                            // Now fire all the de-duped events
+                                            for (final SimpleWatchEvent event : eventsForPath) {
+                                                final Path affectedFile = event.path;
+                                                switch (event.eventType) {
+                                                    case MODIFY -> onEntryModify(affectedFile);
+                                                    case CREATE -> onEntryCreate(affectedFile);
+                                                    case DELETE -> onEntryDelete(affectedFile);
+                                                }
                                             }
                                         }
                                     }
+                                } else {
+                                    LOGGER.info("No change events to process");
                                 }
-
+                            } catch (final Throwable e) {
+                                LOGGER.error("Error in delayed executor runnable: {}. Swallowing.",
+                                        LogUtil.exceptionMessage(e), e);
                             }
-                        } finally {
-                            isBatchScheduled.set(false);
-                        }
-                    });
+                        });
+            } catch (final Throwable e) {
+                LOGGER.error("Error executing delayed executor: {}. Swallowing.",
+                        LogUtil.exceptionMessage(e), e);
+                isBatchInProgress.set(false);
+            }
+        } else {
+            LOGGER.debug("scheduleBatchIfRequired() - Already scheduled, nothing to do");
         }
     }
 
