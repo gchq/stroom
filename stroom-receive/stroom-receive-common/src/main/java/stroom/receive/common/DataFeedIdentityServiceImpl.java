@@ -31,6 +31,9 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Delegates for {@link DataFeedKeyService} and {@link CertificateIdentityService}
+ */
 public class DataFeedIdentityServiceImpl implements DataFeedIdentityService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataFeedIdentityServiceImpl.class);

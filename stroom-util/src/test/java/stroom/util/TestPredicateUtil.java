@@ -17,17 +17,23 @@
 package stroom.util;
 
 import stroom.test.common.TestUtil;
+import stroom.util.PredicateUtil.CountingBiPredicate;
+import stroom.util.PredicateUtil.CountingPredicate;
 
 import com.google.inject.TypeLiteral;
 import io.vavr.Tuple;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPredicateUtil {
 
@@ -151,5 +157,97 @@ class TestPredicateUtil {
                 .addCase(Tuple.of("FOOBAR", "ob"), true)
                 .addCase(Tuple.of("FOOBAR", "foobar"), true)
                 .build();
+    }
+
+    @Test
+    void testCountingPredicate() {
+        final Predicate<Integer> isEvenPredicate = (Integer i) -> i % 2 == 0;
+        final CountingPredicate<Integer> countingPredicate = PredicateUtil.countingPredicate(isEvenPredicate);
+        assertPredicate(countingPredicate, 1, false, 0);
+        assertPredicate(countingPredicate, 1, false, 0);
+        assertPredicate(countingPredicate, 2, true, 1);
+        assertPredicate(countingPredicate, 2, true, 2);
+        assertPredicate(countingPredicate, 3, false, 2);
+        assertPredicate(countingPredicate, 4, true, 3);
+        assertPredicate(countingPredicate, 4, true, 4);
+        countingPredicate.reset();
+        assertThat(countingPredicate.intValue())
+                .isEqualTo(0);
+    }
+
+    @Test
+    void testCountingPredicate_reverse() {
+        final Predicate<Integer> isEvenPredicate = (Integer i) -> i % 2 == 0;
+        final CountingPredicate<Integer> countingPredicate = PredicateUtil.countingPredicate(
+                isEvenPredicate, false);
+        assertPredicate(countingPredicate, 1, false, 1);
+        assertPredicate(countingPredicate, 1, false, 2);
+        assertPredicate(countingPredicate, 2, true, 2);
+        assertPredicate(countingPredicate, 2, true, 2);
+        assertPredicate(countingPredicate, 3, false, 3);
+        assertPredicate(countingPredicate, 4, true, 3);
+        assertPredicate(countingPredicate, 4, true, 3);
+        countingPredicate.reset();
+        assertThat(countingPredicate.intValue())
+                .isEqualTo(0);
+    }
+
+    @Test
+    void testCountingBiPredicate() {
+        final BiPredicate<Integer, Integer> bothEvenPredicate = (i1, i2) ->
+                (i1 % 2 == 0) && (i2 % 2 == 0);
+        final CountingBiPredicate<Integer, Integer> countingPredicate = PredicateUtil.countingBiPredicate(
+                bothEvenPredicate);
+        assertBiPredicate(countingPredicate, 1, 1, false, 0);
+        assertBiPredicate(countingPredicate, 1, 2, false, 0);
+        assertBiPredicate(countingPredicate, 2, 2, true, 1);
+        assertBiPredicate(countingPredicate, 2, 2, true, 2);
+        assertBiPredicate(countingPredicate, 3, 2, false, 2);
+        assertBiPredicate(countingPredicate, 4, 3, false, 2);
+        assertBiPredicate(countingPredicate, 4, 4, true, 3);
+        countingPredicate.reset();
+        assertThat(countingPredicate.intValue())
+                .isEqualTo(0);
+    }
+
+    @Test
+    void testCountingBiPredicate_reversed() {
+        final BiPredicate<Integer, Integer> bothEvenPredicate = (i1, i2) ->
+                (i1 % 2 == 0) && (i2 % 2 == 0);
+        final CountingBiPredicate<Integer, Integer> countingPredicate = PredicateUtil.countingBiPredicate(
+                bothEvenPredicate, false);
+        assertBiPredicate(countingPredicate, 1, 1, false, 1);
+        assertBiPredicate(countingPredicate, 1, 2, false, 2);
+        assertBiPredicate(countingPredicate, 2, 2, true, 2);
+        assertBiPredicate(countingPredicate, 2, 2, true, 2);
+        assertBiPredicate(countingPredicate, 3, 2, false, 3);
+        assertBiPredicate(countingPredicate, 4, 3, false, 4);
+        assertBiPredicate(countingPredicate, 4, 4, true, 4);
+        countingPredicate.reset();
+        assertThat(countingPredicate.intValue())
+                .isEqualTo(0);
+    }
+
+    private void assertPredicate(final CountingPredicate<Integer> predicate,
+                                 final int val,
+                                 final boolean expectedResult,
+                                 final int expectedCount) {
+        final boolean result = predicate.test(val);
+        assertThat(result)
+                .isEqualTo(expectedResult);
+        assertThat(predicate.intValue())
+                .isEqualTo(expectedCount);
+    }
+
+    private void assertBiPredicate(final CountingBiPredicate<Integer, Integer> predicate,
+                                   final int val1,
+                                   final int val2,
+                                   final boolean expectedResult,
+                                   final int expectedCount) {
+        final boolean result = predicate.test(val1, val2);
+        assertThat(result)
+                .isEqualTo(expectedResult);
+        assertThat(predicate.intValue())
+                .isEqualTo(expectedCount);
     }
 }

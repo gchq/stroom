@@ -29,34 +29,12 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class DataFeedIdentities {
 
-//    @JsonProperty
-//    @JsonPropertyDescription("A list of Data Feed Keys, whose keys have been hashed.")
-//    private final List<HashedDataFeedKey> hashedDataFeedKeys;
-//    @JsonProperty
-//    private final List<CertificateIdentity> certificateIdentities;
-
     @JsonProperty
     private final List<DataFeedIdentity> dataFeedIdentities;
 
     public DataFeedIdentities(@JsonProperty("dataFeedIdentity") final List<DataFeedIdentity> dataFeedIdentities) {
         this.dataFeedIdentities = NullSafe.removeNulls(dataFeedIdentities);
     }
-
-//    public DataFeedIdentities(
-//            @JsonProperty("hashedDataFeedKey") final List<HashedDataFeedKey> hashedDataFeedKeys,
-//            @JsonProperty("certificateIdentity") final List<CertificateIdentity> certificateIdentities) {
-//        this.hashedDataFeedKeys = NullSafe.list(hashedDataFeedKeys);
-//        this.certificateIdentities = NullSafe.list(certificateIdentities);
-//    }
-
-//    public List<HashedDataFeedKey> getHashedDataFeedKeys() {
-//        return hashedDataFeedKeys;
-//    }
-//
-//    public List<CertificateIdentity> getCertificateIdentities() {
-//        return certificateIdentities;
-//    }
-
 
     public List<DataFeedIdentity> getDataFeedIdentities() {
         return dataFeedIdentities;
@@ -87,27 +65,4 @@ public class DataFeedIdentities {
                "dataFeedIdentities=" + dataFeedIdentities +
                '}';
     }
-
-    //    @Override
-//    public boolean equals(final Object o) {
-//        if (o == null || getClass() != o.getClass()) {
-//            return false;
-//        }
-//        final DataFeedIdentities that = (DataFeedIdentities) o;
-//        return Objects.equals(hashedDataFeedKeys, that.hashedDataFeedKeys)
-//               && Objects.equals(certificateIdentities, that.certificateIdentities);
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//        return Objects.hash(hashedDataFeedKeys, certificateIdentities);
-//    }
-//
-//    @Override
-//    public String toString() {
-//        return "DataFeedIdentities{" +
-//               "hashedDataFeedKeys=" + hashedDataFeedKeys +
-//               ", certificateIdentities=" + certificateIdentities +
-//               '}';
-//    }
 }
