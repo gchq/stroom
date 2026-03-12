@@ -26,38 +26,25 @@ import stroom.query.api.datasource.FindFieldCriteria;
 import stroom.query.api.datasource.IndexField;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 public class IndexFieldServiceImpl implements IndexFieldService {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexFieldServiceImpl.class);
-
     private final IndexFieldDao indexFieldDao;
-    private final Provider<IndexStore> indexStoreProvider;
     private final SecurityContext securityContext;
-    private final Set<DocRef> loadedIndexes = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     @Inject
     public IndexFieldServiceImpl(final IndexFieldDao indexFieldDao,
-                                 final Provider<IndexStore> indexStoreProvider,
                                  final SecurityContext securityContext) {
         this.indexFieldDao = indexFieldDao;
-        this.indexStoreProvider = indexStoreProvider;
         this.securityContext = securityContext;
     }
 
@@ -75,8 +62,6 @@ public class IndexFieldServiceImpl implements IndexFieldService {
             // If there is no read permission then return no fields.
             return ResultPage.createCriterialBasedList(Collections.emptyList(), criteria);
         }
-
-        ensureLoaded(docRef);
         return indexFieldDao.findFields(criteria);
     }
 
@@ -111,44 +96,8 @@ public class IndexFieldServiceImpl implements IndexFieldService {
         return docRef != null && securityContext.hasDocumentPermission(docRef, DocumentPermission.EDIT);
     }
 
-    private void ensureLoaded(final DocRef dataSourceRef) {
-        if (dataSourceRef != null && !loadedIndexes.contains(dataSourceRef)) {
-            transferFieldsToDB(dataSourceRef);
-            loadedIndexes.add(dataSourceRef);
-        }
-    }
-
-    private void transferFieldsToDB(final DocRef docRef) {
-        try {
-            // Load fields.
-            final IndexStore indexStore = indexStoreProvider.get();
-            final LuceneIndexDoc index = indexStore.readDocument(docRef);
-            if (index != null) {
-                final List<IndexField> fields = NullSafe.list(index.getFields())
-                        .stream()
-                        .map(field -> (IndexField) field)
-                        .toList();
-                addFields(docRef, fields);
-
-//                // TEST DATA
-//                for (int i = 0; i < 1000; i++) {
-//                    addField(fieldSourceId, QueryField.createId("test" + i));
-//                    for (int j = 0; j < 1000; j++) {
-//                        addField(fieldSourceId, QueryField.createId("test" + i + ".test" + j));
-//                        for (int k = 0; k < 1000; k++) {
-//                            addField(fieldSourceId, QueryField.createId("test" + i + ".test" + j + ".test" + k));
-//                        }
-//                    }
-//                }
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-        }
-    }
-
     @Override
     public int getFieldCount(final DocRef docRef) {
-        ensureLoaded(docRef);
         return indexFieldDao.getFieldCount(docRef);
     }
 

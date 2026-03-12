@@ -21,11 +21,13 @@ import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
@@ -40,6 +42,8 @@ import org.fusesource.restygwt.client.DirectRestService;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public interface DictionaryResource extends RestResource, DirectRestService, FetchWithUuid<DictionaryDoc> {
+
+    String FIND_FIELDS_SUB_PATH = "/findWords";
 
     @GET
     @Path("/{uuid}")
@@ -62,4 +66,45 @@ public interface DictionaryResource extends RestResource, DirectRestService, Fet
             summary = "Download a dictionary doc",
             operationId = "downloadDictionary")
     ResourceGeneration download(DocRef dictionaryRef);
+
+    @POST
+    @Path(FIND_FIELDS_SUB_PATH)
+    @Operation(
+            summary = "Find words",
+            operationId = "findWords")
+    ResultPage<String> findWords(
+            @Parameter(description = "criteria", required = true) FindWordCriteria criteria);
+
+    @POST
+    @Path("/addWord")
+    @Operation(
+            summary = "Add word",
+            operationId = "addWord")
+    Boolean addWord(
+            @Parameter(description = "addWord", required = true) AddWord addWord);
+
+    @DELETE
+    @Path("/deleteWord")
+    @Operation(
+            summary = "Delete word",
+            operationId = "deleteWord")
+    Boolean deleteWord(
+            @Parameter(description = "deleteWord", required = true) DeleteWord deleteWord);
+
+    @POST
+    @Path("/setWords")
+    @Operation(
+            summary = "Set words",
+            operationId = "setWords")
+    Boolean setWords(
+            @Parameter(description = "setWords", required = true) SetWords setWords);
+
+
+    @POST
+    @Path("/getWords")
+    @Operation(
+            summary = "Get words",
+            operationId = "getWords")
+    Words getWords(
+            @Parameter(description = "docRef", required = true) DocRef docRef);
 }

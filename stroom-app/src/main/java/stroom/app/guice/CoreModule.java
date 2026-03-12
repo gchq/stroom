@@ -67,6 +67,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.data.store.impl.fs.db.FsDataStoreDaoModule());
         install(new stroom.dictionary.impl.DictionaryHandlerModule());
         install(new stroom.dictionary.impl.DictionaryModule());
+        install(new stroom.dictionary.impl.db.DictionaryDaoModule());
         install(new stroom.documentation.impl.DocumentationHandlerModule());
         install(new stroom.documentation.impl.DocumentationModule());
         install(new stroom.docstore.impl.DocStoreModule());

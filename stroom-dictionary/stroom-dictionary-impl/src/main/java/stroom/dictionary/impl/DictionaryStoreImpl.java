@@ -19,6 +19,7 @@ package stroom.dictionary.impl;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
+import stroom.dictionary.shared.FindWordCriteria;
 import stroom.dictionary.shared.WordList;
 import stroom.dictionary.shared.WordList.Builder;
 import stroom.docref.DocRef;
@@ -35,12 +36,17 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Message;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.PermissionException;
+import stroom.util.shared.ResultPage;
 import stroom.util.string.StringUtil;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -57,15 +63,20 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     public static final boolean IS_DE_DUP_DEFAULT = false;
     private final Store<DictionaryDoc> store;
+    private final Provider<DictionaryWordService> dictionaryWordServiceProvider;
+    private final DictionarySerialiser serialiser;
 
     @Inject
     DictionaryStoreImpl(final StoreFactory storeFactory,
-                        final DictionarySerialiser serialiser) {
+                        final DictionarySerialiser serialiser,
+                        final Provider<DictionaryWordService> dictionaryWordServiceProvider) {
         this.store = storeFactory.createStore(
                 serialiser,
                 DictionaryDoc.TYPE,
                 DictionaryDoc::builder,
                 DictionaryDoc::copy);
+        this.dictionaryWordServiceProvider = dictionaryWordServiceProvider;
+        this.serialiser = serialiser;
     }
 
     // ---------------------------------------------------------------------
@@ -83,7 +94,9 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
                                final boolean makeNameUnique,
                                final Set<String> existingNames) {
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        return store.copyDocument(docRef.getUuid(), newName);
+        final DocRef copy = store.copyDocument(docRef.getUuid(), newName);
+        dictionaryWordServiceProvider.get().copyAll(docRef, copy);
+        return copy;
     }
 
     @Override
@@ -99,6 +112,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     @Override
     public void deleteDocument(final DocRef docRef) {
         store.deleteDocument(docRef);
+        dictionaryWordServiceProvider.get().deleteAll(docRef);
     }
 
     @Override
@@ -213,14 +227,59 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
                                  final Map<String, byte[]> dataMap,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        return store.importDocument(docRef, dataMap, importState, importSettings);
+        Map<String, byte[]> effectiveDataMap = dataMap;
+        try {
+            boolean altered = false;
+            DictionaryDoc doc = serialiser.read(dataMap);
+
+            // Transfer words to the database.
+            if (NullSafe.isNonBlankString(doc.getData())) {
+                // Make sure we transfer all words to the DB and remove them from the doc.
+                final List<String> words = Arrays.stream(doc
+                                .getData()
+                                .split("\n"))
+                        .filter(NullSafe::isNonBlankString)
+                        .toList();
+                dictionaryWordServiceProvider.get().addWords(doc.asDocRef(), words);
+                doc = doc.copy().data(null).build();
+                altered = true;
+            }
+
+            if (altered) {
+                effectiveDataMap = serialiser.write(doc);
+            }
+
+        } catch (final IOException e) {
+            throw new RuntimeException(LogUtil.message("Error de-serialising dictionary {}: {}",
+                    docRef, e.getMessage()), e);
+        }
+
+        return store.importDocument(docRef, effectiveDataMap, importState, importSettings);
     }
 
     @Override
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        return store.exportDocument(docRef, omitAuditFields, messageList);
+        // Get the words.
+        final List<String> words = getWordsForExport(docRef);
+        final String data = NullSafe.get(words, w -> String.join("\n", w));
+        return store.exportDocument(docRef, omitAuditFields, messageList, d ->
+                d.copy().data(data).build());
+    }
+
+    private List<String> getWordsForExport(final DocRef docRef) {
+        try {
+            final PageRequest pageRequest = PageRequest.unlimited();
+            final FindWordCriteria findWordCriteria =
+                    new FindWordCriteria(pageRequest, FindWordCriteria.DEFAULT_SORT_LIST, docRef);
+            final ResultPage<String> words =
+                    dictionaryWordServiceProvider.get().findWords(findWordCriteria);
+            return words.getValues();
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+        }
+        return null;
     }
 
     @Override

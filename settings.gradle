@@ -123,6 +123,8 @@ include 'stroom-db-util'
 // Dictionary
 include 'stroom-dictionary:stroom-dictionary-api'
 include 'stroom-dictionary:stroom-dictionary-impl'
+include 'stroom-dictionary:stroom-dictionary-impl-db'
+include 'stroom-dictionary:stroom-dictionary-impl-db-jooq'
 include 'stroom-dictionary:stroom-dictionary-mock'
 
 // Docref

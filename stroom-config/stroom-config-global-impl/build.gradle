@@ -35,6 +35,7 @@ dependencies {
     implementation project(':stroom-dashboard:stroom-storedquery-impl')
     implementation project(':stroom-data:stroom-data-retention-api')
     implementation project(':stroom-data:stroom-data-store-impl-fs')
+    implementation project(':stroom-dictionary:stroom-dictionary-impl')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-impl-db')
     implementation project(':stroom-event-logging:stroom-event-logging-api')

@@ -212,7 +212,7 @@ public class IndexStoreImpl implements IndexStore {
             }
 
         } catch (final IOException e) {
-            throw new RuntimeException(LogUtil.message("Error de-serialising feed {}: {}",
+            throw new RuntimeException(LogUtil.message("Error de-serialising index {}: {}",
                     docRef, e.getMessage()), e);
         }
 

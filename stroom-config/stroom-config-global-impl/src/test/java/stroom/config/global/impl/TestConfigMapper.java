@@ -42,6 +42,7 @@ import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
 import stroom.credentials.impl.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
+import stroom.dictionary.impl.DictionaryConfig;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
@@ -957,6 +958,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_CREDENTIALS) final CredentialsConfig credentialsConfig,
                 @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                 @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
+                @JsonProperty(PROP_NAME_DICTIONARY) final DictionaryConfig dictionaryConfig,
                 @JsonProperty(PROP_NAME_DOCSTORE) final DocStoreConfig docStoreConfig,
                 @JsonProperty(PROP_NAME_ELASTIC) final ElasticConfig elasticConfig,
                 @JsonProperty(PROP_NAME_EXPLORER) final ExplorerConfig explorerConfig,
@@ -1022,6 +1024,7 @@ class TestConfigMapper {
                     credentialsConfig,
                     dashboardConfig,
                     dataConfig,
+                    dictionaryConfig,
                     docStoreConfig,
                     elasticConfig,
                     explorerConfig,

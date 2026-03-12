@@ -17,12 +17,18 @@
 package stroom.dictionary.impl;
 
 import stroom.dictionary.api.DictionaryStore;
+import stroom.dictionary.shared.AddWord;
+import stroom.dictionary.shared.DeleteWord;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DictionaryResource;
+import stroom.dictionary.shared.FindWordCriteria;
+import stroom.dictionary.shared.SetWords;
+import stroom.dictionary.shared.Words;
 import stroom.docref.DocRef;
 import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.resource.api.ResourceStore;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
@@ -30,6 +36,7 @@ import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -52,16 +59,19 @@ class DictionaryResourceImpl implements DictionaryResource, FetchWithUuid<Dictio
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
     private final Provider<ResourceStore> resourceStoreProvider;
     private final Provider<DocRefInfoService> docRefInfoServiceProvider;
+    private final Provider<DictionaryWordService> dictionaryWordServiceProvider;
 
     @Inject
     DictionaryResourceImpl(final Provider<DictionaryStore> dictionaryStoreProvider,
                            final Provider<DocumentResourceHelper> documentResourceHelperProvider,
                            final Provider<ResourceStore> resourceStoreProvider,
-                           final Provider<DocRefInfoService> docRefInfoServiceProvider) {
+                           final Provider<DocRefInfoService> docRefInfoServiceProvider,
+                           final Provider<DictionaryWordService> dictionaryWordServiceProvider) {
         this.dictionaryStoreProvider = dictionaryStoreProvider;
         this.documentResourceHelperProvider = documentResourceHelperProvider;
         this.resourceStoreProvider = resourceStoreProvider;
         this.docRefInfoServiceProvider = docRefInfoServiceProvider;
+        this.dictionaryWordServiceProvider = dictionaryWordServiceProvider;
     }
 
     @Override
@@ -113,5 +123,35 @@ class DictionaryResourceImpl implements DictionaryResource, FetchWithUuid<Dictio
             throw new UncheckedIOException(e);
         }
         return new ResourceGeneration(resourceKey, new ArrayList<>());
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public ResultPage<String> findWords(final FindWordCriteria criteria) {
+        return dictionaryWordServiceProvider.get().findWords(criteria);
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public Boolean addWord(final AddWord addWord) {
+        return dictionaryWordServiceProvider.get().addWord(addWord);
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public Boolean deleteWord(final DeleteWord deleteWord) {
+        return dictionaryWordServiceProvider.get().deleteWord(deleteWord);
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public Boolean setWords(final SetWords setWords) {
+        return dictionaryWordServiceProvider.get().setWords(setWords);
+    }
+
+    @AutoLogged(OperationType.UNLOGGED)
+    @Override
+    public Words getWords(final DocRef docRef) {
+        return dictionaryWordServiceProvider.get().getWords(docRef);
     }
 }

@@ -32,6 +32,7 @@ import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
 import stroom.credentials.impl.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
+import stroom.dictionary.impl.DictionaryConfig;
 import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
@@ -97,6 +98,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_CORE = "core";
     public static final String PROP_NAME_DASHBOARD = "dashboard";
     public static final String PROP_NAME_DATA = "data";
+    public static final String PROP_NAME_DICTIONARY = "dictionary";
     public static final String PROP_NAME_DOCSTORE = "docstore";
     public static final String PROP_NAME_ELASTIC = "elastic";
     public static final String PROP_NAME_EXPLORER = "explorer";
@@ -150,6 +152,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final CredentialsConfig credentialsConfig;
     private final DashboardConfig dashboardConfig;
     private final DataConfig dataConfig;
+    private final DictionaryConfig dictionaryConfig;
     private final DocStoreConfig docStoreConfig;
     private final ElasticConfig elasticConfig;
     private final ExplorerConfig explorerConfig;
@@ -205,6 +208,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new CredentialsConfig(),
                 new DashboardConfig(),
                 new DataConfig(),
+                new DictionaryConfig(),
                 new DocStoreConfig(),
                 new ElasticConfig(),
                 new ExplorerConfig(),
@@ -259,6 +263,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_CREDENTIALS) final CredentialsConfig credentialsConfig,
                      @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                      @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
+                     @JsonProperty(PROP_NAME_DICTIONARY) final DictionaryConfig dictionaryConfig,
                      @JsonProperty(PROP_NAME_DOCSTORE) final DocStoreConfig docStoreConfig,
                      @JsonProperty(PROP_NAME_ELASTIC) final ElasticConfig elasticConfig,
                      @JsonProperty(PROP_NAME_EXPLORER) final ExplorerConfig explorerConfig,
@@ -309,6 +314,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.credentialsConfig = credentialsConfig;
         this.dashboardConfig = dashboardConfig;
         this.dataConfig = dataConfig;
+        this.dictionaryConfig = dictionaryConfig;
         this.docStoreConfig = docStoreConfig;
         this.elasticConfig = elasticConfig;
         this.explorerConfig = explorerConfig;
@@ -436,6 +442,11 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonPropertyDescription("Configuration for the data layer of stroom")
     public DataConfig getDataConfig() {
         return dataConfig;
+    }
+
+    @JsonProperty(PROP_NAME_DICTIONARY)
+    public DictionaryConfig getDictionaryConfig() {
+        return dictionaryConfig;
     }
 
     @JsonProperty(PROP_NAME_DOCSTORE)

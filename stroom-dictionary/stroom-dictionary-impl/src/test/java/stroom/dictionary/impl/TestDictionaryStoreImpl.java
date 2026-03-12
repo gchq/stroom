@@ -41,21 +41,23 @@ class TestDictionaryStoreImpl {
     private Store<DictionaryDoc> mockStore;
     @Mock
     private StoreFactory mockStoreFactory;
+    @Mock
+    private DictionaryWordService dictionaryWordService;
 
     @Test
     void getWords_unix() {
 
         // Unix line ends
         final DocRef docRef = createDoc("""
-
+                
                 one
                   two
-
-
+                
+                
                    three   \s
                 four
-
-                   """, "foo");
+                
+                """, "foo");
 
         final String[] words = getDictionaryStore().getWords(docRef);
         assertThat(words)
@@ -198,7 +200,7 @@ class TestDictionaryStoreImpl {
     void blankDict() {
         final DocRef docRef1 = createDoc("""
                      \t
-
+                
                 \t
                 """, "doc1");
 
@@ -245,6 +247,7 @@ class TestDictionaryStoreImpl {
 
         return new DictionaryStoreImpl(
                 mockStoreFactory,
-                mockDictionarySerialiser);
+                mockDictionarySerialiser,
+                () -> dictionaryWordService);
     }
 }

@@ -27,5 +27,6 @@ public class DictionaryModule extends AbstractModule {
     protected void configure() {
         bind(DictionaryStore.class).to(DictionaryStoreImpl.class);
         bind(WordListProvider.class).to(DictionaryStoreImpl.class);
+        bind(DictionaryWordService.class).to(DictionaryWordServiceImpl.class);
     }
 }

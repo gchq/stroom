@@ -109,6 +109,8 @@ dependencies {
     implementation project(':stroom-db-util')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-dictionary:stroom-dictionary-impl')
+    implementation project(':stroom-dictionary:stroom-dictionary-impl-db')
+    implementation project(':stroom-dictionary:stroom-dictionary-impl-db-jooq')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-impl')
