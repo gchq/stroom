@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11.3] - 2026-03-12
+
+* Bug **#5449** : Fix concurrency and exception handling Data Feed Key dir watcher (AbstractDirChangeMonitor).
+
+
 ## [v7.11.2] - 2026-03-11
 
 * Bug **#5445** : Revert cache in PipelineDataCacheImpl to be keyed by PipelineDoc.
@@ -2049,7 +2054,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.2...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.3...HEAD
+[v7.11.3]: https://github.com/gchq/stroom/compare/v7.11.2...v7.11.3
 [v7.11.2]: https://github.com/gchq/stroom/compare/v7.11.1...v7.11.2
 [v7.11.1]: https://github.com/gchq/stroom/compare/v7.11.0...v7.11.1
 [v7.11.0]: https://github.com/gchq/stroom/compare/v7.11-beta.25...v7.11.0
