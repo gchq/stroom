@@ -300,6 +300,7 @@ abstract class AbstractScheduledQueryExecutor<T extends AbstractAnalyticRuleDoc>
                 .orElse(null);
         final Schedule schedule = executionSchedule.getSchedule();
         final ScheduleBounds scheduleBounds = executionSchedule.getScheduleBounds();
+
         // See if it is time to execute this query.
         final Instant executionTime = Instant.now();
         final Trigger trigger = TriggerFactory.create(schedule);

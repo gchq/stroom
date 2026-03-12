@@ -268,6 +268,7 @@ public final class ExpressionTerm extends ExpressionItem {
                 "matches regex (CS)",
                 "matches regex (case sensitive)"),
 
+
         // Permission related conditions.
         OF_DOC_REF("of"),
         USER_HAS_PERM("has permissions"),
