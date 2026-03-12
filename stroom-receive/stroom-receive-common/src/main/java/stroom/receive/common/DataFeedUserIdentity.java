@@ -21,7 +21,8 @@ import stroom.security.api.UserIdentity;
 import java.util.Objects;
 
 /**
- * {@link UserIdentity} obtained when authenticated by {@link HashedDataFeedKey}
+ * {@link UserIdentity} obtained when authenticated by {@link DataFeedKeyService}
+ * or {@link CertificateIdentityService}
  */
 public class DataFeedUserIdentity implements UserIdentity {
 
