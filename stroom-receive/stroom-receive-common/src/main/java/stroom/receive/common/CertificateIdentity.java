@@ -21,6 +21,7 @@ import stroom.util.cert.DNFormat;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.CIKey;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
@@ -59,6 +60,7 @@ public final class CertificateIdentity implements DataFeedIdentity {
     @JsonIgnore
     private final int hashCode;
 
+    @JsonCreator
     public CertificateIdentity(@JsonProperty("certificateDn") final String certificateDn,
                                @JsonProperty("dnFormat") final DNFormat dnFormat,
                                @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,

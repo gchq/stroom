@@ -21,7 +21,7 @@ import stroom.receive.common.DataFeedIdentity.IdentityStatus;
 
 import java.nio.file.Path;
 
-public interface CertificateIdentityService {
+public interface CertificateIdentityService extends AuthenticatorFilter {
 
     IdentityStatus addCertificateIdentity(CertificateIdentity certificateIdentity,
                                           Path sourceFile);

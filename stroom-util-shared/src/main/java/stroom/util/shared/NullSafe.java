@@ -1759,6 +1759,36 @@ public class NullSafe {
     }
 
     /**
+     * If value is null, empty or blank an {@link IllegalArgumentException} will be thrown with a message
+     * supplied by messageSupplier.
+     *
+     * @param value           THe string to test.
+     * @param messageSupplier The supplier of the exception message.
+     * @return The supplied string if not blank.
+     */
+    public static String requireNonBlankString(final String value, final Supplier<String> messageSupplier) {
+        if (isBlankString(value)) {
+            throw new IllegalArgumentException(Objects.requireNonNull(messageSupplier).get());
+        }
+        return value;
+    }
+
+    /**
+     * If value is null or empty an {@link IllegalArgumentException} will be thrown with a message
+     * supplied by messageSupplier.
+     *
+     * @param value           THe string to test.
+     * @param messageSupplier The supplier of the exception message.
+     * @return The supplied string if not empty.
+     */
+    public static String requireNonEmtpyString(final String value, final Supplier<String> messageSupplier) {
+        if (isEmptyString(value)) {
+            throw new IllegalArgumentException(Objects.requireNonNull(messageSupplier).get());
+        }
+        return value;
+    }
+
+    /**
      * Require that both {@code value} is non-null and the result of applying {@code getter} to
      * {@code value} is non-null. Throws an {@link NullPointerException} otherwise.
      *
