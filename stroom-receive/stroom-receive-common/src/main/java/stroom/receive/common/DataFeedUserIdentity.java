@@ -25,7 +25,7 @@ import java.util.Objects;
  */
 public class DataFeedUserIdentity implements UserIdentity {
 
-    public static final String SUBJECT_ID_PREFIX = "data-feed-key-";
+    public static final String SUBJECT_ID_PREFIX = "data-feed-identity-";
 
     private final String subjectId;
     private final String displayName;

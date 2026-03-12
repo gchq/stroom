@@ -168,7 +168,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
         }
 
         if (configState.isEnabled(AuthenticationType.CERTIFICATE_IDENTITY)) {
-            filters.add(certificateAuthenticatorProvider.get());
+            filters.add(certificateIdentityServiceProvider.get());
         }
 
         if (configState.isEnabled(AuthenticationType.TOKEN)) {

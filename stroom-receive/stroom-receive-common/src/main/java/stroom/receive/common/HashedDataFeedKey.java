@@ -70,12 +70,12 @@ public final class HashedDataFeedKey implements DataFeedIdentity {
     @JsonCreator
     public HashedDataFeedKey(@JsonProperty("hash") final String hash,
                              @JsonProperty("salt") final String salt,
-                             @JsonProperty("hashAlgorithmId") final DataFeedKeyHashAlgorithm hashAlgorithm,
+                             @JsonProperty("hashAlgorithm") final DataFeedKeyHashAlgorithm hashAlgorithm,
                              @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,
                              @JsonProperty("expiryDateEpochMs") final long expiryDateEpochMs) {
-        this.hash = hash;
-        this.salt = salt;
-        this.hashAlgorithm = hashAlgorithm;
+        this.hash = NullSafe.requireNonBlankString(hash, () -> "hash must not be blank");
+        this.salt = NullSafe.requireNonBlankString(salt, () -> "salt must not be blank");
+        this.hashAlgorithm = Objects.requireNonNull(hashAlgorithm, "hashAlgorithm must not be null");
         // No point holding blank keys or null values
         this.streamMetaData = NullSafe.map(streamMetaData)
                 .entrySet()

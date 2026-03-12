@@ -32,7 +32,6 @@ import org.junit.jupiter.api.TestFactory;
 import org.mockito.Mockito;
 
 import java.util.EnumSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -79,12 +78,12 @@ class TestRequestAuthenticatorImpl {
         final UserIdentity tokenUser = new TestUserIdentity("1"); // We are mocking so type doesn't matter here
         final UserIdentity certUser = new CertificateUserIdentity(certCn); // Type matters here
 
-        final HashedDataFeedKey hashedDataFeedKey = new HashedDataFeedKey(
-                "my hash",
-                "my salt",
-                DataFeedKeyHashAlgorithm.ARGON2,
-                Map.of(StandardHeaderArguments.ACCOUNT_ID, "MyAccountId"),
-                Long.MAX_VALUE);
+//        final HashedDataFeedKey hashedDataFeedKey = new HashedDataFeedKey(
+//                "my hash",
+//                "my salt",
+//                DataFeedKeyHashAlgorithm.ARGON2,
+//                Map.of(StandardHeaderArguments.ACCOUNT_ID, "MyAccountId"),
+//                Long.MAX_VALUE);
         final UserIdentity dataFeedKeyUser = new DataFeedUserIdentity("MyAccountId");
 
         // Type matters here

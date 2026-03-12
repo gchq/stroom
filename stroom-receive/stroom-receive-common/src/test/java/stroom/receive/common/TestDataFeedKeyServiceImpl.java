@@ -55,7 +55,6 @@ class TestDataFeedKeyServiceImpl {
     @Mock
     private HttpServletRequest mockHttpServletRequest;
 
-
     @Test
     void authenticate_noKey() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(

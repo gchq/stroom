@@ -78,8 +78,9 @@ public class CertificateIdentityServiceImpl
         final CIKey keyOwnerMetaKey = getOwnerMetaKey(receiveDataConfigProvider.get());
         final boolean isValid = isValidCertificateIdentity(cachedIdentity, keyOwnerMetaKey);
         if (isValid) {
-            final String certificateDn = cachedIdentity.certificateIdentity.getCertificateDn();
-            final CacheKey cacheKey = new CacheKey(keyOwnerMetaKey, certificateDn);
+            final String certificateDn = certificateIdentity.getCertificateDn();
+            final String owner = certificateIdentity.getStreamMetaValue(keyOwnerMetaKey);
+            final CacheKey cacheKey = new CacheKey(CIKey.ofDynamicKey(owner), certificateDn);
             final boolean success = identityMap.computeIfAbsent(
                             cacheKey,
                             ignored -> ConcurrentHashMap.newKeySet())
@@ -170,9 +171,12 @@ public class CertificateIdentityServiceImpl
             final String keyOwnerFromHeaders = attributeMap.get(keyOwnerMetaKey.get());
             if (NullSafe.isNonBlankString(keyOwnerFromHeaders)) {
                 final Optional<UserIdentity> optUserIdentity = certificateExtractor.getDN(request)
-                        .flatMap(dn -> {
+                        .map(dn -> {
                             final CacheKey cacheKey = new CacheKey(CIKey.ofDynamicKey(keyOwnerFromHeaders), dn);
-                            final Set<CachedIdentity> identities = identityMap.get(cacheKey);
+                            return identityMap.get(cacheKey);
+                        })
+                        .filter(NullSafe::hasItems)
+                        .flatMap(identities -> {
                             final long nowMs = System.currentTimeMillis();
                             return identities.stream()
                                     .filter(identity ->
@@ -185,10 +189,10 @@ public class CertificateIdentityServiceImpl
                             // Don't need to check the keyOwner against keyOwnerFromHeaders as
                             // we built the map, so the key will match the value
                             final String keyOwner = streamMetaData.get(keyOwnerMetaKey);
-                            Objects.requireNonNull(keyOwner);
                             attributeMap.putAll(cachedIdentity.certificateIdentity.getStreamMetaData());
-                            return new DataFeedUserIdentity(keyOwner);
-                        });
+                            return keyOwner;
+                        })
+                        .map(DataFeedUserIdentity::new);
                 LOGGER.debug("Returning optUserIdentity: {}", optUserIdentity);
                 return optUserIdentity;
             } else {
