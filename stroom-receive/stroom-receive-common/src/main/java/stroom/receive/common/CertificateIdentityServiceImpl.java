@@ -155,7 +155,8 @@ public class CertificateIdentityServiceImpl
 
     public synchronized void evictExpired() {
         LOGGER.debug("Evicting expired certificate identities");
-        final CountingPredicate<CachedIdentity> isExpiredPredicate = PredicateUtil.countingPredicate(CachedIdentity::isExpired);
+        final CountingPredicate<CachedIdentity> isExpiredPredicate = PredicateUtil.countingPredicate(
+                CachedIdentity::isExpired);
         identityMap.forEach((dn, identitySet) ->
                 identitySet.removeIf(isExpiredPredicate));
         if (isExpiredPredicate.intValue() > 0) {
