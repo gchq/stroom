@@ -34,8 +34,5 @@ public interface DataFeedKeyService extends AuthenticatorFilter {
     IdentityStatus addDataFeedKey(HashedDataFeedKey hashedDataFeedKey,
                                   Path sourceFile);
 
-//    int addDataFeedKeys(HashedDataFeedKeys hashedDataFeedKeys,
-//                        Path sourceFile);
-
     void removeKeysForFile(Path sourceFile);
 }

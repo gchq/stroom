@@ -41,7 +41,7 @@ public class RemoteFeedModule extends AbstractModule {
 //                .bind(RemoteFeedServiceRPC.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
-                .addBinding(DataFeedIdneitiesDirWatcher.class)
+                .addBinding(DataFeedIdentitiesDirWatcher.class)
                 .addBinding(CertificateIdentityServiceImpl.class)
                 .addBinding(DataFeedKeyServiceImpl.class);
 

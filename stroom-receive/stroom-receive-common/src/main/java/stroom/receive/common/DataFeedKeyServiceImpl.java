@@ -23,6 +23,7 @@ import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.DataFeedIdentity.IdentityStatus;
 import stroom.security.api.UserIdentity;
 import stroom.util.PredicateUtil;
+import stroom.util.PredicateUtil.CountingPredicate;
 import stroom.util.collections.CollectionUtil;
 import stroom.util.collections.CollectionUtil.DuplicateMode;
 import stroom.util.logging.LambdaLogger;
@@ -55,7 +56,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.LongAdder;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -259,66 +260,53 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
 
     public synchronized void evictExpired() {
         LOGGER.debug("Evicting expired dataFeedKeys");
-        final LongAdder counter = new LongAdder();
-        final Predicate<CachedHashedDataFeedKey> isExpiredPredicate = PredicateUtil.countingPredicate(
-                counter,
+        final CountingPredicate<CachedHashedDataFeedKey> isExpiredPredicate = PredicateUtil.countingPredicate(
                 CachedHashedDataFeedKey::isExpired);
 
-        counter.reset();
         keyOwnerToDataFeedKeyMap.forEach((keyOwner, cachedHashedDataFeedKeys) ->
                 cachedHashedDataFeedKeys.removeIf(isExpiredPredicate));
-        LOGGER.debug("Removed {} cachedHashedDataFeedKey items from keyOwnerToDataFeedKeyMap", counter);
-        if (counter.longValue() > 0) {
-            LOGGER.info("Evicted {} expired data feed keys", counter);
+        LOGGER.debug("Removed {} cachedHashedDataFeedKey items from keyOwnerToDataFeedKeyMap", isExpiredPredicate);
+        if (isExpiredPredicate.intValue() > 0) {
+            LOGGER.info("Evicted {} expired data feed keys", isExpiredPredicate);
         }
-//
-//        counter.set(0);
 
         // In all likelihood, there will only be one item in the list per un-hashed key
         // so just invalidate the whole entry
-        unHashedKeyToDataFeedKeyCache.invalidateEntries(PredicateUtil.countingBiPredicate(
-                counter,
-                (unHashedKey, hashedKeys) ->
-                        hashedKeys.stream()
-                                .anyMatch(CachedHashedDataFeedKey::isExpired)));
+        final BiPredicate<UnHashedCacheKey, Set<CachedHashedDataFeedKey>> isExpiredBiPredicate =
+                PredicateUtil.countingBiPredicate(
+                        (UnHashedCacheKey ignored, Set<CachedHashedDataFeedKey> hashedKeys) ->
+                                hashedKeys.stream()
+                                        .anyMatch(CachedHashedDataFeedKey::isExpired));
+        unHashedKeyToDataFeedKeyCache.invalidateEntries(isExpiredBiPredicate);
 
-        LOGGER.debug("Removed {} unHashedKeyToDataFeedKeyCache entries", counter);
+        LOGGER.debug("Removed {} unHashedKeyToDataFeedKeyCache entries", isExpiredBiPredicate);
     }
 
     @Override
     public synchronized void removeKeysForFile(final Path sourceFile) {
         if (sourceFile != null) {
             LOGGER.info("Evicting dataFeedKeys for sourceFile {}", sourceFile);
-            final LongAdder counter = new LongAdder();
-            final Predicate<CachedHashedDataFeedKey> sourceFilePredicate = PredicateUtil.countingPredicate(
-                    counter, cachedKey ->
-                            Objects.equals(sourceFile, cachedKey.getSourceFile()));
 
             // In all likelihood, there will only be one item in the list per un-hashed key
             // so just invalidate the whole entry
-            unHashedKeyToDataFeedKeyCache.invalidateEntries(PredicateUtil.countingBiPredicate(
-                    counter,
-                    (unHashedKey, dataFeedKeys) ->
-                            dataFeedKeys.stream()
-                                    .anyMatch(cachedHashedDataFeedKey ->
-                                            Objects.equals(sourceFile, cachedHashedDataFeedKey.getSourceFile()))));
-            LOGGER.debug("Removed {} unHashedKeyToDataFeedKeyCache entries", counter);
-//            counter.set(0);
-//            cacheKeyToDataFeedKeyMap.entrySet().removeIf(
-//                    entry -> {
-//                        final List<CachedHashedDataFeedKey> hashedKeys = entry.getValue();
-//                        hashedKeys.removeIf(sourceFilePredicate);
-//                        // If we have removed the last one then remove the whole entry
-//                        return hashedKeys.isEmpty();
-//                    });
-//            LOGGER.debug("Removed {} CachedHashedDataFeedKeys from cacheKeyToDataFeedKeyMap", counter);
-//            LOGGER.info("Evicted {} dataFeedKeys for sourceFile {}", counter, sourceFile);
-            counter.reset();
+            final BiPredicate<UnHashedCacheKey, Set<CachedHashedDataFeedKey>> countingBiPredicate =
+                    PredicateUtil.countingBiPredicate(
+                            (UnHashedCacheKey ignored, Set<CachedHashedDataFeedKey> dataFeedKeys) ->
+                                    dataFeedKeys.stream()
+                                            .anyMatch(cachedHashedDataFeedKey ->
+                                                    Objects.equals(sourceFile,
+                                                            cachedHashedDataFeedKey.getSourceFile())));
+            unHashedKeyToDataFeedKeyCache.invalidateEntries(countingBiPredicate);
+            LOGGER.debug("Removed {} unHashedKeyToDataFeedKeyCache entries", countingBiPredicate);
+
+            final CountingPredicate<CachedHashedDataFeedKey> sourceFilePredicate = PredicateUtil.countingPredicate(
+                    cachedKey ->
+                            Objects.equals(sourceFile, cachedKey.getSourceFile()));
             keyOwnerToDataFeedKeyMap.forEach((keyOwner, cachedHashedDataFeedKeys) -> {
                 cachedHashedDataFeedKeys.removeIf(sourceFilePredicate);
             });
-            LOGGER.debug("Removed {} subjectIdToDataFeedKeyMap entries", counter);
-            LOGGER.info("Evicted {} dataFeedKeys for sourceFile {}", counter, sourceFile);
+            LOGGER.debug("Removed {} subjectIdToDataFeedKeyMap entries", countingBiPredicate);
+            LOGGER.info("Evicted {} dataFeedKeys for sourceFile {}", countingBiPredicate, sourceFile);
         }
         LOGGER.debug(() -> LogUtil.message("Total cached keys: {}", keyOwnerToDataFeedKeyMap.values()
                 .stream()

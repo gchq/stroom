@@ -22,6 +22,7 @@ import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.DataFeedIdentity.IdentityStatus;
 import stroom.security.api.UserIdentity;
 import stroom.util.PredicateUtil;
+import stroom.util.PredicateUtil.CountingPredicate;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
@@ -42,13 +43,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Predicate;
 
 @Singleton
@@ -124,19 +125,18 @@ public class CertificateIdentityServiceImpl
         Objects.requireNonNull(sourceFile);
 
         LOGGER.info("Evicting certificate identities for sourceFile {}", sourceFile);
-        final LongAdder counter = new LongAdder();
-        final Predicate<CachedIdentity> sourceFilePredicate = PredicateUtil.countingPredicate(
-                counter, cachedKey ->
+        final CountingPredicate<CachedIdentity> sourceFilePredicate = PredicateUtil.countingPredicate(
+                cachedKey ->
                         Objects.equals(sourceFile, cachedKey.sourceFile()));
 
         identityMap.forEach((dn, identitySet) ->
                 identitySet.removeIf(sourceFilePredicate));
 
-        if (counter.intValue() > 0) {
+        if (sourceFilePredicate.intValue() > 0) {
             removeEmptyEntries();
         }
 
-        LOGGER.debug("Removed {} identityMap sub-entries", counter);
+        LOGGER.debug("Removed {} identityMap sub-entries", sourceFilePredicate);
         LOGGER.debug(() -> LogUtil.message("Total cached keys: {}", identityMap.values()
                 .stream()
                 .mapToInt(Set::size)
@@ -145,27 +145,29 @@ public class CertificateIdentityServiceImpl
 
     private void removeEmptyEntries() {
         // Remove entries with empty sub-sets
-        identityMap.entrySet().removeIf(entry ->
-                entry.getValue().isEmpty());
+        final Predicate<Entry<CacheKey, Set<CachedIdentity>>> isEmptyPredicate = PredicateUtil.countingPredicate(
+                entry ->
+                        NullSafe.isEmptyCollection(entry.getValue()));
+
+        identityMap.entrySet().removeIf(isEmptyPredicate);
+        LOGGER.debug("removeEmptyEntries() - Removed: {}", isEmptyPredicate);
     }
 
     public synchronized void evictExpired() {
         LOGGER.debug("Evicting expired certificate identities");
-        final LongAdder counter = new LongAdder();
-        final Predicate<CachedIdentity> isExpiredPredicate = PredicateUtil.countingPredicate(
-                counter,
-                CachedIdentity::isExpired);
+        final CountingPredicate<CachedIdentity> isExpiredPredicate = PredicateUtil.countingPredicate(CachedIdentity::isExpired);
         identityMap.forEach((dn, identitySet) ->
                 identitySet.removeIf(isExpiredPredicate));
-        if (counter.intValue() > 0) {
+        if (isExpiredPredicate.intValue() > 0) {
             removeEmptyEntries();
         }
-        LOGGER.debug("Removed {} expired identities", counter);
+        LOGGER.debug("Removed {} expired identities", isExpiredPredicate);
     }
 
     @Override
     public Optional<UserIdentity> authenticate(final HttpServletRequest request,
                                                final AttributeMap attributeMap) {
+        LOGGER.debug("authenticate() - request: {}, attributeMap: {}", request, attributeMap);
         try {
             final CIKey keyOwnerMetaKey = getOwnerMetaKey(receiveDataConfigProvider.get());
             final String keyOwnerFromHeaders = attributeMap.get(keyOwnerMetaKey.get());
@@ -193,7 +195,7 @@ public class CertificateIdentityServiceImpl
                             return keyOwner;
                         })
                         .map(DataFeedUserIdentity::new);
-                LOGGER.debug("Returning optUserIdentity: {}", optUserIdentity);
+                LOGGER.debug("authenticate() - Returning optUserIdentity: {}", optUserIdentity);
                 return optUserIdentity;
             } else {
                 LOGGER.debug("authenticate() - Blank keyOwnerFromHeaders");
