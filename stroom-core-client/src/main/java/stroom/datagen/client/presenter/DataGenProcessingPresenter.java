@@ -20,14 +20,14 @@ import stroom.analytics.client.presenter.ScheduledProcessingPresenter;
 import stroom.datagen.client.presenter.DataGenProcessingPresenter.DataGenProcessingView;
 import stroom.datagen.shared.DataGenDoc;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
 public class DataGenProcessingPresenter
-        extends DocumentEditPresenter<DataGenProcessingView, DataGenDoc> {
+        extends DocPresenter<DataGenProcessingView, DataGenDoc> {
 
     private final ScheduledProcessingPresenter scheduledProcessingPresenter;
 
@@ -40,7 +40,7 @@ public class DataGenProcessingPresenter
         view.setProcessSettings(scheduledProcessingPresenter.getView());
     }
 
-    public void setDocumentEditPresenter(final DocumentEditPresenter<?, ?> documentEditPresenter) {
+    public void setDocumentEditPresenter(final DocPresenter<?, ?> documentEditPresenter) {
         scheduledProcessingPresenter.setDocumentEditPresenter(documentEditPresenter);
     }
 

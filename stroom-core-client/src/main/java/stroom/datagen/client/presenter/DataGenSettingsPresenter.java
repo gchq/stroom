@@ -21,7 +21,7 @@ import stroom.datagen.shared.DataGenDoc;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
 import stroom.security.shared.DocumentPermission;
@@ -35,7 +35,7 @@ import com.gwtplatform.mvp.client.View;
 import javax.inject.Provider;
 
 public class DataGenSettingsPresenter
-        extends DocumentEditPresenter<DataGenSettingsView, DataGenDoc>
+        extends DocPresenter<DataGenSettingsView, DataGenDoc>
         implements DirtyUiHandlers {
 
     final DocSelectionBoxPresenter destinationFeedPresenter;

@@ -52,7 +52,6 @@ public class ReportNotificationPresenter
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .errorFeed(errorFeedPresenter.getSelectedEntityReference())
-                .includeRuleDocumentation(getView().isIncludeRuleDocumentation())
                 .build();
     }
 }

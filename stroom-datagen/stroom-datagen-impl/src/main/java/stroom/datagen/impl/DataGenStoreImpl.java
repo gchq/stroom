@@ -20,7 +20,6 @@ import stroom.datagen.shared.DataGenDoc;
 import stroom.datagen.shared.DataGenDoc.Builder;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
@@ -48,8 +47,6 @@ class DataGenStoreImpl implements DataGenStore {
 
     private final Store<DataGenDoc> store;
     private final SecurityContext securityContext;
-    private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
-    private final SearchRequestFactory searchRequestFactory;
     private final Provider<DataGenProcessors> dataGenProcessorsProvider;
 
     @Inject
@@ -59,10 +56,12 @@ class DataGenStoreImpl implements DataGenStore {
                      final Provider<DataGenProcessors> dataGenProcessorsProvider,
                      final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                      final SearchRequestFactory searchRequestFactory) {
-        this.store = storeFactory.createStore(serialiser, DataGenDoc.TYPE, DataGenDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                DataGenDoc.TYPE,
+                DataGenDoc::builder,
+                DataGenDoc::copy);
         this.securityContext = securityContext;
-        this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
-        this.searchRequestFactory = searchRequestFactory;
         this.dataGenProcessorsProvider = dataGenProcessorsProvider;
     }
 
@@ -198,10 +197,7 @@ class DataGenStoreImpl implements DataGenStore {
     public Map<String, byte[]> exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

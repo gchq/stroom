@@ -16,6 +16,7 @@
 
 package stroom.analytics.shared;
 
+import stroom.analytics.shared.AnalyticRuleDoc.Builder;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.DocumentType;
@@ -55,7 +56,6 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                      @JsonProperty("createUser") final String createUser,
                      @JsonProperty("updateUser") final String updateUser,
                      @JsonProperty("description") final String description,
-                     @JsonProperty("includeRuleDocumentation") final Boolean includeRuleDocumentation,
                      @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
                      @JsonProperty("parameters") final List<Param> parameters,
                      @JsonProperty("timeRange") final TimeRange timeRange,
@@ -79,7 +79,6 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                 createUser,
                 updateUser,
                 description,
-                includeRuleDocumentation,
                 languageVersion,
                 parameters,
                 timeRange,
@@ -164,6 +163,16 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
             return self();
         }
 
+        public Builder level(final String level) {
+            this.level = level;
+            return self();
+        }
+
+        public Builder status(final String status) {
+            this.status = status;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -180,7 +189,6 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                     createUser,
                     updateUser,
                     description,
-                    includeRuleDocumentation,
                     languageVersion,
                     parameters,
                     timeRange,

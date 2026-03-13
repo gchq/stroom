@@ -41,8 +41,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     @JsonProperty
     private final String description;
     @JsonProperty
-    private final boolean includeRuleDocumentation;
-    @JsonProperty
     private final QueryLanguageVersion languageVersion;
     @JsonProperty
     private final List<Param> parameters;
@@ -73,7 +71,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     /**
      * A rule's level denotes its severity.
      * A high level rule detection should be prioritised over a low level rule detection.
-    **/
+     **/
     @JsonProperty
     private final String level;
 
@@ -90,8 +88,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     @JsonProperty
     private final String status;
 
-    static final boolean INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE = true;
-
     @JsonCreator
     @SuppressWarnings("checkstyle:linelength")
     public AbstractAnalyticRuleDoc(@JsonProperty("type") final String type,
@@ -103,7 +99,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                                    @JsonProperty("createUser") final String createUser,
                                    @JsonProperty("updateUser") final String updateUser,
                                    @JsonProperty("description") final String description,
-                                   @JsonProperty("includeRuleDocumentation") final Boolean includeRuleDocumentation,
                                    @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
                                    @JsonProperty("parameters") final List<Param> parameters,
                                    @JsonProperty("timeRange") final TimeRange timeRange,
@@ -120,7 +115,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                                    @JsonProperty("status") final String status) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = NullSafe.string(description);
-        this.includeRuleDocumentation = includeRuleDocumentation;
         this.languageVersion = NullSafe.requireNonNullElse(languageVersion, QueryLanguageVersion.STROOM_QL_VERSION_0_1);
         this.parameters = parameters;
         this.timeRange = NullSafe.requireNonNullElse(timeRange, TimeRanges.ALL_TIME);
@@ -144,21 +138,13 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                         suppressDuplicateNotifications,
                         false,
                         Collections.emptyList()));
+
         this.level = level;
         this.status = status;
     }
 
     public String getDescription() {
         return description;
-    }
-
-    /**
-     * The includeRuleDocumentation field determines whether a rule's documentation will be included in
-     * any detections that it produces.
-     * @return boolean value of includeRuleDocumentation
-     */
-    public boolean isIncludeRuleDocumentation() {
-        return includeRuleDocumentation;
     }
 
     public QueryLanguageVersion getLanguageVersion() {
@@ -193,6 +179,14 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
         return errorFeed;
     }
 
+    public String getLevel() {
+        return level;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
     @Deprecated
     public boolean isRememberNotifications() {
         return rememberNotifications;
@@ -205,14 +199,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
     public DuplicateNotificationConfig getDuplicateNotificationConfig() {
         return duplicateNotificationConfig;
-    }
-
-    public String getLevel() {
-        return level;
-    }
-
-    public String getStatus() {
-        return status;
     }
 
     @Override
@@ -263,7 +249,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     public String toString() {
         return "AbstractAnalyticRuleDoc{" +
                "description='" + description + '\'' +
-               ", includeRuleDocumentation=" + includeRuleDocumentation +
                ", languageVersion=" + languageVersion +
                ", parameters=" + parameters +
                ", timeRange=" + timeRange +
@@ -276,8 +261,8 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                ", rememberNotifications=" + rememberNotifications +
                ", suppressDuplicateNotifications=" + suppressDuplicateNotifications +
                ", duplicateNotificationConfig=" + duplicateNotificationConfig +
-               ", level='" + level + '\'' +
-               ", status='" + status + '\'' +
+               ", level=" + level +
+               ", status=" + status +
                '}';
     }
 
@@ -286,7 +271,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
             extends AbstractBuilder<T, B> {
 
         String description;
-        boolean includeRuleDocumentation = INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE;
         QueryLanguageVersion languageVersion;
         List<Param> parameters;
         TimeRange timeRange;
@@ -296,6 +280,7 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
         List<NotificationConfig> notifications;
         DocRef errorFeed;
         DuplicateNotificationConfig duplicateNotificationConfig;
+
         String level;
         String status;
 
@@ -307,7 +292,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
         public AbstractAnalyticRuleDocBuilder(final AbstractAnalyticRuleDoc doc) {
             super(doc);
             this.description = doc.description;
-            this.includeRuleDocumentation = doc.includeRuleDocumentation;
             this.languageVersion = doc.languageVersion;
             this.parameters = doc.parameters;
             this.timeRange = doc.timeRange;
@@ -368,11 +352,6 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
         public B duplicateNotificationConfig(final DuplicateNotificationConfig duplicateNotificationConfig) {
             this.duplicateNotificationConfig = duplicateNotificationConfig;
-            return self();
-        }
-
-        public B includeRuleDocumentation(final boolean includeRuleDocumentation) {
-            this.includeRuleDocumentation = includeRuleDocumentation;
             return self();
         }
 

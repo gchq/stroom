@@ -18,8 +18,8 @@ package stroom.datagen.client.presenter;
 
 import stroom.datagen.shared.DataGenDoc;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -33,7 +33,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import javax.inject.Provider;
 
 public class DataGenPresenter
-        extends DocumentEditTabPresenter<LinkTabPanelView, DataGenDoc> {
+        extends DocTabPresenter<LinkTabPanelView, DataGenDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData EXECUTION = new TabDataImpl("Execution");
@@ -52,8 +52,8 @@ public class DataGenPresenter
         final DataGenProcessingPresenter dataGenProcessingPresenter = dataGenProcessingPresenterProvider.get();
         dataGenProcessingPresenter.setDocumentEditPresenter(this);
 
-        addTab(SETTINGS, new DocumentEditTabProvider<>(dataGenSettingsPresenterProvider::get));
-        addTab(EXECUTION, new DocumentEditTabProvider<>(() -> dataGenProcessingPresenter));
+        addTab(SETTINGS, new DocTabProvider<>(dataGenSettingsPresenterProvider::get));
+        addTab(EXECUTION, new DocTabProvider<>(() -> dataGenProcessingPresenter));
         addTab(DOCUMENTATION, new MarkdownTabProvider<DataGenDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
