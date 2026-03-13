@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11.4] - 2026-03-13
+
+* Feature **#5455** : Add DictionaryAppender to pipelines as an optional pipeline destination.
+
+* Bug **#5449** : Change the asynchronous behaviour in the data feed keys directory watcher.
+
+
 ## [v7.11.3] - 2026-03-12
 
 * Bug **#5449** : Fix concurrency and exception handling Data Feed Key dir watcher (AbstractDirChangeMonitor).
@@ -2054,7 +2061,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.3...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.4...HEAD
+[v7.11.4]: https://github.com/gchq/stroom/compare/v7.11.3...v7.11.4
 [v7.11.3]: https://github.com/gchq/stroom/compare/v7.11.2...v7.11.3
 [v7.11.2]: https://github.com/gchq/stroom/compare/v7.11.1...v7.11.2
 [v7.11.1]: https://github.com/gchq/stroom/compare/v7.11.0...v7.11.1
