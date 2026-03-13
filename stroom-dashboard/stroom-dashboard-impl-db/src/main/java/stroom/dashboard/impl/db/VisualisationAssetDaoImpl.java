@@ -5,6 +5,7 @@ import stroom.dashboard.impl.visualisation.VisualisationAssetDao;
 import stroom.db.util.JooqUtil;
 import stroom.importexport.api.ByteArrayImportExportAsset;
 import stroom.importexport.api.ImportExportAsset;
+import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.visualisation.shared.VisualisationAsset;
@@ -32,9 +33,7 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.time.Instant;
@@ -1129,9 +1128,9 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
                             final long epochMillis = resultSet.getLong(1);
                             dbTimestamp[0] = Instant.ofEpochMilli(epochMillis);
                             try (final InputStream dataStream = resultSet.getBinaryStream(2)) {
-                                saveDataSafely(tempFilePrefix,
+                                FileUtil.saveDataSafely(cachedPath,
+                                        tempFilePrefix,
                                         tempFileSuffix,
-                                        cachedPath,
                                         dataStream);
                             }
                         } // else no result - either doesn't exist or cache is valid
@@ -1226,39 +1225,7 @@ public class VisualisationAssetDaoImpl implements VisualisationAssetDao {
         }
     }
 
-    /**
-     * Performs a safe write to file, so if the system crashes half-way through writing
-     * we don't have a corrupted version of the file.
-     * @param tempFilePrefix The prefix for the temporary file we'll create.
-     *                       Needed so temporary files can be cleaned up if necessary.
-     * @param tempFileSuffix The suffix for the temporary file we'll create.
-     *                       Needed so temporary files can be cleaned up if necessary.
-     * @param filePath The path to the file we want to create.
-     * @param dataStream The data to write to the file. Might be null.
-     * @throws IOException If something goes wrong.
-     */
-    private void saveDataSafely(final String tempFilePrefix,
-                                final String tempFileSuffix,
-                                final Path filePath,
-                                final InputStream dataStream) throws IOException {
-
-        final Path fileDir = filePath.getParent();
-        Files.createDirectories(fileDir);
-        final Path tempFilePath = Files.createTempFile(fileDir,
-                tempFilePrefix,
-                tempFileSuffix);
-
-        if (dataStream != null) {
-            Files.copy(dataStream, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
-        }
-
-        Files.move(tempFilePath,
-                filePath,
-                StandardCopyOption.REPLACE_EXISTING,
-                StandardCopyOption.ATOMIC_MOVE);
-    }
-
-    /**
+        /**
      * Goes through the draft assets and removes any duplicate assets.
      * For example, given the assets "/folder/", "/folder/subfolder/",
      * "/folder/subfolder/file.ext" we only want "/folder/subfolder/file.ext".
