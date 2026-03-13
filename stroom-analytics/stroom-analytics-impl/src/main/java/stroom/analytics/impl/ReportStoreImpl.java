@@ -19,6 +19,7 @@ package stroom.analytics.impl;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleRequest;
+import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.ReportDoc.Builder;
 import stroom.docref.DocRef;
@@ -42,6 +43,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -269,6 +271,20 @@ class ReportStoreImpl implements ReportStore {
 
     @Override
     public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
+        if (docRef != null) {
+            final ExecutionScheduleRequest request = ExecutionScheduleRequest.builder()
+                    .ownerDocRef(docRef)
+                    .build();
+            final ResultPage<ExecutionSchedule> resultPage =
+                    executionScheduleResourceProvider.get().fetchExecutionSchedule(request);
+
+            final Set<DocRef> docRefs = new HashSet<>();
+            resultPage.getValues().forEach(schedule -> {
+                docRefs.add(new DocRef(ExecutionSchedule.ENTITY_TYPE,
+                        String.valueOf(schedule.getId()), schedule.getName()));
+            });
+            return docRefs;
+        }
         return null;
     }
 

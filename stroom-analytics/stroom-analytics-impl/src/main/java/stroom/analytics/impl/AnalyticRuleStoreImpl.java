@@ -43,6 +43,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -286,6 +287,20 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     @Override
     public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
+        if (docRef != null) {
+            final ExecutionScheduleRequest request = ExecutionScheduleRequest.builder()
+                    .ownerDocRef(docRef)
+                    .build();
+            final ResultPage<ExecutionSchedule> resultPage =
+                    executionScheduleDaoProvider.get().fetchExecutionSchedule(request);
+
+            final Set<DocRef> docRefs = new HashSet<>();
+            resultPage.getValues().forEach(schedule -> {
+                docRefs.add(new DocRef(ExecutionSchedule.ENTITY_TYPE,
+                        String.valueOf(schedule.getId()), schedule.getName()));
+            });
+            return docRefs;
+        }
         return null;
     }
 
