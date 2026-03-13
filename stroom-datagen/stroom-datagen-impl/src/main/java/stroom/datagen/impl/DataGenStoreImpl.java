@@ -25,8 +25,6 @@ import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
-import stroom.query.common.v2.DataSourceProviderRegistry;
-import stroom.query.language.SearchRequestFactory;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -53,9 +51,7 @@ class DataGenStoreImpl implements DataGenStore {
     DataGenStoreImpl(final StoreFactory storeFactory,
                      final DataGenSerialiser serialiser,
                      final SecurityContext securityContext,
-                     final Provider<DataGenProcessors> dataGenProcessorsProvider,
-                     final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
-                     final SearchRequestFactory searchRequestFactory) {
+                     final Provider<DataGenProcessors> dataGenProcessorsProvider) {
         this.store = storeFactory.createStore(
                 serialiser,
                 DataGenDoc.TYPE,
@@ -64,11 +60,6 @@ class DataGenStoreImpl implements DataGenStore {
         this.securityContext = securityContext;
         this.dataGenProcessorsProvider = dataGenProcessorsProvider;
     }
-
-    ////////////////////////////////////////////////////////////////////////
-    // START OF ExplorerActionHandler
-
-    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public DocRef createDocument(final String name) {
@@ -127,15 +118,6 @@ class DataGenStoreImpl implements DataGenStore {
         return store.info(docRef);
     }
 
-    ////////////////////////////////////////////////////////////////////////
-    // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////////////////////
-    // START OF HasDependencies
-
-    /// /////////////////////////////////////////////////////////////////////
-
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
         return store.getDependencies(null);
@@ -152,15 +134,6 @@ class DataGenStoreImpl implements DataGenStore {
         store.remapDependencies(docRef, remappings, null);
     }
 
-    ////////////////////////////////////////////////////////////////////////
-    // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////////////////////
-    // START OF DocumentActionHandler
-
-    /// /////////////////////////////////////////////////////////////////////
-
     @Override
     public DataGenDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
@@ -170,15 +143,6 @@ class DataGenStoreImpl implements DataGenStore {
     public DataGenDoc writeDocument(final DataGenDoc document) {
         return store.writeDocument(document);
     }
-
-    ////////////////////////////////////////////////////////////////////////
-    // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
-
-    ////////////////////////////////////////////////////////////////////////
-    // START OF ImportExportActionHandler
-
-    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -209,11 +173,6 @@ class DataGenStoreImpl implements DataGenStore {
     public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
         return null;
     }
-
-    ////////////////////////////////////////////////////////////////////////
-    // END OF ImportExportActionHandler
-
-    /// /////////////////////////////////////////////////////////////////////
 
     @Override
     public List<DocRef> list() {

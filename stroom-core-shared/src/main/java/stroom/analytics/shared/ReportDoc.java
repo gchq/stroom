@@ -16,7 +16,6 @@
 
 package stroom.analytics.shared;
 
-import stroom.analytics.shared.AnalyticRuleDoc.Builder;
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.DocumentType;
