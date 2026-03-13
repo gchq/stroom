@@ -826,9 +826,10 @@ public class NullSafe {
         } else if (list.stream().allMatch(Objects::nonNull)) {
             return Collections.unmodifiableList(list);
         } else {
+            //noinspection SimplifyStreamApiCallChains // cos GWT
             return list.stream()
                     .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toUnmodifiableList());
         }
     }
 
