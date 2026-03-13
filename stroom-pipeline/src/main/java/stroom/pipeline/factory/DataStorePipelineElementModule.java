@@ -22,5 +22,6 @@ public class DataStorePipelineElementModule extends PipelineElementModule {
         bindElement(stroom.pipeline.writer.HDFSFileAppender.class);
         bindElement(stroom.pipeline.writer.RollingStreamAppender.class);
         bindElement(stroom.pipeline.writer.StreamAppender.class);
+        bindElement(stroom.pipeline.writer.DictionaryAppender.class);
     }
 }
