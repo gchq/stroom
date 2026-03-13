@@ -22,6 +22,9 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.CIKey;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -39,14 +42,21 @@ import java.util.Map;
         @JsonSubTypes.Type(value = HashedDataFeedKey.class, name = "DATA_FEED_KEY"),
         @JsonSubTypes.Type(value = CertificateIdentity.class, name = "CERTIFICATE_DN")
 })
+@JsonInclude(Include.NON_NULL)
+@JsonPropertyOrder(alphabetic = true)
 public sealed interface DataFeedIdentity
         permits CertificateIdentity, HashedDataFeedKey {
 
-    /**
-     * @return The meta attributes associated with this identity.
-     * These trump any headers.
-     */
-    Map<String, String> getStreamMetaData();
+    //    /**
+//     * @return The meta attributes associated with this identity.
+//     * These trump any headers.
+//     */
+//    @JsonProperty("streamMetaData")
+//    default Map<String, String> getStreamMetaData() {
+//        return Collections.unmodifiableMap(CIKey.convertToStringMap(getCIStreamMetaData()));
+//    };
+//    @JsonProperty("streamMetaData")
+//    Map<String, String> getStreamMetaData();
 
     /**
      * @return The meta attributes associated with this identity.
@@ -74,7 +84,10 @@ public sealed interface DataFeedIdentity
      */
     @JsonIgnore
     default AttributeMap getAttributeMap() {
-        return new AttributeMap(getStreamMetaData());
+        final AttributeMap attributeMap = new AttributeMap();
+        getCIStreamMetaData().forEach((key, value) ->
+                attributeMap.put(key.get(), value));
+        return attributeMap;
     }
 
     /**

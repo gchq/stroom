@@ -78,10 +78,6 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
             Comparator.comparingLong(CachedHashedDataFeedKey::getExpiryDateEpochMs)
                     .reversed();
 
-    // Holds ALL the keys read from the data feed key files, entries are evicted when
-    // the DataFeedKey has passed its expiry date. List<CachedHashedDataFeedKey> to
-    // allow for hash clashes
-//    private final Map<CacheKey, List<CachedHashedDataFeedKey>> cacheKeyToDataFeedKeyMap = new ConcurrentHashMap<>();
     // The owner will likely have >1 CachedHashedDataFeedKey due to the overlap of keys when
     // new keys are being supplied, but not many. Use CIKey so we are not fussy on case.
     private final Map<CIKey, Set<CachedHashedDataFeedKey>> keyOwnerToDataFeedKeyMap = new ConcurrentHashMap<>();
@@ -143,25 +139,6 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
         return optDataFeedKey;
     }
 
-//    @Override
-//    public Optional<HashedDataFeedKey> getLatestDataFeedKey(final String accountId) {
-//        if (accountId == null) {
-//            return Optional.empty();
-//        } else {
-//            return Optional.ofNullable(accountIdToDataFeedKeyMap.get(accountId))
-//                    .flatMap(cachedKeys -> cachedKeys.stream()
-//                            .max(Comparator.comparing(CachedHashedDataFeedKey::getExpiryDate)))
-//                    .map(CachedHashedDataFeedKey::getDataFeedKey);
-//        }
-//    }
-
-//    @Override
-//    public Optional<HashedDataFeedKey> getDataFeedKey(final String subjectId) {
-//        return Optional.ofNullable(subjectIdToDataFeedKeyMap.get(subjectId))
-//                .map(CachedHashedDataFeedKey::getDataFeedKey);
-//    }
-
-
     @Override
     public synchronized IdentityStatus addDataFeedKey(final HashedDataFeedKey hashedDataFeedKey,
                                                       final Path sourceFile) {
@@ -186,44 +163,6 @@ public class DataFeedKeyServiceImpl implements DataFeedKeyService, Authenticator
                 identityStatus);
         return identityStatus;
     }
-
-//    @Override
-//    public synchronized int addDataFeedKeys(final HashedDataFeedKeys hashedDataFeedKeys,
-//                                            final Path sourceFile) {
-//        final AtomicInteger addedCount = new AtomicInteger();
-//        if (NullSafe.hasItems(hashedDataFeedKeys.getDataFeedKeys())) {
-//            LOGGER.debug(() -> LogUtil.message("Adding {} dataFeedKeys",
-//                    hashedDataFeedKeys.getDataFeedKeys().size()));
-//
-//            final AtomicInteger invalidCount = new AtomicInteger();
-//            final AtomicInteger dupCount = new AtomicInteger();
-//            final CIKey keyOwnerMetaKey = getOwnerMetaKey(receiveDataConfigProvider.get());
-//
-//            hashedDataFeedKeys.getDataFeedKeys()
-//                    .stream()
-//                    .filter(Objects::nonNull)
-//                    .map(dataFeedKey ->
-//                            new CachedHashedDataFeedKey(dataFeedKey, sourceFile))
-//                    .filter(dataFeedKey ->
-//                            isValidDataFeedKey(dataFeedKey, keyOwnerMetaKey, invalidCount))
-//                    .forEach(cachedHashedDataFeedKey -> {
-//                        addDataFeedKey(cachedHashedDataFeedKey, keyOwnerMetaKey, addedCount, dupCount);
-//                    });
-//
-//            LOGGER.debug(() -> LogUtil.message(
-//                    "Added: {}, ignored {} data feed keys (invalid: {}, duplicate: {}), file: {}",
-//                    addedCount,
-//                    invalidCount.get() + dupCount.get(),
-//                    invalidCount.get(),
-//                    dupCount.get(),
-//                    sourceFile));
-//        }
-//        LOGGER.debug(() -> LogUtil.message("Total cached keys: {}", keyOwnerToDataFeedKeyMap.values()
-//                .stream()
-//                .mapToInt(Set::size)
-//                .sum()));
-//        return addedCount.get();
-//    }
 
     private boolean isValidDataFeedKey(final CachedHashedDataFeedKey dataFeedKey,
                                        final CIKey ownerMetaKey) {

@@ -187,12 +187,14 @@ public class CertificateIdentityServiceImpl
                                     .findFirst();
                         })
                         .map(cachedIdentity -> {
-                            final Map<CIKey, String> streamMetaData = cachedIdentity.certificateIdentity()
-                                    .getCIStreamMetaData();
                             // Don't need to check the keyOwner against keyOwnerFromHeaders as
                             // we built the map, so the key will match the value
-                            final String keyOwner = streamMetaData.get(keyOwnerMetaKey);
-                            attributeMap.putAll(cachedIdentity.certificateIdentity.getStreamMetaData());
+                            final String keyOwner = cachedIdentity.certificateIdentity()
+                                    .getStreamMetaValue(keyOwnerMetaKey);
+                            cachedIdentity.certificateIdentity
+                                    .getCIStreamMetaData()
+                                    .forEach((ciKey, val) ->
+                                            attributeMap.put(ciKey.get(), val));
                             return keyOwner;
                         })
                         .map(DataFeedUserIdentity::new);
