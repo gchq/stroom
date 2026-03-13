@@ -61,12 +61,14 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                      @JsonProperty("query") final String query,
                      @JsonProperty("analyticProcessType") final AnalyticProcessType analyticProcessType,
                      @JsonProperty("analyticProcessConfig") final AnalyticProcessConfig analyticProcessConfig,
-                     @Deprecated @JsonProperty("analyticNotificationConfig") final NotificationConfig analyticNotificationConfig,
+                     @Deprecated @JsonProperty("analyticNotificationConfig")
+                         final NotificationConfig analyticNotificationConfig,
                      @JsonProperty("notifications") final List<NotificationConfig> notifications,
                      @JsonProperty("errorFeed") final DocRef errorFeed,
                      @JsonProperty("rememberNotifications") final boolean rememberNotifications,
                      @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
-                     @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
+                     @JsonProperty("duplicateNotificationConfig")
+                         final DuplicateNotificationConfig duplicateNotificationConfig,
                      @JsonProperty("reportSettings") final ReportSettings reportSettings,
                      @JsonProperty("level") final String level,
                      @JsonProperty("status") final String status) {

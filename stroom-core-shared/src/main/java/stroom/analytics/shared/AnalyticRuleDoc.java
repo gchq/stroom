@@ -37,7 +37,6 @@ import java.util.Objects;
     Defines an analytic rule which can be run to alert on events meeting a criteria.
     The criteria is defined using a StroomQL query.
     The analytic can be processed in different ways:
-    
     * Streaming
     * Table Builder
     * Scheduled Query
