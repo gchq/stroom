@@ -828,7 +828,7 @@ public class NullSafe {
         } else {
             return list.stream()
                     .filter(Objects::nonNull)
-                    .toList();
+                    .collect(Collectors.toList());
         }
     }
 
