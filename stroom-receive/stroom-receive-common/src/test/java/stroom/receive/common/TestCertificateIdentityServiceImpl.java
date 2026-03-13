@@ -19,7 +19,6 @@ package stroom.receive.common;
 import stroom.meta.api.AttributeMap;
 import stroom.security.api.UserIdentity;
 import stroom.util.cert.CertificateExtractor;
-import stroom.util.cert.DNFormat;
 
 import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
@@ -122,12 +121,10 @@ class CertificateIdentityServiceImplTest {
         // Neither of these will match
         final CertificateIdentity otherIdentity1 = new CertificateIdentity(
                 TEST_DN,
-                DNFormat.OPEN_SSL,
                 Map.of(OWNER_META_KEY, OTHER_OWNER),
                 Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
         final CertificateIdentity otherIdentity2 = new CertificateIdentity(
                 OTHER_TEST_DN,
-                DNFormat.OPEN_SSL,
                 Map.of(OWNER_META_KEY, OWNER),
                 Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
 
@@ -146,19 +143,16 @@ class CertificateIdentityServiceImplTest {
 
         final CertificateIdentity certificateIdentity = new CertificateIdentity(
                 TEST_DN,
-                DNFormat.OPEN_SSL,
                 Map.of(OWNER_META_KEY, OWNER,
                         "Foo", "Bar"),
                 Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
         // Neither of these will match
         final CertificateIdentity otherIdentity1 = new CertificateIdentity(
                 TEST_DN,
-                DNFormat.OPEN_SSL,
                 Map.of(OWNER_META_KEY, OTHER_OWNER),
                 Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
         final CertificateIdentity otherIdentity2 = new CertificateIdentity(
                 OTHER_TEST_DN,
-                DNFormat.OPEN_SSL,
                 Map.of(OWNER_META_KEY, OWNER),
                 Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
 
@@ -189,19 +183,16 @@ class CertificateIdentityServiceImplTest {
 
         final CertificateIdentity certificateIdentity = new CertificateIdentity(
                 TEST_DN,
-                DNFormat.OPEN_SSL,
                 Map.of(OWNER_META_KEY, OWNER,
                         "Foo", "Bar"),
                 Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
         // Neither of these will match
         final CertificateIdentity otherIdentity1 = new CertificateIdentity(
                 TEST_DN,
-                DNFormat.OPEN_SSL,
                 Map.of(OWNER_META_KEY, OWNER),
                 Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
         final CertificateIdentity otherIdentity2 = new CertificateIdentity(
                 TEST_DN,
-                DNFormat.OPEN_SSL,
                 Map.of(OWNER_META_KEY, OWNER),
                 Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
 
@@ -232,19 +223,16 @@ class CertificateIdentityServiceImplTest {
 
         final CertificateIdentity certificateIdentity = new CertificateIdentity(
                 TEST_DN,
-                DNFormat.OPEN_SSL,
                 Map.of(OWNER_META_KEY, OWNER,
                         "Foo", "Bar"),
                 Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
         // Neither of these will match
         final CertificateIdentity otherIdentity1 = new CertificateIdentity(
                 TEST_DN,
-                DNFormat.OPEN_SSL,
                 Map.of(OWNER_META_KEY, OWNER),
                 Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
         final CertificateIdentity otherIdentity2 = new CertificateIdentity(
                 TEST_DN,
-                DNFormat.OPEN_SSL,
                 Map.of(OWNER_META_KEY, OWNER),
                 Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
 

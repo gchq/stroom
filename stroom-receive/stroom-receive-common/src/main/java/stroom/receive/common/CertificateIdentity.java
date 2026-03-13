@@ -40,13 +40,8 @@ public final class CertificateIdentity implements DataFeedIdentity {
     public static final DNFormat DEFAULT_X509_CERT_DN_FORMAT = DNFormat.LDAP;
 
     @JsonProperty
-    @JsonPropertyDescription("The DN from the X509 certificate. The format of the DN is defined by dnFormat.")
+    @JsonPropertyDescription("The DN from the X509 certificate.")
     private final String certificateDn;
-
-    @JsonProperty
-    @JsonPropertyDescription("The format of the DN String, either OPEN_SSL for '/' delimited, " +
-                             "or LDAP for ',' delimited. LDAP is the default if not specified.")
-    private final DNFormat dnFormat;
 
     @JsonProperty
     @JsonPropertyDescription("A map of stream attribute key/value pairs. These will trump any entries " +
@@ -62,11 +57,9 @@ public final class CertificateIdentity implements DataFeedIdentity {
 
     @JsonCreator
     public CertificateIdentity(@JsonProperty("certificateDn") final String certificateDn,
-                               @JsonProperty("dnFormat") final DNFormat dnFormat,
                                @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,
                                @JsonProperty("expiryDateEpochMs") final long expiryDateEpochMs) {
         this.certificateDn = Objects.requireNonNull(certificateDn);
-        this.dnFormat = Objects.requireNonNullElse(dnFormat, DEFAULT_X509_CERT_DN_FORMAT);
         // No point holding blank keys or null values
         this.streamMetaData = NullSafe.map(streamMetaData)
                 .entrySet()
@@ -78,15 +71,11 @@ public final class CertificateIdentity implements DataFeedIdentity {
                         Entry::getValue));
         this.expiryDateEpochMs = expiryDateEpochMs;
         // Pre-compute the hash as we know we are putting each identity into a map
-        this.hashCode = Objects.hash(certificateDn, dnFormat, streamMetaData, expiryDateEpochMs);
+        this.hashCode = Objects.hash(certificateDn, streamMetaData, expiryDateEpochMs);
     }
 
     public String getCertificateDn() {
         return certificateDn;
-    }
-
-    public DNFormat getDnFormat() {
-        return dnFormat;
     }
 
     @Override
@@ -112,7 +101,6 @@ public final class CertificateIdentity implements DataFeedIdentity {
         final CertificateIdentity that = (CertificateIdentity) o;
         return expiryDateEpochMs == that.expiryDateEpochMs
                && Objects.equals(certificateDn, that.certificateDn)
-               && dnFormat == that.dnFormat
                && Objects.equals(streamMetaData, that.streamMetaData);
     }
 
@@ -125,7 +113,6 @@ public final class CertificateIdentity implements DataFeedIdentity {
     public String toString() {
         return "CertificateIdentity{" +
                "certificateDn='" + certificateDn + '\'' +
-               ", dnFormat=" + dnFormat +
                ", streamMetaData=" + streamMetaData +
                ", expiryDateEpochMs=" + expiryDateEpochMs +
                '}';
