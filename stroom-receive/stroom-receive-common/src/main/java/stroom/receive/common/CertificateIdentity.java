@@ -81,6 +81,7 @@ public final class CertificateIdentity implements DataFeedIdentity {
         return Collections.unmodifiableMap(CIKey.convertToStringMap(streamMetaData));
     }
 
+    @JsonIgnore
     @Override
     public Map<CIKey, String> getCIStreamMetaData() {
         return streamMetaData;

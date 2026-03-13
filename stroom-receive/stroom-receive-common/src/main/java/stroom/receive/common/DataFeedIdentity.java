@@ -52,6 +52,7 @@ public sealed interface DataFeedIdentity
      * @return The meta attributes associated with this identity.
      * These trump any headers.
      */
+    @JsonIgnore
     Map<CIKey, String> getCIStreamMetaData();
 
 

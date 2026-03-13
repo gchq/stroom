@@ -19,6 +19,7 @@ package stroom.receive.common;
 
 import stroom.util.shared.NullSafe;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -32,6 +33,7 @@ public class DataFeedIdentities {
     @JsonProperty
     private final List<DataFeedIdentity> dataFeedIdentities;
 
+    @JsonCreator
     public DataFeedIdentities(@JsonProperty("dataFeedIdentity") final List<DataFeedIdentity> dataFeedIdentities) {
         this.dataFeedIdentities = NullSafe.removeNulls(dataFeedIdentities);
     }
