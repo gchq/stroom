@@ -20,7 +20,6 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.receive.common.DataFeedKeyGenerator.KeyWithHash;
 import stroom.receive.common.DataFeedKeyHasher.HashOutput;
 import stroom.test.common.TestUtil;
-import stroom.util.cert.DNFormat;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -81,7 +80,6 @@ class TestDataFeedIdentities {
                                   + j + "/emailAddress=john_doe@example.com";
                 final CertificateIdentity certificateIdentity = new CertificateIdentity(
                         dn,
-                        DNFormat.OPEN_SSL,
                         Map.of(
                                 "MetaKey1", "MetaKey1Val-" + accountId,
                                 "MetaKey2", "MetaKey2Val-" + accountId,
@@ -165,7 +163,6 @@ class TestDataFeedIdentities {
 
         final CertificateIdentity certificateIdentity1 = new CertificateIdentity(
                 "/DC=com/DC=example/DC=corp/OU=Users/CN=John Doe/emailAddress=john_doe@example.com",
-                DNFormat.LDAP,
                 Map.of(
                         StandardHeaderArguments.ACCOUNT_ID, "system 3",
                         "key1", "val1",
@@ -173,7 +170,6 @@ class TestDataFeedIdentities {
                 Instant.now().plus(3, ChronoUnit.DAYS).toEpochMilli());
         final CertificateIdentity certificateIdentity2 = new CertificateIdentity(
                 "/DC=com/DC=example/DC=corp/OU=Users/CN=Jane Doe/emailAddress=jane_doe@example.com",
-                DNFormat.LDAP,
                 Map.of(
                         StandardHeaderArguments.ACCOUNT_ID, "system 4",
                         "key1", "val1",
