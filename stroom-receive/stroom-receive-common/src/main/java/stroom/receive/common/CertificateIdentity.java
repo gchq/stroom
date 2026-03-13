@@ -17,7 +17,6 @@
 package stroom.receive.common;
 
 
-import stroom.util.cert.DNFormat;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.string.CIKey;
 
@@ -26,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -36,8 +36,6 @@ import java.util.stream.Collectors;
  * attributes that will be applied to any data receipt using that identity.
  */
 public final class CertificateIdentity implements DataFeedIdentity {
-
-    public static final DNFormat DEFAULT_X509_CERT_DN_FORMAT = DNFormat.LDAP;
 
     @JsonProperty
     @JsonPropertyDescription("The DN from the X509 certificate.")
@@ -66,7 +64,7 @@ public final class CertificateIdentity implements DataFeedIdentity {
                 .stream()
                 .filter(entry -> NullSafe.isNonBlankString(entry.getKey()))
                 .filter(entry -> entry.getValue() != null)
-                .collect(Collectors.toMap(
+                .collect(Collectors.toUnmodifiableMap(
                         entry -> CIKey.of(entry.getKey()),
                         Entry::getValue));
         this.expiryDateEpochMs = expiryDateEpochMs;
@@ -80,7 +78,7 @@ public final class CertificateIdentity implements DataFeedIdentity {
 
     @Override
     public Map<String, String> getStreamMetaData() {
-        return CIKey.convertToStringMap(streamMetaData);
+        return Collections.unmodifiableMap(CIKey.convertToStringMap(streamMetaData));
     }
 
     @Override
