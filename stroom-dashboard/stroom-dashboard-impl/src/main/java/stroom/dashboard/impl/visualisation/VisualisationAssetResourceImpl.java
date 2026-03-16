@@ -351,7 +351,8 @@ public class VisualisationAssetResourceImpl implements VisualisationAssetResourc
                         final String editorMode =
                                 config.getAceEditorModes().getOrDefault(extension, config.getDefaultAceEditorMode());
 
-                        LOGGER.info("Content '{}' has extension '{}' -> editor mode '{}'", path, extension, editorMode);
+                        LOGGER.debug("Content '{}' has extension '{}' -> editor mode '{}'",
+                                path, extension, editorMode);
                         return new VisualisationAssetContent(content, editorMode);
                     } catch (final IOException e) {
                         throw new RuntimeException(e);

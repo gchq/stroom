@@ -164,6 +164,42 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
     }
 
     /**
+     * Ensures that the servlet cache is up to date. Pulls data from the
+     * database via an InputStream, if the date of the record in the database
+     * is after the cacheTimestamp.
+     * @param docId The ID of the owner document.
+     * @param assetPath The path to the asset under the owner document
+     * @param metaPath The path in the servlet cache to the metadata about the asset
+     * @param cacheTimestamp The timestamp for the servlet cache asset
+     * @throws IOException If something goes wrong.
+     */
+    private Instant ensureCacheUpToDate(final String docId,
+                                        final String assetPath,
+                                        final Path metaPath,
+                                        final Instant cacheTimestamp) throws IOException {
+
+        final Path cachedAssetPath = getCachePathForAsset(docId, assetPath);
+
+        final Instant dbTimestamp = service.writeLiveToServletCache(
+                ASSET_CACHE_TEMP_PREFIX,
+                ASSET_CACHE_TEMP_SUFFIX,
+                docId,
+                assetPath,
+                cacheTimestamp,
+                cachedAssetPath);
+
+        if (dbTimestamp != null) {
+            // Cache was updated so write the dbTimestamp to disk
+            FileUtil.saveDataSafely(metaPath,
+                    ASSET_CACHE_TEMP_PREFIX,
+                    ASSET_CACHE_TEMP_SUFFIX,
+                    Long.toString(dbTimestamp.toEpochMilli()).getBytes(StandardCharsets.UTF_8));
+            return dbTimestamp;
+        }
+        return cacheTimestamp;
+    }
+
+    /**
      * Returns the timestamp of the file in the cache for the given asset.
      * @param metaPath The path to the meta-file for the asset we're interested in.
      * @return The timestamp of the file in the cache.
@@ -187,34 +223,15 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
      * @throws PermissionException If something goes wrong.
      */
     private InputStream getInputStreamForAsset(final String docId,
-                                               final String assetPath,
-                                               final Path metaPath,
-                                               final Instant cacheTimestamp)
+                                               final String assetPath)
             throws IOException, PermissionException {
-
-        final Path cachedAssetPath = getCachePathForAsset(docId, assetPath);
-
-        final Instant dbTimestamp = service.writeLiveToServletCache(
-                ASSET_CACHE_TEMP_PREFIX,
-                ASSET_CACHE_TEMP_SUFFIX,
-                docId,
-                assetPath,
-                cacheTimestamp,
-                cachedAssetPath);
-
-        if (dbTimestamp != null) {
-            // Cache was updated so write the dbTimestamp to disk
-            FileUtil.saveDataSafely(metaPath,
-                    ASSET_CACHE_TEMP_PREFIX,
-                    ASSET_CACHE_TEMP_SUFFIX,
-                    Long.toString(dbTimestamp.toEpochMilli()).getBytes(StandardCharsets.UTF_8));
-        }
 
         // Cached file must exist now and must be up-to-date, so return an InputStream attached to it
         // Note: UNIX allows a valid read from a file that was deleted after we opened it
         //       as the reference to the file contents keeps the contents in existence.
         // Note: Writing a new version is atomic, so the either old version or new version is always there
         // Note: If the asset doesn't exist then this will throw a FileNotFoundException
+        final Path cachedAssetPath = getCachePathForAsset(docId, assetPath);
         return new BufferedInputStream(new FileInputStream(cachedAssetPath.toFile()));
     }
 
@@ -233,19 +250,24 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
         final Lock lock = locks.get(metaPath);
         lock.lock();
         try {
-            final Instant cacheTimestamp = getCacheTimestamp(metaPath);
+            final Instant initialCacheTimestamp = getCacheTimestamp(metaPath);
+            final Instant cacheTimestamp = ensureCacheUpToDate(docId, path, metaPath, initialCacheTimestamp);
             final String cacheVersion = String.valueOf(cacheTimestamp.toEpochMilli());
+            final String eTag = "\"" + cacheVersion + "\"";
 
             // Is the client asking for cache validation?
             final String etagValid = request.getHeader(ETAG_VALID_HEADER);
-            if (etagValid != null && etagValid.equals(cacheVersion)) {
+
+            if (etagValid != null && (etagValid.equals(eTag))) {
                 response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+                response.setHeader(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE_2S);
+                response.setHeader(ETAG_HEADER, eTag);
             } else {
-                try (final InputStream dataStream = getInputStreamForAsset(docId, path, metaPath, cacheTimestamp)) {
+                try (final InputStream dataStream = getInputStreamForAsset(docId, path)) {
                     response.setContentType(getMimetype(path));
                     response.setStatus(HttpServletResponse.SC_OK);
                     response.setHeader(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE_2S);
-                    response.setHeader(ETAG_HEADER, cacheVersion);
+                    response.setHeader(ETAG_HEADER, eTag);
                     try (final ServletOutputStream responseStream = response.getOutputStream()) {
                         dataStream.transferTo(responseStream);
                     }
