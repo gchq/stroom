@@ -1,11 +1,15 @@
 package stroom.dashboard.impl.visualisation;
 
+import stroom.docref.DocRef;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.PermissionException;
+import stroom.visualisation.shared.VisualisationDoc;
 
 import com.google.common.util.concurrent.Striped;
 import jakarta.inject.Inject;
@@ -89,6 +93,9 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
     /** The service that provides the backend to this servlet */
     private final VisualisationAssetService service;
 
+    /** Security checks */
+    private final SecurityContext securityContext;
+
     /** File extension to mimetype */
     private final Map<String, String> mimetypes;
 
@@ -106,9 +113,11 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
 
     @Inject
     public VisualisationAssetServlet(final VisualisationAssetService service,
+                                     final SecurityContext securityContext,
                                      final Provider<VisualisationAssetConfig> configProvider,
                                      final PathCreator pathCreator) {
         this.service = service;
+        this.securityContext = securityContext;
         final VisualisationAssetConfig config = configProvider.get();
         this.mimetypes = config.getMimetypes();
         this.defaultMimetype = config.getDefaultMimetype();
@@ -245,45 +254,56 @@ public class VisualisationAssetServlet extends HttpServlet implements IsServlet 
         final String docId = docIdAndPath.docId();
         final String path = docIdAndPath.path();
 
-        // Lock on the metaPath
-        final Path metaPath = getCachePathForMetadata(docId, path);
-        final Lock lock = locks.get(metaPath);
-        lock.lock();
-        try {
-            final Instant initialCacheTimestamp = getCacheTimestamp(metaPath);
-            final Instant cacheTimestamp = ensureCacheUpToDate(docId, path, metaPath, initialCacheTimestamp);
-            final String cacheVersion = String.valueOf(cacheTimestamp.toEpochMilli());
-            final String eTag = "\"" + cacheVersion + "\"";
+        final DocRef docRef = new DocRef(VisualisationDoc.TYPE, docId);
+        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+            // Lock on the metaPath
+            final Path metaPath = getCachePathForMetadata(docId, path);
+            final Lock lock = locks.get(metaPath);
+            lock.lock();
+            try {
+                final Instant initialCacheTimestamp = getCacheTimestamp(metaPath);
+                final Instant cacheTimestamp = ensureCacheUpToDate(docId, path, metaPath, initialCacheTimestamp);
+                final String cacheVersion = String.valueOf(cacheTimestamp.toEpochMilli());
+                final String eTag = "\"" + cacheVersion + "\"";
 
-            // Is the client asking for cache validation?
-            final String etagValid = request.getHeader(ETAG_VALID_HEADER);
+                // Is the client asking for cache validation?
+                final String etagValid = request.getHeader(ETAG_VALID_HEADER);
 
-            if (etagValid != null && (etagValid.equals(eTag))) {
-                response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
-                response.setHeader(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE_2S);
-                response.setHeader(ETAG_HEADER, eTag);
-            } else {
-                try (final InputStream dataStream = getInputStreamForAsset(docId, path)) {
-                    response.setContentType(getMimetype(path));
-                    response.setStatus(HttpServletResponse.SC_OK);
+                if (etagValid != null && (etagValid.equals(eTag))) {
+                    response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
                     response.setHeader(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE_2S);
                     response.setHeader(ETAG_HEADER, eTag);
-                    try (final ServletOutputStream responseStream = response.getOutputStream()) {
-                        dataStream.transferTo(responseStream);
+                } else {
+                    try (final InputStream dataStream = getInputStreamForAsset(docId, path)) {
+                        response.setContentType(getMimetype(path));
+                        response.setStatus(HttpServletResponse.SC_OK);
+                        response.setHeader(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE_2S);
+                        response.setHeader(ETAG_HEADER, eTag);
+                        try (final ServletOutputStream responseStream = response.getOutputStream()) {
+                            dataStream.transferTo(responseStream);
+                        }
+                    } catch (final FileNotFoundException e) {
+                        LOGGER.error("Asset {}/{} does not exist", docId, path);
+                        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                    } catch (final IOException e) {
+                        LOGGER.error("Error retrieving asset for docId {}, path '{}': {}",
+                                docId,
+                                path,
+                                e.getMessage(),
+                                e);
+                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    } catch (final PermissionException e) {
+                        LOGGER.warn("Service does not permit access to asset");
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     }
-                } catch (final FileNotFoundException e) {
-                    LOGGER.error("Asset {}/{} does not exist", docId, path);
-                    response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                } catch (final IOException e) {
-                    LOGGER.error("Error retrieving asset for docId {}, path '{}': {}", docId, path, e.getMessage(), e);
-                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                } catch (final PermissionException e) {
-                    LOGGER.warn("User does not have permission to view assets");
-                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 }
+            } finally {
+                lock.unlock();
             }
-        } finally {
-            lock.unlock();
+        } else {
+            LOGGER.warn("User does not have permission to view assets");
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to edit this asset");
         }
     }
 
