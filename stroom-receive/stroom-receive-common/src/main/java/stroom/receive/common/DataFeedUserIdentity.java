@@ -21,16 +21,17 @@ import stroom.security.api.UserIdentity;
 import java.util.Objects;
 
 /**
- * {@link UserIdentity} obtained when authenticated by {@link HashedDataFeedKey}
+ * {@link UserIdentity} obtained when authenticated by {@link DataFeedKeyService}
+ * or {@link CertificateIdentityService}
  */
-public class DataFeedKeyUserIdentity implements UserIdentity {
+public class DataFeedUserIdentity implements UserIdentity {
 
-    public static final String SUBJECT_ID_PREFIX = "data-feed-key-";
+    public static final String SUBJECT_ID_PREFIX = "data-feed-identity-";
 
     private final String subjectId;
     private final String displayName;
 
-    public DataFeedKeyUserIdentity(final String keyOwner) {
+    public DataFeedUserIdentity(final String keyOwner) {
         Objects.requireNonNull(keyOwner);
         this.subjectId = SUBJECT_ID_PREFIX + keyOwner;
         this.displayName = subjectId;
@@ -62,7 +63,7 @@ public class DataFeedKeyUserIdentity implements UserIdentity {
         if (object == null || getClass() != object.getClass()) {
             return false;
         }
-        final DataFeedKeyUserIdentity that = (DataFeedKeyUserIdentity) object;
+        final DataFeedUserIdentity that = (DataFeedUserIdentity) object;
         return Objects.equals(subjectId, that.subjectId) && Objects.equals(displayName,
                 that.displayName);
     }

@@ -17,6 +17,7 @@
 package stroom.importexport;
 
 import stroom.util.json.JsonUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.SerialisationTestConstructor;
 
@@ -270,6 +271,15 @@ class TestJsonSerialisation {
                     .isEqualTo(json1);
 
         } catch (final InstantiationException | InvocationTargetException | IllegalAccessException e) {
+            if (constructor.getDeclaringClass().isAnnotationPresent(SerialisationTestConstructor.class)) {
+                LOGGER.error("Unable to construct an example instance of {} from its test constructor. {}",
+                        clazz.getSimpleName(), LogUtil.exceptionMessage(e));
+            } else {
+                LOGGER.error("Unable to construct an example instance of {}. " +
+                             "You may need to create a no-args constructor annotated with " +
+                             "@SerialisationTestConstructor for this test. {}",
+                        clazz.getSimpleName(), LogUtil.exceptionMessage(e));
+            }
             throw new RuntimeException(e);
         }
     }

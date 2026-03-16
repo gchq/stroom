@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package stroom.receive.common;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.receive.common.DataFeedKeyGenerator.KeyWithHash;
 import stroom.receive.common.DataFeedKeyHasher.HashOutput;
+import stroom.test.common.TestUtil;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -37,16 +38,15 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
+class TestDataFeedIdentities {
 
-class TestHashedDataFeedKeys {
-
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestHashedDataFeedKeys.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDataFeedIdentities.class);
 
     static void main(final String[] ignored) throws IOException {
         final ObjectMapper mapper = JsonUtil.getMapper();
-        final Path dir = Paths.get("/tmp/TestDataFeedKeys");
+        final Path dir = Paths.get("/tmp/TestDataFeedIdentities");
         Files.createDirectories(dir);
 
         final List<String> jsonList = new ArrayList<>();
@@ -54,6 +54,7 @@ class TestHashedDataFeedKeys {
         for (int i = 0; i < 3; i++) {
             final String fileName = "file" + i + ".json";
             final List<KeyWithHash> keyWithHashList = new ArrayList<>();
+            final List<CertificateIdentity> certificateIdentityList = new ArrayList<>();
             final Instant expiry = switch (i) {
                 case 0 -> Instant.now().minus(Duration.ofMinutes(10)); // Expired
                 case 1 -> Instant.now().plus(Duration.ofMinutes(1)); // Soon to expire
@@ -62,7 +63,8 @@ class TestHashedDataFeedKeys {
             };
 
             for (int j = 0; j < 3; j++) {
-                final String accountId = String.valueOf(j + 1000);
+                // Create the data feed key
+                String accountId = String.valueOf(j + 1000);
                 final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateRandomKey(
                         accountId,
                         Map.of(
@@ -71,12 +73,31 @@ class TestHashedDataFeedKeys {
                         expiry);
                 logKey("key" + i + "-" + j, keyWithHash);
                 keyWithHashList.add(keyWithHash);
+
+                // Create the certificate identity
+                accountId = String.valueOf(j + 2000);
+                final String dn = "/DC=com/DC=example/DC=corp/OU=Users/CN=John Doe "
+                                  + j + "/emailAddress=john_doe@example.com";
+                final CertificateIdentity certificateIdentity = new CertificateIdentity(
+                        dn,
+                        Map.of(
+                                "MetaKey1", "MetaKey1Val-" + accountId,
+                                "MetaKey2", "MetaKey2Val-" + accountId,
+                                StandardHeaderArguments.ACCOUNT_ID, accountId),
+                        expiry.toEpochMilli());
+                certificateIdentityList.add(certificateIdentity);
             }
+
             final HashedDataFeedKeys hashedDataFeedKeys = new HashedDataFeedKeys(keyWithHashList.stream()
                     .map(KeyWithHash::hashedDataFeedKey)
                     .toList());
+
+            final DataFeedIdentities dataFeedIdentities = new DataFeedIdentities(Stream.concat(
+                            hashedDataFeedKeys.getDataFeedKeys().stream(),
+                            certificateIdentityList.stream())
+                    .toList());
             final Path filePath = dir.resolve(fileName);
-            final String json = mapper.writeValueAsString(hashedDataFeedKeys);
+            final String json = mapper.writeValueAsString(dataFeedIdentities);
             jsonList.add(json);
             Files.writeString(filePath, json, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
             LOGGER.info("JSON written to {}", filePath.toAbsolutePath());
@@ -103,7 +124,7 @@ class TestHashedDataFeedKeys {
     }
 
     @Test
-    void testSerde() throws IOException {
+    void testSerde() {
         final DataFeedKeyHasher hasher = new Argon2DataFeedKeyHasher();
 
         @SuppressWarnings("checkstyle:lineLength") final String key1 =
@@ -137,27 +158,31 @@ class TestHashedDataFeedKeys {
                         StandardHeaderArguments.ACCOUNT_ID, "system 2",
                         "key3", "val3",
                         "key4", "val4"),
-                Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
-        final HashedDataFeedKeys hashedDataFeedKeys = new HashedDataFeedKeys(List.of(
+                Instant.now().plus(2, ChronoUnit.DAYS).toEpochMilli());
+//        final List<HashedDataFeedKey> hashedDataFeedKeyList = List.of(hashedDataFeedKey1, hashedDataFeedKey2);
+
+        final CertificateIdentity certificateIdentity1 = new CertificateIdentity(
+                "/DC=com/DC=example/DC=corp/OU=Users/CN=John Doe/emailAddress=john_doe@example.com",
+                Map.of(
+                        StandardHeaderArguments.ACCOUNT_ID, "system 3",
+                        "key1", "val1",
+                        "key2", "val2"),
+                Instant.now().plus(3, ChronoUnit.DAYS).toEpochMilli());
+        final CertificateIdentity certificateIdentity2 = new CertificateIdentity(
+                "/DC=com/DC=example/DC=corp/OU=Users/CN=Jane Doe/emailAddress=jane_doe@example.com",
+                Map.of(
+                        StandardHeaderArguments.ACCOUNT_ID, "system 4",
+                        "key1", "val1",
+                        "key2", "val2"),
+                Instant.now().plus(4, ChronoUnit.DAYS).toEpochMilli());
+//        final List<CertificateIdentity> certificateIdentityList = List.of(certificateIdentity1, certificateIdentity2);
+        final List<DataFeedIdentity> dataFeedIdentityList = List.of(
                 hashedDataFeedKey1,
-                hashedDataFeedKey2));
+                certificateIdentity1,
+                hashedDataFeedKey2,
+                certificateIdentity2);
 
-        doSerdeTest(hashedDataFeedKeys, HashedDataFeedKeys.class);
-    }
-
-    private <T> void doSerdeTest(final T entity,
-                                 final Class<T> clazz) throws IOException {
-
-        final ObjectMapper mapper = JsonUtil.getMapper();
-        assertThat(mapper.canSerialize(entity.getClass()))
-                .isTrue();
-
-        final String json = mapper.writeValueAsString(entity);
-        System.out.println("\n" + json);
-
-        final T entity2 = mapper.readValue(json, clazz);
-
-        assertThat(entity2)
-                .isEqualTo(entity);
+        final DataFeedIdentities dataFeedIdentities = new DataFeedIdentities(dataFeedIdentityList);
+        TestUtil.testSerialisation(dataFeedIdentities, DataFeedIdentities.class);
     }
 }

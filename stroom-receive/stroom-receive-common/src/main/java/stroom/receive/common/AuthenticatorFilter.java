@@ -54,7 +54,7 @@ public interface AuthenticatorFilter {
 
     static AuthenticatorFilter wrap(final List<AuthenticatorFilter> attributeMapFilters) {
         if (NullSafe.isEmptyCollection(attributeMapFilters)) {
-            LOGGER.debug("Returning permissive instance");
+            LOGGER.debug("Returning permissive instance, empty attributeMapFilters");
             return NOT_AUTHENTICATED_FILTER;
         } else if (attributeMapFilters.size() == 1) {
             final AuthenticatorFilter first = NullSafe.first(attributeMapFilters);
@@ -62,7 +62,7 @@ public interface AuthenticatorFilter {
                 LOGGER.debug(() -> "Returning " + first.getClass().getSimpleName());
                 return first;
             } else {
-                LOGGER.debug("Returning permissive instance");
+                LOGGER.debug("Returning permissive instance, null filter");
                 return NOT_AUTHENTICATED_FILTER;
             }
         } else {

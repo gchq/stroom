@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 
 package stroom.receive.common;
 
+
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.SerialisationTestConstructor;
 import stroom.util.shared.string.CIKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,12 +29,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -42,28 +37,18 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * Represents the hashed form of a Data Feed Key, i.e. where we only have the
- * hash of the key and not the key itself.
+ * Represents an X509 certificate (using the DN of the certificate) and the meta
+ * attributes that will be applied to any data receipt using that identity.
  */
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
-public final class HashedDataFeedKey implements DataFeedIdentity {
+public final class CertificateIdentity implements DataFeedIdentity {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HashedDataFeedKey.class);
-
-    @JsonProperty
-    @JsonPropertyDescription("The hash of the datafeed key. Hashed using hashAlgorithm.")
-    private final String hash;
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CertificateIdentity.class);
 
     @JsonProperty
-    @JsonPropertyDescription("The salt used to hash the datafeed key. May be null if there is no salt or the " +
-                             "algorithm encodes the salt in the hash, like BCrypt does.")
-    private final String salt;
-
-    @JsonProperty
-    @JsonPropertyDescription("The hash algorithm used to hash the datafeed key. Currently one of " +
-                             "(ARGON2|BCRYPT_2A).")
-    private final DataFeedKeyHashAlgorithm hashAlgorithm;
+    @JsonPropertyDescription("The DN from the X509 certificate.")
+    private final String certificateDn;
 
     @JsonIgnore // Serialise as Map<String, String>
     @JsonPropertyDescription("A map of stream attribute key/value pairs. These will trump any entries " +
@@ -83,14 +68,10 @@ public final class HashedDataFeedKey implements DataFeedIdentity {
     private final int hashCode;
 
     @JsonCreator
-    public HashedDataFeedKey(@JsonProperty("hash") final String hash,
-                             @JsonProperty("salt") final String salt,
-                             @JsonProperty("hashAlgorithm") final DataFeedKeyHashAlgorithm hashAlgorithm,
-                             @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,
-                             @JsonProperty("expiryDateEpochMs") final long expiryDateEpochMs) {
-        this.hash = NullSafe.requireNonBlankString(hash, () -> "hash must not be blank");
-        this.salt = NullSafe.requireNonBlankString(salt, () -> "salt must not be blank");
-        this.hashAlgorithm = Objects.requireNonNull(hashAlgorithm, "hashAlgorithm must not be null");
+    public CertificateIdentity(@JsonProperty("certificateDn") final String certificateDn,
+                               @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,
+                               @JsonProperty("expiryDateEpochMs") final long expiryDateEpochMs) {
+        this.certificateDn = Objects.requireNonNull(certificateDn);
         // No point holding blank keys or null values
         this.ciStreamMetaData = NullSafe.map(streamMetaData)
                 .entrySet()
@@ -112,38 +93,12 @@ public final class HashedDataFeedKey implements DataFeedIdentity {
         // not having a field with @JsonProperty and doesn't like complex map keys.
         this.streamMetaData = Collections.unmodifiableMap(CIKey.convertToStringMap(ciStreamMetaData));
         this.expiryDateEpochMs = expiryDateEpochMs;
-        // Cache the hashCode as we know we will use it
-        this.hashCode = Objects.hash(
-                hash,
-                salt,
-                hashAlgorithm,
-                streamMetaData,
-                expiryDateEpochMs);
+        // Pre-compute the hash as we know we are putting each identity into a map
+        this.hashCode = Objects.hash(certificateDn, streamMetaData, expiryDateEpochMs);
     }
 
-    @SerialisationTestConstructor
-    private HashedDataFeedKey() {
-        this("dummy hash",
-                "dummy salt",
-                DataFeedKeyHashAlgorithm.ARGON2,
-                Collections.emptyMap(),
-                LocalDateTime.of(2026, 3, 13, 13, 51)
-                        .toInstant(ZoneOffset.UTC)
-                        .toEpochMilli());
-    }
-
-    @NotBlank
-    public String getHash() {
-        return hash;
-    }
-
-    public String getSalt() {
-        return salt;
-    }
-
-    @NotBlank
-    public DataFeedKeyHashAlgorithm getHashAlgorithm() {
-        return hashAlgorithm;
+    public String getCertificateDn() {
+        return certificateDn;
     }
 
     private Map<String, String> getStreamMetaData() {
@@ -156,35 +111,19 @@ public final class HashedDataFeedKey implements DataFeedIdentity {
         return ciStreamMetaData;
     }
 
-    @Min(0)
+    @Override
     public long getExpiryDateEpochMs() {
         return expiryDateEpochMs;
     }
 
-    @JsonIgnore
-    public Instant getExpiryDate() {
-        return Instant.ofEpochMilli(expiryDateEpochMs);
-    }
-
-//    @Override
-//    @JsonProperty("type")
-//    public IdentityType getType() {
-//        return IdentityType.DATA_FEED_KEY;
-//    }
-
     @Override
-    public boolean equals(final Object object) {
-        if (this == object) {
-            return true;
-        }
-        if (object == null || getClass() != object.getClass()) {
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        final HashedDataFeedKey that = (HashedDataFeedKey) object;
+        final CertificateIdentity that = (CertificateIdentity) o;
         return expiryDateEpochMs == that.expiryDateEpochMs
-               && Objects.equals(hash, that.hash)
-               && Objects.equals(salt, that.salt)
-               && Objects.equals(hashAlgorithm, that.hashAlgorithm)
+               && Objects.equals(certificateDn, that.certificateDn)
                && Objects.equals(streamMetaData, that.streamMetaData);
     }
 
@@ -195,10 +134,8 @@ public final class HashedDataFeedKey implements DataFeedIdentity {
 
     @Override
     public String toString() {
-        return "DataFeedKey{" +
-               "hash='" + hash + '\'' +
-               ", salt='" + salt + '\'' +
-               ", hashAlgorithmId='" + hashAlgorithm + '\'' +
+        return "CertificateIdentity{" +
+               "certificateDn='" + certificateDn + '\'' +
                ", streamMetaData=" + streamMetaData +
                ", expiryDateEpochMs=" + expiryDateEpochMs +
                '}';
