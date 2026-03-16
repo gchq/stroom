@@ -20,6 +20,7 @@ import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
+import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.importexport.api.ImportExportActionHandler;
@@ -44,12 +45,15 @@ import java.util.stream.Collectors;
 public class ExecutionScheduleImportExportHandlerImpl implements ImportExportActionHandler, NonExplorerDocRefProvider {
     private final Serialiser2<ExecutionSchedule> delegate;
     private final ExecutionScheduleDao executionScheduleDao;
+    private final DocRefInfoService docRefInfoService;
 
     @Inject
     public ExecutionScheduleImportExportHandlerImpl(final Serialiser2Factory serialiser2Factory,
-                                                    final ExecutionScheduleDao executionScheduleDao) {
+                                                    final ExecutionScheduleDao executionScheduleDao,
+                                                    final DocRefInfoService docRefInfoService) {
         this.delegate = serialiser2Factory.createSerialiser(ExecutionSchedule.class);
         this.executionScheduleDao = executionScheduleDao;
+        this.docRefInfoService = docRefInfoService;
     }
 
     private Optional<ExecutionSchedule> findExistingSchedule(final ExecutionSchedule importedSchedule,
@@ -130,7 +134,8 @@ public class ExecutionScheduleImportExportHandlerImpl implements ImportExportAct
             final int id = Integer.parseInt(docRef.getUuid());
             final Optional<ExecutionSchedule> scheduleOpt = executionScheduleDao.fetchScheduleById(id);
             if (scheduleOpt.isPresent()) {
-                final ExecutionSchedule schedule = scheduleOpt.get();
+                final DocRef owningDoc = docRefInfoService.decorate(scheduleOpt.get().getOwningDoc());
+                final ExecutionSchedule schedule = scheduleOpt.get().copy().owningDoc(owningDoc).build();
                 final Map<String, byte[]> data = delegate.write(schedule);
                 return data;
             }
