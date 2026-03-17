@@ -42,6 +42,8 @@ import java.util.Objects;
 })
 public class ExecutionSchedule {
 
+    public static final String ENTITY_TYPE = "ExecutionSchedule";
+
     @JsonProperty
     private final Integer id;
     @JsonProperty

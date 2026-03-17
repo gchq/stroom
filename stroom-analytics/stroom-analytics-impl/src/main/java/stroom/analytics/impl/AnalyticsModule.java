@@ -18,7 +18,9 @@ package stroom.analytics.impl;
 
 import stroom.analytics.api.AnalyticsService;
 import stroom.analytics.shared.DuplicateCheckResource;
+import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.explorer.api.IsSpecialExplorerDataSource;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.processor.api.ProcessorTaskExecutorBinder;
 import stroom.processor.shared.ProcessorType;
@@ -87,6 +89,10 @@ public class AnalyticsModule extends AbstractModule {
 
         bind(AnalyticsService.class).to(AnalyticsServiceImpl.class);
         bind(DuplicateCheckFactory.class).to(DuplicateCheckFactoryImpl.class);
+        bind(ExecutionScheduleResource.class).to(ExecutionScheduleResourceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(ExecutionScheduleImportExportHandlerImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(StreamingAnalyticCache.class);

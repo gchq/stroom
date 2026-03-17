@@ -17,6 +17,9 @@
 package stroom.analytics.rule.impl;
 
 import stroom.analytics.shared.AnalyticProcessConfig;
+import stroom.analytics.shared.ExecutionSchedule;
+import stroom.analytics.shared.ExecutionScheduleRequest;
+import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.ReportDoc.Builder;
 import stroom.docref.DocRef;
@@ -33,11 +36,13 @@ import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -54,6 +59,7 @@ class ReportStoreImpl implements ReportStore {
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
     private final SearchRequestFactory searchRequestFactory;
     private final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider;
+    private final Provider<ExecutionScheduleResource> executionScheduleResourceProvider;
 
     @Inject
     ReportStoreImpl(final StoreFactory storeFactory,
@@ -61,7 +67,8 @@ class ReportStoreImpl implements ReportStore {
                     final SecurityContext securityContext,
                     final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
                     final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
-                    final SearchRequestFactory searchRequestFactory) {
+                    final SearchRequestFactory searchRequestFactory,
+                    final Provider<ExecutionScheduleResource> executionScheduleResourceProvider) {
         this.store = storeFactory.createStore(
                 serialiser,
                 ReportDoc.TYPE,
@@ -71,6 +78,7 @@ class ReportStoreImpl implements ReportStore {
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
         this.analyticRuleProcessorsProvider = analyticRuleProcessorsProvider;
+        this.executionScheduleResourceProvider = executionScheduleResourceProvider;
     }
 
     // ---------------------------------------------------------------------
@@ -261,6 +269,20 @@ class ReportStoreImpl implements ReportStore {
 
     @Override
     public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
+        if (docRef != null) {
+            final ExecutionScheduleRequest request = ExecutionScheduleRequest.builder()
+                    .ownerDocRef(docRef)
+                    .build();
+            final ResultPage<ExecutionSchedule> resultPage =
+                    executionScheduleResourceProvider.get().fetchExecutionSchedule(request);
+
+            final Set<DocRef> docRefs = new HashSet<>();
+            resultPage.getValues().forEach(schedule -> {
+                docRefs.add(new DocRef(ExecutionSchedule.ENTITY_TYPE,
+                        String.valueOf(schedule.getId()), schedule.getName()));
+            });
+            return docRefs;
+        }
         return null;
     }
 
