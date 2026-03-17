@@ -1264,6 +1264,8 @@ class stroom.query.api.datasource.QueryField - public static stroom.query.api.da
 class stroom.query.api.datasource.QueryField - public static stroom.query.api.datasource.QueryField stroom.query.api.datasource.QueryField.createLong(java.lang.String,java.lang.Boolean)
 class stroom.query.api.datasource.QueryField - public static stroom.query.api.datasource.QueryField stroom.query.api.datasource.QueryField.createText(java.lang.String)
 class stroom.query.api.datasource.QueryField - public static stroom.query.api.datasource.QueryField stroom.query.api.datasource.QueryField.createText(java.lang.String,java.lang.Boolean)
+class stroom.query.api.datasource.QueryField - public static stroom.query.api.datasource.QueryField stroom.query.api.datasource.QueryField.createUserRef(java.lang.String)
+class stroom.query.api.datasource.QueryField - public static stroom.query.api.datasource.QueryField stroom.query.api.datasource.QueryField.createUserRef(java.lang.String,java.lang.Boolean)
 class stroom.query.api.datasource.QueryField - public static stroom.query.api.datasource.QueryField$Builder stroom.query.api.datasource.QueryField.builder()
 class stroom.query.api.datasource.QueryField - public stroom.query.api.datasource.ConditionSet stroom.query.api.datasource.QueryField.getConditionSet()
 class stroom.query.api.datasource.QueryField - public stroom.query.api.datasource.FieldType stroom.query.api.datasource.QueryField.getFldType()
