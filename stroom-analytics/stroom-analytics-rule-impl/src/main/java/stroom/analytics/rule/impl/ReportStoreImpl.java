@@ -275,7 +275,7 @@ class ReportStoreImpl implements ReportStore {
                     .build();
             final ResultPage<ExecutionSchedule> resultPage =
                     executionScheduleResourceProvider.get().fetchExecutionSchedule(request);
-            
+
             final Set<DocRef> docRefs = new HashSet<>();
             resultPage.getValues().forEach(schedule -> {
                 docRefs.add(new DocRef(ExecutionSchedule.ENTITY_TYPE,
