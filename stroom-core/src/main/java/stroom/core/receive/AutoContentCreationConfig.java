@@ -44,18 +44,27 @@ public class AutoContentCreationConfig
         implements IsStroomConfig {
 
     public static final String DEFAULT_DESTINATION_BASE_PART = "Feeds";
-    public static final String DEFAULT_DESTINATION_SUB_DIR_PART = "${accountid}";
+    public static final String DEFAULT_DESTINATION_ACCOUNT_ID_PART = "${accountid}";
+    public static final String DEFAULT_DESTINATION_SUB_DIR = "sandbox";
     public static final String DEFAULT_GROUP_TEMPLATE = "grp-${accountid}";
     public static final String DEFAULT_ADDITIONAL_GROUP_TEMPLATE = "grp-${accountid}-sandbox";
+    public static final String DEFAULT_GROUP_PARENT_GROUP = "Data Feed Reader";
+    public static final String DEFAULT_ADDITIONAL_GROUP_PARENT_GROUP = "Data Feed Developer";
 
     @JsonProperty
     private final boolean enabled;
     @JsonProperty
     private final String destinationExplorerPathTemplate;
     @JsonProperty
+    private final String destinationExplorerSubPathTemplate;
+    @JsonProperty
     private final String groupTemplate;
     @JsonProperty
+    private final String groupParentGroupName;
+    @JsonProperty
     private final String additionalGroupTemplate;
+    @JsonProperty
+    private final String additionalGroupParentGroupName;
     @JsonProperty
     private final String createAsSubjectId;
     @JsonProperty
@@ -67,10 +76,13 @@ public class AutoContentCreationConfig
         enabled = false;
         destinationExplorerPathTemplate = DocPath.fromParts(
                         DEFAULT_DESTINATION_BASE_PART,
-                        DEFAULT_DESTINATION_SUB_DIR_PART)
+                        DEFAULT_DESTINATION_ACCOUNT_ID_PART)
                 .toString();
+        destinationExplorerSubPathTemplate = DEFAULT_DESTINATION_SUB_DIR;
         groupTemplate = DEFAULT_GROUP_TEMPLATE;
+        groupParentGroupName = DEFAULT_GROUP_PARENT_GROUP;
         additionalGroupTemplate = DEFAULT_ADDITIONAL_GROUP_TEMPLATE;
+        additionalGroupParentGroupName = DEFAULT_ADDITIONAL_GROUP_PARENT_GROUP;
         createAsSubjectId = User.ADMINISTRATORS_GROUP_SUBJECT_ID;
         createAsType = UserType.GROUP;
         // Ensure consistent order in the serialised json
@@ -90,16 +102,22 @@ public class AutoContentCreationConfig
     public AutoContentCreationConfig(
             @JsonProperty("enabled") final boolean enabled,
             @JsonProperty("destinationExplorerPathTemplate") final String destinationExplorerPathTemplate,
+            @JsonProperty("destinationExplorerSubPathTemplate") final String destinationExplorerSubPathTemplate,
             @JsonProperty("groupTemplate") final String groupTemplate,
+            @JsonProperty("groupParentGroupName") final String groupParentGroupName,
             @JsonProperty("additionalGroupTemplate") final String additionalGroupTemplate,
+            @JsonProperty("additionalGroupParentGroupName") final String additionalGroupParentGroupName,
             @JsonProperty("createAsSubjectId") final String createAsSubjectId,
             @JsonProperty("createAsType") final UserType createAsType,
             @JsonProperty("templateMatchFields") final Set<String> templateMatchFields) {
 
         this.enabled = enabled;
         this.destinationExplorerPathTemplate = destinationExplorerPathTemplate;
+        this.destinationExplorerSubPathTemplate = destinationExplorerSubPathTemplate;
         this.groupTemplate = NullSafe.nonBlankStringElse(groupTemplate, DEFAULT_GROUP_TEMPLATE);
+        this.groupParentGroupName = groupParentGroupName;
         this.additionalGroupTemplate = additionalGroupTemplate;
+        this.additionalGroupParentGroupName = additionalGroupParentGroupName;
         this.createAsSubjectId = createAsSubjectId;
         this.createAsType = createAsType;
         this.templateMatchFields = normaliseFields(templateMatchFields);
@@ -108,8 +126,11 @@ public class AutoContentCreationConfig
     private AutoContentCreationConfig(final Builder builder) {
         this.enabled = builder.enabled;
         this.destinationExplorerPathTemplate = builder.destinationExplorerPathTemplate;
+        this.destinationExplorerSubPathTemplate = builder.destinationExplorerSubPathTemplate;
         this.groupTemplate = builder.groupTemplate;
+        this.groupParentGroupName = builder.groupParentGroupName;
         this.additionalGroupTemplate = builder.additionalGroupTemplate;
+        this.additionalGroupParentGroupName = builder.additionalGroupParentGroupName;
         this.createAsSubjectId = builder.createAsSubjectId;
         this.createAsType = builder.createAsType;
         this.templateMatchFields = normaliseFields(builder.templateMatchFields);
@@ -130,11 +151,19 @@ public class AutoContentCreationConfig
             "The templated path to a folder in the Stroom explorer tree where Stroom will auto-create " +
             "content. If it doesn't exist it will be created. Content will be created in a sub-folder of this " +
             "folder with a name derived from the system name of the received data. By default this is " +
-            "'Feeds/${accountid}'. " +
+            "'Feeds/${accountid}'." +
             "If this property is set in the YAML file, use single quotes to prevent the " +
             "variables being expanded when the config file is loaded.")
     public String getDestinationExplorerPathTemplate() {
         return destinationExplorerPathTemplate;
+    }
+
+    @JsonPropertyDescription(
+            "An optional templated sub-path of 'destinationExplorerPathTemplate'. If set, copied dependencies (e.g." +
+            "XSLT filters, Test Converters, etc.) will be created in the sub-directory defined by this template. " +
+            "If not set, that content will be created in the directory ")
+    public String getDestinationExplorerSubPathTemplate() {
+        return destinationExplorerSubPathTemplate;
     }
 
     @JsonPropertyDescription(
@@ -146,6 +175,14 @@ public class AutoContentCreationConfig
         return groupTemplate;
     }
 
+    @JsonPropertyDescription("An optional group to add the group defined by groupTemplate to." +
+                             "The value of this property is the name of a group. " +
+                             "It allows all the templated groups to belong to a common group for easier " +
+                             "permission management.")
+    public String getGroupParentGroupName() {
+        return groupParentGroupName;
+    }
+
     @JsonPropertyDescription(
             "If set, when Stroom auto-creates a feed, it will create an additional user group with a " +
             "name derived from this template. This is in addition to the user group defined by 'groupTemplate'." +
@@ -154,6 +191,15 @@ public class AutoContentCreationConfig
             "variables being expanded when the config file is loaded.")
     public String getAdditionalGroupTemplate() {
         return additionalGroupTemplate;
+    }
+
+    @JsonPropertyDescription("An optional group to add the group defined by groupTemplate to." +
+                             "The value of this property is the name of a group. It can be the same " +
+                             "as groupParentGroupName if required. " +
+                             "It allows all the templated groups to belong to a common group for easier " +
+                             "permission management.")
+    public String getAdditionalGroupParentGroupName() {
+        return additionalGroupParentGroupName;
     }
 
     @NotNull
@@ -193,15 +239,18 @@ public class AutoContentCreationConfig
     }
 
     public static Builder builder() {
-        return new Builder();
+        return new AutoContentCreationConfig().copy();
     }
 
     public Builder copy() {
         return new Builder()
                 .enabled(enabled)
-                .destinationPathTemplate(destinationExplorerPathTemplate)
+                .destinationExplorerPathTemplate(destinationExplorerPathTemplate)
+                .destinationExplorerSubPathTemplate(destinationExplorerSubPathTemplate)
                 .groupTemplate(groupTemplate)
+                .groupParentGroupName(groupParentGroupName)
                 .additionalGroupTemplate(additionalGroupTemplate)
+                .additionalGroupParentGroupName(additionalGroupParentGroupName)
                 .createAsSubjectId(createAsSubjectId)
                 .createAsType(createAsType)
                 .templateMatchFields(templateMatchFields);
@@ -219,8 +268,11 @@ public class AutoContentCreationConfig
 
         private boolean enabled;
         private String destinationExplorerPathTemplate;
+        private String destinationExplorerSubPathTemplate;
         private String groupTemplate;
+        private String groupParentGroupName;
         private String additionalGroupTemplate;
+        private String additionalGroupParentGroupName;
         private String createAsSubjectId;
         private UserType createAsType;
         private Set<String> templateMatchFields;
@@ -230,8 +282,13 @@ public class AutoContentCreationConfig
             return this;
         }
 
-        public Builder destinationPathTemplate(final String destinationPathTemplate) {
-            this.destinationExplorerPathTemplate = destinationPathTemplate;
+        public Builder destinationExplorerPathTemplate(final String destinationExplorerPathTemplate) {
+            this.destinationExplorerPathTemplate = destinationExplorerPathTemplate;
+            return this;
+        }
+
+        public Builder destinationExplorerSubPathTemplate(final String destinationExplorerSubPathTemplate) {
+            this.destinationExplorerSubPathTemplate = destinationExplorerSubPathTemplate;
             return this;
         }
 
@@ -242,6 +299,16 @@ public class AutoContentCreationConfig
 
         public Builder additionalGroupTemplate(final String additionalGroupSuffix) {
             this.additionalGroupTemplate = additionalGroupSuffix;
+            return this;
+        }
+
+        public Builder groupParentGroupName(final String groupParentGroupName) {
+            this.groupParentGroupName = groupParentGroupName;
+            return this;
+        }
+
+        public Builder additionalGroupParentGroupName(final String additionalGroupParentGroupName) {
+            this.additionalGroupParentGroupName = additionalGroupParentGroupName;
             return this;
         }
 
@@ -271,9 +338,12 @@ public class AutoContentCreationConfig
         public Builder copy() {
             return new Builder()
                     .enabled(this.enabled)
-                    .destinationPathTemplate(this.destinationExplorerPathTemplate)
+                    .destinationExplorerPathTemplate(this.destinationExplorerPathTemplate)
+                    .destinationExplorerSubPathTemplate(this.destinationExplorerSubPathTemplate)
                     .groupTemplate(this.groupTemplate)
+                    .groupParentGroupName(this.groupParentGroupName)
                     .additionalGroupTemplate(this.additionalGroupTemplate)
+                    .additionalGroupParentGroupName(this.additionalGroupParentGroupName)
                     .createAsSubjectId(this.createAsSubjectId)
                     .createAsType(this.createAsType)
                     .templateMatchFields(this.templateMatchFields);
