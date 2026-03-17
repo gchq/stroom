@@ -101,7 +101,6 @@ appConfig:
         prepStmtCacheSqlLimit: 256
     defaultRetentionPeriod: "5y"
     physicalDeleteAge: "P7D"
-    standardComments: []
   askStroomAi:
     chatMemory:
       timeToLive:

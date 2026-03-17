@@ -104,23 +104,50 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
 
     @Override
     public AnnotationTag createAnnotationTag(final CreateAnnotationTagRequest request) {
-        final String uuid = UUID.randomUUID().toString();
-        final Integer id = JooqUtil.contextResult(connectionProvider, context -> context
-                .insertInto(ANNOTATION_TAG,
-                        ANNOTATION_TAG.UUID,
-                        ANNOTATION_TAG.TYPE_ID,
-                        ANNOTATION_TAG.NAME)
-                .values(uuid,
-                        request.getType().getPrimitiveValue(),
-                        request.getName())
-                .returning(ANNOTATION_TAG.ID)
-                .fetchOne(ANNOTATION_TAG.ID));
-        return AnnotationTag.builder()
-                .id(id)
-                .uuid(uuid)
-                .type(request.getType())
-                .name(request.getName())
-                .build();
+        return JooqUtil.contextResult(connectionProvider, context ->
+                context.transactionResult(config -> {
+                    // Check a tag with the same type and name already exists.
+                    final Optional<AnnotationTag> existing = config.dsl()
+                            .select(ANNOTATION_TAG.ID,
+                                    ANNOTATION_TAG.UUID,
+                                    ANNOTATION_TAG.TYPE_ID,
+                                    ANNOTATION_TAG.NAME,
+                                    ANNOTATION_TAG.STYLE_ID)
+                            .from(ANNOTATION_TAG)
+                            .where(ANNOTATION_TAG.TYPE_ID.eq(request.getType().getPrimitiveValue()))
+                            .and(ANNOTATION_TAG.NAME.eq(request.getName()))
+                            .limit(1)
+                            .fetchOptional()
+                            .map(this::mapToAnnotationTag);
+
+                    if (existing.isPresent()) {
+                        config.dsl()
+                                .update(ANNOTATION_TAG)
+                                .set(ANNOTATION_TAG.DELETED, false)
+                                .where(ANNOTATION_TAG.ID.eq(existing.get().getId()))
+                                .execute();
+                        return existing.get();
+                    }
+
+                    // Insert a new tag.
+                    final String uuid = UUID.randomUUID().toString();
+                    final Integer id = config.dsl()
+                            .insertInto(ANNOTATION_TAG,
+                                    ANNOTATION_TAG.UUID,
+                                    ANNOTATION_TAG.TYPE_ID,
+                                    ANNOTATION_TAG.NAME)
+                            .values(uuid,
+                                    request.getType().getPrimitiveValue(),
+                                    request.getName())
+                            .returning(ANNOTATION_TAG.ID)
+                            .fetchOne(ANNOTATION_TAG.ID);
+                    return AnnotationTag.builder()
+                            .id(id)
+                            .uuid(uuid)
+                            .type(request.getType())
+                            .name(request.getName())
+                            .build();
+                }));
     }
 
     @Override

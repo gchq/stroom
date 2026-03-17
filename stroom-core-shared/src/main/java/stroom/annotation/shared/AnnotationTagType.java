@@ -23,7 +23,8 @@ import stroom.util.shared.PrimitiveValueConverter;
 public enum AnnotationTagType implements HasDisplayValue, HasPrimitiveValue {
     STATUS("Status", 0),
     LABEL("Label", 1),
-    COLLECTION("Collection", 2);
+    COLLECTION("Collection", 2),
+    COMMENT("Comment", 3);
 
     public static final PrimitiveValueConverter<AnnotationTagType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AnnotationTagType.class, AnnotationTagType.values());

@@ -180,6 +180,23 @@ class TestAnnotationTagDaoImpl {
         annotationTagDao.deleteAnnotationTag(two);
     }
 
+    @Test
+    void testCreateTagAlreadyExists() {
+        final AnnotationTag original = createStatus("New");
+        annotationTagDao.deleteAnnotationTag(original);
+
+        // Should not be findable after deletion.
+        assertThat(annotationTagDao.findAnnotationTag(AnnotationTagType.STATUS, "New")).isEmpty();
+
+        // Re-creating with the same type and name should undelete the original.
+        final AnnotationTag recreated = createStatus("New");
+        assertThat(recreated.getId()).isEqualTo(original.getId());
+        assertThat(recreated.getUuid()).isEqualTo(original.getUuid());
+
+        // Should now be findable again.
+        assertThat(annotationTagDao.findAnnotationTag(AnnotationTagType.STATUS, "New")).isPresent();
+    }
+
     private AnnotationTag createStatus(final String name) {
         return annotationTagDao.createAnnotationTag(CreateAnnotationTagRequest
                 .builder()

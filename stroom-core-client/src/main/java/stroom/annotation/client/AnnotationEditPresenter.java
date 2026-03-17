@@ -98,6 +98,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class AnnotationEditPresenter
         extends DocPresenter<AnnotationEditView, Annotation>
@@ -201,12 +202,17 @@ public class AnnotationEditPresenter
         });
         annotationCollectionPresenter.setDisplayValueFunction(Lozenge::create);
 
-        this.commentPresenter.setDataSupplier((filter, consumer) ->
-                annotationResourceClient.getStandardComments(filter, consumer, this));
-
-        // See if we are able to get standard comments.
-        annotationResourceClient.getStandardComments(null, values ->
-                getView().setHasCommentValues(values != null && !values.isEmpty()), this);
+        this.commentPresenter.setDataSupplier((filter, consumer) -> {
+            final ExpressionCriteria criteria = createCriteria(AnnotationTagType.COMMENT, filter);
+            annotationResourceClient.findAnnotationTags(criteria, values -> {
+                if (values != null) {
+                    consumer.accept(values.getValues().stream().map(AnnotationTag::getName)
+                            .collect(Collectors.toList()));
+                }
+            },
+                new DefaultErrorHandler(this, null), this);
+        });
+        commentPresenter.setDisplayValueFunction(SafeHtmlUtils::fromString);
     }
 
     private ExpressionCriteria createCriteria(final AnnotationTagType annotationTagType,
@@ -1279,8 +1285,6 @@ public class AnnotationEditPresenter
         String getComment();
 
         void setComment(String comment);
-
-        void setHasCommentValues(final boolean hasCommentValues);
 
         void setHistoryView(Widget view);
 

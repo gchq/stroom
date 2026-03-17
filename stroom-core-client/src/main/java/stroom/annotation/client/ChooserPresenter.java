@@ -77,8 +77,13 @@ public class ChooserPresenter<T>
 
             @Override
             protected void onExecute(final CellPreviewEvent<T> e) {
-                super.onExecute(e);
-                SelectionChangeEvent.fire(selectionModel);
+                final T item = e.getValue();
+                final boolean alreadySelected = Objects.equals(selectionModel.getSelectedObject(), item);
+                selectionModel.setSelected(item, true);
+                if (alreadySelected) {
+                    // setSelected won't fire if selection unchanged, so fire manually
+                    SelectionChangeEvent.fire(selectionModel);
+                }
             }
         });
         view.setBottomWidget(cellTable);
