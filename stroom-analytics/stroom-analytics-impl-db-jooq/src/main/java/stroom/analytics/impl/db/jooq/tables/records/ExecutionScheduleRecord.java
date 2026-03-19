@@ -186,6 +186,20 @@ public class ExecutionScheduleRecord extends UpdatableRecordImpl<ExecutionSchedu
         return (String) get(11);
     }
 
+    /**
+     * Setter for <code>stroom.execution_schedule.UUID</code>.
+     */
+    public void setUuid(String value) {
+        set(12, value);
+    }
+
+    /**
+     * Getter for <code>stroom.execution_schedule.UUID</code>.
+     */
+    public String getUuid() {
+        return (String) get(12);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -209,7 +223,7 @@ public class ExecutionScheduleRecord extends UpdatableRecordImpl<ExecutionSchedu
     /**
      * Create a detached, initialised ExecutionScheduleRecord
      */
-    public ExecutionScheduleRecord(Integer id, String name, Boolean enabled, String nodeName, String scheduleType, String expression, Boolean contiguous, Long startTimeMs, Long endTimeMs, String docType, String docUuid, String runAsUserUuid) {
+    public ExecutionScheduleRecord(Integer id, String name, Boolean enabled, String nodeName, String scheduleType, String expression, Boolean contiguous, Long startTimeMs, Long endTimeMs, String docType, String docUuid, String runAsUserUuid, String uuid) {
         super(ExecutionSchedule.EXECUTION_SCHEDULE);
 
         setId(id);
@@ -224,6 +238,7 @@ public class ExecutionScheduleRecord extends UpdatableRecordImpl<ExecutionSchedu
         setDocType(docType);
         setDocUuid(docUuid);
         setRunAsUserUuid(runAsUserUuid);
+        setUuid(uuid);
         resetChangedOnNotNull();
     }
 }

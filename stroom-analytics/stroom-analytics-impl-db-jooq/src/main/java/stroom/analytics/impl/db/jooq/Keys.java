@@ -34,6 +34,7 @@ public class Keys {
     public static final UniqueKey<AnalyticTrackerRecord> KEY_ANALYTIC_TRACKER_PRIMARY = Internal.createUniqueKey(AnalyticTracker.ANALYTIC_TRACKER, DSL.name("KEY_analytic_tracker_PRIMARY"), new TableField[] { AnalyticTracker.ANALYTIC_TRACKER.FK_ANALYTIC_UUID }, true);
     public static final UniqueKey<ExecutionHistoryRecord> KEY_EXECUTION_HISTORY_PRIMARY = Internal.createUniqueKey(ExecutionHistory.EXECUTION_HISTORY, DSL.name("KEY_execution_history_PRIMARY"), new TableField[] { ExecutionHistory.EXECUTION_HISTORY.ID }, true);
     public static final UniqueKey<ExecutionScheduleRecord> KEY_EXECUTION_SCHEDULE_PRIMARY = Internal.createUniqueKey(ExecutionSchedule.EXECUTION_SCHEDULE, DSL.name("KEY_execution_schedule_PRIMARY"), new TableField[] { ExecutionSchedule.EXECUTION_SCHEDULE.ID }, true);
+    public static final UniqueKey<ExecutionScheduleRecord> KEY_EXECUTION_SCHEDULE_UUID = Internal.createUniqueKey(ExecutionSchedule.EXECUTION_SCHEDULE, DSL.name("KEY_execution_schedule_UUID"), new TableField[] { ExecutionSchedule.EXECUTION_SCHEDULE.UUID }, true);
     public static final UniqueKey<ExecutionTrackerRecord> KEY_EXECUTION_TRACKER_PRIMARY = Internal.createUniqueKey(ExecutionTracker.EXECUTION_TRACKER, DSL.name("KEY_execution_tracker_PRIMARY"), new TableField[] { ExecutionTracker.EXECUTION_TRACKER.FK_EXECUTION_SCHEDULE_ID }, true);
 
     // -------------------------------------------------------------------------
