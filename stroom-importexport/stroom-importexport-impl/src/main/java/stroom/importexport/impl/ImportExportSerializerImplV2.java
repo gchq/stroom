@@ -983,9 +983,10 @@ public class ImportExportSerializerImplV2 implements ImportExportSerializer {
      * @return The resolved path.
      */
     private String resolvePath(final Deque<DocRef> docRefPath, final String childName) {
-        final StringBuilder buf = new StringBuilder();
+        final StringBuilder buf = new StringBuilder("/");
         for (final DocRef docRef : docRefPath) {
             buf.append(docRef.getName());
+            buf.append("/");
         }
         buf.append(childName);
 
