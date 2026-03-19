@@ -64,6 +64,7 @@ class TestFeedNameCheckAttributeMapFilter {
                 .addCase("--foo--", "--FOO--")
                 .addCase("foo bar", "FOO_BAR")
                 .addCase("${AccountId}", "123")
+                .addCase("${ACCOUNTID}", "123")
                 .addCase("${component}", "COMPONENT_XYZ")
                 .addCase("${unknown}", "")
                 .addCase("foo-${AccountId}-bar", "FOO-123-BAR")

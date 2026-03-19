@@ -175,10 +175,11 @@ public class AutoContentCreationConfig
         return groupTemplate;
     }
 
-    @JsonPropertyDescription("An optional group to add the group defined by groupTemplate to." +
-                             "The value of this property is the name of a group. " +
-                             "It allows all the templated groups to belong to a common group for easier " +
-                             "permission management.")
+    @JsonPropertyDescription(
+            "An optional group to add the group defined by groupTemplate to." +
+            "The value of this property is the name of a group. " +
+            "It allows all the templated groups to belong to a common group for easier " +
+            "permission management.")
     public String getGroupParentGroupName() {
         return groupParentGroupName;
     }
@@ -193,11 +194,12 @@ public class AutoContentCreationConfig
         return additionalGroupTemplate;
     }
 
-    @JsonPropertyDescription("An optional group to add the group defined by groupTemplate to." +
-                             "The value of this property is the name of a group. It can be the same " +
-                             "as groupParentGroupName if required. " +
-                             "It allows all the templated groups to belong to a common group for easier " +
-                             "permission management.")
+    @JsonPropertyDescription(
+            "An optional group to add the group defined by groupTemplate to." +
+            "The value of this property is the name of a group. It can be the same " +
+            "as groupParentGroupName if required. " +
+            "It allows all the templated groups to belong to a common group for easier " +
+            "permission management.")
     public String getAdditionalGroupParentGroupName() {
         return additionalGroupParentGroupName;
     }
@@ -213,15 +215,17 @@ public class AutoContentCreationConfig
     }
 
     @NotNull
-    @JsonPropertyDescription("The type of the entity represented by createAsSubjectId, i.g. 'USER' or 'GROUP'. " +
-                             "It is possible for content to be owned by a group rather than individual users.")
+    @JsonPropertyDescription(
+            "The type of the entity represented by createAsSubjectId, i.g. 'USER' or 'GROUP'. " +
+            "It is possible for content to be owned by a group rather than individual users.")
     public UserType getCreateAsType() {
         return createAsType;
     }
 
     @AllMatchPattern(pattern = "^[a-z0-9_-]+$")
-    @JsonPropertyDescription("The header keys available for use when matching a request to a content template. " +
-                             "Must be in lower case.")
+    @JsonPropertyDescription(
+            "The header keys available for use when matching a request to a content template. " +
+            "Must be in lower case.")
     public Set<String> getTemplateMatchFields() {
         return templateMatchFields;
     }
