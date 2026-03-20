@@ -250,15 +250,21 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         if (optFeedDoc.isEmpty()) {
             optFeedDoc = getMatchingTemplate(attributeMap)
                     .flatMap(contentTemplate -> {
-                        // Content gets created as the configured user
-                        final UserRef runAsUserRef = getRunAsUser();
+                        try {
+                            // Content gets created as the configured user
+                            final UserRef runAsUserRef = getRunAsUser();
 
-                        final Optional<FeedDoc> optFeedDoc2 = securityContext.asUserResult(runAsUserRef, () ->
-                                ensureFeed(feedName, userDesc, attributeMap, contentTemplate));
+                            final Optional<FeedDoc> optFeedDoc2 = securityContext.asUserResult(runAsUserRef, () ->
+                                    ensureFeed(feedName, userDesc, attributeMap, contentTemplate));
 
-                        LOGGER.debug("feedName: '{}', userDesc: '{}', optFeedDoc: {}",
-                                feedName, userDesc, optFeedDoc2);
-                        return optFeedDoc2;
+                            LOGGER.debug("feedName: '{}', userDesc: '{}', optFeedDoc: {}",
+                                    feedName, userDesc, optFeedDoc2);
+                            return optFeedDoc2;
+                        } catch (final Exception e) {
+                            LOGGER.error("Error applying contentTemplate {} - {}",
+                                    contentTemplate, LogUtil.exceptionMessage(e), e);
+                            throw e;
+                        }
                     });
         }
         return optFeedDoc;
@@ -332,9 +338,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         final String destinationPath = pathTemplator.generateWith(attributeMap);
         final DocPath baseDocPath = DocPath.fromPathString(destinationPath);
 
-        LOGGER.info("Ensuring baseDocPath path '{}' exists", baseDocPath);
-        final ExplorerNode destFolder = explorerService.ensureFolderPath(
-                baseDocPath, PermissionInheritance.DESTINATION);
+        final ExplorerNode destFolder = ensureExplorerNode(baseDocPath);
         final DocRef destFolderRef = destFolder.getDocRef();
 
         // Only create a sub dir if there are some deps to put in it
@@ -345,9 +349,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
             if (!subPathTemplator.isBlank()) {
                 final DocPath subDirDocPath = baseDocPath.append(DocPath.fromPathString(
                         subPathTemplator.generateWith(attributeMap)));
-                LOGGER.info("Ensuring subDirDocPath path '{}' exists", subDirDocPath);
                 optDestSubFolder = Optional.ofNullable(
-                        explorerService.ensureFolderPath(subDirDocPath, PermissionInheritance.DESTINATION));
+                        ensureExplorerNode(subDirDocPath));
             } else {
                 optDestSubFolder = Optional.empty();
             }
@@ -380,30 +383,27 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
             ensureGroup(groupParentGroupName, group.asRef());
         }
 
-        // Set up the additional group
-        final Templator additionalGroupTemplator = cachedAdditionalGroupTemplator.getValue();
-        final Optional<User> optAdditionalGroup = Optional.ofNullable(
-                ensureGroup(additionalGroupTemplator, attributeMap, userRef));
-        optAdditionalGroup.ifPresent(additionalGroup -> {
-            final String additionalGroupParentGroupName = autoContentCreationConfig.getAdditionalGroupParentGroupName();
-            if (NullSafe.isNonBlankString(additionalGroupParentGroupName)) {
-                // Ensure the common parent group for the additional group
-                ensureGroup(additionalGroupParentGroupName, additionalGroup.asRef());
-            }
-        });
+        // Additional group only needed if we are copying deps, else it would be
+        // the same as the main group
+        final Optional<User> optAdditionalGroup;
+        if (contentTemplate.isCopyElementDependencies()) {
+            final Templator additionalGroupTemplator = cachedAdditionalGroupTemplator.getValue();
+            optAdditionalGroup = Optional.ofNullable(
+                    ensureGroup(additionalGroupTemplator, attributeMap, userRef));
+            optAdditionalGroup.ifPresent(additionalGroup -> {
+                final String additionalGroupParentGroupName =
+                        autoContentCreationConfig.getAdditionalGroupParentGroupName();
+                if (NullSafe.isNonBlankString(additionalGroupParentGroupName)) {
+                    // Ensure the common parent group for the additional group
+                    ensureGroup(additionalGroupParentGroupName, additionalGroup.asRef());
+                }
+            });
+        } else {
+            optAdditionalGroup = Optional.empty();
+        }
 
-        // Creates the explorer node for the Feed and the FeedDoc itself
-        LOGGER.info("Auto-creating feed {} in path '{}'", feedName, baseDocPath);
-        final DocRef feedDocRef = explorerService.create(
-                FeedDoc.TYPE,
-                feedName,
-                destFolder,
-                PermissionInheritance.DESTINATION).getDocRef();
-
-        FeedDoc feedDoc = feedStore.readDocument(feedDocRef);
-        // Set up the feed doc using the information in the data feed key
-        configureFeed(feedDoc, attributeMap, userRef);
-        feedDoc = feedStore.writeDocument(feedDoc);
+        final FeedDoc feedDoc = createFeedDoc(feedName, attributeMap, baseDocPath, destFolder, userRef);
+        final DocRef feedDocRef = feedDoc.asDocRef();
 
         grantPermOnDoc(destFolderRef, group, DocumentPermission.VIEW);
         grantPermOnDoc(feedDocRef, group, DocumentPermission.VIEW);
@@ -422,7 +422,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         });
 
         // Create any templated content
-        final Optional<DocRef> optNewPipeDocRef = createTemplatedContent(attributeMap,
+        final Optional<DocRef> optNewPipeDocRef = createTemplatedContent(
+                attributeMap,
                 feedDocRef,
                 destFolder,
                 optDestSubFolder,
@@ -437,6 +438,31 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
         LOGGER.debug("feedDoc after configuration: {}", feedDoc);
         return feedDocRef;
+    }
+
+    private FeedDoc createFeedDoc(final String feedName,
+                                  final AttributeMap attributeMap,
+                                  final DocPath baseDocPath,
+                                  final ExplorerNode destFolder,
+                                  final UserRef userRef) {
+        // Creates the explorer node for the Feed and the FeedDoc itself
+        LOGGER.info("Auto-creating feed {} in path '{}'", feedName, baseDocPath);
+        final DocRef feedDocRef = explorerService.create(
+                FeedDoc.TYPE,
+                feedName,
+                destFolder,
+                PermissionInheritance.DESTINATION).getDocRef();
+
+        FeedDoc feedDoc = feedStore.readDocument(feedDocRef);
+        // Set up the feed doc using the information in the data feed key
+        configureFeed(feedDoc, attributeMap, userRef);
+        feedDoc = feedStore.writeDocument(feedDoc);
+        return feedDoc;
+    }
+
+    private ExplorerNode ensureExplorerNode(final DocPath docPath) {
+        LOGGER.info("Ensuring explorer path '{}' exists", docPath);
+        return explorerService.ensureFolderPath(docPath, PermissionInheritance.DESTINATION);
     }
 
     private void configureFeed(final FeedDoc feedDoc,
@@ -592,6 +618,8 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                      "destFolder: {}, destSubFolder: {}",
                 contentTemplate, attributeMap, destFolder, optDestSubFolder);
         final DocRef pipelineDocRef = Objects.requireNonNull(contentTemplate.getPipeline());
+        Objects.requireNonNull(pipelineDocRef,
+                () -> LogUtil.message("No pipeline defined in contentTemplate {}", contentTemplate));
         final PipelineDoc pipelineDoc;
         try {
             pipelineDoc = pipelineService.fetch(pipelineDocRef.getUuid());

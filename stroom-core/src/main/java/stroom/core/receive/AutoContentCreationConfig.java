@@ -45,9 +45,9 @@ public class AutoContentCreationConfig
 
     public static final String DEFAULT_DESTINATION_BASE_PART = "Feeds";
     public static final String DEFAULT_DESTINATION_ACCOUNT_ID_PART = "${accountid}";
-    public static final String DEFAULT_DESTINATION_SUB_DIR = "sandbox";
+    public static final String DEFAULT_DESTINATION_SUB_DIR = "dev";
     public static final String DEFAULT_GROUP_TEMPLATE = "grp-${accountid}";
-    public static final String DEFAULT_ADDITIONAL_GROUP_TEMPLATE = "grp-${accountid}-sandbox";
+    public static final String DEFAULT_ADDITIONAL_GROUP_TEMPLATE = "grp-${accountid}-dev";
     public static final String DEFAULT_GROUP_PARENT_GROUP = "Data Feed Reader";
     public static final String DEFAULT_ADDITIONAL_GROUP_PARENT_GROUP = "Data Feed Developer";
 
@@ -187,7 +187,7 @@ public class AutoContentCreationConfig
     @JsonPropertyDescription(
             "If set, when Stroom auto-creates a feed, it will create an additional user group with a " +
             "name derived from this template. This is in addition to the user group defined by 'groupTemplate'." +
-            "If not set, only the latter user group will be created. Default value is 'grp-${accountid}-sandbox'. " +
+            "If not set, only the latter user group will be created. Default value is 'grp-${accountid}-dev'. " +
             "If this property is set in the YAML file, use single quotes to prevent the " +
             "variables being expanded when the config file is loaded.")
     public String getAdditionalGroupTemplate() {

@@ -113,11 +113,11 @@ appConfig:
       maximumTableInputRows: 100
   autoContentCreation:
     additionalGroupParentGroupName: "Data Feed Developer"
-    additionalGroupTemplate: "grp-${accountid}-sandbox"
+    additionalGroupTemplate: "grp-${accountid}-dev"
     createAsSubjectId: "Administrators"
     createAsType: "GROUP"
     destinationExplorerPathTemplate: "/Feeds/${accountid}"
-    destinationExplorerSubPathTemplate: "sandbox"
+    destinationExplorerSubPathTemplate: "dev"
     enabled: false
     groupParentGroupName: "Data Feed Reader"
     groupTemplate: "grp-${accountid}"
