@@ -273,7 +273,7 @@ public class MergeProcessor {
                 Files.createDirectories(uuidDir);
                 final DirQueue dirQueue = new DirQueue(uuidDir, docUuid);
                 // Start processing this queue.
-                CompletableFuture.runAsync(() -> mergeStore(dirQueue, docUuid));
+                CompletableFuture.runAsync(() -> mergeStore(dirQueue, docUuid), executor);
                 return dirQueue;
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);

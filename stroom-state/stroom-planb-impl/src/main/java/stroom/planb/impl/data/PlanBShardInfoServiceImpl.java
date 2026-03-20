@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.io.FileUtil;
@@ -83,6 +84,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -101,6 +103,7 @@ public class PlanBShardInfoServiceImpl implements Searchable {
     private final StatePaths statePaths;
     private final PlanBDocStore planBDocStore;
     private final ShardManager shardManager;
+    private final Executor executor;
 
     @Inject
     public PlanBShardInfoServiceImpl(final SecurityContext securityContext,
@@ -113,7 +116,8 @@ public class PlanBShardInfoServiceImpl implements Searchable {
                                      final ExpressionPredicateFactory expressionPredicateFactory,
                                      final StatePaths statePaths,
                                      final PlanBDocStore planBDocStore,
-                                     final ShardManager shardManager) {
+                                     final ShardManager shardManager,
+                                     final ExecutorProvider executorProvider) {
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
         this.nodeServiceProvider = nodeServiceProvider;
@@ -125,6 +129,7 @@ public class PlanBShardInfoServiceImpl implements Searchable {
         this.statePaths = statePaths;
         this.planBDocStore = planBDocStore;
         this.shardManager = shardManager;
+        this.executor = executorProvider.get();
     }
 
     @Override
@@ -233,7 +238,7 @@ public class PlanBShardInfoServiceImpl implements Searchable {
                                     errorConsumer.add(Severity.ERROR, nodeName, e::getMessage);
                                 }
                             });
-                    final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable);
+                    final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
                     completableFutures.add(completableFuture);
                 }
             }

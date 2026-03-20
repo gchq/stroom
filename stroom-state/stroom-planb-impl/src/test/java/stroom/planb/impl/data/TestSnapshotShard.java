@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.impl.data;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
@@ -21,7 +37,9 @@ import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.time.StroomDuration;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -59,6 +77,7 @@ class TestSnapshotShard {
             byteBufferFactory,
             readOnly) ->
             new TestDb();
+    private static ExecutorService executorService;
 
     @TempDir
     Path tempDir;
@@ -74,6 +93,16 @@ class TestSnapshotShard {
     private StatePaths statePaths;
     private PlanBDoc doc;
     private AutoCloseable mocks;
+
+    @BeforeAll
+    static void beforeAll() {
+        executorService = Executors.newCachedThreadPool();
+    }
+
+    @AfterAll
+    static void afterAll() {
+        executorService.shutdown();
+    }
 
     @BeforeEach
     void setUp() {
@@ -113,7 +142,8 @@ class TestSnapshotShard {
                 statePaths,
                 fileTransferClient,
                 doc,
-                DB_FACTORY);
+                DB_FACTORY,
+                executorService);
 
         // When: Multiple threads read concurrently
         final int threadCount = 50;
@@ -166,7 +196,8 @@ class TestSnapshotShard {
                 statePaths,
                 fileTransferClient,
                 doc,
-                DB_FACTORY);
+                DB_FACTORY,
+                executorService);
 
         // Initial fetch
         assertThat(fetchCount.get()).isEqualTo(1);
@@ -211,7 +242,8 @@ class TestSnapshotShard {
                 statePaths,
                 fileTransferClient,
                 doc,
-                DB_FACTORY);
+                DB_FACTORY,
+                executorService);
 
         // When: We expire the snapshot and trigger multiple reads
         Thread.sleep(150);
@@ -264,7 +296,8 @@ class TestSnapshotShard {
                 statePaths,
                 fileTransferClient,
                 doc,
-                DB_FACTORY);
+                DB_FACTORY,
+                executorService);
 
         // When: We wait for expiry and trigger reads
         Thread.sleep(150);
@@ -368,7 +401,8 @@ class TestSnapshotShard {
                 statePaths,
                 fileTransferClient,
                 doc,
-                DB_FACTORY);
+                DB_FACTORY,
+                executorService);
 
         // When/Then: Normal operation should succeed
         final String info = shard.getInfo();
@@ -393,7 +427,8 @@ class TestSnapshotShard {
                 statePaths,
                 fileTransferClient,
                 doc,
-                DB_FACTORY);
+                DB_FACTORY,
+                executorService);
 
         // Access to open the DB
         shard.getInfo();
@@ -420,7 +455,8 @@ class TestSnapshotShard {
                 statePaths,
                 fileTransferClient,
                 doc,
-                DB_FACTORY);
+                DB_FACTORY,
+                executorService);
 
         // When: We delete it
         final boolean deleted = shard.delete();
@@ -445,7 +481,8 @@ class TestSnapshotShard {
                 statePaths,
                 fileTransferClient,
                 doc,
-                DB_FACTORY);
+                DB_FACTORY,
+                executorService);
 
         // When/Then: Unsupported operations throw
         assertThatThrownBy(() -> shard.merge(tempDir))
@@ -474,7 +511,8 @@ class TestSnapshotShard {
                 statePaths,
                 fileTransferClient,
                 doc,
-                DB_FACTORY);
+                DB_FACTORY,
+                executorService);
 
         // When/Then: getDoc returns the correct document
         assertThat(shard.getDoc()).isEqualTo(doc);
@@ -503,7 +541,8 @@ class TestSnapshotShard {
                 statePaths,
                 fileTransferClient,
                 doc,
-                DB_FACTORY);
+                DB_FACTORY,
+                executorService);
 
         final AtomicInteger successCount = new AtomicInteger(0);
         final AtomicReference<Throwable> firstError = new AtomicReference<>();

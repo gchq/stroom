@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
 
@@ -30,6 +31,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 import static stroom.annotation.impl.db.jooq.tables.AnnotationFeed.ANNOTATION_FEED;
@@ -44,10 +46,13 @@ import static stroom.annotation.impl.db.jooq.tables.AnnotationFeed.ANNOTATION_FE
 class AnnotationFeedDao implements Clearable {
 
     private final AnnotationDbConnProvider connectionProvider;
+    private final Executor executor;
 
     @Inject
-    AnnotationFeedDao(final AnnotationDbConnProvider connectionProvider) {
+    AnnotationFeedDao(final AnnotationDbConnProvider connectionProvider,
+                      final Provider<Executor> executorProvider) {
         this.connectionProvider = connectionProvider;
+        this.executor = executorProvider.get();
     }
 
     public Set<Integer> fetchWithWildCards(final List<String> wildCardedTypeNames) {
@@ -112,9 +117,9 @@ class AnnotationFeedDao implements Clearable {
      * @throws UncheckedInterruptedException if interrupted while waiting
      * @throws RuntimeException              if the async execution fails
      */
-    public static <R> R async(final Supplier<R> supplier) {
+    public <R> R async(final Supplier<R> supplier) {
         try {
-            return CompletableFuture.supplyAsync(supplier).get();
+            return CompletableFuture.supplyAsync(supplier, executor).get();
         } catch (final InterruptedException e) {
             throw new UncheckedInterruptedException(e);
         } catch (final ExecutionException e) {

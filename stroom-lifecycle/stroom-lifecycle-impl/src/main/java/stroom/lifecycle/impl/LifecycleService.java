@@ -208,7 +208,7 @@ class LifecycleService implements Managed {
             final Runnable runnable = runnableProvider.get();
             LOGGER.info("Lifecycle " + runnable.getClass().getSimpleName() + " shutting down");
             CompletableFuture
-                    .runAsync(runnable)
+                    .runAsync(runnable, executor)
                     .whenComplete((ignored, t) -> {
                         if (t != null) {
                             while (t instanceof CompletionException) {

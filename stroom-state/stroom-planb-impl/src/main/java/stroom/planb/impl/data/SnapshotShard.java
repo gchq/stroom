@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
@@ -71,6 +72,7 @@ class SnapshotShard implements Shard {
     private final FileTransferClient fileTransferClient;
     private final PlanBDoc doc;
     private final DbFactory dbFactory;
+    private final Executor executor;
 
     private volatile SnapshotInstance snapshotInstance;
     private final AtomicBoolean rotating = new AtomicBoolean();
@@ -81,7 +83,8 @@ class SnapshotShard implements Shard {
                          final StatePaths statePaths,
                          final FileTransferClient fileTransferClient,
                          final PlanBDoc doc,
-                         final DbFactory dbFactory) {
+                         final DbFactory dbFactory,
+                         final Executor executor) {
         this.byteBuffers = byteBuffers;
         this.byteBufferFactory = byteBufferFactory;
         this.configProvider = configProvider;
@@ -89,6 +92,7 @@ class SnapshotShard implements Shard {
         this.fileTransferClient = fileTransferClient;
         this.doc = doc;
         this.dbFactory = dbFactory;
+        this.executor = executor;
 
         snapshotInstance = new SnapshotInstance(
                 byteBuffers,
@@ -109,8 +113,9 @@ class SnapshotShard implements Shard {
         if (instance.getExpiryTime().isBefore(Instant.now())) {
             if (rotating.compareAndSet(false, true)) {
                 CompletableFuture
-                        .runAsync(this::rotate)
-                        .whenComplete((r, t) -> rotating.set(false));
+                        .runAsync(this::rotate, executor)
+                        .whenComplete((ignoredResult, ignoredThrowable) ->
+                                rotating.set(false));
             }
 
             // Re-read volatile after triggering rotation to get latest reference

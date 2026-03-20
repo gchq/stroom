@@ -231,7 +231,8 @@ class TestTemporalStateDb {
                 () -> planBConfig,
                 statePaths,
                 null,
-                new SimpleTaskContextFactory());
+                new SimpleTaskContextFactory(),
+                executorProvider);
         final MergeProcessor mergeProcessor = new MergeProcessor(
                 statePaths,
                 new MockSecurityContext(),

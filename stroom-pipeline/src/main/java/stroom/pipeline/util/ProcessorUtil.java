@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import stroom.pipeline.parser.XMLParser;
 import java.io.InputStream;
 import java.util.List;
 
+// TODO should be in a dedicated pipeline-test module as it is only used in tests
 public class ProcessorUtil {
 //    public static void processCombined(final InputStream inputStream, final ErrorReceiverProxy errorReceiverProxy,
 //            final XMLFilter filter, final LocationFactoryProxy locationFactory,
