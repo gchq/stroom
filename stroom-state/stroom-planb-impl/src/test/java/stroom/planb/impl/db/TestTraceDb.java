@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,13 +37,17 @@ import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.StateType;
 import stroom.planb.shared.TraceSettings;
 import stroom.security.mock.MockSecurityContext;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.SimpleTaskContextFactory;
+import stroom.task.shared.ThreadPool;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.zip.ZipUtil;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
@@ -58,6 +62,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,6 +81,30 @@ public class TestTraceDb {
     private static final PlanBDoc DOC = getDoc(BASIC_SETTINGS);
     private static final String MAP_UUID = "map-uuid";
     private static final String MAP_NAME = "map-name";
+    private static ExecutorService executorService;
+    private static ExecutorProvider executorProvider;
+
+    @BeforeAll
+    static void beforeAll() {
+        executorService = Executors.newCachedThreadPool();
+        executorProvider = new ExecutorProvider() {
+
+            @Override
+            public Executor get() {
+                return executorService;
+            }
+
+            @Override
+            public Executor get(final ThreadPool threadPool) {
+                return executorService;
+            }
+        };
+    }
+
+    @AfterAll
+    static void afterAll() {
+        executorService.shutdown();
+    }
 
     @Test
     void testWriteRead(@TempDir final Path tempDir) {
@@ -147,7 +178,8 @@ public class TestTraceDb {
                 statePaths,
                 new MockSecurityContext(),
                 new SimpleTaskContextFactory(),
-                shardManager);
+                shardManager,
+                executorProvider);
 
         final int threads = 10;
 
@@ -358,41 +390,41 @@ public class TestTraceDb {
 //
 //    Collection<DynamicTest> createMultiKeyTest(final boolean read) {
 //        final List<DynamicTest> tests = new ArrayList<>();
-////        for (final TestTraceDb.KeyFunction keyFunction : keyFunctions) {
-////            for (final ValueFunction valueFunction : StateValueTestUtil.getValueFunctions()) {
-////                tests.add(DynamicTest.dynamicTest("key type = " + keyFunction +
-////                                                  ", value type = " + valueFunction,
-////                        () -> {
-////                            final TraceSettings settings = new TraceSettings
-////                                    .Builder()
-////                                    .build();
-////
-////                            Path path = null;
-////                            try {
-////                                path = Files.createTempDirectory("stroom");
-////
-////                                testWrite(path, settings, iterations,
-////                                        keyFunction.function,
-////                                        valueFunction.function());
-////                                if (read) {
-////                                    testSimpleRead(path, settings, iterations,
-////                                            keyFunction.function,
-////                                            valueFunction.function());
-////                                }
-////
-////                            } catch (final IOException e) {
-////                                throw new UncheckedIOException(e);
-////                            } finally {
-////                                if (path != null) {
-////                                    FileUtil.deleteDir(path);
-////                                }
-////                            }
-////                        }));
-////            }
-////        }
+
+    /// /        for (final TestTraceDb.KeyFunction keyFunction : keyFunctions) {
+    /// /            for (final ValueFunction valueFunction : StateValueTestUtil.getValueFunctions()) {
+    /// /                tests.add(DynamicTest.dynamicTest("key type = " + keyFunction +
+    /// /                                                  ", value type = " + valueFunction,
+    /// /                        () -> {
+    /// /                            final TraceSettings settings = new TraceSettings
+    /// /                                    .Builder()
+    /// /                                    .build();
+    /// /
+    /// /                            Path path = null;
+    /// /                            try {
+    /// /                                path = Files.createTempDirectory("stroom");
+    /// /
+    /// /                                testWrite(path, settings, iterations,
+    /// /                                        keyFunction.function,
+    /// /                                        valueFunction.function());
+    /// /                                if (read) {
+    /// /                                    testSimpleRead(path, settings, iterations,
+    /// /                                            keyFunction.function,
+    /// /                                            valueFunction.function());
+    /// /                                }
+    /// /
+    /// /                            } catch (final IOException e) {
+    /// /                                throw new UncheckedIOException(e);
+    /// /                            } finally {
+    /// /                                if (path != null) {
+    /// /                                    FileUtil.deleteDir(path);
+    /// /                                }
+    /// /                            }
+    /// /                        }));
+    /// /            }
+    /// /        }
 //        return tests;
 //    }
-
     private void testWriteRead(final Path tempDir,
                                final TraceSettings settings,
                                final Function<Integer, SpanKey> keyFunction,

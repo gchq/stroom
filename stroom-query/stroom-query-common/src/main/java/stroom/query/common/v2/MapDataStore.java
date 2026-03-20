@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import stroom.util.shared.Severity;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import jakarta.inject.Provider;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -47,6 +48,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -77,6 +79,7 @@ public class MapDataStore implements DataStore {
     private final ErrorConsumer errorConsumer;
     private final ResultStoreMapConfig resultStoreMapConfig;
     private final DateTimeSettings dateTimeSettings;
+    private final Executor executor;
 
     private volatile boolean hasEnoughData;
 
@@ -87,7 +90,8 @@ public class MapDataStore implements DataStore {
                         final Map<String, String> paramMap,
                         final DataStoreSettings dataStoreSettings,
                         final ErrorConsumer errorConsumer,
-                        final ResultStoreMapConfig resultStoreMapConfig) {
+                        final ResultStoreMapConfig resultStoreMapConfig,
+                        final Provider<Executor> executorProvider) {
         this.componentId = componentId;
         final List<Column> columns = tableSettings.getColumns();
         this.dateTimeSettings = expressionContext == null
@@ -104,6 +108,7 @@ public class MapDataStore implements DataStore {
         this.maxResults = dataStoreSettings.getMaxResults();
         this.errorConsumer = errorConsumer;
         this.resultStoreMapConfig = resultStoreMapConfig;
+        this.executor = executorProvider.get();
 
         groupingFunctions = new GroupingFunction[compiledDepths.getMaxDepth() + 1];
         for (int depth = 0; depth <= compiledDepths.getMaxGroupDepth(); depth++) {
@@ -255,7 +260,7 @@ public class MapDataStore implements DataStore {
                     resultCount.addAndGet(-items.list.size());
                     items.list.forEach(item -> remove(item.getKey()));
                 }
-            });
+            }, executor);
         }
     }
 
@@ -750,7 +755,7 @@ public class MapDataStore implements DataStore {
                 final Key rawKey = item.getKey();
                 final StoredValues storedValues = item.storedValues;
 
-                groupingMap.compute(rawKey, (k, v) -> {
+                groupingMap.compute(rawKey, (ignored, v) -> {
                     StoredValues result = v;
 
                     if (result == null) {

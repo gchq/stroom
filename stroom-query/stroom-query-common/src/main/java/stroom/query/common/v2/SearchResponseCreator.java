@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@ import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.Severity;
 import stroom.util.string.ExceptionStringUtil;
 
+import jakarta.inject.Provider;
+
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 public class SearchResponseCreator {
@@ -51,6 +54,7 @@ public class SearchResponseCreator {
     private final ExpressionContext expressionContext;
     private final MapDataStoreFactory mapDataStoreFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final Provider<Executor> executorProvider;
 
     private final Map<String, ResultCreator> cachedResultCreators = new HashMap<>();
 
@@ -61,12 +65,14 @@ public class SearchResponseCreator {
                                  final ResultStore store,
                                  final ExpressionContext expressionContext,
                                  final MapDataStoreFactory mapDataStoreFactory,
-                                 final ExpressionPredicateFactory expressionPredicateFactory) {
+                                 final ExpressionPredicateFactory expressionPredicateFactory,
+                                 final Provider<Executor> executorProvider) {
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
         this.expressionContext = expressionContext;
         this.mapDataStoreFactory = mapDataStoreFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.executorProvider = executorProvider;
     }
 
     /**
@@ -319,7 +325,8 @@ public class SearchResponseCreator {
                             null,
                             expressionPredicateFactory,
                             sizesProvider.getDefaultMaxResultsSizes(),
-                            cacheLastResult);
+                            cacheLastResult,
+                            executorProvider);
                     resultCreator = new VisResultCreator(flatResultCreator);
 
                 } else if (ResultStyle.QL_VIS.equals(resultRequest.getResultStyle())) {
@@ -332,7 +339,8 @@ public class SearchResponseCreator {
                             null,
                             expressionPredicateFactory,
                             sizesProvider.getDefaultMaxResultsSizes(),
-                            cacheLastResult);
+                            cacheLastResult,
+                            executorProvider);
                     resultCreator = new QLVisResultCreator(flatResultCreator, resultRequest
                             .getMappings()
                             .getLast()
@@ -348,7 +356,8 @@ public class SearchResponseCreator {
                             null,
                             expressionPredicateFactory,
                             sizesProvider.getDefaultMaxResultsSizes(),
-                            cacheLastResult);
+                            cacheLastResult,
+                            executorProvider);
                 }
             } catch (final RuntimeException e) {
                 throw new RuntimeException(e.getMessage());
