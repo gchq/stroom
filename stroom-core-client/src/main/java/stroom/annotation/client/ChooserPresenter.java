@@ -56,6 +56,7 @@ public class ChooserPresenter<T>
     private final CellTable<T> cellTable;
     private DataSupplier<T> dataSupplier;
     private Function<T, SafeHtml> displayValueFunction = t -> SafeHtmlUtils.fromString(t.toString());
+    private Function<T, String> tooltipFunction = null;
 
     @Inject
     public ChooserPresenter(final EventBus eventBus,
@@ -93,7 +94,18 @@ public class ChooserPresenter<T>
             @Override
             public SafeHtml getValue(final T value) {
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-                builder.appendHtmlConstant("<div style=\"padding: 5px; min-width: 200px\">");
+                if (value != null && tooltipFunction != null) {
+                    final String tooltip = tooltipFunction.apply(value);
+                    if (tooltip != null && !tooltip.isEmpty()) {
+                        builder.appendHtmlConstant("<div style=\"padding: 5px; min-width: 200px\" title=\"");
+                        builder.appendEscaped(tooltip);
+                        builder.appendHtmlConstant("\">");
+                    } else {
+                        builder.appendHtmlConstant("<div style=\"padding: 5px; min-width: 200px\">");
+                    }
+                } else {
+                    builder.appendHtmlConstant("<div style=\"padding: 5px; min-width: 200px\">");
+                }
                 if (value != null) {
                     builder.append(displayValueFunction.apply(value));
                 }
@@ -131,6 +143,10 @@ public class ChooserPresenter<T>
      */
     public void setDisplayValueFunction(final Function<T, SafeHtml> displayValueFunction) {
         this.displayValueFunction = Objects.requireNonNull(displayValueFunction);
+    }
+
+    public void setTooltipFunction(final Function<T, String> tooltipFunction) {
+        this.tooltipFunction = tooltipFunction;
     }
 
     public T getSelected() {

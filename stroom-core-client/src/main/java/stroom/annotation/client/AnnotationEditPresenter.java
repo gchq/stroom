@@ -211,6 +211,7 @@ public class AnnotationEditPresenter
                 new DefaultErrorHandler(this, null), this);
         });
         commentPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
+        commentPresenter.setTooltipFunction(AnnotationTag::getTagText);
     }
 
     private ExpressionCriteria createCriteria(final AnnotationTagType annotationTagType,
