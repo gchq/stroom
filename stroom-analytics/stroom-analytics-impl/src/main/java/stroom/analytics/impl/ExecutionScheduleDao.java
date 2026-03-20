@@ -40,6 +40,8 @@ public interface ExecutionScheduleDao {
 
     Optional<ExecutionSchedule> fetchScheduleById(int id);
 
+    Optional<ExecutionSchedule> fetchScheduleByUuid(String uuid);
+
     List<ExecutionSchedule> fetchSchedulesByRunAsUser(final String userUuid);
 
     ExecutionSchedule createExecutionSchedule(ExecutionSchedule executionSchedule);

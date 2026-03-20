@@ -34,6 +34,7 @@ public class ExecutionScheduleFields {
     private static final List<QueryField> FIELDS = new ArrayList<>();
 
     public static final String ID = "Id";
+    public static final String UUID = "uuid";
     public static final String NAME = "Name";
     public static final String PARENT_DOC = "Parent Document";
     public static final String PARENT_RULE = "Parent Rule";

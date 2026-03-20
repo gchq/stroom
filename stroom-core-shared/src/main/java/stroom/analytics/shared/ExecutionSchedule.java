@@ -38,7 +38,8 @@ import java.util.Objects;
         "contiguous",
         "scheduleBounds",
         "owningDoc",
-        "runAsUser"
+        "runAsUser",
+        "uuid"
 })
 public class ExecutionSchedule {
 
@@ -62,6 +63,8 @@ public class ExecutionSchedule {
     private final DocRef owningDoc;
     @JsonProperty
     private final UserRef runAsUser;
+    @JsonProperty
+    private final String uuid;
 
     @JsonCreator
     public ExecutionSchedule(@JsonProperty("id") final Integer id,
@@ -72,7 +75,8 @@ public class ExecutionSchedule {
                              @JsonProperty("contiguous") final boolean contiguous,
                              @JsonProperty("scheduleBounds") final ScheduleBounds scheduleBounds,
                              @JsonProperty("owningDoc") final DocRef owningDoc,
-                             @JsonProperty("runAsUser") final UserRef runAsUser) {
+                             @JsonProperty("runAsUser") final UserRef runAsUser,
+                             @JsonProperty("uuid") final String uuid) {
         this.id = id;
         this.name = name;
         this.enabled = enabled;
@@ -82,6 +86,7 @@ public class ExecutionSchedule {
         this.scheduleBounds = scheduleBounds;
         this.owningDoc = owningDoc;
         this.runAsUser = runAsUser;
+        this.uuid = uuid;
     }
 
     public Integer getId() {
@@ -120,6 +125,10 @@ public class ExecutionSchedule {
         return runAsUser;
     }
 
+    public String getUuid() {
+        return uuid;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -129,7 +138,7 @@ public class ExecutionSchedule {
             return false;
         }
         final ExecutionSchedule that = (ExecutionSchedule) o;
-        return Objects.equals(id, that.id);
+        return Objects.equals(uuid, that.uuid);
     }
 
     @Override
@@ -148,6 +157,8 @@ public class ExecutionSchedule {
                ", contiguous=" + contiguous +
                ", scheduleBounds=" + scheduleBounds +
                ", owningDoc=" + owningDoc +
+               ", runAsUser=" + runAsUser +
+               ", uuid=" + uuid +
                '}';
     }
 
@@ -174,6 +185,7 @@ public class ExecutionSchedule {
         private ScheduleBounds scheduleBounds;
         private DocRef owningDoc;
         private UserRef runAsUser;
+        private String uuid;
 
         private Builder() {
         }
@@ -188,6 +200,7 @@ public class ExecutionSchedule {
             this.scheduleBounds = executionSchedule.scheduleBounds;
             this.owningDoc = executionSchedule.owningDoc;
             this.runAsUser = executionSchedule.runAsUser;
+            this.uuid = executionSchedule.uuid;
         }
 
 
@@ -236,6 +249,11 @@ public class ExecutionSchedule {
             return this;
         }
 
+        public Builder uuid(final String uuid) {
+            this.uuid = uuid;
+            return this;
+        }
+
         public ExecutionSchedule build() {
             return new ExecutionSchedule(
                     id,
@@ -246,7 +264,8 @@ public class ExecutionSchedule {
                     contiguous,
                     scheduleBounds,
                     owningDoc,
-                    runAsUser);
+                    runAsUser,
+                    uuid);
         }
     }
 }
