@@ -74,7 +74,8 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                         ANNOTATION_TAG.UUID,
                         ANNOTATION_TAG.TYPE_ID,
                         ANNOTATION_TAG.NAME,
-                        ANNOTATION_TAG.STYLE_ID)
+                        ANNOTATION_TAG.STYLE_ID,
+                        ANNOTATION_TAG.TAG_TEXT)
                 .from(ANNOTATION_TAG)
                 .where(ANNOTATION_TAG.ID.eq(id))
                 .fetchOptional(this::mapToAnnotationTag));
@@ -112,7 +113,8 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                                     ANNOTATION_TAG.UUID,
                                     ANNOTATION_TAG.TYPE_ID,
                                     ANNOTATION_TAG.NAME,
-                                    ANNOTATION_TAG.STYLE_ID)
+                                    ANNOTATION_TAG.STYLE_ID,
+                                    ANNOTATION_TAG.TAG_TEXT)
                             .from(ANNOTATION_TAG)
                             .where(ANNOTATION_TAG.TYPE_ID.eq(request.getType().getPrimitiveValue()))
                             .and(ANNOTATION_TAG.NAME.eq(request.getName()))
@@ -124,9 +126,10 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                         config.dsl()
                                 .update(ANNOTATION_TAG)
                                 .set(ANNOTATION_TAG.DELETED, false)
+                                .set(ANNOTATION_TAG.TAG_TEXT, request.getTagText())
                                 .where(ANNOTATION_TAG.ID.eq(existing.get().getId()))
                                 .execute();
-                        return existing.get();
+                        return existing.get().copy().tagText(request.getTagText()).build();
                     }
 
                     // Insert a new tag.
@@ -135,10 +138,12 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                             .insertInto(ANNOTATION_TAG,
                                     ANNOTATION_TAG.UUID,
                                     ANNOTATION_TAG.TYPE_ID,
-                                    ANNOTATION_TAG.NAME)
+                                    ANNOTATION_TAG.NAME,
+                                    ANNOTATION_TAG.TAG_TEXT)
                             .values(uuid,
                                     request.getType().getPrimitiveValue(),
-                                    request.getName())
+                                    request.getName(),
+                                    request.getTagText())
                             .returning(ANNOTATION_TAG.ID)
                             .fetchOne(ANNOTATION_TAG.ID);
                     return AnnotationTag.builder()
@@ -146,6 +151,7 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                             .uuid(uuid)
                             .type(request.getType())
                             .name(request.getName())
+                            .tagText(request.getTagText())
                             .build();
                 }));
     }
@@ -157,6 +163,7 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                 .set(ANNOTATION_TAG.NAME, annotationTag.getName())
                 .set(ANNOTATION_TAG.STYLE_ID,
                         NullSafe.get(annotationTag.getStyle(), ConditionalFormattingStyle::getPrimitiveValue))
+                .set(ANNOTATION_TAG.TAG_TEXT, annotationTag.getTagText())
                 .where(ANNOTATION_TAG.UUID.eq(annotationTag.getUuid()))
                 .execute());
         return annotationTag;
@@ -197,7 +204,8 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                         ANNOTATION_TAG.UUID,
                         ANNOTATION_TAG.TYPE_ID,
                         ANNOTATION_TAG.NAME,
-                        ANNOTATION_TAG.STYLE_ID)
+                        ANNOTATION_TAG.STYLE_ID,
+                        ANNOTATION_TAG.TAG_TEXT)
                 .from(ANNOTATION_TAG)
                 .where(ANNOTATION_TAG.DELETED.isFalse())
                 .and(condition)
@@ -231,7 +239,8 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                                 ANNOTATION_TAG.UUID,
                                 ANNOTATION_TAG.TYPE_ID,
                                 ANNOTATION_TAG.NAME,
-                                ANNOTATION_TAG.STYLE_ID)
+                                ANNOTATION_TAG.STYLE_ID,
+                                ANNOTATION_TAG.TAG_TEXT)
                         .from(ANNOTATION_TAG)
                         .where(ANNOTATION_TAG.TYPE_ID.eq(annotationTagType.getPrimitiveValue()))
                         .and(ANNOTATION_TAG.NAME.eq(name))
@@ -251,6 +260,7 @@ class AnnotationTagDaoImpl implements AnnotationTagDao, Clearable {
                 .name(record.get(ANNOTATION_TAG.NAME))
                 .style(ConditionalFormattingStyle.PRIMITIVE_VALUE_CONVERTER
                         .fromPrimitiveValue(record.get(ANNOTATION_TAG.STYLE_ID)))
+                .tagText(record.get(ANNOTATION_TAG.TAG_TEXT))
                 .build();
     }
 

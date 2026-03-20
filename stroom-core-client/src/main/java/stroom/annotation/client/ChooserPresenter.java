@@ -122,6 +122,10 @@ public class ChooserPresenter<T>
         getView().clearFilter();
     }
 
+    void clearSelection() {
+        selectionModel.clear();
+    }
+
     /**
      * Sets the function to provide a display value for value T.
      */

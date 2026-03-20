@@ -82,6 +82,11 @@ public class AnnotationTag extends TableImpl<AnnotationTagRecord> {
      */
     public final TableField<AnnotationTagRecord, Boolean> DELETED = createField(DSL.name("deleted"), SQLDataType.BOOLEAN.nullable(false).defaultValue(DSL.inline("0", SQLDataType.BOOLEAN)), this, "");
 
+    /**
+     * The column <code>stroom.annotation_tag.tag_text</code>.
+     */
+    public final TableField<AnnotationTagRecord, String> TAG_TEXT = createField(DSL.name("tag_text"), SQLDataType.CLOB, this, "");
+
     private AnnotationTag(Name alias, Table<AnnotationTagRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

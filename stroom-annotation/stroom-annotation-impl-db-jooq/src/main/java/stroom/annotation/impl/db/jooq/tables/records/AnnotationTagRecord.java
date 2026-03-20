@@ -102,6 +102,20 @@ public class AnnotationTagRecord extends UpdatableRecordImpl<AnnotationTagRecord
         return (Boolean) get(5);
     }
 
+    /**
+     * Setter for <code>stroom.annotation_tag.tag_text</code>.
+     */
+    public void setTagText(String value) {
+        set(6, value);
+    }
+
+    /**
+     * Getter for <code>stroom.annotation_tag.tag_text</code>.
+     */
+    public String getTagText() {
+        return (String) get(6);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
