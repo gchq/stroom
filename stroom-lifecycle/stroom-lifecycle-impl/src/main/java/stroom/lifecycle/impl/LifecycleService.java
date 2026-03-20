@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,20 @@ package stroom.lifecycle.impl;
 
 import stroom.lifecycle.api.ShutdownTask;
 import stroom.lifecycle.api.StartupTask;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.ThreadPoolImpl;
+import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.logging.DurationTimer;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.LogUtil;
 
 import io.dropwizard.lifecycle.Managed;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Deque;
 import java.util.Map;
@@ -35,6 +40,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -42,10 +48,12 @@ import java.util.stream.Collectors;
 @Singleton
 class LifecycleService implements Managed {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LifecycleService.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LifecycleService.class);
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Lifecycle Service");
 
     private final Deque<Provider<Runnable>> startPending;
     private final Deque<Provider<Runnable>> stopPending;
+    private final Executor executor;
 
     // The scheduled executor that executes executable beans.
     private final AtomicBoolean shuttingDown = new AtomicBoolean();
@@ -57,7 +65,9 @@ class LifecycleService implements Managed {
     @Inject
     LifecycleService(final Map<StartupTask, Provider<Runnable>> startupTaskMap,
                      final Map<ShutdownTask, Provider<Runnable>> shutdownTaskMap,
-                     final LifecycleConfig lifecycleConfig) {
+                     final LifecycleConfig lifecycleConfig,
+                     final ExecutorProvider executorProvider) {
+        this.executor = executorProvider.get(THREAD_POOL);
         this.enabled.set(lifecycleConfig.isEnabled());
 
         startPending = startupTaskMap.entrySet()
@@ -89,7 +99,7 @@ class LifecycleService implements Managed {
                 LOGGER.info("Starting up in background");
                 doStart();
                 LOGGER.info("Started in {}", logExecutionTime);
-            });
+            }, executor);
         }
     }
 
@@ -108,17 +118,27 @@ class LifecycleService implements Managed {
 
     private synchronized void doStart() {
         if (!shuttingDown.get()) {
-            LOGGER.info("Starting Stroom Lifecycle service");
+            final int initialCount = startPending.size();
+            LOGGER.info("Starting Stroom Lifecycle service, count: {}", initialCount);
             try {
-                startRemaining = new CountDownLatch(startPending.size());
+                startRemaining = new CountDownLatch(initialCount);
                 startNext();
 
                 // Wait for startup to complete.
-                startRemaining.await();
+                LOGGER.debug(() -> LogUtil.message("doStart() - About to wait for startRemaining to count down {}",
+                        startRemaining));
+                final DurationTimer timer = DurationTimer.start();
+                while (!startRemaining.await(30, TimeUnit.SECONDS)) {
+                    // Break out of the await() and log in case one of the services is hanging, so it is
+                    // clear to admin what is going on.
+                    LOGGER.info(() -> LogUtil.message(
+                            "Still waiting for Stroom Lifecycle service to start, remaining count: {}, duration: {}",
+                            startRemaining.getCount(), timer));
+                }
 
-                LOGGER.info("Started Stroom Lifecycle service");
+                LOGGER.info("Stroom Lifecycle service started successfully in {}", timer);
             } catch (final InterruptedException | UncheckedInterruptedException e) {
-                LOGGER.info("Interrupted");
+                LOGGER.info("doStart Interrupted");
                 stop();
             }
         }
@@ -135,15 +155,18 @@ class LifecycleService implements Managed {
             final Provider<Runnable> runnableProvider = startPending.pollFirst();
             if (runnableProvider != null) {
                 final Runnable runnable = runnableProvider.get();
-                LOGGER.info("Lifecycle " + runnable.getClass().getSimpleName() + " starting up");
+                final String className = runnable.getClass().getSimpleName();
+                LOGGER.info("Lifecycle {} starting up", className);
                 CompletableFuture
-                        .runAsync(runnable)
-                        .whenComplete((r, t) -> {
+                        .runAsync(runnable, executor)
+                        .whenComplete((ignored, t) -> {
                             if (t != null) {
                                 while (t instanceof CompletionException) {
                                     t = t.getCause();
                                 }
                                 LOGGER.error(t.getMessage(), t);
+                            } else {
+                                LOGGER.info("Lifecycle {} started up successfully", className);
                             }
                             startNext();
                             startRemaining.countDown();
@@ -186,7 +209,7 @@ class LifecycleService implements Managed {
             LOGGER.info("Lifecycle " + runnable.getClass().getSimpleName() + " shutting down");
             CompletableFuture
                     .runAsync(runnable)
-                    .whenComplete((r, t) -> {
+                    .whenComplete((ignored, t) -> {
                         if (t != null) {
                             while (t instanceof CompletionException) {
                                 t = t.getCause();
