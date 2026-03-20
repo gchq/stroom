@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,9 +34,12 @@ import stroom.index.lucene.analyser.AnalyzerFactory;
 import stroom.query.api.datasource.AnalyzerType;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TerminateHandlerFactory;
+import stroom.task.api.ThreadPoolImpl;
+import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -99,6 +102,7 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -119,6 +123,7 @@ import java.util.stream.Collectors;
 public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LuceneContentIndex.class);
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Lucene Content Index");
     private static final long JOB_ENABLED_STATE_CHECK_INTERVAL = 10_000;
     private static final int LATCH_TIMEOUT_MS = 1_500;
     private static final int MIN_GRAM = 1;
@@ -141,6 +146,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
     private final ExplorerNodeService explorerNodeService;
+    private final Executor executor;
     private final Set<ContentIndexable> indexables;
     private final Path docIndexDir;
     private final CountDownLatch indexInitialisedLatch = new CountDownLatch(1);
@@ -159,12 +165,14 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                               final Set<ContentIndexable> indexables,
                               final SecurityContext securityContext,
                               final TaskContextFactory taskContextFactory,
-                              final ExplorerNodeService explorerNodeService) {
+                              final ExplorerNodeService explorerNodeService,
+                              final ExecutorProvider executorProvider) {
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
         this.indexables = indexables;
         this.docIndexDir = tempDirProvider.get().resolve("doc-index");
         this.explorerNodeService = explorerNodeService;
+        this.executor = executorProvider.get(THREAD_POOL);
     }
 
     private boolean isIndexInitialised() {
@@ -176,7 +184,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
             synchronized (this) {
                 if (!isIndexInitialised() && !isInitialising.get()) {
                     LOGGER.info("{} - Executing async initialisation of the content index", RE_INDEX_JOB_NAME);
-                    CompletableFuture.runAsync(this::initIndex);
+                    CompletableFuture.runAsync(this::initIndex, executor);
                 }
             }
         }
@@ -256,7 +264,6 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
     private void initQueueProcessorThread() {
         CompletableFuture
                 .runAsync(() -> {
-                    Thread.currentThread().setName("Content index queue monitor");
                     LOGGER.info("{} - Starting background thread to monitor change queue", RE_INDEX_JOB_NAME);
                     // This runnable is executed at the end of initIndex, so we don't
                     // have to worry about checking if the index is ready
@@ -281,7 +288,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
                         Thread.currentThread().interrupt();
                         throw new UncheckedInterruptedException(e);
                     }
-                });
+                }, executor);
     }
 
     /**
@@ -753,7 +760,7 @@ public class LuceneContentIndex implements ContentIndex, EntityEvent.Handler {
         explorerNodeService.getNode(docRef).ifPresent(node -> {
             if (node.getTags() != null) {
                 node.getTags().forEach(tag ->
-                    document.add(new TextField(TAG, tag, Store.YES))
+                        document.add(new TextField(TAG, tag, Store.YES))
                 );
             }
         });
