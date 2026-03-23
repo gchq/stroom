@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import stroom.util.thread.CustomThreadFactory;
 
 import com.codahale.metrics.health.HealthCheck;
 import io.dropwizard.lifecycle.Managed;
+import org.jspecify.annotations.NonNull;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -100,11 +101,9 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
                 throw new RuntimeException(LogUtil.message("{} is not a directory", this.dirToWatch));
             }
             this.isValidDir = true;
-            final CustomThreadFactory watcherThreadFactory = new CustomThreadFactory(
-                    this.getClass().getSimpleName() + "-watcher");
+            final CustomThreadFactory watcherThreadFactory = createThreadFactory("Watcher");
             this.watcherExecutorService = Executors.newSingleThreadExecutor(watcherThreadFactory);
-            final CustomThreadFactory processorThreadFactory = new CustomThreadFactory(
-                    this.getClass().getSimpleName() + "-processor");
+            final CustomThreadFactory processorThreadFactory = createThreadFactory("Processor");
             this.processorExecutorService = Executors.newSingleThreadScheduledExecutor(processorThreadFactory);
         } else {
             // This will prevent it starting
@@ -116,6 +115,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
             this.includedEventTypes = null;
         }
     }
+
 
     public Path getDirToWatch() {
         return dirToWatch;
@@ -446,6 +446,10 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
                 .withDetail("isRunning", isRunning)
                 .withDetail("isValidDir", isValidDir)
                 .build();
+    }
+
+    private @NonNull CustomThreadFactory createThreadFactory(final String prefixSuffix) {
+        return new CustomThreadFactory(this.getClass().getSimpleName() + "-" + prefixSuffix);
     }
 
     /**

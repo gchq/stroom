@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,7 +165,7 @@ class AnalyticsNodeSearchTaskHandler implements NodeSearchTaskHandler {
                                             coprocessors.getErrorConsumer(),
                                             fieldArray,
                                             expressionMatcher));
-                    futures.add(CompletableFuture.runAsync(runnable));
+                    futures.add(CompletableFuture.runAsync(runnable, executorProvider.get()));
                 });
             } catch (final RuntimeException e) {
                 coprocessors.getErrorConsumer().add(e);

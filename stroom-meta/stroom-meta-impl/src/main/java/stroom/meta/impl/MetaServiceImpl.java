@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,6 +85,7 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -108,6 +109,7 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
     private final UserQueryRegistry userQueryRegistry;
     private final TaskManager taskManager;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
+    private final Provider<Executor> executorProvider;
 
     @Inject
     MetaServiceImpl(final MetaDao metaDao,
@@ -122,7 +124,8 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
                     final TaskContextFactory taskContextFactory,
                     final UserQueryRegistry userQueryRegistry,
                     final TaskManager taskManager,
-                    final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
+                    final FieldInfoResultPageFactory fieldInfoResultPageFactory,
+                    final Provider<Executor> executorProvider) {
         this.metaDao = metaDao;
         this.metaFeedDao = metaFeedDao;
         this.metaValueDao = metaValueDao;
@@ -136,6 +139,7 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
         this.userQueryRegistry = userQueryRegistry;
         this.taskManager = taskManager;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
+        this.executorProvider = executorProvider;
     }
 
     @Override
@@ -760,7 +764,7 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
 //                            }
 
                                     return metaDao.getRetentionDeletionSummary(rules, criteria);
-                                }));
+                                }), executorProvider.get());
 
                 try {
                     // Wait for completion

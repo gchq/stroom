@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.util.time.StroomDuration;
 
 import java.time.Duration;
 import java.util.Objects;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -114,6 +115,18 @@ public class ThreadUtil {
             } catch (final InterruptedException e) {
                 throw UncheckedInterruptedException.create(e);
             }
+        }
+    }
+
+    /**
+     * If throwable is a {@link CompletionException} then return its cause, else return
+     * throwable. Handles nulls.
+     */
+    public static Throwable getCompletionException(final Throwable throwable) {
+        if (throwable instanceof final CompletionException completionException) {
+            return completionException.getCause();
+        } else {
+            return throwable;
         }
     }
 }

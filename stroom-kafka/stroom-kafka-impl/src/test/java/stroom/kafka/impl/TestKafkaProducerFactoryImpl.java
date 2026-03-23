@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,14 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.kafka.api.KafkaProducerFactory;
 import stroom.kafka.api.SharedKafkaProducer;
 import stroom.kafka.shared.KafkaConfigDoc;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.shared.ThreadPool;
 import stroom.util.sysinfo.SystemInfoResult;
 
 import jakarta.validation.constraints.NotNull;
 import org.apache.kafka.clients.producer.KafkaProducer;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -36,6 +40,9 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,13 +51,39 @@ public class TestKafkaProducerFactoryImpl {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestKafkaProducerFactoryImpl.class);
 
+    private static ExecutorService executorService;
+    private static ExecutorProvider executorProvider;
+
     @Mock
     KafkaConfigDocCache kafkaConfigDocCache;
+
+    @BeforeAll
+    static void beforeAll() {
+        executorService = Executors.newCachedThreadPool();
+        executorProvider = new ExecutorProvider() {
+
+            @Override
+            public Executor get() {
+                return executorService;
+            }
+
+            @Override
+            public Executor get(final ThreadPool threadPool) {
+                return executorService;
+            }
+        };
+    }
+
+    @AfterAll
+    static void afterAll() {
+        executorService.shutdown();
+    }
 
     @Test
     public void getSupplier_empty() {
 
-        final KafkaProducerFactory kafkaProducerFactory = new KafkaProducerFactoryImpl(kafkaConfigDocCache);
+        final KafkaProducerFactory kafkaProducerFactory = new KafkaProducerFactoryImpl(
+                kafkaConfigDocCache, executorProvider);
 
         final KafkaConfigDoc kafkaConfigDoc = createKafkaConfigDoc("Config1", "v1");
 
@@ -69,7 +102,8 @@ public class TestKafkaProducerFactoryImpl {
     @Test
     public void getSupplier_twoConfigs() {
 
-        final KafkaProducerFactory kafkaProducerFactory = new KafkaProducerFactoryImpl(kafkaConfigDocCache);
+        final KafkaProducerFactory kafkaProducerFactory = new KafkaProducerFactoryImpl(
+                kafkaConfigDocCache, executorProvider);
 
         final KafkaConfigDoc kafkaConfigDoc1 = createKafkaConfigDoc("Config1", "v1");
         final KafkaConfigDoc kafkaConfigDoc2 = createKafkaConfigDoc("Config2", "v1");
@@ -135,7 +169,8 @@ public class TestKafkaProducerFactoryImpl {
     @Test
     public void getSupplier_updatedConfig() {
 
-        final KafkaProducerFactory kafkaProducerFactory = new KafkaProducerFactoryImpl(kafkaConfigDocCache);
+        final KafkaProducerFactory kafkaProducerFactory = new KafkaProducerFactoryImpl(
+                kafkaConfigDocCache, executorProvider);
 
         final KafkaConfigDoc kafkaConfigDoc1mk1 = createKafkaConfigDoc("Config1", "v1");
 
@@ -202,7 +237,8 @@ public class TestKafkaProducerFactoryImpl {
     @Test
     void testHealthCheck() {
 
-        final KafkaProducerFactoryImpl kafkaProducerFactory = new KafkaProducerFactoryImpl(kafkaConfigDocCache);
+        final KafkaProducerFactoryImpl kafkaProducerFactory = new KafkaProducerFactoryImpl(
+                kafkaConfigDocCache, executorProvider);
 
         final KafkaConfigDoc kafkaConfigDoc1 = createKafkaConfigDoc("Config1", "v1");
         final KafkaConfigDoc kafkaConfigDoc2 = createKafkaConfigDoc("Config2", "v1");

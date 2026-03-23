@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 public class MapDataStoreFactory implements DataStoreFactory {
 
@@ -46,7 +47,8 @@ public class MapDataStoreFactory implements DataStoreFactory {
                             final FieldIndex fieldIndex,
                             final Map<String, String> paramMap,
                             final DataStoreSettings dataStoreSettings,
-                            final ErrorConsumer errorConsumer) {
+                            final ErrorConsumer errorConsumer,
+                            final Provider<Executor> executorProvider) {
         final SearchResultStoreConfig resultStoreConfig = resultStoreConfigProvider.get();
         return new MapDataStore(
                 componentId,
@@ -56,7 +58,8 @@ public class MapDataStoreFactory implements DataStoreFactory {
                 paramMap,
                 dataStoreSettings,
                 errorConsumer,
-                resultStoreConfig.getMapConfig());
+                resultStoreConfig.getMapConfig(),
+                executorProvider);
     }
 
     @Override

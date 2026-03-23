@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,7 @@ import stroom.util.shared.UserRef;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import jakarta.inject.Provider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -91,6 +92,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -107,10 +109,12 @@ class TestSearchResultCreation {
 
     private DataStoreFactory dataStoreFactory;
     private ExecutorService executorService;
+    private Provider<Executor> executorProvider;
 
     @BeforeEach
     void setup(@TempDir final Path tempDir) {
         executorService = Executors.newCachedThreadPool();
+        executorProvider = () -> executorService;
 
         final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
         final TempDirProvider tempDirProvider = () -> tempDir;
@@ -121,7 +125,7 @@ class TestSearchResultCreation {
                 lmdbEnvDirFactory,
                 SearchResultStoreConfig::new,
                 pathCreator,
-                () -> executorService,
+                executorProvider,
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
                 new ByteBufferFactoryImpl(),
                 new ExpressionPredicateFactory(),
@@ -146,8 +150,8 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory =
-                new CoprocessorsFactory(dataStoreFactory, new ExpressionContextFactory(), sizesProvider);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
+                dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
@@ -179,7 +183,7 @@ class TestSearchResultCreation {
                 "node",
                 new ResultStoreSettingsFactory().get(),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(), executorProvider);
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -258,8 +262,8 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory =
-                new CoprocessorsFactory(dataStoreFactory, new ExpressionContextFactory(), sizesProvider);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
+                dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
@@ -314,7 +318,8 @@ class TestSearchResultCreation {
                 "node",
                 new ResultStoreSettingsFactory().get(),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(),
+                executorProvider);
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -337,8 +342,8 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory =
-                new CoprocessorsFactory(dataStoreFactory, new ExpressionContextFactory(), sizesProvider);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
+                dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
@@ -395,7 +400,8 @@ class TestSearchResultCreation {
                 "node",
                 new ResultStoreSettingsFactory().get(),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(),
+                executorProvider);
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -432,8 +438,8 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory =
-                new CoprocessorsFactory(dataStoreFactory, new ExpressionContextFactory(), sizesProvider);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
+                dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
         final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
@@ -510,7 +516,8 @@ class TestSearchResultCreation {
                 "node",
                 new ResultStoreSettingsFactory().get(),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(),
+                executorProvider);
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 

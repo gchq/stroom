@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,10 +124,6 @@ public class AppPermissionSetImpl implements AppPermissionSet {
     @Override
     public Stream<AppPermission> stream() {
         return appPermissions.stream();
-    }
-
-    public Stream<AppPermission> parallelStream() {
-        return appPermissions.parallelStream();
     }
 
     public void forEach(final Consumer<? super AppPermission> action) {
