@@ -135,6 +135,7 @@
     <inherits name="stroom.monitoring.Monitoring" />
     <inherits name="stroom.index.Index"/>
     <inherits name="stroom.analytics.Analytics" />
+    <inherits name="stroom.datagen.DataGen" />
     <inherits name="stroom.view.View" />
     <!--
     <inherits name="stroom.nstat.store.monitoring.StatsMonitoring" />

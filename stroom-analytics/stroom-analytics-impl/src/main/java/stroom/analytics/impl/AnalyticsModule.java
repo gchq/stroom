@@ -17,7 +17,9 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.api.AnalyticsService;
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.DuplicateCheckResource;
+import stroom.analytics.shared.ReportDoc;
 import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.job.api.ScheduledJobsBinder;
 import stroom.processor.api.ProcessorTaskExecutorBinder;
@@ -107,7 +109,7 @@ public class AnalyticsModule extends AbstractModule {
                 .bind(ProcessorType.STREAMING_ANALYTIC, StreamingAnalyticProcessorExecutor.class);
 
         GuiceUtil.buildMapBinder(binder(), String.class, HasUserDependencies.class)
-                .addBinding(ScheduledQueryAnalyticExecutor.class.getName(), ScheduledQueryAnalyticExecutor.class);
+                .addBinding(ScheduledExecutorService.class.getName(), ScheduledExecutorService.class);
     }
 
 
@@ -129,16 +131,18 @@ public class AnalyticsModule extends AbstractModule {
     private static class ScheduledAnalyticExecutorRunnable extends RunnableWrapper {
 
         @Inject
-        ScheduledAnalyticExecutorRunnable(final ScheduledQueryAnalyticExecutor executor) {
-            super(executor::exec);
+        ScheduledAnalyticExecutorRunnable(final ScheduledExecutorService<AnalyticRuleDoc> scheduledExecutorService,
+                                          final ScheduledQueryAnalyticExecutable scheduledQueryAnalyticExecutor) {
+            super(() -> scheduledExecutorService.exec(scheduledQueryAnalyticExecutor));
         }
     }
 
     private static class ReportExecutorRunnable extends RunnableWrapper {
 
         @Inject
-        ReportExecutorRunnable(final ReportExecutor executor) {
-            super(executor::exec);
+        ReportExecutorRunnable(final ScheduledExecutorService<ReportDoc> scheduledExecutorService,
+                               final ReportExecutor reportExecutor) {
+            super(() -> scheduledExecutorService.exec(reportExecutor));
         }
     }
 

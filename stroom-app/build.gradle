@@ -106,6 +106,7 @@ dependencies {
     implementation project(':stroom-data:stroom-data-store-impl-fs-db-jooq')
     implementation project(':stroom-data:stroom-data-store-util')
     implementation project(':stroom-data:stroom-data-zip')
+    implementation project(':stroom-datagen:stroom-datagen-impl')
     implementation project(':stroom-db-util')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-dictionary:stroom-dictionary-impl')

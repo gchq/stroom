@@ -57,7 +57,7 @@ public abstract class DocPresenter<V extends View, D>
         return false;
     }
 
-    private void setDirty(final boolean dirty) {
+    protected void setDirty(final boolean dirty) {
         if (this.dirty != dirty) {
             this.dirty = dirty;
             onDirty();

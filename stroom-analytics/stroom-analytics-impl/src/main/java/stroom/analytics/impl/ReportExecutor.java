@@ -17,6 +17,7 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.api.NotificationState;
+import stroom.analytics.impl.ScheduledExecutorService.ExecutionResult;
 import stroom.analytics.rule.impl.ReportStore;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionTracker;
@@ -25,7 +26,6 @@ import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.analytics.shared.ReportDoc;
-import stroom.analytics.shared.ReportSettings;
 import stroom.dashboard.impl.SampleGenerator;
 import stroom.dashboard.impl.download.DelimitedTarget;
 import stroom.dashboard.impl.download.ExcelTarget;
@@ -37,9 +37,7 @@ import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.meta.api.MetaProperties;
-import stroom.node.api.NodeInfo;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.api.DestroyReason;
@@ -62,9 +60,6 @@ import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.ref.ErrorConsumer;
-import stroom.security.api.SecurityContext;
-import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskContextFactory;
 import stroom.ui.config.shared.ReportUiDefaultConfig;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.date.DateUtil;
@@ -75,7 +70,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.scheduler.Trigger;
 import stroom.util.shared.NullSafe;
-import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -94,7 +88,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
+public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReportExecutor.class);
 
@@ -103,10 +97,8 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
 
     private final ReportStore reportStore;
     private final ResultStoreManager searchResponseCreatorManager;
-    private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
     private final SearchRequestFactory searchRequestFactory;
     private final ExpressionContextFactory expressionContextFactory;
-    private final ExecutionScheduleDao executionScheduleDao;
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final Provider<ReportUiDefaultConfig> reportUiDefaultConfigProvider;
     private final TempDirProvider tempDirProvider;
@@ -115,39 +107,23 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
     private final Provider<EmailSender> emailSenderProvider;
 
     @Inject
-    public ReportExecutor(final ExecutorProvider executorProvider,
-                          final Provider<AnalyticErrorWriter> analyticErrorWriterProvider,
-                          final TaskContextFactory taskContextFactory,
-                          final NodeInfo nodeInfo,
-                          final SecurityContext securityContext,
-                          final ExecutionScheduleDao executionScheduleDao,
-                          final Provider<DocRefInfoService> docRefInfoServiceProvider,
+    public ReportExecutor(final Provider<AnalyticErrorWriter> analyticErrorWriterProvider,
                           final ReportStore reportStore,
                           final ResultStoreManager searchResponseCreatorManager,
                           final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
                           final SearchRequestFactory searchRequestFactory,
                           final ExpressionContextFactory expressionContextFactory,
-                          final ExecutionScheduleDao executionScheduleDao1,
                           final ExpressionPredicateFactory expressionPredicateFactory,
                           final Provider<ReportUiDefaultConfig> reportUiDefaultConfigProvider,
                           final TempDirProvider tempDirProvider,
                           final Store streamStore,
                           final NotificationStateService notificationStateService,
                           final Provider<EmailSender> emailSenderProvider) {
-        super(executorProvider,
-                analyticErrorWriterProvider,
-                taskContextFactory,
-                nodeInfo,
-                securityContext,
-                executionScheduleDao,
-                docRefInfoServiceProvider,
-                "report");
+        super(analyticErrorWriterProvider, errorReceiverProxyProvider);
         this.reportStore = reportStore;
         this.searchResponseCreatorManager = searchResponseCreatorManager;
-        this.errorReceiverProxyProvider = errorReceiverProxyProvider;
         this.searchRequestFactory = searchRequestFactory;
         this.expressionContextFactory = expressionContextFactory;
-        this.executionScheduleDao = executionScheduleDao1;
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.reportUiDefaultConfigProvider = reportUiDefaultConfigProvider;
         this.tempDirProvider = tempDirProvider;
@@ -157,190 +133,126 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
     }
 
     @Override
-    boolean process(final ReportDoc reportDoc,
-                    final Trigger trigger,
-                    final Instant executionTime,
-                    final Instant effectiveExecutionTime,
-                    final ExecutionSchedule executionSchedule,
-                    final ExecutionTracker currentTracker) {
-        LOGGER.debug(() -> LogUtil.message(
-                "Executing report: {} with executionTime: {}, effectiveExecutionTime: {}, currentTracker: {}",
-                reportDoc.asDocRef().toShortString(), executionTime, effectiveExecutionTime, currentTracker));
-
-        boolean success = false;
+    public ExecutionResult run(final ReportDoc doc,
+                               final Trigger trigger,
+                               final Instant executionTime,
+                               final Instant effectiveExecutionTime,
+                               final ExecutionSchedule executionSchedule,
+                               final ExecutionTracker currentTracker,
+                               final ExecutionResult executionResult) {
         final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
-        ExecutionResult executionResult = ExecutionResult.empty();
 
-        try {
-            final SearchRequestSource searchRequestSource = SearchRequestSource
-                    .builder()
-                    .sourceType(SourceType.SCHEDULED_QUERY_ANALYTIC)
-                    .componentId(SearchRequestFactory.TABLE_COMPONENT_ID)
+        final SearchRequestSource searchRequestSource = SearchRequestSource
+                .builder()
+                .sourceType(SourceType.SCHEDULED_QUERY_ANALYTIC)
+                .componentId(SearchRequestFactory.TABLE_COMPONENT_ID)
+                .build();
+
+        final String query = doc.getQuery();
+        final Query sampleQuery = Query
+                .builder()
+                .params(doc.getParameters())
+                .timeRange(doc.getTimeRange())
+                .build();
+        final SearchRequest sampleRequest = new SearchRequest(
+                searchRequestSource,
+                null,
+                sampleQuery,
+                null,
+                DateTimeSettings.builder().referenceTime(effectiveExecutionTime.toEpochMilli()).build(),
+                false);
+        final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
+        final SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
+
+        // Fix table result requests.
+        final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
+        if (NullSafe.size(resultRequests) == 1) {
+            final ResultRequest resultRequest = resultRequests.getFirst().copy()
+                    .openGroups(null)
+                    .requestedRange(OffsetRange.UNBOUNDED)
                     .build();
 
-            final String query = reportDoc.getQuery();
-            final Query sampleQuery = Query
-                    .builder()
-                    .params(reportDoc.getParameters())
-                    .timeRange(reportDoc.getTimeRange())
-                    .build();
-            final SearchRequest sampleRequest = new SearchRequest(
-                    searchRequestSource,
-                    null,
-                    sampleQuery,
-                    null,
-                    DateTimeSettings.builder().referenceTime(effectiveExecutionTime.toEpochMilli()).build(),
-                    false);
-            final ExpressionContext expressionContext = expressionContextFactory.createContext(sampleRequest);
-            final SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
+            // Create a result store and begin search.
+            final RequestAndStore requestAndStore = searchResponseCreatorManager
+                    .getResultStore(mappedRequest);
+            final SearchRequest modifiedRequest = requestAndStore.searchRequest();
+            try {
+                final DataStore dataStore = requestAndStore
+                        .resultStore().getData(SearchRequestFactory.TABLE_COMPONENT_ID);
+                // Wait for search to complete.
+                dataStore.getCompletionState().awaitCompletion();
 
-            // Fix table result requests.
-            final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
-            if (NullSafe.size(resultRequests) == 1) {
-                final ResultRequest resultRequest = resultRequests.getFirst().copy()
-                        .openGroups(null)
-                        .requestedRange(OffsetRange.UNBOUNDED)
-                        .build();
-
-                // Create a result store and begin search.
-                final RequestAndStore requestAndStore = searchResponseCreatorManager
-                        .getResultStore(mappedRequest);
-                final SearchRequest modifiedRequest = requestAndStore.searchRequest();
+                ReportFile reportFile = null;
                 try {
-                    final DataStore dataStore = requestAndStore
-                            .resultStore().getData(SearchRequestFactory.TABLE_COMPONENT_ID);
-                    // Wait for search to complete.
-                    dataStore.getCompletionState().awaitCompletion();
+                    // Create the output file.
+                    reportFile = createFile(
+                            doc,
+                            executionTime,
+                            effectiveExecutionTime,
+                            modifiedRequest.getDateTimeSettings(),
+                            dataStore,
+                            resultRequest);
 
-                    // Determine if we are going to send empty reports.
-                    final boolean sendEmptyReports = NullSafe.getOrElse(
-                            reportDoc,
-                            ReportDoc::getReportSettings,
-                            ReportSettings::isSendEmptyReports,
-                            false);
-
-                    ReportFile reportFile = null;
-                    try {
-                        // Create the output file.
-                        reportFile = createFile(
-                                reportDoc,
-                                executionTime,
-                                effectiveExecutionTime,
-                                modifiedRequest.getDateTimeSettings(),
-                                dataStore,
-                                resultRequest);
-
-                        // Send the report if not empty or if we are happy to send empty reports anyway.
-                        if (sendEmptyReports || reportFile.rowCount() > 0) {
-                            for (final NotificationConfig notificationConfig : reportDoc.getNotifications()) {
-                                try {
-                                    sendFile(reportDoc,
-                                            notificationConfig,
-                                            reportFile,
-                                            executionTime,
-                                            effectiveExecutionTime);
-                                } catch (final IOException e) {
-                                    errorConsumer.add(e);
-                                }
-                            }
-                        } else {
-                            LOGGER.debug("process() - Notifications skipped - sendEmptyReports: {}, reportFile: {}",
-                                    sendEmptyReports, reportFile);
-                        }
-
-                    } catch (final IOException e) {
-                        errorConsumer.add(e);
-                    } finally {
-                        // Delete the file after we complete.
-                        if (reportFile != null) {
-                            try {
-                                Files.deleteIfExists(reportFile.file());
-                            } catch (final IOException e) {
-                                // Swallow as just a temp file
-                                LOGGER.error("Error deleting reportFile: {} - {}",
-                                        reportFile, LogUtil.exceptionMessage(e), e);
-                            }
+                    for (final NotificationConfig notificationConfig : doc.getNotifications()) {
+                        try {
+                            sendFile(doc, notificationConfig, reportFile, executionTime, effectiveExecutionTime);
+                        } catch (final IOException e) {
+                            errorConsumer.add(e);
                         }
                     }
 
+                } catch (final IOException e) {
+                    errorConsumer.add(e);
                 } finally {
-                    // Destroy search result store.
-                    searchResponseCreatorManager.destroy(modifiedRequest.getKey(), DestroyReason.NO_LONGER_NEEDED);
+                    // Delete the file after we complete.
+                    if (reportFile != null) {
+                        try {
+                            Files.deleteIfExists(reportFile.file());
+                        } catch (final IOException e) {
+                            // Swallow as just a temp file
+                            LOGGER.error("Error deleting reportFile: {} - {}",
+                                    reportFile, LogUtil.exceptionMessage(e), e);
+                        }
+                    }
                 }
+
+            } catch (final InterruptedException e) {
+                throw UncheckedInterruptedException.create(e);
+            } finally {
+                // Destroy search result store.
+                searchResponseCreatorManager.destroy(modifiedRequest.getKey(), DestroyReason.NO_LONGER_NEEDED);
             }
-
-            // Remember last successful execution time and compute next execution time.
-            final Instant now = Instant.now();
-            final Instant nextExecutionTime;
-            if (executionSchedule.isContiguous()) {
-                nextExecutionTime = trigger.getNextExecutionTimeAfter(effectiveExecutionTime);
-            } else {
-                nextExecutionTime = trigger.getNextExecutionTimeAfter(now);
-            }
-
-            // Update tracker.
-            if (nextExecutionTime != null) {
-                final ExecutionTracker executionTracker = new ExecutionTracker(
-                        now.toEpochMilli(),
-                        effectiveExecutionTime.toEpochMilli(),
-                        nextExecutionTime.toEpochMilli());
-                if (currentTracker != null) {
-                    executionScheduleDao.updateTracker(executionSchedule, executionTracker);
-                } else {
-                    executionScheduleDao.createTracker(executionSchedule, executionTracker);
-                }
-            }
-
-            if (executionResult.status() == null) {
-                executionResult = ExecutionResult.complete(executionResult.message());
-                success = true;
-            }
-
-        } catch (final Exception e) {
-            executionResult = ExecutionResult.error(e.getMessage());
-
-            try {
-                LOGGER.debug(e::getMessage, e);
-                errorReceiverProxyProvider.get()
-                        .getErrorReceiver()
-                        .log(Severity.ERROR, null, null, e.getMessage(), e);
-            } catch (final RuntimeException e2) {
-                LOGGER.error(e2::getMessage, e2);
-            }
-
-            // Disable future execution if the error was not an interrupted exception.
-            if (!(e instanceof InterruptedException) &&
-                !(e instanceof UncheckedInterruptedException)) {
-                // Disable future execution.
-                LOGGER.info(() ->
-                        LogUtil.message("Disabling report: {}", RuleUtil.getRuleIdentity(reportDoc)));
-                executionScheduleDao.updateExecutionSchedule(executionSchedule.copy()
-                        .enabled(false)
-                        .build());
-            }
-
-        } finally {
-            // Record the execution.
-            addExecutionHistory(executionSchedule,
-                    executionTime,
-                    effectiveExecutionTime,
-                    executionResult);
         }
 
-        return success;
+        return executionResult;
     }
 
     @Override
-    void postExecuteTidyUp(final List<ReportDoc> analyticDocs) {
-        // Nothing to do
+    public DocRef getDocRef(final ReportDoc doc) {
+        return doc.asDocRef();
+    }
+
+    @Override
+    public ReportDoc reload(final ReportDoc doc) {
+        return reportStore.readDocument(doc.asDocRef());
+    }
+
+    @Override
+    public String getIdentity(final ReportDoc doc) {
+        return RuleUtil.getRuleIdentity(doc);
+    }
+
+    @Override
+    public String getProcessType() {
+        return "report";
     }
 
     private ReportFile createFile(final ReportDoc reportDoc,
-                                  final Instant executionTime,
-                                  final Instant effectiveExecutionTime,
-                                  final DateTimeSettings dateTimeSettings,
-                                  final DataStore dataStore,
-                                  final ResultRequest resultRequest) throws IOException {
+                            final Instant executionTime,
+                            final Instant effectiveExecutionTime,
+                            final DateTimeSettings dateTimeSettings,
+                            final DataStore dataStore,
+                            final ResultRequest resultRequest) throws IOException {
         long totalRowCount = 0;
         final DownloadSearchResultFileType fileType = reportDoc.getReportSettings().getFileType();
         final String dateTime = DateUtil.createFileDateTimeString(effectiveExecutionTime);
@@ -350,7 +262,6 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
 
         // Start target
         try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
-
             final SearchResultWriter.Target target = switch (fileType) {
                 case CSV -> new DelimitedTarget(outputStream, ",");
                 case TSV -> new DelimitedTarget(outputStream, "\t");
@@ -488,11 +399,6 @@ public class ReportExecutor extends AbstractScheduledQueryExecutor<ReportDoc> {
         writer.write(":");
         writer.write(value);
         writer.write("\n");
-    }
-
-    @Override
-    ReportDoc load(final DocRef docRef) {
-        return reportStore.readDocument(docRef);
     }
 
     @Override
