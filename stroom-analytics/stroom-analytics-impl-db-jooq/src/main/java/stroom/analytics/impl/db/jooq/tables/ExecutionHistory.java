@@ -85,6 +85,12 @@ public class ExecutionHistory extends TableImpl<ExecutionHistoryRecord> {
      */
     public final TableField<ExecutionHistoryRecord, String> MESSAGE = createField(DSL.name("message"), SQLDataType.CLOB, this, "");
 
+    /**
+     * The column
+     * <code>stroom.execution_history.fk_execution_schedule_uuid</code>.
+     */
+    public final TableField<ExecutionHistoryRecord, String> FK_EXECUTION_SCHEDULE_UUID = createField(DSL.name("fk_execution_schedule_uuid"), SQLDataType.VARCHAR(255), this, "");
+
     private ExecutionHistory(Name alias, Table<ExecutionHistoryRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }

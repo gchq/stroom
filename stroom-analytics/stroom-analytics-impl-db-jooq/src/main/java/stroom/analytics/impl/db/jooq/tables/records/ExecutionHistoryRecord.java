@@ -106,6 +106,22 @@ public class ExecutionHistoryRecord extends UpdatableRecordImpl<ExecutionHistory
         return (String) get(5);
     }
 
+    /**
+     * Setter for
+     * <code>stroom.execution_history.fk_execution_schedule_uuid</code>.
+     */
+    public void setFkExecutionScheduleUuid(String value) {
+        set(6, value);
+    }
+
+    /**
+     * Getter for
+     * <code>stroom.execution_history.fk_execution_schedule_uuid</code>.
+     */
+    public String getFkExecutionScheduleUuid() {
+        return (String) get(6);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -129,7 +145,7 @@ public class ExecutionHistoryRecord extends UpdatableRecordImpl<ExecutionHistory
     /**
      * Create a detached, initialised ExecutionHistoryRecord
      */
-    public ExecutionHistoryRecord(Long id, Integer fkExecutionScheduleId, Long executionTimeMs, Long effectiveExecutionTimeMs, String status, String message) {
+    public ExecutionHistoryRecord(Long id, Integer fkExecutionScheduleId, Long executionTimeMs, Long effectiveExecutionTimeMs, String status, String message, String fkExecutionScheduleUuid) {
         super(ExecutionHistory.EXECUTION_HISTORY);
 
         setId(id);
@@ -138,6 +154,7 @@ public class ExecutionHistoryRecord extends UpdatableRecordImpl<ExecutionHistory
         setEffectiveExecutionTimeMs(effectiveExecutionTimeMs);
         setStatus(status);
         setMessage(message);
+        setFkExecutionScheduleUuid(fkExecutionScheduleUuid);
         resetChangedOnNotNull();
     }
 }

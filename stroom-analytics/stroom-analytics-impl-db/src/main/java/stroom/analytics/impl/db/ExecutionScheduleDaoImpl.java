@@ -538,7 +538,11 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
     public Boolean deleteExecutionSchedule(final ExecutionSchedule executionSchedule) {
         JooqUtil.context(analyticsDbConnProvider, context -> context
                 .deleteFrom(EXECUTION_HISTORY)
-                .where(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_ID.eq(executionSchedule.getId()))
+                .where(executionSchedule.getUuid() == null
+                        ? EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_ID.eq(executionSchedule.getId())
+                        : EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID.eq(executionSchedule.getUuid())
+                                .or(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID.isNull()
+                                        .and(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_ID.eq(executionSchedule.getId()))))
                 .execute());
 
         JooqUtil.context(analyticsDbConnProvider, context -> context
@@ -618,15 +622,28 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
     public ResultPage<ExecutionHistory> fetchExecutionHistory(final ExecutionHistoryRequest request) {
         // Only filter on the user in the DB as we don't have a jooq/sql version of the
         // QuickFilterPredicateFactory
-        final Collection<Condition> conditions = JooqUtil.conditions(
-                Optional.ofNullable(request.getExecutionSchedule().getId())
-                        .map(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_ID::eq));
+        final Collection<Condition> conditions;
+        if (request.getExecutionSchedule().getUuid() != null) {
+            //Logic: FK_UUID == sched_uuid OR (FK_UUID == null AND FK_ID == sched_id)
+            conditions = JooqUtil.conditions(
+                Optional.of(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID.eq(request.getExecutionSchedule().getUuid())
+                    .or(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID.isNull()
+                        .and(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_ID.eq(request.getExecutionSchedule().getId()))
+                    )
+                )
+            );
+        } else {
+            conditions = JooqUtil.conditions(
+                    Optional.ofNullable(request.getExecutionSchedule().getId())
+                            .map(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_ID::eq));
+        }
         final Collection<OrderField<?>> orderFields = createExecutionHistoryOrderFields(request);
         final Integer offset = JooqUtil.getOffset(request.getPageRequest());
         final Integer limit = JooqUtil.getLimit(request.getPageRequest(), true);
 
         final List<ExecutionHistory> list = JooqUtil.contextResult(analyticsDbConnProvider, context -> context
                         .select(EXECUTION_HISTORY.ID,
+                                EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID,
                                 EXECUTION_HISTORY.EXECUTION_TIME_MS,
                                 EXECUTION_HISTORY.EFFECTIVE_EXECUTION_TIME_MS,
                                 EXECUTION_HISTORY.STATUS,
@@ -660,11 +677,13 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
         JooqUtil.context(analyticsDbConnProvider, context -> context
                 .insertInto(EXECUTION_HISTORY)
                 .columns(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_ID,
+                        EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID,
                         EXECUTION_HISTORY.EXECUTION_TIME_MS,
                         EXECUTION_HISTORY.EFFECTIVE_EXECUTION_TIME_MS,
                         EXECUTION_HISTORY.STATUS,
                         EXECUTION_HISTORY.MESSAGE)
                 .values(executionHistory.getExecutionSchedule().getId(),
+                        executionHistory.getExecutionSchedule().getUuid(),
                         executionHistory.getExecutionTimeMs(),
                         executionHistory.getEffectiveExecutionTimeMs(),
                         executionHistory.getStatus(),
@@ -721,6 +740,20 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
 
     private ExecutionHistory recordToExecutionHistory(final Record record) {
         final ExecutionSchedule executionSchedule = recordToExecutionSchedule(record);
+
+        String fkExecutionScheduleUuid = record.get(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID);
+        if (fkExecutionScheduleUuid == null) {
+            fkExecutionScheduleUuid = executionSchedule.getUuid();
+            final String finalUuid = fkExecutionScheduleUuid;
+            JooqUtil.context(analyticsDbConnProvider, context -> context
+                    .update(EXECUTION_HISTORY)
+                    .set(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID, finalUuid)
+                    .where(EXECUTION_HISTORY.ID.eq(record.get(EXECUTION_HISTORY.ID)))
+                    .execute());
+            LOGGER.debug("Assigned FK UUID {} to ExecutionHistory {}", finalUuid,
+                    record.get(EXECUTION_HISTORY.ID));
+        }
+
         return ExecutionHistory
                 .builder()
                 .id(record.get(EXECUTION_HISTORY.ID))
