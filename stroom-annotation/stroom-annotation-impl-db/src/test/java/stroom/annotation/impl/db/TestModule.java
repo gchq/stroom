@@ -23,9 +23,7 @@ import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.meta.api.StreamFeedProvider;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.user.api.UserRefLookup;
-import stroom.task.api.ExecutorProvider;
 import stroom.task.mock.MockTaskModule;
-import stroom.task.shared.ThreadPool;
 import stroom.test.common.MockMetrics;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.metrics.Metrics;
@@ -34,8 +32,6 @@ import stroom.util.shared.UserRef;
 import com.google.inject.AbstractModule;
 
 import java.util.Optional;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public class TestModule extends AbstractModule {
 
@@ -56,20 +52,6 @@ public class TestModule extends AbstractModule {
                 Optional.of(UserRef.forUserUuid(userUuid)));
         bind(StreamFeedProvider.class).toInstance(id -> "TEST_FEED_NAME");
         bind(Metrics.class).toInstance(new MockMetrics());
-        bind(ExecutorProvider.class)
-                .toInstance(new ExecutorProvider() {
-                    private final Executor executor = Executors.newSingleThreadExecutor();
-
-                    @Override
-                    public Executor get() {
-                        return executor;
-                    }
-
-                    @Override
-                    public Executor get(final ThreadPool threadPool) {
-                        return executor;
-                    }
-                });
     }
 //
 //
