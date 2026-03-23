@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11.5] - 2026-03-23
+
+* Bug **#5466** : Fix asynchronous code that was causing thread deadlocks on machines with a low number of cores (e.g. <= 2). This bug was caused by a change to the JVM.
+
+
 ## [v7.11.4] - 2026-03-13
 
 * Feature **#5455** : Add DictionaryAppender to pipelines as an optional pipeline destination.
@@ -2061,7 +2066,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.4...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.5...HEAD
+[v7.11.5]: https://github.com/gchq/stroom/compare/v7.11.4...v7.11.5
 [v7.11.4]: https://github.com/gchq/stroom/compare/v7.11.3...v7.11.4
 [v7.11.3]: https://github.com/gchq/stroom/compare/v7.11.2...v7.11.3
 [v7.11.2]: https://github.com/gchq/stroom/compare/v7.11.1...v7.11.2
