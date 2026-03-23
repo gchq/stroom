@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 
 @Singleton
 public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQueryHandler {
@@ -56,18 +57,21 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
     private final Provider<ElasticIndexStore> elasticIndexStoreProvider;
     private final Provider<ElasticSuggestConfig> elasticSuggestConfigProvider;
     private final Provider<TaskContextFactory> taskContextFactoryProvider;
+    private final Provider<Executor> executorProvider;
 
     @Inject
     public ElasticSuggestionsQueryHandlerImpl(final Provider<ElasticClientCache> elasticClientCacheProvider,
                                               final Provider<ElasticClusterStore> elasticClusterStoreProvider,
                                               final Provider<ElasticIndexStore> elasticIndexStoreProvider,
                                               final Provider<ElasticSuggestConfig> elasticSuggestConfigProvider,
-                                              final Provider<TaskContextFactory> taskContextFactoryProvider) {
+                                              final Provider<TaskContextFactory> taskContextFactoryProvider,
+                                              final Provider<Executor> executorProvider) {
         this.elasticClientCacheProvider = elasticClientCacheProvider;
         this.elasticClusterStoreProvider = elasticClusterStoreProvider;
         this.elasticIndexStoreProvider = elasticIndexStoreProvider;
         this.elasticSuggestConfigProvider = elasticSuggestConfigProvider;
         this.taskContextFactoryProvider = taskContextFactoryProvider;
+        this.executorProvider = executorProvider;
     }
 
     @Override
@@ -76,13 +80,15 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
         final ElasticClusterDoc elasticCluster = elasticClusterStoreProvider.get()
                 .readDocument(elasticIndex.getClusterRef());
 
-        final CompletableFuture<Suggestions> future = CompletableFuture.supplyAsync(taskContextFactoryProvider.get()
-                .contextResult("Query suggestions for Elasticsearch index '" + elasticIndex.getName() + "'",
-                        taskContext -> elasticClientCacheProvider.get().contextResult(elasticCluster.getConnection(),
-                                elasticClient -> querySuggestions(request, elasticIndex, elasticClient)
-                        )
-                )
-        );
+        final CompletableFuture<Suggestions> future = CompletableFuture.supplyAsync(
+                taskContextFactoryProvider.get().contextResult(
+                        "Query suggestions for Elasticsearch index '" + elasticIndex.getName() + "'",
+                        taskContext ->
+                                elasticClientCacheProvider.get().contextResult(elasticCluster.getConnection(),
+                                        elasticClient ->
+                                                querySuggestions(request, elasticIndex, elasticClient)
+                                )
+                ), executorProvider.get());
 
         try {
             return future.get();
