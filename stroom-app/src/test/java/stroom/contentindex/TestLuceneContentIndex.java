@@ -52,7 +52,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 public class TestLuceneContentIndex extends AbstractCoreIntegrationTest {
 
-    @SuppressWarnings("checkstyle:linelength")
+    @SuppressWarnings({"checkstyle:linelength", "checkstyle:RegexpSingleline"})
     private static final String TEXT = """
             <?xml version="1.0" encoding="UTF-8" ?>
             <xsl:stylesheet xpath-default-namespace="records:2" xmlns="reference-data:2" xmlns:evt="event-logging:3"
