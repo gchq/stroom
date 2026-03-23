@@ -114,6 +114,12 @@ public class Detection {
     @JsonProperty
     private final String status;
 
+    /**
+     * Denotes the name of the feed the data that triggered this detection originated from.
+     */
+    @JsonProperty
+    private final String feedName;
+
     @JsonCreator
     public Detection(@JsonProperty("detectTime") final String detectTime,
                      @JsonProperty("detectorName") final String detectorName,
@@ -132,7 +138,8 @@ public class Detection {
                      @JsonProperty("values") final List<DetectionValue> values,
                      @JsonProperty("linkedEvents") final List<DetectionLinkedEvent> linkedEvents,
                      @JsonProperty("level") final String level,
-                     @JsonProperty("status") final String status) {
+                     @JsonProperty("status") final String status,
+                     @JsonProperty("feedName") final String feedName) {
         this.detectTime = detectTime;
         this.detectorName = detectorName;
         this.detectorUuid = detectorUuid;
@@ -151,6 +158,7 @@ public class Detection {
         this.linkedEvents = linkedEvents;
         this.level = level;
         this.status = status;
+        this.feedName = feedName;
     }
 
     private Detection(final Builder builder) {
@@ -172,6 +180,7 @@ public class Detection {
         linkedEvents = builder.linkedEvents;
         level = builder.level;
         status = builder.status;
+        feedName = builder.feedName;
     }
 
     public static Builder builder(final Detection copy) {
@@ -191,6 +200,7 @@ public class Detection {
         builder.linkedEvents = copy.getLinkedEvents();
         builder.level = copy.getLevel();
         builder.status = copy.getStatus();
+        builder.feedName = copy.getFeedName();
         return builder;
     }
 
@@ -266,6 +276,10 @@ public class Detection {
         return status;
     }
 
+    public String getFeedName() {
+        return feedName;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {
@@ -287,9 +301,8 @@ public class Detection {
                 detection.executionTime) && Objects.equals(effectiveExecutionTime,
                 detection.effectiveExecutionTime) && Objects.equals(values,
                 detection.values) && Objects.equals(linkedEvents,
-                detection.linkedEvents) && Objects.equals(level, detection.level) && Objects.equals(
-                status,
-                detection.status);
+                detection.linkedEvents) && Objects.equals(level, detection.level) && Objects.equals(status,
+                detection.status) && Objects.equals(feedName, detection.feedName);
     }
 
     @Override
@@ -311,7 +324,8 @@ public class Detection {
                 values,
                 linkedEvents,
                 level,
-                status);
+                status,
+                feedName);
     }
 
     @Override
@@ -335,6 +349,7 @@ public class Detection {
                ", linkedEvents=" + linkedEvents +
                ", level='" + level + '\'' +
                ", status='" + status + '\'' +
+               ", feedName='" + feedName + '\'' +
                '}';
     }
 
@@ -370,6 +385,7 @@ public class Detection {
         private List<DetectionLinkedEvent> linkedEvents;
         private String level;
         private String status;
+        private String feedName;
 
         private Builder() {
         }
@@ -393,6 +409,7 @@ public class Detection {
             this.linkedEvents = detection.linkedEvents;
             this.level = detection.level;
             this.status = detection.status;
+            this.feedName = detection.feedName;
         }
 
         public Builder withDetectTime(final String detectTime) {
@@ -542,6 +559,11 @@ public class Detection {
 
         public Builder withStatus(final String status) {
             this.status = status;
+            return this;
+        }
+
+        public Builder withFeedName(final String feedName) {
+            this.feedName = feedName;
             return this;
         }
 

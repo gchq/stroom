@@ -19,6 +19,7 @@ package stroom.analytics.impl;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.state.FeedHolder;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.CompiledColumn;
@@ -54,6 +55,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
     private final ColumnFormatter fieldFormatter;
     private Provider<DetectionConsumer> detectionsConsumerProvider;
+    private final FeedHolder feedHolder;
 
     private DetectionConsumer detectionConsumer;
 
@@ -68,8 +70,10 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
 
     @Inject
     public DetectionConsumerProxy(final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
-                                  final AnalyticsConfig analyticsConfig) {
+                                  final AnalyticsConfig analyticsConfig,
+                                  final FeedHolder feedHolder) {
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
+        this.feedHolder = feedHolder;
         final DateTimeSettings dateTimeSettings = DateTimeSettings
                 .builder()
                 .localZoneId(analyticsConfig.getTimezone())
@@ -248,6 +252,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
                 .withLinkedEvents(linkedEvents)
                 .withLevel(analyticRuleDoc.getLevel())
                 .withStatus(analyticRuleDoc.getStatus())
+                .withFeedName(feedHolder.getFeedName())
                 .build();
 
         final DetectionConsumer detectionConsumer = getDetectionConsumer();

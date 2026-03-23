@@ -87,6 +87,7 @@ public class DetectionWriter implements DetectionConsumer {
     private static final String EVENT_ID = "eventId";
     private static final String LEVEL = "level";
     private static final String STATUS = "status";
+    private static final String FEED_NAME = "feedName";
 
 
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -158,6 +159,7 @@ public class DetectionWriter implements DetectionConsumer {
             writeLinkedEvents(detection.getLinkedEvents());
             writeOptionalDataElement(LEVEL, detection.getLevel());
             writeOptionalDataElement(STATUS, detection.getStatus());
+            writeOptionalDataElement(FEED_NAME, detection.getFeedName());
             writeEndElement(DETECTION);
 
         } catch (final SAXException e) {
