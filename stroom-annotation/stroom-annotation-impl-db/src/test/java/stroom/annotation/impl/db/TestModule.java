@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.meta.api.StreamFeedProvider;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.user.api.UserRefLookup;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.mock.MockTaskModule;
+import stroom.task.shared.ThreadPool;
 import stroom.test.common.MockMetrics;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.util.metrics.Metrics;
@@ -32,6 +34,8 @@ import stroom.util.shared.UserRef;
 import com.google.inject.AbstractModule;
 
 import java.util.Optional;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class TestModule extends AbstractModule {
 
@@ -48,9 +52,24 @@ public class TestModule extends AbstractModule {
         install(new MockTaskModule());
         install(new CacheModule());
 
-        bind(UserRefLookup.class).toInstance((userUuid, context) -> Optional.of(UserRef.forUserUuid(userUuid)));
+        bind(UserRefLookup.class).toInstance((userUuid, context) ->
+                Optional.of(UserRef.forUserUuid(userUuid)));
         bind(StreamFeedProvider.class).toInstance(id -> "TEST_FEED_NAME");
         bind(Metrics.class).toInstance(new MockMetrics());
+        bind(ExecutorProvider.class)
+                .toInstance(new ExecutorProvider() {
+                    private final Executor executor = Executors.newSingleThreadExecutor();
+
+                    @Override
+                    public Executor get() {
+                        return executor;
+                    }
+
+                    @Override
+                    public Executor get(final ThreadPool threadPool) {
+                        return executor;
+                    }
+                });
     }
 //
 //
