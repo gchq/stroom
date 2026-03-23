@@ -571,6 +571,7 @@ public class MapDataStore implements DataStore {
                 // We won't group, sort or trim lists with only a single item obviously.
                 if (list.size() > 1) {
                     if (groupingFunction != null || sortingFunction != null) {
+                        // The sorting/grouping is CPU bound (I think) so OK to use the Fork Join Pool
                         Stream<MapItem> stream = list
                                 .parallelStream();
 
@@ -584,8 +585,7 @@ public class MapDataStore implements DataStore {
                             stream = sortingFunction.apply(stream);
                         }
 
-                        list = stream
-                                .collect(Collectors.toList());
+                        list = stream.collect(Collectors.toList());
                     }
 
                     if (list.size() > trimmedSize) {
@@ -740,6 +740,10 @@ public class MapDataStore implements DataStore {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private class GroupingFunction implements Function<Stream<MapItem>, Stream<MapItem>> {
 
         private final CompiledColumn[] compiledColumns;
@@ -772,10 +776,12 @@ public class MapDataStore implements DataStore {
                 });
             });
 
+            // CPU bound so OK to use Fork Join Pool
             return groupingMap
                     .entrySet()
                     .parallelStream()
-                    .map(e -> new MapItem(MapDataStore.this, e.getKey(), compiledColumns, e.getValue()));
+                    .map(e ->
+                            new MapItem(MapDataStore.this, e.getKey(), compiledColumns, e.getValue()));
         }
     }
 }

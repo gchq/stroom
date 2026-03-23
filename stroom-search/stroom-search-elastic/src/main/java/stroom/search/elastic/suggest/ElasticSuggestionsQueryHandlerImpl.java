@@ -25,7 +25,10 @@ import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.ElasticIndexStore;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.ThreadPoolImpl;
+import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -51,13 +54,14 @@ import java.util.concurrent.Executor;
 public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQueryHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSuggestionsQueryHandlerImpl.class);
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Elastic Suggestions Query Handler");
 
     private final Provider<ElasticClientCache> elasticClientCacheProvider;
     private final Provider<ElasticClusterStore> elasticClusterStoreProvider;
     private final Provider<ElasticIndexStore> elasticIndexStoreProvider;
     private final Provider<ElasticSuggestConfig> elasticSuggestConfigProvider;
     private final Provider<TaskContextFactory> taskContextFactoryProvider;
-    private final Provider<Executor> executorProvider;
+    private final Executor executor;
 
     @Inject
     public ElasticSuggestionsQueryHandlerImpl(final Provider<ElasticClientCache> elasticClientCacheProvider,
@@ -65,13 +69,13 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
                                               final Provider<ElasticIndexStore> elasticIndexStoreProvider,
                                               final Provider<ElasticSuggestConfig> elasticSuggestConfigProvider,
                                               final Provider<TaskContextFactory> taskContextFactoryProvider,
-                                              final Provider<Executor> executorProvider) {
+                                              final ExecutorProvider executorProvider) {
         this.elasticClientCacheProvider = elasticClientCacheProvider;
         this.elasticClusterStoreProvider = elasticClusterStoreProvider;
         this.elasticIndexStoreProvider = elasticIndexStoreProvider;
         this.elasticSuggestConfigProvider = elasticSuggestConfigProvider;
         this.taskContextFactoryProvider = taskContextFactoryProvider;
-        this.executorProvider = executorProvider;
+        this.executor = executorProvider.get(THREAD_POOL);
     }
 
     @Override
@@ -88,7 +92,7 @@ public class ElasticSuggestionsQueryHandlerImpl implements ElasticSuggestionsQue
                                         elasticClient ->
                                                 querySuggestions(request, elasticIndex, elasticClient)
                                 )
-                ), executorProvider.get());
+                ), executor);
 
         try {
             return future.get();
