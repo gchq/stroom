@@ -29,6 +29,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskUtil;
 import stroom.task.api.TerminateHandlerFactory;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
@@ -232,8 +233,9 @@ public class IndexShardManager {
                             final CompletableFuture<?>[] futures = ownedShards.stream()
                                     .takeWhile(TaskUtil.createTaskTerminatedCheck(parentTaskContext, LOGGER))
                                     .map(shard -> {
-                                        // We use a child tak context here to create child messages in the UI but also to
-                                        // ensure the task is performed in the context of the parent user.
+                                        // We use a child tak context here to create child messages in the
+                                        // UI but also to ensure the task is performed in the context of the parent
+                                        // user.
                                         final Runnable runnable = taskContextFactory.childContext(
                                                 parentTaskContext,
                                                 "Index Shard Manager",
@@ -255,13 +257,17 @@ public class IndexShardManager {
                                                 });
 
                                         return CompletableFuture.runAsync(runnable, executor)
-                                                .whenComplete((ignored, e) -> {
-                                                    if (e != null) {
-                                                        LOGGER.error(e::getMessage, e);
+                                                .exceptionally(e -> {
+                                                    final Throwable compEx = ThreadUtil.getCompletionException(e);
+                                                    if (compEx != null) {
+                                                        LOGGER.error("Error performing {} on shard {} - {}",
+                                                                action,
+                                                                shard.getId(),
+                                                                LogUtil.exceptionMessage(compEx), compEx);
                                                     }
                                                     remaining.getAndDecrement();
+                                                    return null;
                                                 });
-
                                     }).toArray(CompletableFuture[]::new);
 
                             // Wait for all task creation to complete.

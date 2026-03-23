@@ -275,9 +275,11 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
                                                              + " ("
                                                              + entry.getKey().tags().entrySet()
                                                                      .stream()
-                                                                     .filter(entry2 -> !entry2.getKey().equals(
-                                                                             "client-id"))
-                                                                     .map(entry2 -> entry2.getKey() + "=" + entry2.getValue())
+                                                                     .filter(entry2 ->
+                                                                             !entry2.getKey().equals(
+                                                                                     "client-id"))
+                                                                     .map(entry2 ->
+                                                                             entry2.getKey() + "=" + entry2.getValue())
                                                                      .collect(Collectors.joining(","))
                                                              + ")";
 
