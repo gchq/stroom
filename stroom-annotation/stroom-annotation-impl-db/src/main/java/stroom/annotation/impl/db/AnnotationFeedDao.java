@@ -18,11 +18,13 @@ package stroom.annotation.impl.db;
 
 import stroom.db.util.JooqUtil;
 import stroom.db.util.JooqUtil.BooleanOperator;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.ThreadPoolImpl;
+import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;
-import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
 
@@ -45,12 +47,14 @@ import static stroom.annotation.impl.db.jooq.tables.AnnotationFeed.ANNOTATION_FE
 @Singleton
 class AnnotationFeedDao implements Clearable {
 
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Annotation Feed DAO");
+
     private final AnnotationDbConnProvider connectionProvider;
     private final Executor executor;
 
     @Inject
     AnnotationFeedDao(final AnnotationDbConnProvider connectionProvider,
-                      final Provider<Executor> executorProvider) {
+                      final ExecutorProvider executorProvider) {
         this.connectionProvider = connectionProvider;
         this.executor = executorProvider.get();
     }
@@ -99,7 +103,8 @@ class AnnotationFeedDao implements Clearable {
 
     @Override
     public void clear() {
-        JooqUtil.context(connectionProvider, context -> context.deleteFrom(ANNOTATION_FEED).execute());
+        JooqUtil.context(connectionProvider, context ->
+                context.deleteFrom(ANNOTATION_FEED).execute());
     }
 
     /**
