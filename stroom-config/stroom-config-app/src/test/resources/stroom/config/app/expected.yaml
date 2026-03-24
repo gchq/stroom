@@ -112,11 +112,14 @@ appConfig:
       maximumBatchSize: 16384
       maximumTableInputRows: 100
   autoContentCreation:
-    additionalGroupTemplate: "grp-${accountid}-sandbox"
+    additionalGroupParentGroupName: "Data Feed Developer"
+    additionalGroupTemplate: "grp-${accountid}-dev"
     createAsSubjectId: "Administrators"
     createAsType: "GROUP"
     destinationExplorerPathTemplate: "/Feeds/${accountid}"
+    destinationExplorerSubPathTemplate: "dev"
     enabled: false
+    groupParentGroupName: "Data Feed Reader"
     groupTemplate: "grp-${accountid}"
     templateMatchFields:
     - "accountid"
