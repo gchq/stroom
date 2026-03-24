@@ -16,19 +16,23 @@
 
 package stroom.receive.common;
 
+import stroom.receive.common.DataFeedIdentity.IdentityStatus;
+
 import java.nio.file.Path;
 
+/**
+ * Service for dealing with Data Feed Keys and other data feed identities, e.g. Certificate
+ * Identities.
+ * <p>
+ * This allows data feed identities to be placed in a file on the file system and these
+ * identities can be used to authenticate data feed receipt and to inject additional
+ * metadata in the received data's attributes.
+ * </p>
+ */
 public interface DataFeedKeyService extends AuthenticatorFilter {
 
-//    Optional<HashedDataFeedKey> getDataFeedKey(final HttpServletRequest request,
-//                                               final AttributeMap attributeMap);
-
-//    Optional<HashedDataFeedKey> getLatestDataFeedKey(final String accountId);
-
-    int addDataFeedKeys(HashedDataFeedKeys hashedDataFeedKeys,
-                        Path sourceFile);
-
-    void evictExpired();
+    IdentityStatus addDataFeedKey(HashedDataFeedKey hashedDataFeedKey,
+                                  Path sourceFile);
 
     void removeKeysForFile(Path sourceFile);
 }

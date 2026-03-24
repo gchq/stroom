@@ -1,0 +1,143 @@
+/*
+ * Copyright 2016-2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.receive.common;
+
+
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.util.Collections;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.stream.Collectors;
+
+/**
+ * Represents an X509 certificate (using the DN of the certificate) and the meta
+ * attributes that will be applied to any data receipt using that identity.
+ */
+@JsonInclude(Include.NON_NULL)
+@JsonPropertyOrder(alphabetic = true)
+public final class CertificateIdentity implements DataFeedIdentity {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CertificateIdentity.class);
+
+    @JsonProperty
+    @JsonPropertyDescription("The DN from the X509 certificate.")
+    private final String certificateDn;
+
+    @JsonIgnore // Serialise as Map<String, String>
+    @JsonPropertyDescription("A map of stream attribute key/value pairs. These will trump any entries " +
+                             "in the stream headers.")
+    private final Map<CIKey, String> ciStreamMetaData;
+
+    @JsonProperty
+    @JsonPropertyDescription("A map of stream attribute key/value pairs. These will trump any entries " +
+                             "in the stream headers. Keys are case insensitive.")
+    private final Map<String, String> streamMetaData;
+
+    @JsonProperty
+    @JsonPropertyDescription("The date/time the key expires, expressed as milliseconds since the unix epoch.")
+    private final long expiryDateEpochMs;
+
+    @JsonIgnore
+    private final int hashCode;
+
+    @JsonCreator
+    public CertificateIdentity(@JsonProperty("certificateDn") final String certificateDn,
+                               @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,
+                               @JsonProperty("expiryDateEpochMs") final long expiryDateEpochMs) {
+        this.certificateDn = Objects.requireNonNull(certificateDn);
+        // No point holding blank keys or null values
+        this.ciStreamMetaData = NullSafe.map(streamMetaData)
+                .entrySet()
+                .stream()
+                .filter(entry -> NullSafe.isNonBlankString(entry.getKey()))
+                .filter(entry -> entry.getValue() != null)
+                .collect(Collectors.toUnmodifiableMap(
+                        entry -> CIKey.of(entry.getKey()),
+                        Entry::getValue,
+                        (val1, val2) -> {
+                            // two values for the same key, just use the first one
+                            LOGGER.warn("Duplicate key (ignoring case). Keeping value '{}', ignoring value '{}', " +
+                                        "streamMetaData: {}",
+                                    val1, val2, streamMetaData);
+                            return val1;
+                        })
+                );
+        // It would be nice not have this field but TestJsonSerialisation can't cope with
+        // not having a field with @JsonProperty and doesn't like complex map keys.
+        this.streamMetaData = Collections.unmodifiableMap(CIKey.convertToStringMap(ciStreamMetaData));
+        this.expiryDateEpochMs = expiryDateEpochMs;
+        // Pre-compute the hash as we know we are putting each identity into a map
+        this.hashCode = Objects.hash(certificateDn, streamMetaData, expiryDateEpochMs);
+    }
+
+    public String getCertificateDn() {
+        return certificateDn;
+    }
+
+    private Map<String, String> getStreamMetaData() {
+        return streamMetaData;
+    }
+
+    @Override
+    @JsonIgnore // Serialise as Map<String, String>
+    public Map<CIKey, String> getCIStreamMetaData() {
+        return ciStreamMetaData;
+    }
+
+    @Override
+    public long getExpiryDateEpochMs() {
+        return expiryDateEpochMs;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final CertificateIdentity that = (CertificateIdentity) o;
+        return expiryDateEpochMs == that.expiryDateEpochMs
+               && Objects.equals(certificateDn, that.certificateDn)
+               && Objects.equals(streamMetaData, that.streamMetaData);
+    }
+
+    @Override
+    public int hashCode() {
+        return hashCode;
+    }
+
+    @Override
+    public String toString() {
+        return "CertificateIdentity{" +
+               "certificateDn='" + certificateDn + '\'' +
+               ", streamMetaData=" + streamMetaData +
+               ", expiryDateEpochMs=" + expiryDateEpochMs +
+               '}';
+    }
+}

@@ -170,13 +170,18 @@ public class StroomDocsUtil {
         }
     }
 
+    public static Path resolveStroomDocsFile(final Path subPath) {
+        return StroomDocsUtil.resolveStroomDocsFile(subPath, true);
+    }
+
     /**
      * @param subPath A path to a file in the stroom-docs repo that is relative to the
      *                stroom-docs repo root.
-     * @return An absolute path to the file which has been tested to see if it exists and
-     * is a regular file.
+     *                If checkExists is true, the file will be tested to see if it exists
+     *                and is a regular file.
+     * @return An absolute path to the file.
      */
-    public static Path resolveStroomDocsFile(final Path subPath) {
+    public static Path resolveStroomDocsFile(final Path subPath, final boolean checkExists) {
         final String stroomDocsRepoDirStr = System.getProperty(STROOM_DOCS_REPO_DIR_PROP_KEY);
         final Path stroomDocsRepoDir;
 
@@ -198,9 +203,11 @@ public class StroomDocsUtil {
 
         final Path file = stroomDocsRepoDir.resolve(subPath).toAbsolutePath().normalize();
 
-        if (!Files.isRegularFile(file)) {
-            throw new RuntimeException(LogUtil.message("stroom-docs file '{}' does not exist",
-                    stroomDocsRepoDir.toAbsolutePath().normalize()));
+        if (checkExists) {
+            if (!Files.isRegularFile(file)) {
+                throw new RuntimeException(LogUtil.message("stroom-docs file '{}' does not exist",
+                        stroomDocsRepoDir.toAbsolutePath().normalize()));
+            }
         }
         return file;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,10 @@ import stroom.security.api.SecurityContext;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.Objects;
+import java.util.concurrent.Executor;
 
 public final class ResultStoreFactory {
 
@@ -33,6 +35,7 @@ public final class ResultStoreFactory {
     private final ResultStoreSettingsFactory resultStoreSettingsFactory;
     private final MapDataStoreFactory mapDataStoreFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final Provider<Executor> executorProvider;
 
     @Inject
     ResultStoreFactory(final SizesProvider sizesProvider,
@@ -40,13 +43,15 @@ public final class ResultStoreFactory {
                        final NodeInfo nodeInfo,
                        final ResultStoreSettingsFactory resultStoreSettingsFactory,
                        final MapDataStoreFactory mapDataStoreFactory,
-                       final ExpressionPredicateFactory expressionPredicateFactory) {
+                       final ExpressionPredicateFactory expressionPredicateFactory,
+                       final Provider<Executor> executorProvider) {
         this.sizesProvider = sizesProvider;
         this.securityContext = securityContext;
         this.nodeInfo = nodeInfo;
         this.resultStoreSettingsFactory = resultStoreSettingsFactory;
         this.mapDataStoreFactory = mapDataStoreFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.executorProvider = executorProvider;
     }
 
     public ResultStore create(final SearchRequestSource searchRequestSource,
@@ -62,6 +67,7 @@ public final class ResultStoreFactory {
                 nodeInfo.getThisNodeName(),
                 resultStoreSettingsFactory.get(),
                 mapDataStoreFactory,
-                expressionPredicateFactory);
+                expressionPredicateFactory,
+                executorProvider);
     }
 }

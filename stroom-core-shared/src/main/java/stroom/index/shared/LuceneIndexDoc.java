@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Description(
-        "Lucene Index is the standard built-in index within Stroom and is one of may data sources.\n" +
+        "Lucene Index is the standard built-in index within Stroom and is one of many data sources.\n" +
         "An index is like a catalog in a library and provides a very fast way to access " +
         "documents/records/events when searching using fields that have been indexed.\n" +
         "The index stores the field values and pointers to the document they came from " +

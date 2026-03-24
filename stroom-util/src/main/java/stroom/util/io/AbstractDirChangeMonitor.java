@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,11 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.thread.CustomThreadFactory;
 
 import com.codahale.metrics.health.HealthCheck;
 import io.dropwizard.lifecycle.Managed;
+import org.jspecify.annotations.NonNull;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -36,9 +38,7 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EnumSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -50,29 +50,40 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+/**
+ * Abstract class for monitoring a directory on the file system and handling the events,
+ * e.g. new/modified/deleted files.
+ * <p>
+ * If a succession of events happen such that the changes in one event overwrite the changes in
+ * a previous one, then there is no guarantee as to what the outcome will be.
+ */
 public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Managed {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDirChangeMonitor.class);
     private static final long DELAY_BEFORE_FILE_READ_MS = 2_000;
 
-    private final ExecutorService executorService;
-    private WatchService watchService = null;
-    private Future<?> watcherFuture = null;
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final boolean isValidDir;
-    private final AtomicBoolean isBatchScheduled = new AtomicBoolean(false);
+    private final AtomicBoolean isBatchInProgress = new AtomicBoolean(false);
     private final List<String> errors = new ArrayList<>();
     private final BlockingQueue<SimpleWatchEvent> queue = new LinkedBlockingQueue<>();
+    private final ExecutorService watcherExecutorService;
+    private final ScheduledExecutorService processorExecutorService;
 
     protected final Predicate<Path> fileIncludeFilter;
     protected final Set<EventType> includedEventTypes;
     protected final Path dirToWatch;
+
+    private WatchService watchService = null;
+    private Future<?> watcherFuture = null;
 
     public AbstractDirChangeMonitor(final Path dirToWatch) {
         this(dirToWatch, null, EnumSet.allOf(EventType.class));
@@ -90,23 +101,21 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
                 throw new RuntimeException(LogUtil.message("{} is not a directory", this.dirToWatch));
             }
             this.isValidDir = true;
-            this.executorService = Executors.newSingleThreadExecutor();
+            final CustomThreadFactory watcherThreadFactory = createThreadFactory("Watcher");
+            this.watcherExecutorService = Executors.newSingleThreadExecutor(watcherThreadFactory);
+            final CustomThreadFactory processorThreadFactory = createThreadFactory("Processor");
+            this.processorExecutorService = Executors.newSingleThreadScheduledExecutor(processorThreadFactory);
         } else {
             // This will prevent it starting
             this.isValidDir = false;
             this.dirToWatch = null;
-            this.executorService = null;
+            this.watcherExecutorService = null;
+            this.processorExecutorService = null;
             this.fileIncludeFilter = null;
             this.includedEventTypes = null;
         }
     }
 
-    private Set<SimpleWatchEvent> createEmptySet() {
-        // Should be only one thread touching it at once anyway, either the watcher thread writing
-        // or the scheduled thread reading, but not at the same time.
-        // LinkedHashSet to preserve event order
-        return Collections.synchronizedSet(new LinkedHashSet<>());
-    }
 
     public Path getDirToWatch() {
         return dirToWatch;
@@ -154,11 +163,12 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
         watcherFuture = CompletableFuture.runAsync(() -> {
             WatchKey watchKey = null;
 
-            LOGGER.info("Starting file modification watcher for {}", dirToWatch.toAbsolutePath().normalize());
+            LOGGER.info(() -> LogUtil.message("Starting directory modification watcher for {}",
+                    dirToWatch.toAbsolutePath().normalize()));
             while (true) {
                 if (Thread.currentThread().isInterrupted()) {
-                    LOGGER.debug("Thread interrupted, stopping watching directory {}",
-                            dirToWatch.toAbsolutePath().normalize());
+                    LOGGER.debug(() -> LogUtil.message("Thread interrupted, stopping watching directory {}",
+                            dirToWatch.toAbsolutePath().normalize()));
                     break;
                 }
 
@@ -211,7 +221,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
                     break;
                 }
             }
-        }, executorService);
+        }, watcherExecutorService);
     }
 
     private void handleWatchEvent(final WatchEvent<Path> pathEvent) {
@@ -224,12 +234,9 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
 
         try {
             final EventType eventType = EventType.fromKind(kind);
-            if (eventType != null
-                && includedEventTypes.contains(eventType)) {
-
-                // Add the event to our batch.
-                queue.add(new SimpleWatchEvent(eventType, affectedFile));
-                scheduleBatchIfRequired();
+            if (NullSafe.test(eventType, includedEventTypes::contains)) {
+                final SimpleWatchEvent watchEvent = new SimpleWatchEvent(eventType, affectedFile);
+                queueEvent(watchEvent);
             } else {
                 LOGGER.debug("Ignoring eventType: {} on affectedFile: {}", eventType, affectedFile);
             }
@@ -239,55 +246,120 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
         }
     }
 
-    private synchronized void scheduleBatchIfRequired() {
+    private void queueEvent(final SimpleWatchEvent watchEvent) {
+        // Add the event to our batch.
+        synchronized (this) {
+            queue.add(watchEvent);
+            LOGGER.debug(() -> LogUtil.message("queueEvent() - watchEvent: {}, queue.size: {}",
+                    watchEvent, queue.size()));
+            scheduleBatchIfRequired();
+        }
+    }
 
+    private List<SimpleWatchEvent> drainQueuedEvents() {
+        final List<SimpleWatchEvent> events = new ArrayList<>();
+        synchronized (this) {
+            try {
+                queue.drainTo(events);
+                LOGGER.debug(() -> LogUtil.message("drainQueuedEvents() - drained {} events", events.size()));
+            } finally {
+                // Once we have drained, any new items that go on the queue after we release the lock
+                // will need a new delayed execution, so mark as not in progress.
+                isBatchInProgress.set(false);
+                LOGGER.debug("drainQueuedEvents() - Resetting isBatchInProgress to false");
+            }
+        }
+        return events;
+    }
+
+    private void processQueuedEvents() {
+        try {
+            LOGGER.debug("processQueuedEvents() - Running");
+            final List<SimpleWatchEvent> events = drainQueuedEvents();
+            int processedCount = 0;
+            if (!events.isEmpty()) {
+                LOGGER.info(() -> LogUtil.message("Processing batch of {} change event(s)", events.size()));
+                final Map<Path, List<SimpleWatchEvent>> groupedByPath = events.stream()
+                        .collect(Collectors.groupingBy(
+                                SimpleWatchEvent::path,
+                                Collectors.toList()));
+
+                for (final Entry<Path, List<SimpleWatchEvent>> entry : groupedByPath.entrySet()) {
+                    final Path path = entry.getKey();
+                    final List<SimpleWatchEvent> eventsForPath = entry.getValue();
+                    LOGGER.debug(() -> LogUtil.message("path: {}, simpleWatchEvents: {}",
+                            path, LogUtil.toCsv(eventsForPath, SimpleWatchEvent::eventType)));
+
+                    if (NullSafe.hasItems(eventsForPath)) {
+                        final List<SimpleWatchEvent> deDupedEventsForPath = deDupEvents(eventsForPath);
+                        if (deDupedEventsForPath.size() != eventsForPath.size()) {
+                            LOGGER.info(() -> LogUtil.message(
+                                    "Processing {} change event(s) for {} after de-duplication",
+                                    deDupedEventsForPath.size(), path));
+                        } else {
+                            LOGGER.info(() -> LogUtil.message(
+                                    "Processing {} change event(s) for {}",
+                                    deDupedEventsForPath.size(), path));
+                        }
+
+                        // Now handle all the de-duped events
+                        for (final SimpleWatchEvent event : deDupedEventsForPath) {
+                            final Consumer<Path> handler = switch (event.eventType) {
+                                case MODIFY -> this::onEntryModify;
+                                case CREATE -> this::onEntryCreate;
+                                case DELETE -> this::onEntryDelete;
+                                default -> {
+                                    LOGGER.debug("processQueuedEvents() - Ignoring event {}", event);
+                                    yield null;
+                                }
+                            };
+                            if (handler != null) {
+                                try {
+                                    LOGGER.debug("processQueuedEvents() - Handling event {}", event);
+                                    handler.accept(event.path);
+                                    processedCount++;
+                                } catch (final Exception e) {
+                                    LOGGER.error("Error in handler for event {}. {}. Swallowing.",
+                                            event, LogUtil.exceptionMessage(e), e);
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                LOGGER.info("No change events to process");
+            }
+            LOGGER.info("Completed processing of {} change events(s)", processedCount);
+        } catch (final Throwable e) {
+            LOGGER.error("Error in delayed executor runnable: {}. Swallowing.",
+                    LogUtil.exceptionMessage(e), e);
+        }
+    }
+
+    private void scheduleBatchIfRequired() {
         // When a file is changed the filesystem can trigger two changes, one to change the file content
         // and another to change the file access time. To prevent a duplicate read we delay the read
         // a bit so we can have many changes during that delay period but with only one read of the file.
-        if (isBatchScheduled.compareAndSet(false, true)) {
-            LOGGER.info("Scheduling call to change listener for file {} in {}ms",
-                    dirToWatch.toAbsolutePath().normalize(),
-                    DELAY_BEFORE_FILE_READ_MS);
+        if (isBatchInProgress.compareAndSet(false, true)) {
+            try {
+                LOGGER.info(() -> LogUtil.message("Scheduling call to change listener for file {} in {}ms",
+                        dirToWatch.toAbsolutePath().normalize(),
+                        DELAY_BEFORE_FILE_READ_MS));
 
-            CompletableFuture.delayedExecutor(DELAY_BEFORE_FILE_READ_MS, TimeUnit.MILLISECONDS)
-                    .execute(() -> {
-                        try {
-                            synchronized (this) {
-                                // Atomically swap out the set with an empty one
-                                final List<SimpleWatchEvent> allEvents = new ArrayList<>();
-                                queue.drainTo(allEvents);
+                // Schedule an async process to handle all the queued events
+                processorExecutorService.schedule(
+                        this::processQueuedEvents,
+                        DELAY_BEFORE_FILE_READ_MS,
+                        TimeUnit.MILLISECONDS);
 
-                                LOGGER.debug(() -> LogUtil.message("Draining batch of {} events", allEvents.size()));
-                                final Map<Path, List<SimpleWatchEvent>> groupedByPath = allEvents.stream()
-                                        .collect(Collectors.groupingBy(
-                                                SimpleWatchEvent::path,
-                                                Collectors.toList()));
-
-                                for (final Entry<Path, List<SimpleWatchEvent>> entry : groupedByPath.entrySet()) {
-                                    final Path path = entry.getKey();
-                                    List<SimpleWatchEvent> eventsForPath = entry.getValue();
-                                    LOGGER.debug("path: {}, simpleWatchEvents: {}", path, eventsForPath);
-
-                                    if (NullSafe.hasItems(eventsForPath)) {
-                                        eventsForPath = deDupEvents(eventsForPath);
-
-                                        // Now fire all the de-duped events
-                                        for (final SimpleWatchEvent event : eventsForPath) {
-                                            final Path affectedFile = event.path;
-                                            switch (event.eventType) {
-                                                case MODIFY -> onEntryModify(affectedFile);
-                                                case CREATE -> onEntryCreate(affectedFile);
-                                                case DELETE -> onEntryDelete(affectedFile);
-                                            }
-                                        }
-                                    }
-                                }
-
-                            }
-                        } finally {
-                            isBatchScheduled.set(false);
-                        }
-                    });
+            } catch (final Throwable e) {
+                LOGGER.error("Error executing delayed executor: {}. " +
+                             "Swallowing and resetting isBatchInProgress to false.",
+                        LogUtil.exceptionMessage(e), e);
+                isBatchInProgress.set(false);
+            }
+        } else {
+            LOGGER.debug("scheduleBatchIfRequired() - Already scheduled, nothing to do");
         }
     }
 
@@ -307,7 +379,7 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
                     // Drop latest one in MODIFY,MODIFY or CREATE,MODIFY
                     if (event.eventType == lastEventType
                         || (event.eventType == EventType.MODIFY && lastEventType == EventType.CREATE)) {
-                        LOGGER.debug("Dropping event {}", event);
+                        LOGGER.debug("deDupEvents() - Dropping event {}", event);
                     } else {
                         filteredEvents.add(event);
                         lastEventType = event.eventType;
@@ -333,13 +405,16 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
             if (watchService != null) {
                 watchService.close();
             }
-            if (executorService != null) {
+            if (watcherExecutorService != null) {
                 if (watcherFuture != null
                     && !watcherFuture.isCancelled()
                     && !watcherFuture.isDone()) {
                     watcherFuture.cancel(true);
                 }
-                executorService.shutdown();
+                watcherExecutorService.shutdown();
+            }
+            if (processorExecutorService != null) {
+                processorExecutorService.shutdown();
             }
         }
         isRunning.set(false);
@@ -373,6 +448,10 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
                 .build();
     }
 
+    private @NonNull CustomThreadFactory createThreadFactory(final String prefixSuffix) {
+        return new CustomThreadFactory(this.getClass().getSimpleName() + "-" + prefixSuffix);
+    }
+
     /**
      * Called once the directory monitor has been started
      */
@@ -380,16 +459,24 @@ public abstract class AbstractDirChangeMonitor implements HasHealthCheck, Manage
 
     /**
      * Called when a file/directory in the monitored directory is modified.
+     * There is no guarantee that subsequent changes haven't happened to this file
+     * after this event was fired. Implementations should allow for the file
+     * to be no longer present, e.g. if it was deleted after this event.
      */
     protected abstract void onEntryModify(final Path path);
 
     /**
      * Called when a file/directory in the monitored directory is created.
+     * There is no guarantee that subsequent changes haven't happened to this file
+     * after this event was fired. Implementations should allow for the file
+     * to be no longer present, e.g. if it was deleted after this event.
      */
     protected abstract void onEntryCreate(final Path path);
 
     /**
      * Called when a file/directory in the monitored directory is deleted.
+     * There is no guarantee that subsequent changes haven't happened to this file
+     * after this event was fired.
      */
     protected abstract void onEntryDelete(final Path path);
 
