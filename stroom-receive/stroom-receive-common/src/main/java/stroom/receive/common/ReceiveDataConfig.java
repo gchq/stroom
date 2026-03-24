@@ -66,7 +66,7 @@ public class ReceiveDataConfig
     public static final String DEFAULT_OWNER_META_KEY = StandardHeaderArguments.ACCOUNT_ID;
 
     public static final boolean DEFAULT_AUTHENTICATION_REQUIRED = true;
-    public static final String DEFAULT_DATA_FEED_KEYS_DIR = "data_feed_keys";
+    public static final String DEFAULT_DATA_FEED_IDENTITIES_DIR = "data_feed_identities";
     public static final boolean DEFAULT_FEED_NAME_GENERATION_ENABLED = false;
 
     public static final String DEFAULT_FEED_NAME_TEMPLATE = toTemplate(
@@ -85,8 +85,9 @@ public class ReceiveDataConfig
     public static final Set<String> DEFAULT_META_TYPES =
             CollectionUtil.asUnmodifiabledConsistentOrderSet(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
 
-    public static final Set<AuthenticationType> DEFAULT_AUTH_TYPES =
-            EnumSet.of(AuthenticationType.CERTIFICATE, AuthenticationType.TOKEN);
+    public static final Set<AuthenticationType> DEFAULT_AUTH_TYPES = EnumSet.of(
+            AuthenticationType.CERTIFICATE,
+            AuthenticationType.TOKEN);
 
     public static final ReceiptCheckMode DEFAULT_RECEIPT_CHECK_MODE = ReceiptCheckMode.getDefault();
     // If we can't hit the downstream then we have to let everything in
@@ -97,9 +98,9 @@ public class ReceiveDataConfig
     @JsonProperty
     private final boolean authenticationRequired;
     @JsonProperty
-    private final String dataFeedKeysDir;
+    private final String dataFeedIdentitiesDir;
     @JsonProperty
-    private final String dataFeedKeyOwnerMetaKey;
+    private final String dataFeedOwnerMetaKey;
     @JsonProperty
     private final CacheConfig authenticatedDataFeedKeyCache;
     @JsonProperty
@@ -130,8 +131,8 @@ public class ReceiveDataConfig
         metaTypes = DEFAULT_META_TYPES;
         enabledAuthenticationTypes = DEFAULT_AUTH_TYPES;
         authenticationRequired = DEFAULT_AUTHENTICATION_REQUIRED;
-        dataFeedKeysDir = DEFAULT_DATA_FEED_KEYS_DIR;
-        dataFeedKeyOwnerMetaKey = DEFAULT_OWNER_META_KEY;
+        dataFeedIdentitiesDir = DEFAULT_DATA_FEED_IDENTITIES_DIR;
+        dataFeedOwnerMetaKey = DEFAULT_OWNER_META_KEY;
         authenticatedDataFeedKeyCache = createDefaultDataFeedKeyCacheConfig();
         x509CertificateHeader = DEFAULT_X509_CERT_HEADER;
         x509CertificateDnHeader = DEFAULT_X509_CERT_DN_HEADER;
@@ -151,8 +152,8 @@ public class ReceiveDataConfig
             @JsonProperty("metaTypes") final Set<String> metaTypes,
             @JsonProperty("enabledAuthenticationTypes") final Set<AuthenticationType> enabledAuthenticationTypes,
             @JsonProperty("authenticationRequired") final Boolean authenticationRequired,
-            @JsonProperty("dataFeedKeysDir") final String dataFeedKeysDir,
-            @JsonProperty("dataFeedKeyOwnerMetaKey") final String dataFeedKeyOwnerMetaKey,
+            @JsonProperty("dataFeedIdentitiesDir") final String dataFeedIdentitiesDir,
+            @JsonProperty("dataFeedOwnerMetaKey") final String dataFeedOwnerMetaKey,
             @JsonProperty("authenticatedDataFeedKeyCache") final CacheConfig authenticatedDataFeedKeyCache,
             @JsonProperty("x509CertificateHeader") final String x509CertificateHeader,
             @JsonProperty("x509CertificateDnHeader") final String x509CertificateDnHeader,
@@ -172,8 +173,9 @@ public class ReceiveDataConfig
                 DEFAULT_AUTH_TYPES);
         this.authenticationRequired = Objects.requireNonNullElse(
                 authenticationRequired, DEFAULT_AUTHENTICATION_REQUIRED);
-        this.dataFeedKeysDir = NullSafe.nonBlankStringElse(dataFeedKeysDir, DEFAULT_DATA_FEED_KEYS_DIR);
-        this.dataFeedKeyOwnerMetaKey = NullSafe.nonBlankStringElse(dataFeedKeyOwnerMetaKey, DEFAULT_OWNER_META_KEY);
+        this.dataFeedIdentitiesDir = NullSafe.nonBlankStringElse(
+                dataFeedIdentitiesDir, DEFAULT_DATA_FEED_IDENTITIES_DIR);
+        this.dataFeedOwnerMetaKey = NullSafe.nonBlankStringElse(dataFeedOwnerMetaKey, DEFAULT_OWNER_META_KEY);
         this.authenticatedDataFeedKeyCache = Objects.requireNonNullElseGet(
                 authenticatedDataFeedKeyCache, ReceiveDataConfig::createDefaultDataFeedKeyCacheConfig);
         this.x509CertificateHeader = NullSafe.nonBlankStringElse(x509CertificateHeader, DEFAULT_X509_CERT_HEADER);
@@ -255,14 +257,14 @@ public class ReceiveDataConfig
     }
 
     @ValidDirectoryPath(ensureExistence = true)
-    @JsonPropertyDescription("The directory where Stroom will look for datafeed key files. " +
-                             "Only used if datafeedKeyAuthenticationEnabled is true." +
+    @JsonPropertyDescription("The directory where Stroom will look for datafeed identity files. " +
+                             "Only used if enabledAuthenticationTypes contains DATA_FEED_KEY or ." +
                              "If the value is a relative path then it will be treated as being " +
                              "relative to stroom.path.home. " +
                              "Data feed key files must have the extension .json. Files in sub-directories" +
                              "will be ignored.")
-    public String getDataFeedKeysDir() {
-        return dataFeedKeysDir;
+    public String getDataFeedIdentitiesDir() {
+        return dataFeedIdentitiesDir;
     }
 
     @NotBlank
@@ -271,8 +273,8 @@ public class ReceiveDataConfig
                              "using the associated Data Feed Key, and its value will be checked against the value " +
                              "held with the hashed Data Feed Key by Stroom. Default value is 'AccountId'. " +
                              "Case does not matter.")
-    public String getDataFeedKeyOwnerMetaKey() {
-        return dataFeedKeyOwnerMetaKey;
+    public String getDataFeedOwnerMetaKey() {
+        return dataFeedOwnerMetaKey;
     }
 
     @NotNull
@@ -377,8 +379,8 @@ public class ReceiveDataConfig
         return "ReceiveDataConfig{" +
                ", metaTypes=" + metaTypes +
                ", authenticationRequired=" + authenticationRequired +
-               ", dataFeedKeysDir='" + dataFeedKeysDir + '\'' +
-               ", dataFeedKeyOwnerMetaKey='" + dataFeedKeyOwnerMetaKey + '\'' +
+               ", dataFeedKeysDir='" + dataFeedIdentitiesDir + '\'' +
+               ", dataFeedKeyOwnerMetaKey='" + dataFeedOwnerMetaKey + '\'' +
                ", authenticatedDataFeedKeyCache=" + authenticatedDataFeedKeyCache +
                ", enabledAuthenticationTypes=" + enabledAuthenticationTypes +
                ", x509CertificateHeader='" + x509CertificateHeader + '\'' +
@@ -404,8 +406,8 @@ public class ReceiveDataConfig
         return authenticationRequired == that.authenticationRequired
                && feedNameGenerationEnabled == that.feedNameGenerationEnabled
                && Objects.equals(metaTypes, that.metaTypes)
-               && Objects.equals(dataFeedKeysDir, that.dataFeedKeysDir)
-               && Objects.equals(dataFeedKeyOwnerMetaKey, that.dataFeedKeyOwnerMetaKey)
+               && Objects.equals(dataFeedIdentitiesDir, that.dataFeedIdentitiesDir)
+               && Objects.equals(dataFeedOwnerMetaKey, that.dataFeedOwnerMetaKey)
                && Objects.equals(authenticatedDataFeedKeyCache, that.authenticatedDataFeedKeyCache)
                && Objects.equals(enabledAuthenticationTypes, that.enabledAuthenticationTypes)
                && Objects.equals(x509CertificateHeader, that.x509CertificateHeader)
@@ -422,8 +424,8 @@ public class ReceiveDataConfig
         return Objects.hash(
                 metaTypes,
                 authenticationRequired,
-                dataFeedKeysDir,
-                dataFeedKeyOwnerMetaKey,
+                dataFeedIdentitiesDir,
+                dataFeedOwnerMetaKey,
                 authenticatedDataFeedKeyCache,
                 enabledAuthenticationTypes,
                 x509CertificateHeader,
@@ -441,7 +443,7 @@ public class ReceiveDataConfig
         builder.metaTypes = receiveDataConfig.getMetaTypes();
         builder.enabledAuthenticationTypes = receiveDataConfig.getEnabledAuthenticationTypes();
         builder.authenticationRequired = receiveDataConfig.isAuthenticationRequired();
-        builder.dataFeedKeysDir = receiveDataConfig.getDataFeedKeysDir();
+        builder.dataFeedKeysDir = receiveDataConfig.getDataFeedIdentitiesDir();
         builder.authenticatedDataFeedKeyCache = receiveDataConfig.getAuthenticatedDataFeedKeyCache();
         builder.x509CertificateHeader = receiveDataConfig.getX509CertificateHeader();
         builder.x509CertificateDnHeader = receiveDataConfig.getX509CertificateDnHeader();

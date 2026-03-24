@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,9 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskUtil;
 import stroom.task.api.TerminateHandlerFactory;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
@@ -39,6 +41,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.StringUtil;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.nio.file.Files;
@@ -47,8 +50,8 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -74,6 +77,7 @@ public class IndexShardManager {
     private final SecurityContext securityContext;
     private final PathCreator pathCreator;
     private final AtomicBoolean deletingShards = new AtomicBoolean();
+    private final Provider<Executor> executorProvider;
 
     @Inject
     IndexShardManager(final IndexStore indexStore,
@@ -83,7 +87,8 @@ public class IndexShardManager {
                       final Executor executor,
                       final TaskContextFactory taskContextFactory,
                       final SecurityContext securityContext,
-                      final PathCreator pathCreator) {
+                      final PathCreator pathCreator,
+                      final Provider<Executor> executorProvider) {
         this.indexStore = indexStore;
         this.indexShardDao = indexShardDao;
         this.indexShardWriterCache = indexShardWriterCache;
@@ -92,12 +97,14 @@ public class IndexShardManager {
         this.taskContextFactory = taskContextFactory;
         this.securityContext = securityContext;
         this.pathCreator = pathCreator;
+        this.executorProvider = executorProvider;
     }
 
     /**
      * Delete anything that has been marked to delete
      */
     public void deleteFromDisk() {
+        LOGGER.debug("deleteFromDisk()");
         securityContext.secure(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             if (deletingShards.compareAndSet(false, true)) {
                 try {
@@ -105,7 +112,7 @@ public class IndexShardManager {
                     criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
                     criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
                     final ResultPage<IndexShard> shards = indexShardDao.find(criteria);
-                    if (NullSafe.test(shards, shards2 -> shards2.size() > 0)) {
+                    if (NullSafe.hasItems(shards)) {
                         deleteShardsFromDisk(indexShardWriterCache, shards);
                     } else {
                         LOGGER.debug("No matching shards to delete, criteria: {}", criteria);
@@ -123,6 +130,7 @@ public class IndexShardManager {
 
     private void deleteShardsFromDisk(final IndexShardWriterCache indexShardWriterCache,
                                       final ResultPage<IndexShard> shards) {
+        LOGGER.debug(() -> LogUtil.message("deleteShardsFromDisk() - shard count: {}", NullSafe.size(shards)));
         final Runnable runnable = taskContextFactory.context(
                 "Delete Logically Deleted Shards",
                 TerminateHandlerFactory.NOOP_FACTORY,
@@ -156,7 +164,7 @@ public class IndexShardManager {
                     }
                 });
 
-        // In tests we don't have a task manager.
+        // In tests, we don't have a task manager.
         NullSafe.consumeOr(
                 executor,
                 ex -> ex.execute(runnable),
@@ -200,7 +208,7 @@ public class IndexShardManager {
 
     private long performAction(final List<IndexShard> ownedShards, final IndexShardAction action) {
         final AtomicLong shardCount = new AtomicLong();
-        if (!ownedShards.isEmpty()) {
+        if (NullSafe.hasItems(ownedShards)) {
             taskContextFactory.context(
                     "Index Shard Manager",
                     TerminateHandlerFactory.NOOP_FACTORY,
@@ -210,65 +218,81 @@ public class IndexShardManager {
                         // Create an atomic integer to count the number of index shard writers yet to complete the
                         // specified action.
                         final AtomicInteger remaining = new AtomicInteger(ownedShards.size());
+                        final AtomicInteger errorCount = new AtomicInteger();
 
                         // Create a scheduled executor for us to continually log index shard writer action progress.
-                        try (final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor()) {
+                        try (final ScheduledExecutorService scheduledLoggingExecutor =
+                                Executors.newSingleThreadScheduledExecutor()) {
                             // Start logging action progress.
-                            executor.scheduleAtFixedRate(
-                                    () -> LOGGER.info(() ->
-                                            "Waiting for " + remaining.get() + " index shards to " + action.getName()),
+                            scheduledLoggingExecutor.scheduleAtFixedRate(
+                                    () -> LOGGER.info(() -> LogUtil.message(
+                                            "Waiting for {} index shards to {}", remaining.get(), action.getName())),
                                     10,
                                     10,
                                     TimeUnit.SECONDS);
 
-                            // Perform action on all of the index shard writers in parallel.
-                            ownedShards.parallelStream().forEach(shard -> {
-                                try {
-                                    // We use a child tak context here to create child messages in the UI but also to
-                                    // ensure the task is performed in the context of the parent user.
-                                    taskContextFactory.childContext(parentTaskContext,
-                                            "Index Shard Manager",
-                                            TerminateHandlerFactory.NOOP_FACTORY,
-                                            taskContext -> {
-                                                taskContext.info(() -> action.getActivity() +
-                                                                       " index shard: " +
-                                                                       shard.getId());
-                                                switch (action) {
-                                                    case FLUSH:
-                                                        shardCount.incrementAndGet();
-                                                        flush(shard);
-                                                        break;
-                                                    case DELETE:
-                                                        shardCount.incrementAndGet();
-                                                        delete(shard);
-                                                        break;
-                                                }
-                                            }).run();
-                                } catch (final RuntimeException e) {
-                                    LOGGER.error(e::getMessage, e);
-                                }
+                            // Perform action on all the index shard writers in parallel.
+                            final Executor executor = executorProvider.get();
+                            final CompletableFuture<?>[] futures = ownedShards.stream()
+                                    .takeWhile(TaskUtil.createTaskTerminatedCheck(parentTaskContext, LOGGER))
+                                    .map(shard -> {
+                                        // We use a child tak context here to create child messages in the
+                                        // UI but also to ensure the task is performed in the context of the parent
+                                        // user.
+                                        final Runnable runnable = taskContextFactory.childContext(
+                                                parentTaskContext,
+                                                "Index Shard Manager",
+                                                TerminateHandlerFactory.NOOP_FACTORY,
+                                                taskContext -> {
+                                                    taskContext.info(() ->
+                                                            action.getActivity() + " index shard: " + shard.getId());
+                                                    switch (action) {
+                                                        case FLUSH -> flush(shard);
+                                                        case DELETE -> delete(shard);
+                                                    }
+                                                });
 
-                                remaining.getAndDecrement();
-                            });
+                                        return CompletableFuture.runAsync(runnable, executor)
+                                                .handle((ignored, e) -> {
+                                                    // This handle method is called for success or failure
+                                                    // Log and swallow the error
+                                                    ThreadUtil.consumeCompletionException(e, cause ->
+                                                            LOGGER.error("Error performing {} on shard {} - {}",
+                                                                    action,
+                                                                    shard.getId(),
+                                                                    LogUtil.exceptionMessage(cause), cause));
+                                                    remaining.getAndDecrement();
+                                                    if (e != null) {
+                                                        errorCount.incrementAndGet();
+                                                    } else {
+                                                        shardCount.incrementAndGet();
+                                                    }
+                                                    return null; // runnable, so no return
+                                                });
+                                    }).toArray(CompletableFuture[]::new);
+
+                            // Wait for all tasks to complete.
+                            CompletableFuture.allOf(futures)
+                                    .join();
 
                             // Shut down the progress logging executor.
-                            executor.shutdown();
+                            scheduledLoggingExecutor.shutdown();
                         }
 
-                        LOGGER.info(() -> "Finished " +
-                                          action.getActivity().toLowerCase(Locale.ROOT) +
-                                          " index shards");
+                        LOGGER.info(() -> LogUtil.message("Finished {} {} index shards, error count: {}",
+                                action.getActivity().toLowerCase(), shardCount, errorCount));
                     }).run();
         }
-
         return shardCount.get();
     }
 
     private void flush(final IndexShard indexShard) {
+        LOGGER.debug("flush() - indexShard: {}", indexShard);
         indexShardWriterCache.flush(indexShard.getId());
     }
 
     private void delete(final IndexShard indexShard) {
+        LOGGER.debug("delete() - indexShard: {}", indexShard);
         final DocRef indexDocRef = DocRef
                 .builder()
                 .type(LuceneIndexDoc.TYPE)
@@ -304,7 +328,6 @@ public class IndexShardManager {
             if (index == null) {
                 // If there is no associated index then delete the shard.
                 indexShardWriterCache.delete(shard.getId());
-
             } else {
                 final Integer retentionDayAge = index.getRetentionDayAge();
                 final Long partitionToTime = shard.getPartitionToTime();
@@ -332,6 +355,10 @@ public class IndexShardManager {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public enum IndexShardAction {
         FLUSH("flush", "Flushing"),
         DELETE("delete", "Deleting");
@@ -344,10 +371,16 @@ public class IndexShardManager {
             this.activity = activity;
         }
 
+        /**
+         * @return "flush" or "Deleting"
+         */
         public String getName() {
             return name;
         }
 
+        /**
+         * @return "Flushing" or "Deleting"
+         */
         public String getActivity() {
             return activity;
         }

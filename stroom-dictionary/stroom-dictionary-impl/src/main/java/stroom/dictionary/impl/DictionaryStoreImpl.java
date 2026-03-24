@@ -51,7 +51,7 @@ import java.util.Stack;
 import java.util.stream.Collectors;
 
 @Singleton
-class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
+public class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DictionaryStoreImpl.class);
 

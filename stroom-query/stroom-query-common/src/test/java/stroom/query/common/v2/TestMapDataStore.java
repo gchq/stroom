@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import stroom.query.language.functions.FieldIndex;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.concurrent.Executors;
 
 class TestMapDataStore extends AbstractDataStoreTest {
 
@@ -47,7 +48,8 @@ class TestMapDataStore extends AbstractDataStoreTest {
                 Collections.emptyMap(),
                 dataStoreSettings,
                 errorConsumer,
-                resultStoreConfig.getMapConfig());
+                resultStoreConfig.getMapConfig(),
+                Executors::newCachedThreadPool);
     }
 
     @Test

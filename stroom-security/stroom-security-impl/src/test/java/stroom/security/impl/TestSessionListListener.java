@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,16 @@ import stroom.node.api.NodeService;
 import stroom.security.mock.MockSecurityContext;
 import stroom.security.shared.SessionListResponse;
 import stroom.security.shared.SessionResource;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContextFactory;
+import stroom.task.shared.ThreadPool;
 import stroom.test.common.TestUtil;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -37,11 +41,17 @@ import org.mockito.quality.Strictness;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResource> {
+
+    private static ExecutorService executorService;
+    private static ExecutorProvider executorProvider;
 
     private final Map<String, SessionListService> sessionListServiceMap = new HashMap<>();
 
@@ -50,6 +60,28 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
 
     public TestSessionListListener() {
         super(createNodeList(BASE_PORT));
+    }
+
+    @BeforeAll
+    static void beforeAll() {
+        executorService = Executors.newCachedThreadPool();
+        executorProvider = new ExecutorProvider() {
+
+            @Override
+            public Executor get() {
+                return executorService;
+            }
+
+            @Override
+            public Executor get(final ThreadPool threadPool) {
+                return executorService;
+            }
+        };
+    }
+
+    @AfterAll
+    static void afterAll() {
+        executorService.shutdown();
     }
 
     @BeforeEach
@@ -139,7 +171,8 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
                 new SimpleTaskContextFactory(),
                 webTargetFactory(),
                 Mockito.mock(StroomUserIdentityFactory.class),
-                new MockSecurityContext());
+                new MockSecurityContext(),
+                executorProvider);
 
         sessionListServiceMap.put(node.getNodeName(), sessionListService);
 

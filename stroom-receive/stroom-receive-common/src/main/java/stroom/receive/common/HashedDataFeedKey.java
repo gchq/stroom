@@ -16,12 +16,16 @@
 
 package stroom.receive.common;
 
-import stroom.meta.api.AttributeMap;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.SerialisationTestConstructor;
 import stroom.util.shared.string.CIKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -29,6 +33,9 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -38,8 +45,11 @@ import java.util.stream.Collectors;
  * Represents the hashed form of a Data Feed Key, i.e. where we only have the
  * hash of the key and not the key itself.
  */
+@JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
-public class HashedDataFeedKey {
+public final class HashedDataFeedKey implements DataFeedIdentity {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HashedDataFeedKey.class);
 
     @JsonProperty
     @JsonPropertyDescription("The hash of the datafeed key. Hashed using hashAlgorithm.")
@@ -55,10 +65,15 @@ public class HashedDataFeedKey {
                              "(ARGON2|BCRYPT_2A).")
     private final DataFeedKeyHashAlgorithm hashAlgorithm;
 
-    @JsonProperty
+    @JsonIgnore // Serialise as Map<String, String>
     @JsonPropertyDescription("A map of stream attribute key/value pairs. These will trump any entries " +
                              "in the stream headers.")
-    private final Map<CIKey, String> streamMetaData;
+    private final Map<CIKey, String> ciStreamMetaData;
+
+    @JsonProperty
+    @JsonPropertyDescription("A map of stream attribute key/value pairs. These will trump any entries " +
+                             "in the stream headers. Keys are case insensitive.")
+    private final Map<String, String> streamMetaData;
 
     @JsonProperty
     @JsonPropertyDescription("The date/time the key expires, expressed as milliseconds since the unix epoch.")
@@ -70,21 +85,32 @@ public class HashedDataFeedKey {
     @JsonCreator
     public HashedDataFeedKey(@JsonProperty("hash") final String hash,
                              @JsonProperty("salt") final String salt,
-                             @JsonProperty("hashAlgorithmId") final DataFeedKeyHashAlgorithm hashAlgorithm,
+                             @JsonProperty("hashAlgorithm") final DataFeedKeyHashAlgorithm hashAlgorithm,
                              @JsonProperty("streamMetaData") final Map<String, String> streamMetaData,
                              @JsonProperty("expiryDateEpochMs") final long expiryDateEpochMs) {
-        this.hash = hash;
-        this.salt = salt;
-        this.hashAlgorithm = hashAlgorithm;
+        this.hash = NullSafe.requireNonBlankString(hash, () -> "hash must not be blank");
+        this.salt = NullSafe.requireNonBlankString(salt, () -> "salt must not be blank");
+        this.hashAlgorithm = Objects.requireNonNull(hashAlgorithm, "hashAlgorithm must not be null");
         // No point holding blank keys or null values
-        this.streamMetaData = NullSafe.map(streamMetaData)
+        this.ciStreamMetaData = NullSafe.map(streamMetaData)
                 .entrySet()
                 .stream()
                 .filter(entry -> NullSafe.isNonBlankString(entry.getKey()))
                 .filter(entry -> entry.getValue() != null)
-                .collect(Collectors.toMap(
+                .collect(Collectors.toUnmodifiableMap(
                         entry -> CIKey.of(entry.getKey()),
-                        Entry::getValue));
+                        Entry::getValue,
+                        (val1, val2) -> {
+                            // two values for the same key, just use the first one
+                            LOGGER.warn("Duplicate key (ignoring case). Keeping value '{}', ignoring value '{}', " +
+                                        "streamMetaData: {}",
+                                    val1, val2, streamMetaData);
+                            return val1;
+                        })
+                );
+        // It would be nice not have this field but TestJsonSerialisation can't cope with
+        // not having a field with @JsonProperty and doesn't like complex map keys.
+        this.streamMetaData = Collections.unmodifiableMap(CIKey.convertToStringMap(ciStreamMetaData));
         this.expiryDateEpochMs = expiryDateEpochMs;
         // Cache the hashCode as we know we will use it
         this.hashCode = Objects.hash(
@@ -93,6 +119,17 @@ public class HashedDataFeedKey {
                 hashAlgorithm,
                 streamMetaData,
                 expiryDateEpochMs);
+    }
+
+    @SerialisationTestConstructor
+    private HashedDataFeedKey() {
+        this("dummy hash",
+                "dummy salt",
+                DataFeedKeyHashAlgorithm.ARGON2,
+                Collections.emptyMap(),
+                LocalDateTime.of(2026, 3, 13, 13, 51)
+                        .toInstant(ZoneOffset.UTC)
+                        .toEpochMilli());
     }
 
     @NotBlank
@@ -109,30 +146,14 @@ public class HashedDataFeedKey {
         return hashAlgorithm;
     }
 
-    public Map<String, String> getStreamMetaData() {
-        return CIKey.convertToStringMap(streamMetaData);
-    }
-
-    @JsonIgnore
-    public Map<CIKey, String> getCIStreamMetaData() {
+    private Map<String, String> getStreamMetaData() {
         return streamMetaData;
     }
 
-    @JsonIgnore
-    public AttributeMap getAttributeMap() {
-        return new AttributeMap(getStreamMetaData());
-    }
-
-    @JsonIgnore
-    public String getStreamMetaValue(final String metaKey) {
-        return NullSafe.isNonBlankString(metaKey)
-                ? streamMetaData.get(CIKey.of(metaKey))
-                : null;
-    }
-
-    @JsonIgnore
-    public String getStreamMetaValue(final CIKey metaKey) {
-        return NullSafe.get(metaKey, streamMetaData::get);
+    @Override
+    @JsonIgnore // Serialise as Map<String, String>
+    public Map<CIKey, String> getCIStreamMetaData() {
+        return ciStreamMetaData;
     }
 
     @Min(0)
@@ -145,10 +166,11 @@ public class HashedDataFeedKey {
         return Instant.ofEpochMilli(expiryDateEpochMs);
     }
 
-    @JsonIgnore
-    public boolean isExpired() {
-        return Instant.now().isAfter(getExpiryDate());
-    }
+//    @Override
+//    @JsonProperty("type")
+//    public IdentityType getType() {
+//        return IdentityType.DATA_FEED_KEY;
+//    }
 
     @Override
     public boolean equals(final Object object) {

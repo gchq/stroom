@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import stroom.node.impl.NodeConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
+import stroom.util.BuildInfoProvider;
 import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
@@ -57,6 +58,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.SessionUtil;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
@@ -83,7 +85,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Objects;
+import java.util.concurrent.ForkJoinPool;
 
 public class App extends Application<Config> {
 
@@ -107,6 +111,8 @@ public class App extends Application<Config> {
     private ManagedServices managedServices;
     @Inject
     private RestResourceAutoLogger resourceAutoLogger;
+    @Inject
+    private BuildInfoProvider buildInfoProvider;
 
     // Injected manually
     private HomeDirProvider homeDirProvider;
@@ -273,15 +279,30 @@ public class App extends Application<Config> {
     }
 
     private void showNodeInfo(final Config configuration) {
+        final int parallelism;
+        try (final ForkJoinPool forkJoinPool = ForkJoinPool.commonPool()) {
+            parallelism = forkJoinPool.getParallelism();
+        }
+        final int availableProcessors = Runtime.getRuntime().availableProcessors();
+        final BuildInfo buildInfo = buildInfoProvider.get();
         LOGGER.info("""
+                        App Info:
                         ********************************************************************************
-                          Stroom home:   {}
-                          Stroom temp:   {}
-                          Node name:     {}
+                          Build Version:         {}
+                          Build Time:            {}
+                          Stroom Home:           {}
+                          Stroom Temp:           {}
+                          Node Name:             {}
+                          Available Processors:  {}
+                          FJP Parallelism:       {}
                         ********************************************************************************""",
+                buildInfo.getBuildVersion(),
+                Instant.ofEpochMilli(buildInfo.getBuildTime()),
                 homeDirProvider.get().toAbsolutePath().normalize(),
                 tempDirProvider.get().toAbsolutePath().normalize(),
-                getNodeName(configuration.getYamlAppConfig()));
+                getNodeName(configuration.getYamlAppConfig()),
+                availableProcessors,
+                parallelism);
     }
 
     private void warnAboutDefaultOpenIdCreds(final Config configuration, final Injector injector) {

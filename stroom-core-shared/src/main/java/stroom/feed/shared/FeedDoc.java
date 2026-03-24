@@ -39,7 +39,7 @@ import java.util.Objects;
 @Description(
         "The {{< glossary \"Feed\" >}} is Stroom's way of compartmentalising data that has been ingested or " +
         "created by a [Pipeline]({{< relref \"#pipeline\" >}}).\n" +
-        "Ingested data must specify the Feed that is it destined for.\n\n" +
+        "Ingested data must specify the Feed that it is destined for.\n\n" +
         "The Feed Document defines the character encoding for the data in the Feed, the type of data that " +
         "will be received into it (e.g. `Raw Events`) and optionally a Volume Group to use for " +
         "data storage.\n" +

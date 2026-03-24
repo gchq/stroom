@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
 import stroom.security.api.SecurityContext;
 import stroom.suggestions.api.SuggestionsService;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 
@@ -52,6 +53,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -69,6 +71,7 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
     private final DocRefInfoService docRefInfoService;
     private final TaskContextFactory taskContextFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final Executor executor;
 
     // This may need changing if we have suggestions that are not for the stream store data source
     private final Map<String, Function<String, List<String>>> metaFieldNameToFunctionMap = Map.of(
@@ -99,7 +102,8 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
                                     final TaskContextFactory taskContextFactory,
                                     final DocRefInfoService docRefInfoService,
                                     final SuggestionsService suggestionsService,
-                                    final ExpressionPredicateFactory expressionPredicateFactory) {
+                                    final ExpressionPredicateFactory expressionPredicateFactory,
+                                    final ExecutorProvider executorProvider) {
         this.metaService = metaService;
         this.pipelineStore = pipelineStore;
         this.securityContext = securityContext;
@@ -107,6 +111,7 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
         this.docRefInfoService = docRefInfoService;
         this.taskContextFactory = taskContextFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.executor = executorProvider.get();
     }
 
     @Override
@@ -186,7 +191,7 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
         final CompletableFuture<Set<String>> metaFeedsFuture = CompletableFuture.supplyAsync(
                 taskContextFactory.contextResult(
                         "Get meta feed names",
-                        taskContext -> metaService.getFeeds()));
+                        taskContext -> metaService.getFeeds()), executor);
 
         final CompletableFuture<List<String>> docFeedsFuture = CompletableFuture.supplyAsync(
                 taskContextFactory.contextResult(
@@ -195,15 +200,17 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
                                 feedStore.list()
                                         .stream()
                                         .map(DocRef::getName)
-                                        .collect(Collectors.toList())));
+                                        .collect(Collectors.toList())), executor);
 
         try {
             // Make async calls to get the two lists then combine
             return expressionPredicateFactory.filterAndSortStream(
-                            metaFeedsFuture.thenCombine(docFeedsFuture, (metaFeedNames, docFeedNames) -> Stream
-                                            .concat(metaFeedNames.stream(), docFeedNames.stream())
-                                            .parallel()
-                                            .distinct())
+                            metaFeedsFuture.thenCombine(
+                                            docFeedsFuture,
+                                            (metaFeedNames, docFeedNames) ->
+                                                    Stream.concat(metaFeedNames.stream(), docFeedNames.stream())
+                                                            .parallel()
+                                                            .distinct())
                                     .get(),
                             userInput,
                             Optional.of(Comparator.naturalOrder()))

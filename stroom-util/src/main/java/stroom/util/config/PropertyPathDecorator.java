@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ public class PropertyPathDecorator {
         // Get all the props at this level
         final Map<String, Prop> properties = PropertyUtil.getProperties(config);
 
+        // Use of ForkJoinPool is ok here as all CPU bound
         properties.values()
                 .parallelStream()
                 .forEach(prop -> {

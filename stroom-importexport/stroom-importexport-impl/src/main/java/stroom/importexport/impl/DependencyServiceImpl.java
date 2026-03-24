@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,17 @@ import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.FieldProviderImpl;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.query.common.v2.ValueFunctionFactoriesImpl;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskUtil;
+import stroom.task.api.ThreadPoolImpl;
+import stroom.task.shared.ThreadPool;
+import stroom.util.concurrent.ThreadUtil;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.NullSafe;
@@ -48,13 +54,17 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class DependencyServiceImpl implements DependencyService {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DependencyServiceImpl.class);
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Dependency Service");
 
     private static final Comparator<Dependency> FROM_TYPE_COMPARATOR =
             CompareUtil.getNullSafeCaseInsensitiveComparator(Dependency::getFrom, DocRef::getType);
@@ -106,18 +116,21 @@ public class DependencyServiceImpl implements DependencyService {
     private final TaskContextFactory taskContextFactory;
     private final ExplorerDecorator explorerDecorator;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final Executor executor;
 
     @Inject
     public DependencyServiceImpl(final ImportExportActionHandlers importExportActionHandlers,
                                  final DocRefInfoService docRefInfoService,
                                  final TaskContextFactory taskContextFactory,
                                  final ExplorerDecorator explorerDecorator,
-                                 final ExpressionPredicateFactory expressionPredicateFactory) {
+                                 final ExpressionPredicateFactory expressionPredicateFactory,
+                                 final ExecutorProvider executorProvider) {
         this.importExportActionHandlers = importExportActionHandlers;
         this.docRefInfoService = docRefInfoService;
         this.taskContextFactory = taskContextFactory;
         this.explorerDecorator = explorerDecorator;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.executor = executorProvider.get(THREAD_POOL);
     }
 
     @Override
@@ -236,39 +249,64 @@ public class DependencyServiceImpl implements DependencyService {
     }
 
     private Map<DocRef, Set<DocRef>> buildDependencyMap(final TaskContext parentTaskContext) {
-        return importExportActionHandlers
+        final List<CompletableFuture<Map<DocRef, Set<DocRef>>>> futures = importExportActionHandlers
                 .getHandlers()
                 .values()
-                .parallelStream()
-                .map(handler ->
-                        taskContextFactory.childContextResult(
-                                parentTaskContext,
-                                "Get " + handler.getType() + " dependencies",
-                                taskContext -> {
-                                    Map<DocRef, Set<DocRef>> deps = null;
-                                    try {
-                                        final DurationTimer timer = DurationTimer.start();
-                                        deps = handler.getDependencies();
-                                        if (LOGGER.isDebugEnabled() && !NullSafe.isEmptyMap(deps)) {
-                                            LOGGER.debug("Handler {} returned dependencies for {} docs in {}",
-                                                    handler.getClass().getSimpleName(),
-                                                    deps.size(),
-                                                    timer);
-                                        }
-                                    } catch (final RuntimeException e) {
-                                        LOGGER.error(e.getMessage(), e);
+                .stream()
+                .takeWhile(TaskUtil.createTaskTerminatedCheck(parentTaskContext, LOGGER))
+                .map(handler -> {
+                    final Supplier<Map<DocRef, Set<DocRef>>> supplier = taskContextFactory.childContextResult(
+                            parentTaskContext,
+                            "Get " + handler.getType() + " dependencies",
+                            ignored -> {
+                                Map<DocRef, Set<DocRef>> deps = null;
+                                try {
+                                    final DurationTimer timer = DurationTimer.start();
+                                    deps = handler.getDependencies();
+                                    if (LOGGER.isDebugEnabled() && !NullSafe.isEmptyMap(deps)) {
+                                        LOGGER.debug("Handler {} returned dependencies for {} docs in {}",
+                                                handler.getClass().getSimpleName(),
+                                                deps.size(),
+                                                timer);
                                     }
-                                    return deps;
-                                }).get())
+                                } catch (final RuntimeException e) {
+                                    LOGGER.error(e.getMessage(), e);
+                                }
+                                return deps;
+                            });
+
+                    return CompletableFuture.supplyAsync(supplier, executor)
+                            .handle((docRefSetMap, e) -> {
+                                final Throwable cause = ThreadUtil.getCompletionException(e);
+                                if (cause != null) {
+                                    LOGGER.error("buildDependencyMap() - Error with handler: {} - {}",
+                                            handler, LogUtil.exceptionMessage(cause), cause);
+                                    return null;
+                                } else {
+                                    LOGGER.debug(() -> LogUtil.message(
+                                            "buildDependencyMap() - handler: {}, entry count: {}",
+                                            handler, docRefSetMap.size()));
+                                    return docRefSetMap;
+                                }
+                            });
+                })
+                .toList();
+
+        final Map<DocRef, Set<DocRef>> deps = futures.stream()
+                .takeWhile(TaskUtil.createTaskTerminatedCheck(parentTaskContext, LOGGER))
+                .map(CompletableFuture::join)
                 .filter(Objects::nonNull)
                 .map(Map::entrySet)
                 .flatMap(Set::stream)
                 .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        Map.Entry::getValue,
+                        Entry::getKey,
+                        Entry::getValue,
                         (e1, e2) ->
                                 Stream.concat(e1.stream(), e2.stream())
                                         .collect(Collectors.toSet())));
+
+        LOGGER.debug("buildDependencyMap() - deps count: {}", deps.size());
+        return deps;
     }
 
     private Optional<Comparator<Dependency>> getDependencyComparator(final DependencyCriteria criteria) {

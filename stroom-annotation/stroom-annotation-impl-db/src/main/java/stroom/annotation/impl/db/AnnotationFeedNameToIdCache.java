@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,8 @@ class AnnotationFeedNameToIdCache implements Clearable {
      * Load feed name from database asynchronously to avoid connection conflicts.
      */
     private Optional<Integer> load(final String name) {
-        return AnnotationFeedDao.async(() -> annotationFeedDao.fetchByName(name));
+        return annotationFeedDao.async(() ->
+                annotationFeedDao.fetchByName(name));
     }
 
     /**
@@ -124,7 +125,7 @@ class AnnotationFeedNameToIdCache implements Clearable {
      */
     private int loadOrCreate(final String name) {
         // Try and get the existing id from the DB or else create one.
-        return AnnotationFeedDao.async(() ->
+        return annotationFeedDao.async(() ->
                 annotationFeedDao.fetchByName(name).orElse(annotationFeedDao.create(name)));
     }
 

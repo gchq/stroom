@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.Executor;
 
 public class CoprocessorsFactory {
 
@@ -50,14 +52,17 @@ public class CoprocessorsFactory {
     private final DataStoreFactory dataStoreFactory;
     private final ExpressionContextFactory expressionContextFactory;
     private final SizesProvider sizesProvider;
+    private final Provider<Executor> executorProvider;
 
     @Inject
     public CoprocessorsFactory(final DataStoreFactory dataStoreFactory,
                                final ExpressionContextFactory expressionContextFactory,
-                               final SizesProvider sizesProvider) {
+                               final SizesProvider sizesProvider,
+                               final Provider<Executor> executorProvider) {
         this.dataStoreFactory = dataStoreFactory;
         this.expressionContextFactory = expressionContextFactory;
         this.sizesProvider = sizesProvider;
+        this.executorProvider = executorProvider;
     }
 
     public List<CoprocessorSettings> createSettings(final SearchRequest searchRequest) {
@@ -240,6 +245,7 @@ public class CoprocessorsFactory {
                 fieldIndex,
                 paramMap,
                 modifiedSettings,
-                errorConsumer);
+                errorConsumer,
+                executorProvider);
     }
 }
