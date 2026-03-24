@@ -32,7 +32,7 @@ public enum DNFormat {
 
     private final String delimiter;
 
-    DNFormat(String delimiter) {
+    DNFormat(final String delimiter) {
         this.delimiter = delimiter;
     }
 

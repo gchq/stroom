@@ -26,8 +26,8 @@ public interface ThrowingRunnable<E extends Throwable> {
 
     /**
      * Wraps a runnable that throws a checked exception with a catch block that will wrap
-     * any thrown exception with a {@link RuntimeException}, thus making it unchecked and
-     * usable in a lambda.
+     * any thrown exception with either a {@link UncheckedIOException} or {@link RuntimeException},
+     * thus making it unchecked and usable in a lambda.
      */
     static <E extends Throwable> Runnable unchecked(final ThrowingRunnable<E> runnable) {
         return () -> {
@@ -41,5 +41,15 @@ public interface ThrowingRunnable<E extends Throwable> {
                 }
             }
         };
+    }
+
+    /**
+     * Run the passed {@link Runnable} that throws a checked exception.
+     * Any {@link Throwable} will be caught and wrapped into either a {@link RuntimeException}
+     * of {@link UncheckedIOException} then re-thrown.
+     */
+    static <E extends Throwable> void run(final ThrowingRunnable<E> runnable) {
+        unchecked(runnable)
+                .run();
     }
 }

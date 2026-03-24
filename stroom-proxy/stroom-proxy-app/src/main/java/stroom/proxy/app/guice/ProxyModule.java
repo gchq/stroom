@@ -38,7 +38,7 @@ import stroom.proxy.app.servlet.ProxyQueueMonitoringServlet;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.app.servlet.ProxyWelcomeServlet;
-import stroom.receive.common.DataFeedKeyDirWatcher;
+import stroom.receive.common.DataFeedIdentitiesDirWatcher;
 import stroom.receive.common.DebugServlet;
 import stroom.receive.common.FeedStatusResourceImpl;
 import stroom.receive.common.FeedStatusResourceV2Impl;
@@ -99,7 +99,7 @@ public class ProxyModule extends AbstractModule {
         install(new PrometheusModule());
 
         HasHealthCheckBinder.create(binder())
-                .bind(DataFeedKeyDirWatcher.class)
+                .bind(DataFeedIdentitiesDirWatcher.class)
                 .bind(LogLevelInspector.class)
                 .bind(ProxyConfigHealthCheck.class)
                 .bind(ProxyApiKeyCheckClient.class)

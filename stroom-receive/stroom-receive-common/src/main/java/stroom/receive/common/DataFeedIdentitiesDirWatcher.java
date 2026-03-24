@@ -38,36 +38,29 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
 
 @Singleton
-public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
+public class DataFeedIdentitiesDirWatcher extends AbstractDirChangeMonitor {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataFeedKeyDirWatcher.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataFeedIdentitiesDirWatcher.class);
 
-    private static final Predicate<Path> FILE_INCLUDE_FILTER = path ->
-            path != null
-            && Files.isRegularFile(path)
-            && path.getFileName().toString().endsWith(".json");
-
-    private final Provider<DataFeedKeyService> dataFeedKeyServiceProvider;
+    private final Provider<DataFeedIdentityService> dataFeedIdentityServiceProvider;
 
     @Inject
-    public DataFeedKeyDirWatcher(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
-                                 final SimplePathCreator simplePathCreator,
-                                 final Provider<DataFeedKeyService> dataFeedKeyServiceProvider) {
-        super(
-                getDataFeedDir(receiveDataConfigProvider, simplePathCreator),
-                FILE_INCLUDE_FILTER,
+    public DataFeedIdentitiesDirWatcher(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                                        final SimplePathCreator simplePathCreator,
+                                        final Provider<DataFeedIdentityService> dataFeedIdentityServiceProvider) {
+        super(getDataFeedDir(receiveDataConfigProvider, simplePathCreator),
+                DataFeedIdentitiesDirWatcher::isJsonFile,
                 EnumSet.allOf(EventType.class));
-        this.dataFeedKeyServiceProvider = dataFeedKeyServiceProvider;
+        this.dataFeedIdentityServiceProvider = dataFeedIdentityServiceProvider;
     }
 
     private static Path getDataFeedDir(final Provider<ReceiveDataConfig> receiveDataConfigProvider,
                                        final SimplePathCreator simplePathCreator) {
         final ReceiveDataConfig receiveDataConfig = receiveDataConfigProvider.get();
         return NullSafe.get(
-                receiveDataConfig.getDataFeedKeysDir(),
+                receiveDataConfig.getDataFeedIdentitiesDir(),
                 simplePathCreator::toAppPath);
     }
 
@@ -96,7 +89,7 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
     protected void onEntryDelete(final Path path) {
         LOGGER.debug("onEntryDelete - path: {}", path);
         if (path != null) {
-            dataFeedKeyServiceProvider.get().removeKeysForFile(path);
+            dataFeedIdentityServiceProvider.get().removeKeysForFile(path);
         }
     }
 
@@ -108,7 +101,7 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
 
     private void processAllFiles() {
         // Re-scan the whole directory. The addDataFeedKeys method is idempotent
-        LOGGER.info("Reading all data feed key files in {}", dirToWatch);
+        LOGGER.info("Reading all data feed identity files in {}", dirToWatch);
         try (final DirectoryStream<Path> dirStream = Files.newDirectoryStream(dirToWatch)) {
             final AtomicInteger counter = new AtomicInteger();
             dirStream.forEach(path -> {
@@ -116,10 +109,10 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
                     processFile(path);
                     counter.incrementAndGet();
                 } else {
-                    LOGGER.info("Ignoring file {}", path.toAbsolutePath().normalize());
+                    LOGGER.info(() -> LogUtil.message("Ignoring file {}", path.toAbsolutePath().normalize()));
                 }
             });
-            LOGGER.info("Completed reading {} data feed key files in {}", counter, dirToWatch);
+            LOGGER.info("Completed reading {} data feed identity files in {}", counter, dirToWatch);
         } catch (final Exception e) {
             LOGGER.error("Error reading contents of directory '{}': {}", dirToWatch, LogUtil.exceptionMessage(e));
         }
@@ -127,30 +120,45 @@ public class DataFeedKeyDirWatcher extends AbstractDirChangeMonitor {
 
     private void processFile(final Path path) {
         if (path != null && Files.isRegularFile(path)) {
-            LOGGER.info("Reading datafeed key file {}", path.toAbsolutePath().normalize());
+            LOGGER.info(() -> LogUtil.message("Reading data feed identity file {}", path.toAbsolutePath().normalize()));
             final ObjectReader reader = JsonUtil.getMapper().reader()
                     .with(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
             try (final InputStream fileStream = new FileInputStream(path.toFile())) {
                 try {
-                    final HashedDataFeedKeys hashedDataFeedKeys = reader.readValue(fileStream,
-                            HashedDataFeedKeys.class);
-                    if (hashedDataFeedKeys != null && NullSafe.hasItems(hashedDataFeedKeys.getDataFeedKeys())) {
-                        final int addedCount = dataFeedKeyServiceProvider.get().addDataFeedKeys(hashedDataFeedKeys,
-                                path);
-                        LOGGER.info("Loaded {} datafeed keys found in {}",
+                    final DataFeedIdentities dataFeedIdentities = reader.readValue(fileStream,
+                            DataFeedIdentities.class);
+                    if (dataFeedIdentities != null && !dataFeedIdentities.isEmpty()) {
+                        final int addedCount = dataFeedIdentityServiceProvider.get()
+                                .addDataFeedKeys(dataFeedIdentities.getDataFeedIdentities(), path);
+                        LOGGER.info(() -> LogUtil.message("Loaded {} data feed identities found in {}",
                                 addedCount,
-                                path.toAbsolutePath().normalize());
+                                path.toAbsolutePath().normalize()));
                     } else {
-                        LOGGER.info("No datafeed keys found in {}", path.toAbsolutePath().normalize());
+                        LOGGER.info(() -> LogUtil.message("No data feed identities found in {}",
+                                path.toAbsolutePath().normalize()));
                     }
                 } catch (final IOException e) {
-                    LOGGER.debug("Error parsing file {}: {}", path, e.getMessage(), e);
+                    LOGGER.debug(() -> LogUtil.message("Error parsing file {}: {}", path, e.getMessage()), e);
                     LOGGER.error("Error parsing file {}: {} (enable DEBUG for stacktrace)", path, e.getMessage());
                 }
             } catch (final IOException e) {
-                LOGGER.debug("Error reading file {}: {}", path, e.getMessage(), e);
+                LOGGER.debug(() -> LogUtil.message("Error reading file {}: {}", path, e.getMessage()), e);
                 LOGGER.error("Error reading file {}: {} (enable DEBUG for stacktrace)", path, e.getMessage());
             }
         }
     }
+
+    private static boolean isJsonFile(final Path path) {
+        final boolean isJsonFile = path != null
+                                   && Files.isRegularFile(path)
+                                   && Files.isReadable(path)
+                                   && path.getFileName()
+                                           .toString()
+                                           .toLowerCase()
+                                           .endsWith(".json");
+        LOGGER.debug(() -> LogUtil.message("isJsonFile() - path: {}, isJsonFile: {}",
+                NullSafe.get(path, Path::toAbsolutePath, Path::normalize), isJsonFile));
+        return isJsonFile;
+    }
+
 }
