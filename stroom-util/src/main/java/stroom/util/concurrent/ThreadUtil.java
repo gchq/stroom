@@ -141,8 +141,10 @@ public class ThreadUtil {
                                                   final Consumer<Throwable> throwableConsumer) {
         if (throwableConsumer != null) {
             final Throwable cause = switch (throwable) {
-                case final CompletionException completionException -> completionException.getCause();
-                case final ExecutionException executionException -> executionException.getCause();
+                case final CompletionException completionException ->
+                        Objects.requireNonNullElse(completionException.getCause(), throwable);
+                case final ExecutionException executionException ->
+                        Objects.requireNonNullElse(executionException.getCause(), throwable);
                 case null, default -> throwable;
             };
             if (cause != null) {

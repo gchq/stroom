@@ -218,6 +218,7 @@ public class IndexShardManager {
                         // Create an atomic integer to count the number of index shard writers yet to complete the
                         // specified action.
                         final AtomicInteger remaining = new AtomicInteger(ownedShards.size());
+                        final AtomicInteger errorCount = new AtomicInteger();
 
                         // Create a scheduled executor for us to continually log index shard writer action progress.
                         try (final ScheduledExecutorService scheduledLoggingExecutor =
@@ -261,7 +262,11 @@ public class IndexShardManager {
                                                                     shard.getId(),
                                                                     LogUtil.exceptionMessage(cause), cause));
                                                     remaining.getAndDecrement();
-                                                    shardCount.incrementAndGet();
+                                                    if (e != null) {
+                                                        errorCount.incrementAndGet();
+                                                    } else {
+                                                        shardCount.incrementAndGet();
+                                                    }
                                                     return null; // runnable, so no return
                                                 });
                                     }).toArray(CompletableFuture[]::new);
@@ -274,7 +279,8 @@ public class IndexShardManager {
                             scheduledLoggingExecutor.shutdown();
                         }
 
-                        LOGGER.info(() -> LogUtil.message("Finished {} index {}", action.getActivity(), shardCount));
+                        LOGGER.info(() -> LogUtil.message("Finished {} {} index shards, error count: {}",
+                                action.getActivity().toLowerCase(), shardCount, errorCount));
                     }).run();
         }
         return shardCount.get();
@@ -365,10 +371,16 @@ public class IndexShardManager {
             this.activity = activity;
         }
 
+        /**
+         * @return "flush" or "Deleting"
+         */
         public String getName() {
             return name;
         }
 
+        /**
+         * @return "Flushing" or "Deleting"
+         */
         public String getActivity() {
             return activity;
         }
