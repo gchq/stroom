@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11.6] - 2026-03-24
+
+* Bug **#5471** : Fix bug in INFO logging output (the count of remaining shards) when flushing/deleting index shards.
+
+
 ## [v7.11.5] - 2026-03-23
 
 * Bug **#5466** : Fix asynchronous code that was causing thread deadlocks on machines with a low number of cores (e.g. <= 2). This bug was caused by a change to the JVM.
@@ -2066,7 +2071,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.5...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.6...HEAD
+[v7.11.6]: https://github.com/gchq/stroom/compare/v7.11.5...v7.11.6
 [v7.11.5]: https://github.com/gchq/stroom/compare/v7.11.4...v7.11.5
 [v7.11.4]: https://github.com/gchq/stroom/compare/v7.11.3...v7.11.4
 [v7.11.3]: https://github.com/gchq/stroom/compare/v7.11.2...v7.11.3
