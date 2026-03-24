@@ -22,7 +22,9 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public class ThreadUtil {
 
@@ -119,14 +121,35 @@ public class ThreadUtil {
     }
 
     /**
-     * If throwable is a {@link CompletionException} then return its cause, else return
-     * throwable. Handles nulls.
+     * If throwable is a {@link CompletionException} or {@link ExecutionException} then return
+     * its cause, else return throwable. Handles nulls.
      */
     public static Throwable getCompletionException(final Throwable throwable) {
-        if (throwable instanceof final CompletionException completionException) {
-            return completionException.getCause();
-        } else {
-            return throwable;
+        return switch (throwable) {
+            case final CompletionException completionException -> completionException.getCause();
+            case final ExecutionException executionException -> executionException.getCause();
+            case null, default -> throwable;
+        };
+    }
+
+    /**
+     * If throwable is a {@link CompletionException} or {@link ExecutionException} then pass
+     * its cause to throwableConsumer, else just pass throwable to throwableConsumer.
+     * If throwable or throwableConsumer are null it is a no-op.
+     */
+    public static void consumeCompletionException(final Throwable throwable,
+                                                  final Consumer<Throwable> throwableConsumer) {
+        if (throwableConsumer != null) {
+            final Throwable cause = switch (throwable) {
+                case final CompletionException completionException ->
+                        Objects.requireNonNullElse(completionException.getCause(), throwable);
+                case final ExecutionException executionException ->
+                        Objects.requireNonNullElse(executionException.getCause(), throwable);
+                case null, default -> throwable;
+            };
+            if (cause != null) {
+                throwableConsumer.accept(cause);
+            }
         }
     }
 }
