@@ -2,7 +2,6 @@ package stroom.pipeline.factory;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
@@ -23,20 +22,12 @@ public class PipelineDataHolderFactory {
 
     private final PipelineStackLoader pipelineStackLoader;
     private final SecurityContext securityContext;
-    private final PipelineStore pipelineStore;
 
     @Inject
     public PipelineDataHolderFactory(final PipelineStackLoader pipelineStackLoader,
-                                     final SecurityContext securityContext,
-                                     final PipelineStore pipelineStore) {
+                                     final SecurityContext securityContext) {
         this.pipelineStackLoader = pipelineStackLoader;
         this.securityContext = securityContext;
-        this.pipelineStore = pipelineStore;
-    }
-
-    public PipelineDataHolder create(final DocRef docRef) {
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(docRef);
-        return create(pipelineDoc);
     }
 
     public PipelineDataHolder create(final PipelineDoc pipelineDoc) {

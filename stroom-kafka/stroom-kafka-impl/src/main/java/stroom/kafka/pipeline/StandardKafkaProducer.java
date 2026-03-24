@@ -232,7 +232,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                 };
 
                 try {
-                    this.xmlValueHandler = XMLUtil.createTransformerHandler(errorListener, false);
+                    this.xmlValueHandler = XMLUtil.createTransformerHandler(errorListener, false, true);
                     outputStream = new ByteArrayOutputStream();
                     xmlValueHandler.setResult(new StreamResult(outputStream));
                     xmlValueHandler.startDocument();

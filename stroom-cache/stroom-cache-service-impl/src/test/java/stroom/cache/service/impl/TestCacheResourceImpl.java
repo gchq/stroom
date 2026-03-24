@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.cache.CacheIdentity;
 import stroom.util.shared.cache.CacheInfo;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -39,6 +41,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -47,6 +51,8 @@ import static org.mockito.Mockito.when;
 
 @MockitoSettings(strictness = Strictness.LENIENT)
 class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource> {
+
+    private static ExecutorService executorService;
 
     @Mock
     private CacheManagerService cacheManagerService;
@@ -57,6 +63,16 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
 
     public TestCacheResourceImpl() {
         super(createNodeList(BASE_PORT));
+    }
+
+    @BeforeAll
+    static void beforeAll() {
+        executorService = Executors.newCachedThreadPool();
+    }
+
+    @AfterAll
+    static void afterAll() {
+        executorService.shutdown();
     }
 
     @Override
@@ -125,7 +141,8 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
                 () -> nodeInfo,
                 AbstractMultiNodeResourceTest::webTargetFactory,
                 () -> cacheManagerService,
-                null);
+                null,
+                () -> executorService);
     }
 
     @Test

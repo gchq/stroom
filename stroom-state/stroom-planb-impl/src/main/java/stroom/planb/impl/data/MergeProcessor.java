@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.docstore.api.DocumentNotFoundException;
 import stroom.planb.impl.db.StatePaths;
 import stroom.planb.shared.PlanBDoc;
 import stroom.security.api.SecurityContext;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
@@ -41,6 +42,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
@@ -60,17 +62,20 @@ public class MergeProcessor {
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
     private final ShardManager shardManager;
+    private final Executor executor;
     private volatile boolean merging;
 
     @Inject
     public MergeProcessor(final StatePaths statePaths,
                           final SecurityContext securityContext,
                           final TaskContextFactory taskContextFactory,
-                          final ShardManager shardManager) {
+                          final ShardManager shardManager,
+                          final ExecutorProvider executorProvider) {
         this.receiveStore = new SequentialFileStore(statePaths.getStagingDir());
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
         this.shardManager = shardManager;
+        this.executor = executorProvider.get();
 
         mergingDir = statePaths.getMergingDir();
         FileUtil.ensureDirExists(mergingDir);
@@ -126,7 +131,7 @@ public class MergeProcessor {
                         } finally {
                             merging = false;
                         }
-                    });
+                    }, executor);
                 }
             }
         }
@@ -268,7 +273,7 @@ public class MergeProcessor {
                 Files.createDirectories(uuidDir);
                 final DirQueue dirQueue = new DirQueue(uuidDir, docUuid);
                 // Start processing this queue.
-                CompletableFuture.runAsync(() -> mergeStore(dirQueue, docUuid));
+                CompletableFuture.runAsync(() -> mergeStore(dirQueue, docUuid), executor);
                 return dirQueue;
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);

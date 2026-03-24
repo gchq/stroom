@@ -50,7 +50,7 @@ class TestXmlWriter {
         attributes.addAttribute("", "att", "att", "string", text);
 
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        final TransformerHandler th = XMLUtil.createTransformerHandler(new FatalErrorListener(), true);
+        final TransformerHandler th = XMLUtil.createTransformerHandler(new FatalErrorListener(), true, true);
         th.setResult(new StreamResult(baos));
 
         th.startDocument();

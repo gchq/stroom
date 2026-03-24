@@ -635,6 +635,15 @@ public class NullSafe {
     /**
      * @return The size of the collection or zero if null.
      */
+    public static <T> int size(final ResultPage<T> resultPage) {
+        return resultPage != null
+                ? resultPage.size()
+                : 0;
+    }
+
+    /**
+     * @return The size of the collection or zero if null.
+     */
     public static <T> int size(final T[] items) {
         return items != null
                 ? items.length

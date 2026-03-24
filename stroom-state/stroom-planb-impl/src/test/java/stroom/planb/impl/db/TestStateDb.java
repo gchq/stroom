@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,13 +54,17 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValShort;
 import stroom.query.language.functions.ValString;
 import stroom.security.mock.MockSecurityContext;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.SimpleTaskContextFactory;
+import stroom.task.shared.ThreadPool;
 import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.zip.ZipUtil;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -79,6 +83,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -100,6 +107,8 @@ class TestStateDb {
     private static final Val MAX_FLOAT = ValFloat.create(Float.MAX_VALUE);
     private static final Val MIN_DOUBLE = ValDouble.create(Double.MIN_VALUE);
     private static final Val MAX_DOUBLE = ValDouble.create(Double.MAX_VALUE);
+    private static ExecutorService executorService;
+    private static ExecutorProvider executorProvider;
 
     private final List<KeyFunction> keyFunctions = List.of(
             new KeyFunction(KeyType.BOOLEAN.name(), KeyType.BOOLEAN,
@@ -128,6 +137,28 @@ class TestStateDb {
                     i -> KeyPrefix.create(ValString.create(StateValueTestUtil.makeString(400)))),
             new KeyFunction("Variable long", KeyType.VARIABLE,
                     i -> KeyPrefix.create(ValString.create(StateValueTestUtil.makeString(1000)))));
+
+    @BeforeAll
+    static void beforeAll() {
+        executorService = Executors.newCachedThreadPool();
+        executorProvider = new ExecutorProvider() {
+
+            @Override
+            public Executor get() {
+                return executorService;
+            }
+
+            @Override
+            public Executor get(final ThreadPool threadPool) {
+                return executorService;
+            }
+        };
+    }
+
+    @AfterAll
+    static void afterAll() {
+        executorService.shutdown();
+    }
 
     @Test
     void testReadWrite(@TempDir final Path tempDir) {
@@ -216,12 +247,14 @@ class TestStateDb {
                 () -> planBConfig,
                 statePaths,
                 null,
-                new SimpleTaskContextFactory());
+                new SimpleTaskContextFactory(),
+                executorProvider);
         final MergeProcessor mergeProcessor = new MergeProcessor(
                 statePaths,
                 new MockSecurityContext(),
                 new SimpleTaskContextFactory(),
-                shardManager);
+                shardManager,
+                executorProvider);
 
         final int threads = 10;
 
