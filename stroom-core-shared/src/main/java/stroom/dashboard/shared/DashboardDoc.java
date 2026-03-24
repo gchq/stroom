@@ -35,7 +35,7 @@ import java.util.Objects;
         "The dashboard is highly customisable to allow querying of many different data sources of " +
         "different types.\n" +
         "Queried data can be displayed in tabular form, visualised using interactive charts/graphs or " +
-        "render as HTML.\n" +
+        "rendered as HTML.\n" +
         "\n" +
         "The Dashboard Doc can either be used for ad-hoc querying/visualising of data, to construct " +
         "a dashboard for others to view or to just view an already constructed dashboard.\n" +
