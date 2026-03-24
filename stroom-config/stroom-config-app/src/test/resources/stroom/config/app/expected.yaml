@@ -266,22 +266,23 @@ appConfig:
       volumeSelector: "RoundRobin"
     meta:
       dataFormats:
+      - "CSV"
+      - "CSV_NO_HEADER"
+      - "FIXED_WIDTH"
       - "FIXED_WIDTH_NO_HEADER"
       - "INI"
-      - "CSV"
       - "JSON"
+      - "JSON_LINES"
+      - "PSV"
+      - "PSV_NO_HEADER"
+      - "SYSLOG"
       - "TEXT"
+      - "TOML"
+      - "TSV"
+      - "TSV_NO_HEADER"
+      - "XML"
       - "XML_FRAGMENT"
       - "YAML"
-      - "PSV_NO_HEADER"
-      - "PSV"
-      - "CSV_NO_HEADER"
-      - "XML"
-      - "TSV"
-      - "SYSLOG"
-      - "TSV_NO_HEADER"
-      - "FIXED_WIDTH"
-      - "TOML"
       db:
         connection:
           jdbcDriverClassName: null
@@ -319,24 +320,24 @@ appConfig:
         statisticsMode: "INTERNAL"
       metaTypes:
       - "Context"
-      - "Raw Reference"
-      - "Events"
-      - "Raw Events"
-      - "Reference"
+      - "Detections"
       - "Error"
+      - "Events"
+      - "Meta Data"
+      - "Raw Events"
+      - "Raw Reference"
+      - "Records"
+      - "Reference"
       - "Test Events"
       - "Test Reference"
-      - "Detections"
-      - "Meta Data"
-      - "Records"
       metaValue:
         addAsync: true
         deleteAge: "P30D"
         deleteBatchSize: 500
         flushBatchSize: 500
       rawMetaTypes:
-      - "Raw Reference"
       - "Raw Events"
+      - "Raw Reference"
     retention:
       deleteBatchSize: 1000
       useQueryOptimisation: true
