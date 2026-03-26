@@ -47,7 +47,7 @@ run_db_migration() {
   echo -e "${GREEN}Running database migration${NC}"
 
   # DB is in a sibling container so need to force it to use the IP instead of localhost
-  export STROOM_JDBC_DRIVER_URL="jdbc:mysql://${host_ip}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+  export STROOM_JDBC_DRIVER_URL="jdbc:mysql://${host_ip}:3307/${MYSQL_DB:-stroom}?useUnicode=yes&characterEncoding=UTF-8"
   java \
     -jar \
     ./stroom-app/build/libs/stroom-app-all.jar \
