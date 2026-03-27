@@ -35,15 +35,6 @@ import com.gwtplatform.mvp.client.View;
  */
 public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView> {
 
-    /** Widget to show the list of available content packs */
-    private final ContentStoreContentPackListPresenter contentPackListPresenter;
-
-    /** Widget to show the details of a particular content pack */
-    public final ContentStoreContentPackDetailsPresenter contentPackDetailsPresenter;
-
-    /** Label for the content */
-    private static final String LABEL = "Content Store";
-
     /** Tab type for the content (what is this?) */
     public static final String TAB_TYPE = "Content Store";
 
@@ -54,12 +45,13 @@ public class ContentStorePresenter extends ContentTabPresenter<ContentStoreView>
     static final ContentStoreResource CONTENT_STORE_RESOURCE
             = GWT.create(ContentStoreResource.class);
 
-    /**
-     * Injected constructor.
-     * @param eventBus Passed to superclass
-     * @param view Passed to superclass
-     * @param contentPackListPresenter The widget to show the list of available content packs.
-     */
+    /** Label for the content */
+    private static final String LABEL = "Content Store";
+
+    private final ContentStoreContentPackListPresenter contentPackListPresenter;
+
+    public final ContentStoreContentPackDetailsPresenter contentPackDetailsPresenter;
+
     @SuppressWarnings("unused")
     @Inject
     public ContentStorePresenter(final EventBus eventBus,

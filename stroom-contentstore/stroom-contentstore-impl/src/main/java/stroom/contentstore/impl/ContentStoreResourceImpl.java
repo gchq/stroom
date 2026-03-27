@@ -203,7 +203,6 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
         final List<ContentStoreContentPackWithDynamicState> contentPacksWithState = new ArrayList<>();
 
         for (final String contentStoreUrl : contentStoreUrls) {
-            LOGGER.debug("Parsing content store at '{}'", contentStoreUrl);
 
             try {
                 final URI uri = new URI(contentStoreUrl);
@@ -411,7 +410,6 @@ public class ContentStoreResourceImpl implements ContentStoreResource {
 
     @Override
     public ContentStoreValueResponse<Boolean> checkContentUpgradeAvailable(final ContentStoreContentPack contentPack) {
-        LOGGER.debug("Checking for upgrades for {}", contentPack.getUiName());
 
         try {
             // Find a matching GitRepoDoc

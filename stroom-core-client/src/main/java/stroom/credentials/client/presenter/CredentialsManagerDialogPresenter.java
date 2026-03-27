@@ -33,18 +33,15 @@ import com.gwtplatform.mvp.client.View;
 public class CredentialsManagerDialogPresenter
         extends MyPresenterWidget<CredentialsManagerDialogPresenter.CredentialsManagerDialogView> {
 
-    /** Converts markdown to HTML */
-    private final MarkdownConverter markdownConverter;
-
     /** Width of dialog */
     private static final int DIALOG_WIDTH = 700;
 
     /** Height of dialog */
     private static final int DIALOG_HEIGHT = 700;
 
-    /**
-     * Injected constructor.
-     */
+    /** Converts markdown to HTML */
+    private final MarkdownConverter markdownConverter;
+
     @Inject
     public CredentialsManagerDialogPresenter(final EventBus eventBus,
                                              final CredentialsManagerDialogView view,

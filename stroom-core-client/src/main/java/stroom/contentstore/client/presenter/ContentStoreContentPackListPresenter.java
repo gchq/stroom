@@ -54,7 +54,6 @@ public class ContentStoreContentPackListPresenter
     /** Points to top level of this page. Allows updating state of everything. */
     private ContentStorePresenter contentStorePresenter = null;
 
-    /** REST to the server */
     final RestFactory restFactory;
 
     /** Table of content packs */
@@ -73,12 +72,6 @@ public class ContentStoreContentPackListPresenter
     /** Index of the first item in the list of content packs */
     private static final int FIRST_ITEM_INDEX = 0;
 
-    /**
-     * Injected constructor.
-     * @param eventBus GWT event bus
-     * @param view Where this component is going to be inserted
-     * @param restFactory Creates connection to server
-     */
     @SuppressWarnings("unused")
     @Inject
     public ContentStoreContentPackListPresenter(final EventBus eventBus,
