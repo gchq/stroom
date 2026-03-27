@@ -16,17 +16,22 @@
 
 package stroom.analytics.impl;
 
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionHistory;
 import stroom.analytics.shared.ExecutionHistoryRequest;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ExecutionTracker;
+import stroom.analytics.shared.ReportDoc;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.FindUserContext;
 import stroom.security.user.api.UserRefLookup;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -34,22 +39,32 @@ import stroom.util.shared.UserRef;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @AutoLogged(OperationType.UNLOGGED)
 class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExecutionScheduleResourceImpl.class);
+
     private final Provider<ExecutionScheduleDao> executionScheduleDaoProvider;
     private final Provider<SecurityContext> securityContextProvider;
     private final Provider<UserRefLookup> userRefLookupProvider;
+    private final Provider<ScheduledQueryAnalyticExecutor> scheduledQueryAnalyticExecutorProvider;
+    private final Provider<ReportExecutor> reportExecutorProvider;
 
     @Inject
     ExecutionScheduleResourceImpl(final Provider<ExecutionScheduleDao> executionScheduleDaoProvider,
                                   final Provider<SecurityContext> securityContextProvider,
-                                  final Provider<UserRefLookup> userRefLookupProvider) {
+                                  final Provider<UserRefLookup> userRefLookupProvider,
+                                  final Provider<ScheduledQueryAnalyticExecutor> scheduledQueryAnalyticExecutorProvider,
+                                  final Provider<ReportExecutor> reportExecutorProvider) {
         this.executionScheduleDaoProvider = executionScheduleDaoProvider;
         this.securityContextProvider = securityContextProvider;
         this.userRefLookupProvider = userRefLookupProvider;
+        this.scheduledQueryAnalyticExecutorProvider = scheduledQueryAnalyticExecutorProvider;
+        this.reportExecutorProvider = reportExecutorProvider;
     }
 
     @Override
@@ -68,6 +83,11 @@ class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
     }
 
     @Override
+    public Boolean deleteExecutionSchedules(final List<ExecutionSchedule> executionSchedules) {
+        return executionScheduleDaoProvider.get().deleteExecutionSchedules(executionSchedules);
+    }
+
+    @Override
     public ResultPage<ExecutionSchedule> fetchExecutionSchedule(final ExecutionScheduleRequest request) {
         return executionScheduleDaoProvider.get().fetchExecutionSchedule(request);
     }
@@ -80,6 +100,35 @@ class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
     @Override
     public ExecutionTracker fetchTracker(final ExecutionSchedule schedule) {
         return executionScheduleDaoProvider.get().fetchTracker(schedule);
+    }
+
+    @Override
+    public Boolean executeSchedulesNow(final List<ExecutionSchedule> schedules) {
+        //Move to dao?
+        try {
+            final List<ExecutionSchedule> analyticRuleSchedules = new ArrayList<>();
+            final List<ExecutionSchedule> reportSchedules = new ArrayList<>();
+            for (final ExecutionSchedule schedule : schedules) {
+                switch (schedule.getOwningDoc().getType()) {
+                    case AnalyticRuleDoc.TYPE -> analyticRuleSchedules.add(schedule);
+                    case ReportDoc.TYPE -> reportSchedules.add(schedule);
+                    default -> throw new UnsupportedOperationException(
+                            "Unsupported execution schedule type: " + schedule.getOwningDoc().getType()
+                    );
+                }
+            }
+            if (!analyticRuleSchedules.isEmpty()) {
+                scheduledQueryAnalyticExecutorProvider.get().execFromSchedules(analyticRuleSchedules);
+            }
+            if (!reportSchedules.isEmpty()) {
+                reportExecutorProvider.get().execFromSchedules(reportSchedules);
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.error(() ->
+                    LogUtil.message("Error during forced schedule processing: {}", e.getMessage()), e);
+            return false;
+        }
+        return true;
     }
 
     private ExecutionSchedule checkRunAs(final ExecutionSchedule executionSchedule) {

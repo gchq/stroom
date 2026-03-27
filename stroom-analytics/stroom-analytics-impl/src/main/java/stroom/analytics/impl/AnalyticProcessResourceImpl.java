@@ -16,7 +16,6 @@
 
 package stroom.analytics.impl;
 
-import stroom.analytics.rule.impl.AnalyticRuleProcessors;
 import stroom.analytics.shared.AnalyticProcessResource;
 import stroom.analytics.shared.AnalyticTracker;
 import stroom.event.logging.rs.api.AutoLogged;

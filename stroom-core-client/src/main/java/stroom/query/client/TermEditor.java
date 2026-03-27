@@ -19,6 +19,7 @@ package stroom.query.client;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.item.client.BaseSelectionBox;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.ExpressionTerm.Condition;
@@ -345,10 +346,12 @@ public class TermEditor extends Composite {
                 case IN_DICTIONARY,
                      IN_FOLDER,
                      IS_DOC_REF,
+                     IS_NOT_DOC_REF,
                      OF_DOC_REF:
                     enterDocRefMode(field, condition);
                     break;
                 case IS_USER_REF,
+                     IS_NOT_USER_REF,
                      USER_HAS_PERM,
                      USER_HAS_OWNER,
                      USER_HAS_DELETE,
@@ -408,7 +411,7 @@ public class TermEditor extends Composite {
             if (Condition.IN_DICTIONARY.equals(condition)) {
                 docSelectionBoxPresenter.setIncludedTypes("Dictionary");
             } else if (Condition.IN_FOLDER.equals(condition) || Condition.OF_DOC_REF.equals(condition)) {
-                docSelectionBoxPresenter.setIncludedTypes("Folder");
+                docSelectionBoxPresenter.setIncludedTypes(ExplorerConstants.FOLDER_LIKE);
                 docSelectionBoxPresenter.setAllowFolderSelection(true);
             } else if (FieldType.DOC_REF.equals(field.getFldType())) {
                 if (field.getDocRefType() != null) {

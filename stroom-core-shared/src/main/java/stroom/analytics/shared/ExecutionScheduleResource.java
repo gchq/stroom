@@ -30,6 +30,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.fusesource.restygwt.client.DirectRestService;
 
+import java.util.List;
+
 @Tag(name = "ExecutionSchedule")
 @Path("/executionSchedule" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
@@ -62,6 +64,14 @@ public interface ExecutionScheduleResource
                                     ExecutionSchedule executionSchedule);
 
     @POST
+    @Path("/deleteExecutionSchedules")
+    @Operation(
+            summary = "Delete Execution Schedules",
+            operationId = "deleteExecutionSchedules")
+    Boolean deleteExecutionSchedules(@Parameter(description = "executionSchedules", required = true)
+                                    List<ExecutionSchedule> executionSchedules);
+
+    @POST
     @Path("/fetchExecutionSchedule")
     @Operation(
             summary = "Fetch execution schedule",
@@ -84,4 +94,11 @@ public interface ExecutionScheduleResource
             operationId = "fetchTracker")
     ExecutionTracker fetchTracker(@Parameter(description = "request", required = true)
                                   ExecutionSchedule schedule);
+
+    @POST
+    @Path("/executeSchedulesNow")
+    @Operation(
+            summary = "Execute schedules now",
+            operationId = "executeSchedulesNow")
+    Boolean executeSchedulesNow(List<ExecutionSchedule> schedules);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.analytics.rule.impl;
+package stroom.analytics.impl;
 
-import stroom.analytics.shared.ReportDoc;
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
@@ -26,22 +26,22 @@ import jakarta.inject.Inject;
 
 import java.io.IOException;
 
-public class ReportSerialiser implements DocumentSerialiser2<ReportDoc> {
+public class AnalyticRuleSerialiser implements DocumentSerialiser2<AnalyticRuleDoc> {
 
-    private final Serialiser2<ReportDoc> delegate;
+    private final Serialiser2<AnalyticRuleDoc> delegate;
 
     @Inject
-    public ReportSerialiser(final Serialiser2Factory serialiser2Factory) {
-        this.delegate = serialiser2Factory.createSerialiser(ReportDoc.class);
+    public AnalyticRuleSerialiser(final Serialiser2Factory serialiser2Factory) {
+        this.delegate = serialiser2Factory.createSerialiser(AnalyticRuleDoc.class);
     }
 
     @Override
-    public ReportDoc read(final ImportExportDocument importExportDocument) throws IOException {
+    public AnalyticRuleDoc read(final ImportExportDocument importExportDocument) throws IOException {
         return delegate.read(importExportDocument);
     }
 
     @Override
-    public ImportExportDocument write(final ReportDoc document) throws IOException {
+    public ImportExportDocument write(final AnalyticRuleDoc document) throws IOException {
         return delegate.write(document);
     }
 }

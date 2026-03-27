@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.analytics.rule.impl;
+package stroom.analytics.impl;
 
-import stroom.analytics.shared.AnalyticRuleDoc;
+import stroom.analytics.shared.ReportDoc;
 import stroom.event.logging.api.ObjectInfoProvider;
 
 import event.logging.BaseObject;
@@ -24,13 +24,13 @@ import event.logging.OtherObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class AnalyticRuleDocObjectInfoProvider implements ObjectInfoProvider {
+class ReportDocObjectInfoProvider implements ObjectInfoProvider {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AnalyticRuleDocObjectInfoProvider.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ReportDocObjectInfoProvider.class);
 
     @Override
     public BaseObject createBaseObject(final Object obj) {
-        final AnalyticRuleDoc alertRule = (AnalyticRuleDoc) obj;
+        final ReportDoc alertRule = (ReportDoc) obj;
         final OtherObject.Builder<Void> builder = OtherObject.builder()
                 .withType(alertRule.getType())
                 .withId(alertRule.getUuid())

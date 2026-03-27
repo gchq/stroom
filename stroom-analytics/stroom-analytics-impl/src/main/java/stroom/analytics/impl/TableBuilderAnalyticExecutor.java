@@ -17,7 +17,6 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.impl.AnalyticDataStores.AnalyticDataStore;
-import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;

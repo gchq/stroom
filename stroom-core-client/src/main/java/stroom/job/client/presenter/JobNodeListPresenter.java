@@ -159,7 +159,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
             }
         }));
 
-        // NodeLisPresenter may change a node
+        // NodeListPresenter may change a node
         registerHandler(getEventBus().addHandler(
                 NodeChangeEvent.getType(), event -> {
                     // We are likely showing all jobs so just refresh

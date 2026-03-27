@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.analytics.rule.impl;
+package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticProcessConfig;
-import stroom.analytics.shared.AnalyticRuleDoc;
-import stroom.analytics.shared.AnalyticRuleDoc.Builder;
-import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
+import stroom.analytics.shared.ExecutionSchedule;
+import stroom.analytics.shared.ExecutionScheduleRequest;
+import stroom.analytics.shared.ReportDoc;
+import stroom.analytics.shared.ReportDoc.Builder;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docstore.api.DependencyRemapFunction;
@@ -35,6 +36,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
+import stroom.util.shared.PageRequest;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -47,31 +49,34 @@ import java.util.Optional;
 import java.util.Set;
 
 @Singleton
-class AnalyticRuleStoreImpl implements AnalyticRuleStore {
+class ReportStoreImpl implements ReportStore {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticRuleStoreImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReportStoreImpl.class);
 
-    private final Store<AnalyticRuleDoc> store;
+    private final Store<ReportDoc> store;
     private final SecurityContext securityContext;
     private final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider;
     private final SearchRequestFactory searchRequestFactory;
+    private final Provider<ExecutionScheduleDao> executionScheduleDaoProvider;
     private final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider;
 
     @Inject
-    AnalyticRuleStoreImpl(final StoreFactory storeFactory,
-                          final AnalyticRuleSerialiser serialiser,
-                          final SecurityContext securityContext,
-                          final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
-                          final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
-                          final SearchRequestFactory searchRequestFactory) {
+    ReportStoreImpl(final StoreFactory storeFactory,
+                    final ReportSerialiser serialiser,
+                    final SecurityContext securityContext,
+                    final Provider<ExecutionScheduleDao> executionScheduleDaoProvider,
+                    final Provider<AnalyticRuleProcessors> analyticRuleProcessorsProvider,
+                    final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
+                    final SearchRequestFactory searchRequestFactory) {
         this.store = storeFactory.createStore(
                 serialiser,
-                AnalyticRuleDoc.TYPE,
-                AnalyticRuleDoc::builder,
-                AnalyticRuleDoc::copy);
+                ReportDoc.TYPE,
+                ReportDoc::builder,
+                ReportDoc::copy);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
+        this.executionScheduleDaoProvider = executionScheduleDaoProvider;
         this.analyticRuleProcessorsProvider = analyticRuleProcessorsProvider;
     }
 
@@ -86,7 +91,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
         // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
         // them until after they are created in the store.
         securityContext.asProcessingUser(() -> {
-            final AnalyticRuleDoc analyticRuleDoc = store.readDocument(docRef);
+            final ReportDoc analyticRuleDoc = store.readDocument(docRef);
             store.writeDocument(analyticRuleDoc);
         });
         return docRef;
@@ -98,7 +103,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                                final boolean makeNameUnique,
                                final Set<String> existingNames) {
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        final AnalyticRuleDoc document = store.readDocument(docRef);
+        final ReportDoc document = store.readDocument(docRef);
         return store.createDocument(newName,
                 (uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
                     final Builder builder = document
@@ -113,22 +118,6 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
                     final AnalyticProcessConfig analyticProcessConfig = document.getAnalyticProcessConfig();
                     if (analyticProcessConfig != null) {
-//                        if (analyticProcessConfig instanceof
-//                                final ScheduledQueryAnalyticProcessConfig scheduledQueryAnalyticProcessConfig) {
-//                            builder.analyticProcessConfig(
-//                                    scheduledQueryAnalyticProcessConfig.copy().enabled(false).build());
-//                        } else
-                        if (analyticProcessConfig instanceof
-                                final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
-                            builder.analyticProcessConfig(
-                                    tableBuilderAnalyticProcessConfig.copy().enabled(false).build());
-                        }
-//                        } else if (analyticProcessConfig instanceof
-//                                final StreamingAnalyticProcessConfig streamingAnalyticProcessConfig) {
-////                            builder.analyticProcessConfig(
-////                                    streamingAnalyticProcessConfig.copy().enabled(false).build());
-//                        }
-
                         builder.analyticProcessConfig(analyticProcessConfig);
                     }
 
@@ -149,6 +138,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     @Override
     public void deleteDocument(final DocRef docRef) {
         deleteProcessorFilter(docRef);
+        deleteExecutionSchedules(docRef);
         store.deleteDocument(docRef);
     }
 
@@ -181,9 +171,9 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private DependencyRemapFunction<AnalyticRuleDoc> createMapper() {
+    private DependencyRemapFunction<ReportDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
-            final AnalyticRuleDoc.Builder builder = doc.copy();
+            final ReportDoc.Builder builder = doc.copy();
             try {
                 if (doc.getQuery() != null) {
                     searchRequestFactory.extractDataSourceOnly(doc.getQuery(), docRef -> {
@@ -235,12 +225,12 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     // ---------------------------------------------------------------------
 
     @Override
-    public AnalyticRuleDoc readDocument(final DocRef docRef) {
+    public ReportDoc readDocument(final DocRef docRef) {
         return store.readDocument(docRef);
     }
 
     @Override
-    public AnalyticRuleDoc writeDocument(final AnalyticRuleDoc document) {
+    public ReportDoc writeDocument(final ReportDoc document) {
         return store.writeDocument(document);
     }
 
@@ -267,8 +257,8 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     @Override
     public ImportExportDocument exportDocument(final DocRef docRef,
-                                               final boolean omitAuditFields,
-                                               final List<Message> messageList) {
+                                              final boolean omitAuditFields,
+                                              final List<Message> messageList) {
         return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
@@ -302,11 +292,31 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
     }
 
     private void deleteProcessorFilter(final DocRef docRef) {
+//        try {
+//            final ReportDoc analyticRuleDoc = readDocument(docRef);
+//            analyticRuleProcessorsProvider.get().deleteProcessorFilters(analyticRuleDoc);
+//        } catch (final RuntimeException e) {
+//            LOGGER.debug(e::getMessage, e);
+//        }
+    }
+
+    private void deleteExecutionSchedules(final DocRef docRef) {
         try {
-            final AnalyticRuleDoc analyticRuleDoc = readDocument(docRef);
-            analyticRuleProcessorsProvider.get().deleteProcessorFilters(analyticRuleDoc);
+            final ReportDoc reportDoc = readDocument(docRef);
+            final ExecutionScheduleRequest request = ExecutionScheduleRequest
+                    .builder()
+                    .pageRequest(PageRequest.unlimited())
+                    .ownerDocRef(docRef)
+                    .build();
+            final List<ExecutionSchedule> executionSchedules = executionScheduleDaoProvider
+                    .get()
+                    .fetchExecutionSchedule(request)
+                    .getValues();
+            for (final ExecutionSchedule executionSchedule : executionSchedules) {
+                executionScheduleDaoProvider.get().deleteExecutionSchedule(executionSchedule);
+            }
         } catch (final RuntimeException e) {
-            LOGGER.debug(e::getMessage, e);
+            LOGGER.error(e::getMessage, e);
         }
     }
 }

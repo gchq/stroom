@@ -32,7 +32,7 @@ import java.util.stream.IntStream;
 public class TestGuardPerformance {
 
     private final int iterations = 1_000_000;
-    private final int threadCount = Runtime.getRuntime().availableProcessors();
+    private final int threadCount = Integer.highestOneBit(Runtime.getRuntime().availableProcessors());
     private volatile Object env = new Object();
 
     @Test
