@@ -33,6 +33,7 @@ import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.TableResult;
+import stroom.query.api.TimeRange;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.security.api.SecurityContext;
@@ -82,6 +83,7 @@ public class SearchEventLogImpl implements SearchEventLog {
                        final String rawQuery,
                        final DocRef dataSourceRef,
                        final ExpressionOperator expression,
+                       final TimeRange timeRange,
                        final String queryInfo,
                        final List<Param> params,
                        final List<Result> results,
@@ -110,6 +112,7 @@ public class SearchEventLogImpl implements SearchEventLog {
                             .withDataSources(dataSources)
                             .withQuery(query)
                             .addData(buildDataFromParams(params))
+                            .addData(buildDataFromTimeRange(timeRange))
                             .addData(Data.builder()
                                     .withName("queryComponent")
                                     .withValue(queryComponentId)
@@ -330,6 +333,26 @@ public class SearchEventLogImpl implements SearchEventLog {
                 LOGGER.error(e2.getMessage(), e2);
             }
         });
+    }
+
+    private Iterable<Data> buildDataFromTimeRange(final TimeRange timeRange) {
+        if (timeRange == null) {
+            return Collections.emptyList();
+        }
+        final Builder<Void> builder = Data.builder().withName("timeRange");
+        if (timeRange.getFrom() != null) {
+            builder.addData(Data.builder()
+                    .withName("from")
+                    .withValue(timeRange.getFrom())
+                    .build());
+        }
+        if (timeRange.getTo() != null) {
+            builder.addData(Data.builder()
+                    .withName("to")
+                    .withValue(timeRange.getTo())
+                    .build());
+        }
+        return List.of(builder.build());
     }
 
     private String getDataSourceString(final DocRef dataSourceRef) {
