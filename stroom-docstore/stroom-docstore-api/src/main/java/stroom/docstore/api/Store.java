@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docref.HasFindDocsByName;
 import stroom.docstore.shared.AbstractDoc;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
@@ -77,15 +78,15 @@ public interface Store<D extends AbstractDoc>
 
     DocRef importDocument(
             DocRef docRef,
-            Map<String, byte[]> dataMap,
+            ImportExportDocument importExportDocument,
             ImportState importState,
             ImportSettings importSettings);
 
-    Map<String, byte[]> exportDocument(DocRef docRef,
+    ImportExportDocument exportDocument(DocRef docRef,
                                        boolean omitAuditFields,
                                        List<Message> messageList);
 
-    Map<String, byte[]> exportDocument(DocRef docRef,
+    ImportExportDocument exportDocument(DocRef docRef,
                                        boolean omitAuditFields,
                                        List<Message> messageList,
                                        Function<D, D> function);

@@ -17,6 +17,9 @@
 package stroom.docstore.impl;
 
 import stroom.docstore.api.Serialiser2;
+import stroom.importexport.api.ByteArrayImportExportAsset;
+import stroom.importexport.api.ImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.util.json.JsonUtil;
 import stroom.util.string.EncodingUtil;
 
@@ -26,8 +29,6 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.HashMap;
-import java.util.Map;
 
 public class JsonSerialiser2<D> implements Serialiser2<D> {
 
@@ -42,23 +43,30 @@ public class JsonSerialiser2<D> implements Serialiser2<D> {
     }
 
     @Override
-    public D read(final Map<String, byte[]> data) throws IOException {
-        final byte[] meta = data.get(META);
-        return read(meta);
+    public D read(final ImportExportDocument importExportDocument) throws IOException {
+        return read(importExportDocument.getExtAsset(META));
     }
 
     @Override
-    public D read(final byte[] data) throws IOException {
-        return mapper.readValue(new StringReader(EncodingUtil.asString(data)), clazz);
+    public D read(final ImportExportAsset asset) throws IOException {
+        D document = null;
+        if (asset != null) {
+            final byte[] data = asset.getInputData();
+            if (data != null) {
+                document = mapper.readValue(new StringReader(EncodingUtil.asString(data)), clazz);
+            }
+        }
+        return document;
     }
 
     @Override
-    public Map<String, byte[]> write(final D document) throws IOException {
+    public ImportExportDocument write(final D document) throws IOException {
         final StringWriter stringWriter = new StringWriter();
         write(stringWriter, document);
-        final Map<String, byte[]> data = new HashMap<>();
-        data.put(META, EncodingUtil.asBytes(stringWriter.toString()));
-        return data;
+        final ImportExportDocument importExportDocument = new ImportExportDocument();
+        importExportDocument.addExtAsset(
+                new ByteArrayImportExportAsset(META, EncodingUtil.asBytes(stringWriter.toString())));
+        return importExportDocument;
     }
 
     @Override

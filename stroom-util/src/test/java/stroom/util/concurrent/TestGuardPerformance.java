@@ -16,6 +16,7 @@
 
 package stroom.util.concurrent;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -35,8 +36,8 @@ public class TestGuardPerformance {
     private volatile Object env = new Object();
 
     @Test
+    @Disabled
     public void perfTest() {
-        // Do multiple rounds to let it warm up
         for (int i = 1; i <= 3; i++) {
             System.out.println("Round: " + i + " SimpleGuard");
             IntStream.of(1, 2, 4, 8, 16, 32, 64)

@@ -325,3 +325,5 @@ include 'stroom-gitrepo:stroom-gitrepo-mock'
 
 include 'stroom-credentials:stroom-credentials-impl'
 include 'stroom-credentials:stroom-credentials-impl-db-jooq'
+include 'stroom-dashboard:stroom-dashboard-impl-db'
+include 'stroom-dashboard:stroom-dashboard-impl-db-jooq'

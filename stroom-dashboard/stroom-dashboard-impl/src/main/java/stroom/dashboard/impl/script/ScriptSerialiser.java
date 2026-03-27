@@ -19,13 +19,14 @@ package stroom.dashboard.impl.script;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.importexport.api.ByteArrayImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.script.shared.ScriptDoc;
 import stroom.util.string.EncodingUtil;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class ScriptSerialiser implements DocumentSerialiser2<ScriptDoc> {
 
@@ -39,17 +40,22 @@ public class ScriptSerialiser implements DocumentSerialiser2<ScriptDoc> {
     }
 
     @Override
-    public ScriptDoc read(final Map<String, byte[]> data) throws IOException {
-        return delegate.read(data).copy().data(EncodingUtil.asString(data.get(JS))).build();
+    public ScriptDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        ScriptDoc document = delegate.read(importExportDocument);
+        final String js = EncodingUtil.asString(importExportDocument.getExtAssetData(JS));
+        if (js != null) {
+            document = document.copy().data(js).build();
+        }
+        return document;
     }
 
     @Override
-    public Map<String, byte[]> write(final ScriptDoc document) throws IOException {
+    public ImportExportDocument write(final ScriptDoc document) throws IOException {
         final String js = document.getData();
-        final Map<String, byte[]> data = delegate.write(document.copy().data(null).build());
+        final ImportExportDocument importExportDocument = delegate.write(document.copy().data(null).build());
         if (js != null) {
-            data.put(JS, EncodingUtil.asBytes(js));
+            importExportDocument.addExtAsset(new ByteArrayImportExportAsset(JS, EncodingUtil.asBytes(js)));
         }
-        return data;
+        return importExportDocument;
     }
 }

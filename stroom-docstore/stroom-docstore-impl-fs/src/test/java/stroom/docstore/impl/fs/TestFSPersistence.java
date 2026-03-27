@@ -19,6 +19,8 @@ package stroom.docstore.impl.fs;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.shared.AbstractDoc;
+import stroom.importexport.api.ByteArrayImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -27,9 +29,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,16 +62,16 @@ class TestFSPersistence {
         byte[] bytes = mapper.writeValueAsBytes(doc);
 
         // Create
-        Map<String, byte[]> data = new HashMap<>();
-        data.put("meta", bytes);
-        persistence.write(docRef, false, data);
+        final ImportExportDocument ieDoc = new ImportExportDocument();
+        ieDoc.addExtAsset(new ByteArrayImportExportAsset("meta", bytes));
+        persistence.write(docRef, false, ieDoc);
 
         // Exists
         assertThat(persistence.exists(docRef)).isTrue();
 
         // Read
-        data = persistence.read(docRef);
-        assertThat(data.get("meta")).isEqualTo(bytes);
+        final ImportExportDocument ieDocRead = persistence.read(docRef);
+        assertThat(ieDocRead.getExtAssetData("meta")).isEqualTo(bytes);
 
         // List
         List<DocRef> refs = persistence.list(docRef.getType());
@@ -84,13 +84,13 @@ class TestFSPersistence {
         // Update
         doc = doc.copy().name("New Name").build();
         bytes = mapper.writeValueAsBytes(doc);
-        data = new HashMap<>();
-        data.put("meta", bytes);
-        persistence.write(docRef, true, data);
+        final ImportExportDocument ieDocNewName = new ImportExportDocument();
+        ieDocNewName.addExtAsset(new ByteArrayImportExportAsset("meta", bytes));
+        persistence.write(docRef, true, ieDocNewName);
 
         // Read
-        data = persistence.read(docRef);
-        assertThat(data.get("meta")).isEqualTo(bytes);
+        final ImportExportDocument ieDocNewNameRead = persistence.read(docRef);
+        assertThat(ieDocNewNameRead.getExtAssetData("meta")).isEqualTo(bytes);
 
         // List
         refs = persistence.list(docRef.getType());

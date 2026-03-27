@@ -20,11 +20,11 @@ import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.gitrepo.shared.GitRepoDoc;
+import stroom.importexport.api.ImportExportDocument;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class GitRepoSerialiser implements DocumentSerialiser2<GitRepoDoc> {
 
@@ -36,12 +36,12 @@ public class GitRepoSerialiser implements DocumentSerialiser2<GitRepoDoc> {
     }
 
     @Override
-    public GitRepoDoc read(final Map<String, byte[]> data) throws IOException {
-        return delegate.read(data);
+    public GitRepoDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        return delegate.read(importExportDocument);
     }
 
     @Override
-    public Map<String, byte[]> write(final GitRepoDoc document) throws IOException {
+    public ImportExportDocument write(final GitRepoDoc document) throws IOException {
         return delegate.write(document);
     }
 }

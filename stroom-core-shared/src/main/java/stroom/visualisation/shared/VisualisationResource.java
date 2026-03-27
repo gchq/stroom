@@ -52,4 +52,5 @@ public interface VisualisationResource extends RestResource, DirectRestService, 
             operationId = "updateVisualisation")
     VisualisationDoc update(
             @PathParam("uuid") String uuid, @Parameter(description = "doc", required = true) VisualisationDoc doc);
+
 }

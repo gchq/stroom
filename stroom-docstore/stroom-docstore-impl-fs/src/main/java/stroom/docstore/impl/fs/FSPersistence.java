@@ -20,6 +20,9 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.shared.AbstractDoc;
+import stroom.importexport.api.ByteArrayImportExportAsset;
+import stroom.importexport.api.ImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.util.io.PathCreator;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.Clearable;
@@ -44,9 +47,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Singleton
@@ -86,8 +87,9 @@ public class FSPersistence implements Persistence, Clearable {
     }
 
     @Override
-    public Map<String, byte[]> read(final DocRef docRef) throws IOException {
-        final Map<String, byte[]> data = new HashMap<>();
+    public ImportExportDocument read(final DocRef docRef) throws IOException {
+        final ImportExportDocument importExportDocument = new ImportExportDocument();
+
         try (final DirectoryStream<Path> stream = Files.newDirectoryStream(getPathForType(docRef.getType()),
                 docRef.getUuid() + ".*")) {
             stream.forEach(file -> {
@@ -98,7 +100,7 @@ public class FSPersistence implements Persistence, Clearable {
                     final String ext = fileName.substring(index + 1);
 
                     final byte[] bytes = Files.readAllBytes(file);
-                    data.put(ext, bytes);
+                    importExportDocument.addExtAsset(new ByteArrayImportExportAsset(ext, bytes));
 
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
@@ -108,15 +110,15 @@ public class FSPersistence implements Persistence, Clearable {
             throw new UncheckedIOException(e);
         }
 
-        if (data.size() == 0) {
+        if (importExportDocument.getExtAssets().isEmpty()) {
             return null;
         }
 
-        return data;
+        return importExportDocument;
     }
 
     @Override
-    public void write(final DocRef docRef, final boolean update, final Map<String, byte[]> data) {
+    public void write(final DocRef docRef, final boolean update, final ImportExportDocument importExportDocument) {
         final Path filePath = getPath(docRef, META);
         if (update) {
             if (!Files.isRegularFile(filePath)) {
@@ -126,13 +128,16 @@ public class FSPersistence implements Persistence, Clearable {
             throw new RuntimeException("Document already exists with uuid=" + docRef.getUuid());
         }
 
-        data.forEach((ext, bytes) -> {
+        for (final ImportExportAsset asset : importExportDocument.getExtAssets()) {
             try {
-                Files.write(getPath(docRef, ext), bytes);
+                final byte[] data = asset.getInputData();
+                if (data != null) {
+                    Files.write(getPath(docRef, asset.getKey()), data);
+                }
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
             }
-        });
+        }
     }
 
     @Override

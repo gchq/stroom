@@ -1357,6 +1357,52 @@ appConfig:
     pathPrefix: null
     port: null
     scheme: "https"
+  visualisationAsset:
+    aceEditorModes:
+      htm: "HTML"
+      txt: "TEXT"
+      css: "CSS"
+      svg: "XML"
+      xml: "XML"
+      js: "JAVASCRIPT"
+      html: "HTML"
+    assetCacheDir: "asset_cache"
+    clearAssetCacheOnStartup: false
+    default: "application/octet-stream"
+    defaultAceEditorMode: "TEXT"
+    mimetypes:
+      htm: "text/html"
+      jpg: "image/jpeg"
+      css: "text/css"
+      tiff: "image/tiff"
+      bmp: "image/bmp"
+      apng: "image/apng"
+      gif: "image/jpeg"
+      svg: "image/svg+xml"
+      png: "image/png"
+      js: "text/javascript"
+      webp: "image/webp"
+      tif: "image/tiff"
+      txt: "text/plain"
+      xml: "application/xml"
+      jpeg: "image/jpeg"
+      html: "text/html"
+  visualisationAssetDb:
+    connection:
+      jdbcDriverClassName: null
+      jdbcDriverPassword: null
+      jdbcDriverUrl: null
+      jdbcDriverUsername: null
+    connectionPool:
+      cachePrepStmts: false
+      connectionTimeout: "PT30S"
+      idleTimeout: "PT10M"
+      leakDetectionThreshold: "PT0S"
+      maxLifetime: "PT30M"
+      maxPoolSize: 30
+      minimumIdle: 10
+      prepStmtCacheSize: 25
+      prepStmtCacheSqlLimit: 256
   volumes:
     createDefaultIndexVolumesOnStart: true
     defaultIndexVolumeFilesystemUtilisation: 0.9

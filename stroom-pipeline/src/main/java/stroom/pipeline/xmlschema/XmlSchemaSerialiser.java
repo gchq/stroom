@@ -19,13 +19,14 @@ package stroom.pipeline.xmlschema;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.importexport.api.ByteArrayImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.util.string.EncodingUtil;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class XmlSchemaSerialiser implements DocumentSerialiser2<XmlSchemaDoc> {
 
@@ -39,17 +40,20 @@ public class XmlSchemaSerialiser implements DocumentSerialiser2<XmlSchemaDoc> {
     }
 
     @Override
-    public XmlSchemaDoc read(final Map<String, byte[]> data) throws IOException {
-        return delegate.read(data).copy().data(EncodingUtil.asString(data.get(XSD))).build();
+    public XmlSchemaDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        return delegate.read(importExportDocument)
+                .copy()
+                .data(EncodingUtil.asString(importExportDocument.getExtAssetData(XSD)))
+                .build();
     }
 
     @Override
-    public Map<String, byte[]> write(final XmlSchemaDoc document) throws IOException {
+    public ImportExportDocument write(final XmlSchemaDoc document) throws IOException {
         final String xsd = document.getData();
-        final Map<String, byte[]> data = delegate.write(document.copy().data(null).build());
+        final ImportExportDocument importExportDocument = delegate.write(document.copy().data(null).build());
         if (xsd != null) {
-            data.put(XSD, EncodingUtil.asBytes(xsd));
+            importExportDocument.addExtAsset(new ByteArrayImportExportAsset(XSD, EncodingUtil.asBytes(xsd)));
         }
-        return data;
+        return importExportDocument;
     }
 }

@@ -42,6 +42,8 @@ import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
 import stroom.credentials.impl.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
+import stroom.dashboard.impl.visualisation.VisualisationAssetConfig;
+import stroom.dashboard.impl.visualisation.VisualisationAssetConfig.VisualisationAssetDbConfig;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
@@ -990,6 +992,8 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_PATH) final StroomPathConfig pathConfig,
                 @JsonProperty(PROP_NAME_UI) final UiConfig uiConfig,
                 @JsonProperty(PROP_NAME_UI_URI) final UiUriConfig uiUri,
+                @JsonProperty(PROP_NAME_VISUALISATION_ASSET) final VisualisationAssetConfig visualisationAssetConfig,
+                @JsonProperty(PROP_NAME_VISUALISATION_ASSET_DB) final VisualisationAssetDbConfig visualisationAssetDbConfig,
                 @JsonProperty(PROP_NAME_VOLUMES) final VolumeConfig volumeConfig,
                 @JsonProperty("stringProp") final String stringProp,
                 @JsonProperty("stringListProp") final List<String> stringListProp,
@@ -1055,6 +1059,8 @@ class TestConfigMapper {
                     pathConfig,
                     uiConfig,
                     uiUri,
+                    visualisationAssetConfig,
+                    visualisationAssetDbConfig,
                     volumeConfig);
 
             this.stringProp = stringProp;

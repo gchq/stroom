@@ -8597,6 +8597,285 @@ paths:
       summary: Update a visualisation doc
       tags:
       - Visualisations
+  /visualisationAssets/fetchDraftAssets/{ownerDocId}:
+    get:
+      operationId: fetchDraftAssets
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VisualisationAssets"
+          description: default response
+      summary: Fetch the assets belonging to a visualisation doc by the doc's UUID
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/getContent/{ownerDocId}:
+    get:
+      operationId: getContent
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: path
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VisualisationAssetContent"
+          description: default response
+      summary: Gets the content of an asset for editing
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/revertDraftFromLive/{ownerDocId}:
+    put:
+      operationId: revertDraftFromLive
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Revert draft assets to get rid of any changes
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/saveAs/{fromOwnerDocId}:
+    put:
+      operationId: saveAs
+      parameters:
+      - in: path
+        name: fromOwnerDocId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisualisationAssetSaveAsParameters"
+        description: SaveAs parameters
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Save the document's assets to another document
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/saveAs/{ownerDocId}:
+    get:
+      operationId: indexAssetExists
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Check if an index.html asset exists for the document ID
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/saveDraftToLive/{ownerDocId}:
+    put:
+      operationId: saveDraftToLive
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Save draft assets to main store to make them live
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/updateContent/{ownerDocId}:
+    put:
+      operationId: updateContent
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisualisationAssetUpdateContent"
+        description: Path and Content
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Updates the content of an asset
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/updateDelete/{ownerDocId}:
+    put:
+      operationId: updateDelete
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisualisationAssetUpdateDelete"
+        description: Path and isFolder
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Deletes an asset
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/updateNewFile/{ownerDocId}:
+    put:
+      operationId: updateNewFile
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisualisationAssetUpdateNewFile"
+        description: Path and Mimetype
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Creates a new text file
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/updateNewFolder/{ownerDocId}:
+    put:
+      operationId: updateNewFolder
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: Path
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Create new folder
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/updateNewUploadedFile/{ownerDocId}:
+    put:
+      operationId: updateNewUploadedFile
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisualisationAssetUpdateNewFile"
+        description: "Path, ResourceKey and Mimetype"
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Creates a new uploaded file
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/updateRename/{ownerDocId}:
+    put:
+      operationId: updateRename
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisualisationAssetUpdateRename"
+        description: "Old Path, New Path and isFolder"
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Renames an asset
+      tags:
+      - VisualisationAssets
   /welcome/v1:
     get:
       operationId: fetchWelcome
@@ -11437,7 +11716,9 @@ components:
           - FIELDS_SORT_NONE
           - FILE
           - FILE_FORMATTED
+          - FILE_IMAGE
           - FILE_RAW
+          - FILE_SCRIPT
           - FILTER
           - FIND
           - FOLDER
@@ -13511,6 +13792,7 @@ components:
           - 401 - 312 - Client Token or Certificate failed authentication
           - 401 - 313 - Data feed key failed authentication
           - 401 - 314 - Data feed key has expired
+          - 401 - 315 - Client Certificate DN failed authentication
           - 500 - 400 - Compressed stream invalid
           - 413 - 410 - Content too large
           - 500 - 999 - Unknown error
@@ -15486,7 +15768,9 @@ components:
           - FIELDS_SORT_NONE
           - FILE
           - FILE_FORMATTED
+          - FILE_IMAGE
           - FILE_RAW
+          - FILE_SCRIPT
           - FILTER
           - FIND
           - FOLDER
@@ -20312,6 +20596,78 @@ components:
             $ref: "#/components/schemas/DocRef"
       required:
       - componentId
+    VisualisationAsset:
+      type: object
+      properties:
+        folder:
+          type: boolean
+        id:
+          type: string
+        path:
+          type: string
+    VisualisationAssetContent:
+      type: object
+      properties:
+        content:
+          type: string
+        editorMode:
+          type: string
+    VisualisationAssetSaveAsParameters:
+      type: object
+      properties:
+        toOwnerDocId:
+          type: string
+        updatedContent:
+          type: string
+          format: byte
+        updatedContentPath:
+          type: string
+    VisualisationAssetUpdateContent:
+      type: object
+      properties:
+        content:
+          type: string
+          format: byte
+        path:
+          type: string
+    VisualisationAssetUpdateDelete:
+      type: object
+      properties:
+        folder:
+          type: boolean
+        path:
+          type: string
+    VisualisationAssetUpdateNewFile:
+      type: object
+      properties:
+        path:
+          type: string
+        resourceKey:
+          $ref: "#/components/schemas/ResourceKey"
+    VisualisationAssetUpdateRename:
+      type: object
+      properties:
+        folder:
+          type: boolean
+        newPath:
+          type: string
+        oldPath:
+          type: string
+    VisualisationAssets:
+      type: object
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: "#/components/schemas/VisualisationAsset"
+        dirty:
+          type: boolean
+        ownerId:
+          type: string
+        uploadedFiles:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/ResourceKey"
     VisualisationDoc:
       type: object
       properties:

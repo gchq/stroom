@@ -2092,6 +2092,22 @@ public enum SvgImage {
             "288 -288,0 z\" /></svg> \n" +
             ""),
 
+    FILE_IMAGE("file-image.svg", "svg-image__file-image", "" +
+            "<svg viewBox=\"0 0 384 512\" version=\"1.1\" id=\"svg4\" xmlns=\"http://www.w3.org/2000" +
+            "/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\"><defs id=\"defs8\" /><!-- Font Awesom" +
+            "e Free 5.15.1 by @fontawesome - https://fontawesome.com License - https://fontaw" +
+            "esome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)" +
+            " --><path style=\"fill:var(--icon-colour__black);stroke:#808080;stroke-opacity:1;" +
+            "fill-opacity:1\" d=\"M369.9 97.9L286 14C277 5 264.8-.1 252.1-.1H48C21.5 0 0 21.5 0" +
+            " 48v416c0 26.5 21.5 48 48 48h288c26.5 0 48-21.5 48-48V131.9c0-12.7-5.1-25-14.1-3" +
+            "4zM332.1 128H256V51.9l76.1 76.1zM48 464V48h160v104c0 13.3 10.7 24 24 24h104v288H" +
+            "48z\" id=\"path2\" /><path style=\"fill:none;stroke:var(--icon-colour__black);stroke" +
+            "-width:40;stroke-dasharray:none;stroke-opacity:1\" d=\"M 28.20339,282.0339 106.305" +
+            "08,238.64407 256,483.79661\" id=\"path6405\" /><circle style=\"fill:none;stroke:#f2e" +
+            "900;stroke-width:40;stroke-dasharray:none;stroke-opacity:1\" id=\"path7200\" cx=\"24" +
+            "8.40678\" cy=\"252.74576\" r=\"40.135593\" /></svg> \n" +
+            ""),
+
     FILE_RAW("file-raw.svg", "svg-image__file-raw", "" +
             "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 384 512\"><!-- Font Awesome " +
             "Free 5.15.1 by @fontawesome - https://fontawesome.com License - https://fontawes" +
@@ -2149,6 +2165,33 @@ public enum SvgImage {
             " l 0,416 c 0,26.5 21.5,48 48,48 l 288,0 c 26.5,0 48,-21.5 48,-48 l 0,-332.1 c 0," +
             "-12.7 -5.1,-25 -14.1,-34 z M 332.1,128 256,128 256,51.9 332.1,128 Z M 48,464 48," +
             "48 l 160,0 0,104 c 0,13.3 10.7,24 24,24 l 104,0 0,288 -288,0 z\" /></svg> \n" +
+            ""),
+
+    FILE_SCRIPT("file-script.svg", "svg-image__file-script", "" +
+            "<svg viewBox=\"0 0 384 512\" version=\"1.1\" id=\"svg416\" xml:space=\"preserve\" xmlns=" +
+            "\"http://www.w3.org/2000/svg\" xmlns:svg=\"http://www.w3.org/2000/svg\"><defs id=\"de" +
+            "fs420\" /><!-- Font Awesome Free 5.15.1 by @fontawesome - https://fontawesome.com" +
+            " License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OF" +
+            "L 1.1, Code: MIT License) --><path style=\"fill:currentColor\" d=\"M369.9 97.9L286 " +
+            "14C277 5 264.8-.1 252.1-.1H48C21.5 0 0 21.5 0 48v416c0 26.5 21.5 48 48 48h288c26" +
+            ".5 0 48-21.5 48-48V131.9c0-12.7-5.1-25-14.1-34zM332.1 128H256V51.9l76.1 76.1zM48" +
+            " 464V48h160v104c0 13.3 10.7 24 24 24h104v288H48z\" id=\"path414\" /><path style=\"fi" +
+            "ll:var(--icon-colour__black);stroke-width:0.168617;fill-opacity:1\" d=\"m 296.4639" +
+            "3,371.28394 q 0,34.88939 -27.37471,54.03379 -27.19581,19.1444 -76.75658,19.1444 " +
+            "-92.14367,0 -106.815086,-64.05328 l 33.100146,-6.62002 q 5.72544,22.72281 24.333" +
+            "09,33.458 18.60765,10.5562 50.63429,10.5562 33.10015,0 50.99212,-11.2719 18.0708" +
+            "9,-11.45086 18.07089,-33.45798 0,-12.34548 -5.72543,-20.03902 -5.54649,-7.69354 " +
+            "-15.74492,-12.7033 -10.19843,-5.00975 -24.33309,-8.40923 -14.13466,-3.39948 -31." +
+            "31096,-7.33571 -29.8796,-6.62003 -45.44562,-13.24006 -15.38709,-6.62003 -24.3330" +
+            "8,-14.67142 -8.94599,-8.23031 -13.77682,-19.14442 -4.651916,-10.9141 -4.651916,-" +
+            "25.04876 0,-32.38447 24.690926,-49.91861 24.86984,-17.53413 71.03114,-17.53413 4" +
+            "2.94074,0 65.66355,13.24006 22.72281,13.06114 31.84771,44.72993 l -33.63692,5.90" +
+            "436 q -5.54649,-20.03902 -21.11252,-28.985 -15.56602,-9.12491 -43.11966,-9.12491" +
+            " -30.23744,0 -46.1613,10.0195 -15.92385,10.01951 -15.92385,29.8796 0,11.62979 6." +
+            "08327,19.32334 6.26219,7.51462 17.89197,12.88222 11.62979,5.18867 46.34022,12.88" +
+            "222 11.62979,2.6838 23.08065,5.54651 11.62978,2.6838 22.18605,6.62003 10.55625,3" +
+            ".75732 19.68117,8.94599 9.30383,5.18867 16.10278,12.7033 6.79895,7.51463 10.5562" +
+            "7,17.71306 3.93622,10.19843 3.93622,23.97524 z\" id=\"path675\" /></svg> \n" +
             ""),
 
     FILTER("filter.svg", "svg-image__filter", "" +

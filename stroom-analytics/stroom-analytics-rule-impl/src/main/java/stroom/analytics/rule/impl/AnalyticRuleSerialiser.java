@@ -20,11 +20,11 @@ import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.importexport.api.ImportExportDocument;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class AnalyticRuleSerialiser implements DocumentSerialiser2<AnalyticRuleDoc> {
 
@@ -36,14 +36,12 @@ public class AnalyticRuleSerialiser implements DocumentSerialiser2<AnalyticRuleD
     }
 
     @Override
-    public AnalyticRuleDoc read(final Map<String, byte[]> data) throws IOException {
-        final AnalyticRuleDoc document = delegate.read(data);
-        return document;
+    public AnalyticRuleDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        return delegate.read(importExportDocument);
     }
 
     @Override
-    public Map<String, byte[]> write(final AnalyticRuleDoc document) throws IOException {
-        final Map<String, byte[]> data = delegate.write(document);
-        return data;
+    public ImportExportDocument write(final AnalyticRuleDoc document) throws IOException {
+        return delegate.write(document);
     }
 }

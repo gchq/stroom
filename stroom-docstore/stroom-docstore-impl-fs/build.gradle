@@ -21,6 +21,7 @@ dependencies {
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 
