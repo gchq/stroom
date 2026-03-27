@@ -40,7 +40,10 @@ public enum ContentStoreContentPackStatus {
     PACK_UPGRADABLE("Pack upgradable"),
 
     /** Upgrades available with current settings */
-    CONTENT_UPGRADABLE("Content upgradable");
+    CONTENT_UPGRADABLE("Content upgradable"),
+
+    /** Error checking for upgrade status */
+    ERROR("Error checking for upgrade status");
 
     /** Shown in the UI for this enum */
     private final String description;

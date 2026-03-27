@@ -311,16 +311,20 @@ public class ContentStoreContentPackListPresenter
                             .create(ContentStorePresenter.CONTENT_STORE_RESOURCE)
                             .method(res -> res.checkContentUpgradeAvailable(cpws.getContentPack()))
                             .onSuccess(upgradeAvailable -> {
-                                if (upgradeAvailable.getValue()) {
-                                    cpws.setInstallationStatus(ContentStoreContentPackStatus.CONTENT_UPGRADABLE);
-                                    contentPackStatusCache.put(cpws.getContentPack(), cpws.getInstallationStatus());
-                                    if (contentStorePresenter != null) {
-                                        contentStorePresenter.updateState();
+                                if (upgradeAvailable.isOk()) {
+                                    if (upgradeAvailable.getValue() != null && upgradeAvailable.getValue()) {
+                                        cpws.setInstallationStatus(ContentStoreContentPackStatus.CONTENT_UPGRADABLE);
+                                        contentPackStatusCache.put(cpws.getContentPack(), cpws.getInstallationStatus());
+                                        if (contentStorePresenter != null) {
+                                            contentStorePresenter.updateState();
+                                        }
+                                    } else {
+                                        contentPackStatusCache.put(cpws.getContentPack(), cpws.getInstallationStatus());
                                     }
                                 } else {
+                                    cpws.setInstallationStatus(ContentStoreContentPackStatus.ERROR);
                                     contentPackStatusCache.put(cpws.getContentPack(), cpws.getInstallationStatus());
                                 }
-
                                 // Check the next item
                                 doUpgradeCheckOn(rowIndex + 1);
                             })
