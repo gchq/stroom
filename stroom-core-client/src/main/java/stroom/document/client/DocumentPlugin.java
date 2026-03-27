@@ -44,7 +44,6 @@ import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 
-import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
@@ -102,20 +101,31 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
     /**
      * 4. This method will open a document and show it in the content pane.
      */
-    public MyPresenterWidget<?> open(final DocRef docRef,
+    public final MyPresenterWidget<?> open(final DocRef docRef,
                                      final boolean forceOpen,
                                      final boolean fullScreen,
                                      final TaskMonitorFactory taskMonitorFactory) {
-        return open(docRef, forceOpen, fullScreen, null, null, false, taskMonitorFactory);
+        return open(docRef, forceOpen, fullScreen, true, null, null, false, taskMonitorFactory);
     }
 
-    public MyPresenterWidget<?> open(final DocRef docRef,
+    public final MyPresenterWidget<?> open(final DocRef docRef,
+                                     final boolean forceOpen,
+                                     final boolean fullScreen,
+                                     final boolean selectDefaultTab,
+                                     final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                     final TaskMonitorFactory taskMonitorFactory) {
+        return open(docRef, forceOpen, fullScreen, selectDefaultTab, null, callbackOnOpen, false, taskMonitorFactory);
+    }
+
+    public final MyPresenterWidget<?> open(final DocRef docRef,
                                      final boolean forceOpen,
                                      final boolean fullScreen,
                                      final CommonDocLinkTab selectedLinkTab,
                                      final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                     final boolean duplicate,
                                      final TaskMonitorFactory taskMonitorFactory) {
-        return open(docRef, forceOpen, fullScreen, selectedLinkTab, callbackOnOpen, false, taskMonitorFactory);
+        return open(docRef, forceOpen, fullScreen, true, selectedLinkTab, callbackOnOpen, duplicate,
+                taskMonitorFactory);
     }
 
     /**
@@ -125,6 +135,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
     public MyPresenterWidget<?> open(final DocRef docRef,
                                      final boolean forceOpen,
                                      final boolean fullScreen,
+                                     final boolean selectDefaultTab,
                                      final CommonDocLinkTab selectedLinkTab,
                                      final Consumer<MyPresenterWidget<?>> callbackOnOpen,
                                      final boolean duplicate,
@@ -153,7 +164,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                 }
 
                 if (selectedLinkTab != null) {
-                    GWT.log("existing - " + existingTab.getClass().getName());
+//                    GWT.log("existing - " + existingTab.getClass().getName());
                     if (existingTab instanceof DocTabPresenter<?, ?>) {
                         ((DocTabPresenter<?, ?>) existingTab).selectCommonTab(selectedLinkTab);
                     } else if (existingTab instanceof LinkTabPanelPresenter) {
@@ -196,6 +207,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                             closeHandler,
                             tabData,
                             fullScreen,
+                            selectDefaultTab,
                             selectedLinkTab,
                             callbackOnOpen,
                             taskMonitorFactory);
@@ -210,7 +222,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
         return presenter;
     }
 
-    protected void showDocument(final DocRef docRef,
+    protected final void showDocument(final DocRef docRef,
                                 final MyPresenterWidget<?> documentEditPresenter,
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
@@ -221,6 +233,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                 closeHandler,
                 tabData,
                 false,
+                true,
                 null,
                 null,
                 taskMonitorFactory);
@@ -232,7 +245,8 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
-                                final CommonDocLinkTab selectedTab,
+                                final boolean selectDefaultTab,
+                                final CommonDocLinkTab selectedCommonTab,
                                 final Consumer<MyPresenterWidget<?>> callbackOnOpen,
                                 final TaskMonitorFactory taskMonitorFactory) {
         final RestErrorHandler errorHandler = caught ->
@@ -245,11 +259,17 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
             if (doc == null) {
                 AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, null);
             } else {
-                if (selectedTab != null) {
+                if (selectedCommonTab != null) {
                     if (myPresenterWidget instanceof DocTabPresenter<?, ?>) {
-                        ((DocTabPresenter<?, ?>) myPresenterWidget).selectCommonTab(selectedTab);
+                        ((DocTabPresenter<?, ?>) myPresenterWidget).selectCommonTab(selectedCommonTab);
                     } else if (myPresenterWidget instanceof LinkTabPanelPresenter) {
-                        ((LinkTabPanelPresenter) myPresenterWidget).selectCommonTab(selectedTab);
+                        ((LinkTabPanelPresenter) myPresenterWidget).selectCommonTab(selectedCommonTab);
+                    }
+                } else {
+                    if (myPresenterWidget instanceof final DocTabPresenter<?, ?> docTabPresenter) {
+                        if (selectDefaultTab) {
+                            docTabPresenter.getDefaultTab().ifPresent(docTabPresenter::selectTab);
+                        }
                     }
                 }
                 // Read the newly loaded document.

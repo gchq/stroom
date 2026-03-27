@@ -17,7 +17,6 @@
 package stroom.pipeline.client;
 
 import stroom.core.client.ContentManager;
-import stroom.data.client.presenter.ExpressionValidator;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -25,7 +24,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
-import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.meta.shared.FindMetaCriteria;
@@ -56,7 +54,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -112,36 +110,6 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
         }));
 
         registerHandler(getEventBus().addHandler(BeginPipelineSteppingEvent.getType(), this::onBeginStepping));
-    }
-
-    @Override
-    public MyPresenterWidget<?> open(final DocRef docRef,
-                                     final boolean forceOpen,
-                                     final boolean fullScreen,
-                                     final CommonDocLinkTab selectedLinkTab,
-                                     final Consumer<MyPresenterWidget<?>> callbackOnOpen,
-                                     final boolean duplicate,
-                                     final TaskMonitorFactory taskMonitorFactory) {
-        final Consumer<MyPresenterWidget<?>> callback;
-        if (callbackOnOpen == null) {
-            callback = presenter -> {
-                initPipelineModel(presenter, docRef);
-            };
-        } else {
-            callback = presenter -> {
-                initPipelineModel(presenter, docRef);
-                callbackOnOpen.accept(presenter);
-            };
-        }
-
-        return super.open(docRef, forceOpen, fullScreen, selectedLinkTab, callback, duplicate,
-                taskMonitorFactory);
-    }
-
-    private void initPipelineModel(final MyPresenterWidget<?> presenter, final DocRef pipeline) {
-        final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;
-        pipelinePresenter.setMetaListExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION, null);
-        pipelinePresenter.initPipelineModel(pipeline);
     }
 
     @Override
@@ -299,17 +267,30 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                                   final Meta meta,
                                   final String childStreamType) {
         open(pipeline, true, false,
-                null, presenter -> {
+                false, presenter -> {
                     final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;
-                    // Only begin stepping when the pipeline model has been set up
-                    pipelinePresenter.addChangeDataHandler(event -> {
-                        pipelinePresenter.setSteppingMode(true);
+
+                    if (pipelinePresenter.isSteppingInit()) {
+                        pipelinePresenter.showSteppingMode(true);
                         pipelinePresenter.setMetaListExpression(
                                 MetaExpressionUtil.createDataIdExpression(meta.getId()),
                                 () -> pipelinePresenter.beginStepping(stepType, stepLocation, meta, childStreamType));
-                    });
-
-                    pipelinePresenter.initPipelineModel(pipeline);
+                    } else {
+                        pipelinePresenter.setSteppingMetaExpression(
+                                MetaExpressionUtil.createDataIdExpression(meta.getId()));
+                        pipelinePresenter.showSteppingMode(true);
+                        // Only begin stepping when the pipeline model has been loaded.
+                        // Then remove the handler because we dont want it to run again
+                        final HandlerRegistration[] registration = new HandlerRegistration[1];
+                        registration[0] = pipelinePresenter.addDataLoadedHandler(event -> {
+                            registration[0].removeHandler();
+                            pipelinePresenter.refreshSteppingMeta(
+                                    () -> pipelinePresenter.beginStepping(stepType,
+                                            stepLocation,
+                                            meta,
+                                            childStreamType));
+                        });
+                    }
                 }, new DefaultTaskMonitorFactory(this));
     }
 }

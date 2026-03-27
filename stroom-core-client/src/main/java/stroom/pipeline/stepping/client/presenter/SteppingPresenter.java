@@ -665,6 +665,10 @@ public class SteppingPresenter
         this.pipelineDoc = pipelineDoc;
     }
 
+    public PipelineDoc getPipelineDoc() {
+        return pipelineDoc;
+    }
+
     public void refreshMetaList() {
         steppingMetaListPresenter.refresh();
     }

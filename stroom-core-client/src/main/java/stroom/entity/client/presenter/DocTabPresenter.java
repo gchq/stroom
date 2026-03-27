@@ -59,6 +59,7 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     protected final ButtonPanel toolbar;
     private PresenterWidget<?> currentContent;
     protected DocRef docRef;
+    private TabData defaultTab;
 
     private final TabContentProvider<D> tabContentProvider;
     private final Map<CommonDocLinkTab, TabData> commonTabsMap;
@@ -276,6 +277,14 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     @Override
     public DocRef getDocRef() {
         return docRef;
+    }
+
+    public void setDefaultTab(final TabData defaultTab) {
+        this.defaultTab = defaultTab;
+    }
+
+    public Optional<TabData> getDefaultTab() {
+        return Optional.ofNullable(defaultTab);
     }
 
     /**
