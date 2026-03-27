@@ -903,26 +903,6 @@ paths:
       summary: Gets a list of events linked to this annotation
       tags:
       - Annotations
-  /annotation/v1/getStandardComments:
-    get:
-      operationId: getAnnotationSampleComments
-      parameters:
-      - in: query
-        name: filter
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-          description: default response
-      summary: Gets a list of predefined comments
-      tags:
-      - Annotations
   /annotation/v1/updateAnnotationTag:
     put:
       operationId: updateAnnotationTag
@@ -9699,12 +9679,15 @@ components:
           - BROWN
           - GREY
           - BLUE_GREY
+        tagText:
+          type: string
         type:
           type: string
           enum:
           - STATUS
           - LABEL
           - COLLECTION
+          - COMMENT
         uuid:
           type: string
     AnyBoolean:
@@ -10794,6 +10777,7 @@ components:
           - Installed
           - Pack upgradable
           - Content upgradable
+          - Error checking for upgrade status
     ContentStoreCreateGitRepoRequest:
       type: object
       properties:
@@ -10958,12 +10942,15 @@ components:
       properties:
         name:
           type: string
+        tagText:
+          type: string
         type:
           type: string
           enum:
           - STATUS
           - LABEL
           - COLLECTION
+          - COMMENT
     CreateHashedApiKeyRequest:
       type: object
       properties:
