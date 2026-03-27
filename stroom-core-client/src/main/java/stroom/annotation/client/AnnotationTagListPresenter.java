@@ -115,6 +115,17 @@ public class AnnotationTagListPresenter extends MyPresenterWidget<PagerView> {
         };
         dataGrid.addResizableColumn(nameColumn, "Name", 400);
 
+        if (annotationTagType.hasTagText()) {
+            // Tag text.
+            final Column<AnnotationTag, String> tagTextColumn = new Column<AnnotationTag, String>(new TextCell()) {
+                @Override
+                public String getValue(final AnnotationTag annotationTag) {
+                    return annotationTag.getTagText();
+                }
+            };
+            dataGrid.addResizableColumn(tagTextColumn, annotationTagType.getDisplayValue(), 600);
+        }
+
         if (annotationTagType == AnnotationTagType.LABEL) {
             // Style.
             final Function<AnnotationTag, SafeHtml> function = annotationTag ->

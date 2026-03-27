@@ -180,6 +180,44 @@ class TestAnnotationTagDaoImpl {
         annotationTagDao.deleteAnnotationTag(two);
     }
 
+    @Test
+    void testCreateTagAlreadyExists() {
+        final AnnotationTag original = createStatus("New");
+        annotationTagDao.deleteAnnotationTag(original);
+
+        // Should not be findable after deletion.
+        assertThat(annotationTagDao.findAnnotationTag(AnnotationTagType.STATUS, "New")).isEmpty();
+
+        // Re-creating with the same type and name should undelete the original.
+        final AnnotationTag recreated = createStatus("New");
+        assertThat(recreated.getId()).isEqualTo(original.getId());
+        assertThat(recreated.getUuid()).isEqualTo(original.getUuid());
+
+        // Should now be findable again.
+        assertThat(annotationTagDao.findAnnotationTag(AnnotationTagType.STATUS, "New")).isPresent();
+    }
+
+    @Test
+    void testCreateCommentTagAlreadyExistsUpdatesTagText() {
+        final AnnotationTag original = createComment("Phishing", "This looks like a phishing attempt.");
+        annotationTagDao.deleteAnnotationTag(original);
+
+        // Should not be findable after deletion.
+        assertThat(annotationTagDao.findAnnotationTag(AnnotationTagType.COMMENT, "Phishing")).isEmpty();
+
+        // Re-creating with updated tagText should undelete and update the text.
+        final AnnotationTag recreated = createComment("Phishing", "Updated phishing comment text.");
+        assertThat(recreated.getId()).isEqualTo(original.getId());
+        assertThat(recreated.getUuid()).isEqualTo(original.getUuid());
+        assertThat(recreated.getTagText()).isEqualTo("Updated phishing comment text.");
+
+        // Should now be findable with updated tagText.
+        final Optional<AnnotationTag> found = annotationTagDao
+                .findAnnotationTag(AnnotationTagType.COMMENT, "Phishing");
+        assertThat(found).isPresent();
+        assertThat(found.get().getTagText()).isEqualTo("Updated phishing comment text.");
+    }
+
     private AnnotationTag createStatus(final String name) {
         return annotationTagDao.createAnnotationTag(CreateAnnotationTagRequest
                 .builder()
@@ -201,6 +239,15 @@ class TestAnnotationTagDaoImpl {
                 .builder()
                 .type(AnnotationTagType.LABEL)
                 .name(name)
+                .build());
+    }
+
+    private AnnotationTag createComment(final String name, final String tagText) {
+        return annotationTagDao.createAnnotationTag(CreateAnnotationTagRequest
+                .builder()
+                .type(AnnotationTagType.COMMENT)
+                .name(name)
+                .tagText(tagText)
                 .build());
     }
 }

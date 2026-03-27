@@ -28,6 +28,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -41,6 +42,10 @@ public class AnnotationTagEditViewImpl
 
     @UiField
     TextBox name;
+    @UiField
+    FormGroup tagTextGroup;
+    @UiField
+    TextArea tagText;
     @UiField
     FormGroup styleGroup;
     @UiField
@@ -76,6 +81,22 @@ public class AnnotationTagEditViewImpl
     @Override
     public void setName(final String name) {
         this.name.setText(name);
+    }
+
+    @Override
+    public void showTagText(final boolean show, final String label) {
+        tagTextGroup.setLabel(label);
+        tagTextGroup.setVisible(show);
+    }
+
+    @Override
+    public String getTagText() {
+        return this.tagText.getText();
+    }
+
+    @Override
+    public void setTagText(final String tagText) {
+        this.tagText.setText(tagText);
     }
 
     @Override

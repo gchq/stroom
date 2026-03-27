@@ -31,16 +31,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @JsonPropertyOrder(alphabetic = true)
 public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, HasDbConfig {
 
     public static final String DEFAULT_RETENTION_PERIOD = "5y";
 
     private final AnnotationDBConfig dbConfig;
-    private final List<String> standardComments;
     private final String createText;
     private final String defaultRetentionPeriod;
     private final StroomDuration physicalDeleteAge;
@@ -49,7 +45,6 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
 
     public AnnotationConfig() {
         dbConfig = new AnnotationDBConfig();
-        standardComments = new ArrayList<>();
         createText = "Create Annotation";
         defaultRetentionPeriod = DEFAULT_RETENTION_PERIOD;
         physicalDeleteAge = StroomDuration.ofDays(7);
@@ -66,14 +61,12 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
     @SuppressWarnings("unused")
     @JsonCreator
     public AnnotationConfig(@JsonProperty("db") final AnnotationDBConfig dbConfig,
-                            @JsonProperty("standardComments") final List<String> standardComments,
                             @JsonProperty("createText") final String createText,
                             @JsonProperty("defaultRetentionPeriod") final String defaultRetentionPeriod,
                             @JsonProperty("physicalDeleteAge") final StroomDuration physicalDeleteAge,
                             @JsonProperty("annotationTagCache") final CacheConfig annotationTagCache,
                             @JsonProperty("annotationFeedCache") final CacheConfig annotationFeedCache) {
         this.dbConfig = dbConfig;
-        this.standardComments = standardComments;
         this.createText = createText;
         this.defaultRetentionPeriod = defaultRetentionPeriod;
         this.physicalDeleteAge = physicalDeleteAge;
@@ -85,12 +78,6 @@ public class AnnotationConfig extends AbstractConfig implements IsStroomConfig, 
     @JsonProperty("db")
     public AnnotationDBConfig getDbConfig() {
         return dbConfig;
-    }
-
-    @JsonProperty("standardComments")
-    @JsonPropertyDescription("A list of standard comments that can be added to annotations")
-    public List<String> getStandardComments() {
-        return standardComments;
     }
 
     @JsonProperty("createText")

@@ -408,3 +408,14 @@
     font-size: var(--font-size-11);
 }
 
+.annotationTag-tagTextGroup {
+    flex: 1;
+    min-height: 0;
+}
+
+.annotationTag-tagTextGroup textarea {
+    flex: 1;
+    min-height: 0;
+    resize: none;
+}
+
