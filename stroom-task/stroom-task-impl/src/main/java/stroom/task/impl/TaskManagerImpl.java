@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,8 +105,10 @@ class TaskManagerImpl implements TaskManager {
 
     @Override
     public synchronized void startup() {
-        LOGGER.info("startup()");
-        executorProvider.setStop(false);
+        if (executorProvider.isStopped()) {
+            throw new IllegalStateException("ExecutorProvider is stopped");
+        }
+        LOGGER.info("Starting Stroom Task Manager");
     }
 
     /**
@@ -115,7 +117,7 @@ class TaskManagerImpl implements TaskManager {
      */
     @Override
     public synchronized void shutdown() {
-        LOGGER.info("shutdown()");
+        LOGGER.info("Stopping Stroom Task Manager");
         executorProvider.setStop(true);
 
         try {
@@ -130,7 +132,7 @@ class TaskManagerImpl implements TaskManager {
                 if (waiting) {
                     // Output some debug to list the tasks that are executing
                     // and queued.
-                    LOGGER.info("shutdown() - Waiting for {} tasks to complete. {}",
+                    LOGGER.info("Waiting for {} tasks to complete. {}",
                             currentCount,
                             taskRegistry.list().stream()
                                     .map(TaskContextImpl::toString)
@@ -151,7 +153,7 @@ class TaskManagerImpl implements TaskManager {
         }
 
         executorProvider.setStop(false);
-        LOGGER.info("shutdown() - Complete");
+        LOGGER.info("Stroom Task Manager stopped successfully");
     }
 
     ResultPage<TaskProgress> terminate(final FindTaskCriteria criteria) {

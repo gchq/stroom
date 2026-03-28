@@ -16,7 +16,10 @@
 
 package stroom.datagen.impl;
 
+import stroom.analytics.impl.ExecuteNow;
+import stroom.analytics.impl.ExecuteNowProviderBinder;
 import stroom.analytics.impl.ScheduledExecutorService;
+import stroom.analytics.shared.ExecutionSchedule;
 import stroom.datagen.shared.DataGenDoc;
 import stroom.docstore.api.ContentIndexable;
 import stroom.docstore.api.DocumentActionHandlerBinder;
@@ -60,6 +63,9 @@ public class DataGenModule extends AbstractModule {
         ObjectInfoProviderBinder.create(binder())
                 .bind(DataGenDoc.class, DataGenDocObjectInfoProvider.class);
 
+        ExecuteNowProviderBinder.create(binder())
+                .bind(DataGenDoc.TYPE, DataGenExecuteNow.class);
+
         RestResourcesBinder.create(binder())
                 .bind(DataGenResourceImpl.class);
     }
@@ -70,6 +76,24 @@ public class DataGenModule extends AbstractModule {
         ScheduledDataGenExecutorRunnable(final ScheduledExecutorService<DataGenDoc> scheduledExecutorService,
                                          final ScheduledDataGenExecutable scheduledDataGenExecutor) {
             super(() -> scheduledExecutorService.exec(scheduledDataGenExecutor));
+        }
+    }
+
+    private static class DataGenExecuteNow implements ExecuteNow {
+
+        private final ScheduledExecutorService<DataGenDoc> scheduledExecutorService;
+        private final ScheduledDataGenExecutable scheduledQueryAnalyticExecutor;
+
+        @Inject
+        DataGenExecuteNow(final ScheduledExecutorService<DataGenDoc> scheduledExecutorService,
+                          final ScheduledDataGenExecutable scheduledQueryAnalyticExecutor) {
+            this.scheduledExecutorService = scheduledExecutorService;
+            this.scheduledQueryAnalyticExecutor = scheduledQueryAnalyticExecutor;
+        }
+
+        @Override
+        public void execute(final ExecutionSchedule executionSchedule) {
+            scheduledExecutorService.executeNow(executionSchedule, scheduledQueryAnalyticExecutor);
         }
     }
 }

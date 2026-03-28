@@ -20,11 +20,11 @@ import stroom.datagen.shared.DataGenDoc;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.importexport.api.ImportExportDocument;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class DataGenSerialiser implements DocumentSerialiser2<DataGenDoc> {
 
@@ -36,14 +36,12 @@ public class DataGenSerialiser implements DocumentSerialiser2<DataGenDoc> {
     }
 
     @Override
-    public DataGenDoc read(final Map<String, byte[]> data) throws IOException {
-        final DataGenDoc document = delegate.read(data);
-        return document;
+    public DataGenDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        return delegate.read(importExportDocument);
     }
 
     @Override
-    public Map<String, byte[]> write(final DataGenDoc document) throws IOException {
-        final Map<String, byte[]> data = delegate.write(document);
-        return data;
+    public ImportExportDocument write(final DataGenDoc document) throws IOException {
+        return delegate.write(document);
     }
 }

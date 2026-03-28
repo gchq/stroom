@@ -4,20 +4,16 @@
 package stroom.explorer.impl.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import stroom.explorer.impl.db.jooq.Keys;
+import stroom.explorer.impl.db.jooq.Stroom;
+import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -30,10 +26,9 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.explorer.impl.db.jooq.Keys;
-import stroom.explorer.impl.db.jooq.Stroom;
-import stroom.explorer.impl.db.jooq.tables.ExplorerFavourite.ExplorerFavouritePath;
-import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 
 /**
@@ -111,37 +106,6 @@ public class ExplorerNode extends TableImpl<ExplorerNodeRecord> {
         this(DSL.name("explorer_node"), null);
     }
 
-    public <O extends Record> ExplorerNode(Table<O> path, ForeignKey<O, ExplorerNodeRecord> childPath, InverseForeignKey<O, ExplorerNodeRecord> parentPath) {
-        super(path, childPath, parentPath, EXPLORER_NODE);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class ExplorerNodePath extends ExplorerNode implements Path<ExplorerNodeRecord> {
-        public <O extends Record> ExplorerNodePath(Table<O> path, ForeignKey<O, ExplorerNodeRecord> childPath, InverseForeignKey<O, ExplorerNodeRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private ExplorerNodePath(Name alias, Table<ExplorerNodeRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public ExplorerNodePath as(String alias) {
-            return new ExplorerNodePath(DSL.name(alias), this);
-        }
-
-        @Override
-        public ExplorerNodePath as(Name alias) {
-            return new ExplorerNodePath(alias, this);
-        }
-
-        @Override
-        public ExplorerNodePath as(Table<?> alias) {
-            return new ExplorerNodePath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -160,19 +124,6 @@ public class ExplorerNode extends TableImpl<ExplorerNodeRecord> {
     @Override
     public List<UniqueKey<ExplorerNodeRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.KEY_EXPLORER_NODE_EXPLORER_NODE_TYPE_UUID);
-    }
-
-    private transient ExplorerFavouritePath _explorerFavourite;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom.explorer_favourite</code> table
-     */
-    public ExplorerFavouritePath explorerFavourite() {
-        if (_explorerFavourite == null)
-            _explorerFavourite = new ExplorerFavouritePath(this, null, Keys.EXPLORER_FAVOURITE_EXPLORER_NODE_ID.getInverseKey());
-
-        return _explorerFavourite;
     }
 
     @Override

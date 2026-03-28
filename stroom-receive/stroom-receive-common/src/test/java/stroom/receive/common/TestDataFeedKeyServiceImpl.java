@@ -55,7 +55,6 @@ class TestDataFeedKeyServiceImpl {
     @Mock
     private HttpServletRequest mockHttpServletRequest;
 
-
     @Test
     void authenticate_noKey() {
         final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
@@ -152,9 +151,7 @@ class TestDataFeedKeyServiceImpl {
                 hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID)
         ));
 
-        dataFeedKeyService.addDataFeedKeys(
-                new HashedDataFeedKeys(List.of(hashedDataFeedKey)),
-                Path.of("foo"));
+        dataFeedKeyService.addDataFeedKey(hashedDataFeedKey, Path.of("foo"));
 
         ThreadUtil.sleep(expiryDuration);
 
@@ -187,9 +184,7 @@ class TestDataFeedKeyServiceImpl {
                 hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID)
         ));
 
-        dataFeedKeyService.addDataFeedKeys(
-                new HashedDataFeedKeys(List.of(hashedDataFeedKey)),
-                Path.of("foo"));
+        dataFeedKeyService.addDataFeedKey(hashedDataFeedKey, Path.of("foo"));
 
         final Optional<UserIdentity> optUserIdentity = dataFeedKeyService.authenticate(
                 mockHttpServletRequest,
@@ -197,7 +192,7 @@ class TestDataFeedKeyServiceImpl {
 
         final UserIdentity userIdentity = optUserIdentity.get();
         assertThat(userIdentity.subjectId())
-                .isEqualTo(DataFeedKeyUserIdentity.SUBJECT_ID_PREFIX
+                .isEqualTo(DataFeedUserIdentity.SUBJECT_ID_PREFIX
                            + hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID));
         assertThat(userIdentity.getDisplayName())
                 .isEqualTo(userIdentity.subjectId());
@@ -224,7 +219,9 @@ class TestDataFeedKeyServiceImpl {
         final List<HashedDataFeedKey> hashedDataFeedKeys = keys.stream()
                 .map(KeyWithHash::hashedDataFeedKey)
                 .toList();
-        dataFeedKeyService.addDataFeedKeys(new HashedDataFeedKeys(hashedDataFeedKeys), Path.of("foo"));
+        for (final HashedDataFeedKey hashedDataFeedKey : hashedDataFeedKeys) {
+            dataFeedKeyService.addDataFeedKey(hashedDataFeedKey, Path.of("foo"));
+        }
 
         for (final KeyWithHash key : keys) {
             final String plainKey = key.key();
@@ -240,7 +237,7 @@ class TestDataFeedKeyServiceImpl {
 
             final UserIdentity userIdentity = optUserIdentity.get();
             assertThat(userIdentity.subjectId())
-                    .isEqualTo(DataFeedKeyUserIdentity.SUBJECT_ID_PREFIX
+                    .isEqualTo(DataFeedUserIdentity.SUBJECT_ID_PREFIX
                                + accId);
             assertThat(userIdentity.getDisplayName())
                     .isEqualTo(userIdentity.subjectId());
@@ -272,7 +269,9 @@ class TestDataFeedKeyServiceImpl {
         final List<HashedDataFeedKey> hashedDataFeedKeys = keys.stream()
                 .map(KeyWithHash::hashedDataFeedKey)
                 .toList();
-        dataFeedKeyService.addDataFeedKeys(new HashedDataFeedKeys(hashedDataFeedKeys), Path.of("foo"));
+        for (final HashedDataFeedKey hashedDataFeedKey : hashedDataFeedKeys) {
+            dataFeedKeyService.addDataFeedKey(hashedDataFeedKey, Path.of("foo"));
+        }
 
         // Test each key twice to get a cache hit on 2nd go
         for (int i = 0; i < 2; i++) {
@@ -290,7 +289,7 @@ class TestDataFeedKeyServiceImpl {
 
                 final UserIdentity userIdentity = optUserIdentity.get();
                 assertThat(userIdentity.subjectId())
-                        .isEqualTo(DataFeedKeyUserIdentity.SUBJECT_ID_PREFIX
+                        .isEqualTo(DataFeedUserIdentity.SUBJECT_ID_PREFIX
                                    + accId2);
                 assertThat(userIdentity.getDisplayName())
                         .isEqualTo(userIdentity.subjectId());
@@ -310,9 +309,7 @@ class TestDataFeedKeyServiceImpl {
         final AttributeMap attributeMap = new AttributeMap(Map.of(
                 StandardHeaderArguments.ACCOUNT_ID, "foo"));
 
-        dataFeedKeyService.addDataFeedKeys(
-                new HashedDataFeedKeys(List.of(hashedDataFeedKey)),
-                Path.of("foo"));
+        dataFeedKeyService.addDataFeedKey(hashedDataFeedKey, Path.of("foo"));
 
         Assertions.assertThatThrownBy(
                         () -> {

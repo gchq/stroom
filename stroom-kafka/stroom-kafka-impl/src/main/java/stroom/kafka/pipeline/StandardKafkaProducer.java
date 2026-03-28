@@ -238,7 +238,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
             //This is an XML value element
             if (xmlValueDepth == -1) {
                 try {
-                    this.xmlValueHandler = XMLUtil.createTransformerHandler(getOrCreateErrorListener(), false);
+                    this.xmlValueHandler = XMLUtil.createTransformerHandler(getOrCreateErrorListener(), false, true);
                     outputStream = new ByteArrayOutputStream();
                     xmlValueHandler.setResult(new StreamResult(outputStream));
                     xmlValueHandler.startDocument();

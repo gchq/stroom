@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,8 @@ public class TestModule extends AbstractModule {
         install(new MockTaskModule());
         install(new CacheModule());
 
-        bind(UserRefLookup.class).toInstance((userUuid, context) -> Optional.of(UserRef.forUserUuid(userUuid)));
+        bind(UserRefLookup.class).toInstance((userUuid, context) ->
+                Optional.of(UserRef.forUserUuid(userUuid)));
         bind(StreamFeedProvider.class).toInstance(id -> "TEST_FEED_NAME");
         bind(Metrics.class).toInstance(new MockMetrics());
     }

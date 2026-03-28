@@ -101,17 +101,6 @@ public class AnnotationResourceClient extends AbstractRestClient {
                 .exec();
     }
 
-    public void getStandardComments(final String filter,
-                                    final Consumer<List<String>> consumer,
-                                    final TaskMonitorFactory taskMonitorFactory) {
-        restFactory
-                .create(ANNOTATION_RESOURCE)
-                .method(res -> res.getStandardComments(filter))
-                .onSuccess(consumer)
-                .taskMonitorFactory(taskMonitorFactory)
-                .exec();
-    }
-
     public void createAnnotation(final CreateAnnotationRequest request,
                                  final Consumer<Annotation> consumer,
                                  final TaskMonitorFactory taskMonitorFactory) {

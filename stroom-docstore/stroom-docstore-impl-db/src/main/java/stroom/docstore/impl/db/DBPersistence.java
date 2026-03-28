@@ -20,6 +20,9 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentNotFoundException;
 import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.Persistence;
+import stroom.importexport.api.ByteArrayImportExportAsset;
+import stroom.importexport.api.ImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.util.string.PatternUtil;
 
 import jakarta.inject.Inject;
@@ -27,6 +30,7 @@ import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -156,8 +160,8 @@ public class DBPersistence implements Persistence {
     }
 
     @Override
-    public Map<String, byte[]> read(final DocRef docRef) {
-        final Map<String, byte[]> data = new HashMap<>();
+    public ImportExportDocument read(final DocRef docRef) {
+        final ImportExportDocument importExportDocument = new ImportExportDocument();
         try (final Connection connection = dataSource.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement(SELECT_BY_TYPE_UUID_SQL)) {
                 preparedStatement.setString(1, docRef.getType());
@@ -165,7 +169,11 @@ public class DBPersistence implements Persistence {
 
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
-                        data.put(resultSet.getString(1), resultSet.getBytes(2));
+                        final ImportExportAsset asset =
+                                new ByteArrayImportExportAsset(
+                                        resultSet.getString(1),
+                                        resultSet.getBytes(2));
+                        importExportDocument.addExtAsset(asset);
                     }
                 }
             }
@@ -174,15 +182,15 @@ public class DBPersistence implements Persistence {
             throw new RuntimeException(e.getMessage(), e);
         }
 
-        if (data.isEmpty()) {
+        if (importExportDocument.getExtAssets().isEmpty()) {
             throw new DocumentNotFoundException(docRef);
         }
 
-        return data;
+        return importExportDocument;
     }
 
     @Override
-    public void write(final DocRef docRef, final boolean update, final Map<String, byte[]> data) {
+    public void write(final DocRef docRef, final boolean update, final ImportExportDocument importExportDocument) {
         try (final Connection connection = dataSource.getConnection()) {
             // Get the auto commit status.
             final boolean autoCommit = connection.getAutoCommit();
@@ -202,22 +210,22 @@ public class DBPersistence implements Persistence {
 
                 // Get existing ids.
                 final Map<String, Long> existingExtensionToIdMap = getExtensionIds(docRef);
-                data.forEach((ext, bytes) -> {
+                for (final ImportExportAsset asset : importExportDocument.getExtAssets()) {
                     if (update) {
-                        final Long existingId = existingExtensionToIdMap.get(ext);
+                        final Long existingId = existingExtensionToIdMap.get(asset.getKey());
                         if (existingId != null) {
-                            update(connection, existingId, docRef, ext, bytes);
+                            update(connection, existingId, docRef, asset.getKey(), asset.getInputData());
                         } else {
-                            save(connection, docRef, ext, bytes);
+                            save(connection, docRef, asset.getKey(), asset.getInputData());
                         }
                     } else {
-                        save(connection, docRef, ext, bytes);
+                        save(connection, docRef, asset.getKey(), asset.getInputData());
                     }
-                });
+                }
 
                 // Remove any old extensions.
                 existingExtensionToIdMap.forEach((ext, id) -> {
-                    if (!data.containsKey(ext)) {
+                    if (!importExportDocument.containsExtAssetWithKey(ext)) {
                         LOGGER.debug("Deleting doc entry {}", id);
                         delete(id);
                     }
@@ -226,7 +234,7 @@ public class DBPersistence implements Persistence {
                 // Commit all of the changes.
                 connection.commit();
 
-            } catch (final RuntimeException e) {
+            } catch (final IOException | RuntimeException e) {
                 // Rollback any changes.
                 connection.rollback();
 

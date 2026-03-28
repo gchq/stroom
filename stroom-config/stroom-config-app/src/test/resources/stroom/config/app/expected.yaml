@@ -101,7 +101,6 @@ appConfig:
         prepStmtCacheSqlLimit: 256
     defaultRetentionPeriod: "5y"
     physicalDeleteAge: "P7D"
-    standardComments: []
   askStroomAi:
     chatMemory:
       timeToLive:
@@ -112,11 +111,14 @@ appConfig:
       maximumBatchSize: 16384
       maximumTableInputRows: 100
   autoContentCreation:
-    additionalGroupTemplate: "grp-${accountid}-sandbox"
+    additionalGroupParentGroupName: "Data Feed Developer"
+    additionalGroupTemplate: "grp-${accountid}-dev"
     createAsSubjectId: "Administrators"
     createAsType: "GROUP"
     destinationExplorerPathTemplate: "/Feeds/${accountid}"
+    destinationExplorerSubPathTemplate: "dev"
     enabled: false
+    groupParentGroupName: "Data Feed Reader"
     groupTemplate: "grp-${accountid}"
     templateMatchFields:
     - "accountid"
@@ -266,22 +268,23 @@ appConfig:
       volumeSelector: "RoundRobin"
     meta:
       dataFormats:
+      - "CSV"
+      - "CSV_NO_HEADER"
+      - "FIXED_WIDTH"
       - "FIXED_WIDTH_NO_HEADER"
       - "INI"
-      - "CSV"
       - "JSON"
+      - "JSON_LINES"
+      - "PSV"
+      - "PSV_NO_HEADER"
+      - "SYSLOG"
       - "TEXT"
+      - "TOML"
+      - "TSV"
+      - "TSV_NO_HEADER"
+      - "XML"
       - "XML_FRAGMENT"
       - "YAML"
-      - "PSV_NO_HEADER"
-      - "PSV"
-      - "CSV_NO_HEADER"
-      - "XML"
-      - "TSV"
-      - "SYSLOG"
-      - "TSV_NO_HEADER"
-      - "FIXED_WIDTH"
-      - "TOML"
       db:
         connection:
           jdbcDriverClassName: null
@@ -319,24 +322,24 @@ appConfig:
         statisticsMode: "INTERNAL"
       metaTypes:
       - "Context"
-      - "Raw Reference"
-      - "Events"
-      - "Raw Events"
-      - "Reference"
+      - "Detections"
       - "Error"
+      - "Events"
+      - "Meta Data"
+      - "Raw Events"
+      - "Raw Reference"
+      - "Records"
+      - "Reference"
       - "Test Events"
       - "Test Reference"
-      - "Detections"
-      - "Meta Data"
-      - "Records"
       metaValue:
         addAsync: true
         deleteAge: "P30D"
         deleteBatchSize: 500
         flushBatchSize: 500
       rawMetaTypes:
-      - "Raw Reference"
       - "Raw Events"
+      - "Raw Reference"
     retention:
       deleteBatchSize: 1000
       useQueryOptimisation: true
@@ -875,8 +878,8 @@ appConfig:
       refreshAfterWrite: null
       statisticsMode: "DROPWIZARD_METRICS"
     authenticationRequired: true
-    dataFeedKeyOwnerMetaKey: "AccountId"
-    dataFeedKeysDir: "data_feed_keys"
+    dataFeedIdentitiesDir: "data_feed_identities"
+    dataFeedOwnerMetaKey: "AccountId"
     enabledAuthenticationTypes:
     - "TOKEN"
     - "CERTIFICATE"
@@ -1353,6 +1356,52 @@ appConfig:
     pathPrefix: null
     port: null
     scheme: "https"
+  visualisationAsset:
+    aceEditorModes:
+      htm: "HTML"
+      txt: "TEXT"
+      css: "CSS"
+      svg: "XML"
+      xml: "XML"
+      js: "JAVASCRIPT"
+      html: "HTML"
+    assetCacheDir: "asset_cache"
+    clearAssetCacheOnStartup: false
+    default: "application/octet-stream"
+    defaultAceEditorMode: "TEXT"
+    mimetypes:
+      htm: "text/html"
+      jpg: "image/jpeg"
+      css: "text/css"
+      tiff: "image/tiff"
+      bmp: "image/bmp"
+      apng: "image/apng"
+      gif: "image/jpeg"
+      svg: "image/svg+xml"
+      png: "image/png"
+      js: "text/javascript"
+      webp: "image/webp"
+      tif: "image/tiff"
+      txt: "text/plain"
+      xml: "application/xml"
+      jpeg: "image/jpeg"
+      html: "text/html"
+  visualisationAssetDb:
+    connection:
+      jdbcDriverClassName: null
+      jdbcDriverPassword: null
+      jdbcDriverUrl: null
+      jdbcDriverUsername: null
+    connectionPool:
+      cachePrepStmts: false
+      connectionTimeout: "PT30S"
+      idleTimeout: "PT10M"
+      leakDetectionThreshold: "PT0S"
+      maxLifetime: "PT30M"
+      maxPoolSize: 30
+      minimumIdle: 10
+      prepStmtCacheSize: 25
+      prepStmtCacheSqlLimit: 256
   volumes:
     createDefaultIndexVolumesOnStart: true
     defaultIndexVolumeFilesystemUtilisation: 0.9

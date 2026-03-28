@@ -95,14 +95,24 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
 
     private LoggingErrorReceiver loggingErrorReceiver;
 
-    void test(final String name, final String type) {
+    void test(final String name,
+              final String type) {
+        test(name, type, null);
+    }
+
+    void test(final String name,
+              final String type,
+              final DocRef dictionaryRef) {
         final String dir = name + "/";
         final String stem = dir + name + "_" + type;
         final DocRef textConverterRef = createTextConverter(dir + name + ".ds3.xml",
                 name,
                 TextConverterType.DATA_SPLITTER);
         final DocRef filteredXSLT = createXSLT(stem + ".xsl", name);
-        final DocRef pipelineRef = createPipeline(stem + "_Pipeline.json", textConverterRef, filteredXSLT);
+        final DocRef pipelineRef = createPipeline(stem + "_Pipeline.json",
+                textConverterRef,
+                filteredXSLT,
+                dictionaryRef);
 
         pipelineScopeRunnable.scopeRunnable(() -> {
             process(pipelineRef, dir, name, null);
@@ -112,7 +122,8 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
 
     private DocRef createPipeline(final String pipelineFile,
                                   final DocRef textConverterRef,
-                                  final DocRef xsltRef) {
+                                  final DocRef xsltRef,
+                                  final DocRef dictionaryRef) {
         // Load the pipeline config.
         final String data = StroomPipelineTestFileUtil.getString(pipelineFile);
         final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
@@ -126,6 +137,10 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
         if (xsltRef != null) {
             builder.addProperty(
                     PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
+        }
+        if (dictionaryRef != null) {
+            builder.addProperty(
+                    PipelineDataUtil.createProperty("dictionaryAppender", "dictionary", dictionaryRef));
         }
 
         pipelineDoc = pipelineDoc.copy().pipelineData(builder.build()).build();

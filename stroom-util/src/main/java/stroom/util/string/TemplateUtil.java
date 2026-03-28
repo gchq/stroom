@@ -129,15 +129,6 @@ public class TemplateUtil {
         return result;
     }
 
-    private static String normaliseStaticText(final String name,
-                                              final Function<String, String> formatter) {
-        String result = NullSafe.string(name);
-        if (formatter != null) {
-            result = formatter.apply(result);
-        }
-        return result;
-    }
-
 
     // --------------------------------------------------------------------------------
 
@@ -182,7 +173,7 @@ public class TemplateUtil {
                         .generate();
             }
 
-            LOGGER.debug("Generated output '{}' from varToReplacementProviderMap: {}",
+            LOGGER.debug("generateWith() - Generated output '{}' from varToReplacementProviderMap: {}",
                     output, varToReplacementMap);
             return output;
         }
@@ -200,7 +191,8 @@ public class TemplateUtil {
                         .collect(Collectors.joining());
             }
 
-            LOGGER.debug("Generated output '{}' from varToReplacementProviderMap: {}", output, varToReplacementMap);
+            LOGGER.debug("doGenerate() - Generated output '{}' from varToReplacementProviderMap: {}",
+                    output, varToReplacementMap);
             return output;
         }
 
@@ -277,10 +269,10 @@ public class TemplateUtil {
                 if (templator.isVarInTemplate(var)) {
                     if (NullSafe.isNonEmptyString(replacement)) {
                         // No point adding a func for an empty replacement
-                        varToReplacementProviderMap.put(var, aVar -> replacement);
+                        varToReplacementProviderMap.put(var, ignored -> replacement);
                     }
                 } else {
-                    LOGGER.debug("var '{}' is not in template '{}'", var, templator.template);
+                    LOGGER.debug("addReplacement() - var '{}' is not in template '{}'", var, templator.template);
                 }
             } else {
                 throw new IllegalArgumentException("Blank var");
@@ -300,7 +292,7 @@ public class TemplateUtil {
                         if (templator.isVarInTemplate(var)
                             && NullSafe.isNonEmptyString(replacement)) {
                             // No point adding a func for an empty replacement
-                            varToReplacementProviderMap.put(var, aVar -> replacement);
+                            varToReplacementProviderMap.put(var, ignored -> replacement);
                         }
                     });
             return this;

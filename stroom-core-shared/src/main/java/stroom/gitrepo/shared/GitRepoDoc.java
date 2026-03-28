@@ -22,7 +22,6 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -121,12 +120,12 @@ public class GitRepoDoc extends AbstractDoc {
         this.contentStoreContentPackId = contentStoreContentPackId;
 
         // Git settings
-        this.url = NullSafe.requireNonNullElse(url, "");
-        this.credentialName = NullSafe.requireNonNullElse(credentialName, "");
-        this.branch = NullSafe.requireNonNullElse(branch, "");
-        this.path = NullSafe.requireNonNullElse(path, "");
-        this.commit = NullSafe.requireNonNullElse(commit, "");
-        this.autoPush = NullSafe.requireNonNullElse(autoPush, Boolean.FALSE);
+        this.url = Objects.requireNonNullElse(url, "");
+        this.credentialName = Objects.requireNonNullElse(credentialName, "");
+        this.branch = Objects.requireNonNullElse(branch, "");
+        this.path = Objects.requireNonNullElse(path, "");
+        this.commit = Objects.requireNonNullElse(commit, "");
+        this.autoPush = Objects.requireNonNullElse(autoPush, Boolean.FALSE);
     }
 
     /**

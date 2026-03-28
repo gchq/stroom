@@ -90,6 +90,14 @@ public interface ScheduledExecutable<T> {
     /**
      * Reloads the document prior to execution.
      *
+     * @param docRef The doc ref.
+     * @return The reloaded document, or {@code null} if it no longer exists.
+     */
+    T load(DocRef docRef);
+
+    /**
+     * Reloads the document prior to execution.
+     *
      * @param doc The existing document.
      * @return The reloaded document, or {@code null} if it no longer exists.
      */

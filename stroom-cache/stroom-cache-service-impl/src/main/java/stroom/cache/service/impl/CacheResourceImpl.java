@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -62,18 +63,21 @@ class CacheResourceImpl implements CacheResource {
     private final Provider<WebTargetFactory> webTargetFactory;
     private final Provider<CacheManagerService> cacheManagerService;
     private final Provider<TaskContextFactory> taskContextFactory;
+    private final Provider<Executor> executorProvider;
 
     @Inject
     CacheResourceImpl(final Provider<NodeService> nodeService,
                       final Provider<NodeInfo> nodeInfo,
                       final Provider<WebTargetFactory> webTargetFactory,
                       final Provider<CacheManagerService> cacheManagerService,
-                      final Provider<TaskContextFactory> taskContextFactory) {
+                      final Provider<TaskContextFactory> taskContextFactory,
+                      final Provider<Executor> executorProvider) {
         this.nodeService = nodeService;
         this.nodeInfo = nodeInfo;
         this.webTargetFactory = webTargetFactory;
         this.cacheManagerService = cacheManagerService;
         this.taskContextFactory = taskContextFactory;
+        this.executorProvider = executorProvider;
     }
 
     @Override
@@ -188,7 +192,7 @@ class CacheResourceImpl implements CacheResource {
                                                         clearCache(cacheName, nodeName));
 
                                 return CompletableFuture
-                                        .supplyAsync(supplier)
+                                        .supplyAsync(supplier, executorProvider.get())
                                         .exceptionally(throwable -> {
                                             failedNodes.add(nodeName);
                                             exception.set(throwable);

@@ -47,6 +47,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     // Inject this so we can mock it for testing
     private final Provider<DataFeedKeyService> dataFeedKeyServiceProvider;
+    private final Provider<CertificateIdentityService> certificateIdentityServiceProvider;
     private final Provider<OidcTokenAuthenticator> oidcTokenAuthenticatorProvider;
     private final Provider<CertificateAuthenticator> certificateAuthenticatorProvider;
     private final Provider<AllowUnauthenticatedAuthenticator> allowUnauthenticatedAuthenticatorProvider;
@@ -58,6 +59,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
             final UserIdentityFactory userIdentityFactory,
             final Provider<ReceiveDataConfig> receiveDataConfigProvider,
             final Provider<DataFeedKeyService> dataFeedKeyServiceProvider,
+            final Provider<CertificateIdentityService> certificateIdentityServiceProvider,
             final Provider<OidcTokenAuthenticator> oidcTokenAuthenticatorProvider,
             final Provider<CertificateAuthenticator> certificateAuthenticatorProvider,
             final Provider<AllowUnauthenticatedAuthenticator> allowUnauthenticatedAuthenticatorProvider) {
@@ -72,6 +74,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
                 .withValueFunction(this::createFilter)
                 .build();
         this.dataFeedKeyServiceProvider = dataFeedKeyServiceProvider;
+        this.certificateIdentityServiceProvider = certificateIdentityServiceProvider;
         this.oidcTokenAuthenticatorProvider = oidcTokenAuthenticatorProvider;
         this.certificateAuthenticatorProvider = certificateAuthenticatorProvider;
         this.allowUnauthenticatedAuthenticatorProvider = allowUnauthenticatedAuthenticatorProvider;
@@ -99,11 +102,11 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
                     switch (authenticationType) {
                         case DATA_FEED_KEY -> throw new StroomStreamException(
                                 StroomStatusCode.CLIENT_DATA_FEED_KEY_REQUIRED, attributeMap);
+                        case CERTIFICATE_IDENTITY,
+                             CERTIFICATE -> throw new StroomStreamException(
+                                StroomStatusCode.CLIENT_CERTIFICATE_REQUIRED, attributeMap);
                         case TOKEN ->
                                 throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_REQUIRED, attributeMap);
-                        case CERTIFICATE ->
-                                throw new StroomStreamException(StroomStatusCode.CLIENT_CERTIFICATE_REQUIRED,
-                                        attributeMap);
                         default -> {
                             LOGGER.error("Unexpected type {}", authenticationType);
                             throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR, attributeMap,
@@ -151,25 +154,21 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
         }
     }
 
-    private String getMechanismNameOrNull(final boolean isEnabled, final String name) {
-        return isEnabled
-                ? name
-                : null;
-    }
-
     /**
      * Create a combined filter that takes into account the currently configured
      * auth mechanisms
-     *
-     * @param configState
-     * @return
      */
     private AuthenticatorFilter createFilter(final ConfigState configState) {
         final List<AuthenticatorFilter> filters = new ArrayList<>();
+        LOGGER.debug("createFilter() - configState: {}", configState);
 
         // We want to do this in a consistent order and to prefer say token over cert
         if (configState.isEnabled(AuthenticationType.DATA_FEED_KEY)) {
             filters.add(dataFeedKeyServiceProvider.get());
+        }
+
+        if (configState.isEnabled(AuthenticationType.CERTIFICATE_IDENTITY)) {
+            filters.add(certificateIdentityServiceProvider.get());
         }
 
         if (configState.isEnabled(AuthenticationType.TOKEN)) {
@@ -181,7 +180,9 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
         }
 
         // If auth is not required then add a fallback filter to provide an UnauthenticatedUserIdentity
-        // rather than returning an empty optional
+        // rather than returning an empty optional.
+        // We still need the above if blocks as auth may not be required, but we might want
+        // to authenticate if an enabled auth method is provided.
         if (!configState.isAuthenticationRequired) {
             filters.add(allowUnauthenticatedAuthenticatorProvider.get());
         }
@@ -210,6 +211,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
             // Remove authorization header from attributes as it should not be stored or
             // forwarded on.
             NullSafe.consume(attributeMap, userIdentityFactory::removeAuthEntries);
+            LOGGER.debug("processAttributes() - attributeMap: {}", attributeMap);
         }
     }
 

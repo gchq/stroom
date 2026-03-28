@@ -388,11 +388,6 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         }
     }
 
-    @Override
-    public void setHasCommentValues(final boolean hasCommentValues) {
-        commentButton.setVisible(hasCommentValues);
-    }
-
     public interface Binder extends UiBinder<Widget, AnnotationEditViewImpl> {
 
     }

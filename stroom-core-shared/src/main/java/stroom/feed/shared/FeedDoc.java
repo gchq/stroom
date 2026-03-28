@@ -39,7 +39,7 @@ import java.util.Objects;
 @Description(
         "The {{< glossary \"Feed\" >}} is Stroom's way of compartmentalising data that has been ingested or " +
         "created by a [Pipeline]({{< relref \"#pipeline\" >}}).\n" +
-        "Ingested data must specify the Feed that is it destined for.\n\n" +
+        "Ingested data must specify the Feed that it is destined for.\n\n" +
         "The Feed Document defines the character encoding for the data in the Feed, the type of data that " +
         "will be received into it (e.g. `Raw Events`) and optionally a Volume Group to use for " +
         "data storage.\n" +
@@ -124,11 +124,11 @@ public class FeedDoc extends AbstractDoc {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = NullSafe.string(description);
         this.classification = NullSafe.string(classification);
-        this.encoding = NullSafe.requireNonNullElse(encoding, "UTF-8");
-        this.contextEncoding = NullSafe.requireNonNullElse(contextEncoding, "UTF-8");
+        this.encoding = Objects.requireNonNullElse(encoding, "UTF-8");
+        this.contextEncoding = Objects.requireNonNullElse(contextEncoding, "UTF-8");
         this.retentionDayAge = retentionDayAge;
         this.reference = reference;
-        this.streamType = NullSafe.requireNonNullElse(streamType,
+        this.streamType = Objects.requireNonNullElse(streamType,
                 reference
                         ? StreamTypeNames.RAW_REFERENCE
                         : StreamTypeNames.RAW_EVENTS);
@@ -136,7 +136,7 @@ public class FeedDoc extends AbstractDoc {
         this.contextFormat = NullSafe.string(contextFormat);
         this.schema = NullSafe.string(schema);
         this.schemaVersion = NullSafe.string(schemaVersion);
-        this.status = NullSafe.requireNonNullElse(status, FeedStatus.RECEIVE);
+        this.status = Objects.requireNonNullElse(status, FeedStatus.RECEIVE);
         this.volumeGroup = NullSafe.string(volumeGroup);
     }
 

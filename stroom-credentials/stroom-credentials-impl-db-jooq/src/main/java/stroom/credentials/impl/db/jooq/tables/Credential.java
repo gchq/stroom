@@ -4,9 +4,9 @@
 package stroom.credentials.impl.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import stroom.credentials.impl.db.jooq.Keys;
+import stroom.credentials.impl.db.jooq.Stroom;
+import stroom.credentials.impl.db.jooq.tables.records.CredentialRecord;
 
 import org.jooq.Condition;
 import org.jooq.Field;
@@ -26,9 +26,9 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.credentials.impl.db.jooq.Keys;
-import stroom.credentials.impl.db.jooq.Stroom;
-import stroom.credentials.impl.db.jooq.tables.records.CredentialRecord;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 
 /**
@@ -105,7 +105,7 @@ public class Credential extends TableImpl<CredentialRecord> {
     /**
      * The column <code>stroom.credential.key_store</code>.
      */
-    public final TableField<CredentialRecord, byte[]> KEY_STORE = createField(DSL.name("key_store"), SQLDataType.BLOB.nullable(false), this, "");
+    public final TableField<CredentialRecord, byte[]> KEY_STORE = createField(DSL.name("key_store"), SQLDataType.BLOB, this, "");
 
     private Credential(Name alias, Table<CredentialRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);

@@ -18,7 +18,6 @@ package stroom.analytics.impl;
 
 import stroom.analytics.api.NotificationState;
 import stroom.analytics.impl.ScheduledExecutorService.ExecutionResult;
-import stroom.analytics.rule.impl.ReportStore;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionTracker;
 import stroom.analytics.shared.NotificationConfig;
@@ -233,6 +232,11 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
     }
 
     @Override
+    public ReportDoc load(final DocRef docRef) {
+        return reportStore.readDocument(docRef);
+    }
+
+    @Override
     public ReportDoc reload(final ReportDoc doc) {
         return reportStore.readDocument(doc.asDocRef());
     }
@@ -248,11 +252,11 @@ public class ReportExecutor extends AbstractScheduledQueryExecutable<ReportDoc> 
     }
 
     private ReportFile createFile(final ReportDoc reportDoc,
-                            final Instant executionTime,
-                            final Instant effectiveExecutionTime,
-                            final DateTimeSettings dateTimeSettings,
-                            final DataStore dataStore,
-                            final ResultRequest resultRequest) throws IOException {
+                                  final Instant executionTime,
+                                  final Instant effectiveExecutionTime,
+                                  final DateTimeSettings dateTimeSettings,
+                                  final DataStore dataStore,
+                                  final ResultRequest resultRequest) throws IOException {
         long totalRowCount = 0;
         final DownloadSearchResultFileType fileType = reportDoc.getReportSettings().getFileType();
         final String dateTime = DateUtil.createFileDateTimeString(effectiveExecutionTime);

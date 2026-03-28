@@ -24,6 +24,7 @@ import stroom.query.language.VisualisationTokenConsumer;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.util.guice.ServletBinder;
 import stroom.util.shared.Clearable;
 import stroom.visualisation.shared.VisualisationDoc;
 
@@ -49,11 +50,15 @@ public class VisualisationModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(VisualisationResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(VisualisationAssetResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(VisualisationDocCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(VisualisationDocCacheImpl.class);
+
+        ServletBinder.create(binder()).bind(VisualisationAssetServlet.class);
     }
 }

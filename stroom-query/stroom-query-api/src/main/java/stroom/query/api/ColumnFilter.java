@@ -16,6 +16,8 @@
 
 package stroom.query.api;
 
+import stroom.util.shared.NullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -31,7 +33,11 @@ public class ColumnFilter {
 
     @JsonCreator
     public ColumnFilter(@JsonProperty("filter") final String filter) {
-        this.filter = filter;
+        if (NullSafe.isBlankString(filter)) {
+            this.filter = null;
+        } else {
+            this.filter = filter;
+        }
     }
 
     public String getFilter() {

@@ -20,11 +20,11 @@ import stroom.aws.s3.shared.S3ConfigDoc;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.importexport.api.ImportExportDocument;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class S3ConfigSerialiser implements DocumentSerialiser2<S3ConfigDoc> {
 
@@ -36,12 +36,12 @@ public class S3ConfigSerialiser implements DocumentSerialiser2<S3ConfigDoc> {
     }
 
     @Override
-    public S3ConfigDoc read(final Map<String, byte[]> data) throws IOException {
-        return delegate.read(data);
+    public S3ConfigDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        return delegate.read(importExportDocument);
     }
 
     @Override
-    public Map<String, byte[]> write(final S3ConfigDoc document) throws IOException {
+    public ImportExportDocument write(final S3ConfigDoc document) throws IOException {
         return delegate.write(document);
     }
 }

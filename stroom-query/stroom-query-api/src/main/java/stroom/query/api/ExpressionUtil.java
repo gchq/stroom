@@ -454,6 +454,47 @@ public class ExpressionUtil {
                 .build();
     }
 
+    /**
+     * There are various places in the code where we do parameter substitution etc and we want to filter out empty
+     * terms. This method is used to identify terms that we should ignore in those circumstances.
+     * <p>
+     * Note that it filters empty string values which is only applicable if we have performed parameter substitution.
+     */
+    public static boolean isValidTerm(final ExpressionTerm term,
+                                      final boolean allowBlankValues) {
+        if (term == null || !term.enabled() || term.getField() == null || term.getCondition() == null) {
+            return false;
+        }
+
+        return switch (term.getCondition()) {
+            case CONTAINS,
+                 CONTAINS_CASE_SENSITIVE,
+                 EQUALS,
+                 EQUALS_CASE_SENSITIVE,
+                 STARTS_WITH,
+                 STARTS_WITH_CASE_SENSITIVE,
+                 ENDS_WITH,
+                 ENDS_WITH_CASE_SENSITIVE,
+                 NOT_EQUALS,
+                 NOT_EQUALS_CASE_SENSITIVE,
+                 GREATER_THAN,
+                 GREATER_THAN_OR_EQUAL_TO,
+                 LESS_THAN,
+                 LESS_THAN_OR_EQUAL_TO,
+                 BETWEEN, MATCHES_REGEX,
+                 MATCHES_REGEX_CASE_SENSITIVE,
+                 WORD_BOUNDARY -> {
+                if (allowBlankValues) {
+                    yield term.getValue() != null;
+                }
+                yield NullSafe.isNonBlankString(term.getValue());
+            }
+            case IN -> term.getValue() != null;
+            case IN_DICTIONARY, IN_FOLDER, IS_USER_REF, OF_DOC_REF -> term.getDocRef() != null;
+            default -> true;
+        };
+    }
+
 
     // --------------------------------------------------------------------------------
 

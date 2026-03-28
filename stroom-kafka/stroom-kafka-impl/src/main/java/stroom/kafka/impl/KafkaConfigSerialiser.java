@@ -19,12 +19,12 @@ package stroom.kafka.impl;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.kafka.shared.KafkaConfigDoc;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class KafkaConfigSerialiser implements DocumentSerialiser2<KafkaConfigDoc> {
 
@@ -36,12 +36,12 @@ public class KafkaConfigSerialiser implements DocumentSerialiser2<KafkaConfigDoc
     }
 
     @Override
-    public KafkaConfigDoc read(final Map<String, byte[]> data) throws IOException {
-        return delegate.read(data);
+    public KafkaConfigDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        return delegate.read(importExportDocument);
     }
 
     @Override
-    public Map<String, byte[]> write(final KafkaConfigDoc document) throws IOException {
+    public ImportExportDocument write(final KafkaConfigDoc document) throws IOException {
         return delegate.write(document);
     }
 }

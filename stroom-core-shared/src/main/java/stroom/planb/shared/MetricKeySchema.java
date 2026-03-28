@@ -18,7 +18,6 @@ package stroom.planb.shared;
 
 import stroom.query.api.UserTimeZone;
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -58,10 +57,10 @@ public class MetricKeySchema {
                            @JsonProperty("hashLength") final HashLength hashLength,
                            @JsonProperty("temporalResolution") final TemporalResolution temporalResolution,
                            @JsonProperty("timeZone") final UserTimeZone timeZone) {
-        this.keyType =  NullSafe.requireNonNullElse(keyType, DEFAULT_KEY_TYPE);
-        this.hashLength =  NullSafe.requireNonNullElse(hashLength, DEFAULT_HASH_LENGTH);
-        this.temporalResolution = NullSafe.requireNonNullElse(temporalResolution, DEFAULT_TEMPORAL_RESOLUTION);
-        this.timeZone = NullSafe.requireNonNullElse(timeZone, DEFAULT_TIME_ZONE);
+        this.keyType = Objects.requireNonNullElse(keyType, DEFAULT_KEY_TYPE);
+        this.hashLength = Objects.requireNonNullElse(hashLength, DEFAULT_HASH_LENGTH);
+        this.temporalResolution = Objects.requireNonNullElse(temporalResolution, DEFAULT_TEMPORAL_RESOLUTION);
+        this.timeZone = Objects.requireNonNullElse(timeZone, DEFAULT_TIME_ZONE);
     }
 
     public KeyType getKeyType() {
@@ -157,9 +156,9 @@ public class MetricKeySchema {
         @Override
         public MetricKeySchema build() {
             return new MetricKeySchema(
-                    NullSafe.requireNonNullElse(keyType, DEFAULT_KEY_TYPE),
-                    NullSafe.requireNonNullElse(hashLength, DEFAULT_HASH_LENGTH),
-                    NullSafe.requireNonNullElse(temporalResolution, DEFAULT_TEMPORAL_RESOLUTION),
+                    Objects.requireNonNullElse(keyType, DEFAULT_KEY_TYPE),
+                    Objects.requireNonNullElse(hashLength, DEFAULT_HASH_LENGTH),
+                    Objects.requireNonNullElse(temporalResolution, DEFAULT_TEMPORAL_RESOLUTION),
                     timeZone == null
                             ? DEFAULT_TIME_ZONE
                             : timeZone.copy().build());

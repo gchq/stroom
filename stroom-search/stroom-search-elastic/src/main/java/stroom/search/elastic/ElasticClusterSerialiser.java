@@ -19,12 +19,12 @@ package stroom.search.elastic;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class ElasticClusterSerialiser implements DocumentSerialiser2<ElasticClusterDoc> {
 
@@ -38,12 +38,12 @@ public class ElasticClusterSerialiser implements DocumentSerialiser2<ElasticClus
     }
 
     @Override
-    public ElasticClusterDoc read(final Map<String, byte[]> data) throws IOException {
-        return delegate.read(data);
+    public ElasticClusterDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        return delegate.read(importExportDocument);
     }
 
     @Override
-    public Map<String, byte[]> write(final ElasticClusterDoc document) throws IOException {
+    public ImportExportDocument write(final ElasticClusterDoc document) throws IOException {
         return delegate.write(document);
     }
 }

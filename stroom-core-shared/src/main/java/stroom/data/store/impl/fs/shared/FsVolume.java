@@ -24,7 +24,6 @@ import stroom.util.shared.HasCapacity;
 import stroom.util.shared.HasCapacityInfo;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.PrimitiveValueConverter;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -99,7 +98,7 @@ public class FsVolume implements HasAuditInfoGetters, HasIntegerId, HasCapacity 
         this.status = status;
         this.byteLimit = byteLimit;
         this.volumeState = volumeState;
-        this.volumeType = NullSafe.requireNonNullElse(volumeType, FsVolumeType.STANDARD);
+        this.volumeType = Objects.requireNonNullElse(volumeType, FsVolumeType.STANDARD);
         this.s3ClientConfig = s3ClientConfig;
         this.s3ClientConfigData = s3ClientConfigData;
         this.volumeGroupId = volumeGroupId;

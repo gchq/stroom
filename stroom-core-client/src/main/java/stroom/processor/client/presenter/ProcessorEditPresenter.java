@@ -56,6 +56,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class ProcessorEditPresenter
@@ -118,7 +119,7 @@ public class ProcessorEditPresenter
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
         selectionBoxModel.addItems(fields);
         editExpressionPresenter.init(restFactory, dataSource, selectionBoxModel);
-        editExpressionPresenter.read(NullSafe.requireNonNullElse(expression, ExpressionOperator.builder().build()));
+        editExpressionPresenter.read(Objects.requireNonNullElse(expression, ExpressionOperator.builder().build()));
 
         getView().setMinMetaCreateTimeMs(minMetaCreateTimeMs);
         getView().setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);

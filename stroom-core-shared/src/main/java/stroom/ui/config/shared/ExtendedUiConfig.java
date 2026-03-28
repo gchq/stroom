@@ -19,7 +19,6 @@ package stroom.ui.config.shared;
 import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.security.shared.HashAlgorithm;
 import stroom.util.shared.NotInjectableConfig;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.collection.GwtCollectionUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -116,7 +115,7 @@ public class ExtendedUiConfig {
         this.maxApiKeyExpiryAgeMs = maxApiKeyExpiryAgeMs;
         // Ensures serialisation tests work
         this.obfuscatedFields = GwtCollectionUtil.asUnmodifiabledConsistentOrderSet(obfuscatedFields);
-        this.receiptCheckMode = NullSafe.requireNonNullElse(receiptCheckMode, ReceiptCheckMode.getDefault());
+        this.receiptCheckMode = Objects.requireNonNullElse(receiptCheckMode, ReceiptCheckMode.getDefault());
         this.lastAnnotationChangeTime = lastAnnotationChangeTime;
     }
 

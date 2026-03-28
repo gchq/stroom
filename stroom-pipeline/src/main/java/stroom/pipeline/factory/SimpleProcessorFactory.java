@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.util.shared.ElementId;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import org.slf4j.Logger;
@@ -49,16 +50,18 @@ public class SimpleProcessorFactory implements ProcessorFactory {
 
     @Override
     public Processor create(final List<Processor> processors) {
-        if (processors == null || processors.size() == 0) {
+        if (NullSafe.isEmptyCollection(processors)) {
             return null;
+        } else if (processors.size() == 1) {
+            return processors.getFirst();
+        } else {
+            return new MultiWayProcessor(processors, errorReceiver);
         }
-
-        if (processors.size() == 1) {
-            return processors.get(0);
-        }
-
-        return new MultiWayProcessor(processors, errorReceiver);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class MultiWayProcessor implements Processor {
 

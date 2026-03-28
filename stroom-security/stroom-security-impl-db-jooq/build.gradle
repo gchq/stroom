@@ -86,13 +86,11 @@ jooq {
                             }
                         }
                     }
-                    //generate {
-                        // TODO: When we upgrade to jooq 3.19 we may want this to stop warnings
-                        // relating to the self join in stroom_user_group as we don't use implicit joins
-                        // Implicit joind Seem like syntactic sugar that we don't need
-                        //implicitJoinPathsToOne = false
-                        //implicitJoinPathsToMany = false
-                    //}
+                    generate {
+                        // Implicit join seem like syntactic sugar that we don't need
+                        implicitJoinPathsToOne = false
+                        implicitJoinPathsToMany = false
+                    }
                     target {
                         packageName = 'stroom.security.impl.db.jooq'
                         directory = 'src/main/java'

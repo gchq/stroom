@@ -91,6 +91,11 @@ public class ScheduledDataGenExecutable implements ScheduledExecutable<DataGenDo
     }
 
     @Override
+    public DataGenDoc load(final DocRef docRef) {
+        return dataGenStore.readDocument(docRef);
+    }
+
+    @Override
     public DataGenDoc reload(final DataGenDoc doc) {
         return dataGenStore.readDocument(doc.asDocRef());
     }

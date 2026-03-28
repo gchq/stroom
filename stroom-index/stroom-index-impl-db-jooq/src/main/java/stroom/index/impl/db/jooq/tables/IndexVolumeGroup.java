@@ -4,20 +4,16 @@
 package stroom.index.impl.db.jooq.tables;
 
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import stroom.index.impl.db.jooq.Keys;
+import stroom.index.impl.db.jooq.Stroom;
+import stroom.index.impl.db.jooq.tables.records.IndexVolumeGroupRecord;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -30,10 +26,9 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.index.impl.db.jooq.Keys;
-import stroom.index.impl.db.jooq.Stroom;
-import stroom.index.impl.db.jooq.tables.IndexVolume.IndexVolumePath;
-import stroom.index.impl.db.jooq.tables.records.IndexVolumeGroupRecord;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 
 /**
@@ -121,37 +116,6 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
         this(DSL.name("index_volume_group"), null);
     }
 
-    public <O extends Record> IndexVolumeGroup(Table<O> path, ForeignKey<O, IndexVolumeGroupRecord> childPath, InverseForeignKey<O, IndexVolumeGroupRecord> parentPath) {
-        super(path, childPath, parentPath, INDEX_VOLUME_GROUP);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class IndexVolumeGroupPath extends IndexVolumeGroup implements Path<IndexVolumeGroupRecord> {
-        public <O extends Record> IndexVolumeGroupPath(Table<O> path, ForeignKey<O, IndexVolumeGroupRecord> childPath, InverseForeignKey<O, IndexVolumeGroupRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private IndexVolumeGroupPath(Name alias, Table<IndexVolumeGroupRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public IndexVolumeGroupPath as(String alias) {
-            return new IndexVolumeGroupPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public IndexVolumeGroupPath as(Name alias) {
-            return new IndexVolumeGroupPath(alias, this);
-        }
-
-        @Override
-        public IndexVolumeGroupPath as(Table<?> alias) {
-            return new IndexVolumeGroupPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -170,19 +134,6 @@ public class IndexVolumeGroup extends TableImpl<IndexVolumeGroupRecord> {
     @Override
     public List<UniqueKey<IndexVolumeGroupRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.KEY_INDEX_VOLUME_GROUP_NAME);
-    }
-
-    private transient IndexVolumePath _indexVolume;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_v7_11.index_volume</code> table
-     */
-    public IndexVolumePath indexVolume() {
-        if (_indexVolume == null)
-            _indexVolume = new IndexVolumePath(this, null, Keys.INDEX_VOLUME_GROUP_LINK_FK_GROUP_NAME.getInverseKey());
-
-        return _indexVolume;
     }
 
     @Override

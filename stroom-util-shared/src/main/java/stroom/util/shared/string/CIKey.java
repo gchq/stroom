@@ -161,8 +161,7 @@ public class CIKey implements Comparable<CIKey> {
         } else {
             // See if we have a common key that matches exactly with the one requested.
             // Case-sensitive here because CIKey should wrap the exact case passed in.
-            return NullSafe.requireNonNullElseGet(
-                    CIKeys.getCommonKey(key),
+            return Objects.requireNonNullElseGet(CIKeys.getCommonKey(key),
                     () -> {
                         checkNoUpperCaseChars(lowerKey);
                         if (key.equalsIgnoreCase(lowerKey)) {
@@ -263,7 +262,7 @@ public class CIKey implements Comparable<CIKey> {
     }
 
     /**
-     * Create a {@link CIKey} for a key that is known NOT to be in {@link CIKey}s map
+     * Create a {@link CIKey} for a key that is believed to NOT be in {@link CIKey}s map
      * of common keys and is a key that will not be added to the map of common keys in future.
      * This is a minor optimisation that saves a map lookup if the key is known
      * to probably not be in the map.

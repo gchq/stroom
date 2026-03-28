@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -53,6 +54,7 @@ import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
 import stroom.visualisation.client.presenter.VisFunctionCache;
+import stroom.visualisation.shared.VisualisationAssetResource;
 import stroom.visualisation.shared.VisualisationResource;
 
 import com.google.gwt.core.client.GWT;
@@ -60,12 +62,15 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
@@ -81,6 +86,8 @@ public class VisPresenter
     public static final String TAB_TYPE = "vis-component";
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
+    private static final VisualisationAssetResource VISUALISATION_ASSET_RESOURCE =
+            GWT.create(VisualisationAssetResource.class);
 
     public static final ComponentType TYPE = new ComponentType(4, "vis", "Visualisation", ComponentUse.PANEL);
     private static final long UPDATE_INTERVAL = 2000;
@@ -122,6 +129,8 @@ public class VisPresenter
 
     private final VisSelectionModel visSelectionModel;
     private boolean pause;
+
+    private HandlerRegistration loadIframeHandlerRegistration;
 
     @Inject
     public VisPresenter(final EventBus eventBus, final VisView view,
@@ -445,6 +454,8 @@ public class VisPresenter
                 .method(res -> res.fetch(visualisationDocRef.getUuid()))
                 .onSuccess(result -> {
                     if (result != null) {
+                        function.setFunctionName(result.getFunctionName());
+
                         // Get all possible settings for this visualisation.
                         possibleSettings = null;
                         try {
@@ -456,21 +467,52 @@ public class VisPresenter
                                               + getVisSettings().getVisualisation());
                         }
 
-                        function.setFunctionName(result.getFunctionName());
+                        // Is there an asset named index.html? If so load it. Otherwise, use old mechanism.
+                        restFactory
+                                .create(VISUALISATION_ASSET_RESOURCE)
+                                .method(res -> res.indexAssetExists(visualisationDocRef.getUuid()))
+                                .onSuccess(indexAssetExists -> {
+                                    if (indexAssetExists) {
+                                        loadIframeHandlerRegistration = visFrame.addLoadHandler(event -> {
+                                            function.setStatus(LoadStatus.LOADED);
 
-                        // Do we have required scripts.
-                        if (result.getScriptRef() != null) {
-                            // Now we have loaded the visualisation, load all
-                            // associated scripts.
-                            loadScripts(function, result.getScriptRef());
+                                            // Remove the load handler again
+                                            if (loadIframeHandlerRegistration != null) {
+                                                loadIframeHandlerRegistration.removeHandler();
+                                                loadIframeHandlerRegistration = null;
+                                            }
+                                        });
 
-                        } else {
-                            // Set the function status to loaded. This will tell all
-                            // handlers that the function is ready for use.
-                            if (!LoadStatus.FAILURE.equals(function.getStatus())) {
-                                function.setStatus(LoadStatus.LOADED);
-                            }
-                        }
+                                        // Load the index.html into the iframe
+                                        final SafeUri safeDocRef = UriUtils.fromString(visualisationDocRef.getUuid());
+                                        visFrame.setUrl("/assets/"
+                                                        + safeDocRef.asString()
+                                                        + "/index.html");
+
+                                    } else {
+                                        // Do we have required scripts.
+                                        if (result.getScriptRef() != null) {
+                                            // Now we have loaded the visualisation, load all
+                                            // associated scripts.
+                                            loadScripts(function, result.getScriptRef());
+
+                                        } else {
+                                            // Set the function status to loaded. This will tell all
+                                            // handlers that the function is ready for use.
+                                            if (!LoadStatus.FAILURE.equals(function.getStatus())) {
+                                                function.setStatus(LoadStatus.LOADED);
+                                            }
+                                        }
+                                    }
+                                })
+                                .onFailure(caught -> {
+                                    AlertEvent.fireError(this,
+                                            "There was an error checking if the visualisation document "
+                                            + "has an index.html asset: " + caught.getMessage(),
+                                            null);
+                                })
+                                .taskMonitorFactory(getView().getRefreshButton())
+                                .exec();
                     } else {
                         failure(function,
                                 "No visualisation found for: " + getVisSettings().getVisualisation());
@@ -500,13 +542,17 @@ public class VisPresenter
 
     @Override
     public void onChange(final VisFunction function) {
+
         // Ensure this is a load event for the current function.
         if (function.equals(currentFunction)) {
             if (LoadStatus.LOADED.equals(function.getStatus())) {
                 try {
-                    if (loadedFunction == null || !loadedFunction.equals(function)) {
-                        loadedFunction = function;
-                        visFrame.setVisType(function.getFunctionName(), getClassName(currentPreferences.getTheme()));
+                    if (function.getFunctionName() != null) {
+                        if (loadedFunction == null || !loadedFunction.equals(function)) {
+                            loadedFunction = function;
+                            visFrame.setVisType(function.getFunctionName(),
+                                    getClassName(currentPreferences.getTheme()));
+                        }
                     }
 
                     currentError = null;

@@ -17,7 +17,6 @@
 package stroom.widget.tooltip.client.event;
 
 import stroom.event.client.StaticEventBus;
-import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.tooltip.client.event.ShowHelpEvent.Handler;
@@ -28,6 +27,8 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+
+import java.util.Objects;
 
 public class ShowHelpEvent extends GwtEvent<Handler> {
 
@@ -40,12 +41,12 @@ public class ShowHelpEvent extends GwtEvent<Handler> {
     private ShowHelpEvent(final Element element,
                           final PopupPosition popupPosition,
                           final SafeHtml content) {
-        this.popupPosition = NullSafe.requireNonNullElseGet(popupPosition, () -> {
+        this.popupPosition = Objects.requireNonNullElseGet(popupPosition, () -> {
             final Rect relativeRect = new Rect(element);
             return new PopupPosition(relativeRect, PopupLocation.RIGHT);
         });
         this.element = element;
-        this.content = NullSafe.requireNonNullElse(content, SafeHtmlUtils.EMPTY_SAFE_HTML);
+        this.content = Objects.requireNonNullElse(content, SafeHtmlUtils.EMPTY_SAFE_HTML);
     }
 
     private ShowHelpEvent(final Builder builder) {

@@ -17,7 +17,6 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.impl.ScheduledExecutorService.ExecutionResult;
-import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionTracker;
@@ -314,6 +313,11 @@ public class ScheduledQueryAnalyticExecutable extends AbstractScheduledQueryExec
     @Override
     public DocRef getDocRef(final AnalyticRuleDoc doc) {
         return doc.asDocRef();
+    }
+
+    @Override
+    public AnalyticRuleDoc load(final DocRef docRef) {
+        return analyticRuleStore.readDocument(docRef);
     }
 
     @Override

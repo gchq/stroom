@@ -18,8 +18,8 @@ package stroom.analytics;
 
 import stroom.analytics.impl.ExecutionScheduleDao;
 import stroom.analytics.impl.ReportExecutor;
+import stroom.analytics.impl.ReportStore;
 import stroom.analytics.impl.ScheduledExecutorService;
-import stroom.analytics.rule.impl.ReportStore;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.ExecutionHistory;
 import stroom.analytics.shared.ExecutionHistoryRequest;

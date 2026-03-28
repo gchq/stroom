@@ -17,7 +17,6 @@
 package stroom.planb.shared;
 
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -45,7 +44,7 @@ public class TemporalStateKeySchema extends StateKeySchema {
                                   @JsonProperty("hashLength") final HashLength hashLength,
                                   @JsonProperty("temporalPrecision") final TemporalPrecision temporalPrecision) {
         super(keyType, hashLength);
-        this.temporalPrecision = NullSafe.requireNonNullElse(temporalPrecision, DEFAULT_TEMPORAL_PRECISION);
+        this.temporalPrecision = Objects.requireNonNullElse(temporalPrecision, DEFAULT_TEMPORAL_PRECISION);
     }
 
     public TemporalPrecision getTemporalPrecision() {

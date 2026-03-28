@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@ import stroom.kafka.api.KafkaProducerFactory;
 import stroom.kafka.api.SharedKafkaProducer;
 import stroom.kafka.api.SharedKafkaProducerIdentity;
 import stroom.kafka.shared.KafkaConfigDoc;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.ThreadPoolImpl;
+import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -44,8 +47,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 /**
@@ -60,8 +65,10 @@ import java.util.stream.Collectors;
 class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(KafkaProducerFactoryImpl.class);
+    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl("Kafka Producer Factory");
 
     private final KafkaConfigDocCache kafkaConfigDocCache;
+    private final Executor executor;
 
     // Keyed on uuid, represents the current KP for each UUID. These are the KPs that are given out to
     // new calls to getSharedProducer()
@@ -72,8 +79,10 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
             new ConcurrentHashMap<>();
 
     @Inject
-    KafkaProducerFactoryImpl(final KafkaConfigDocCache kafkaConfigDocCache) {
+    KafkaProducerFactoryImpl(final KafkaConfigDocCache kafkaConfigDocCache,
+                             final ExecutorProvider executorProvider) {
         this.kafkaConfigDocCache = kafkaConfigDocCache;
+        this.executor = executorProvider.get(THREAD_POOL);
     }
 
     @Override
@@ -94,7 +103,7 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
             final SharedKafkaProducerImpl activeSharedProducer = currentSharedProducersMap.get(
                     desiredKey.getConfigUuid());
             if (activeSharedProducer != null
-                    && desiredKey.equals(activeSharedProducer.getSharedKafkaProducerIdentity())) {
+                && desiredKey.equals(activeSharedProducer.getSharedKafkaProducerIdentity())) {
                 // This is the latest SharedKafkaProducer so use it
                 LOGGER.debug("Using latest SharedKafkaProducer");
                 sharedKafkaProducer = activeSharedProducer;
@@ -210,16 +219,24 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
 
     void shutdown() {
         LOGGER.info("Shutting down Stroom Kafka Producer Factory Service");
+        try {
+            final CompletableFuture<?>[] futures = allSharedProducersMap.values()
+                    .stream()
+                    .map(sharedKafkaProducer ->
+                            CompletableFuture.runAsync(() -> {
+                                sharedKafkaProducer.getKafkaProducer().ifPresent(
+                                        kafkaProducer -> {
+                                            LOGGER.info("Closing Kafka producer {}", sharedKafkaProducer);
+                                            kafkaProducer.close();
+                                            LOGGER.info("Closed Kafka producer {}", sharedKafkaProducer);
+                                        });
+                            }, executor))
+                    .toArray(CompletableFuture[]::new);
 
-        allSharedProducersMap.values()
-                .parallelStream()
-                .forEach(sharedKafkaProducer -> {
-                    sharedKafkaProducer.getKafkaProducer().ifPresent(kafkaProducer -> {
-                        LOGGER.info("Closing Kafka producer for {}",
-                                sharedKafkaProducer.getSharedKafkaProducerIdentity());
-                        kafkaProducer.close();
-                    });
-                });
+            CompletableFuture.allOf(futures).join();
+        } catch (final Exception e) {
+            LOGGER.error("Error shutting down Kafka producers - {}", LogUtil.exceptionMessage(e), e);
+        }
     }
 
     public static Properties getProperties(final KafkaConfigDoc doc) {
@@ -255,13 +272,16 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasSystemInfo {
                                 .stream()
                                 .map(entry -> {
                                     final String groupName = entry.getKey().group()
-                                            + " ("
-                                            + entry.getKey().tags().entrySet()
-                                            .stream()
-                                            .filter(entry2 -> !entry2.getKey().equals("client-id"))
-                                            .map(entry2 -> entry2.getKey() + "=" + entry2.getValue())
-                                            .collect(Collectors.joining(","))
-                                            + ")";
+                                                             + " ("
+                                                             + entry.getKey().tags().entrySet()
+                                                                     .stream()
+                                                                     .filter(entry2 ->
+                                                                             !entry2.getKey().equals(
+                                                                                     "client-id"))
+                                                                     .map(entry2 ->
+                                                                             entry2.getKey() + "=" + entry2.getValue())
+                                                                     .collect(Collectors.joining(","))
+                                                             + ")";
 
                                     return Tuple.of(
                                             groupName,

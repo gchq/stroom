@@ -17,7 +17,6 @@
 package stroom.planb.shared;
 
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -40,7 +39,7 @@ public class HistogramValueSchema {
 
     @JsonCreator
     public HistogramValueSchema(@JsonProperty("valueType") final MaxValueSize valueType) {
-        this.valueType = NullSafe.requireNonNullElse(valueType, DEFAULT_VALUE_TYPE);
+        this.valueType = Objects.requireNonNullElse(valueType, DEFAULT_VALUE_TYPE);
     }
 
     public MaxValueSize getValueType() {

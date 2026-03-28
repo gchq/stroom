@@ -764,6 +764,7 @@ class QueryServiceImpl implements QueryService, QueryFieldProvider {
                             searchRequest.getQuery(),
                             NullSafe.get(mappedRequest, SearchRequest::getQuery, Query::getDataSource),
                             NullSafe.get(mappedRequest, SearchRequest::getQuery, Query::getExpression),
+                            NullSafe.get(mappedRequest, SearchRequest::getQuery, Query::getTimeRange),
                             searchRequest.getQueryContext().getQueryInfo(),
                             searchRequest.getQueryContext().getParams(),
                             NullSafe.get(result, DashboardSearchResponse::getResults),

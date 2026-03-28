@@ -903,26 +903,6 @@ paths:
       summary: Gets a list of events linked to this annotation
       tags:
       - Annotations
-  /annotation/v1/getStandardComments:
-    get:
-      operationId: getAnnotationSampleComments
-      parameters:
-      - in: query
-        name: filter
-        schema:
-          type: string
-      responses:
-        default:
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-          description: default response
-      summary: Gets a list of predefined comments
-      tags:
-      - Annotations
   /annotation/v1/updateAnnotationTag:
     put:
       operationId: updateAnnotationTag
@@ -2278,6 +2258,50 @@ paths:
       summary: Find data source fields
       tags:
       - Data Sources
+  /datagen/v1/{uuid}:
+    get:
+      operationId: fetchDataGen
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataGenDoc"
+          description: default response
+      summary: Fetch an analytic rule doc by its UUID
+      tags:
+      - Queries
+    put:
+      operationId: updateDataGen
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataGenDoc"
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataGenDoc"
+          description: default response
+      summary: Update an analytic rule doc
+      tags:
+      - Queries
   /dbStatus/v1:
     get:
       operationId: getDbSystemTableStatus
@@ -2710,6 +2734,48 @@ paths:
                 type: boolean
           description: default response
       summary: Delete Execution Schedule
+      tags:
+      - ExecutionSchedule
+  /executionSchedule/v1/deleteExecutionSchedules:
+    post:
+      operationId: deleteExecutionSchedules
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/ExecutionSchedule"
+        description: executionSchedules
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Delete Execution Schedules
+      tags:
+      - ExecutionSchedule
+  /executionSchedule/v1/executeSchedulesNow:
+    post:
+      operationId: executeSchedulesNow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/ExecutionSchedule"
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Execute schedules now
       tags:
       - ExecutionSchedule
   /executionSchedule/v1/fetchExecutionHistory:
@@ -8597,6 +8663,285 @@ paths:
       summary: Update a visualisation doc
       tags:
       - Visualisations
+  /visualisationAssets/fetchDraftAssets/{ownerDocId}:
+    get:
+      operationId: fetchDraftAssets
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VisualisationAssets"
+          description: default response
+      summary: Fetch the assets belonging to a visualisation doc by the doc's UUID
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/getContent/{ownerDocId}:
+    get:
+      operationId: getContent
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      - in: query
+        name: path
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VisualisationAssetContent"
+          description: default response
+      summary: Gets the content of an asset for editing
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/revertDraftFromLive/{ownerDocId}:
+    put:
+      operationId: revertDraftFromLive
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Revert draft assets to get rid of any changes
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/saveAs/{fromOwnerDocId}:
+    put:
+      operationId: saveAs
+      parameters:
+      - in: path
+        name: fromOwnerDocId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisualisationAssetSaveAsParameters"
+        description: SaveAs parameters
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Save the document's assets to another document
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/saveAs/{ownerDocId}:
+    get:
+      operationId: indexAssetExists
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Check if an index.html asset exists for the document ID
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/saveDraftToLive/{ownerDocId}:
+    put:
+      operationId: saveDraftToLive
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Save draft assets to main store to make them live
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/updateContent/{ownerDocId}:
+    put:
+      operationId: updateContent
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisualisationAssetUpdateContent"
+        description: Path and Content
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Updates the content of an asset
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/updateDelete/{ownerDocId}:
+    put:
+      operationId: updateDelete
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisualisationAssetUpdateDelete"
+        description: Path and isFolder
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Deletes an asset
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/updateNewFile/{ownerDocId}:
+    put:
+      operationId: updateNewFile
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisualisationAssetUpdateNewFile"
+        description: Path and Mimetype
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Creates a new text file
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/updateNewFolder/{ownerDocId}:
+    put:
+      operationId: updateNewFolder
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: string
+        description: Path
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Create new folder
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/updateNewUploadedFile/{ownerDocId}:
+    put:
+      operationId: updateNewUploadedFile
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisualisationAssetUpdateNewFile"
+        description: "Path, ResourceKey and Mimetype"
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Creates a new uploaded file
+      tags:
+      - VisualisationAssets
+  /visualisationAssets/updateRename/{ownerDocId}:
+    put:
+      operationId: updateRename
+      parameters:
+      - in: path
+        name: ownerDocId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisualisationAssetUpdateRename"
+        description: "Old Path, New Path and isFolder"
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                type: boolean
+          description: default response
+      summary: Renames an asset
+      tags:
+      - VisualisationAssets
   /welcome/v1:
     get:
       operationId: fetchWelcome
@@ -9180,6 +9525,8 @@ components:
           enum:
           - STROOM_QL_VERSION_0_1
           - SIGMA
+        level:
+          type: string
         name:
           type: string
         notifications:
@@ -9194,6 +9541,8 @@ components:
           type: string
         rememberNotifications:
           type: boolean
+        status:
+          type: string
         suppressDuplicateNotifications:
           type: boolean
         timeRange:
@@ -9378,12 +9727,15 @@ components:
           - BROWN
           - GREY
           - BLUE_GREY
+        tagText:
+          type: string
         type:
           type: string
           enum:
           - STATUS
           - LABEL
           - COLLECTION
+          - COMMENT
         uuid:
           type: string
     AnyBoolean:
@@ -10473,6 +10825,7 @@ components:
           - Installed
           - Pack upgradable
           - Content upgradable
+          - Error checking for upgrade status
     ContentStoreCreateGitRepoRequest:
       type: object
       properties:
@@ -10637,12 +10990,15 @@ components:
       properties:
         name:
           type: string
+        tagText:
+          type: string
         type:
           type: string
           enum:
           - STATUS
           - LABEL
           - COLLECTION
+          - COMMENT
     CreateHashedApiKeyRequest:
       type: object
       properties:
@@ -10911,6 +11267,33 @@ components:
         properties:
           searchRequest:
             $ref: "#/components/schemas/DashboardSearchRequest"
+    DataGenDoc:
+      type: object
+      properties:
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        description:
+          type: string
+        feed:
+          $ref: "#/components/schemas/DocRef"
+        name:
+          type: string
+        template:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
     DataInfoSection:
       type: object
       properties:
@@ -11371,6 +11754,7 @@ components:
           - DISABLE
           - DOCUMENT_ANALYTIC_OUTPUT_STORE
           - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_DATA_GEN
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
           - DOCUMENT_DICTIONARY
@@ -11437,7 +11821,9 @@ components:
           - FIELDS_SORT_NONE
           - FILE
           - FILE_FORMATTED
+          - FILE_IMAGE
           - FILE_RAW
+          - FILE_SCRIPT
           - FILTER
           - FIND
           - FOLDER
@@ -12129,6 +12515,8 @@ components:
       properties:
         enabled:
           type: boolean
+        expression:
+          $ref: "#/components/schemas/ExpressionOperator"
         nodeName:
           type: string
         ownerDocRef:
@@ -12436,7 +12824,9 @@ components:
             - IN_DICTIONARY
             - IN_FOLDER
             - IS_DOC_REF
+            - IS_NOT_DOC_REF
             - IS_USER_REF
+            - IS_NOT_USER_REF
             - IS_NULL
             - IS_NOT_NULL
             - MATCHES_REGEX
@@ -12488,6 +12878,7 @@ components:
           enum:
           - FEED_STATUS
           - RECEIPT_POLICY
+          - FEED_EXISTENCE
           - RECEIVE_ALL
           - DROP_ALL
           - REJECT_ALL
@@ -13510,6 +13901,7 @@ components:
           - 401 - 312 - Client Token or Certificate failed authentication
           - 401 - 313 - Data feed key failed authentication
           - 401 - 314 - Data feed key has expired
+          - 401 - 315 - Client Certificate DN failed authentication
           - 500 - 400 - Compressed stream invalid
           - 413 - 410 - Content too large
           - 500 - 999 - Unknown error
@@ -15419,6 +15811,7 @@ components:
           - DISABLE
           - DOCUMENT_ANALYTIC_OUTPUT_STORE
           - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_DATA_GEN
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
           - DOCUMENT_DICTIONARY
@@ -15485,7 +15878,9 @@ components:
           - FIELDS_SORT_NONE
           - FILE
           - FILE_FORMATTED
+          - FILE_IMAGE
           - FILE_RAW
+          - FILE_SCRIPT
           - FILTER
           - FIND
           - FOLDER
@@ -16357,7 +16752,7 @@ components:
           - "'=', '!=', 'in', 'in dictionary'"
           - "'is', 'in folder'"
           - "'=', '!=', 'in', 'in dictionary'"
-          - "'is', 'in folder', '=', '!=', 'in', 'in dictionary'"
+          - "'is', 'is not', 'in folder', '=', '!=', 'in', 'in dictionary'"
           - "'=', '!=', 'in', 'in dictionary'"
           - "'=', '!=', '==', '!==', 'in', 'in dictionary'"
           - "'==', '!==', 'between', 'in', 'in dictionary'"
@@ -16394,7 +16789,7 @@ components:
           - '''of'''
           - "'has permissions', 'has owner permission', 'has delete permission', 'has\
             \ edit permission', 'has view permission', 'has use permission'"
-          - '''is'''
+          - "'is', 'is not'"
         docRefType:
           type: string
         fldName:
@@ -16905,6 +17300,8 @@ components:
           enum:
           - STROOM_QL_VERSION_0_1
           - SIGMA
+        level:
+          type: string
         name:
           type: string
         notifications:
@@ -16921,6 +17318,8 @@ components:
           type: boolean
         reportSettings:
           $ref: "#/components/schemas/ReportSettings"
+        status:
+          type: string
         suppressDuplicateNotifications:
           type: boolean
         timeRange:
@@ -19657,7 +20056,9 @@ components:
           - IN_DICTIONARY
           - IN_FOLDER
           - IS_DOC_REF
+          - IS_NOT_DOC_REF
           - IS_USER_REF
+          - IS_NOT_USER_REF
           - IS_NULL
           - IS_NOT_NULL
           - MATCHES_REGEX
@@ -20311,6 +20712,78 @@ components:
             $ref: "#/components/schemas/DocRef"
       required:
       - componentId
+    VisualisationAsset:
+      type: object
+      properties:
+        folder:
+          type: boolean
+        id:
+          type: string
+        path:
+          type: string
+    VisualisationAssetContent:
+      type: object
+      properties:
+        content:
+          type: string
+        editorMode:
+          type: string
+    VisualisationAssetSaveAsParameters:
+      type: object
+      properties:
+        toOwnerDocId:
+          type: string
+        updatedContent:
+          type: string
+          format: byte
+        updatedContentPath:
+          type: string
+    VisualisationAssetUpdateContent:
+      type: object
+      properties:
+        content:
+          type: string
+          format: byte
+        path:
+          type: string
+    VisualisationAssetUpdateDelete:
+      type: object
+      properties:
+        folder:
+          type: boolean
+        path:
+          type: string
+    VisualisationAssetUpdateNewFile:
+      type: object
+      properties:
+        path:
+          type: string
+        resourceKey:
+          $ref: "#/components/schemas/ResourceKey"
+    VisualisationAssetUpdateRename:
+      type: object
+      properties:
+        folder:
+          type: boolean
+        newPath:
+          type: string
+        oldPath:
+          type: string
+    VisualisationAssets:
+      type: object
+      properties:
+        assets:
+          type: array
+          items:
+            $ref: "#/components/schemas/VisualisationAsset"
+        dirty:
+          type: boolean
+        ownerId:
+          type: string
+        uploadedFiles:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/ResourceKey"
     VisualisationDoc:
       type: object
       properties:

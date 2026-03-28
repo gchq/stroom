@@ -21,7 +21,6 @@ import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.Field;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.IndexField;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -147,7 +146,7 @@ public class SolrIndexField implements IndexField {
             @JsonProperty("sortMissingLast") final boolean sortMissingLast,
             @JsonProperty("denseVectorFieldConfig") final DenseVectorFieldConfig denseVectorFieldConfig) {
         this.fldName = convertLegacyName(fldName, fieldName);
-        this.fldType = NullSafe.requireNonNullElse(convertLegacyType(fldType, fieldUse), FieldType.TEXT);
+        this.fldType = Objects.requireNonNullElse(convertLegacyType(fldType, fieldUse), FieldType.TEXT);
         this.nativeType = convertLegacyNativeType(nativeType, fieldType);
         this.stored = stored;
         this.indexed = indexed;

@@ -221,61 +221,209 @@ public class PredicateUtil {
     /**
      * Creates a predicate that increments counter for each match encountered.
      *
-     * @param counter   The counter to increment. It is the caller's responsibility to zero it as needed.
      * @param predicate The predicate to wrap
      * @return The wrapped predicate
      */
-    public static <T> Predicate<T> countingPredicate(final LongAdder counter,
-                                                     final Predicate<T> predicate) {
-        return countingPredicate(counter, true, predicate);
+    public static <T> CountingPredicate<T> countingPredicate(final Predicate<T> predicate) {
+        return new CountingPredicate<>(predicate, true);
     }
 
     /**
      * Creates a predicate that increments counter for each match encountered.
      *
-     * @param counter     The counter to increment. It is the caller's responsibility to zero it as needed.
+     * @param predicate   The predicate to wrap
      * @param countIfTrue If true counter is incremented for a match. If false, counter is incremented for
      *                    a non-match.
-     * @param predicate   The predicate to wrap
      * @return The wrapped predicate
      */
-    public static <T> Predicate<T> countingPredicate(final LongAdder counter,
-                                                     final boolean countIfTrue,
-                                                     final Predicate<T> predicate) {
-        Objects.requireNonNull(predicate);
-        Objects.requireNonNull(counter);
-        return val -> {
-            final boolean result = predicate.test(val);
-            if (countIfTrue) {
-                if (result) {
-                    counter.increment();
-                }
-            } else {
-                if (!result) {
-                    counter.increment();
-                }
-            }
-            return result;
-        };
+    public static <T> CountingPredicate<T> countingPredicate(final Predicate<T> predicate,
+                                                             final boolean countIfTrue) {
+        return new CountingPredicate<>(predicate, countIfTrue);
     }
 
     /**
      * Creates a {@link BiPredicate} that increments counter for each match encountered.
      *
-     * @param counter   The counter to increment. It is the caller's responsibility to zero it as needed.
      * @param predicate The {@link BiPredicate} to wrap
      * @return The wrapped predicate
      */
-    public static <T1, T2> BiPredicate<T1, T2> countingBiPredicate(final LongAdder counter,
-                                                                   final BiPredicate<T1, T2> predicate) {
-        Objects.requireNonNull(predicate);
-        Objects.requireNonNull(counter);
-        return (t1, t2) -> {
-            final boolean result = predicate.test(t1, t2);
-            if (result) {
-                counter.increment();
+    public static <T1, T2> CountingBiPredicate<T1, T2> countingBiPredicate(final BiPredicate<T1, T2> predicate) {
+        return new CountingBiPredicate<>(predicate, true);
+    }
+
+    /**
+     * Creates a {@link BiPredicate} that increments counter for each match encountered.
+     *
+     * @param predicate   The {@link BiPredicate} to wrap
+     * @param countIfTrue If true counter is incremented for a match. If false, counter is incremented for
+     *                    a non-match.
+     * @return The wrapped predicate
+     */
+    public static <T1, T2> CountingBiPredicate<T1, T2> countingBiPredicate(final BiPredicate<T1, T2> predicate,
+                                                                           final boolean countIfTrue) {
+        return new CountingBiPredicate<>(predicate, countIfTrue);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * A {@link Predicate} that maintains a count of the number of times the predicate
+     * has matched (or not matched depending on countIfTrue).
+     */
+    public static class CountingPredicate<T> implements Predicate<T> {
+
+        private final LongAdder longAdder = new LongAdder();
+        private final Predicate<T> predicate;
+
+        private CountingPredicate(final Predicate<T> predicate, final boolean countIfTrue) {
+            Objects.requireNonNull(predicate);
+            if (countIfTrue) {
+                // Increment on pass
+                this.predicate = val -> {
+                    final boolean passedTest = predicate.test(val);
+                    if (passedTest) {
+                        longAdder.increment();
+                    }
+                    return passedTest;
+                };
+            } else {
+                // Increment on fail
+                this.predicate = val -> {
+                    final boolean passedTest = predicate.test(val);
+                    if (!passedTest) {
+                        longAdder.increment();
+                    }
+                    return passedTest;
+                };
             }
-            return result;
-        };
+        }
+
+        public static <T> CountingPredicate<T> wrap(final Predicate<T> predicate) {
+            return new CountingPredicate<>(predicate, true);
+        }
+
+        public static <T> CountingPredicate<T> wrap(final Predicate<T> predicate,
+                                                    final boolean countIfTrue) {
+            return new CountingPredicate<>(predicate, countIfTrue);
+        }
+
+        /**
+         * @return The current count of successful test calls since initialisation or
+         * {@link CountingPredicate#reset()} was last called.
+         * Not for use in concurrency control.
+         */
+        public long longValue() {
+            return longAdder.longValue();
+        }
+
+        /**
+         * @return The current count of successful test calls since initialisation or
+         * {@link CountingPredicate#reset()} was last called.
+         * Not for use in concurrency control.
+         */
+        public long intValue() {
+            return longAdder.intValue();
+        }
+
+        /**
+         * Resets the count back to zero.
+         */
+        public void reset() {
+            longAdder.reset();
+        }
+
+        @Override
+        public boolean test(final T t) {
+            return predicate.test(t);
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(longAdder.longValue());
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * A {@link BiPredicate} that maintains a count of the number of times the predicate
+     * has matched (or not matched depending on countIfTrue).
+     */
+    public static class CountingBiPredicate<T1, T2> implements BiPredicate<T1, T2> {
+
+        private final LongAdder longAdder = new LongAdder();
+        private final BiPredicate<T1, T2> predicate;
+
+        private CountingBiPredicate(final BiPredicate<T1, T2> predicate,
+                                    final boolean countIfTrue) {
+            Objects.requireNonNull(predicate);
+            if (countIfTrue) {
+                // Increment on pass
+                this.predicate = (val1, val2) -> {
+                    final boolean passedTest = predicate.test(val1, val2);
+                    if (passedTest) {
+                        longAdder.increment();
+                    }
+                    return passedTest;
+                };
+            } else {
+                // Increment on fail
+                this.predicate = (val1, val2) -> {
+                    final boolean passedTest = predicate.test(val1, val2);
+                    if (!passedTest) {
+                        longAdder.increment();
+                    }
+                    return passedTest;
+                };
+            }
+        }
+
+        public static <T1, T2> CountingBiPredicate<T1, T2> wrap(final BiPredicate<T1, T2> predicate) {
+            return new CountingBiPredicate<>(predicate, true);
+        }
+
+        public static <T1, T2> CountingBiPredicate<T1, T2> wrap(final BiPredicate<T1, T2> predicate,
+                                                                final boolean countIfTrue) {
+            return new CountingBiPredicate<>(predicate, true);
+        }
+
+        /**
+         * @return The current count of successful test calls since initialisation or
+         * {@link CountingBiPredicate#reset()} was last called.
+         * Not for use in concurrency control.
+         */
+        public long longValue() {
+            return longAdder.longValue();
+        }
+
+        /**
+         * @return The current count of successful test calls since initialisation or
+         * {@link CountingBiPredicate#reset()} was last called.
+         * Not for use in concurrency control.
+         */
+        public long intValue() {
+            return longAdder.intValue();
+        }
+
+        /**
+         * Resets the count back to zero.
+         */
+        public void reset() {
+            longAdder.reset();
+        }
+
+        @Override
+        public boolean test(final T1 t1, final T2 t2) {
+            return predicate.test(t1, t2);
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(longAdder.longValue());
+        }
     }
 }

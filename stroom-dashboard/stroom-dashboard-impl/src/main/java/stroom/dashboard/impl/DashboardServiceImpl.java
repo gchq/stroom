@@ -504,6 +504,7 @@ class DashboardServiceImpl implements DashboardService {
                             null,
                             search.getDataSourceRef(),
                             search.getExpression(),
+                            search.getTimeRange(),
                             search.getQueryInfo(),
                             search.getParams(),
                             NullSafe.get(result, DashboardSearchResponse::getResults),

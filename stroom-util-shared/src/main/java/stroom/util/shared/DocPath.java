@@ -89,6 +89,10 @@ public class DocPath {
         this(combineLists(parts1, parts2));
     }
 
+    private DocPath(final List<String> parts1, final List<String> parts2, final boolean absolute) {
+        this(combineLists(parts1, parts2), absolute);
+    }
+
     private static List<String> combineLists(final List<String> parts1, final List<String> parts2) {
         if (parts1 == null || parts1.isEmpty()) {
             return parts2;
@@ -262,7 +266,7 @@ public class DocPath {
             if (otherPath.isAbsolute()) {
                 throw new IllegalArgumentException("otherPath can't be absolute");
             }
-            return new DocPath(this.getParts(), otherPath.getParts());
+            return new DocPath(this.getParts(), otherPath.getParts(), this.isAbsolute());
         }
     }
 

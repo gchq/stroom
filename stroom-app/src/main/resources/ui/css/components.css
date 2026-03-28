@@ -590,10 +590,6 @@
     white-space: nowrap;
 }
 
-.steppingViewImpl-treeContainer {
-	padding: 15px 5px;
-}
-
 .pipelineStructureViewImpl-treeContainer {
 	padding: 10px 5px;
 }
@@ -2772,4 +2768,29 @@ button.main-menu svg {
     display: flex;
     align-items: center;
     gap: var(--control__gap--horizontal);
+}
+
+/* Visualisation Assets */
+.visualisation-asset-tree table {
+    border-spacing: 3px;
+}
+
+.visualisation-asset-tree .gwt-TreeItem  {
+    padding-top: 1px;
+    padding-bottom: 2px;
+    padding-left: 2px;
+    padding-right: 1px;
+}
+
+.visualisation-asset-tree .gwt-TreeItem svg {
+    width: 16px;
+    height: 16px;
+}
+
+.visualisation-asset-tree td img {
+    margin-top: 4px;
+}
+
+.visualisation-asset-tree .gwt-TreeItem-selected {
+    background-color: var(--row__background-color--selected);
 }

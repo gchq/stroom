@@ -22,7 +22,6 @@ import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.Param;
 import stroom.query.api.TimeRange;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -95,8 +94,7 @@ public class ReportDoc extends AbstractAnalyticRuleDoc {
                 level,
                 status);
 
-        this.reportSettings = NullSafe.requireNonNullElseGet(
-                reportSettings,
+        this.reportSettings = Objects.requireNonNullElseGet(reportSettings,
                 () -> ReportSettings.builder().build());
     }
 

@@ -21,6 +21,7 @@ import stroom.docref.DocRefInfo;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.pathways.shared.PathwaysDoc;
@@ -152,13 +153,13 @@ public class PathwaysStoreImpl implements PathwaysStore {
 
     @Override
     public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
+                                 final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
 //
 //        Map<String, byte[]> effectiveDataMap = dataMap;
 //        try {
-////            boolean altered = false;
+// //            boolean altered = false;
 //            final PathwaysDoc doc = serialiser.read(dataMap);
 //
 //            // TODO : Leaving here as we will want to copy pathways once they are in the DB.
@@ -201,13 +202,13 @@ public class PathwaysStoreImpl implements PathwaysStore {
 //                    docRef, e.getMessage()), e);
 //        }
 
-        return store.importDocument(docRef, dataMap, importState, importSettings);
+        return store.importDocument(docRef, importExportDocument, importState, importSettings);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
+    public ImportExportDocument exportDocument(final DocRef docRef,
+                                               final boolean omitAuditFields,
+                                               final List<Message> messageList) {
         // TODO : Leaving here as we will want to copy pathways once they are in the DB.
 //        // Get the first 1000 fields.
 //        final List<PathwaysField> fields = getFieldsForExport(docRef);

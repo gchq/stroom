@@ -25,6 +25,8 @@ import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.svg.shared.SvgImage;
 import stroom.test.common.docs.StroomDocsUtil;
+import stroom.util.exception.ThrowingRunnable;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -35,13 +37,17 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -55,12 +61,14 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
 
     private static final Path DOCUMENT_SUB_PATH = Paths.get(
             "content/en/docs/reference-section/documents.md");
+    private static final Path DATA_FILE_SUB_PATH = Paths.get(
+            "data/stroom/documents.json");
 
     private static final Set<String> DOC_TYPE_DENY_LIST = Set.of(
             DataRetentionRules.TYPE,
             ReceiveDataRules.TYPE);
 
-    public static void main(final String[] args) {
+    static void main(final String[] ignoredArgs) {
         final GenerateDocumentReferenceDoc generateDocumentReferenceDoc = new GenerateDocumentReferenceDoc();
         generateDocumentReferenceDoc.generateDocumentsReference();
     }
@@ -78,7 +86,7 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
 
     void generateDocumentsReference(final ScanResult scanResult) {
 
-        final String generatedContent = scanResult
+        final List<DocInfo> docInfoList = scanResult
                 .getSubclasses(AbstractDoc.class)
                 .parallelStream()
                 // Not visible in UI currently
@@ -89,7 +97,11 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
                 .filter(docInfo ->
                         DocumentTypeGroup.SYSTEM != docInfo.group
                         && DocumentTypeGroup.STRUCTURE != docInfo.group)
-                .sequential()
+                .toList();
+
+        writeDataFile(docInfoList);
+
+        final String generatedContent = docInfoList.stream()
                 .collect(Collectors.groupingBy(DocInfo::group))
                 .entrySet()
                 .stream()
@@ -110,11 +122,33 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
         }
     }
 
+    private static void writeDataFile(final List<DocInfo> docInfoList) {
+        // Key on lowercase type for easier lookup
+        // Use linkedHashMap for consistent order in the file
+        final Map<String, DocInfo> docInfoMap = docInfoList.stream()
+                .sorted(Comparator.comparing(DocInfo::getLowerType))
+                .collect(Collectors.toMap(
+                        DocInfo::getLowerType,
+                        Function.identity(),
+                        (ignored1, ignored2) -> {
+                            throw new IllegalStateException("Dup keys");
+                        },
+                        LinkedHashMap::new));
+        final Path jsonFile = StroomDocsUtil.resolveStroomDocsFile(DATA_FILE_SUB_PATH, false);
+        final Path parent = jsonFile.getParent();
+        ThrowingRunnable.run(() -> {
+            Files.createDirectories(parent);
+            final String jsonData = JsonUtil.writeValueAsString(docInfoMap);
+            Files.writeString(jsonFile, jsonData);
+            LOGGER.info("Written JSON data to {}", jsonFile);
+        });
+    }
+
     private DocInfo mapClass(final ClassInfo classInfo) {
         final Class<?> clazz = classInfo.loadClass();
 
         if (!classInfo.isInterface() && classInfo.hasField(DOCUMENT_TYPE_FIELD_NAME)) {
-            DocumentType docType = null;
+            final DocumentType docType;
             try {
                 final Field field = clazz.getField(DOCUMENT_TYPE_FIELD_NAME);
                 field.setAccessible(true);
@@ -140,12 +174,20 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
                             Description.class.getSimpleName(), classInfo.getName());
                 }
 
+                final SvgImage icon = docType.getIcon();
+                final DocumentTypeGroup group = docType.getGroup();
+
                 return new DocInfo(
                         docType.getType(),
                         description,
                         docType.getDisplayType(),
-                        docType.getIcon(),
-                        docType.getGroup());
+                        icon,
+                        icon.getRelativePathStr(),
+                        icon.getClassName(),
+                        group,
+                        group.getPriority(),
+                        group.getDisplayName(),
+                        group.getDescription());
             }
         } else {
             return null;
@@ -161,10 +203,10 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
 
             return LogUtil.message("""
                             ## {}
-
+                            \s
                             {}
-
-
+                            \s
+                            \s
                             {}
                             """,
                     documentTypeGroup.getDisplayName(),
@@ -185,12 +227,12 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
     private String convertDocToText(final DocInfo docInfo) {
         final String template = """
                 ### {}
-
+                \s
                 * Icon: {{< stroom-icon "{}" >}}
                 * Type: `{}`
-
+                \s
                 {}
-
+                \s
                 """;
 
         final String description = Objects.requireNonNullElse(
@@ -200,7 +242,7 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
         return LogUtil.message(
                 template,
                 docInfo.typeDisplayName,
-                docInfo.icon().getRelativePathStr(),
+                docInfo.icon.getRelativePathStr(),
                 docInfo.type,
                 description);
     }
@@ -214,7 +256,15 @@ public class GenerateDocumentReferenceDoc implements DocumentationGenerator {
             String description,
             String typeDisplayName,
             SvgImage icon,
-            DocumentTypeGroup group) {
+            String iconRelativePathStr,
+            String iconClassName,
+            DocumentTypeGroup group,
+            int groupPriority,
+            String groupDisplayName,
+            String groupDescription) {
 
+        String getLowerType() {
+            return type.toLowerCase();
+        }
     }
 }

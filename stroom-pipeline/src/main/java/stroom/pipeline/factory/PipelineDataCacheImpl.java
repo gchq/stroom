@@ -19,6 +19,7 @@ package stroom.pipeline.factory;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.cache.DocumentPermissionCache;
 import stroom.pipeline.shared.PipelineDoc;
@@ -41,7 +42,7 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable, Enti
 
     private static final String CACHE_NAME = "Pipeline Structure Cache";
 
-    private final LoadingStroomCache<DocRef, PipelineDataHolder> cache;
+    private final LoadingStroomCache<PipelineDoc, PipelineDataHolder> cache;
     private final SecurityContext securityContext;
     private final DocumentPermissionCache documentPermissionCache;
 
@@ -67,7 +68,7 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable, Enti
                     "You do not have permission to use " + pipelineDoc);
         }
 
-        final PipelineDataHolder pipelineDataHolder = cache.get(docRef);
+        final PipelineDataHolder pipelineDataHolder = cache.get(pipelineDoc);
         return NullSafe.get(pipelineDataHolder, PipelineDataHolder::getMergedPipelineData);
     }
 
@@ -81,16 +82,16 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable, Enti
         if (EntityAction.CLEAR_CACHE.equals(event.getAction())) {
             clear();
         } else {
-            final DocRef changedDocRef = event.getDocRef();
+            final DocRef docRef = event.getDocRef();
             final DocRef oldDocRef = event.getOldDocRef();
 
             // The cached PipelineData is a merge of the pipelineData from
             // all pipelineDocs in the inheritance chain so need to check each
             // entry to see if any of them relate to the changed docRef(s)
-            cache.invalidateEntries((docRef, pipelineDataHolder) ->
-                    docRef.equals(changedDocRef)
-                    || docRef.equals(oldDocRef)
-                    || pipelineDataHolder.containsDocRef(changedDocRef)
+            cache.invalidateEntries((pipelineDoc, pipelineDataHolder) ->
+                    DocRefUtil.isSameDocument(pipelineDoc, docRef)
+                    || DocRefUtil.isSameDocument(pipelineDoc, oldDocRef)
+                    || pipelineDataHolder.containsDocRef(docRef)
                     || pipelineDataHolder.containsDocRef(oldDocRef));
         }
     }

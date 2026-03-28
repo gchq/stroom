@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import stroom.config.common.HasDbConfig;
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.shared.DataFormatNames;
 import stroom.util.cache.CacheConfig;
+import stroom.util.collections.CollectionUtil;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.config.annotations.RequiresRestart.RestartScope;
 import stroom.util.logging.LambdaLogger;
@@ -46,7 +47,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.util.HashSet;
 import java.util.Set;
 
 
@@ -80,9 +80,11 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
-        metaTypes = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
-        rawMetaTypes = new HashSet<>(StreamTypeNames.ALL_HARD_CODED_RAW_STREAM_TYPE_NAMES);
-        dataFormats = new HashSet<>(DataFormatNames.ALL_HARD_CODED_FORMAT_NAMES);
+        // Use LinkedHashSet for consistent order when serialised
+        metaTypes = CollectionUtil.asUnmodifiabledConsistentOrderSet(StreamTypeNames.ALL_HARD_CODED_STREAM_TYPE_NAMES);
+        rawMetaTypes = CollectionUtil.asUnmodifiabledConsistentOrderSet(
+                StreamTypeNames.ALL_HARD_CODED_RAW_STREAM_TYPE_NAMES);
+        dataFormats = CollectionUtil.asUnmodifiabledConsistentOrderSet(DataFormatNames.ALL_HARD_CODED_FORMAT_NAMES);
         metaStatusUpdateBatchSize = 0;
     }
 
@@ -176,6 +178,7 @@ public class MetaServiceConfig extends AbstractConfig implements IsStroomConfig,
             DataFormatNames.XML,
             DataFormatNames.XML_FRAGMENT,
             DataFormatNames.JSON,
+            DataFormatNames.JSON_LINES,
             DataFormatNames.YAML,
             DataFormatNames.TOML,
             DataFormatNames.INI,

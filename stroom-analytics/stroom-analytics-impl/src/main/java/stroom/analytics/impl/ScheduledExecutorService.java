@@ -410,6 +410,24 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
                         scheduledExecutable)).get();
     }
 
+    public boolean executeNow(final ExecutionSchedule executionSchedule,
+                              final ScheduledExecutable<T> scheduledExecutable) {
+        // Reload the scheduled item in case it has changed since last executed.
+        final T reloaded = scheduledExecutable.load(executionSchedule.getOwningDoc());
+        if (reloaded == null) {
+            return false;
+        }
+
+        return taskContextFactory.contextResult(
+                "Scheduled " + scheduledExecutable.getProcessType() + ": " +
+                scheduledExecutable.getIdentity(reloaded),
+                taskContext -> execute(
+                        reloaded,
+                        executionSchedule,
+                        taskContext,
+                        scheduledExecutable)).get();
+    }
+
     /**
      * Executes a schedule within a child task context.
      *

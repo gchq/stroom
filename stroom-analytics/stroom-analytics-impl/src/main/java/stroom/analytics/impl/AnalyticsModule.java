@@ -19,6 +19,8 @@ package stroom.analytics.impl;
 import stroom.analytics.api.AnalyticsService;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.DuplicateCheckResource;
+import stroom.analytics.shared.ExecutionSchedule;
+import stroom.analytics.shared.ExecutionScheduleFields;
 import stroom.analytics.shared.ReportDoc;
 import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.job.api.ScheduledJobsBinder;
@@ -28,6 +30,7 @@ import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.HasResultStoreInfo;
 import stroom.query.common.v2.SearchProvider;
 import stroom.search.impl.NodeSearchTaskHandlerProvider;
+import stroom.suggestions.api.SuggestionsServiceBinder;
 import stroom.util.RunnableWrapper;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
@@ -57,7 +60,7 @@ public class AnalyticsModule extends AbstractModule {
 //                        .periodicSchedule("1m")
 //                        .enabled(false)
 //                        .advanced(true))
-                .bindJobTo(ScheduledAnalyticExecutorRunnable.class, builder -> builder
+                .bindJobTo(AnalyticExecutorRunnable.class, builder -> builder
                         .name("Analytic Executor: Scheduled Query")
                         .description("Run scheduled index query analytics periodically")
                         .frequencySchedule("10m")
@@ -108,6 +111,13 @@ public class AnalyticsModule extends AbstractModule {
         ProcessorTaskExecutorBinder.create(binder())
                 .bind(ProcessorType.STREAMING_ANALYTIC, StreamingAnalyticProcessorExecutor.class);
 
+        SuggestionsServiceBinder.create(binder())
+                .bind(ExecutionScheduleFields.TYPE, ExecutionScheduleSuggestionsQueryHandler.class);
+
+        ExecuteNowProviderBinder.create(binder())
+                .bind(AnalyticRuleDoc.TYPE, AnalyticExecuteNow.class)
+                .bind(ReportDoc.TYPE, ReportExecuteNow.class);
+
         GuiceUtil.buildMapBinder(binder(), String.class, HasUserDependencies.class)
                 .addBinding(ScheduledExecutorService.class.getName(), ScheduledExecutorService.class);
     }
@@ -128,12 +138,31 @@ public class AnalyticsModule extends AbstractModule {
     // --------------------------------------------------------------------------------
 
 
-    private static class ScheduledAnalyticExecutorRunnable extends RunnableWrapper {
+    private static class AnalyticExecutorRunnable extends RunnableWrapper {
 
         @Inject
-        ScheduledAnalyticExecutorRunnable(final ScheduledExecutorService<AnalyticRuleDoc> scheduledExecutorService,
-                                          final ScheduledQueryAnalyticExecutable scheduledQueryAnalyticExecutor) {
+        AnalyticExecutorRunnable(final ScheduledExecutorService<AnalyticRuleDoc> scheduledExecutorService,
+                                 final ScheduledQueryAnalyticExecutable scheduledQueryAnalyticExecutor) {
             super(() -> scheduledExecutorService.exec(scheduledQueryAnalyticExecutor));
+        }
+    }
+
+
+    private static class AnalyticExecuteNow implements ExecuteNow {
+
+        private final ScheduledExecutorService<AnalyticRuleDoc> scheduledExecutorService;
+        private final ScheduledQueryAnalyticExecutable scheduledQueryAnalyticExecutor;
+
+        @Inject
+        AnalyticExecuteNow(final ScheduledExecutorService<AnalyticRuleDoc> scheduledExecutorService,
+                           final ScheduledQueryAnalyticExecutable scheduledQueryAnalyticExecutor) {
+            this.scheduledExecutorService = scheduledExecutorService;
+            this.scheduledQueryAnalyticExecutor = scheduledQueryAnalyticExecutor;
+        }
+
+        @Override
+        public void execute(final ExecutionSchedule executionSchedule) {
+            scheduledExecutorService.executeNow(executionSchedule, scheduledQueryAnalyticExecutor);
         }
     }
 
@@ -143,6 +172,24 @@ public class AnalyticsModule extends AbstractModule {
         ReportExecutorRunnable(final ScheduledExecutorService<ReportDoc> scheduledExecutorService,
                                final ReportExecutor reportExecutor) {
             super(() -> scheduledExecutorService.exec(reportExecutor));
+        }
+    }
+
+    private static class ReportExecuteNow implements ExecuteNow {
+
+        private final ScheduledExecutorService<ReportDoc> scheduledExecutorService;
+        private final ReportExecutor scheduledQueryAnalyticExecutor;
+
+        @Inject
+        ReportExecuteNow(final ScheduledExecutorService<ReportDoc> scheduledExecutorService,
+                         final ReportExecutor scheduledQueryAnalyticExecutor) {
+            this.scheduledExecutorService = scheduledExecutorService;
+            this.scheduledQueryAnalyticExecutor = scheduledQueryAnalyticExecutor;
+        }
+
+        @Override
+        public void execute(final ExecutionSchedule executionSchedule) {
+            scheduledExecutorService.executeNow(executionSchedule, scheduledQueryAnalyticExecutor);
         }
     }
 

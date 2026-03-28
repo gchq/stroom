@@ -17,7 +17,6 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.api.AnalyticsService;
-import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.DuplicateCheckResource;

@@ -665,6 +665,10 @@ public class SteppingPresenter
         this.pipelineDoc = pipelineDoc;
     }
 
+    public PipelineDoc getPipelineDoc() {
+        return pipelineDoc;
+    }
+
     public void refreshMetaList() {
         steppingMetaListPresenter.refresh();
     }
@@ -684,7 +688,7 @@ public class SteppingPresenter
         }
 
         beginStepping(StepType.REFRESH,
-                NullSafe.requireNonNullElse(requestBuilder.build().getStepLocation(),
+                Objects.requireNonNullElse(requestBuilder.build().getStepLocation(),
                         new StepLocation(meta.getId(), 0, 0)),
                 meta, childStreamType);
     }

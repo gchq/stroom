@@ -18,7 +18,6 @@ package stroom.analytics.shared;
 
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -42,7 +41,7 @@ public class ReportSettings {
     @JsonCreator
     public ReportSettings(@JsonProperty("fileType") final DownloadSearchResultFileType fileType,
                           @JsonProperty("sendEmptyReports") final Boolean sendEmptyReports) {
-        this.fileType = NullSafe.requireNonNullElse(fileType, DEFAULT_FILE_TYPE);
+        this.fileType = Objects.requireNonNullElse(fileType, DEFAULT_FILE_TYPE);
         this.sendEmptyReports = sendEmptyReports == null || sendEmptyReports;
     }
 

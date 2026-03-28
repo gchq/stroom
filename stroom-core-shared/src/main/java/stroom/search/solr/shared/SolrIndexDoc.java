@@ -22,7 +22,6 @@ import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.ExpressionOperator;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -116,10 +115,10 @@ public class SolrIndexDoc extends AbstractDoc {
         } else {
             this.collection = collection;
         }
-        this.solrConnectionConfig = NullSafe.requireNonNullElse(
+        this.solrConnectionConfig = Objects.requireNonNullElse(
                 solrConnectionConfig,
                 SolrConnectionConfig.builder().build());
-        this.fields = NullSafe.requireNonNullElseGet(fields, () -> {
+        this.fields = Objects.requireNonNullElseGet(fields, () -> {
             final List<SolrIndexField> list = new ArrayList<>();
             // Always add standard id fields for now.
             list.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
