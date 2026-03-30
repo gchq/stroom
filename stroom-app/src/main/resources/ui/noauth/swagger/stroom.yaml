@@ -2258,6 +2258,50 @@ paths:
       summary: Find data source fields
       tags:
       - Data Sources
+  /datagen/v1/{uuid}:
+    get:
+      operationId: fetchDataGen
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataGenDoc"
+          description: default response
+      summary: Fetch an analytic rule doc by its UUID
+      tags:
+      - Queries
+    put:
+      operationId: updateDataGen
+      parameters:
+      - in: path
+        name: uuid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DataGenDoc"
+        description: doc
+        required: true
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DataGenDoc"
+          description: default response
+      summary: Update an analytic rule doc
+      tags:
+      - Queries
   /dbStatus/v1:
     get:
       operationId: getDbSystemTableStatus
@@ -9481,6 +9525,8 @@ components:
           enum:
           - STROOM_QL_VERSION_0_1
           - SIGMA
+        level:
+          type: string
         name:
           type: string
         notifications:
@@ -9495,6 +9541,8 @@ components:
           type: string
         rememberNotifications:
           type: boolean
+        status:
+          type: string
         suppressDuplicateNotifications:
           type: boolean
         timeRange:
@@ -11219,6 +11267,33 @@ components:
         properties:
           searchRequest:
             $ref: "#/components/schemas/DashboardSearchRequest"
+    DataGenDoc:
+      type: object
+      properties:
+        createTimeMs:
+          type: integer
+          format: int64
+        createUser:
+          type: string
+        description:
+          type: string
+        feed:
+          $ref: "#/components/schemas/DocRef"
+        name:
+          type: string
+        template:
+          type: string
+        type:
+          type: string
+        updateTimeMs:
+          type: integer
+          format: int64
+        updateUser:
+          type: string
+        uuid:
+          type: string
+        version:
+          type: string
     DataInfoSection:
       type: object
       properties:
@@ -11679,6 +11754,7 @@ components:
           - DISABLE
           - DOCUMENT_ANALYTIC_OUTPUT_STORE
           - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_DATA_GEN
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
           - DOCUMENT_DICTIONARY
@@ -15735,6 +15811,7 @@ components:
           - DISABLE
           - DOCUMENT_ANALYTIC_OUTPUT_STORE
           - DOCUMENT_ANALYTIC_RULE
+          - DOCUMENT_DATA_GEN
           - DOCUMENT_ANNOTATIONS_INDEX
           - DOCUMENT_DASHBOARD
           - DOCUMENT_DICTIONARY
@@ -17223,6 +17300,8 @@ components:
           enum:
           - STROOM_QL_VERSION_0_1
           - SIGMA
+        level:
+          type: string
         name:
           type: string
         notifications:
@@ -17239,6 +17318,8 @@ components:
           type: boolean
         reportSettings:
           $ref: "#/components/schemas/ReportSettings"
+        status:
+          type: string
         suppressDuplicateNotifications:
           type: boolean
         timeRange:

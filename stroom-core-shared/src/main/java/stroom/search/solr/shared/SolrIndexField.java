@@ -21,7 +21,6 @@ import stroom.query.api.datasource.DenseVectorFieldConfig;
 import stroom.query.api.datasource.Field;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.IndexField;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;

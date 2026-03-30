@@ -19,12 +19,10 @@ package stroom.pipeline.shared;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.AbstractEmbeddableDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasData;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

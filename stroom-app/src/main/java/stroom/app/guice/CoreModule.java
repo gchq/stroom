@@ -127,6 +127,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.security.impl.db.SecurityDaoModule());
         install(new stroom.analytics.impl.AnalyticRuleModule());
         install(new stroom.analytics.impl.ReportModule());
+        install(new stroom.datagen.impl.DataGenModule());
         install(new stroom.planb.impl.PlanBModule());
         install(new stroom.statistics.impl.InternalStatisticsModule());
         install(new stroom.statistics.impl.sql.SqlStatisticsModule());

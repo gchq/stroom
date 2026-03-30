@@ -18,7 +18,6 @@ package stroom.planb.shared;
 
 import stroom.query.api.UserTimeZone;
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

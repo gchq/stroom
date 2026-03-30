@@ -17,7 +17,6 @@
 package stroom.monitoring.client;
 
 import stroom.analytics.client.presenter.ExecutionScheduleManager;
-import stroom.analytics.shared.ExecutionScheduleFields;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;

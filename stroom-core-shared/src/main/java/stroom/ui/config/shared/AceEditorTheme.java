@@ -36,8 +36,6 @@
 
 package stroom.ui.config.shared;
 
-import stroom.util.shared.NullSafe;
-
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumMap;

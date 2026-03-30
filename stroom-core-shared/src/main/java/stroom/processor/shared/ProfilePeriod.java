@@ -16,7 +16,6 @@
 
 package stroom.processor.shared;
 
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.Days;
 import stroom.util.shared.time.Time;
 

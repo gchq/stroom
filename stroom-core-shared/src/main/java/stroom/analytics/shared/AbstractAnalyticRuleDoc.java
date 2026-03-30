@@ -68,6 +68,26 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
     @JsonProperty
     private final DuplicateNotificationConfig duplicateNotificationConfig;
 
+    /**
+     * A rule's level denotes its severity.
+     * A high level rule detection should be prioritised over a low level rule detection.
+     **/
+    @JsonProperty
+    private final String level;
+
+    /**
+     * A rule's status denotes how reliable it is. There are several stages:
+     *  - Experimental: An early-stage rule that may be incomplete. Expect more false positives.
+     *  - Testing: More mature than experimental rules. Actively being validated in rela environments.
+     *    Expect some false positives.
+     *  - Stable: Considered production-ready. Has been thoroughly tested across multiple environments.
+     *    Expect a reasonable false positive rate.
+     *  - Deprecated: An outdated or superseded rule that may rely on old techniques or assumptions.
+     *    Generally avoid using these in production.
+     **/
+    @JsonProperty
+    private final String status;
+
     @JsonCreator
     @SuppressWarnings("checkstyle:linelength")
     public AbstractAnalyticRuleDoc(@JsonProperty("type") final String type,
@@ -90,7 +110,9 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                                    @JsonProperty("errorFeed") final DocRef errorFeed,
                                    @JsonProperty("rememberNotifications") final boolean rememberNotifications,
                                    @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
-                                   @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
+                                   @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
+                                   @JsonProperty("level") final String level,
+                                   @JsonProperty("status") final String status) {
         super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = NullSafe.string(description);
         this.languageVersion = Objects.requireNonNullElse(languageVersion, QueryLanguageVersion.STROOM_QL_VERSION_0_1);
@@ -116,6 +138,9 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                         suppressDuplicateNotifications,
                         false,
                         Collections.emptyList()));
+
+        this.level = level;
+        this.status = status;
     }
 
     public String getDescription() {
@@ -152,6 +177,14 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
     public DocRef getErrorFeed() {
         return errorFeed;
+    }
+
+    public String getLevel() {
+        return level;
+    }
+
+    public String getStatus() {
+        return status;
     }
 
     @Deprecated
@@ -207,7 +240,9 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                 errorFeed,
                 rememberNotifications,
                 suppressDuplicateNotifications,
-                duplicateNotificationConfig);
+                duplicateNotificationConfig,
+                level,
+                status);
     }
 
     @Override
@@ -226,6 +261,8 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
                ", rememberNotifications=" + rememberNotifications +
                ", suppressDuplicateNotifications=" + suppressDuplicateNotifications +
                ", duplicateNotificationConfig=" + duplicateNotificationConfig +
+               ", level=" + level +
+               ", status=" + status +
                '}';
     }
 
@@ -244,6 +281,9 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
         DocRef errorFeed;
         DuplicateNotificationConfig duplicateNotificationConfig;
 
+        String level;
+        String status;
+
         public AbstractAnalyticRuleDocBuilder() {
             languageVersion = QueryLanguageVersion.STROOM_QL_VERSION_0_1;
             notifications = new ArrayList<>();
@@ -261,6 +301,8 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
             this.notifications = new ArrayList<>(doc.notifications);
             this.errorFeed = doc.errorFeed;
             this.duplicateNotificationConfig = doc.duplicateNotificationConfig;
+            this.level = doc.level;
+            this.status = doc.status;
         }
 
         public B description(final String description) {
@@ -310,6 +352,16 @@ public abstract class AbstractAnalyticRuleDoc extends AbstractDoc {
 
         public B duplicateNotificationConfig(final DuplicateNotificationConfig duplicateNotificationConfig) {
             this.duplicateNotificationConfig = duplicateNotificationConfig;
+            return self();
+        }
+
+        public B level(final String level) {
+            this.level = level;
+            return self();
+        }
+
+        public B status(final String status) {
+            this.status = status;
             return self();
         }
     }

@@ -27,7 +27,6 @@ import stroom.ui.config.shared.Theme;
 import stroom.ui.config.shared.ThemeCssUtil;
 import stroom.ui.config.shared.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
-import stroom.util.shared.NullSafe;
 import stroom.widget.datepicker.client.ClientTimeZone;
 import stroom.widget.util.client.ClientStringUtil;
 

@@ -18,7 +18,6 @@ package stroom.analytics.shared;
 
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

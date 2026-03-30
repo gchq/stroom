@@ -3,7 +3,6 @@ package stroom.ai.shared;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.validation.ValidFilePath;
 
 import com.fasterxml.jackson.annotation.JsonCreator;

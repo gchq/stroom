@@ -16,7 +16,6 @@
 
 package stroom.planb.shared;
 
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 

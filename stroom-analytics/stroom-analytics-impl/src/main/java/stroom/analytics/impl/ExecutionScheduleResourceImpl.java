@@ -16,14 +16,12 @@
 
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionHistory;
 import stroom.analytics.shared.ExecutionHistoryRequest;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ExecutionTracker;
-import stroom.analytics.shared.ReportDoc;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
@@ -39,8 +37,8 @@ import stroom.util.shared.UserRef;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @AutoLogged(OperationType.UNLOGGED)
@@ -51,20 +49,17 @@ class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
     private final Provider<ExecutionScheduleDao> executionScheduleDaoProvider;
     private final Provider<SecurityContext> securityContextProvider;
     private final Provider<UserRefLookup> userRefLookupProvider;
-    private final Provider<ScheduledQueryAnalyticExecutor> scheduledQueryAnalyticExecutorProvider;
-    private final Provider<ReportExecutor> reportExecutorProvider;
+    private final Provider<Map<ExecuteNowType, ExecuteNow>> executeNowMapProvider;
 
     @Inject
     ExecutionScheduleResourceImpl(final Provider<ExecutionScheduleDao> executionScheduleDaoProvider,
                                   final Provider<SecurityContext> securityContextProvider,
                                   final Provider<UserRefLookup> userRefLookupProvider,
-                                  final Provider<ScheduledQueryAnalyticExecutor> scheduledQueryAnalyticExecutorProvider,
-                                  final Provider<ReportExecutor> reportExecutorProvider) {
+                                  final Provider<Map<ExecuteNowType, ExecuteNow>> executeNowMapProvider) {
         this.executionScheduleDaoProvider = executionScheduleDaoProvider;
         this.securityContextProvider = securityContextProvider;
         this.userRefLookupProvider = userRefLookupProvider;
-        this.scheduledQueryAnalyticExecutorProvider = scheduledQueryAnalyticExecutorProvider;
-        this.reportExecutorProvider = reportExecutorProvider;
+        this.executeNowMapProvider = executeNowMapProvider;
     }
 
     @Override
@@ -104,24 +99,15 @@ class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
 
     @Override
     public Boolean executeSchedulesNow(final List<ExecutionSchedule> schedules) {
-        //Move to dao?
         try {
-            final List<ExecutionSchedule> analyticRuleSchedules = new ArrayList<>();
-            final List<ExecutionSchedule> reportSchedules = new ArrayList<>();
             for (final ExecutionSchedule schedule : schedules) {
-                switch (schedule.getOwningDoc().getType()) {
-                    case AnalyticRuleDoc.TYPE -> analyticRuleSchedules.add(schedule);
-                    case ReportDoc.TYPE -> reportSchedules.add(schedule);
-                    default -> throw new UnsupportedOperationException(
-                            "Unsupported execution schedule type: " + schedule.getOwningDoc().getType()
-                    );
+                final ExecuteNow executeNow = executeNowMapProvider.get()
+                        .get(new ExecuteNowType(schedule.getOwningDoc().getType()));
+                if (executeNow == null) {
+                    throw new UnsupportedOperationException(
+                            "Unsupported execution schedule type: " + schedule.getOwningDoc().getType());
                 }
-            }
-            if (!analyticRuleSchedules.isEmpty()) {
-                scheduledQueryAnalyticExecutorProvider.get().execFromSchedules(analyticRuleSchedules);
-            }
-            if (!reportSchedules.isEmpty()) {
-                reportExecutorProvider.get().execFromSchedules(reportSchedules);
+                executeNow.execute(schedule);
             }
         } catch (final RuntimeException e) {
             LOGGER.error(() ->

@@ -4,13 +4,13 @@
 package stroom.credentials.impl.db.jooq;
 
 
+import stroom.credentials.impl.db.jooq.tables.Credential;
+import stroom.credentials.impl.db.jooq.tables.records.CredentialRecord;
+
 import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
-
-import stroom.credentials.impl.db.jooq.tables.Credential;
-import stroom.credentials.impl.db.jooq.tables.records.CredentialRecord;
 
 
 /**

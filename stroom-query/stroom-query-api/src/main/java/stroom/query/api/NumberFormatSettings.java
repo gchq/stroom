@@ -16,8 +16,6 @@
 
 package stroom.query.api;
 
-import stroom.util.shared.NullSafe;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;

@@ -4,12 +4,6 @@
 package stroom.explorer.impl.db.jooq;
 
 
-import org.jooq.ForeignKey;
-import org.jooq.TableField;
-import org.jooq.UniqueKey;
-import org.jooq.impl.DSL;
-import org.jooq.impl.Internal;
-
 import stroom.explorer.impl.db.jooq.tables.ExplorerFavourite;
 import stroom.explorer.impl.db.jooq.tables.ExplorerNode;
 import stroom.explorer.impl.db.jooq.tables.ExplorerPath;
@@ -20,6 +14,12 @@ import stroom.explorer.impl.db.jooq.tables.records.ExplorerNodeRecord;
 import stroom.explorer.impl.db.jooq.tables.records.ExplorerPathRecord;
 import stroom.explorer.impl.db.jooq.tables.records.TabSessionDocRefRecord;
 import stroom.explorer.impl.db.jooq.tables.records.TabSessionRecord;
+
+import org.jooq.ForeignKey;
+import org.jooq.TableField;
+import org.jooq.UniqueKey;
+import org.jooq.impl.DSL;
+import org.jooq.impl.Internal;
 
 
 /**

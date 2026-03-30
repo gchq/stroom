@@ -17,7 +17,6 @@
 package stroom.planb.shared;
 
 import stroom.docs.shared.Description;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
