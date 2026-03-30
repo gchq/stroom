@@ -4,14 +4,14 @@
 package stroom.credentials.impl.db.jooq;
 
 
-import stroom.credentials.impl.db.jooq.tables.Credential;
+import java.util.Arrays;
+import java.util.List;
 
 import org.jooq.Catalog;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
-import java.util.Arrays;
-import java.util.List;
+import stroom.credentials.impl.db.jooq.tables.Credential;
 
 
 /**

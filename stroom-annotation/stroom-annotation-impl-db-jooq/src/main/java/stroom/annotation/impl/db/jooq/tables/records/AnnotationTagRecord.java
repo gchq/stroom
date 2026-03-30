@@ -4,10 +4,10 @@
 package stroom.annotation.impl.db.jooq.tables.records;
 
 
-import stroom.annotation.impl.db.jooq.tables.AnnotationTag;
-
 import org.jooq.Record1;
 import org.jooq.impl.UpdatableRecordImpl;
+
+import stroom.annotation.impl.db.jooq.tables.AnnotationTag;
 
 
 /**
@@ -139,7 +139,7 @@ public class AnnotationTagRecord extends UpdatableRecordImpl<AnnotationTagRecord
     /**
      * Create a detached, initialised AnnotationTagRecord
      */
-    public AnnotationTagRecord(Integer id, String uuid, Byte typeId, String name, Byte styleId, Boolean deleted) {
+    public AnnotationTagRecord(Integer id, String uuid, Byte typeId, String name, Byte styleId, Boolean deleted, String tagText) {
         super(AnnotationTag.ANNOTATION_TAG);
 
         setId(id);
@@ -148,6 +148,7 @@ public class AnnotationTagRecord extends UpdatableRecordImpl<AnnotationTagRecord
         setName(name);
         setStyleId(styleId);
         setDeleted(deleted);
+        setTagText(tagText);
         resetChangedOnNotNull();
     }
 }
