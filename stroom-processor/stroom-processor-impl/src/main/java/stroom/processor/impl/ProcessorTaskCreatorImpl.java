@@ -206,7 +206,8 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                         final int remaining = tasksToCreate - totalTasksCreated.intValue();
                         if (remaining <= 0) {
                             LOGGER.trace(() -> LogUtil.message(
-                                    "createNewTasks() - No tasks remaining, filterQueue.size: {}, totalTasksCreated: {}",
+                                    "createNewTasks() - No tasks remaining, filterQueue.size: {}, " +
+                                    "totalTasksCreated: {}",
                                     filterQueue.size(), totalTasksCreated));
                             break;
                         }
