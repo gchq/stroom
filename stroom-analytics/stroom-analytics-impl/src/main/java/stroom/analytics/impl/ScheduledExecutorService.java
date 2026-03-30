@@ -410,8 +410,48 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
                         scheduledExecutable)).get();
     }
 
-    public boolean executeNow(final ExecutionSchedule executionSchedule,
+    public void executeNow(final ExecutionSchedule executionSchedule,
                               final ScheduledExecutable<T> scheduledExecutable) {
+        final WorkQueue workQueue = new WorkQueue(executorProvider.get(), 1, 1);
+        final Runnable runnable = () -> {
+            try {
+                securityContext.asUser(executionSchedule.getRunAsUser(), () -> securityContext.useAsRead(() -> {
+                    boolean success = true;
+                    while (success) {
+                        success = executeNowIfScheduled(executionSchedule,
+                                scheduledExecutable);
+                    }
+                }));
+            } catch (final RuntimeException e) {
+                LOGGER.error(() ->
+                        LogUtil.message("Error executing {}: {}",
+                                scheduledExecutable.getProcessType()), e);
+            }
+        };
+        workQueue.exec(runnable);
+        workQueue.join();
+    }
+
+
+    /**
+     * Determines whether a schedule should execute and performs execution if required.
+     *
+     * @param executionSchedule   The execution schedule.
+     * @param scheduledExecutable The executable implementation.
+     * @return {@code true} if execution should continue, otherwise {@code false}.
+     */
+    private boolean executeNowIfScheduled(final ExecutionSchedule executionSchedule,
+                                          final ScheduledExecutable<T> scheduledExecutable) {
+        final Optional<ExecutionSchedule> optionalSchedule = executionScheduleDao
+                .fetchScheduleById(executionSchedule.getId());
+        if (optionalSchedule.isEmpty()) {
+            return false;
+        }
+        final ExecutionSchedule schedule = optionalSchedule.get();
+        if (!schedule.isEnabled()) {
+            return false;
+        }
+
         // Reload the scheduled item in case it has changed since last executed.
         final T reloaded = scheduledExecutable.load(executionSchedule.getOwningDoc());
         if (reloaded == null) {
@@ -435,7 +475,7 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
      * @param executionSchedule   The execution schedule.
      * @param taskContext         The task context.
      * @param scheduledExecutable The executable implementation.
-     * @return Always {@code false} to indicate no repeat execution within this invocation.
+     * @return {@code true} if execution should continue, otherwise {@code false}.
      */
     private boolean execute(final T doc,
                             final ExecutionSchedule executionSchedule,
@@ -489,6 +529,7 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
                                 scheduledExecutable);
                         return doc;
                     });
+            return true;
         }
         return false;
     }
