@@ -33,9 +33,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * Holds state relating to the progress of creation of tasks by the master node
@@ -45,14 +48,17 @@ public class ProgressMonitor {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProgressMonitor.class);
 
 
-    private final List<FilterProgressMonitor> filterProgressMonitorList =
-            Collections.synchronizedList(new ArrayList<>());
+    private final List<FilterProgressMonitor> filterProgressMonitorList = Collections.synchronizedList(
+            new ArrayList<>());
+    //    private final Map<SkipReason, List<ProcessorFilter>> skippedFiltersList = new ConcurrentHashMap<>();
+    private final List<SkippedFilter> skippedFilters = Collections.synchronizedList(new ArrayList<>());
+    private final List<ErroredFilter> erroredFilters = Collections.synchronizedList(new ArrayList<>());
 
     private final int totalFilterCount;
     private final DurationTimer totalDuration;
 
     public ProgressMonitor(final int totalFilterCount) {
-        totalDuration = DurationTimer.start();
+        this.totalDuration = DurationTimer.start();
         this.totalFilterCount = totalFilterCount;
     }
 
@@ -84,14 +90,34 @@ public class ProgressMonitor {
                             final boolean showPhaseDetail,
                             final QueueProcessTasksState queueProcessTasksState) {
         synchronized (filterProgressMonitorList) {
+
+            final List<FilterProgressMonitor> filterMonitorsWithoutError = filterProgressMonitorList.stream()
+                    .filter(Predicate.not(FilterProgressMonitor::hasError))
+                    .toList();
+            final long erroredFiltersCount = Stream.concat(
+                            filterProgressMonitorList.stream()
+                                    .filter(FilterProgressMonitor::hasError)
+                                    .map(FilterProgressMonitor::getId),
+                            erroredFilters.stream()
+                                    .map(ErroredFilter::filter)
+                                    .map(ProcessorFilter::getId))
+                    .filter(Objects::nonNull)
+                    .count();
+
             sb.append(title);
             sb.append("\n");
             sb.append("---\n");
             sb.append("Inspected ");
-            sb.append(filterProgressMonitorList.size());
+            sb.append(filterMonitorsWithoutError.size());
             sb.append("/");
             sb.append(totalFilterCount);
             sb.append(" filters");
+            sb.append("\n");
+            sb.append("Skipped: ");
+            sb.append(skippedFilters.size());
+            sb.append("\n");
+            sb.append("Errored: ");
+            sb.append(erroredFiltersCount);
             sb.append("\n");
             sb.append("Total time: ");
             sb.append(totalDuration.get());
@@ -101,6 +127,7 @@ public class ProgressMonitor {
             } else {
                 final AtomicInteger initialCount = new AtomicInteger();
                 final AtomicInteger added = new AtomicInteger();
+                // It's possible the error happened after the tasks were created
                 filterProgressMonitorList.forEach(filterProgressMonitor -> {
                     initialCount.addAndGet(filterProgressMonitor.initialCount);
                     added.addAndGet(filterProgressMonitor.added.get());
@@ -124,7 +151,7 @@ public class ProgressMonitor {
                         final PhaseDetails filterPhaseDetails = entry.getValue();
 
                         combinedPhaseDetailsMap
-                                .computeIfAbsent(phase, k -> new PhaseDetails(phase))
+                                .computeIfAbsent(phase, ignored -> new PhaseDetails(phase))
                                 .add(filterPhaseDetails);
                     }
                 }
@@ -135,7 +162,7 @@ public class ProgressMonitor {
 
     private void addDetail(final StringBuilder sb, final boolean showPhaseDetail) {
         synchronized (filterProgressMonitorList) {
-            if (!filterProgressMonitorList.isEmpty()) {
+            if (!filterProgressMonitorList.isEmpty() || !skippedFilters.isEmpty() || !erroredFilters.isEmpty()) {
                 sb.append("\n\nDETAIL");
                 for (final FilterProgressMonitor filterProgressMonitor : filterProgressMonitorList) {
                     final ProcessorFilter filter = filterProgressMonitor.filter;
@@ -155,12 +182,35 @@ public class ProgressMonitor {
                     sb.append("Final: ");
                     sb.append(filterProgressMonitor.initialCount +
                               filterProgressMonitor.added.get());
+                    if (filterProgressMonitor.hasError()) {
+                        sb.append("\n");
+                        sb.append("Error: ");
+                        sb.append(filterProgressMonitor.throwable.getMessage());
+                    }
 
                     // Only show phase detail in trace log.
                     if (showPhaseDetail) {
                         appendPhaseDetails(sb, filterProgressMonitor.phaseDetailsMap.values());
                     }
                 }
+
+                skippedFilters.forEach(skippedFilter -> {
+                    sb.append("\n---\n");
+                    sb.append("Filter (");
+                    appendFilter(sb, skippedFilter.filter);
+                    sb.append(")\n");
+                    sb.append("Skipped due to: ");
+                    sb.append(skippedFilter.skipReason.getDisplayValue());
+                });
+
+                erroredFilters.forEach(erroredFilter -> {
+                    sb.append("\n---\n");
+                    sb.append("Filter (");
+                    appendFilter(sb, erroredFilter.filter);
+                    sb.append(")\n");
+                    sb.append("Failed with error : ");
+                    sb.append(erroredFilter.throwable.getMessage());
+                });
             }
         }
     }
@@ -201,6 +251,40 @@ public class ProgressMonitor {
                 initialQueueSize);
         filterProgressMonitorList.add(filterProgressMonitor);
         return filterProgressMonitor;
+    }
+
+    /**
+     * Log a filter that has been skipped for some reason
+     */
+    public void logSkippedFilter(final ProcessorFilter filter,
+                                 final SkipReason reason) {
+        try {
+            Objects.requireNonNull(filter);
+            Objects.requireNonNull(reason);
+            skippedFilters.add(new SkippedFilter(filter, reason));
+        } catch (final Exception e) {
+            LOGGER.error("Error logging a skipped filter {} - {}",
+                    NullSafe.get(filter, ProcessorFilter::getFilterInfo),
+                    LogUtil.exceptionMessage(e),
+                    e);
+            // Swallow so progress monitoring doesn't halt processing
+        }
+    }
+
+    public void logErroredFilter(final ProcessorFilter filter,
+                                 final Throwable filterException) {
+        try {
+            Objects.requireNonNull(filter);
+            Objects.requireNonNull(filterException);
+            erroredFilters.add(new ErroredFilter(filter, filterException));
+        } catch (final Exception logException) {
+            LOGGER.error("Error logging a errored filter {} (filter error: {})- {}",
+                    NullSafe.get(filter, ProcessorFilter::getFilterInfo),
+                    LogUtil.exceptionMessage(filterException),
+                    LogUtil.exceptionMessage(logException),
+                    logException);
+            // Swallow so progress monitoring doesn't halt processing
+        }
     }
 
     // --------------------------------------------------------------------------------
@@ -245,6 +329,7 @@ public class ProgressMonitor {
         private final AtomicInteger added = new AtomicInteger();
 
         private Duration completeDuration;
+        private Throwable throwable = null;
 
         private FilterProgressMonitor(final ProcessorFilter filter,
                                       final int initialCount) {
@@ -274,13 +359,30 @@ public class ProgressMonitor {
                              final long affectedItemCount) {
             final Duration duration = durationTimer.get();
             final PhaseDetails phaseDetails = phaseDetailsMap
-                    .computeIfAbsent(phase, k -> new PhaseDetails(phase));
+                    .computeIfAbsent(phase, ignored -> new PhaseDetails(phase));
 
             phaseDetails.increment(affectedItemCount, duration);
         }
 
+        public void logException(final Throwable throwable) {
+            this.throwable = throwable;
+        }
+
         public void complete() {
             completeDuration = durationTimer.get();
+        }
+
+        public void complete(final Throwable throwable) {
+            this.throwable = throwable;
+            completeDuration = durationTimer.get();
+        }
+
+        boolean hasError() {
+            return throwable != null;
+        }
+
+        Integer getId() {
+            return NullSafe.get(filter, ProcessorFilter::getId);
         }
     }
 
@@ -323,6 +425,69 @@ public class ProgressMonitor {
             this.calls.addAndGet(phaseDetails.calls.get());
             this.affectedItemCount.addAndGet(phaseDetails.affectedItemCount.get());
             durationAdder.add(phaseDetails.durationAdder);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum SkipReason {
+        /**
+         * The maximum number of tasks has been reached for this filter
+         */
+        MAX_TASKS_REACHED("Maximum number of tasks already created"),
+        /**
+         * The filter created zero tasks on the last poll
+         */
+        ZERO_TASKS_ON_LAST_POLL("No tasks created on last poll"),
+        /**
+         * Filter was disabled/deleted after the job started
+         */
+        DISABLED_OR_DELETED("Filter was disabled/deleted after the job started"),
+        /**
+         * The tracker is in a completed state
+         */
+        TRACKER_COMPLETE("The tracker is in a completed state"),
+        /**
+         * The tracker is in a error state
+         */
+        TRACKER_ERROR("The tracker is in a error state");
+
+        private final String displayValue;
+
+        SkipReason(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        public String getDisplayValue() {
+            return displayValue;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record SkippedFilter(ProcessorFilter filter,
+                                 SkipReason skipReason) {
+
+        private SkippedFilter {
+            Objects.requireNonNull(filter);
+            Objects.requireNonNull(skipReason);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record ErroredFilter(ProcessorFilter filter,
+                                 Throwable throwable) {
+
+        private ErroredFilter {
+            Objects.requireNonNull(filter);
+            Objects.requireNonNull(throwable);
         }
     }
 }

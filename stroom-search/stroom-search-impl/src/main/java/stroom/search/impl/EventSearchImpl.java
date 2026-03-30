@@ -76,7 +76,7 @@ class EventSearchImpl implements EventSearch {
         final Runnable runnable = taskContextFactory.childContext(
                 parentTaskContext,
                 "Event Search",
-                taskContext -> {
+                ignoredTaskContext -> {
                     final EventSearchTaskHandler eventSearchTaskHandler = eventSearchTaskHandlerProvider.get();
                     eventSearchTaskHandler.exec(eventSearchTask, consumer);
                 });
