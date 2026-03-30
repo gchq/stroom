@@ -390,7 +390,8 @@ class ProcessorTaskQueueManagerImpl implements ProcessorTaskQueueManager, HasSys
     private void fillTaskQueueSync(final boolean isEmptyReportRequired) {
         if (allowTaskQueueFill) {
             try {
-                LOGGER.debug("fillTaskQueueAsync() - Executing fillTaskQueue");
+                LOGGER.debug("fillTaskQueueAsync() - Executing fillTaskQueue, isEmptyReportRequired: {}",
+                        isEmptyReportRequired);
                 securityContext.asProcessingUser(() ->
                         taskContextFactory.context(
                                 "Fill task queue",

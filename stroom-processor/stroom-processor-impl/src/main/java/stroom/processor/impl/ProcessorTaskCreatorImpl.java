@@ -28,8 +28,10 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.impl.ProcessorProfileCache.ProfileResult;
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
 import stroom.processor.impl.ProgressMonitor.Phase;
+import stroom.processor.impl.ProgressMonitor.SkipReason;
 import stroom.processor.shared.FeedDependencies;
 import stroom.processor.shared.Limits;
+import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorFilterTrackerStatus;
@@ -65,6 +67,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.SimpleDurationUtil;
+import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -170,6 +173,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
 
     private void createNewTasks(final TaskContext parentTaskContext,
                                 final LongAdder totalTasksCreated) {
+        final DurationTimer timer = DurationTimer.start();
         LOGGER.trace("createNewTasks() - Starting");
         info(parentTaskContext, () -> "Starting");
 
@@ -178,9 +182,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         final ProcessorConfig processorConfig = processorConfigProvider.get();
         final ProgressMonitor progressMonitor = new ProgressMonitor(filters.size());
 
-        parentTaskContext.info(() -> "Creating tasks for " +
-                                     filters.size() +
-                                     " filters");
+        parentTaskContext.info(() -> "Creating tasks for " + filters.size() + " filters");
 
         try {
             final LinkedBlockingQueue<ProcessorFilter> filterQueue = new LinkedBlockingQueue<>(filters);
@@ -189,30 +191,53 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
             // Now execute all the runnable items.
             final Executor executor = executorProvider.get(THREAD_POOL);
             final int threadCount = Math.min(filters.size(), processorConfig.getTaskCreationThreadCount());
+            final int tasksToCreate = processorConfig.getTasksToCreate();
+            LOGGER.trace(() -> LogUtil.message(
+                    "createNewTasks() - filterQueue.size: {}, threadCount: {}, tasksToCreate: {}",
+                    filterQueue.size(), threadCount, tasksToCreate));
+
             final CompletableFuture<?>[] futures = new CompletableFuture[threadCount];
             for (int i = 0; i < threadCount; i++) {
+                final int threadNo = i + 1;
                 futures[i] = CompletableFuture.runAsync(() -> {
-                    boolean run = true;
-                    while (run) {
-                        final int remaining = processorConfig.getTasksToCreate() - totalTasksCreated.intValue();
+                    while (true) {
+                        // With >1 thread running, we may create a lot more tasks than tasksToCreate, but
+                        // that is accepted and while not ideal, is not a significant problem
+                        final int remaining = tasksToCreate - totalTasksCreated.intValue();
+                        if (remaining <= 0) {
+                            LOGGER.trace(() -> LogUtil.message(
+                                    "createNewTasks() - No tasks remaining, filterQueue.size: {}, totalTasksCreated: {}",
+                                    filterQueue.size(), totalTasksCreated));
+                            break;
+                        }
                         final ProcessorFilter filter = filterQueue.poll();
-                        if (remaining > 0 && filter != null && !Thread.currentThread().isInterrupted()) {
-                            try {
-                                createTasksForFilter(
-                                        parentTaskContext,
-                                        filters,
-                                        progressMonitor,
-                                        filterCount,
-                                        filter,
-                                        remaining,
-                                        totalTasksCreated);
-                            } catch (final RuntimeException e) {
-                                LOGGER.error(e::getMessage, e);
-                            }
-                        } else {
-                            run = false;
+                        if (filter == null) {
+                            LOGGER.trace("createNewTasks() - Queue empty, remaining: {}, totalTasksCreated: {}",
+                                    remaining, totalTasksCreated);
+                            break;
+                        }
+                        if (Thread.currentThread().isInterrupted()) {
+                            LOGGER.trace("createNewTasks() - Interrupted, remaining: {}, totalTasksCreated: {}",
+                                    remaining, totalTasksCreated);
+                            break;
+                        }
+
+                        try {
+                            createTasksForFilter(
+                                    parentTaskContext,
+                                    filters,
+                                    progressMonitor,
+                                    filterCount,
+                                    filter,
+                                    remaining,
+                                    totalTasksCreated,
+                                    processorConfig);
+                        } catch (final RuntimeException e) {
+                            progressMonitor.logErroredFilter(filter, e);
+                            LOGGER.error(e::getMessage, e);
                         }
                     }
+                    LOGGER.trace("createNewTasks() - Async task complete, threadNo: {}/{}", threadNo, threadCount);
                 }, executor);
             }
             // Wait for all task creation to complete.
@@ -225,7 +250,8 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
 
         progressMonitor.report("CREATE NEW TASKS", null);
 
-        LOGGER.trace("createNewTasks() - Finished");
+        LOGGER.trace("createNewTasks() - Finished, totalTasksCreated: {}, duration: {}",
+                totalTasksCreated, timer);
     }
 
     private void createTasksForFilter(final TaskContext parentTaskContext,
@@ -234,12 +260,19 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                       final AtomicInteger filterCount,
                                       final ProcessorFilter filter,
                                       final int remaining,
-                                      final LongAdder totalTasksCreated) {
+                                      final LongAdder totalTasksCreated,
+                                      final ProcessorConfig processorConfig) {
         // Set the current user to be the one who created the filter so that only streams that
         // the user has access to are processed.
         final UserRef runAs = getFilterRunAs(filter);
+        LOGGER.trace(() -> LogUtil.message(
+                "createTasksForFilter() - filters.size: {}, filterCount: {}, remaining: {}, " +
+                "totalTasksCreated: {}, runAs: {}, filter: {}",
+                filters.size(), filterCount, remaining, totalTasksCreated, runAs, filter.getFilterInfo()));
+
         securityContext.asUser(runAs, () ->
-                taskContextFactory.childContext(parentTaskContext,
+                taskContextFactory.childContext(
+                        parentTaskContext,
                         "Create Tasks",
                         taskContext -> {
                             final int count = filterCount.incrementAndGet();
@@ -255,7 +288,8 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                     filter,
                                     progressMonitor,
                                     remaining,
-                                    totalTasksCreated);
+                                    totalTasksCreated,
+                                    processorConfig);
                         }).run());
     }
 
@@ -267,17 +301,29 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         return filter.getRunAsUser();
     }
 
+    private boolean isValidFilterAndProcessor(final ProcessorFilter filter) {
+        if (filter != null && !filter.isDeleted() && filter.isEnabled()) {
+            final Processor processor = filter.getProcessor();
+            return processor != null
+                   && !processor.isDeleted()
+                   && processor.isEnabled();
+        } else {
+            return false;
+        }
+    }
+
     public void createTasksForFilter(final TaskContext taskContext,
                                      final ProcessorFilter filter,
                                      final ProgressMonitor progressMonitor,
                                      final int remaining,
-                                     final LongAdder totalTasksCreated) {
+                                     final LongAdder totalTasksCreated,
+                                     final ProcessorConfig processorConfig) {
         try {
             // The filter might have been deleted since we found it.
             processorFilterService.fetch(filter.getId()).ifPresent(loadedFilter -> {
 
                 // Only try and create tasks if the processor is enabled.
-                if (loadedFilter.isEnabled() && loadedFilter.getProcessor().isEnabled()) {
+                if (isValidFilterAndProcessor(loadedFilter)) {
 
                     // Get the tracker for this filter.
                     final ProcessorFilterTracker tracker = loadedFilter.getProcessorFilterTracker();
@@ -290,18 +336,31 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                             tracker.setLastPollTaskCount(0);
                             updateTracker(tracker, null);
                         }
-
+                        final SkipReason skipReason = ProcessorFilterTrackerStatus.COMPLETE.equals(tracker.getStatus())
+                                ? SkipReason.TRACKER_COMPLETE
+                                : SkipReason.TRACKER_ERROR;
+                        progressMonitor.logSkippedFilter(filter, skipReason);
+                        LOGGER.trace(() -> LogUtil.message(
+                                "createTasksForFilter() - Skipping filter, tracker.status: {}, filter: {}",
+                                tracker.getStatus(), loadedFilter.getFilterInfo()));
                     } else {
                         doCreateTasksForFilter(
                                 taskContext,
                                 loadedFilter,
                                 progressMonitor,
                                 remaining,
-                                totalTasksCreated);
+                                totalTasksCreated,
+                                processorConfig);
                     }
+                } else {
+                    progressMonitor.logSkippedFilter(filter, SkipReason.DISABLED_OR_DELETED);
+                    LOGGER.trace(() -> LogUtil.message(
+                            "createTasksForFilter() - Skipping filter: {}, {}",
+                            filter.getFilterInfo(), filter));
                 }
             });
         } catch (final RuntimeException e) {
+            progressMonitor.logErroredFilter(filter, e);
             LOGGER.error(() -> LogUtil.message("Error processing filter: {} {} - {}",
                     filter.getFilterInfo(),
                     e.getClass().getSimpleName(),
@@ -310,34 +369,59 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         }
     }
 
+    private boolean checkTrackerTaskCount(final ProcessorFilter filter,
+                                          final ProcessorFilterTracker tracker,
+                                          final ProcessorConfig processorConfig) {
+        final Integer lastPollTaskCount = tracker.getLastPollTaskCount();
+        final Long lastPollMs = tracker.getLastPollMs();
+        final StroomDuration skipNonProducingFiltersDuration = processorConfig.getSkipNonProducingFiltersDuration();
+
+        if (lastPollTaskCount == null
+            || lastPollTaskCount > 0
+            || lastPollMs == null
+            || skipNonProducingFiltersDuration == null) {
+            return true;
+        } else {
+            final long timeSinceLastPollMs = System.currentTimeMillis() - lastPollMs;
+            final long skipNonProducingFiltersDurationMs = skipNonProducingFiltersDuration.toMillis();
+            if (timeSinceLastPollMs > skipNonProducingFiltersDurationMs) {
+                return true;
+            } else {
+                LOGGER.debug(() -> LogUtil.message(
+                        "checkTrackerTaskCount() - Skipping filter with no tasks on last poll, " +
+                        "timeSinceLastPollMs: {}, skipNonProducingFiltersDurationMs: {}, filter: {}",
+                        timeSinceLastPollMs, skipNonProducingFiltersDuration, filter.getFilterInfo()));
+                return false;
+            }
+        }
+    }
+
     private void doCreateTasksForFilter(final TaskContext taskContext,
                                         final ProcessorFilter filter,
                                         final ProgressMonitor progressMonitor,
                                         final int remaining,
-                                        final LongAdder totalTasksCreated) {
+                                        final LongAdder totalTasksCreated,
+                                        final ProcessorConfig processorConfig) {
+        LOGGER.trace(() -> LogUtil.message("doCreateTasksForFilter() - remaining: {}, filter: {}",
+                remaining, filter.getFilterInfo()));
+
         // Don't try and create tasks for this filter if we didn't manage to create any last time and not much time has
         // passed since the last attempt.
         final ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();
-        if (tracker.getLastPollTaskCount() == null ||
-            tracker.getLastPollTaskCount() > 0 ||
-            Instant
-                    .ofEpochMilli(tracker.getLastPollMs())
-                    .plus(processorConfigProvider.get().getSkipNonProducingFiltersDuration())
-                    .isBefore(Instant.now())) {
+        if (checkTrackerTaskCount(filter, tracker, processorConfig)) {
             final int currentCreatedTasks = processorTaskDao.countTasksForFilter(filter.getId(), TaskStatus.CREATED);
             totalTasksCreated.add(currentCreatedTasks);
 
             int maxTasks = remaining - currentCreatedTasks;
 
             // See if we are allowing tasks to be created eagerly beyond the process limit.
-            if (!processorConfigProvider.get().isCreateTasksBeyondProcessLimit()) {
+            if (!processorConfig.isCreateTasksBeyondProcessLimit()) {
                 boolean usedProfile = false;
 
                 // We are limiting task creation so see if there is a profile that will limit total cluster tasks.
                 if (filter.getProfileName() != null) {
                     try {
-                        final ProfileResult profileResult = processorProfileCache
-                                .getProfile(filter.getProfileName());
+                        final ProfileResult profileResult = processorProfileCache.getProfile(filter.getProfileName());
                         Objects.requireNonNull(profileResult, "No processing profile found (filter=" +
                                                               filter +
                                                               ", profileName=" +
@@ -362,11 +446,18 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 }
             }
 
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("doCreateTasksForFilter() - maxTasks: {}, remaining: {}, currentCreatedTasks: {}, " +
+                             "isProcessingTaskCountBounded: {}, isCreateTasksBeyondProcessLimit: {}",
+                        maxTasks, remaining, currentCreatedTasks, filter.isProcessingTaskCountBounded(),
+                        processorConfig.isCreateTasksBeyondProcessLimit());
+            }
+
             // Skip filters that already have enough tasks.
             if (maxTasks > 0) {
                 info(taskContext, filter::getFilterInfo);
-                final FilterProgressMonitor filterProgressMonitor =
-                        progressMonitor.logFilter(filter, currentCreatedTasks);
+                final FilterProgressMonitor filterProgressMonitor = progressMonitor.logFilter(
+                        filter, currentCreatedTasks);
 
                 final QueryData queryData = filter.getQueryData();
                 final boolean isStreamStoreSearch = queryData.getDataSource() != null
@@ -400,6 +491,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                 totalTasksCreated);
                     }
                 } catch (final RuntimeException e) {
+                    filterProgressMonitor.logException(e);
                     LOGGER.error(() -> LogUtil.message("Error creating tasks for filter: {} {} - {}",
                             filter.getFilterInfo(),
                             e.getClass().getSimpleName(),
@@ -423,11 +515,15 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                     } catch (final RuntimeException e2) {
                         LOGGER.error(e.getMessage(), e);
                     }
-
                 } finally {
                     filterProgressMonitor.complete();
                 }
+            } else {
+                LOGGER.trace("doCreateTasksForFilter() - maxTasks is 0, Skipping filter {}", filter.getFilterInfo());
+                progressMonitor.logSkippedFilter(filter, SkipReason.MAX_TASKS_REACHED);
             }
+        } else {
+            progressMonitor.logSkippedFilter(filter, SkipReason.ZERO_TASKS_ON_LAST_POLL);
         }
     }
 
@@ -443,7 +539,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
             throw new RuntimeException("Attempting to create tasks with an unconstrained filter " + filter);
         }
 
-        LOGGER.debug("Creating tasks from criteria, requiredTasks: {}, filter: {}", maxTasks, filter);
+        LOGGER.debug("createTasksFromCriteria() - requiredTasks: {}, filter: {}", maxTasks, filter);
 
         // This will contain locked and unlocked streams
         final long maxMetaId = getMaxMetaId(filter);
@@ -642,6 +738,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                                     filter.getFilterInfo()));
                 }
             } catch (final Exception e) {
+                filterProgressMonitor.logException(e);
                 LOGGER.error("Error creating tasks for filter {}, {}", filter.getId(), e.getMessage(), e);
             }
         };
@@ -658,11 +755,15 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
                 consumer);
 
         // record the future so we can wait for it later
-        final CompletableFuture<Void> future2 = future.whenComplete((v, throwable) -> {
+        final CompletableFuture<Void> future2 = future.whenComplete((ignoredVoid, e) -> {
             filterProgressMonitor.logPhase(
                     Phase.CREATE_TASKS_FROM_SEARCH_QUERY,
                     durationTimer, totalTasks.get());
             filterProgressMonitor.add(totalTasks.get());
+            if (e != null) {
+                // Will come in here if it doesn't get as far as the consumer
+                filterProgressMonitor.logException(e);
+            }
             filterProgressMonitor.complete();
         });
         future2.join();
@@ -673,9 +774,7 @@ public class ProcessorTaskCreatorImpl implements ProcessorTaskCreator {
         final DurationTimer durationTimer = DurationTimer.start();
         processorFilterTrackerDao.update(tracker);
         if (filterProgressMonitor != null) {
-            filterProgressMonitor.logPhase(Phase.UPDATE_TRACKERS,
-                    durationTimer,
-                    0);
+            filterProgressMonitor.logPhase(Phase.UPDATE_TRACKERS, durationTimer, 0);
         }
     }
 
