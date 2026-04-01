@@ -202,7 +202,8 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
         final Collection<OrderField<?>> orderFields = createExecutionScheduleOrderFields(request);
 
         final List<ExecutionSchedule> list = JooqUtil.contextResult(analyticsDbConnProvider, context -> context
-                        .select(EXECUTION_SCHEDULE.NAME,
+                        .select(EXECUTION_SCHEDULE.UUID,
+                                EXECUTION_SCHEDULE.NAME,
                                 EXECUTION_SCHEDULE.ENABLED,
                                 EXECUTION_SCHEDULE.NODE_NAME,
                                 EXECUTION_SCHEDULE.SCHEDULE_TYPE,
@@ -212,8 +213,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                                 EXECUTION_SCHEDULE.END_TIME_MS,
                                 EXECUTION_SCHEDULE.DOC_TYPE,
                                 EXECUTION_SCHEDULE.DOC_UUID,
-                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID,
-                                EXECUTION_SCHEDULE.UUID)
+                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID)
                         .from(EXECUTION_SCHEDULE)
                         .where(conditions)
                         .orderBy(orderFields)
@@ -245,7 +245,8 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
         final int limit = JooqUtil.getLimit(request.getPageRequest(), true);
 
         final List<ExecutionSchedule> list = JooqUtil.contextResult(analyticsDbConnProvider, context -> context
-                        .select(EXECUTION_SCHEDULE.NAME,
+                        .select(EXECUTION_SCHEDULE.UUID,
+                                EXECUTION_SCHEDULE.NAME,
                                 EXECUTION_SCHEDULE.ENABLED,
                                 EXECUTION_SCHEDULE.NODE_NAME,
                                 EXECUTION_SCHEDULE.SCHEDULE_TYPE,
@@ -344,7 +345,8 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                 .conditions(Optional.of(EXECUTION_SCHEDULE.UUID.eq(uuid)));
 
         return JooqUtil.contextResult(analyticsDbConnProvider, context -> context
-                        .select(EXECUTION_SCHEDULE.NAME,
+                        .select(EXECUTION_SCHEDULE.UUID,
+                                EXECUTION_SCHEDULE.NAME,
                                 EXECUTION_SCHEDULE.ENABLED,
                                 EXECUTION_SCHEDULE.NODE_NAME,
                                 EXECUTION_SCHEDULE.SCHEDULE_TYPE,
@@ -354,8 +356,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                                 EXECUTION_SCHEDULE.END_TIME_MS,
                                 EXECUTION_SCHEDULE.DOC_TYPE,
                                 EXECUTION_SCHEDULE.DOC_UUID,
-                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID,
-                                EXECUTION_SCHEDULE.UUID)
+                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID)
                         .from(EXECUTION_SCHEDULE)
                         .where(conditions)
                         .fetchOptional())
@@ -365,7 +366,8 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
     @Override
     public List<ExecutionSchedule> fetchSchedulesByRunAsUser(final String userUuid) {
         return JooqUtil.contextResult(analyticsDbConnProvider, context -> context
-                        .select(EXECUTION_SCHEDULE.NAME,
+                        .select(EXECUTION_SCHEDULE.UUID,
+                                EXECUTION_SCHEDULE.NAME,
                                 EXECUTION_SCHEDULE.ENABLED,
                                 EXECUTION_SCHEDULE.NODE_NAME,
                                 EXECUTION_SCHEDULE.SCHEDULE_TYPE,
@@ -375,8 +377,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                                 EXECUTION_SCHEDULE.END_TIME_MS,
                                 EXECUTION_SCHEDULE.DOC_TYPE,
                                 EXECUTION_SCHEDULE.DOC_UUID,
-                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID,
-                                EXECUTION_SCHEDULE.UUID)
+                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID)
                         .from(EXECUTION_SCHEDULE)
                         .where(EXECUTION_SCHEDULE.RUN_AS_USER_UUID.eq(userUuid))
                         .fetch())
@@ -571,6 +572,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                                 EXECUTION_HISTORY.EFFECTIVE_EXECUTION_TIME_MS,
                                 EXECUTION_HISTORY.STATUS,
                                 EXECUTION_HISTORY.MESSAGE,
+                                EXECUTION_SCHEDULE.UUID,
                                 EXECUTION_SCHEDULE.NAME,
                                 EXECUTION_SCHEDULE.ENABLED,
                                 EXECUTION_SCHEDULE.NODE_NAME,
@@ -581,8 +583,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                                 EXECUTION_SCHEDULE.END_TIME_MS,
                                 EXECUTION_SCHEDULE.DOC_TYPE,
                                 EXECUTION_SCHEDULE.DOC_UUID,
-                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID,
-                                EXECUTION_SCHEDULE.UUID)
+                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID)
                         .from(EXECUTION_HISTORY)
                         .join(EXECUTION_SCHEDULE)
                         .on(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID.eq(EXECUTION_SCHEDULE.UUID))
