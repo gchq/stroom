@@ -38,6 +38,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -276,7 +277,7 @@ class ReportStoreImpl implements ReportStore {
                     .ownerDocRef(docRef)
                     .build();
             final ResultPage<ExecutionSchedule> resultPage =
-                    executionScheduleResourceProvider.get().fetchExecutionSchedule(request);
+                    executionScheduleDaoProvider.get().fetchExecutionSchedule(request);
 
             final Set<DocRef> docRefs = new HashSet<>();
             resultPage.getValues().forEach(schedule -> {

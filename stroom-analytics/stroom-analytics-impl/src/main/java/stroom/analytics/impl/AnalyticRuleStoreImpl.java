@@ -42,6 +42,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -317,7 +318,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                         .build();
 
                 final ResultPage<ExecutionSchedule> resultPage =
-                        executionScheduleResourceProvider.get().fetchExecutionSchedule(request);
+                        executionScheduleDaoProvider.get().fetchExecutionSchedule(request);
 
                 resultPage.getValues().forEach(schedule -> {
                     docRefs.add(new DocRef(ExecutionSchedule.ENTITY_TYPE,
