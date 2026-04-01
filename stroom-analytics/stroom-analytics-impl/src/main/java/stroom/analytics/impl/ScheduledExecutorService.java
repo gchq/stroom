@@ -383,7 +383,7 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
                                        final ExecutionSchedule executionSchedule,
                                        final ScheduledExecutable<T> scheduledExecutable) {
         final Optional<ExecutionSchedule> optionalSchedule = executionScheduleDao
-                .fetchScheduleById(executionSchedule.getId());
+                .fetchScheduleByUuid(executionSchedule.getUuid());
         if (optionalSchedule.isEmpty()) {
             return false;
         }

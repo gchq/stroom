@@ -92,7 +92,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
         this.docRefInfoService = docRefInfoService;
 
         expressionMapper = expressionMapperFactory.create();
-        expressionMapper.map(ExecutionScheduleFields.FIELD_ID, EXECUTION_SCHEDULE.ID, Integer::valueOf);
+
         expressionMapper.map(ExecutionScheduleFields.FIELD_NAME, EXECUTION_SCHEDULE.NAME, String::valueOf);
         expressionMapper.map(ExecutionScheduleFields.FIELD_ENABLED, EXECUTION_SCHEDULE.ENABLED, Boolean::valueOf);
         expressionMapper.map(ExecutionScheduleFields.FIELD_NODE_NAME, EXECUTION_SCHEDULE.NODE_NAME, String::valueOf);
@@ -202,8 +202,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
         final Collection<OrderField<?>> orderFields = createExecutionScheduleOrderFields(request);
 
         final List<ExecutionSchedule> list = JooqUtil.contextResult(analyticsDbConnProvider, context -> context
-                        .select(EXECUTION_SCHEDULE.ID,
-                                EXECUTION_SCHEDULE.NAME,
+                        .select(EXECUTION_SCHEDULE.NAME,
                                 EXECUTION_SCHEDULE.ENABLED,
                                 EXECUTION_SCHEDULE.NODE_NAME,
                                 EXECUTION_SCHEDULE.SCHEDULE_TYPE,
@@ -246,8 +245,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
         final int limit = JooqUtil.getLimit(request.getPageRequest(), true);
 
         final List<ExecutionSchedule> list = JooqUtil.contextResult(analyticsDbConnProvider, context -> context
-                        .select(EXECUTION_SCHEDULE.ID,
-                                EXECUTION_SCHEDULE.NAME,
+                        .select(EXECUTION_SCHEDULE.NAME,
                                 EXECUTION_SCHEDULE.ENABLED,
                                 EXECUTION_SCHEDULE.NODE_NAME,
                                 EXECUTION_SCHEDULE.SCHEDULE_TYPE,
@@ -338,29 +336,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
         return ResultPage.createCriterialBasedList(list.stream().skip(offset).limit(limit).toList(), request);
     }
 
-    @Override
-    public Optional<ExecutionSchedule> fetchScheduleById(final int id) {
-        final Collection<Condition> conditions = JooqUtil.conditions(Optional.of(EXECUTION_SCHEDULE.ID.eq(id)));
 
-        return JooqUtil.contextResult(analyticsDbConnProvider, context -> context
-                        .select(EXECUTION_SCHEDULE.ID,
-                                EXECUTION_SCHEDULE.NAME,
-                                EXECUTION_SCHEDULE.ENABLED,
-                                EXECUTION_SCHEDULE.NODE_NAME,
-                                EXECUTION_SCHEDULE.SCHEDULE_TYPE,
-                                EXECUTION_SCHEDULE.EXPRESSION,
-                                EXECUTION_SCHEDULE.CONTIGUOUS,
-                                EXECUTION_SCHEDULE.START_TIME_MS,
-                                EXECUTION_SCHEDULE.END_TIME_MS,
-                                EXECUTION_SCHEDULE.DOC_TYPE,
-                                EXECUTION_SCHEDULE.DOC_UUID,
-                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID,
-                                EXECUTION_SCHEDULE.UUID)
-                        .from(EXECUTION_SCHEDULE)
-                        .where(conditions)
-                        .fetchOptional())
-                .map(this::recordToExecutionSchedule);
-    }
 
     @Override
     public Optional<ExecutionSchedule> fetchScheduleByUuid(final String uuid) {
@@ -368,8 +344,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                 .conditions(Optional.of(EXECUTION_SCHEDULE.UUID.eq(uuid)));
 
         return JooqUtil.contextResult(analyticsDbConnProvider, context -> context
-                        .select(EXECUTION_SCHEDULE.ID,
-                                EXECUTION_SCHEDULE.NAME,
+                        .select(EXECUTION_SCHEDULE.NAME,
                                 EXECUTION_SCHEDULE.ENABLED,
                                 EXECUTION_SCHEDULE.NODE_NAME,
                                 EXECUTION_SCHEDULE.SCHEDULE_TYPE,
@@ -390,8 +365,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
     @Override
     public List<ExecutionSchedule> fetchSchedulesByRunAsUser(final String userUuid) {
         return JooqUtil.contextResult(analyticsDbConnProvider, context -> context
-                        .select(EXECUTION_SCHEDULE.ID,
-                                EXECUTION_SCHEDULE.NAME,
+                        .select(EXECUTION_SCHEDULE.NAME,
                                 EXECUTION_SCHEDULE.ENABLED,
                                 EXECUTION_SCHEDULE.NODE_NAME,
                                 EXECUTION_SCHEDULE.SCHEDULE_TYPE,
@@ -472,89 +446,50 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
     public ExecutionSchedule updateExecutionSchedule(final ExecutionSchedule executionSchedule) {
         final UserRef runAsUser = checkRunAs(executionSchedule);
 
-        final String uuid = executionSchedule.getUuid() == null
-                ? UUID.randomUUID().toString()
-                : executionSchedule.getUuid();
-
-        if (executionSchedule.getUuid() == null) {
-            LOGGER.info("Updating execution schedule {} with uuid {}", executionSchedule, uuid);
-            JooqUtil.context(analyticsDbConnProvider, context -> context
-                    .update(EXECUTION_SCHEDULE)
-                    .set(EXECUTION_SCHEDULE.NAME, executionSchedule.getName())
-                    .set(EXECUTION_SCHEDULE.ENABLED, executionSchedule.isEnabled())
-                    .set(EXECUTION_SCHEDULE.NODE_NAME, executionSchedule.getNodeName())
-                    .set(EXECUTION_SCHEDULE.SCHEDULE_TYPE,
-                            executionSchedule.getSchedule().getType().name())
-                    .set(EXECUTION_SCHEDULE.EXPRESSION,
-                            executionSchedule.getSchedule().getExpression())
-                    .set(EXECUTION_SCHEDULE.CONTIGUOUS, executionSchedule.isContiguous())
-                    .set(EXECUTION_SCHEDULE.START_TIME_MS,
-                            executionSchedule.getScheduleBounds() == null
-                                    ? null
-                                    : executionSchedule.getScheduleBounds()
-                                            .getStartTimeMs())
-                    .set(EXECUTION_SCHEDULE.END_TIME_MS,
-                            executionSchedule.getScheduleBounds() == null
-                                    ? null
-                                    : executionSchedule.getScheduleBounds()
-                                            .getEndTimeMs())
-                    .set(EXECUTION_SCHEDULE.DOC_TYPE, executionSchedule.getOwningDoc().getType())
-                    .set(EXECUTION_SCHEDULE.DOC_UUID, executionSchedule.getOwningDoc().getUuid())
-                    .set(EXECUTION_SCHEDULE.RUN_AS_USER_UUID, runAsUser.getUuid())
-                    .set(EXECUTION_SCHEDULE.UUID, uuid)
-                    .where(EXECUTION_SCHEDULE.ID.eq(executionSchedule.getId()))
-                    .execute());
-        } else {
-            JooqUtil.context(analyticsDbConnProvider, context -> context
-                    .update(EXECUTION_SCHEDULE)
-                    .set(EXECUTION_SCHEDULE.NAME, executionSchedule.getName())
-                    .set(EXECUTION_SCHEDULE.ENABLED, executionSchedule.isEnabled())
-                    .set(EXECUTION_SCHEDULE.NODE_NAME, executionSchedule.getNodeName())
-                    .set(EXECUTION_SCHEDULE.SCHEDULE_TYPE,
-                            executionSchedule.getSchedule().getType().name())
-                    .set(EXECUTION_SCHEDULE.EXPRESSION,
-                            executionSchedule.getSchedule().getExpression())
-                    .set(EXECUTION_SCHEDULE.CONTIGUOUS, executionSchedule.isContiguous())
-                    .set(EXECUTION_SCHEDULE.START_TIME_MS,
-                            executionSchedule.getScheduleBounds() == null
-                                    ? null
-                                    : executionSchedule.getScheduleBounds()
-                                            .getStartTimeMs())
-                    .set(EXECUTION_SCHEDULE.END_TIME_MS,
-                            executionSchedule.getScheduleBounds() == null
-                                    ? null
-                                    : executionSchedule.getScheduleBounds()
-                                            .getEndTimeMs())
-                    .set(EXECUTION_SCHEDULE.DOC_TYPE, executionSchedule.getOwningDoc().getType())
-                    .set(EXECUTION_SCHEDULE.DOC_UUID, executionSchedule.getOwningDoc().getUuid())
-                    .set(EXECUTION_SCHEDULE.RUN_AS_USER_UUID, runAsUser.getUuid())
-                    .where(EXECUTION_SCHEDULE.UUID.eq(executionSchedule.getUuid()))
-                    .execute());
-        }
-        return fetchScheduleByUuid(uuid).orElse(null);
+        JooqUtil.context(analyticsDbConnProvider, context -> context
+                .update(EXECUTION_SCHEDULE)
+                .set(EXECUTION_SCHEDULE.NAME, executionSchedule.getName())
+                .set(EXECUTION_SCHEDULE.ENABLED, executionSchedule.isEnabled())
+                .set(EXECUTION_SCHEDULE.NODE_NAME, executionSchedule.getNodeName())
+                .set(EXECUTION_SCHEDULE.SCHEDULE_TYPE,
+                        executionSchedule.getSchedule().getType().name())
+                .set(EXECUTION_SCHEDULE.EXPRESSION,
+                        executionSchedule.getSchedule().getExpression())
+                .set(EXECUTION_SCHEDULE.CONTIGUOUS, executionSchedule.isContiguous())
+                .set(EXECUTION_SCHEDULE.START_TIME_MS,
+                        executionSchedule.getScheduleBounds() == null
+                                ? null
+                                : executionSchedule.getScheduleBounds()
+                                        .getStartTimeMs())
+                .set(EXECUTION_SCHEDULE.END_TIME_MS,
+                        executionSchedule.getScheduleBounds() == null
+                                ? null
+                                : executionSchedule.getScheduleBounds()
+                                        .getEndTimeMs())
+                .set(EXECUTION_SCHEDULE.DOC_TYPE, executionSchedule.getOwningDoc().getType())
+                .set(EXECUTION_SCHEDULE.DOC_UUID, executionSchedule.getOwningDoc().getUuid())
+                .set(EXECUTION_SCHEDULE.RUN_AS_USER_UUID, runAsUser.getUuid())
+                .where(EXECUTION_SCHEDULE.UUID.eq(executionSchedule.getUuid()))
+                .execute());
+        
+        return fetchScheduleByUuid(executionSchedule.getUuid()).orElse(null);
     }
 
     @Override
     public Boolean deleteExecutionSchedule(final ExecutionSchedule executionSchedule) {
         JooqUtil.context(analyticsDbConnProvider, context -> context
                 .deleteFrom(EXECUTION_HISTORY)
-                .where(executionSchedule.getUuid() == null
-                        ? EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_ID.eq(executionSchedule.getId())
-                        : EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID.eq(executionSchedule.getUuid())
-                                .or(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID.isNull()
-                                        .and(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_ID.eq(executionSchedule.getId()))))
+                .where(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID.eq(executionSchedule.getUuid()))
                 .execute());
 
         JooqUtil.context(analyticsDbConnProvider, context -> context
                 .deleteFrom(EXECUTION_TRACKER)
-                .where(EXECUTION_TRACKER.FK_EXECUTION_SCHEDULE_ID.eq(executionSchedule.getId()))
+                .where(EXECUTION_TRACKER.FK_EXECUTION_SCHEDULE_UUID.eq(executionSchedule.getUuid()))
                 .execute());
 
         JooqUtil.context(analyticsDbConnProvider, context -> context
                 .deleteFrom(EXECUTION_SCHEDULE)
-                .where(executionSchedule.getUuid() == null
-                        ? EXECUTION_SCHEDULE.ID.eq(executionSchedule.getId())
-                        : EXECUTION_SCHEDULE.UUID.eq(executionSchedule.getUuid()))
+                .where(EXECUTION_SCHEDULE.UUID.eq(executionSchedule.getUuid()))
                 .execute());
 
 
@@ -579,7 +514,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                                 EXECUTION_TRACKER.LAST_EFFECTIVE_EXECUTION_TIME_MS,
                                 EXECUTION_TRACKER.NEXT_EFFECTIVE_EXECUTION_TIME_MS)
                         .from(EXECUTION_TRACKER)
-                        .where(EXECUTION_TRACKER.FK_EXECUTION_SCHEDULE_ID.eq(schedule.getId()))
+                        .where(EXECUTION_TRACKER.FK_EXECUTION_SCHEDULE_UUID.eq(schedule.getUuid()))
                         .fetchOptional())
                 .map(record -> new ExecutionTracker(
                         record.get(EXECUTION_TRACKER.ACTUAL_EXECUTION_TIME_MS),
@@ -592,12 +527,12 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
         JooqUtil.context(analyticsDbConnProvider, context -> context
                 .insertInto(EXECUTION_TRACKER)
                 .columns(
-                        EXECUTION_TRACKER.FK_EXECUTION_SCHEDULE_ID,
+                        EXECUTION_TRACKER.FK_EXECUTION_SCHEDULE_UUID,
                         EXECUTION_TRACKER.ACTUAL_EXECUTION_TIME_MS,
                         EXECUTION_TRACKER.LAST_EFFECTIVE_EXECUTION_TIME_MS,
                         EXECUTION_TRACKER.NEXT_EFFECTIVE_EXECUTION_TIME_MS)
                 .values(
-                        executionSchedule.getId(),
+                        executionSchedule.getUuid(),
                         executionTracker.getActualExecutionTimeMs(),
                         executionTracker.getLastEffectiveExecutionTimeMs(),
                         executionTracker.getNextEffectiveExecutionTimeMs())
@@ -614,7 +549,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                         executionTracker.getLastEffectiveExecutionTimeMs())
                 .set(EXECUTION_TRACKER.NEXT_EFFECTIVE_EXECUTION_TIME_MS,
                         executionTracker.getNextEffectiveExecutionTimeMs())
-                .where(EXECUTION_TRACKER.FK_EXECUTION_SCHEDULE_ID.eq(executionSchedule.getId()))
+                .where(EXECUTION_TRACKER.FK_EXECUTION_SCHEDULE_UUID.eq(executionSchedule.getUuid()))
                 .execute());
     }
 
@@ -622,21 +557,9 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
     public ResultPage<ExecutionHistory> fetchExecutionHistory(final ExecutionHistoryRequest request) {
         // Only filter on the user in the DB as we don't have a jooq/sql version of the
         // QuickFilterPredicateFactory
-        final Collection<Condition> conditions;
-        if (request.getExecutionSchedule().getUuid() != null) {
-            //Logic: FK_UUID == sched_uuid OR (FK_UUID == null AND FK_ID == sched_id)
-            conditions = JooqUtil.conditions(
-                Optional.of(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID.eq(request.getExecutionSchedule().getUuid())
-                    .or(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID.isNull()
-                        .and(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_ID.eq(request.getExecutionSchedule().getId()))
-                    )
-                )
-            );
-        } else {
-            conditions = JooqUtil.conditions(
-                    Optional.ofNullable(request.getExecutionSchedule().getId())
-                            .map(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_ID::eq));
-        }
+        final Collection<Condition> conditions = JooqUtil.conditions(
+                Optional.ofNullable(request.getExecutionSchedule().getUuid())
+                        .map(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID::eq));
         final Collection<OrderField<?>> orderFields = createExecutionHistoryOrderFields(request);
         final Integer offset = JooqUtil.getOffset(request.getPageRequest());
         final Integer limit = JooqUtil.getLimit(request.getPageRequest(), true);
@@ -648,7 +571,6 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                                 EXECUTION_HISTORY.EFFECTIVE_EXECUTION_TIME_MS,
                                 EXECUTION_HISTORY.STATUS,
                                 EXECUTION_HISTORY.MESSAGE,
-                                EXECUTION_SCHEDULE.ID,
                                 EXECUTION_SCHEDULE.NAME,
                                 EXECUTION_SCHEDULE.ENABLED,
                                 EXECUTION_SCHEDULE.NODE_NAME,
@@ -663,7 +585,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                                 EXECUTION_SCHEDULE.UUID)
                         .from(EXECUTION_HISTORY)
                         .join(EXECUTION_SCHEDULE)
-                        .on(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_ID.eq(EXECUTION_SCHEDULE.ID))
+                        .on(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID.eq(EXECUTION_SCHEDULE.UUID))
                         .where(conditions)
                         .orderBy(orderFields)
                         .limit(offset, limit)
@@ -676,14 +598,12 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
     public void addExecutionHistory(final ExecutionHistory executionHistory) {
         JooqUtil.context(analyticsDbConnProvider, context -> context
                 .insertInto(EXECUTION_HISTORY)
-                .columns(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_ID,
-                        EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID,
+                .columns(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID,
                         EXECUTION_HISTORY.EXECUTION_TIME_MS,
                         EXECUTION_HISTORY.EFFECTIVE_EXECUTION_TIME_MS,
                         EXECUTION_HISTORY.STATUS,
                         EXECUTION_HISTORY.MESSAGE)
-                .values(executionHistory.getExecutionSchedule().getId(),
-                        executionHistory.getExecutionSchedule().getUuid(),
+                .values(executionHistory.getExecutionSchedule().getUuid(),
                         executionHistory.getExecutionTimeMs(),
                         executionHistory.getEffectiveExecutionTimeMs(),
                         executionHistory.getStatus(),
@@ -697,19 +617,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
     }
 
     private ExecutionSchedule recordToExecutionSchedule(final Record record) {
-        String uuid = record.get(EXECUTION_SCHEDULE.UUID);
-        if (uuid == null) {
-            uuid = UUID.randomUUID().toString();
-            final String finaluuid = uuid;
-            JooqUtil.context(analyticsDbConnProvider, context -> context
-                    .update(EXECUTION_SCHEDULE)
-                    .set(EXECUTION_SCHEDULE.UUID, finaluuid)
-                    .where(EXECUTION_SCHEDULE.ID.eq(record.get(EXECUTION_SCHEDULE.ID)))
-                    .execute());
-            LOGGER.debug("Assigned new UUID {} to ExecutionSchedule {}", uuid,
-                    record.get(EXECUTION_SCHEDULE.ID));
-        }
-
+        final String uuid = record.get(EXECUTION_SCHEDULE.UUID);
         final ScheduleType scheduleType = ScheduleType.valueOf(record.get(EXECUTION_SCHEDULE.SCHEDULE_TYPE));
         final Schedule schedule = new Schedule(scheduleType, record.get(EXECUTION_SCHEDULE.EXPRESSION));
         final ScheduleBounds scheduleBounds = new ScheduleBounds(
@@ -722,7 +630,6 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
 
         return ExecutionSchedule
                 .builder()
-                .id(record.get(EXECUTION_SCHEDULE.ID))
                 .name(record.get(EXECUTION_SCHEDULE.NAME))
                 .enabled(record.get(EXECUTION_SCHEDULE.ENABLED))
                 .nodeName(record.get(EXECUTION_SCHEDULE.NODE_NAME))
@@ -740,19 +647,6 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
 
     private ExecutionHistory recordToExecutionHistory(final Record record) {
         final ExecutionSchedule executionSchedule = recordToExecutionSchedule(record);
-
-        String fkExecutionScheduleUuid = record.get(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID);
-        if (fkExecutionScheduleUuid == null) {
-            fkExecutionScheduleUuid = executionSchedule.getUuid();
-            final String finalUuid = fkExecutionScheduleUuid;
-            JooqUtil.context(analyticsDbConnProvider, context -> context
-                    .update(EXECUTION_HISTORY)
-                    .set(EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_UUID, finalUuid)
-                    .where(EXECUTION_HISTORY.ID.eq(record.get(EXECUTION_HISTORY.ID)))
-                    .execute());
-            LOGGER.debug("Assigned FK UUID {} to ExecutionHistory {}", finalUuid,
-                    record.get(EXECUTION_HISTORY.ID));
-        }
 
         return ExecutionHistory
                 .builder()

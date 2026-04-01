@@ -24,6 +24,8 @@ import stroom.docrefinfo.api.DocRefInfoService;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.importexport.api.ImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.api.NonExplorerDocRefProvider;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
@@ -65,13 +67,12 @@ public class ExecutionScheduleImportExportHandlerImpl implements ImportExportAct
         final ResultPage<ExecutionSchedule> page = executionScheduleDao.fetchExecutionSchedule(request);
         //Currently
         return page.getValues().stream()
-                .filter(s -> Objects.equals(s.getId(), importedSchedule.getId()))
+                .filter(s -> Objects.equals(s.getUuid(), importedSchedule.getUuid()))
                 .findFirst();
     }
 
     private Optional<ExecutionSchedule> findExistingSchedule(final DocRef pseudoDocRef) {
-        final int id = Integer.parseInt(pseudoDocRef.getUuid());
-        return executionScheduleDao.fetchScheduleById(id);
+        return executionScheduleDao.fetchScheduleByUuid(pseudoDocRef.getUuid());
     }
 
     // ---------------------------------------------------------------------
@@ -80,19 +81,19 @@ public class ExecutionScheduleImportExportHandlerImpl implements ImportExportAct
 
     @Override
     public DocRef importDocument(final DocRef pseudoDocRef,
-            final Map<String, byte[]> dataMap,
+            final ImportExportDocument importExportDocument,
             final ImportState importState,
             final ImportSettings importSettings) {
         //Currently does not use the docref details provided - awaiting UUID update
 
-        final byte[] bytes = dataMap.get("meta");
-        if (bytes == null) {
+        final ImportExportAsset importExportAsset = importExportDocument.getExtAsset("meta");
+        if (importExportAsset == null) {
             importState.addMessage(Severity.ERROR, "No meta data found for " + pseudoDocRef);
             return pseudoDocRef; // return un-imported docref
         }
 
         try {
-            final ExecutionSchedule importedSchedule = delegate.read(bytes);
+            final ExecutionSchedule importedSchedule = delegate.read(importExportAsset);
 
             if (importedSchedule != null) {
                 final DocRef owningDoc = importedSchedule.getOwningDoc();
@@ -111,7 +112,7 @@ public class ExecutionScheduleImportExportHandlerImpl implements ImportExportAct
                         final ExecutionSchedule existingSchedule = existingScheduleOpt.get();
 
                         final ExecutionSchedule updatedSchedule = importedSchedule.copy()
-                                .id(existingSchedule.getId()) // preserve local ID
+                                .uuid(existingSchedule.getUuid()) // preserve local UUID
                                 .build();
                         executionScheduleDao.updateExecutionSchedule(updatedSchedule);
                     } else {
@@ -127,23 +128,21 @@ public class ExecutionScheduleImportExportHandlerImpl implements ImportExportAct
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
+    public ImportExportDocument exportDocument(final DocRef docRef,
             final boolean omitAuditFields,
             final List<Message> messageList) {
         try {
-            final int id = Integer.parseInt(docRef.getUuid());
-            final Optional<ExecutionSchedule> scheduleOpt = executionScheduleDao.fetchScheduleById(id);
+            final Optional<ExecutionSchedule> scheduleOpt = executionScheduleDao.fetchScheduleByUuid(docRef.getUuid());
             if (scheduleOpt.isPresent()) {
                 final DocRef owningDoc = docRefInfoService.decorate(scheduleOpt.get().getOwningDoc());
                 final ExecutionSchedule schedule = scheduleOpt.get().copy().owningDoc(owningDoc).build();
-                final Map<String, byte[]> data = delegate.write(schedule);
-                return data;
+                return delegate.write(schedule);
             }
-        } catch (final NumberFormatException | IOException e) {
+        } catch (final IOException e) {
             messageList.add(new Message(Severity.ERROR,
                     "Unable to export schedule " + docRef + ": " + e.getMessage()));
         }
-        return Map.of();
+        return null;
     }
 
     @Override
@@ -151,7 +150,7 @@ public class ExecutionScheduleImportExportHandlerImpl implements ImportExportAct
         final ExecutionScheduleRequest request = ExecutionScheduleRequest.builder().build();
         final ResultPage<ExecutionSchedule> page = executionScheduleDao.fetchExecutionSchedule(request);
         return page.getValues().stream()
-                .map(s -> new DocRef(ExecutionSchedule.ENTITY_TYPE, String.valueOf(s.getId()), s.getName()))
+                .map(s -> new DocRef(ExecutionSchedule.ENTITY_TYPE, s.getUuid(), s.getName()))
                 .collect(Collectors.toSet());
     }
 
@@ -198,12 +197,15 @@ public class ExecutionScheduleImportExportHandlerImpl implements ImportExportAct
     // ---------------------------------------------------------------------
 
     @Override
-    public DocRef getOwnerDocument(final DocRef docRef, final Map<String, byte[]> dataMap) {
-        if (dataMap != null) {
+    public DocRef getOwnerDocument(final DocRef docRef, final ImportExportDocument importExportDocument) {
+        if (importExportDocument != null) {
             try {
-                final ExecutionSchedule schedule = delegate.read(dataMap);
-                if (schedule != null) {
-                    return schedule.getOwningDoc();
+                final ImportExportAsset asset = importExportDocument.getExtAsset("meta");
+                if (asset != null) {
+                    final ExecutionSchedule schedule = delegate.read(asset);
+                    if (schedule != null) {
+                        return schedule.getOwningDoc();
+                    }
                 }
             } catch (final IOException e) {
                 throw new RuntimeException("Error reading execution schedule meta data", e);

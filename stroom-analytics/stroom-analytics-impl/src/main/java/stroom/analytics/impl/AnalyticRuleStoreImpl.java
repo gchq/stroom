@@ -322,7 +322,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
                 resultPage.getValues().forEach(schedule -> {
                     docRefs.add(new DocRef(ExecutionSchedule.ENTITY_TYPE,
-                            String.valueOf(schedule.getId()), schedule.getName()));
+                            schedule.getUuid(), schedule.getName()));
                 });
             }
             return docRefs;

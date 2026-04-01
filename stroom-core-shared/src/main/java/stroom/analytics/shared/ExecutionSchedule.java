@@ -30,7 +30,6 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({
-        "id",
         "name",
         "enabled",
         "nodeName",
@@ -45,8 +44,6 @@ public class ExecutionSchedule {
 
     public static final String ENTITY_TYPE = "ExecutionSchedule";
 
-    @JsonProperty
-    private final Integer id;
     @JsonProperty
     private final String name;
     @JsonProperty
@@ -67,8 +64,7 @@ public class ExecutionSchedule {
     private final String uuid;
 
     @JsonCreator
-    public ExecutionSchedule(@JsonProperty("id") final Integer id,
-                             @JsonProperty("name") final String name,
+    public ExecutionSchedule(@JsonProperty("name") final String name,
                              @JsonProperty("enabled") final boolean enabled,
                              @JsonProperty("nodeName") final String nodeName,
                              @JsonProperty("schedule") final Schedule schedule,
@@ -77,7 +73,6 @@ public class ExecutionSchedule {
                              @JsonProperty("owningDoc") final DocRef owningDoc,
                              @JsonProperty("runAsUser") final UserRef runAsUser,
                              @JsonProperty("uuid") final String uuid) {
-        this.id = id;
         this.name = name;
         this.enabled = enabled;
         this.nodeName = nodeName;
@@ -87,10 +82,6 @@ public class ExecutionSchedule {
         this.owningDoc = owningDoc;
         this.runAsUser = runAsUser;
         this.uuid = uuid;
-    }
-
-    public Integer getId() {
-        return id;
     }
 
     public String getName() {
@@ -143,14 +134,13 @@ public class ExecutionSchedule {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(uuid);
     }
 
     @Override
     public String toString() {
         return "ExecutionSchedule{" +
-               "id=" + id +
-               ", name=" + name +
+               "name=" + name +
                ", enabled=" + enabled +
                ", nodeName='" + nodeName + '\'' +
                ", schedule=" + schedule +
@@ -176,7 +166,6 @@ public class ExecutionSchedule {
 
     public static class Builder {
 
-        private Integer id;
         private String name;
         private boolean enabled;
         private String nodeName;
@@ -191,7 +180,6 @@ public class ExecutionSchedule {
         }
 
         private Builder(final ExecutionSchedule executionSchedule) {
-            this.id = executionSchedule.id;
             this.name = executionSchedule.name;
             this.enabled = executionSchedule.enabled;
             this.nodeName = executionSchedule.nodeName;
@@ -203,11 +191,6 @@ public class ExecutionSchedule {
             this.uuid = executionSchedule.uuid;
         }
 
-
-        public Builder id(final Integer id) {
-            this.id = id;
-            return this;
-        }
 
         public Builder name(final String name) {
             this.name = name;
@@ -256,7 +239,6 @@ public class ExecutionSchedule {
 
         public ExecutionSchedule build() {
             return new ExecutionSchedule(
-                    id,
                     name,
                     enabled,
                     nodeName,
