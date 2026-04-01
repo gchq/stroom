@@ -43,8 +43,6 @@ import stroom.security.user.api.UserRefLookup;
 import stroom.util.scheduler.CronTrigger;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -72,7 +70,6 @@ import static stroom.analytics.impl.db.jooq.tables.ExecutionSchedule.EXECUTION_S
 import static stroom.analytics.impl.db.jooq.tables.ExecutionTracker.EXECUTION_TRACKER;
 
 public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExecutionScheduleDaoImpl.class);
 
     private final AnalyticsDbConnProvider analyticsDbConnProvider;
     private final Provider<UserRefLookup> userRefLookupProvider;
@@ -337,8 +334,6 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
         return ResultPage.createCriterialBasedList(list.stream().skip(offset).limit(limit).toList(), request);
     }
 
-
-
     @Override
     public Optional<ExecutionSchedule> fetchScheduleByUuid(final String uuid) {
         final Collection<Condition> conditions = JooqUtil
@@ -390,6 +385,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
 
         final Optional<String> optionalUuid = JooqUtil.contextResult(analyticsDbConnProvider, context -> context
                         .insertInto(EXECUTION_SCHEDULE,
+                                EXECUTION_SCHEDULE.UUID,
                                 EXECUTION_SCHEDULE.NAME,
                                 EXECUTION_SCHEDULE.ENABLED,
                                 EXECUTION_SCHEDULE.NODE_NAME,
@@ -400,9 +396,11 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                                 EXECUTION_SCHEDULE.END_TIME_MS,
                                 EXECUTION_SCHEDULE.DOC_TYPE,
                                 EXECUTION_SCHEDULE.DOC_UUID,
-                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID,
-                                EXECUTION_SCHEDULE.UUID)
-                        .values(executionSchedule.getName(),
+                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID)
+                        .values(executionSchedule.getUuid() == null
+                                        ? UUID.randomUUID().toString()
+                                        : executionSchedule.getUuid(),
+                                executionSchedule.getName(),
                                 executionSchedule.isEnabled(),
                                 executionSchedule.getNodeName(),
                                 executionSchedule.getSchedule().getType().name(),
@@ -416,10 +414,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                                         : executionSchedule.getScheduleBounds().getEndTimeMs(),
                                 executionSchedule.getOwningDoc().getType(),
                                 executionSchedule.getOwningDoc().getUuid(),
-                                runAsUser.getUuid(),
-                                executionSchedule.getUuid() == null
-                                        ? UUID.randomUUID().toString()
-                                        : executionSchedule.getUuid())
+                                runAsUser.getUuid())
                         .returning(EXECUTION_SCHEDULE.UUID)
                         .fetchOptional())
                 .map(ExecutionScheduleRecord::getUuid);
@@ -472,7 +467,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                 .set(EXECUTION_SCHEDULE.RUN_AS_USER_UUID, runAsUser.getUuid())
                 .where(EXECUTION_SCHEDULE.UUID.eq(executionSchedule.getUuid()))
                 .execute());
-        
+
         return fetchScheduleByUuid(executionSchedule.getUuid()).orElse(null);
     }
 
@@ -631,6 +626,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
 
         return ExecutionSchedule
                 .builder()
+                .uuid(uuid)
                 .name(record.get(EXECUTION_SCHEDULE.NAME))
                 .enabled(record.get(EXECUTION_SCHEDULE.ENABLED))
                 .nodeName(record.get(EXECUTION_SCHEDULE.NODE_NAME))
@@ -642,13 +638,11 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                         .get()
                         .getByUuid(record.get(EXECUTION_SCHEDULE.RUN_AS_USER_UUID), FindUserContext.RUN_AS)
                         .orElse(null))
-                .uuid(uuid)
                 .build();
     }
 
     private ExecutionHistory recordToExecutionHistory(final Record record) {
         final ExecutionSchedule executionSchedule = recordToExecutionSchedule(record);
-
         return ExecutionHistory
                 .builder()
                 .id(record.get(EXECUTION_HISTORY.ID))

@@ -33,33 +33,17 @@ public class ExecutionHistoryRecord extends UpdatableRecordImpl<ExecutionHistory
     }
 
     /**
-     * Setter for
-     * <code>stroom.execution_history.fk_execution_schedule_id</code>.
-     */
-    public void setFkExecutionScheduleId(Integer value) {
-        set(1, value);
-    }
-
-    /**
-     * Getter for
-     * <code>stroom.execution_history.fk_execution_schedule_id</code>.
-     */
-    public Integer getFkExecutionScheduleId() {
-        return (Integer) get(1);
-    }
-
-    /**
      * Setter for <code>stroom.execution_history.execution_time_ms</code>.
      */
     public void setExecutionTimeMs(Long value) {
-        set(2, value);
+        set(1, value);
     }
 
     /**
      * Getter for <code>stroom.execution_history.execution_time_ms</code>.
      */
     public Long getExecutionTimeMs() {
-        return (Long) get(2);
+        return (Long) get(1);
     }
 
     /**
@@ -67,7 +51,7 @@ public class ExecutionHistoryRecord extends UpdatableRecordImpl<ExecutionHistory
      * <code>stroom.execution_history.effective_execution_time_ms</code>.
      */
     public void setEffectiveExecutionTimeMs(Long value) {
-        set(3, value);
+        set(2, value);
     }
 
     /**
@@ -75,35 +59,35 @@ public class ExecutionHistoryRecord extends UpdatableRecordImpl<ExecutionHistory
      * <code>stroom.execution_history.effective_execution_time_ms</code>.
      */
     public Long getEffectiveExecutionTimeMs() {
-        return (Long) get(3);
+        return (Long) get(2);
     }
 
     /**
      * Setter for <code>stroom.execution_history.status</code>.
      */
     public void setStatus(String value) {
-        set(4, value);
+        set(3, value);
     }
 
     /**
      * Getter for <code>stroom.execution_history.status</code>.
      */
     public String getStatus() {
-        return (String) get(4);
+        return (String) get(3);
     }
 
     /**
      * Setter for <code>stroom.execution_history.message</code>.
      */
     public void setMessage(String value) {
-        set(5, value);
+        set(4, value);
     }
 
     /**
      * Getter for <code>stroom.execution_history.message</code>.
      */
     public String getMessage() {
-        return (String) get(5);
+        return (String) get(4);
     }
 
     /**
@@ -111,7 +95,7 @@ public class ExecutionHistoryRecord extends UpdatableRecordImpl<ExecutionHistory
      * <code>stroom.execution_history.fk_execution_schedule_uuid</code>.
      */
     public void setFkExecutionScheduleUuid(String value) {
-        set(6, value);
+        set(5, value);
     }
 
     /**
@@ -119,7 +103,7 @@ public class ExecutionHistoryRecord extends UpdatableRecordImpl<ExecutionHistory
      * <code>stroom.execution_history.fk_execution_schedule_uuid</code>.
      */
     public String getFkExecutionScheduleUuid() {
-        return (String) get(6);
+        return (String) get(5);
     }
 
     // -------------------------------------------------------------------------
@@ -145,11 +129,10 @@ public class ExecutionHistoryRecord extends UpdatableRecordImpl<ExecutionHistory
     /**
      * Create a detached, initialised ExecutionHistoryRecord
      */
-    public ExecutionHistoryRecord(Long id, Integer fkExecutionScheduleId, Long executionTimeMs, Long effectiveExecutionTimeMs, String status, String message, String fkExecutionScheduleUuid) {
+    public ExecutionHistoryRecord(Long id, Long executionTimeMs, Long effectiveExecutionTimeMs, String status, String message, String fkExecutionScheduleUuid) {
         super(ExecutionHistory.EXECUTION_HISTORY);
 
         setId(id);
-        setFkExecutionScheduleId(fkExecutionScheduleId);
         setExecutionTimeMs(executionTimeMs);
         setEffectiveExecutionTimeMs(effectiveExecutionTimeMs);
         setStatus(status);

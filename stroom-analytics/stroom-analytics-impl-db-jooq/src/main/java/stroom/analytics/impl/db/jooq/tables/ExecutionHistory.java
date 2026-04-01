@@ -12,7 +12,6 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
@@ -28,7 +27,6 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
-import stroom.analytics.impl.db.jooq.Indexes;
 import stroom.analytics.impl.db.jooq.Keys;
 import stroom.analytics.impl.db.jooq.Stroom;
 import stroom.analytics.impl.db.jooq.tables.records.ExecutionHistoryRecord;
@@ -59,12 +57,6 @@ public class ExecutionHistory extends TableImpl<ExecutionHistoryRecord> {
      * The column <code>stroom.execution_history.id</code>.
      */
     public final TableField<ExecutionHistoryRecord, Long> ID = createField(DSL.name("id"), SQLDataType.BIGINT.nullable(false).identity(true), this, "");
-
-    /**
-     * The column
-     * <code>stroom.execution_history.fk_execution_schedule_id</code>.
-     */
-    public final TableField<ExecutionHistoryRecord, Integer> FK_EXECUTION_SCHEDULE_ID = createField(DSL.name("fk_execution_schedule_id"), SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
      * The column <code>stroom.execution_history.execution_time_ms</code>.
@@ -125,11 +117,6 @@ public class ExecutionHistory extends TableImpl<ExecutionHistoryRecord> {
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
-    }
-
-    @Override
-    public List<Index> getIndexes() {
-        return Arrays.asList(Indexes.EXECUTION_HISTORY_EXECUTION_HISTORY_EXECUTION_SCHEDULE_ID);
     }
 
     @Override

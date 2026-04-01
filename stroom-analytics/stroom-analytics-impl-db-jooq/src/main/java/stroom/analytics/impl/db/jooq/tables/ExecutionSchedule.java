@@ -10,7 +10,6 @@ import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.PlainSQL;
@@ -53,11 +52,6 @@ public class ExecutionSchedule extends TableImpl<ExecutionScheduleRecord> {
     public Class<ExecutionScheduleRecord> getRecordType() {
         return ExecutionScheduleRecord.class;
     }
-
-    /**
-     * The column <code>stroom.execution_schedule.id</code>.
-     */
-    public final TableField<ExecutionScheduleRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
      * The column <code>stroom.execution_schedule.name</code>.
@@ -156,16 +150,6 @@ public class ExecutionSchedule extends TableImpl<ExecutionScheduleRecord> {
     @Override
     public List<Index> getIndexes() {
         return Arrays.asList(Indexes.EXECUTION_SCHEDULE_EXECUTION_SCHEDULE_DOC_IDX, Indexes.EXECUTION_SCHEDULE_EXECUTION_SCHEDULE_ENABLED_IDX);
-    }
-
-    @Override
-    public Identity<ExecutionScheduleRecord, Integer> getIdentity() {
-        return (Identity<ExecutionScheduleRecord, Integer>) super.getIdentity();
-    }
-
-    @Override
-    public UniqueKey<ExecutionScheduleRecord> getPrimaryKey() {
-        return Keys.KEY_EXECUTION_SCHEDULE_PRIMARY;
     }
 
     @Override

@@ -30,6 +30,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({
+        "uuid",
         "name",
         "enabled",
         "nodeName",
@@ -37,13 +38,14 @@ import java.util.Objects;
         "contiguous",
         "scheduleBounds",
         "owningDoc",
-        "runAsUser",
-        "uuid"
+        "runAsUser"
 })
 public class ExecutionSchedule {
 
     public static final String ENTITY_TYPE = "ExecutionSchedule";
 
+    @JsonProperty
+    private final String uuid;
     @JsonProperty
     private final String name;
     @JsonProperty
@@ -60,19 +62,18 @@ public class ExecutionSchedule {
     private final DocRef owningDoc;
     @JsonProperty
     private final UserRef runAsUser;
-    @JsonProperty
-    private final String uuid;
 
     @JsonCreator
-    public ExecutionSchedule(@JsonProperty("name") final String name,
+    public ExecutionSchedule(@JsonProperty("uuid") final String uuid,
+                             @JsonProperty("name") final String name,
                              @JsonProperty("enabled") final boolean enabled,
                              @JsonProperty("nodeName") final String nodeName,
                              @JsonProperty("schedule") final Schedule schedule,
                              @JsonProperty("contiguous") final boolean contiguous,
                              @JsonProperty("scheduleBounds") final ScheduleBounds scheduleBounds,
                              @JsonProperty("owningDoc") final DocRef owningDoc,
-                             @JsonProperty("runAsUser") final UserRef runAsUser,
-                             @JsonProperty("uuid") final String uuid) {
+                             @JsonProperty("runAsUser") final UserRef runAsUser) {
+        this.uuid = uuid;
         this.name = name;
         this.enabled = enabled;
         this.nodeName = nodeName;
@@ -81,7 +82,10 @@ public class ExecutionSchedule {
         this.scheduleBounds = scheduleBounds;
         this.owningDoc = owningDoc;
         this.runAsUser = runAsUser;
-        this.uuid = uuid;
+    }
+
+    public String getUuid() {
+        return uuid;
     }
 
     public String getName() {
@@ -116,10 +120,6 @@ public class ExecutionSchedule {
         return runAsUser;
     }
 
-    public String getUuid() {
-        return uuid;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -140,7 +140,8 @@ public class ExecutionSchedule {
     @Override
     public String toString() {
         return "ExecutionSchedule{" +
-               "name=" + name +
+               "uuid=" + uuid +
+               ", name=" + name +
                ", enabled=" + enabled +
                ", nodeName='" + nodeName + '\'' +
                ", schedule=" + schedule +
@@ -148,7 +149,6 @@ public class ExecutionSchedule {
                ", scheduleBounds=" + scheduleBounds +
                ", owningDoc=" + owningDoc +
                ", runAsUser=" + runAsUser +
-               ", uuid=" + uuid +
                '}';
     }
 
@@ -166,6 +166,7 @@ public class ExecutionSchedule {
 
     public static class Builder {
 
+        private String uuid;
         private String name;
         private boolean enabled;
         private String nodeName;
@@ -174,12 +175,12 @@ public class ExecutionSchedule {
         private ScheduleBounds scheduleBounds;
         private DocRef owningDoc;
         private UserRef runAsUser;
-        private String uuid;
 
         private Builder() {
         }
 
         private Builder(final ExecutionSchedule executionSchedule) {
+            this.uuid = executionSchedule.uuid;
             this.name = executionSchedule.name;
             this.enabled = executionSchedule.enabled;
             this.nodeName = executionSchedule.nodeName;
@@ -188,9 +189,13 @@ public class ExecutionSchedule {
             this.scheduleBounds = executionSchedule.scheduleBounds;
             this.owningDoc = executionSchedule.owningDoc;
             this.runAsUser = executionSchedule.runAsUser;
-            this.uuid = executionSchedule.uuid;
         }
 
+
+        public Builder uuid(final String uuid) {
+            this.uuid = uuid;
+            return this;
+        }
 
         public Builder name(final String name) {
             this.name = name;
@@ -232,13 +237,9 @@ public class ExecutionSchedule {
             return this;
         }
 
-        public Builder uuid(final String uuid) {
-            this.uuid = uuid;
-            return this;
-        }
-
         public ExecutionSchedule build() {
             return new ExecutionSchedule(
+                    uuid,
                     name,
                     enabled,
                     nodeName,
@@ -246,8 +247,7 @@ public class ExecutionSchedule {
                     contiguous,
                     scheduleBounds,
                     owningDoc,
-                    runAsUser,
-                    uuid);
+                    runAsUser);
         }
     }
 }

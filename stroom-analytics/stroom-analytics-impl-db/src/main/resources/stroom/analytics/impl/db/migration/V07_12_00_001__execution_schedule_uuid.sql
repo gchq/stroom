@@ -98,20 +98,20 @@ BEGIN
 
     -- Drop old id-based foreign keys and id in execution_schedule.
     -- Currently commented out for safety in testing.
-    -- SELECT COUNT(1) INTO object_count FROM information_schema.columns WHERE table_schema = database() AND table_name = 'execution_history' AND column_name = 'fk_execution_schedule_id';
-    -- IF object_count > 0 THEN
-    --    ALTER TABLE execution_history DROP COLUMN fk_execution_schedule_id;
-    -- END IF;
-    --
-    -- SELECT COUNT(1) INTO object_count FROM information_schema.columns WHERE table_schema = database() AND table_name = 'execution_tracker' AND column_name = 'fk_execution_schedule_id';
-    -- IF object_count > 0 THEN
-    --    ALTER TABLE execution_tracker DROP COLUMN fk_execution_schedule_id;
-    -- END IF;
-    --
-    -- SELECT COUNT(1) INTO object_count FROM information_schema.columns WHERE table_schema = database() AND table_name = 'execution_schedule' AND column_name = 'id';
-    -- IF object_count > 0 THEN
-    --    ALTER TABLE execution_schedule DROP COLUMN id;
-    -- END IF;
+    SELECT COUNT(1) INTO object_count FROM information_schema.columns WHERE table_schema = database() AND table_name = 'execution_history' AND column_name = 'fk_execution_schedule_id';
+    IF object_count > 0 THEN
+       ALTER TABLE execution_history DROP COLUMN fk_execution_schedule_id;
+    END IF;
+
+    SELECT COUNT(1) INTO object_count FROM information_schema.columns WHERE table_schema = database() AND table_name = 'execution_tracker' AND column_name = 'fk_execution_schedule_id';
+    IF object_count > 0 THEN
+       ALTER TABLE execution_tracker DROP COLUMN fk_execution_schedule_id;
+    END IF;
+
+    SELECT COUNT(1) INTO object_count FROM information_schema.columns WHERE table_schema = database() AND table_name = 'execution_schedule' AND column_name = 'id';
+    IF object_count > 0 THEN
+       ALTER TABLE execution_schedule DROP COLUMN id;
+    END IF;
 
 END $$
 

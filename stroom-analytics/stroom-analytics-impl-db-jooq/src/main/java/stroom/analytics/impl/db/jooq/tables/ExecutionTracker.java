@@ -54,12 +54,6 @@ public class ExecutionTracker extends TableImpl<ExecutionTrackerRecord> {
 
     /**
      * The column
-     * <code>stroom.execution_tracker.fk_execution_schedule_id</code>.
-     */
-    public final TableField<ExecutionTrackerRecord, Integer> FK_EXECUTION_SCHEDULE_ID = createField(DSL.name("fk_execution_schedule_id"), SQLDataType.INTEGER.nullable(false), this, "");
-
-    /**
-     * The column
      * <code>stroom.execution_tracker.actual_execution_time_ms</code>.
      */
     public final TableField<ExecutionTrackerRecord, Long> ACTUAL_EXECUTION_TIME_MS = createField(DSL.name("actual_execution_time_ms"), SQLDataType.BIGINT.nullable(false), this, "");

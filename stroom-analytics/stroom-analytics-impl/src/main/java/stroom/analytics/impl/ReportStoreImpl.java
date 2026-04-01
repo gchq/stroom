@@ -19,7 +19,6 @@ package stroom.analytics.impl;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleRequest;
-import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.ReportDoc.Builder;
 import stroom.docref.DocRef;

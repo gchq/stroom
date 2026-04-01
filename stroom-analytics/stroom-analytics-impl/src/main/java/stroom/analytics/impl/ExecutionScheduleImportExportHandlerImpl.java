@@ -65,7 +65,6 @@ public class ExecutionScheduleImportExportHandlerImpl implements ImportExportAct
                 .ownerDocRef(owningDoc)
                 .build();
         final ResultPage<ExecutionSchedule> page = executionScheduleDao.fetchExecutionSchedule(request);
-        //Currently
         return page.getValues().stream()
                 .filter(s -> Objects.equals(s.getUuid(), importedSchedule.getUuid()))
                 .findFirst();
@@ -84,8 +83,6 @@ public class ExecutionScheduleImportExportHandlerImpl implements ImportExportAct
             final ImportExportDocument importExportDocument,
             final ImportState importState,
             final ImportSettings importSettings) {
-        //Currently does not use the docref details provided - awaiting UUID update
-
         final ImportExportAsset importExportAsset = importExportDocument.getExtAsset("meta");
         if (importExportAsset == null) {
             importState.addMessage(Severity.ERROR, "No meta data found for " + pseudoDocRef);
