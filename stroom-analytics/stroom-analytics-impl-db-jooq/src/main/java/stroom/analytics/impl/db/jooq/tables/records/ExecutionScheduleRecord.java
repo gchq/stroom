@@ -187,14 +187,14 @@ public class ExecutionScheduleRecord extends UpdatableRecordImpl<ExecutionSchedu
     }
 
     /**
-     * Setter for <code>stroom.execution_schedule.UUID</code>.
+     * Setter for <code>stroom.execution_schedule.uuid</code>.
      */
     public void setUuid(String value) {
         set(12, value);
     }
 
     /**
-     * Getter for <code>stroom.execution_schedule.UUID</code>.
+     * Getter for <code>stroom.execution_schedule.uuid</code>.
      */
     public String getUuid() {
         return (String) get(12);

@@ -12,6 +12,7 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
@@ -27,6 +28,7 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
+import stroom.analytics.impl.db.jooq.Indexes;
 import stroom.analytics.impl.db.jooq.Keys;
 import stroom.analytics.impl.db.jooq.Stroom;
 import stroom.analytics.impl.db.jooq.tables.records.ExecutionHistoryRecord;
@@ -126,6 +128,11 @@ public class ExecutionHistory extends TableImpl<ExecutionHistoryRecord> {
     }
 
     @Override
+    public List<Index> getIndexes() {
+        return Arrays.asList(Indexes.EXECUTION_HISTORY_EXECUTION_HISTORY_EXECUTION_SCHEDULE_ID);
+    }
+
+    @Override
     public Identity<ExecutionHistoryRecord, Long> getIdentity() {
         return (Identity<ExecutionHistoryRecord, Long>) super.getIdentity();
     }
@@ -137,7 +144,7 @@ public class ExecutionHistory extends TableImpl<ExecutionHistoryRecord> {
 
     @Override
     public List<ForeignKey<ExecutionHistoryRecord, ?>> getReferences() {
-        return Arrays.asList(Keys.EXECUTION_HISTORY_EXECUTION_SCHEDULE_ID);
+        return Arrays.asList(Keys.EXECUTION_HISTORY_FK_EXECUTION_SCHEDULE_UUID);
     }
 
     @Override

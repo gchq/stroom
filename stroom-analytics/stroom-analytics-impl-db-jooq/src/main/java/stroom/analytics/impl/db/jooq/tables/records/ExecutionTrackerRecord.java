@@ -82,12 +82,28 @@ public class ExecutionTrackerRecord extends UpdatableRecordImpl<ExecutionTracker
         return (Long) get(3);
     }
 
+    /**
+     * Setter for
+     * <code>stroom.execution_tracker.fk_execution_schedule_uuid</code>.
+     */
+    public void setFkExecutionScheduleUuid(String value) {
+        set(4, value);
+    }
+
+    /**
+     * Getter for
+     * <code>stroom.execution_tracker.fk_execution_schedule_uuid</code>.
+     */
+    public String getFkExecutionScheduleUuid() {
+        return (String) get(4);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
 
     @Override
-    public Record1<Integer> key() {
+    public Record1<String> key() {
         return (Record1) super.key();
     }
 
@@ -105,13 +121,14 @@ public class ExecutionTrackerRecord extends UpdatableRecordImpl<ExecutionTracker
     /**
      * Create a detached, initialised ExecutionTrackerRecord
      */
-    public ExecutionTrackerRecord(Integer fkExecutionScheduleId, Long actualExecutionTimeMs, Long lastEffectiveExecutionTimeMs, Long nextEffectiveExecutionTimeMs) {
+    public ExecutionTrackerRecord(Integer fkExecutionScheduleId, Long actualExecutionTimeMs, Long lastEffectiveExecutionTimeMs, Long nextEffectiveExecutionTimeMs, String fkExecutionScheduleUuid) {
         super(ExecutionTracker.EXECUTION_TRACKER);
 
         setFkExecutionScheduleId(fkExecutionScheduleId);
         setActualExecutionTimeMs(actualExecutionTimeMs);
         setLastEffectiveExecutionTimeMs(lastEffectiveExecutionTimeMs);
         setNextEffectiveExecutionTimeMs(nextEffectiveExecutionTimeMs);
+        setFkExecutionScheduleUuid(fkExecutionScheduleUuid);
         resetChangedOnNotNull();
     }
 }

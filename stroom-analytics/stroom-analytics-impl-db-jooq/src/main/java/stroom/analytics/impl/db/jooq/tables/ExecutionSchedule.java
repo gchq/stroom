@@ -115,9 +115,9 @@ public class ExecutionSchedule extends TableImpl<ExecutionScheduleRecord> {
     public final TableField<ExecutionScheduleRecord, String> RUN_AS_USER_UUID = createField(DSL.name("run_as_user_uuid"), SQLDataType.VARCHAR(255), this, "");
 
     /**
-     * The column <code>stroom.execution_schedule.UUID</code>.
+     * The column <code>stroom.execution_schedule.uuid</code>.
      */
-    public final TableField<ExecutionScheduleRecord, String> UUID = createField(DSL.name("UUID"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<ExecutionScheduleRecord, String> UUID = createField(DSL.name("uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     private ExecutionSchedule(Name alias, Table<ExecutionScheduleRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);

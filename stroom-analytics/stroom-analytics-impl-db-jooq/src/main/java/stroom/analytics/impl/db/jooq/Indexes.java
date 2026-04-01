@@ -9,6 +9,7 @@ import org.jooq.OrderField;
 import org.jooq.impl.DSL;
 import org.jooq.impl.Internal;
 
+import stroom.analytics.impl.db.jooq.tables.ExecutionHistory;
 import stroom.analytics.impl.db.jooq.tables.ExecutionSchedule;
 
 
@@ -22,6 +23,7 @@ public class Indexes {
     // INDEX definitions
     // -------------------------------------------------------------------------
 
+    public static final Index EXECUTION_HISTORY_EXECUTION_HISTORY_EXECUTION_SCHEDULE_ID = Internal.createIndex(DSL.name("execution_history_execution_schedule_id"), ExecutionHistory.EXECUTION_HISTORY, new OrderField[] { ExecutionHistory.EXECUTION_HISTORY.FK_EXECUTION_SCHEDULE_ID }, false);
     public static final Index EXECUTION_SCHEDULE_EXECUTION_SCHEDULE_DOC_IDX = Internal.createIndex(DSL.name("execution_schedule_doc_idx"), ExecutionSchedule.EXECUTION_SCHEDULE, new OrderField[] { ExecutionSchedule.EXECUTION_SCHEDULE.DOC_TYPE, ExecutionSchedule.EXECUTION_SCHEDULE.DOC_UUID }, false);
     public static final Index EXECUTION_SCHEDULE_EXECUTION_SCHEDULE_ENABLED_IDX = Internal.createIndex(DSL.name("execution_schedule_enabled_idx"), ExecutionSchedule.EXECUTION_SCHEDULE, new OrderField[] { ExecutionSchedule.EXECUTION_SCHEDULE.DOC_TYPE, ExecutionSchedule.EXECUTION_SCHEDULE.DOC_UUID, ExecutionSchedule.EXECUTION_SCHEDULE.ENABLED, ExecutionSchedule.EXECUTION_SCHEDULE.NODE_NAME }, false);
 }
