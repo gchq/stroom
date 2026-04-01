@@ -661,7 +661,7 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
 
     private Collection<OrderField<?>> createExecutionScheduleOrderFields(final ExecutionScheduleRequest request) {
         if (request.getSortList() == null || request.getSortList().isEmpty()) {
-            return Collections.singleton(EXECUTION_SCHEDULE.ID);
+            return Collections.singleton(EXECUTION_SCHEDULE.NAME);
         }
 
         final List<OrderField<?>> list = new ArrayList<>();
@@ -706,8 +706,8 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                         : EXECUTION_SCHEDULE.RUN_AS_USER_UUID);
             } else {
                 list.add(sort.isDesc()
-                        ? EXECUTION_SCHEDULE.UUID.desc()
-                        : EXECUTION_SCHEDULE.UUID);
+                        ? EXECUTION_SCHEDULE.NAME.desc()
+                        : EXECUTION_SCHEDULE.NAME);
             }
         });
         return list;
