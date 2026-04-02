@@ -18,7 +18,6 @@ package stroom.analytics.impl.db;
 
 import stroom.analytics.impl.ExecutionNode;
 import stroom.analytics.impl.ExecutionScheduleDao;
-import stroom.analytics.impl.db.jooq.tables.records.ExecutionScheduleRecord;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionHistory;
 import stroom.analytics.shared.ExecutionHistoryFields;
@@ -70,7 +69,6 @@ import static stroom.analytics.impl.db.jooq.tables.ExecutionSchedule.EXECUTION_S
 import static stroom.analytics.impl.db.jooq.tables.ExecutionTracker.EXECUTION_TRACKER;
 
 public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
-
     private final AnalyticsDbConnProvider analyticsDbConnProvider;
     private final Provider<UserRefLookup> userRefLookupProvider;
     private final SecurityContext securityContext;
@@ -383,42 +381,42 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
     public ExecutionSchedule createExecutionSchedule(final ExecutionSchedule executionSchedule) {
         final UserRef runAsUser = checkRunAs(executionSchedule);
 
-        final Optional<String> optionalUuid = JooqUtil.contextResult(analyticsDbConnProvider, context -> context
-                        .insertInto(EXECUTION_SCHEDULE,
-                                EXECUTION_SCHEDULE.UUID,
-                                EXECUTION_SCHEDULE.NAME,
-                                EXECUTION_SCHEDULE.ENABLED,
-                                EXECUTION_SCHEDULE.NODE_NAME,
-                                EXECUTION_SCHEDULE.SCHEDULE_TYPE,
-                                EXECUTION_SCHEDULE.EXPRESSION,
-                                EXECUTION_SCHEDULE.CONTIGUOUS,
-                                EXECUTION_SCHEDULE.START_TIME_MS,
-                                EXECUTION_SCHEDULE.END_TIME_MS,
-                                EXECUTION_SCHEDULE.DOC_TYPE,
-                                EXECUTION_SCHEDULE.DOC_UUID,
-                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID)
-                        .values(executionSchedule.getUuid() == null
-                                        ? UUID.randomUUID().toString()
-                                        : executionSchedule.getUuid(),
-                                executionSchedule.getName(),
-                                executionSchedule.isEnabled(),
-                                executionSchedule.getNodeName(),
-                                executionSchedule.getSchedule().getType().name(),
-                                executionSchedule.getSchedule().getExpression(),
-                                executionSchedule.isContiguous(),
-                                executionSchedule.getScheduleBounds() == null
-                                        ? null
-                                        : executionSchedule.getScheduleBounds().getStartTimeMs(),
-                                executionSchedule.getScheduleBounds() == null
-                                        ? null
-                                        : executionSchedule.getScheduleBounds().getEndTimeMs(),
-                                executionSchedule.getOwningDoc().getType(),
-                                executionSchedule.getOwningDoc().getUuid(),
-                                runAsUser.getUuid())
-                        .returning(EXECUTION_SCHEDULE.UUID)
-                        .fetchOptional())
-                .map(ExecutionScheduleRecord::getUuid);
-        return optionalUuid.flatMap(this::fetchScheduleByUuid).orElse(null);
+        final String uuid = executionSchedule.getUuid() == null
+                ? UUID.randomUUID().toString()
+                : executionSchedule.getUuid();
+
+        JooqUtil.contextResult(analyticsDbConnProvider, context -> context
+                .insertInto(EXECUTION_SCHEDULE,
+                        EXECUTION_SCHEDULE.UUID,
+                        EXECUTION_SCHEDULE.NAME,
+                        EXECUTION_SCHEDULE.ENABLED,
+                        EXECUTION_SCHEDULE.NODE_NAME,
+                        EXECUTION_SCHEDULE.SCHEDULE_TYPE,
+                        EXECUTION_SCHEDULE.EXPRESSION,
+                        EXECUTION_SCHEDULE.CONTIGUOUS,
+                        EXECUTION_SCHEDULE.START_TIME_MS,
+                        EXECUTION_SCHEDULE.END_TIME_MS,
+                        EXECUTION_SCHEDULE.DOC_TYPE,
+                        EXECUTION_SCHEDULE.DOC_UUID,
+                        EXECUTION_SCHEDULE.RUN_AS_USER_UUID)
+                .values(uuid,
+                        executionSchedule.getName(),
+                        executionSchedule.isEnabled(),
+                        executionSchedule.getNodeName(),
+                        executionSchedule.getSchedule().getType().name(),
+                        executionSchedule.getSchedule().getExpression(),
+                        executionSchedule.isContiguous(),
+                        executionSchedule.getScheduleBounds() == null
+                                ? null
+                                : executionSchedule.getScheduleBounds().getStartTimeMs(),
+                        executionSchedule.getScheduleBounds() == null
+                                ? null
+                                : executionSchedule.getScheduleBounds().getEndTimeMs(),
+                        executionSchedule.getOwningDoc().getType(),
+                        executionSchedule.getOwningDoc().getUuid(),
+                        runAsUser.getUuid())
+                .execute());
+        return fetchScheduleByUuid(uuid).orElse(null);
     }
 
     private UserRef checkRunAs(final ExecutionSchedule executionSchedule) {
