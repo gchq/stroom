@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.SequencedMap;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -239,6 +240,28 @@ public class CollectionUtil {
                         () -> new EnumMap<>(enumType)));
     }
 
+    /**
+     * @return A {@link Stream} of {@link NumberedItem}s, with zero based numbering. Items are
+     * numbered according to iteration order.
+     */
+    public static <T> Stream<NumberedItem<T>> createNumberedStream(final Collection<T> items) {
+        return createNumberedStream(items, 0);
+
+    }
+
+    /**
+     * @return A {@link Stream} of {@link NumberedItem}s, with numberBase determining the
+     * base for the numbering. Items are numbered according to iteration order.
+     */
+    public static <T> Stream<NumberedItem<T>> createNumberedStream(final Collection<T> items,
+                                                                   final int numberBase) {
+
+        final AtomicInteger atomicInteger = new AtomicInteger(numberBase);
+        return NullSafe.stream(items)
+                .map(item ->
+                        new NumberedItem<>(atomicInteger.getAndIncrement(), item));
+    }
+
 
     // --------------------------------------------------------------------------------
 
@@ -285,5 +308,13 @@ public class CollectionUtil {
         public SequencedMap<K, V> build() {
             return map;
         }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public record NumberedItem<T>(int number, T item) {
+
     }
 }

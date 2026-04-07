@@ -531,15 +531,15 @@ public class MetaServiceImpl implements MetaService, StreamFeedProvider, Searcha
     public ResultPage<MetaRow> findDecoratedRows(final FindMetaCriteria criteria) {
         try {
             final ResultPage<MetaRow> list = findRows(criteria);
-
-            LOGGER.logDurationIfTraceEnabled(
-                    () -> {
-                        final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
-                        list.getValues().forEach(metaRow ->
-                                decorator.addMatchingRetentionRuleInfo(metaRow.getMeta(), metaRow.getAttributes()));
-                    },
-                    "Adding data retention rules");
-
+            if (NullSafe.hasItems(list)) {
+                LOGGER.logDurationIfTraceEnabled(
+                        () -> {
+                            final StreamAttributeMapRetentionRuleDecorator decorator = decoratorProvider.get();
+                            list.getValues().forEach(metaRow ->
+                                    decorator.addMatchingRetentionRuleInfo(metaRow.getMeta(), metaRow.getAttributes()));
+                        },
+                        "Adding data retention rules");
+            }
             return list;
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);

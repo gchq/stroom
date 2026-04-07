@@ -17,7 +17,6 @@
 package stroom.data.retention.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
-import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionCreationTimeUtil;
 import stroom.data.retention.api.DataRetentionRuleAction;
 import stroom.data.retention.api.DataRetentionRulesProvider;
@@ -32,6 +31,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.time.TimePeriod;
 import stroom.util.time.TimeUtils;
 
@@ -53,7 +53,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -95,20 +94,16 @@ public class DataRetentionPolicyExecutor {
 
     private final ClusterLockService clusterLockService;
     private final DataRetentionRulesProvider dataRetentionRulesProvider;
-    private final DataRetentionConfig policyConfig;
     private final MetaService metaService;
     private final TaskContextFactory taskContextFactory;
-    private final AtomicBoolean running = new AtomicBoolean();
 
     @Inject
     DataRetentionPolicyExecutor(final ClusterLockService clusterLockService,
                                 final DataRetentionRulesProvider dataRetentionRulesProvider,
-                                final DataRetentionConfig policyConfig,
                                 final MetaService metaService,
                                 final TaskContextFactory taskContextFactory) {
         this.clusterLockService = clusterLockService;
         this.dataRetentionRulesProvider = dataRetentionRulesProvider;
-        this.policyConfig = policyConfig;
         this.metaService = metaService;
         this.taskContextFactory = taskContextFactory;
     }
@@ -131,7 +126,7 @@ public class DataRetentionPolicyExecutor {
                 process(now.truncatedTo(ChronoUnit.MILLIS));
                 info(() -> "Finished data retention process in " + logExecutionTime);
             } catch (final TaskTerminatedException e) {
-                LOGGER.debug("Task terminated", e);
+                LOGGER.debug("exec() - Task terminated", e);
                 LOGGER.error(JOB_NAME + " - Task terminated after " + logExecutionTime);
             } catch (final RuntimeException e) {
                 LOGGER.error(JOB_NAME + " - Error enforcing data retention policies: {}", e.getMessage(), e);
@@ -141,55 +136,54 @@ public class DataRetentionPolicyExecutor {
 
     private synchronized void process(final Instant now) {
         final DataRetentionRules dataRetentionRules = dataRetentionRulesProvider.getOrCreate();
-        LOGGER.info("All retention time calculations based on now()={}", now);
-        if (dataRetentionRules != null) {
-            final List<DataRetentionRule> activeRules = getActiveRules(dataRetentionRules.getRules());
+        LOGGER.info("process() - All retention time calculations based on now()={}", now);
+        final List<DataRetentionRule> activeRules = NullSafe.get(
+                dataRetentionRules,
+                DataRetentionRules::getRules,
+                this::getActiveRules);
 
-            if (activeRules != null && activeRules.size() > 0) {
+        if (NullSafe.hasItems(activeRules)) {
 
-                // Create a map of unique periods with the set of rules that apply to them.
-                final List<ProcessablePeriod> processablePeriods = getProcessPeriods(
-                        dataRetentionRules,
-                        activeRules,
-                        now);
+            // Create a map of unique periods with the set of rules that apply to them.
+            final List<ProcessablePeriod> processablePeriods = getProcessPeriods(
+                    dataRetentionRules,
+                    activeRules,
+                    now);
 
-                // Rules must be in ascending order by rule number so they applied in the correct order
-                processablePeriods.stream()
-                        .sorted(Comparator.comparing(processablePeriod ->
-                                // Work backwards in time
-                                processablePeriod.timePeriod.getFrom(), Comparator.reverseOrder()))
-                        .takeWhile(entry -> {
-                            if (Thread.currentThread().isInterrupted()) {
-                                LOGGER.error("Thread interrupted");
-                                throw new TaskTerminatedException();
-                            } else {
-                                return true;
-                            }
-                        })
-                        .forEach(processablePeriod -> {
-                            final List<DataRetentionRuleAction> ruleActions =
-                                    processablePeriod.dataRetentionRuleActions;
-                            final TimePeriod period = processablePeriod.timePeriod;
+            // Rules must be in ascending order by rule number so they applied in the correct order
+            processablePeriods.stream()
+                    .sorted(Comparator.comparing(processablePeriod ->
+                            // Work backwards in time
+                            processablePeriod.timePeriod.getFrom(), Comparator.reverseOrder()))
+                    .takeWhile(ignored -> {
+                        if (Thread.currentThread().isInterrupted()) {
+                            LOGGER.error("process() - Thread interrupted");
+                            throw new TaskTerminatedException();
+                        } else {
+                            return true;
+                        }
+                    })
+                    .forEach(processablePeriod -> {
+                        final List<DataRetentionRuleAction> ruleActions =
+                                processablePeriod.dataRetentionRuleActions;
+                        final TimePeriod period = processablePeriod.timePeriod;
 
-                            final List<DataRetentionRuleAction> sortedActions = ruleActions.stream()
-                                    .sorted(DataRetentionRuleAction.comparingByRuleNo())
-                                    .collect(Collectors.toList());
+                        final List<DataRetentionRuleAction> sortedActions = ruleActions.stream()
+                                .sorted(DataRetentionRuleAction.comparingByRuleNo())
+                                .collect(Collectors.toList());
 
-                            processPeriod(period, sortedActions, processablePeriod.ruleAge, now);
+                        processPeriod(period, sortedActions, processablePeriod.ruleAge, now);
 
-                            // We have successfully processed this period so update the tracker
-                            // so the next run on this period can work from where we got to
-                            final DataRetentionTracker newTracker = new DataRetentionTracker(
-                                    dataRetentionRules.getVersion(),
-                                    processablePeriod.ruleAge,
-                                    now);
-                            metaService.setTracker(newTracker);
-                        });
-            } else {
-                LOGGER.info("No active rules to process");
-            }
+                        // We have successfully processed this period so update the tracker
+                        // so the next run on this period can work from where we got to
+                        final DataRetentionTracker newTracker = new DataRetentionTracker(
+                                dataRetentionRules.getVersion(),
+                                processablePeriod.ruleAge,
+                                now);
+                        metaService.setTracker(newTracker);
+                    });
         } else {
-            LOGGER.info("No active rules to process");
+            LOGGER.info("process() - No active rules to process");
         }
     }
 
@@ -215,9 +209,10 @@ public class DataRetentionPolicyExecutor {
             @Nullable final DataRetentionTracker dataRetentionTracker) {
 
         final Optional<Duration> optTimeSinceLastRun = Optional.ofNullable(dataRetentionTracker)
-                .map(tracker -> Duration.between(dataRetentionTracker.getLastRunTime(), now));
+                .map(ignored ->
+                        Duration.between(dataRetentionTracker.getLastRunTime(), now));
 
-        LOGGER.debug(() -> LogUtil.message("Treating timeSinceLastRun as: {}, ruleAge: {}",
+        LOGGER.debug(() -> LogUtil.message("getTimeSinceLastRun() - Treating timeSinceLastRun as: {}, ruleAge: {}",
                 optTimeSinceLastRun,
                 (dataRetentionTracker != null
                         ? dataRetentionTracker.getRuleAge()
@@ -284,12 +279,6 @@ public class DataRetentionPolicyExecutor {
                 ? "EPOCH"
                 : TimeUtils.instantAsAgeStr(period.getFrom(), now) + " ago";
         final String toTimeAgeStr = TimeUtils.instantAsAgeStr(period.getTo(), now);
-
-        // Duration is better for shorter periods as Period will just say P0D for small stuff
-        final String durationStr = period.getDuration().compareTo(Duration.ofDays(30)) < 0
-                ? period.getDuration().toString()
-                : period.getPeriod().toString();
-
         return LogUtil.message("{} => {} ago ({} => {}) [duration: {}]",
                 fromTimeAgeStr,
                 toTimeAgeStr,
@@ -302,16 +291,14 @@ public class DataRetentionPolicyExecutor {
                                final List<DataRetentionRuleAction> sortedRuleActions,
                                final String ruleAge,
                                final Instant now) {
-        info(() -> {
-            return LogUtil.message(
-                    "Considering streams created " +
-                    "between {}, {} rule actions:\n{}",
-                    getPeriodInfo(period, now),
-                    sortedRuleActions.size(),
-                    sortedRuleActions.stream()
-                            .map(this::getRuleActionInfo)
-                            .collect(Collectors.joining("\n")));
-        });
+        info(() -> LogUtil.message(
+                "Considering streams created " +
+                "between {}, {} rule actions:\n{}",
+                getPeriodInfo(period, now),
+                sortedRuleActions.size(),
+                sortedRuleActions.stream()
+                        .map(this::getRuleActionInfo)
+                        .collect(Collectors.joining("\n"))));
 
         LOGGER.logDurationIfInfoEnabled(
                 () ->
@@ -341,7 +328,7 @@ public class DataRetentionPolicyExecutor {
                 .sorted(Comparator.reverseOrder())
                 .collect(Collectors.toList());
 
-        final Instant mostRecentCreationTime = descendingCreationTimes.get(0);
+        final Instant mostRecentCreationTime = descendingCreationTimes.getFirst();
 
         // We don't need to delete anything newer than this time as all rules have a minCreateTime
         // older than or equal to it.  Thus make this the end of our first deletion period
@@ -376,16 +363,17 @@ public class DataRetentionPolicyExecutor {
                 fromTime = Ordering.natural()
                         .max(creationTime, adjustedFromTime);
 
-                LOGGER.debug("toTime: {}, createTime: {}, adjustedToTime {}, fromTime: {}",
+                LOGGER.debug("getProcessPeriods() - toTime: {}, createTime: {}, adjustedToTime {}, fromTime: {}",
                         toTime, creationTime, adjustedFromTime, fromTime);
             } else {
                 fromTime = creationTime;
-                LOGGER.debug("No tracker so use un-adjusted fromTime: {}", fromTime);
+                LOGGER.debug("getProcessPeriods() - No tracker so use un-adjusted fromTime: {}", fromTime);
             }
 
             final TimePeriod period = TimePeriod.between(fromTime, toTime);
 
-            LOGGER.debug(() -> LogUtil.message("creationTime: {} ({} ago), ruleAge: '{}', tracker: ({}), period: {}",
+            LOGGER.debug(() -> LogUtil.message(
+                    "getProcessPeriods() - creationTime: {} ({} ago), ruleAge: '{}', tracker: ({}), period: {}",
                     creationTime,
                     TimeUtils.instantAsAge(creationTime, now),
                     ruleAge,
@@ -401,7 +389,7 @@ public class DataRetentionPolicyExecutor {
                         final DataRetentionRuleAction ruleAction = new DataRetentionRuleAction(rule, ruleOutcome);
 
                         LOGGER.debug(() -> LogUtil.message(
-                                "  {} Rule: {}, ruleMinCreateTime: {} ({} ago)",
+                                "getProcessPeriods() - {} Rule: {}, ruleMinCreateTime: {} ({} ago)",
                                 ruleOutcome,
                                 rule,
                                 getEarliestRetainedCreateTime(rule, now),
@@ -413,8 +401,7 @@ public class DataRetentionPolicyExecutor {
             final ProcessablePeriod processablePeriod = new ProcessablePeriod(
                     period,
                     ruleAge,
-                    ruleActions,
-                    tracker);
+                    ruleActions);
             processablePeriods.add(processablePeriod);
 
             // Move the toTime ready for the next time period in the loop
@@ -457,7 +444,7 @@ public class DataRetentionPolicyExecutor {
                         .collect(Collectors.toMap(
                                 Tuple2::_1, Tuple2::_2));
 
-        LOGGER.debug(() -> LogUtil.message("trackersByEarliestCreateTime:\n{}",
+        LOGGER.debug(() -> LogUtil.message("getTrackersByEarliestCreateTime():\n{}",
                 trackersByEarliestCreateTime.entrySet()
                         .stream()
                         .sorted(Entry.comparingByKey())
@@ -498,18 +485,19 @@ public class DataRetentionPolicyExecutor {
 
         // Ensure we have a min creation time of the epoch to ensure we delete any qualifying data
         // right back as far as the data goes. No rules in the set to retain the data so it gets deleted.
-        earliestRetainedCreationTimeMap.computeIfAbsent(Instant.EPOCH, k -> new HashSet<>());
+        earliestRetainedCreationTimeMap.computeIfAbsent(Instant.EPOCH, ignored -> new HashSet<>());
 
-        LOGGER.debug(() -> "earliestRetainedCreationTimeMap:\n" + earliestRetainedCreationTimeMap.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
-                .map(entry -> "createTime: "
-                              + entry.getKey() + " ("
-                              + TimeUtils.instantAsAge(entry.getKey(), now)
-                              + " ago) => "
-                              + entry.getValue().stream()
-                                      .sorted(Comparator.comparing(DataRetentionRule::getRuleNumber))
-                                      .collect(Collectors.toList()))
-                .collect(Collectors.joining("\n")));
+        LOGGER.debug(() ->
+                "getEarliestRetainedCreationTimeMap:\n" + earliestRetainedCreationTimeMap.entrySet().stream()
+                        .sorted(Map.Entry.comparingByKey(Comparator.reverseOrder()))
+                        .map(entry -> "createTime: "
+                                      + entry.getKey() + " ("
+                                      + TimeUtils.instantAsAge(entry.getKey(), now)
+                                      + " ago) => "
+                                      + entry.getValue().stream()
+                                              .sorted(Comparator.comparing(DataRetentionRule::getRuleNumber))
+                                              .toList())
+                        .collect(Collectors.joining("\n")));
 
         return earliestRetainedCreationTimeMap;
     }
@@ -526,6 +514,10 @@ public class DataRetentionPolicyExecutor {
         taskContextFactory.current().info(messageSupplier);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     /**
      * Holds state for each of the time periods that we will process
      */
@@ -534,16 +526,13 @@ public class DataRetentionPolicyExecutor {
         private final TimePeriod timePeriod;
         private final String ruleAge;
         private final List<DataRetentionRuleAction> dataRetentionRuleActions;
-        private final DataRetentionTracker tracker;
 
         private ProcessablePeriod(final TimePeriod timePeriod,
                                   final String ruleAge,
-                                  final List<DataRetentionRuleAction> dataRetentionRuleActions,
-                                  final DataRetentionTracker tracker) {
+                                  final List<DataRetentionRuleAction> dataRetentionRuleActions) {
             this.timePeriod = timePeriod;
             this.ruleAge = ruleAge;
             this.dataRetentionRuleActions = dataRetentionRuleActions;
-            this.tracker = tracker;
         }
     }
 }
