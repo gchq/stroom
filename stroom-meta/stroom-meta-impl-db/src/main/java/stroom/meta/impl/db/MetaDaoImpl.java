@@ -66,6 +66,7 @@ import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.Period;
 import stroom.util.collections.BatchingIterator;
+import stroom.util.collections.CollectionUtil;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.DurationTimer.TimedResult;
 import stroom.util.logging.LambdaLogger;
@@ -892,7 +893,7 @@ public class MetaDaoImpl implements MetaDao {
                                                 detailTable.field(typeNameField));
 
                                 // Dump the query in case we want to run it in a mysql shell.
-                                LOGGER.debug("query:\n{}", query);
+                                LOGGER.debug("getRetentionDeletionSummary() - query:\n{}", query);
 
                                 return query.fetch();
                             })
@@ -973,7 +974,7 @@ public class MetaDaoImpl implements MetaDao {
                              final TimePeriod period) {
 
         LOGGER.debug(() ->
-                LogUtil.message("logicalDelete called for {} and actions\n{}",
+                LogUtil.message("logicalDelete() called for {} and actions\n{}",
                         period, ruleActions.stream()
                                 .map(ruleAction -> ruleAction.getRule().getRuleNumber() + " " +
                                                    ruleAction.getRule().getExpression() + " " +
@@ -1025,11 +1026,11 @@ public class MetaDaoImpl implements MetaDao {
                         Instant.now().plusMillis(1)));
 
                 if (optSubPeriod.isEmpty()) {
-                    LOGGER.debug("No time slice found");
+                    LOGGER.debug("logicalDelete() - No time slice found");
                     break;
                 }
                 final TimePeriod subPeriod = optSubPeriod.get();
-                LOGGER.debug("Iteration {}, using sub-period {}", iteration, subPeriod);
+                LOGGER.debug("logicalDelete() - Iteration {}, using sub-period {}", iteration, subPeriod);
 
                 startTime = Instant.now();
                 lastUpdateCount = LOGGER.logDurationIfDebugEnabled(
@@ -1053,7 +1054,7 @@ public class MetaDaoImpl implements MetaDao {
                                     .and(META_M.CREATE_TIME.greaterOrEqual(subPeriod.getFrom().toEpochMilli()))
                                     .and(META_M.CREATE_TIME.lessThan(subPeriod.getTo().toEpochMilli()));
 
-                            LOGGER.debug("update:\n{}", query);
+                            LOGGER.debug("logicalDelete() - update:\n{}", query);
 
                             return query.execute();
                         }),
@@ -1069,7 +1070,9 @@ public class MetaDaoImpl implements MetaDao {
                 startTimeInc = subPeriod.getFrom();
                 totalUpdateCount.addAndGet(lastUpdateCount);
                 iteration.incrementAndGet();
-                LOGGER.debug("Logically deleted {} meta rows (total so far {})", lastUpdateCount, totalUpdateCount);
+                LOGGER.debug("logicalDelete() - Logically deleted {} meta rows (total so far {})",
+                        lastUpdateCount,
+                        totalUpdateCount);
 
             } while (lastUpdateCount != 0 && !Thread.currentThread().isInterrupted());
 
@@ -1098,7 +1101,8 @@ public class MetaDaoImpl implements MetaDao {
                                               final int batchSize,
                                               final List<Condition> conditions,
                                               final boolean includesMetaProcessorTbl) {
-        LOGGER.debug("getTimeSlice({}, {}, {}, {})", startTimeInc, batchSize, conditions, includesMetaProcessorTbl);
+        LOGGER.debug("getTimeSlice() - startTimeInc: {}, batchSize: {}, includesMetaProcessorTbl: {}, conditions: \n{}",
+                startTimeInc, batchSize, includesMetaProcessorTbl, conditions);
 
         final String createTimeCol = META_M.CREATE_TIME.getName();
         final String minCreateTimeCol = "min_create_time";
@@ -1137,7 +1141,7 @@ public class MetaDaoImpl implements MetaDao {
                                                     DSL.max(limitedSet.field(createTimeCol)).as(maxCreateTimeCol))
                                             .from(limitedSet);
 
-                                    LOGGER.debug("query:\n{}", query);
+                                    LOGGER.debug("getTimeSlice() - query:\n{}", query);
 
                                     return query.fetchOne();
                                 })
@@ -1152,10 +1156,11 @@ public class MetaDaoImpl implements MetaDao {
                                 return Optional.of(
                                         TimePeriod.between((long) min, (long) max + 1));
                             }
-                        }), () -> LogUtil.message("Selecting time slice starting at {}, with batch size {}",
+                        }), () -> LogUtil.message(
+                        "getTimeSlice() - Selecting time slice starting at {}, with batch size {}",
                         startTimeInc, batchSize));
 
-        LOGGER.debug("Returning period {}", timePeriod);
+        LOGGER.debug("getTimeSlice() - Returning period {}", timePeriod);
 
         // NOTE The number of records in the slice may differ from the desired batch size if you have
         // multiple records on the boundary with the same create_time (unlikely with milli precision).
@@ -1227,23 +1232,24 @@ public class MetaDaoImpl implements MetaDao {
             if (orConditions.size() > 1) {
                 conditions.add(DSL.or(orConditions));
             } else if (orConditions.size() == 1) {
-                conditions.add(orConditions.get(0));
+                conditions.add(orConditions.getFirst());
             }
         }
 
-        LOGGER.debug("conditions {}", conditions);
+        LOGGER.debug(() ->
+                LogUtil.message("createRetentionDeleteConditions() - conditions \n{}",
+                        CollectionUtil.createNumberedStream(conditions)
+                                .map(numberedItem ->
+                                        "Condition: " + numberedItem.number() + ": \n" + numberedItem.item())
+                                .collect(Collectors.joining("\n"))));
         return conditions;
     }
 
     private boolean ruleActionToBoolean(final DataRetentionRuleAction action) {
-        switch (action.getOutcome()) {
-            case DELETE:
-                return true;
-            case RETAIN:
-                return false;
-            default:
-                throw new RuntimeException("Unexpected type " + action.getOutcome().name());
-        }
+        return switch (action.getOutcome()) {
+            case DELETE -> true;
+            case RETAIN -> false;
+        };
     }
 
     @Override
@@ -1535,7 +1541,7 @@ public class MetaDaoImpl implements MetaDao {
                                     .orderBy(orderFields)
                                     .limit(offset, numberOfRows);
 
-                            LOGGER.debug("Find SQL:\n{}", select);
+                            LOGGER.debug("find() -  SQL:\n{}", select);
 
                             return select.fetch();
                         })

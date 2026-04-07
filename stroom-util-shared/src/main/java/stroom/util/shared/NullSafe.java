@@ -227,7 +227,7 @@ public class NullSafe {
         if (list == null || list.isEmpty()) {
             return null;
         } else {
-            // GWT can't do getFirst()
+            //noinspection SequencedCollectionMethodCanBeUsed   // GWT can't do getFirst()
             return list.get(0);
         }
     }
@@ -239,7 +239,7 @@ public class NullSafe {
         if (list == null || list.isEmpty()) {
             return null;
         } else {
-            // GWT can't do getLast()
+            //noinspection SequencedCollectionMethodCanBeUsed   // GWT can't do getLast()
             return list.get(list.size() - 1);
         }
     }
@@ -721,8 +721,8 @@ public class NullSafe {
     }
 
     /**
-     * Returns a {@link Stream<Entry<K,V>>} of entries is non-null
-     * else returns an empty {@link Stream<Entry<K,V>>}
+     * Returns a {@link Stream<Entry>} of entries is non-null
+     * else returns an empty {@link Stream<Entry>}
      */
     public static <K, V> Stream<Entry<K, V>> streamEntries(final Map<K, V> map) {
         if (map == null || map.isEmpty()) {
