@@ -319,7 +319,6 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
     }
 
     private ApiKeyRecord mapApiKeyToRecord(final HashedApiKey apiKey, final ApiKeyRecord record) {
-        record.from(apiKey);
         record.set(API_KEY.ID, apiKey.getId());
         record.set(API_KEY.VERSION, apiKey.getVersion());
         record.set(API_KEY.CREATE_TIME_MS, apiKey.getCreateTimeMs());
@@ -344,20 +343,20 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                         "User with uuid {} not found", ownerUuid)));
 
         return HashedApiKey.builder()
-                .withId(record.get(API_KEY.ID))
-                .withVersion(record.get(API_KEY.VERSION))
-                .withCreateTimeMs(record.get(API_KEY.CREATE_TIME_MS))
-                .withCreateUser(record.get(API_KEY.CREATE_USER))
-                .withUpdateTimeMs(record.get(API_KEY.UPDATE_TIME_MS))
-                .withUpdateUser(record.get(API_KEY.UPDATE_USER))
-                .withOwner(owner.asRef())
-                .withApiKeyHash(record.get(API_KEY.API_KEY_HASH))
-                .withApiKeyPrefix(record.get(API_KEY.API_KEY_PREFIX))
-                .withExpireTimeMs(record.get(API_KEY.EXPIRES_ON_MS))
-                .withName(record.get(API_KEY.NAME))
-                .withComments(record.get(API_KEY.COMMENTS))
-                .withEnabled(record.get(API_KEY.ENABLED))
-                .withHashAlgorithm(HashAlgorithm.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
+                .id(record.get(API_KEY.ID))
+                .version(record.get(API_KEY.VERSION))
+                .createTimeMs(record.get(API_KEY.CREATE_TIME_MS))
+                .createUser(record.get(API_KEY.CREATE_USER))
+                .updateTimeMs(record.get(API_KEY.UPDATE_TIME_MS))
+                .updateUser(record.get(API_KEY.UPDATE_USER))
+                .owner(owner.asRef())
+                .apiKeyHash(record.get(API_KEY.API_KEY_HASH))
+                .apiKeyPrefix(record.get(API_KEY.API_KEY_PREFIX))
+                .expireTimeMs(record.get(API_KEY.EXPIRES_ON_MS))
+                .name(record.get(API_KEY.NAME))
+                .comments(record.get(API_KEY.COMMENTS))
+                .enabled(record.get(API_KEY.ENABLED))
+                .hashAlgorithm(HashAlgorithm.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(
                         record.get(API_KEY.HASH_ALGORITHM)))
                 .build();
     }

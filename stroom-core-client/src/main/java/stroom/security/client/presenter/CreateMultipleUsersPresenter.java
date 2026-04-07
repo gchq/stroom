@@ -102,8 +102,7 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
             nextSelection.ifPresent(consumer);
             event.hide();
         } else {
-            final User user = disabled.remove(0);
-            user.setEnabled(true);
+            final User user = disabled.remove(0).copy().enabled(true).build();
             restFactory
                     .create(USER_RESOURCE)
                     .method(res -> res.update(user))

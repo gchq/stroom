@@ -23,9 +23,11 @@ import stroom.analytics.shared.ScheduleBounds;
 import stroom.item.client.SelectionBox;
 import stroom.schedule.client.ScheduleBox;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
+import stroom.widget.button.client.Button;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.form.client.FormGroup;
@@ -97,6 +99,10 @@ public final class BatchExecutionScheduleEditViewImpl
     @UiField
     CustomCheckBox runAsUserEnable;
 
+    @UiField
+    Button applySelectionButton;
+    @UiField
+    Button applyFilteredButton;
 
     private String selectedNode;
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
@@ -108,6 +114,9 @@ public final class BatchExecutionScheduleEditViewImpl
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
         setRunAsUserView();
         endTimeBox.setOptional(true);
+
+        applySelectionButton.setIcon(SvgImage.OK);
+        applyFilteredButton.setIcon(SvgImage.GENERATE);
 
         nameEnable.addValueChangeHandler(event -> update());
         enabledEnable.addValueChangeHandler(event -> update());
@@ -126,7 +135,6 @@ public final class BatchExecutionScheduleEditViewImpl
     public Widget asWidget() {
         return widget;
     }
-
 
     @Override
     public void focus() {
@@ -152,8 +160,6 @@ public final class BatchExecutionScheduleEditViewImpl
             userRefSelectionBoxPresenter.setSelected(null);
         }
     }
-
-
 
     @Override
     public ExecutionSchedule getUpdatedExecutionSchedule(final ExecutionSchedule executionSchedule) {
@@ -210,7 +216,6 @@ public final class BatchExecutionScheduleEditViewImpl
         userRefSelectionBoxPresenter.setEnabled(runAsUserEnable.getValue());
         runAsUserForm.setDisabled(!runAsUserEnable.getValue());
     }
-
 
     @Override
     public String getName() {
@@ -282,6 +287,16 @@ public final class BatchExecutionScheduleEditViewImpl
 
     }
 
+    @Override
+    public Button getApplySelectionButton() {
+        return applySelectionButton;
+    }
+
+    @Override
+    public Button getApplyFilteredButton() {
+        return applyFilteredButton;
+    }
+
     public boolean isAnyBoxEnabled() {
         return nameEnable.getValue()
                || enabledEnable.getValue()
@@ -292,7 +307,8 @@ public final class BatchExecutionScheduleEditViewImpl
                || runAsUserEnable.getValue();
     }
 
-    //Formats the contents of all enabled boxes into a multiline String for the edit summary confirmation window
+    // Formats the contents of all enabled boxes into a multiline String for the
+    // edit summary confirmation window
     public String getEditSummary() {
         final StringBuilder sb = new StringBuilder();
         if (nameEnable.getValue()) {

@@ -52,7 +52,6 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.SimpleMetrics;
-import stroom.util.shared.NullSafe;
 
 import com.esotericsoftware.kryo.io.ByteBufferInput;
 import com.esotericsoftware.kryo.io.Input;
@@ -89,8 +88,6 @@ public class LmdbDataStore implements DataStore {
 
     private static final long COMMIT_FREQUENCY_MS = 10000;
     private static final int MAX_LIST_SIZE = 10_000;
-    public static final ByteBuffer DB_STATE_VALUE = ByteBuffer
-            .allocateDirect(Long.BYTES + Long.BYTES + Long.BYTES);
 
     private final LmdbEnv env;
     private final LmdbDb db;
@@ -132,6 +129,8 @@ public class LmdbDataStore implements DataStore {
     private final int maxSortedItems;
     private final DateTimeSettings dateTimeSettings;
     private final ByteBufferFactory bufferFactory;
+    private final ByteBuffer dbStateValue = ByteBuffer
+            .allocateDirect(Long.BYTES + Long.BYTES + Long.BYTES);
 
     public LmdbDataStore(final SearchRequestSource searchRequestSource,
                          final LmdbEnv.Builder lmdbEnvBuilder,
@@ -259,7 +258,7 @@ public class LmdbDataStore implements DataStore {
     private void addInternal(final Val[] values,
                              final int period) {
         SearchProgressLog.increment(queryKey, SearchPhase.LMDB_DATA_STORE_ADD);
-        LOGGER.trace(() -> "add() called for " + values.length + " values");
+        LOGGER.trace("add() called for {} values", values.length);
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();
         final boolean[][] valueIndicesByDepth = compiledDepths.getValueIndicesByDepth();
 
@@ -345,8 +344,8 @@ public class LmdbDataStore implements DataStore {
                                         uncommittedCount++;
                                     }
                                     case final CurrentDbStateLmdbQueueItem currentDbStateLmdbQueueItem ->
-                                        currentDbState = currentDbStateLmdbQueueItem.getCurrentDbState()
-                                                .mergeExisting(currentDbState);
+                                            currentDbState = currentDbStateLmdbQueueItem.getCurrentDbState()
+                                                    .mergeExisting(currentDbState);
                                     case final Sync sync -> {
                                         commit(writeTxn, currentDbState);
                                         sync.sync();
@@ -699,7 +698,7 @@ public class LmdbDataStore implements DataStore {
 
     private void putCurrentDbState(final WriteTxn writeTxn, final CurrentDbState currentDbState) {
         if (currentDbState != null) {
-            ByteBuffer valueBuffer = DB_STATE_VALUE;
+            ByteBuffer valueBuffer = dbStateValue;
             valueBuffer.clear();
             putLong(valueBuffer, currentDbState.getStreamId());
             putLong(valueBuffer, currentDbState.getEventId());
@@ -745,7 +744,7 @@ public class LmdbDataStore implements DataStore {
     }
 
     private void putLong(final ByteBuffer valueBuffer, final Long l) {
-        valueBuffer.putLong(NullSafe.requireNonNullElse(l, -1L));
+        valueBuffer.putLong(Objects.requireNonNullElse(l, -1L));
     }
 
     public CurrentDbState sync() {
@@ -1061,7 +1060,7 @@ public class LmdbDataStore implements DataStore {
             int maxSize = trimmedSize * 2;
             maxSize = Math.max(maxSize, 1_000);
 
-            final SortedItems sortedItems = new SortedItems(10, maxSize, trimmedSize, trimTop, sorter);
+            final SortedItems sortedItems = new SortedItems(64, maxSize, trimmedSize, trimTop, sorter);
             readContext.read(keyRange, iterator -> {
                 final AtomicLong totalRowCount = new AtomicLong();
                 while (iterator.hasNext()

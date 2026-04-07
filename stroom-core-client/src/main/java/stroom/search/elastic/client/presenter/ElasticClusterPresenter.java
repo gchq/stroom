@@ -17,8 +17,8 @@
 package stroom.search.elastic.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -32,7 +32,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPanelView, ElasticClusterDoc> {
+public class ElasticClusterPresenter extends DocTabPresenter<LinkTabPanelView, ElasticClusterDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
@@ -47,7 +47,7 @@ public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPan
             final DocumentUserPermissionsTabProvider<ElasticClusterDoc> documentUserPermissionsTabProvider) {
         super(eventBus, view);
 
-        addTab(SETTINGS, new DocumentEditTabProvider<>(clusterSettingsPresenterProvider::get));
+        addTab(SETTINGS, new DocTabProvider<>(clusterSettingsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<ElasticClusterDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -61,8 +61,7 @@ public class ElasticClusterPresenter extends DocumentEditTabPresenter<LinkTabPan
             @Override
             public ElasticClusterDoc onWrite(final MarkdownEditPresenter presenter,
                                              final ElasticClusterDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

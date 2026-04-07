@@ -25,7 +25,6 @@ import stroom.security.shared.AppUserPermissions;
 import stroom.security.shared.FetchAppUserPermissionsRequest;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.security.shared.User;
-import stroom.util.AuditUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -356,13 +355,14 @@ class TestAppPermissionDaoImpl {
     }
 
     private UserRef createUserOrGroup(final String name, final boolean group) {
-        final User user = User.builder()
+        final User user = User
+                .builder()
                 .subjectId(name)
                 .displayName(name)
                 .uuid(UUID.randomUUID().toString())
                 .group(group)
+                .stampAudit("test")
                 .build();
-        AuditUtil.stamp(() -> "test", user);
         return userDao.create(user).asRef();
     }
 }

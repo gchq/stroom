@@ -91,7 +91,7 @@ public class DownstreamHostConfig extends UriConfig implements IsProxyConfig {
             @JsonProperty("noFetchIntervalAfterFailure") final StroomDuration noFetchIntervalAfterFailure) {
 
         super(Objects.requireNonNullElse(scheme, DEFAULT_SCHEME),
-                Objects.requireNonNull(hostname),
+                hostname,
                 port,
                 pathPrefix);
         this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_ENABLED);

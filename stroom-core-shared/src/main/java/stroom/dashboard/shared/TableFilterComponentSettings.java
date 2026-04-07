@@ -73,6 +73,12 @@ public final class TableFilterComponentSettings implements ComponentSettings {
             return false;
         }
         final TableFilterComponentSettings that = (TableFilterComponentSettings) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(tableId, that.tableId);
+//        final boolean b2 = Objects.equals(columns, that.columns);
+//        final boolean b4 = Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules);
+
         return Objects.equals(tableId, that.tableId) &&
                Objects.equals(columns, that.columns) &&
                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules);

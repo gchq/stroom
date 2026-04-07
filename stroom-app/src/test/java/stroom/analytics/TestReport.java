@@ -19,6 +19,7 @@ package stroom.analytics;
 import stroom.analytics.impl.ExecutionScheduleDao;
 import stroom.analytics.impl.ReportExecutor;
 import stroom.analytics.impl.ReportStore;
+import stroom.analytics.impl.ScheduledExecutorService;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.ExecutionHistory;
 import stroom.analytics.shared.ExecutionHistoryRequest;
@@ -92,6 +93,8 @@ class TestReport extends AbstractAnalyticsTest {
     private ReportStore reportStore;
     @Inject
     private Store streamStore;
+    @Inject
+    private ScheduledExecutorService<ReportDoc> scheduledExecutorService;
 
     @Test
     void test() {
@@ -136,7 +139,7 @@ class TestReport extends AbstractAnalyticsTest {
                 .build());
 
         // Now run the search process.
-        reportExecutor.execFromDocs();
+        scheduledExecutorService.exec(reportExecutor);
 
         // As we have created alerts ensure we now have more streams.
         testReportStream(expectedStreams, expectedRecords);

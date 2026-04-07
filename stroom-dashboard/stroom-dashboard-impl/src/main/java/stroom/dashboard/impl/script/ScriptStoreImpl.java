@@ -18,11 +18,11 @@ package stroom.dashboard.impl.script;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.script.shared.ScriptDoc;
@@ -37,7 +37,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 class ScriptStoreImpl implements ScriptStore {
@@ -49,7 +48,11 @@ class ScriptStoreImpl implements ScriptStore {
     ScriptStoreImpl(final StoreFactory storeFactory,
                     final ScriptSerialiser serialiser,
                     final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, ScriptDoc.TYPE, ScriptDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                ScriptDoc.TYPE,
+                ScriptDoc::builder,
+                ScriptDoc::copy);
         this.securityContext = securityContext;
     }
 
@@ -115,14 +118,15 @@ class ScriptStoreImpl implements ScriptStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<ScriptDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<ScriptDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
             if (doc.getDependencies() != null) {
-                doc.setDependencies(doc.getDependencies()
+                return doc.copy().dependencies(doc.getDependencies()
                         .stream()
                         .map(dependencyRemapper::remap)
-                        .toList());
+                        .toList()).build();
             }
+            return doc;
         };
     }
 
@@ -159,20 +163,17 @@ class ScriptStoreImpl implements ScriptStore {
 
     @Override
     public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
+                                 final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        return store.importDocument(docRef, dataMap, importState, importSettings);
+        return store.importDocument(docRef, importExportDocument, importState, importSettings);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
+    public ImportExportDocument exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

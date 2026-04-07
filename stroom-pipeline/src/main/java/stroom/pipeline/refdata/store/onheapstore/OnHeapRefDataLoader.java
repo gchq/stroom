@@ -36,9 +36,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Range;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
@@ -54,8 +51,7 @@ import java.util.TreeMap;
 
 class OnHeapRefDataLoader implements RefDataLoader {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OnHeapRefDataLoader.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(OnHeapRefDataLoader.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OnHeapRefDataLoader.class);
 
     private static final Comparator<Range<Long>> RANGE_COMPARATOR = Comparator
             .comparingLong(Range::getFrom);
@@ -179,7 +175,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
             }
 
 
-//        LAMBDA_LOGGER.doIfTraceEnabled(() ->
+//        LOGGER.doIfTraceEnabled(() ->
 //                refDataStore.logAllContents(LOGGER::trace));
 
             currentLoaderState = LoaderState.COMPLETED;
@@ -199,7 +195,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
         checkCurrentState(LoaderState.INITIALISED);
         final KeyValueMapKey mapKey = new KeyValueMapKey(mapDefinition, key);
 
-        LAMBDA_LOGGER.trace(() ->
+        LOGGER.trace(() ->
                 LogUtil.message("containsKey == {}", keyValueMap.containsKey(mapKey)));
 
         final PutOutcome putOutcome = putRefEntryWithOutcome(
@@ -210,7 +206,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
 
         recordPut(mapDefinition, putOutcome.isSuccess());
 
-        LAMBDA_LOGGER.trace(() -> LogUtil.message("put completed for {} {} {}, size now {}",
+        LOGGER.trace(() -> LogUtil.message("put completed for {} {} {}, size now {}",
                 mapDefinition, key, refDataValue, keyValueMap.size()));
 
         NullSafe.consume(keyPutOutcomeHandler, handler -> handler.handleOutcome(
@@ -237,7 +233,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
                 overwriteExisting);
 
         recordPut(mapDefinition, putOutcome.isSuccess());
-        LAMBDA_LOGGER.trace(() -> LogUtil.message("put completed for {} {} {}, size now {}",
+        LOGGER.trace(() -> LogUtil.message("put completed for {} {} {}, size now {}",
                 mapDefinition, keyRange, refDataValue,
                 Optional.ofNullable(rangeValueNestedMap.get(mapDefinition))
                         .map(NavigableMap::size)

@@ -17,7 +17,6 @@
 package stroom.widget.popup.client.event;
 
 import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.popup.client.view.DialogActionType;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -71,15 +70,11 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
     }
 
     public boolean isOk() {
-        return action.getType() == DialogActionType.OK;
+        return action == DialogAction.OK;
     }
 
     public boolean isCreate() {
-        return action.getType() == DialogActionType.CREATE;
-    }
-
-    public DialogAction getAction() {
-        return action;
+        return action == DialogAction.CREATE;
     }
 
     /**
@@ -116,7 +111,7 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
         private final PresenterWidget<?> presenterWidget;
 
         private boolean autoClose;
-        private DialogAction action = DialogAction.builder().type(DialogActionType.OK).build();
+        private DialogAction action = DialogAction.OK;
         private Runnable cancelHandler;
 
         public Builder(final PresenterWidget<?> presenterWidget) {

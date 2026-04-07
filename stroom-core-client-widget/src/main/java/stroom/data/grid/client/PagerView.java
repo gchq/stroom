@@ -24,7 +24,6 @@ import stroom.widget.button.client.ToggleButtonView;
 
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
 import com.gwtplatform.mvp.client.View;
 
 public interface PagerView extends View, TaskMonitorFactory {

@@ -18,7 +18,7 @@ package stroom.index.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
@@ -45,7 +45,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsView, LuceneIndexDoc>
+public class IndexSettingsPresenter
+        extends DocPresenter<IndexSettingsView, LuceneIndexDoc>
         implements IndexSettingsUiHandlers {
 
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
@@ -84,12 +85,7 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
 
     @Override
     protected void onBind() {
-        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> setDirty(true)));
-    }
-
-    @Override
-    public void onChange() {
-        setDirty(true);
+        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> onChange()));
     }
 
     @Override
@@ -106,20 +102,22 @@ public class IndexSettingsPresenter extends DocumentEditPresenter<IndexSettingsV
 
     @Override
     protected LuceneIndexDoc onWrite(final LuceneIndexDoc index) {
-        index.setMaxDocsPerShard(getView().getMaxDocsPerShard());
-        index.setShardsPerPartition(getView().getShardsPerPartition());
-        index.setPartitionBy(getView().getPartitionBy());
-        index.setPartitionSize(getView().getPartitionSize());
-        index.setTimeField(getView().getTimeField());
-        index.setRetentionDayAge(getView().getRetentionAge().getValue().getDays());
-
         String volumeGroupName = getView().getVolumeGroups().getValue();
         if (NullSafe.isEmptyString(volumeGroupName)) {
             volumeGroupName = null;
         }
-        index.setVolumeGroupName(volumeGroupName);
-        index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
-        return index;
+
+        return index
+                .copy()
+                .maxDocsPerShard(getView().getMaxDocsPerShard())
+                .shardsPerPartition(getView().getShardsPerPartition())
+                .partitionBy(getView().getPartitionBy())
+                .partitionSize(getView().getPartitionSize())
+                .timeField(getView().getTimeField())
+                .retentionDayAge(getView().getRetentionAge().getValue().getDays())
+                .volumeGroupName(volumeGroupName)
+                .defaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference())
+                .build();
     }
 
     private void updateRetentionAge(final SupportedRetentionAge selected) {

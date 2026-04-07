@@ -53,9 +53,7 @@ public class BasicSettingsTabPresenter<V extends BasicSettingsView>
     @Override
     public boolean isDirty(final ComponentConfig componentConfig) {
         final ComponentConfig newComponentConfig = write(componentConfig);
-
         final boolean equal = Objects.equals(componentConfig.getName(), newComponentConfig.getName());
-
         return !equal;
     }
 }

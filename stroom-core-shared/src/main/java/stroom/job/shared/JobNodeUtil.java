@@ -22,10 +22,9 @@ import stroom.util.shared.scheduler.ScheduleType;
 
 public class JobNodeUtil {
 
-    public static void setSchedule(final JobNode jobNode, final Schedule schedule) {
+    public static JobNode setSchedule(final JobNode jobNode, final Schedule schedule) {
         final JobType jobType = getJobType(schedule);
-        jobNode.setJobType(jobType);
-        jobNode.setSchedule(schedule.getExpression());
+        return jobNode.copy().jobType(jobType).schedule(schedule.getExpression()).build();
     }
 
     public static JobType getJobType(final Schedule schedule) {

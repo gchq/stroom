@@ -54,86 +54,117 @@ public class ContentStoreContentPack {
     @JsonProperty
     private ContentStoreMetadata contentStoreMetadata;
 
-    /** The ID of this Content Pack within the Content Store */
+    /**
+     * The ID of this Content Pack within the Content Store
+     */
     @JsonProperty
     private final String id;
 
-    /** The name as displayed in the UI */
+    /**
+     * The name as displayed in the UI
+     */
     @JsonProperty
     private final String uiName;
 
-    /** URL of the icon to display */
+    /**
+     * URL of the icon to display
+     */
     @JsonProperty
     private final String iconUrl;
 
-    /** Display name of the license */
+    /**
+     * Display name of the license
+     */
     @JsonProperty
     private final String licenseName;
 
-    /** URL of the full license text */
+    /**
+     * URL of the full license text
+     */
     @JsonProperty
     private final String licenseUrl;
 
-    /** Where the pack will be installed within Stroom */
+    /**
+     * Where the pack will be installed within Stroom
+     */
     @JsonProperty
     private final String stroomPath;
 
-    /** Extra Markdown information about this pack */
+    /**
+     * Extra Markdown information about this pack
+     */
     @JsonProperty
     private final String details;
 
-    /** Name of the GitRepoDoc */
+    /**
+     * Name of the GitRepoDoc
+     */
     @JsonProperty
     private final String gitRepoName;
 
-    /** Git remote repository URL. Not final as overridden in testing */
+    /**
+     * Git remote repository URL. Not final as overridden in testing
+     */
     @JsonProperty
     private String gitUrl;
 
-    /** Git branch */
+    /**
+     * Git branch
+     */
     @JsonProperty
     private final String gitBranch;
 
-    /** Path inside Git repo */
+    /**
+     * Path inside Git repo
+     */
     @JsonProperty
     private final String gitPath;
 
-    /** Hash of the Git commit to pull */
+    /**
+     * Hash of the Git commit to pull
+     */
     @JsonProperty
     private final String gitCommit;
 
-    /** Whether this repo requires authentication */
+    /**
+     * Whether this repo requires authentication
+     */
     @JsonProperty
     private final Boolean gitNeedsAuth;
 
-    /** Default Git path to use - the root */
+    /**
+     * Default Git path to use - the root
+     */
     private static final String DEFAULT_GIT_PATH =
             "/";
 
-    /** Length to truncate details field to in toString() */
+    /**
+     * Length to truncate details field to in toString()
+     */
     private static final int DETAILS_TRUNC = 25;
 
     /**
      * Constructor. Initialises the values from the YAML.
-     * @param id Name as used in the ContentStore. Must not be null.
-     * @param uiName Name as shown in the UI. Must not be null.
-     * @param iconUrl Icon URL. Can be null in which case null will
-     *                be returned.
-     * @param licenseName Name of license for UI. Can be null.
-     * @param licenseUrl URL of full license info. Can be null.
-     * @param stroomPath Where the pack will be installed in Stroom.
-     *                   Can be null in which case it will be installed in
-     *                   the root of the Explorer Tree.
-     * @param gitRepoName The name of the GitRepoDoc to create. That is, the
-     *                    name as shown in the Explorer Tree. Can be null or
-     *                    empty string, in which case the uiName will be used
-     *                    instead.
-     * @param gitUrl URL of remote Git repository. Must not be null.
-     * @param gitBranch Name of Git branch. Must not be null.
-     * @param gitPath Path to files we're interested in. Can be null in which
-     *                case the root will be used.
-     * @param gitCommit Hash of the Git commit to pull. Can be null in which
-     *                  case the latest commit will be pulled.
+     *
+     * @param id           Name as used in the ContentStore. Must not be null.
+     * @param uiName       Name as shown in the UI. Must not be null.
+     * @param iconUrl      Icon URL. Can be null in which case null will
+     *                     be returned.
+     * @param licenseName  Name of license for UI. Can be null.
+     * @param licenseUrl   URL of full license info. Can be null.
+     * @param stroomPath   Where the pack will be installed in Stroom.
+     *                     Can be null in which case it will be installed in
+     *                     the root of the Explorer Tree.
+     * @param gitRepoName  The name of the GitRepoDoc to create. That is, the
+     *                     name as shown in the Explorer Tree. Can be null or
+     *                     empty string, in which case the uiName will be used
+     *                     instead.
+     * @param gitUrl       URL of remote Git repository. Must not be null.
+     * @param gitBranch    Name of Git branch. Must not be null.
+     * @param gitPath      Path to files we're interested in. Can be null in which
+     *                     case the root will be used.
+     * @param gitCommit    Hash of the Git commit to pull. Can be null in which
+     *                     case the latest commit will be pulled.
      * @param gitNeedsAuth Whether this Git repo needs authentication to pull
      *                     stuff from.
      */
@@ -159,16 +190,32 @@ public class ContentStoreContentPack {
         this.id = Objects.requireNonNull(id);
         this.uiName = Objects.requireNonNull(uiName);
         this.iconUrl = iconUrl;
-        this.licenseName = licenseName == null ? "" : licenseName;
-        this.licenseUrl = licenseUrl == null ? "" : licenseUrl;
-        this.stroomPath = stroomPath == null || stroomPath.isEmpty() ? "/" : stroomPath;
-        this.details = details == null ? "" : details;
-        this.gitRepoName = gitRepoName == null || gitRepoName.isEmpty() ? uiName : gitRepoName;
+        this.licenseName = licenseName == null
+                ? ""
+                : licenseName;
+        this.licenseUrl = licenseUrl == null
+                ? ""
+                : licenseUrl;
+        this.stroomPath = stroomPath == null || stroomPath.isEmpty()
+                ? "/"
+                : stroomPath;
+        this.details = details == null
+                ? ""
+                : details;
+        this.gitRepoName = gitRepoName == null || gitRepoName.isEmpty()
+                ? uiName
+                : gitRepoName;
         this.gitUrl = Objects.requireNonNull(gitUrl);
         this.gitBranch = Objects.requireNonNull(gitBranch);
-        this.gitPath = gitPath == null ? DEFAULT_GIT_PATH : gitPath;
-        this.gitCommit = gitCommit == null ? "" : gitCommit;
-        this.gitNeedsAuth = gitNeedsAuth == null ? Boolean.FALSE : gitNeedsAuth;
+        this.gitPath = gitPath == null
+                ? DEFAULT_GIT_PATH
+                : gitPath;
+        this.gitCommit = gitCommit == null
+                ? ""
+                : gitCommit;
+        this.gitNeedsAuth = gitNeedsAuth == null
+                ? Boolean.FALSE
+                : gitNeedsAuth;
         this.contentStoreMetadata = metadata;
     }
 
@@ -304,6 +351,7 @@ public class ContentStoreContentPack {
      * Used in testing to substitute a different repository URL for the URL given
      * in the content-store.yml file. Allows us to cache stuff in a local GIT repo
      * and avoid lots of downloads from remote repositories.
+     *
      * @param overrideGitUrl The new URL.
      */
     public void overrideGitUrl(final String overrideGitUrl) {
@@ -314,6 +362,7 @@ public class ContentStoreContentPack {
      * Sets the metadata of the content store that this belongs to.
      * Resolved later. This structure may change. Only called when creating the list of
      * content packs. Shouldn't be called by anything else.
+     *
      * @param meta The metadata. Must not be null.
      */
     public void setContentStoreMetadata(final ContentStoreMetadata meta) {
@@ -336,6 +385,7 @@ public class ContentStoreContentPack {
      * Matches on the Content Store ownerID and the Content Pack ID.
      * Doesn't look at anything else, so may get clashes between
      * Content Packs and manually created GitRepos.
+     *
      * @param gitRepoDoc The existing Stroom GitRepoDoc to check.
      * @return true if there is a match; false otherwise.
      */
@@ -364,6 +414,7 @@ public class ContentStoreContentPack {
      * Assumes that matches() has returned true before this is called.
      * Checks if the URL, branch, path or commit hash have changed. If they
      * have then this is an upgrade.
+     *
      * @param gitRepoDoc The GitRepoDoc that matches this content pack
      *                   but that we want to check for possible upgrades.
      * @return true if this content pack could upgrade the given doc.
@@ -378,16 +429,20 @@ public class ContentStoreContentPack {
 
     /**
      * Copies the settings in this Content Pack into the GitRepoDoc.
+     *
      * @param gitRepoDoc The doc to copy settings into.
      */
-    public void updateSettingsIn(final GitRepoDoc gitRepoDoc) {
-        gitRepoDoc.setContentStoreMetadata(contentStoreMetadata);
-        gitRepoDoc.setContentStoreContentPackId(id);
-        gitRepoDoc.setUrl(gitUrl);
-        gitRepoDoc.setBranch(gitBranch);
-        gitRepoDoc.setPath(gitPath);
-        gitRepoDoc.setCommit(gitCommit);
-        gitRepoDoc.setDescription(details);
+    public GitRepoDoc updateSettingsIn(final GitRepoDoc gitRepoDoc) {
+        return gitRepoDoc
+                .copy()
+                .contentStoreMetadata(contentStoreMetadata)
+                .contentStoreContentPackId(id)
+                .url(gitUrl)
+                .branch(gitBranch)
+                .path(gitPath)
+                .commit(gitCommit)
+                .description(details)
+                .build();
     }
 
     @Override

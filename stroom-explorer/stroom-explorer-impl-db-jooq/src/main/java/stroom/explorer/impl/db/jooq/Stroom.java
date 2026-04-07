@@ -14,6 +14,8 @@ import org.jooq.impl.SchemaImpl;
 import stroom.explorer.impl.db.jooq.tables.ExplorerFavourite;
 import stroom.explorer.impl.db.jooq.tables.ExplorerNode;
 import stroom.explorer.impl.db.jooq.tables.ExplorerPath;
+import stroom.explorer.impl.db.jooq.tables.TabSession;
+import stroom.explorer.impl.db.jooq.tables.TabSessionDocRef;
 
 
 /**
@@ -45,6 +47,16 @@ public class Stroom extends SchemaImpl {
     public final ExplorerPath EXPLORER_PATH = ExplorerPath.EXPLORER_PATH;
 
     /**
+     * The table <code>stroom.tab_session</code>.
+     */
+    public final TabSession TAB_SESSION = TabSession.TAB_SESSION;
+
+    /**
+     * The table <code>stroom.tab_session_doc_ref</code>.
+     */
+    public final TabSessionDocRef TAB_SESSION_DOC_REF = TabSessionDocRef.TAB_SESSION_DOC_REF;
+
+    /**
      * No further instances allowed
      */
     private Stroom() {
@@ -62,7 +74,9 @@ public class Stroom extends SchemaImpl {
         return Arrays.asList(
             ExplorerFavourite.EXPLORER_FAVOURITE,
             ExplorerNode.EXPLORER_NODE,
-            ExplorerPath.EXPLORER_PATH
+            ExplorerPath.EXPLORER_PATH,
+            TabSession.TAB_SESSION,
+            TabSessionDocRef.TAB_SESSION_DOC_REF
         );
     }
 }

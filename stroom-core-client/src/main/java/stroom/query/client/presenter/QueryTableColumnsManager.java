@@ -771,7 +771,7 @@ public class QueryTableColumnsManager implements HeadingListener, FilterCellMana
                                                 .write(queryTablePreferences);
                                         if (!Objects.equals(updated, queryTablePreferences)) {
                                             tablePresenter.setQueryTablePreferences(updated);
-                                            tablePresenter.setDirty(true);
+                                            tablePresenter.onChange();
                                             tablePresenter.refresh();
                                         }
 

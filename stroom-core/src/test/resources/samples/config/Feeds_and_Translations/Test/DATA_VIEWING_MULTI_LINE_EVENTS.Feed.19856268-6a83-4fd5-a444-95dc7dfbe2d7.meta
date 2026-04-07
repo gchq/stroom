@@ -4,9 +4,15 @@
   "name" : "DATA_VIEWING_MULTI_LINE-EVENTS",
   "version" : "fbaba621-e07b-46c0-ac5f-fadb0518dcaa",
   "description" : "DATA_SPLITTER-EVENTS",
+  "classification" : "",
   "encoding" : "UTF-8",
   "contextEncoding" : "UTF-8",
   "reference" : false,
   "streamType" : "Raw Events",
-  "status" : "RECEIVE"
+  "dataFormat" : "",
+  "contextFormat" : "",
+  "schema" : "",
+  "schemaVersion" : "",
+  "status" : "RECEIVE",
+  "volumeGroup" : "Default Volume Group"
 }

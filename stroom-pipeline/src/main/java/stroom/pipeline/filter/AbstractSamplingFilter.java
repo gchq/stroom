@@ -68,7 +68,7 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
         errorListener = new ErrorListenerAdaptor(getElementId(), locationFactory, errorReceiverProxy);
 
         try {
-            this.handler = XMLUtil.createTransformerHandler(errorListener, false);
+            this.handler = XMLUtil.createTransformerHandler(errorListener, false, true);
 
         } catch (final TransformerConfigurationException e) {
             errorReceiverProxy.log(Severity.FATAL_ERROR,
@@ -104,7 +104,11 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
      */
     @Override
     public void startDocument() throws SAXException {
-        this.outputStream = new ByteArrayOutputStream();
+        if (this.outputStream == null) {
+            this.outputStream = new ByteArrayOutputStream();
+        } else {
+            this.outputStream.reset();
+        }
         handler.setResult(new StreamResult(outputStream));
 
         handler.startDocument();

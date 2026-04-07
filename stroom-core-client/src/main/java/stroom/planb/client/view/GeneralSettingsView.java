@@ -16,12 +16,12 @@
 
 package stroom.planb.client.view;
 
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
 
 import com.gwtplatform.mvp.client.HasUiHandlers;
 
-public interface GeneralSettingsView extends ReadOnlyChangeHandler, HasUiHandlers<PlanBSettingsUiHandlers> {
+public interface GeneralSettingsView extends ReadOnlyChangeHandler, HasUiHandlers<ChangeUiHandlers> {
 
     Long getMaxStoreSize();
 

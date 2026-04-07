@@ -18,6 +18,7 @@ package stroom.docstore.impl;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.RWLockFactory;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.util.PredicateUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.string.PatternUtil;
@@ -25,7 +26,6 @@ import stroom.util.string.PatternUtil;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -36,9 +36,9 @@ public interface Persistence {
 
     void delete(DocRef docRef);
 
-    Map<String, byte[]> read(DocRef docRef) throws IOException;
+    ImportExportDocument read(DocRef docRef) throws IOException;
 
-    void write(DocRef docRef, boolean update, Map<String, byte[]> data) throws IOException;
+    void write(DocRef docRef, boolean update, ImportExportDocument importExportDocument) throws IOException;
 
     List<DocRef> list(String type);
 

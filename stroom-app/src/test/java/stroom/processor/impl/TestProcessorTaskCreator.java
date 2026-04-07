@@ -240,7 +240,8 @@ class TestProcessorTaskCreator extends AbstractCoreIntegrationTest {
                 filter,
                 new ProgressMonitor(1),
                 100,
-                new LongAdder());
+                new LongAdder(),
+                processorConfig);
     }
 
     private int taskCount() {

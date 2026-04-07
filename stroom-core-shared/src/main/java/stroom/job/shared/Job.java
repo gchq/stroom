@@ -17,7 +17,8 @@
 package stroom.job.shared;
 
 
-import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.AuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -28,38 +29,28 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
-public final class Job implements HasAuditInfo, HasIntegerId {
+public final class Job implements HasAuditInfoGetters, HasIntegerId {
 
     @JsonProperty
-    private Integer id;
+    private final Integer id;
     @JsonProperty
-    private Integer version;
+    private final Integer version;
     @JsonProperty
-    private Long createTimeMs;
+    private final Long createTimeMs;
     @JsonProperty
-    private String createUser;
+    private final String createUser;
     @JsonProperty
-    private Long updateTimeMs;
+    private final Long updateTimeMs;
     @JsonProperty
-    private String updateUser;
+    private final String updateUser;
     @JsonProperty
-    private String name;
+    private final String name;
     @JsonProperty
-    private boolean enabled;
+    private final boolean enabled;
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private boolean advanced;
-
-    public Job() {
-    }
-
-    public Job(final Integer id, final boolean enabled, final String description, final boolean advanced) {
-        this.id = id;
-        this.enabled = enabled;
-        this.description = description;
-        this.advanced = advanced;
-    }
+    private final boolean advanced;
 
     @JsonCreator
     public Job(@JsonProperty("id") final Integer id,
@@ -89,16 +80,8 @@ public final class Job implements HasAuditInfo, HasIntegerId {
         return id;
     }
 
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
     public Integer getVersion() {
         return version;
-    }
-
-    public void setVersion(final Integer version) {
-        this.version = version;
     }
 
     @Override
@@ -106,17 +89,9 @@ public final class Job implements HasAuditInfo, HasIntegerId {
         return createTimeMs;
     }
 
-    public void setCreateTimeMs(final Long createTimeMs) {
-        this.createTimeMs = createTimeMs;
-    }
-
     @Override
     public String getCreateUser() {
         return createUser;
-    }
-
-    public void setCreateUser(final String createUser) {
-        this.createUser = createUser;
     }
 
     @Override
@@ -124,41 +99,21 @@ public final class Job implements HasAuditInfo, HasIntegerId {
         return updateTimeMs;
     }
 
-    public void setUpdateTimeMs(final Long updateTimeMs) {
-        this.updateTimeMs = updateTimeMs;
-    }
-
     @Override
     public String getUpdateUser() {
         return updateUser;
-    }
-
-    public void setUpdateUser(final String updateUser) {
-        this.updateUser = updateUser;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(final String name) {
-        this.name = name;
-    }
-
     public boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
-    }
-
     public String getDescription() {
         return description;
-    }
-
-    public void setDescription(final String description) {
-        this.description = description;
     }
 
     /**
@@ -170,24 +125,20 @@ public final class Job implements HasAuditInfo, HasIntegerId {
         return advanced;
     }
 
-    public void setAdvanced(final boolean advanced) {
-        this.advanced = advanced;
-    }
-
     @Override
     public String toString() {
         return "Job{" +
-                "id=" + id +
-                ", version=" + version +
-                ", createTimeMs=" + createTimeMs +
-                ", createUser='" + createUser + '\'' +
-                ", updateTimeMs=" + updateTimeMs +
-                ", updateUser='" + updateUser + '\'' +
-                ", name='" + name + '\'' +
-                ", enabled=" + enabled +
-                ", description='" + description + '\'' +
-                ", advanced=" + advanced +
-                '}';
+               "id=" + id +
+               ", version=" + version +
+               ", createTimeMs=" + createTimeMs +
+               ", createUser='" + createUser + '\'' +
+               ", updateTimeMs=" + updateTimeMs +
+               ", updateUser='" + updateUser + '\'' +
+               ", name='" + name + '\'' +
+               ", enabled=" + enabled +
+               ", description='" + description + '\'' +
+               ", advanced=" + advanced +
+               '}';
     }
 
     @Override
@@ -205,5 +156,94 @@ public final class Job implements HasAuditInfo, HasIntegerId {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static final class Builder
+            extends AuditInfoBuilder<Job, Builder> {
+
+        private Integer id;
+        private Integer version;
+        private String name;
+        private boolean enabled;
+        private String description;
+        private boolean advanced;
+
+        private Builder() {
+        }
+
+        private Builder(final Job job) {
+            this.id = job.id;
+            this.version = job.version;
+            this.createTimeMs = job.createTimeMs;
+            this.createUser = job.createUser;
+            this.updateTimeMs = job.updateTimeMs;
+            this.updateUser = job.updateUser;
+            this.name = job.name;
+            this.enabled = job.enabled;
+            this.description = job.description;
+            this.advanced = job.advanced;
+        }
+
+        public Builder id(final Integer id) {
+            this.id = id;
+            return self();
+        }
+
+        public Builder version(final Integer version) {
+            this.version = version;
+            return self();
+        }
+
+        public Builder name(final String name) {
+            this.name = name;
+            return self();
+        }
+
+        public Builder enabled(final boolean enabled) {
+            this.enabled = enabled;
+            return self();
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder advanced(final boolean advanced) {
+            this.advanced = advanced;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public Job build() {
+            return new Job(
+                    id,
+                    version,
+                    createTimeMs,
+                    createUser,
+                    updateTimeMs,
+                    updateUser,
+                    name,
+                    enabled,
+                    description,
+                    advanced);
+        }
     }
 }

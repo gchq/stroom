@@ -17,7 +17,7 @@
 package stroom.pathways.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.feed.shared.FeedDoc;
@@ -32,7 +32,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-public class PathwaysSettingsPresenter extends DocumentEditPresenter<PathwaysSettingsView, PathwaysDoc>
+public class PathwaysSettingsPresenter extends DocPresenter<PathwaysSettingsView, PathwaysDoc>
         implements PathwaysSettingsUiHandlers {
 
     private final DocSelectionBoxPresenter traceStorePresenter;
@@ -60,13 +60,8 @@ public class PathwaysSettingsPresenter extends DocumentEditPresenter<PathwaysSet
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(traceStorePresenter.addDataSelectionHandler(e -> setDirty(true)));
-        registerHandler(feedPresenter.addDataSelectionHandler(e -> setDirty(true)));
-    }
-
-    @Override
-    public void onChange() {
-        setDirty(true);
+        registerHandler(traceStorePresenter.addDataSelectionHandler(e -> onChange()));
+        registerHandler(feedPresenter.addDataSelectionHandler(e -> onChange()));
     }
 
     @Override
@@ -83,15 +78,17 @@ public class PathwaysSettingsPresenter extends DocumentEditPresenter<PathwaysSet
 
     @Override
     protected PathwaysDoc onWrite(final PathwaysDoc doc) {
-        doc.setTemporalOrderingTolerance(getView().getTemporalOrderingTolerance());
-        doc.setAllowPathwayCreation(getView().isAllowPathwayCreation());
-        doc.setAllowPathwayMutation(getView().isAllowPathwayMutation());
-        doc.setAllowConstraintCreation(getView().isAllowConstraintCreation());
-        doc.setAllowConstraintMutation(getView().isAllowConstraintMutation());
-        doc.setTracesDocRef(traceStorePresenter.getSelectedEntityReference());
-        doc.setInfoFeed(feedPresenter.getSelectedEntityReference());
-        doc.setProcessingNode(getView().getProcessingNode());
-        return doc;
+        return doc
+                .copy()
+                .temporalOrderingTolerance(getView().getTemporalOrderingTolerance())
+                .allowPathwayCreation(getView().isAllowPathwayCreation())
+                .allowPathwayMutation(getView().isAllowPathwayMutation())
+                .allowConstraintCreation(getView().isAllowConstraintCreation())
+                .allowConstraintMutation(getView().isAllowConstraintMutation())
+                .tracesDocRef(traceStorePresenter.getSelectedEntityReference())
+                .infoFeed(feedPresenter.getSelectedEntityReference())
+                .processingNode(getView().getProcessingNode())
+                .build();
     }
 
     public interface PathwaysSettingsView

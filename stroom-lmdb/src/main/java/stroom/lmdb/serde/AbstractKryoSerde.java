@@ -31,9 +31,6 @@ import java.nio.ByteBuffer;
 
 public abstract class AbstractKryoSerde<T> implements Serde<T>, KryoSerializer<T> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractKryoSerde.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(AbstractKryoSerde.class);
-
     public static final int VARIABLE_LENGTH_LONG_BYTES = 9;
     public static final int BOOLEAN_BYTES = 1;
 

@@ -40,6 +40,8 @@ import com.gwtplatform.mvp.client.View;
  */
 public class UsersPresenter extends ContentTabPresenter<UsersView> {
 
+    public static final String TAB_TYPE = "Users";
+
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
     private final UserListPresenter userList;
@@ -159,7 +161,7 @@ public class UsersPresenter extends ContentTabPresenter<UsersView> {
 
     @Override
     public String getType() {
-        return "Users";
+        return TAB_TYPE;
     }
 
     public void showUser(final UserRef userRef) {

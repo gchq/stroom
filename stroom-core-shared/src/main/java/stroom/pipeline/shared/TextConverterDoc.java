@@ -19,7 +19,6 @@ package stroom.pipeline.shared;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.AbstractEmbeddableDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
@@ -67,11 +66,11 @@ public class TextConverterDoc extends AbstractEmbeddableDoc implements HasData {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.TEXT_CONVERTER_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private String data;
+    private final String data;
     @JsonProperty
-    private TextConverterType converterType;
+    private final TextConverterType converterType;
 
     @JsonCreator
     public TextConverterDoc(@JsonProperty("uuid") final String uuid,
@@ -88,11 +87,7 @@ public class TextConverterDoc extends AbstractEmbeddableDoc implements HasData {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser, embeddedIn);
         this.description = description;
         this.data = data;
-        this.converterType = converterType;
-
-        if (converterType == null) {
-            this.converterType = TextConverterType.NONE;
-        }
+        this.converterType = Objects.requireNonNullElse(converterType, TextConverterType.NONE);
     }
 
     /**
@@ -115,26 +110,13 @@ public class TextConverterDoc extends AbstractEmbeddableDoc implements HasData {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     @Override
     public String getData() {
         return data;
     }
 
-    @Override
-    public void setData(final String data) {
-        this.data = data;
-    }
-
     public TextConverterType getConverterType() {
         return converterType;
-    }
-
-    public void setConverterType(final TextConverterType converterType) {
-        this.converterType = converterType;
     }
 
     @Override
@@ -180,11 +162,16 @@ public class TextConverterDoc extends AbstractEmbeddableDoc implements HasData {
         return new Builder(this);
     }
 
+    @Override
+    public HasData copyWithData(final String data) {
+        return copy().data(data).build();
+    }
+
     public static Builder builder() {
         return new Builder();
     }
 
-    public static final class Builder extends AbstractDoc.AbstractBuilder<TextConverterDoc, TextConverterDoc.Builder> {
+    public static final class Builder extends AbstractBuilder<TextConverterDoc, Builder> {
 
         private String description;
         private String data;

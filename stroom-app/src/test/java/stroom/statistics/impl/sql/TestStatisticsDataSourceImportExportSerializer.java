@@ -74,12 +74,17 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
     @Test
     void testStatisticsDataSource() {
         final ExplorerNode statNode = explorerService.create(StatisticStoreDoc.TYPE, "StatName1", null, null);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(statNode.getDocRef());
-        statisticsDataSource.setDescription("My Description");
-        statisticsDataSource.setStatisticType(StatisticType.COUNT);
-        statisticsDataSource.setConfig(new StatisticsDataSourceData());
-        statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag1"));
-        statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag2"));
+        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(statNode.getDocRef())
+                .copy()
+                .description("My Description")
+                .statisticType(StatisticType.COUNT)
+                .config(StatisticsDataSourceData
+                        .builder()
+                        .fields(List.of(
+                                new StatisticField("tag1"),
+                                new StatisticField("tag2")))
+                        .build())
+                .build();
         statisticStoreStore.writeDocument(statisticsDataSource);
 
         assertThat(statisticStoreStore.list().size()).isEqualTo(1);
@@ -113,7 +118,7 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
 
         assertThat(dataSources.size()).isEqualTo(1);
 
-        final StatisticStoreDoc importedDataSource = statisticStoreStore.readDocument(dataSources.get(0));
+        final StatisticStoreDoc importedDataSource = statisticStoreStore.readDocument(dataSources.getFirst());
 
         assertThat(importedDataSource.getName()).isEqualTo(statisticsDataSource.getName());
         assertThat(importedDataSource.getStatisticType()).isEqualTo(statisticsDataSource.getStatisticType());
@@ -130,12 +135,17 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
     @Test
     void testStatisticsDataSourceV2() {
         final ExplorerNode statNode = explorerService.create(StatisticStoreDoc.TYPE, "StatName1", null, null);
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(statNode.getDocRef());
-        statisticsDataSource.setDescription("My Description");
-        statisticsDataSource.setStatisticType(StatisticType.COUNT);
-        statisticsDataSource.setConfig(new StatisticsDataSourceData());
-        statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag1"));
-        statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag2"));
+        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(statNode.getDocRef())
+                .copy()
+                .description("My Description")
+                .statisticType(StatisticType.COUNT)
+                .config(StatisticsDataSourceData
+                        .builder()
+                        .fields(List.of(
+                                new StatisticField("tag1"),
+                                new StatisticField("tag2")))
+                        .build())
+                .build();
         statisticStoreStore.writeDocument(statisticsDataSource);
 
         assertThat(statisticStoreStore.list().size()).isEqualTo(1);
@@ -169,7 +179,7 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
 
         assertThat(dataSources.size()).isEqualTo(1);
 
-        final StatisticStoreDoc importedDataSource = statisticStoreStore.readDocument(dataSources.get(0));
+        final StatisticStoreDoc importedDataSource = statisticStoreStore.readDocument(dataSources.getFirst());
 
         assertThat(importedDataSource.getName()).isEqualTo(statisticsDataSource.getName());
         assertThat(importedDataSource.getStatisticType()).isEqualTo(statisticsDataSource.getStatisticType());
@@ -181,17 +191,20 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
     @Test
     void testDeSerialiseOnLoad() {
         final DocRef docRef = statisticStoreStore.createDocument("StatName1");
-        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef);
-        statisticsDataSource.setDescription("My Description");
-        statisticsDataSource.setStatisticType(StatisticType.COUNT);
-
-        statisticsDataSource.setConfig(new StatisticsDataSourceData());
-        statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag1"));
-        statisticsDataSource.getConfig().addStatisticField(new StatisticField("tag2"));
-
+        final StatisticStoreDoc statisticsDataSource = statisticStoreStore.readDocument(docRef)
+                .copy()
+                .description("My Description")
+                .statisticType(StatisticType.COUNT)
+                .config(StatisticsDataSourceData
+                        .builder()
+                        .fields(List.of(
+                                new StatisticField("tag1"),
+                                new StatisticField("tag2")))
+                        .build())
+                .build();
         statisticStoreStore.writeDocument(statisticsDataSource);
 
-        final DocRef statisticStoreRef = statisticStoreStore.list().get(0);
+        final DocRef statisticStoreRef = statisticStoreStore.list().getFirst();
         final StatisticStoreDoc statisticsDataSource2 = statisticStoreStore.readDocument(statisticStoreRef);
         assertThat(statisticsDataSource2).isNotNull();
 

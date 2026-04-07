@@ -138,12 +138,14 @@ public class AnalyticsDataSetup {
 
         // Add view.
         final DocRef viewDocRef = viewStore.createDocument("index_view");
-        final ViewDoc viewDoc = viewStore.readDocument(viewDocRef);
-        viewDoc.setDataSource(indexDocRef);
-        viewDoc.setPipeline(searchResultPipeline);
-        viewDoc.setFilter(ExpressionOperator.builder()
-                .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
-                .build());
+        final ViewDoc viewDoc = viewStore.readDocument(viewDocRef)
+                .copy()
+                .dataSource(indexDocRef)
+                .pipeline(searchResultPipeline)
+                .filter(ExpressionOperator.builder()
+                        .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
+                        .build())
+                .build();
         viewStore.writeDocument(viewDoc);
 
         // Create somewhere to put the alerts.

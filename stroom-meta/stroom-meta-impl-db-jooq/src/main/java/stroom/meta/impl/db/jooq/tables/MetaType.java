@@ -10,14 +10,10 @@ import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,7 +28,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.meta.impl.db.jooq.Keys;
 import stroom.meta.impl.db.jooq.Stroom;
-import stroom.meta.impl.db.jooq.tables.Meta.MetaPath;
 import stroom.meta.impl.db.jooq.tables.records.MetaTypeRecord;
 
 
@@ -96,37 +91,6 @@ public class MetaType extends TableImpl<MetaTypeRecord> {
         this(DSL.name("meta_type"), null);
     }
 
-    public <O extends Record> MetaType(Table<O> path, ForeignKey<O, MetaTypeRecord> childPath, InverseForeignKey<O, MetaTypeRecord> parentPath) {
-        super(path, childPath, parentPath, META_TYPE);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class MetaTypePath extends MetaType implements Path<MetaTypeRecord> {
-        public <O extends Record> MetaTypePath(Table<O> path, ForeignKey<O, MetaTypeRecord> childPath, InverseForeignKey<O, MetaTypeRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private MetaTypePath(Name alias, Table<MetaTypeRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public MetaTypePath as(String alias) {
-            return new MetaTypePath(DSL.name(alias), this);
-        }
-
-        @Override
-        public MetaTypePath as(Name alias) {
-            return new MetaTypePath(alias, this);
-        }
-
-        @Override
-        public MetaTypePath as(Table<?> alias) {
-            return new MetaTypePath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -145,18 +109,6 @@ public class MetaType extends TableImpl<MetaTypeRecord> {
     @Override
     public List<UniqueKey<MetaTypeRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.KEY_META_TYPE_NAME);
-    }
-
-    private transient MetaPath _meta;
-
-    /**
-     * Get the implicit to-many join path to the <code>stroom.meta</code> table
-     */
-    public MetaPath meta() {
-        if (_meta == null)
-            _meta = new MetaPath(this, null, Keys.META_TYPE_ID.getInverseKey());
-
-        return _meta;
     }
 
     @Override

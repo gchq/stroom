@@ -33,12 +33,14 @@ import java.util.List;
 import java.util.Objects;
 
 @Description(
-        "Defines an analytic rule which can be run to alert on events meeting a criteria.\n" +
-        "The criteria is defined using a StroomQL query.\n" +
-        "The analytic can be processed in different ways:\n\n" +
-        "* Streaming\n" +
-        "* Table Builder\n" +
-        "* Scheduled Query")
+    """
+    Defines an analytic rule which can be run to alert on events meeting a criteria.
+    The criteria is defined using a StroomQL query.
+    The analytic can be processed in different ways:
+    * Streaming
+    * Table Builder
+    * Scheduled Query
+    """)
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
@@ -48,6 +50,10 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
 
     private static final boolean INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE = true;
 
+    /**
+     * The includeRuleDocumentation field determines whether a rule's documentation
+     * will be included in any detections that it produces.
+     */
     @JsonProperty
     private final boolean includeRuleDocumentation;
 
@@ -61,7 +67,6 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                            @JsonProperty("createUser") final String createUser,
                            @JsonProperty("updateUser") final String updateUser,
                            @JsonProperty("description") final String description,
-                           @JsonProperty("includeRuleDocumentation") final Boolean includeRuleDocumentation,
                            @JsonProperty("languageVersion") final QueryLanguageVersion languageVersion,
                            @JsonProperty("parameters") final List<Param> parameters,
                            @JsonProperty("timeRange") final TimeRange timeRange,
@@ -73,7 +78,10 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                            @JsonProperty("errorFeed") final DocRef errorFeed,
                            @JsonProperty("rememberNotifications") final boolean rememberNotifications,
                            @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
-                           @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
+                           @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
+                           @JsonProperty("includeRuleDocumentation") final Boolean includeRuleDocumentation,
+                           @JsonProperty("level") final String level,
+                           @JsonProperty("status") final String status) {
         super(TYPE, uuid,
                 name,
                 version,
@@ -93,18 +101,14 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                 errorFeed,
                 rememberNotifications,
                 suppressDuplicateNotifications,
-                duplicateNotificationConfig);
+                duplicateNotificationConfig,
+                level,
+                status);
         this.includeRuleDocumentation = includeRuleDocumentation == null
                 ? INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE
                 : includeRuleDocumentation;
     }
 
-    /**
-     * The includeRuleDocumentation field determines whether a rule's documentation
-     * will be included in any detections that it produces.
-     *
-     * @return boolean value of includeRuleDocumentation
-     */
     public boolean isIncludeRuleDocumentation() {
         return includeRuleDocumentation;
     }
@@ -165,6 +169,16 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
             return self();
         }
 
+        public Builder level(final String level) {
+            this.level = level;
+            return self();
+        }
+
+        public Builder status(final String status) {
+            this.status = status;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -181,7 +195,6 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                     createUser,
                     updateUser,
                     description,
-                    includeRuleDocumentation,
                     languageVersion,
                     parameters,
                     timeRange,
@@ -193,7 +206,10 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                     errorFeed,
                     false,
                     false,
-                    duplicateNotificationConfig);
+                    duplicateNotificationConfig,
+                    includeRuleDocumentation,
+                    level,
+                    status);
         }
     }
 }

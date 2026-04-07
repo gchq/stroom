@@ -436,10 +436,6 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         }
     }
 
-    public List<String> getStandardComments(final String filter) {
-        return filterValues(annotationConfigProvider.get().getStandardComments(), filter);
-    }
-
     public void performDataRetention() {
         performDataRetention(RETENTION_EVENTS_BATCH_SIZE);
     }

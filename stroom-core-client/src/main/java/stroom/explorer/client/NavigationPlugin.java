@@ -22,27 +22,36 @@ import stroom.core.client.presenter.Plugin;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.SetDocumentAsFavouriteEvent;
+import stroom.explorer.client.event.DeleteTabSessionEvent;
 import stroom.explorer.client.event.LocateDocEvent;
+import stroom.explorer.client.event.OpenTabSessionEvent;
+import stroom.explorer.client.event.SaveTabSessionEvent;
 import stroom.explorer.client.event.ShowFindEvent;
 import stroom.explorer.client.event.ShowFindInContentEvent;
 import stroom.explorer.client.event.ShowRecentItemsEvent;
+import stroom.explorer.client.event.TabSessionChangeEvent;
+import stroom.explorer.client.presenter.TabSessionManager;
+import stroom.explorer.shared.TabSession;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.List;
 import javax.inject.Singleton;
 
 @Singleton
 public class NavigationPlugin extends Plugin {
 
     private DocRef selectedDoc;
+    private List<TabSession> tabSessions;
 
     @Inject
-    public NavigationPlugin(final EventBus eventBus) {
+    public NavigationPlugin(final EventBus eventBus, final TabSessionManager tabSessionManager) {
         super(eventBus);
         // track the currently selected doc.
         registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
@@ -52,6 +61,10 @@ public class NavigationPlugin extends Plugin {
             } else {
                 selectedDoc = null;
             }
+        }));
+
+        registerHandler(getEventBus().addHandler(TabSessionChangeEvent.getType(), e -> {
+            tabSessions = e.getTabSessions();
         }));
     }
 
@@ -100,5 +113,38 @@ public class NavigationPlugin extends Plugin {
                         .command(() -> SetDocumentAsFavouriteEvent.fire(
                                 NavigationPlugin.this, selectedDoc, true))
                         .build());
+
+        event.getMenuItems().addMenuItem(MenuKeys.NAVIGATION_MENU, new Separator(210));
+
+        event.getMenuItems().addMenuItem(MenuKeys.NAVIGATION_MENU,
+                new IconMenuItem.Builder()
+                        .priority(211)
+                        .icon(SvgImage.OPEN)
+                        .text("Open Tab Session")
+                        .enabled(tabSessions != null && !tabSessions.isEmpty())
+                        .command(() -> OpenTabSessionEvent.fire(this))
+                        .build()
+        );
+
+        event.getMenuItems().addMenuItem(MenuKeys.NAVIGATION_MENU,
+                new IconMenuItem.Builder()
+                        .priority(212)
+                        .icon(SvgImage.SAVE)
+                        .text("Save Tab Session")
+                        .command(() -> SaveTabSessionEvent.fire(this))
+                        .build());
+
+        event.getMenuItems().addMenuItem(MenuKeys.NAVIGATION_MENU,
+                new IconMenuItem.Builder()
+                        .priority(213)
+                        .icon(SvgImage.DELETE)
+                        .text("Delete Tab Session")
+                        .enabled(tabSessions != null && !tabSessions.isEmpty())
+                        .command(() -> DeleteTabSessionEvent.fire(this))
+                        .build());
+    }
+
+    public void setTabSessions(final List<TabSession> tabSessions) {
+        this.tabSessions = tabSessions;
     }
 }

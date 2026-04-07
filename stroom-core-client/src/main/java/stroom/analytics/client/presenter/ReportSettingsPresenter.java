@@ -21,8 +21,8 @@ import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.ReportSettings;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyUiHandlers;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.document.client.event.ChangeUiHandlers;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -32,8 +32,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 public class ReportSettingsPresenter
-        extends DocumentEditPresenter<ReportSettingsView, ReportDoc>
-        implements DirtyUiHandlers {
+        extends DocPresenter<ReportSettingsView, ReportDoc> {
 
     @Inject
     public ReportSettingsPresenter(final EventBus eventBus, final ReportSettingsView view) {
@@ -69,16 +68,10 @@ public class ReportSettingsPresenter
                 .build();
     }
 
-    @Override
-    public void onDirty() {
-        setDirty(true);
-    }
-
-
     // --------------------------------------------------------------------------------
 
 
-    public interface ReportSettingsView extends View, Focus, HasUiHandlers<DirtyUiHandlers> {
+    public interface ReportSettingsView extends View, Focus, HasUiHandlers<ChangeUiHandlers> {
 
         DownloadSearchResultFileType getFileType();
 

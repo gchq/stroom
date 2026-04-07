@@ -18,11 +18,12 @@ package stroom.dashboard.impl.visualisation;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.importexport.api.ImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
@@ -31,20 +32,29 @@ import stroom.visualisation.shared.VisualisationDoc;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 class VisualisationStoreImpl implements VisualisationStore {
 
     private final Store<VisualisationDoc> store;
 
+    private final VisualisationAssetService visualisationAssetService;
+
     @Inject
     VisualisationStoreImpl(final StoreFactory storeFactory,
-                           final VisualisationSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, VisualisationDoc.TYPE, VisualisationDoc::builder);
+                           final VisualisationSerialiser serialiser,
+                           final VisualisationAssetService assetService) {
+        this.store = storeFactory.createStore(
+                serialiser,
+                VisualisationDoc.TYPE,
+                VisualisationDoc::builder,
+                VisualisationDoc::copy);
+        this.visualisationAssetService = assetService;
     }
 
     // ---------------------------------------------------------------------
@@ -62,7 +72,13 @@ class VisualisationStoreImpl implements VisualisationStore {
                                final boolean makeNameUnique,
                                final Set<String> existingNames) {
         final String newName = UniqueNameUtil.getCopyName(name, makeNameUnique, existingNames);
-        return store.copyDocument(docRef.getUuid(), newName);
+        final DocRef copyDocRef = store.copyDocument(docRef.getUuid(), newName);
+        try {
+            visualisationAssetService.copyAssetsToDoc(docRef, copyDocRef);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+        return copyDocRef;
     }
 
     @Override
@@ -78,6 +94,11 @@ class VisualisationStoreImpl implements VisualisationStore {
     @Override
     public void deleteDocument(final DocRef docRef) {
         store.deleteDocument(docRef);
+        try {
+            visualisationAssetService.deleteAssetsForDoc(docRef);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -109,9 +130,9 @@ class VisualisationStoreImpl implements VisualisationStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<VisualisationDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<VisualisationDoc> createMapper() {
         return (doc, dependencyRemapper) ->
-                doc.setScriptRef(dependencyRemapper.remap(doc.getScriptRef()));
+                doc.copy().scriptRef(dependencyRemapper.remap(doc.getScriptRef())).build();
     }
 
     // ---------------------------------------------------------------------
@@ -147,20 +168,38 @@ class VisualisationStoreImpl implements VisualisationStore {
 
     @Override
     public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
+                                 final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        return store.importDocument(docRef, dataMap, importState, importSettings);
+
+        final DocRef storeDocRef = store.importDocument(docRef, importExportDocument, importState, importSettings);
+
+        // Import the path assets
+        try {
+            visualisationAssetService.setAssetsFromImport(docRef, importExportDocument.getPathAssets());
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
+        }
+        return storeDocRef;
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
+    public ImportExportDocument exportDocument(final DocRef docRef,
+                                               final boolean omitAuditFields,
+                                               final List<Message> messageList) {
+
+        final ImportExportDocument importExportDocument = store.exportDocument(docRef, omitAuditFields, messageList);
+
+        // Get all the assets to be exported to sub-paths
+        try {
+            final Collection<ImportExportAsset> assets = visualisationAssetService.getAssetsForExport(docRef);
+            for (final ImportExportAsset asset : assets) {
+                importExportDocument.addPathAsset(asset);
+            }
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
         }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return importExportDocument;
     }
 
     @Override

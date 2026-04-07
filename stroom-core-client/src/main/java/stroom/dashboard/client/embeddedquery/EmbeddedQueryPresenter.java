@@ -347,11 +347,11 @@ public class EmbeddedQueryPresenter
     public void showTable(final boolean show) {
         if (show) {
             setSettings(getQuerySettings().copy().showTable(Boolean.TRUE).build());
-            setDirty(true);
+            onChange();
             updateVisibleResult();
         } else {
             setSettings(getQuerySettings().copy().showTable(null).build());
-            setDirty(true);
+            onChange();
             updateVisibleResult();
         }
     }
@@ -372,7 +372,7 @@ public class EmbeddedQueryPresenter
                 setSettings(updatedSettings);
                 updateQueryDoc(embeddedQueryDoc, updatedSettings);
                 queryDocPresenter.read(embeddedQueryDoc.asDocRef(), embeddedQueryDoc, false);
-                setDirty(true);
+                onChange();
             });
             queryDocPresenter.read(doc.asDocRef(), doc, false);
             contentManager.open(e -> e.getCallback().closeTab(true), queryDocPresenter, queryDocPresenter);
@@ -384,8 +384,10 @@ public class EmbeddedQueryPresenter
         if (doc == null) {
             doc = QueryDoc.builder().uuid("Embedded Query").build();
         }
-        doc.setName(getDashboardContext().getDashboardDocRef().getName() + " - " + getComponentConfig().getName());
-        return doc;
+        return doc
+                .copy()
+                .name(getDashboardContext().getDashboardDocRef().getName() + " - " + getComponentConfig().getName())
+                .build();
     }
 
     public void runQuery() {
@@ -468,7 +470,7 @@ public class EmbeddedQueryPresenter
             currentTablePresenter.setQueryModel(queryModel);
             currentTablePresenter.setTaskMonitorFactory(this);
             currentTablePresenter.updateQueryTablePreferences();
-            tableHandlerRegistrations.add(currentTablePresenter.addDirtyHandler(e -> setDirty(true)));
+            tableHandlerRegistrations.add(currentTablePresenter.addChangeHandler(this::onChange));
             tableHandlerRegistrations.add(currentTablePresenter.getSelectionModel()
                     .addSelectionHandler(event ->
                             getDashboardContext().fireComponentChangeEvent(this)));
@@ -557,7 +559,7 @@ public class EmbeddedQueryPresenter
 
     @Override
     public void run(final boolean incremental,
-                     final boolean storeHistory) {
+                    final boolean storeHistory) {
         // No point running the search if there is no query
         run(incremental, storeHistory, currentSelectionQuery);
     }
@@ -681,11 +683,7 @@ public class EmbeddedQueryPresenter
     @Override
     public ComponentConfig write() {
         // Write expression.
-        setSettings(getQuerySettings()
-                .copy()
-                .lastQueryKey(queryModel.getCurrentQueryKey())
-                .lastQueryNode(queryModel.getCurrentNode())
-                .build());
+        setSettings(getQuerySettings());
         return super.write();
     }
 

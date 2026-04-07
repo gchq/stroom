@@ -53,8 +53,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -88,8 +86,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @MockitoSettings(strictness = Strictness.LENIENT) // For the mocks in RefDataStoreTestModule
 class TestRefDataOnHeapStore {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestRefDataOnHeapStore.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestRefDataOnHeapStore.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestRefDataOnHeapStore.class);
 
     private static final String FIXED_PIPELINE_UUID = UUID.randomUUID().toString();
     private static final String FIXED_PIPELINE_VERSION = UUID.randomUUID().toString();
@@ -511,7 +508,7 @@ class TestRefDataOnHeapStore {
                 });
 
                 LOGGER.debug("Getting values");
-                LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
+                LOGGER.logDurationIfDebugEnabled(() -> {
                     IntStream.range(0, recCount)
                             .boxed()
                             .sorted(Comparator.reverseOrder())
@@ -589,7 +586,7 @@ class TestRefDataOnHeapStore {
                 });
 
                 LOGGER.debug("Getting values");
-                LAMBDA_LOGGER.logDurationIfDebugEnabled(() -> {
+                LOGGER.logDurationIfDebugEnabled(() -> {
                     IntStream.range(0, recCount)
                             .boxed()
                             .sorted(Comparator.reverseOrder())

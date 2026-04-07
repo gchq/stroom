@@ -32,6 +32,8 @@ import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
 import stroom.credentials.impl.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
+import stroom.dashboard.impl.visualisation.VisualisationAssetConfig;
+import stroom.dashboard.impl.visualisation.VisualisationAssetConfig.VisualisationAssetDbConfig;
 import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
@@ -55,7 +57,6 @@ import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
-import stroom.state.impl.StateConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.StroomPathConfig;
@@ -128,11 +129,12 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_SESSION_COOKIE = "sessionCookie";
     public static final String PROP_NAME_SESSION = "session";
     public static final String PROP_NAME_SOLR = "solr";
-    public static final String PROP_NAME_STATE = "state";
     public static final String PROP_NAME_PLANB = "planb";
     public static final String PROP_NAME_STATISTICS = "statistics";
     public static final String PROP_NAME_UI = "ui";
     public static final String PROP_NAME_UI_URI = "uiUri";
+    public static final String PROP_NAME_VISUALISATION_ASSET = "visualisationAsset";
+    public static final String PROP_NAME_VISUALISATION_ASSET_DB = "visualisationAssetDb";
     public static final String PROP_NAME_VOLUMES = "volumes";
 
     private final boolean haltBootOnConfigValidationFailure;
@@ -179,13 +181,14 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final SessionCookieConfig sessionCookieConfig;
     private final SessionConfig sessionConfig;
     private final SolrConfig solrConfig;
-    private final StateConfig stateConfig;
     private final PlanBConfig planBConfig;
     private final StatisticsConfig statisticsConfig;
     private final StoredQueryConfig storedQueryConfig;
     private final StroomPathConfig pathConfig;
     private final UiConfig uiConfig;
     private final UiUriConfig uiUri;
+    private final VisualisationAssetConfig visualisationAssetConfig;
+    private final VisualisationAssetDbConfig visualisationAssetDbConfig;
     private final VolumeConfig volumeConfig;
 
     /**
@@ -235,13 +238,14 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                 new SessionCookieConfig(),
                 new SessionConfig(),
                 new SolrConfig(),
-                new StateConfig(),
                 new PlanBConfig(),
                 new StatisticsConfig(),
                 new StoredQueryConfig(),
                 new StroomPathConfig(),
                 new UiConfig(),
                 new UiUriConfig(),
+                new VisualisationAssetConfig(),
+                new VisualisationAssetDbConfig(),
                 new VolumeConfig());
     }
 
@@ -290,13 +294,14 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                      @JsonProperty(PROP_NAME_SESSION) final SessionConfig sessionConfig,
                      @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
-                     @JsonProperty(PROP_NAME_STATE) final StateConfig stateConfig,
                      @JsonProperty(PROP_NAME_PLANB) final PlanBConfig planBConfig,
                      @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
                      @JsonProperty(PROP_NAME_QUERY_HISTORY) final StoredQueryConfig storedQueryConfig,
                      @JsonProperty(PROP_NAME_PATH) final StroomPathConfig pathConfig,
                      @JsonProperty(PROP_NAME_UI) final UiConfig uiConfig,
                      @JsonProperty(PROP_NAME_UI_URI) final UiUriConfig uiUri,
+                     @JsonProperty(PROP_NAME_VISUALISATION_ASSET) final VisualisationAssetConfig visualisationAssetConfig,
+                     @JsonProperty(PROP_NAME_VISUALISATION_ASSET_DB) final VisualisationAssetDbConfig visualisationAssetDbConfig,
                      @JsonProperty(PROP_NAME_VOLUMES) final VolumeConfig volumeConfig) {
         this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
         this.crossModuleConfig = crossModuleConfig;
@@ -341,13 +346,14 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.sessionCookieConfig = sessionCookieConfig;
         this.sessionConfig = sessionConfig;
         this.solrConfig = solrConfig;
-        this.stateConfig = stateConfig;
         this.planBConfig = planBConfig;
         this.statisticsConfig = statisticsConfig;
         this.storedQueryConfig = storedQueryConfig;
         this.pathConfig = pathConfig;
         this.uiConfig = uiConfig;
         this.uiUri = uiUri;
+        this.visualisationAssetConfig = visualisationAssetConfig;
+        this.visualisationAssetDbConfig = visualisationAssetDbConfig;
         this.volumeConfig = volumeConfig;
     }
 
@@ -599,12 +605,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         return sessionConfig;
     }
 
-    @JsonProperty(PROP_NAME_STATE)
-    @JsonPropertyDescription("Configuration for the stroom state service")
-    public StateConfig getStateConfig() {
-        return stateConfig;
-    }
-
     @JsonProperty(PROP_NAME_PLANB)
     @JsonPropertyDescription("Configuration for the stroom Plan B state service")
     public PlanBConfig getPlanBConfig() {
@@ -627,6 +627,16 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_UI_URI)
     public UiUriConfig getUiUri() {
         return uiUri;
+    }
+
+    @JsonProperty(PROP_NAME_VISUALISATION_ASSET)
+    public VisualisationAssetConfig getVisualisationAsset() {
+        return visualisationAssetConfig;
+    }
+
+    @JsonProperty(PROP_NAME_VISUALISATION_ASSET_DB)
+    public VisualisationAssetDbConfig getVisualisationAssetDbConfig() {
+        return visualisationAssetDbConfig;
     }
 
     @JsonProperty(PROP_NAME_VOLUMES)

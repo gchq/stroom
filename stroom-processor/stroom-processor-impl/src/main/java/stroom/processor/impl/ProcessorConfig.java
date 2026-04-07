@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.Min;
 
 
 @SuppressWarnings("unused")
@@ -52,6 +53,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
     private final CacheConfig processorFilterCache;
     private final CacheConfig processorNodeCache;
     private final CacheConfig processorFeedCache;
+    private final CacheConfig processorProfileCache;
 
     private final StroomDuration disownDeadTasksAfter;
 
@@ -86,6 +88,11 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
                 .build();
+        processorProfileCache = CacheConfig.builder()
+                .maximumSize(1000L)
+                .expireAfterWrite(StroomDuration.ofHours(1))
+                .refreshAfterWrite(StroomDuration.ofSeconds(10))
+                .build();
         disownDeadTasksAfter = StroomDuration.ofMinutes(10);
         waitToQueueTasksDuration = StroomDuration.ofSeconds(10);
         skipNonProducingFiltersDuration = StroomDuration.ofSeconds(10);
@@ -106,6 +113,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                            @JsonProperty("processorFilterCache") final CacheConfig processorFilterCache,
                            @JsonProperty("processorNodeCache") final CacheConfig processorNodeCache,
                            @JsonProperty("processorFeedCache") final CacheConfig processorFeedCache,
+                           @JsonProperty("processorProfileCache") final CacheConfig processorProfileCache,
                            @JsonProperty("disownDeadTasksAfter") final StroomDuration disownDeadTasksAfter,
                            @JsonProperty("waitToQueueTasksDuration") final StroomDuration waitToQueueTasksDuration,
                            @JsonProperty("skipNonProducingFiltersDuration") final StroomDuration
@@ -123,6 +131,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         this.processorFilterCache = processorFilterCache;
         this.processorNodeCache = processorNodeCache;
         this.processorFeedCache = processorFeedCache;
+        this.processorProfileCache = processorProfileCache;
         this.disownDeadTasksAfter = disownDeadTasksAfter;
         this.waitToQueueTasksDuration = waitToQueueTasksDuration;
         this.skipNonProducingFiltersDuration = skipNonProducingFiltersDuration;
@@ -153,6 +162,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         return fillTaskQueue;
     }
 
+    @Min(1)
     @JsonPropertyDescription("The number of tasks to attempt to queue from filters considered in priority order. " +
                              "Note that this number will be exceeded if we have currently queued tasks from lower " +
                              "priority filters.")
@@ -160,6 +170,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         return queueSize;
     }
 
+    @Min(1)
     @JsonPropertyDescription("How many tasks should we try to create in the DB ready to be queued." +
                              "Note that the number of tasks created may be greater than this number as each task " +
                              "creation thread will " +
@@ -176,11 +187,13 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         return createTasksBeyondProcessLimit;
     }
 
+    @Min(1)
     @JsonPropertyDescription("The number of concurrent threads to use for task creation.")
     public int getTaskCreationThreadCount() {
         return taskCreationThreadCount;
     }
 
+    @Min(1)
     @JsonPropertyDescription("The maximum number of rows to insert in a single multi insert statement, " +
                              "e.g. INSERT INTO X VALUES (...), (...), (...)")
     public int getDatabaseMultiInsertMaxBatchSize() {
@@ -201,6 +214,10 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
 
     public CacheConfig getProcessorFeedCache() {
         return processorFeedCache;
+    }
+
+    public CacheConfig getProcessorProfileCache() {
+        return processorProfileCache;
     }
 
     @JsonPropertyDescription("How long to wait before we remove ownership of tasks from nodes that appear to have died")
@@ -239,6 +256,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
                ", processorFilterCache=" + processorFilterCache +
                ", processorNodeCache=" + processorNodeCache +
                ", processorFeedCache=" + processorFeedCache +
+               ", processorProfileCache=" + processorProfileCache +
                ", disownDeadTasksAfter=" + disownDeadTasksAfter +
                ", waitToQueueTasksDuration=" + waitToQueueTasksDuration +
                ", skipNonProducingFiltersDuration=" + skipNonProducingFiltersDuration +

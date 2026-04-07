@@ -1331,35 +1331,6 @@
         "tags" : [ "Annotations" ]
       }
     },
-    "/annotation/v1/getStandardComments" : {
-      "get" : {
-        "operationId" : "getAnnotationSampleComments",
-        "parameters" : [ {
-          "in" : "query",
-          "name" : "filter",
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "type" : "string"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Gets a list of predefined comments",
-        "tags" : [ "Annotations" ]
-      }
-    },
     "/annotation/v1/updateAnnotationTag" : {
       "put" : {
         "operationId" : "updateAnnotationTag",
@@ -1388,260 +1359,9 @@
         "tags" : [ "Annotations" ]
       }
     },
-    "/apikey/v1" : {
-      "delete" : {
-        "deprecated" : true,
-        "operationId" : "deleteAllApiKeys",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "integer",
-                  "format" : "int32"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Delete all API keys.",
-        "tags" : [ "Api Keys" ]
-      },
-      "post" : {
-        "deprecated" : true,
-        "operationId" : "createApiKey",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/CreateApiKeyRequest"
-              }
-            }
-          },
-          "description" : "CreateApiKeyRequest",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ApiKey"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Create a new API key.",
-        "tags" : [ "Api Keys" ]
-      }
-    },
-    "/apikey/v1/byData/{data}" : {
-      "delete" : {
-        "deprecated" : true,
-        "operationId" : "deleteApiKeyByData",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "data",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "integer",
-                  "format" : "int32"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Delete an API key by the data itself.",
-        "tags" : [ "Api Keys" ]
-      },
-      "get" : {
-        "deprecated" : true,
-        "operationId" : "fetchApiKeyByData",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "data",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ApiKey"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Read a API key by the data itself.",
-        "tags" : [ "Api Keys" ]
-      }
-    },
-    "/apikey/v1/noauth/getDefaultApiKeyExpirySeconds" : {
-      "get" : {
-        "deprecated" : true,
-        "operationId" : "getDefaultApiKeyExpirySeconds",
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "integer",
-                  "format" : "int64"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Get the default time taken for API keys to expire",
-        "tags" : [ "Api Keys" ]
-      }
-    },
-    "/apikey/v1/search" : {
-      "post" : {
-        "deprecated" : true,
-        "operationId" : "searchApiKeys",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/SearchApiKeyRequest"
-              }
-            }
-          },
-          "description" : "SearchRequest",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ApiKeyResultPage"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Submit a search request for API keys",
-        "tags" : [ "Api Keys" ]
-      }
-    },
-    "/apikey/v1/{id}" : {
-      "delete" : {
-        "deprecated" : true,
-        "operationId" : "deleteApiKey",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "id",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "integer",
-                  "format" : "int32"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Delete a API key by ID.",
-        "tags" : [ "Api Keys" ]
-      },
-      "get" : {
-        "deprecated" : true,
-        "operationId" : "fetchApiKey",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "id",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ApiKey"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Read a API key by ID.",
-        "tags" : [ "Api Keys" ]
-      }
-    },
-    "/apikey/v1/{id}/enabled" : {
-      "get" : {
-        "deprecated" : true,
-        "operationId" : "toggleApiKeyEnabled",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "id",
-          "required" : true,
-          "schema" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        }, {
-          "in" : "query",
-          "name" : "enabled",
-          "required" : true,
-          "schema" : {
-            "type" : "boolean"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "integer",
-                  "format" : "int32"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Enable or disable the state of an API key.",
-        "tags" : [ "Api Keys" ]
-      }
-    },
     "/apikey/v2" : {
       "post" : {
-        "operationId" : "createApiKey_1",
+        "operationId" : "createApiKey",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1671,7 +1391,7 @@
     },
     "/apikey/v2/deleteBatch" : {
       "delete" : {
-        "operationId" : "deleteApiKey_2",
+        "operationId" : "deleteApiKey_1",
         "requestBody" : {
           "content" : {
             "application/json" : {
@@ -1766,7 +1486,7 @@
     },
     "/apikey/v2/{id}" : {
       "delete" : {
-        "operationId" : "deleteApiKey_1",
+        "operationId" : "deleteApiKey",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -1792,7 +1512,7 @@
         "tags" : [ "API Key" ]
       },
       "get" : {
-        "operationId" : "fetchApiKey_1",
+        "operationId" : "fetchApiKey",
         "parameters" : [ {
           "in" : "path",
           "name" : "id",
@@ -3605,6 +3325,69 @@
         },
         "summary" : "Find data source fields",
         "tags" : [ "Data Sources" ]
+      }
+    },
+    "/datagen/v1/{uuid}" : {
+      "get" : {
+        "operationId" : "fetchDataGen",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DataGenDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch an analytic rule doc by its UUID",
+        "tags" : [ "Queries" ]
+      },
+      "put" : {
+        "operationId" : "updateDataGen",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "uuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DataGenDoc"
+              }
+            }
+          },
+          "description" : "doc",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DataGenDoc"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Update an analytic rule doc",
+        "tags" : [ "Queries" ]
       }
     },
     "/dbStatus/v1" : {
@@ -7253,6 +7036,242 @@
         "tags" : [ "Meta" ]
       }
     },
+    "/node/nodeGroup/v2" : {
+      "post" : {
+        "operationId" : "createNodeGroup",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "description" : "name",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/NodeGroup"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Creates a node group",
+        "tags" : [ "Node Groups" ]
+      }
+    },
+    "/node/nodeGroup/v2/fetchById/{id}" : {
+      "get" : {
+        "operationId" : "fetchNodeGroupById",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/NodeGroup"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets an node group by id",
+        "tags" : [ "Node Groups" ]
+      }
+    },
+    "/node/nodeGroup/v2/fetchByName/{name}" : {
+      "get" : {
+        "operationId" : "fetchNodeGroupByName",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/NodeGroup"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets an node group by name",
+        "tags" : [ "Node Groups" ]
+      }
+    },
+    "/node/nodeGroup/v2/find" : {
+      "post" : {
+        "operationId" : "findNodeGroups",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindNodeGroupRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageNodeGroup"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Finds node groups matching request",
+        "tags" : [ "Node Groups" ]
+      }
+    },
+    "/node/nodeGroup/v2/getNodeGroupStates/{id}" : {
+      "get" : {
+        "operationId" : "getNodeGroupState",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageNodeGroupState"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets node group states",
+        "tags" : [ "Node Groups" ]
+      }
+    },
+    "/node/nodeGroup/v2/updateNodeGroupState" : {
+      "post" : {
+        "operationId" : "updateNodeGroupState",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/NodeGroupChange"
+              }
+            }
+          },
+          "description" : "nodeGroupState",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Updates node group state",
+        "tags" : [ "Node Groups" ]
+      }
+    },
+    "/node/nodeGroup/v2/{id}" : {
+      "delete" : {
+        "operationId" : "deleteNodeGroup",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Deletes an node group",
+        "tags" : [ "Node Groups" ]
+      },
+      "put" : {
+        "operationId" : "updateNodeGroup",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/NodeGroup"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/NodeGroup"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Updates an node group",
+        "tags" : [ "Node Groups" ]
+      }
+    },
     "/node/v1/all" : {
       "get" : {
         "operationId" : "listAllNodes",
@@ -8956,6 +8975,184 @@
         "tags" : [ "Processor Filters" ]
       }
     },
+    "/processorProfile/v1" : {
+      "post" : {
+        "operationId" : "createProcessorProfile",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProcessorProfile"
+              }
+            }
+          },
+          "description" : "processorProfile",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProcessorProfile"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Creates a processor profile",
+        "tags" : [ "Processor Profiles" ]
+      }
+    },
+    "/processorProfile/v1/fetchById/{id}" : {
+      "get" : {
+        "operationId" : "fetchProcessorProfileById",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProcessorProfile"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets a processor profile by ID",
+        "tags" : [ "Processor Profiles" ]
+      }
+    },
+    "/processorProfile/v1/fetchByName/{name}" : {
+      "get" : {
+        "operationId" : "fetchProcessorProfileByName",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "name",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProcessorProfile"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets a processor profile by name",
+        "tags" : [ "Processor Profiles" ]
+      }
+    },
+    "/processorProfile/v1/find" : {
+      "post" : {
+        "operationId" : "findProcessorProfiles",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/FindProcessorProfileRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ResultPageProcessorProfile"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Finds processor profiles matching request",
+        "tags" : [ "Processor Profiles" ]
+      }
+    },
+    "/processorProfile/v1/{id}" : {
+      "delete" : {
+        "operationId" : "deleteProcessorProfile",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Deletes a processor profile",
+        "tags" : [ "Processor Profiles" ]
+      },
+      "put" : {
+        "operationId" : "updateProcessorProfile",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/ProcessorProfile"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ProcessorProfile"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Updates a processor profile",
+        "tags" : [ "Processor Profiles" ]
+      }
+    },
     "/processorTask/v1/abandon/{nodeName}" : {
       "post" : {
         "operationId" : "abandonProcessorTasks",
@@ -10076,44 +10273,6 @@
         "tags" : [ "ResultStore" ]
       }
     },
-    "/result-store/v1/exists/{nodeName}" : {
-      "post" : {
-        "operationId" : "resultStoreExists",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "nodeName",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/QueryKey"
-              }
-            }
-          },
-          "description" : "queryKey",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "boolean"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Determines if the requested result store still exists",
-        "tags" : [ "ResultStore" ]
-      }
-    },
     "/result-store/v1/find/{nodeName}" : {
       "post" : {
         "operationId" : "findResultStores",
@@ -10540,99 +10699,6 @@
         "tags" : [ "Scripts" ]
       }
     },
-    "/scyllaDB/v1/testCluster" : {
-      "post" : {
-        "operationId" : "testScyllaDB",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ScyllaDbDoc"
-              }
-            }
-          },
-          "description" : "scyllaDbDoc",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ScyllaDbTestResponse"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Test connection to the ScyllaDb instance",
-        "tags" : [ "ScyllaDB Instances" ]
-      }
-    },
-    "/scyllaDB/v1/{uuid}" : {
-      "get" : {
-        "operationId" : "fetchScyllaDB",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "uuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ScyllaDbDoc"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Fetch an ScyllaDb config doc by its UUID",
-        "tags" : [ "ScyllaDB Instances" ]
-      },
-      "put" : {
-        "operationId" : "updateScyllaDB",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "uuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/ScyllaDbDoc"
-              }
-            }
-          },
-          "description" : "doc",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ScyllaDbDoc"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Update an ScyllaDb config doc",
-        "tags" : [ "ScyllaDB Instances" ]
-      }
-    },
     "/searchable/v2/destroy" : {
       "post" : {
         "operationId" : "destroySearchableQuery",
@@ -10951,170 +11017,6 @@
         "tags" : [ "Sql Statistics Query" ]
       }
     },
-    "/stateStore/v1/{uuid}" : {
-      "get" : {
-        "operationId" : "fetchStateStore_1",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "uuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/StateDoc"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Fetch an state store doc by its UUID",
-        "tags" : [ "State Stores" ]
-      },
-      "put" : {
-        "operationId" : "updateStateStore_1",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "uuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/StateDoc"
-              }
-            }
-          },
-          "description" : "doc",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/StateDoc"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Update an state store doc",
-        "tags" : [ "State Stores" ]
-      }
-    },
-    "/statistic/rollUp/v1/bitMaskConversion" : {
-      "post" : {
-        "operationId" : "statisticBitMaskConversion",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "array",
-                "items" : {
-                  "type" : "integer",
-                  "format" : "int32"
-                }
-              }
-            }
-          },
-          "description" : "maskValues",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/CustomRollUpMaskFields"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Get rollup bit mask",
-        "tags" : [ "SQL Statistics RollUps" ]
-      }
-    },
-    "/statistic/rollUp/v1/bitMaskPermGeneration" : {
-      "post" : {
-        "operationId" : "statisticBitMaskPermGeneration",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "integer",
-                "format" : "int32"
-              }
-            }
-          },
-          "description" : "fieldCount",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "array",
-                  "items" : {
-                    "$ref" : "#/components/schemas/CustomRollUpMask"
-                  }
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Create rollup bit mask",
-        "tags" : [ "SQL Statistics RollUps" ]
-      }
-    },
-    "/statistic/rollUp/v1/dataSourceFieldChange" : {
-      "post" : {
-        "operationId" : "statisticFieldChange",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/StatisticsDataSourceFieldChangeRequest"
-              }
-            }
-          },
-          "description" : "request",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/StatisticsDataSourceData"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Change fields",
-        "tags" : [ "SQL Statistics RollUps" ]
-      }
-    },
     "/statistic/v1/{uuid}" : {
       "get" : {
         "operationId" : "fetchStatisticStore",
@@ -11176,164 +11078,6 @@
         },
         "summary" : "Update a statistic doc",
         "tags" : [ "SQL Statistics Stores" ]
-      }
-    },
-    "/statsStore/rollUp/v1/bitMaskConversion" : {
-      "post" : {
-        "operationId" : "statsBitMaskConversion",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "array",
-                "items" : {
-                  "type" : "integer",
-                  "format" : "int32"
-                }
-              }
-            }
-          },
-          "description" : "maskValues",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ResultPageCustomRollUpMaskFields"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Get rollup bit mask",
-        "tags" : [ "Stroom Stats RollUps" ]
-      }
-    },
-    "/statsStore/rollUp/v1/bitMaskPermGeneration" : {
-      "post" : {
-        "operationId" : "statsBitMaskPermGeneration",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "type" : "integer",
-                "format" : "int32"
-              }
-            }
-          },
-          "description" : "fieldCount",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/ResultPageCustomRollUpMask"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Create rollup bit mask",
-        "tags" : [ "Stroom Stats RollUps" ]
-      }
-    },
-    "/statsStore/rollUp/v1/dataSourceFieldChange" : {
-      "post" : {
-        "operationId" : "statsFieldChange",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/StroomStatsStoreFieldChangeRequest"
-              }
-            }
-          },
-          "description" : "request",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/StroomStatsStoreEntityData"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Change fields",
-        "tags" : [ "Stroom Stats RollUps" ]
-      }
-    },
-    "/statsStore/v1/{uuid}" : {
-      "get" : {
-        "operationId" : "fetchStroomStatsStore",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "uuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/StroomStatsStoreDoc"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Fetch a store doc doc by its UUID",
-        "tags" : [ "Stroom Stats Stores" ]
-      },
-      "put" : {
-        "operationId" : "updateStroomStatsStore",
-        "parameters" : [ {
-          "in" : "path",
-          "name" : "uuid",
-          "required" : true,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/StroomStatsStoreDoc"
-              }
-            }
-          },
-          "description" : "doc",
-          "required" : true
-        },
-        "responses" : {
-          "default" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/StroomStatsStoreDoc"
-                }
-              }
-            },
-            "description" : "default response"
-          }
-        },
-        "summary" : "Update a stats store doc",
-        "tags" : [ "Stroom Stats Stores" ]
       }
     },
     "/stepping/v1/findElementDoc" : {
@@ -11906,6 +11650,90 @@
         },
         "summary" : "Get a system info result by name",
         "tags" : [ "System Info" ]
+      }
+    },
+    "/tabSession/v1" : {
+      "delete" : {
+        "operationId" : "deleteTabSession",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TabSessionDeleteRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TabSession"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Deletes a tab session",
+        "tags" : [ "Tab Sessions" ]
+      },
+      "get" : {
+        "operationId" : "getForCurrentUser",
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TabSession"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Get tab sessions for the current user",
+        "tags" : [ "Tab Sessions" ]
+      },
+      "post" : {
+        "operationId" : "addTabSession",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TabSessionAddRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "array",
+                  "items" : {
+                    "$ref" : "#/components/schemas/TabSession"
+                  }
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Add a tab session for the current user",
+        "tags" : [ "Tab Sessions" ]
       }
     },
     "/task/v1/find/{nodeName}" : {
@@ -12847,6 +12675,411 @@
         "tags" : [ "Visualisations" ]
       }
     },
+    "/visualisationAssets/fetchDraftAssets/{ownerDocId}" : {
+      "get" : {
+        "operationId" : "fetchDraftAssets",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "ownerDocId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisualisationAssets"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Fetch the assets belonging to a visualisation doc by the doc's UUID",
+        "tags" : [ "VisualisationAssets" ]
+      }
+    },
+    "/visualisationAssets/getContent/{ownerDocId}" : {
+      "get" : {
+        "operationId" : "getContent",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "ownerDocId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "path",
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/VisualisationAssetContent"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Gets the content of an asset for editing",
+        "tags" : [ "VisualisationAssets" ]
+      }
+    },
+    "/visualisationAssets/revertDraftFromLive/{ownerDocId}" : {
+      "put" : {
+        "operationId" : "revertDraftFromLive",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "ownerDocId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Revert draft assets to get rid of any changes",
+        "tags" : [ "VisualisationAssets" ]
+      }
+    },
+    "/visualisationAssets/saveAs/{fromOwnerDocId}" : {
+      "put" : {
+        "operationId" : "saveAs",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "fromOwnerDocId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisualisationAssetSaveAsParameters"
+              }
+            }
+          },
+          "description" : "SaveAs parameters",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Save the document's assets to another document",
+        "tags" : [ "VisualisationAssets" ]
+      }
+    },
+    "/visualisationAssets/saveAs/{ownerDocId}" : {
+      "get" : {
+        "operationId" : "indexAssetExists",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "ownerDocId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Check if an index.html asset exists for the document ID",
+        "tags" : [ "VisualisationAssets" ]
+      }
+    },
+    "/visualisationAssets/saveDraftToLive/{ownerDocId}" : {
+      "put" : {
+        "operationId" : "saveDraftToLive",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "ownerDocId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Save draft assets to main store to make them live",
+        "tags" : [ "VisualisationAssets" ]
+      }
+    },
+    "/visualisationAssets/updateContent/{ownerDocId}" : {
+      "put" : {
+        "operationId" : "updateContent",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "ownerDocId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisualisationAssetUpdateContent"
+              }
+            }
+          },
+          "description" : "Path and Content",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Updates the content of an asset",
+        "tags" : [ "VisualisationAssets" ]
+      }
+    },
+    "/visualisationAssets/updateDelete/{ownerDocId}" : {
+      "put" : {
+        "operationId" : "updateDelete",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "ownerDocId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisualisationAssetUpdateDelete"
+              }
+            }
+          },
+          "description" : "Path and isFolder",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Deletes an asset",
+        "tags" : [ "VisualisationAssets" ]
+      }
+    },
+    "/visualisationAssets/updateNewFile/{ownerDocId}" : {
+      "put" : {
+        "operationId" : "updateNewFile",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "ownerDocId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisualisationAssetUpdateNewFile"
+              }
+            }
+          },
+          "description" : "Path and Mimetype"
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Creates a new text file",
+        "tags" : [ "VisualisationAssets" ]
+      }
+    },
+    "/visualisationAssets/updateNewFolder/{ownerDocId}" : {
+      "put" : {
+        "operationId" : "updateNewFolder",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "ownerDocId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "type" : "string"
+              }
+            }
+          },
+          "description" : "Path"
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Create new folder",
+        "tags" : [ "VisualisationAssets" ]
+      }
+    },
+    "/visualisationAssets/updateNewUploadedFile/{ownerDocId}" : {
+      "put" : {
+        "operationId" : "updateNewUploadedFile",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "ownerDocId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisualisationAssetUpdateNewFile"
+              }
+            }
+          },
+          "description" : "Path, ResourceKey and Mimetype",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Creates a new uploaded file",
+        "tags" : [ "VisualisationAssets" ]
+      }
+    },
+    "/visualisationAssets/updateRename/{ownerDocId}" : {
+      "put" : {
+        "operationId" : "updateRename",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "ownerDocId",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/VisualisationAssetUpdateRename"
+              }
+            }
+          },
+          "description" : "Old Path, New Path and isFolder",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Renames an asset",
+        "tags" : [ "VisualisationAssets" ]
+      }
+    },
     "/welcome/v1" : {
       "get" : {
         "operationId" : "fetchWelcome",
@@ -13622,6 +13855,9 @@
             "type" : "string",
             "enum" : [ "STROOM_QL_VERSION_0_1", "SIGMA" ]
           },
+          "level" : {
+            "type" : "string"
+          },
           "name" : {
             "type" : "string"
           },
@@ -13642,6 +13878,9 @@
           },
           "rememberNotifications" : {
             "type" : "boolean"
+          },
+          "status" : {
+            "type" : "string"
           },
           "suppressDuplicateNotifications" : {
             "type" : "boolean"
@@ -13860,9 +14099,12 @@
             "type" : "string",
             "enum" : [ "NONE", "RED", "PINK", "PURPLE", "DEEP_PURPLE", "INDIGO", "BLUE", "LIGHT_BLUE", "CYAN", "TEAL", "GREEN", "LIGHT_GREEN", "LIME", "YELLOW", "AMBER", "ORANGE", "DEEP_ORANGE", "BROWN", "GREY", "BLUE_GREY" ]
           },
+          "tagText" : {
+            "type" : "string"
+          },
           "type" : {
             "type" : "string",
-            "enum" : [ "STATUS", "LABEL", "COLLECTION" ]
+            "enum" : [ "STATUS", "LABEL", "COLLECTION", "COMMENT" ]
           },
           "uuid" : {
             "type" : "string"
@@ -13906,69 +14148,6 @@
           },
           "stringValue" : {
             "type" : "string"
-          }
-        }
-      },
-      "ApiKey" : {
-        "type" : "object",
-        "properties" : {
-          "comments" : {
-            "type" : "string"
-          },
-          "createTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "createUser" : {
-            "type" : "string"
-          },
-          "data" : {
-            "type" : "string"
-          },
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "expiresOnMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "id" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "type" : {
-            "type" : "string"
-          },
-          "updateTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "updateUser" : {
-            "type" : "string"
-          },
-          "userEmail" : {
-            "type" : "string"
-          },
-          "userId" : {
-            "type" : "string"
-          },
-          "version" : {
-            "type" : "integer",
-            "format" : "int32"
-          }
-        }
-      },
-      "ApiKeyResultPage" : {
-        "type" : "object",
-        "properties" : {
-          "pageResponse" : {
-            "$ref" : "#/components/schemas/PageResponse"
-          },
-          "values" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/ApiKey"
-            }
           }
         }
       },
@@ -15267,7 +15446,7 @@
           },
           "installationStatus" : {
             "type" : "string",
-            "enum" : [ "-", "Installed", "Pack upgradable", "Content upgradable" ]
+            "enum" : [ "-", "Installed", "Pack upgradable", "Content upgradable", "Error checking for upgrade status" ]
           }
         }
       },
@@ -15506,34 +15685,14 @@
           "name" : {
             "type" : "string"
           },
+          "tagText" : {
+            "type" : "string"
+          },
           "type" : {
             "type" : "string",
-            "enum" : [ "STATUS", "LABEL", "COLLECTION" ]
+            "enum" : [ "STATUS", "LABEL", "COLLECTION", "COMMENT" ]
           }
         }
-      },
-      "CreateApiKeyRequest" : {
-        "type" : "object",
-        "properties" : {
-          "comments" : {
-            "type" : "string"
-          },
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "expiresOnMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "tokenType" : {
-            "type" : "string",
-            "pattern" : "^user$|^api$|^email_reset$"
-          },
-          "userId" : {
-            "type" : "string"
-          }
-        },
-        "required" : [ "tokenType", "userId" ]
       },
       "CreateHashedApiKeyRequest" : {
         "type" : "object",
@@ -15605,6 +15764,9 @@
           "processorType" : {
             "type" : "string",
             "enum" : [ "PIPELINE", "STREAMING_ANALYTIC" ]
+          },
+          "profileName" : {
+            "type" : "string"
           },
           "queryData" : {
             "$ref" : "#/components/schemas/QueryData"
@@ -15702,27 +15864,6 @@
               "type" : "integer",
               "format" : "int32"
             }
-          }
-        }
-      },
-      "CustomRollUpMaskFields" : {
-        "type" : "object",
-        "properties" : {
-          "id" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "maskValue" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "rolledUpFieldPositions" : {
-            "type" : "array",
-            "items" : {
-              "type" : "integer",
-              "format" : "int32"
-            },
-            "uniqueItems" : true
           }
         }
       },
@@ -15914,6 +16055,46 @@
             }
           }
         } ]
+      },
+      "DataGenDoc" : {
+        "type" : "object",
+        "properties" : {
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "feed" : {
+            "$ref" : "#/components/schemas/DocRef"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "template" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "uuid" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          }
+        }
       },
       "DataInfoSection" : {
         "type" : "object",
@@ -16128,6 +16309,19 @@
           }
         },
         "required" : [ "localZoneId", "referenceTime" ]
+      },
+      "Days" : {
+        "type" : "object",
+        "properties" : {
+          "days" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string",
+              "enum" : [ "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY" ]
+            },
+            "uniqueItems" : true
+          }
+        }
       },
       "DecorateRequest" : {
         "type" : "object",
@@ -16375,7 +16569,7 @@
           "type" : {
             "type" : "string",
             "description" : "The type of the 'document' that this DocRef refers to",
-            "example" : "StroomStatsStore"
+            "example" : "StatisticStore"
           },
           "uuid" : {
             "type" : "string",
@@ -16455,7 +16649,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "AI", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "CONTENT_STORE", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_GIT_REPO", "DOCUMENT_GIT_REPO_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_OPEN_AI", "DOCUMENT_PATHWAYS", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_TRACES", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HELP_OUTLINE", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "KEY_BLUE", "LINK", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MAXIMISE", "MENU", "MINIMISE", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PATHWAYS_CHOICE", "PATHWAYS_NODE", "PATHWAYS_SEQUENCE", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RERUN", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SELECTION", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "AI", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "CONTENT_STORE", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_DATA_GEN", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_GIT_REPO", "DOCUMENT_GIT_REPO_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_OPEN_AI", "DOCUMENT_PATHWAYS", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_TRACES", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_IMAGE", "FILE_RAW", "FILE_SCRIPT", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HELP_OUTLINE", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "KEY_BLUE", "LINK", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MAXIMISE", "MENU", "MINIMISE", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PATHWAYS_CHOICE", "PATHWAYS_NODE", "PATHWAYS_SEQUENCE", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RERUN", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SELECTION", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
           },
           "type" : {
             "type" : "string"
@@ -16966,12 +17160,6 @@
             },
             "embeddedQueryDoc" : {
               "$ref" : "#/components/schemas/QueryDoc"
-            },
-            "lastQueryKey" : {
-              "$ref" : "#/components/schemas/QueryKey"
-            },
-            "lastQueryNode" : {
-              "type" : "string"
             },
             "queryRef" : {
               "$ref" : "#/components/schemas/DocRef"
@@ -17599,7 +17787,7 @@
             "condition" : {
               "type" : "string",
               "description" : "The condition of the predicate term",
-              "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NOT_DOC_REF", "IS_USER_REF", "IS_NOT_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "WORD_BOUNDARY", "CONTAINS_CASE_SENSITIVE", "EQUALS_CASE_SENSITIVE", "NOT_EQUALS_CASE_SENSITIVE", "STARTS_WITH_CASE_SENSITIVE", "ENDS_WITH_CASE_SENSITIVE", "MATCHES_REGEX_CASE_SENSITIVE", "IS_SCHEDULE_TYPE", "IS_NOT_SCHEDULE_TYPE", "IS_PARENT_DOC_TYPE", "IS_NOT_PARENT_DOC_TYPE", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
+              "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NOT_DOC_REF", "IS_USER_REF", "IS_NOT_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "WORD_BOUNDARY", "CONTAINS_CASE_SENSITIVE", "EQUALS_CASE_SENSITIVE", "NOT_EQUALS_CASE_SENSITIVE", "STARTS_WITH_CASE_SENSITIVE", "ENDS_WITH_CASE_SENSITIVE", "MATCHES_REGEX_CASE_SENSITIVE", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
             },
             "docRef" : {
               "$ref" : "#/components/schemas/DocRef"
@@ -17642,7 +17830,7 @@
           },
           "receiptCheckMode" : {
             "type" : "string",
-            "enum" : [ "FEED_STATUS", "RECEIPT_POLICY", "RECEIVE_ALL", "DROP_ALL", "REJECT_ALL" ]
+            "enum" : [ "FEED_STATUS", "RECEIPT_POLICY", "FEED_EXISTENCE", "RECEIVE_ALL", "DROP_ALL", "REJECT_ALL" ]
           },
           "uiConfig" : {
             "$ref" : "#/components/schemas/UiConfig"
@@ -18478,6 +18666,27 @@
           }
         }
       },
+      "FindNodeGroupRequest" : {
+        "type" : "object",
+        "properties" : {
+          "filter" : {
+            "type" : "string"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
       "FindNodeStatusCriteria" : {
         "type" : "object",
         "properties" : {
@@ -18510,6 +18719,27 @@
           },
           "queryable" : {
             "type" : "boolean"
+          },
+          "sort" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "sortList" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/CriteriaFieldSort"
+            }
+          }
+        }
+      },
+      "FindProcessorProfileRequest" : {
+        "type" : "object",
+        "properties" : {
+          "filter" : {
+            "type" : "string"
+          },
+          "pageRequest" : {
+            "$ref" : "#/components/schemas/PageRequest"
           },
           "sort" : {
             "type" : "string",
@@ -19006,7 +19236,7 @@
           },
           "stroomStatusCode" : {
             "type" : "string",
-            "enum" : [ "200 - 0 - OK", "406 - 100 - Feed must be specified", "406 - 101 - Feed is not defined", "406 - 102 - Data type is invalid", "406 - 103 - A mandatory header is missing", "406 - 104 - Data format is invalid", "406 - 110 - Feed is not set to receive data", "406 - 111 - Feed is not valid", "406 - 112 - Data Feed key and/or accountId is not valid", "406 - 113 - Data has been rejected by the receipt policy rules", "406 - 120 - Unexpected data type", "406 - 200 - Unknown compression", "401 - 300 - Client Certificate Required", "401 - 301 - Client Token Required", "401 - 302 - Client token or certificate required", "401 - 303 - Client data feed key required", "401 - 304 - Authentication of the client is required", "401 - 310 - Client Certificate failed authentication", "401 - 311 - Client Token failed authentication", "401 - 312 - Client Token or Certificate failed authentication", "401 - 313 - Data feed key failed authentication", "401 - 314 - Data feed key has expired", "500 - 400 - Compressed stream invalid", "413 - 410 - Content too large", "500 - 999 - Unknown error" ]
+            "enum" : [ "200 - 0 - OK", "406 - 100 - Feed must be specified", "406 - 101 - Feed is not defined", "406 - 102 - Data type is invalid", "406 - 103 - A mandatory header is missing", "406 - 104 - Data format is invalid", "406 - 110 - Feed is not set to receive data", "406 - 111 - Feed is not valid", "406 - 112 - Data Feed key and/or accountId is not valid", "406 - 113 - Data has been rejected by the receipt policy rules", "406 - 120 - Unexpected data type", "406 - 200 - Unknown compression", "401 - 300 - Client Certificate Required", "401 - 301 - Client Token Required", "401 - 302 - Client token or certificate required", "401 - 303 - Client data feed key required", "401 - 304 - Authentication of the client is required", "401 - 310 - Client Certificate failed authentication", "401 - 311 - Client Token failed authentication", "401 - 312 - Client Token or Certificate failed authentication", "401 - 313 - Data feed key failed authentication", "401 - 314 - Data feed key has expired", "401 - 315 - Client Certificate DN failed authentication", "500 - 400 - Compressed stream invalid", "413 - 410 - Content too large", "500 - 999 - Unknown error" ]
           }
         }
       },
@@ -20813,6 +21043,66 @@
           }
         }
       },
+      "NodeGroup" : {
+        "type" : "object",
+        "properties" : {
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "enabled" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "NodeGroupChange" : {
+        "type" : "object",
+        "properties" : {
+          "included" : {
+            "type" : "boolean"
+          },
+          "nodeGroupId" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "nodeId" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "NodeGroupState" : {
+        "type" : "object",
+        "properties" : {
+          "included" : {
+            "type" : "boolean"
+          },
+          "node" : {
+            "$ref" : "#/components/schemas/Node"
+          }
+        }
+      },
       "NodeInfo" : {
         "type" : "object",
         "properties" : {
@@ -21435,7 +21725,7 @@
           },
           "icon" : {
             "type" : "string",
-            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "AI", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "CONTENT_STORE", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_GIT_REPO", "DOCUMENT_GIT_REPO_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_OPEN_AI", "DOCUMENT_PATHWAYS", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SCYLLA_DB", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATE_STORE", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_STROOM_STATS_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_TRACES", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_RAW", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HELP_OUTLINE", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "KEY_BLUE", "LINK", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MAXIMISE", "MENU", "MINIMISE", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PATHWAYS_CHOICE", "PATHWAYS_NODE", "PATHWAYS_SEQUENCE", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_STROOM_STATS_STORE", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RERUN", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SELECTION", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
+            "enum" : [ "ADD", "ADD_ABOVE", "ADD_BELOW", "ADD_MULTIPLE", "AI", "ALERT", "ALERT_SIMPLE", "ARROW_DOWN", "ARROW_LEFT", "ARROW_RIGHT", "ARROW_UP", "AUTO_REFRESH", "BACKWARD", "BORDERED_CIRCLE", "CALENDAR", "CANCEL", "CASE_SENSITIVE", "CLEAR", "CLIPBOARD", "CLOSE", "CODE", "COLLAPSE_ALL", "COLLAPSE_UP", "CONTENT_STORE", "COPY", "DATABASE", "DELETE", "DEPENDENCIES", "DISABLE", "DOCUMENT_ANALYTIC_OUTPUT_STORE", "DOCUMENT_ANALYTIC_RULE", "DOCUMENT_DATA_GEN", "DOCUMENT_ANNOTATIONS_INDEX", "DOCUMENT_DASHBOARD", "DOCUMENT_DICTIONARY", "DOCUMENT_DOCUMENTATION", "DOCUMENT_ELASTIC_CLUSTER", "DOCUMENT_ELASTIC_INDEX", "DOCUMENT_FAVOURITES", "DOCUMENT_FEED", "DOCUMENT_FOLDER", "DOCUMENT_GIT_REPO", "DOCUMENT_GIT_REPO_FOLDER", "DOCUMENT_INDEX", "DOCUMENT_KAFKA_CONFIG", "DOCUMENT_OPEN_AI", "DOCUMENT_PATHWAYS", "DOCUMENT_PIPELINE", "DOCUMENT_PLAN_B", "DOCUMENT_QUERY", "DOCUMENT_RECEIVE_DATA_RULE_SET", "DOCUMENT_REPORT", "DOCUMENT_S3", "DOCUMENT_SCRIPT", "DOCUMENT_SEARCHABLE", "DOCUMENT_SELECT_ALL_OR_NONE", "DOCUMENT_SIGMA_RULE", "DOCUMENT_SOLR_INDEX", "DOCUMENT_STATISTIC_STORE", "DOCUMENT_SYSTEM", "DOCUMENT_TEXT_CONVERTER", "DOCUMENT_TRACES", "DOCUMENT_VIEW", "DOCUMENT_VISUALISATION", "DOCUMENT_XMLSCHEMA", "DOCUMENT_XSLT", "DOT", "DOUBLE_ARROW", "DOWN", "DOWNLOAD", "DROP_DOWN", "EDIT", "ELLIPSES_HORIZONTAL", "ELLIPSES_VERTICAL", "ERROR", "EXCLAMATION", "EXPAND_ALL", "EXPAND_DOWN", "EXPLORER", "EYE", "EYE_OFF", "FAST_BACKWARD", "FAST_FORWARD", "FATAL", "FATAL_DARK", "FAVOURITES", "FAVOURITES_OUTLINE", "FEED", "FIELD", "FIELDS_EXPRESSION", "FIELDS_FILTER", "FIELDS_FORMAT", "FIELDS_GROUP", "FIELDS_SORT_ASCENDING", "FIELDS_SORT_DESCENDING", "FIELDS_SORT_NONE", "FILE", "FILE_FORMATTED", "FILE_IMAGE", "FILE_RAW", "FILE_SCRIPT", "FILTER", "FIND", "FOLDER", "FOLDER_TREE", "FORMAT", "FORWARD", "FUNCTION", "GENERATE", "HELP", "HELP_OUTLINE", "HIDE", "HIDE_MENU", "HISTORY", "INFINITY_LOGO", "INFO", "INSERT", "JOBS", "KEY", "KEY_BLUE", "LINK", "LOCATE", "LOCKED", "LOGO", "LOGOUT", "MAXIMISE", "MENU", "MINIMISE", "MONITORING", "MOVE", "NODES", "OK", "OO", "OPEN", "OPERATOR", "PASSWORD", "PATHWAYS_CHOICE", "PATHWAYS_NODE", "PATHWAYS_SEQUENCE", "PAUSE", "PEN", "PIPELINE_ELASTIC_INDEX", "PIPELINE_FILE", "PIPELINE_FILES", "PIPELINE_HADOOP", "PIPELINE_ID", "PIPELINE_INDEX", "PIPELINE_JSON", "PIPELINE_KAFKA", "PIPELINE_MERGE", "PIPELINE_RECORD_COUNT", "PIPELINE_RECORD_OUTPUT", "PIPELINE_REFERENCE_DATA", "PIPELINE_SEARCH_OUTPUT", "PIPELINE_SOLR", "PIPELINE_SPLIT", "PIPELINE_STATISTICS", "PIPELINE_STREAM", "PIPELINE_STROOM_STATS", "PIPELINE_TEXT", "PIPELINE_XML", "PIPELINE_XML_SEARCH", "PIPELINE_XSD", "PIPELINE_XSLT", "PLAY", "PROCESS", "PROPERTIES", "QUESTION", "RAW", "REFRESH", "REGEX", "REMOVE", "RERUN", "RESIZE", "RESIZE_HANDLE", "SAVE", "SAVEAS", "SEARCH", "SELECTION", "SETTINGS", "SHARD_CLOSE", "SHARD_FLUSH", "SHARE", "SHIELD", "SHOW", "SHOW_MENU", "SPINNER_CIRCLE", "SPINNER_PAUSE", "SPINNER_SPINNING", "STAMP", "STEP", "STEPPING", "STEPPING_CIRCLE", "STEP_BACKWARD", "STEP_FORWARD", "STOP", "TABLE", "TABLE_NESTED", "TAB_CLOSE", "TAGS", "TEXT_WRAP", "TICK", "UNDO", "UNLINK", "UNLOCK", "UP", "UPLOAD", "USER", "USERS", "VALUE_FILTER", "VOLUMES", "WARNING" ]
           },
           "roles" : {
             "type" : "array",
@@ -21899,6 +22189,9 @@
           "processorUuid" : {
             "type" : "string"
           },
+          "profileName" : {
+            "type" : "string"
+          },
           "queryData" : {
             "$ref" : "#/components/schemas/QueryData"
           },
@@ -22022,6 +22315,48 @@
           }
         }
       },
+      "ProcessorProfile" : {
+        "type" : "object",
+        "properties" : {
+          "createTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "createUser" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "nodeGroupName" : {
+            "type" : "string"
+          },
+          "profilePeriods" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProfilePeriod"
+            }
+          },
+          "timeZone" : {
+            "$ref" : "#/components/schemas/UserTimeZone"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "ProcessorRow" : {
         "type" : "object",
         "allOf" : [ {
@@ -22118,6 +22453,37 @@
           "status" : {
             "type" : "string",
             "enum" : [ "CREATED", "QUEUED", "ASSIGNED", "PROCESSING", "COMPLETE", "FAILED", "DELETED" ]
+          }
+        }
+      },
+      "ProfilePeriod" : {
+        "type" : "object",
+        "properties" : {
+          "days" : {
+            "$ref" : "#/components/schemas/Days"
+          },
+          "endTime" : {
+            "$ref" : "#/components/schemas/Time"
+          },
+          "limitClusterThreads" : {
+            "type" : "boolean"
+          },
+          "limitNodeThreads" : {
+            "type" : "boolean"
+          },
+          "maxClusterThreads" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "maxNodeThreads" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "startTime" : {
+            "$ref" : "#/components/schemas/Time"
+          },
+          "uuid" : {
+            "type" : "string"
           }
         }
       },
@@ -22271,12 +22637,6 @@
             "expression" : {
               "$ref" : "#/components/schemas/ExpressionOperator"
             },
-            "lastQueryKey" : {
-              "$ref" : "#/components/schemas/QueryKey"
-            },
-            "lastQueryNode" : {
-              "type" : "string"
-            },
             "selectionHandlers" : {
               "type" : "array",
               "items" : {
@@ -22412,7 +22772,7 @@
         "properties" : {
           "conditionSet" : {
             "type" : "string",
-            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'is not', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '==', '!==', 'in', 'in dictionary'", "'is', 'is not'", "'is', 'is not'", "'==', '!==', 'between', 'in', 'in dictionary'", "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains', 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches regex', 'matches regex (CS)', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is', 'is not'" ]
+            "enum" : [ "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary', 'between', '>', '>=', '<', '<='", "'=', '!='", "'=', '!=', 'between', '>', '>=', '<', '<='", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', 'in folder'", "'=', '!=', 'in', 'in dictionary'", "'is', 'is not', 'in folder', '=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '==', '!==', 'in', 'in dictionary'", "'==', '!==', 'between', 'in', 'in dictionary'", "'==', '!==', 'in', 'in dictionary', '=', '!=', 'between', 'contains', 'contains (CS)', '>', '>=', '<', '<=', 'is null', 'is not null', 'matches regex', 'matches regex (CS)', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'matches regex'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!='", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'is', '=', '!='", "'between'", "'=', '!=', 'in'", "'contains', '=', '!=', 'matches regex', 'in'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary'", "'=', '!=', 'in', 'in dictionary', 'is'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'contains', 'contains (CS)', '=', '==', '!=', '!==', 'starts with', 'starts with (CS)', 'ends with', 'ends with (CS)', 'matches regex', 'matches regex (CS)', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'=', '!=', '>', '>=', '<', '<=', 'between', 'in', 'in dictionary'", "'is'", "'of'", "'has permissions', 'has owner permission', 'has delete permission', 'has edit permission', 'has view permission', 'has use permission'", "'is', 'is not'" ]
           },
           "docRefType" : {
             "type" : "string"
@@ -23069,6 +23429,9 @@
             "type" : "string",
             "enum" : [ "STROOM_QL_VERSION_0_1", "SIGMA" ]
           },
+          "level" : {
+            "type" : "string"
+          },
           "name" : {
             "type" : "string"
           },
@@ -23092,6 +23455,9 @@
           },
           "reportSettings" : {
             "$ref" : "#/components/schemas/ReportSettings"
+          },
+          "status" : {
+            "type" : "string"
           },
           "suppressDuplicateNotifications" : {
             "type" : "boolean"
@@ -23369,36 +23735,6 @@
           }
         }
       },
-      "ResultPageCustomRollUpMask" : {
-        "type" : "object",
-        "description" : "A page of results.",
-        "properties" : {
-          "pageResponse" : {
-            "$ref" : "#/components/schemas/PageResponse"
-          },
-          "values" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/CustomRollUpMask"
-            }
-          }
-        }
-      },
-      "ResultPageCustomRollUpMaskFields" : {
-        "type" : "object",
-        "description" : "A page of results.",
-        "properties" : {
-          "pageResponse" : {
-            "$ref" : "#/components/schemas/PageResponse"
-          },
-          "values" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/CustomRollUpMaskFields"
-            }
-          }
-        }
-      },
       "ResultPageDBTableStatus" : {
         "type" : "object",
         "description" : "A page of results.",
@@ -23665,6 +24001,51 @@
             "type" : "array",
             "items" : {
               "$ref" : "#/components/schemas/MetaRow"
+            }
+          }
+        }
+      },
+      "ResultPageNodeGroup" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/NodeGroup"
+            }
+          }
+        }
+      },
+      "ResultPageNodeGroupState" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/NodeGroupState"
+            }
+          }
+        }
+      },
+      "ResultPageProcessorProfile" : {
+        "type" : "object",
+        "description" : "A page of results.",
+        "properties" : {
+          "pageResponse" : {
+            "$ref" : "#/components/schemas/PageResponse"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/ProcessorProfile"
             }
           }
         }
@@ -24225,60 +24606,6 @@
           }
         }
       },
-      "ScyllaDbDoc" : {
-        "type" : "object",
-        "properties" : {
-          "connection" : {
-            "type" : "string"
-          },
-          "createTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "createUser" : {
-            "type" : "string"
-          },
-          "description" : {
-            "type" : "string"
-          },
-          "keyspace" : {
-            "type" : "string"
-          },
-          "keyspaceCql" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "type" : {
-            "type" : "string"
-          },
-          "updateTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "updateUser" : {
-            "type" : "string"
-          },
-          "uuid" : {
-            "type" : "string"
-          },
-          "version" : {
-            "type" : "string"
-          }
-        }
-      },
-      "ScyllaDbTestResponse" : {
-        "type" : "object",
-        "properties" : {
-          "message" : {
-            "type" : "string"
-          },
-          "ok" : {
-            "type" : "boolean"
-          }
-        }
-      },
       "Search" : {
         "type" : "object",
         "properties" : {
@@ -24308,27 +24635,6 @@
           },
           "timeRange" : {
             "$ref" : "#/components/schemas/TimeRange"
-          }
-        }
-      },
-      "SearchApiKeyRequest" : {
-        "type" : "object",
-        "properties" : {
-          "pageRequest" : {
-            "$ref" : "#/components/schemas/PageRequest"
-          },
-          "quickFilter" : {
-            "type" : "string"
-          },
-          "sort" : {
-            "type" : "string",
-            "writeOnly" : true
-          },
-          "sortList" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/CriteriaFieldSort"
-            }
           }
         }
       },
@@ -25455,69 +25761,6 @@
           }
         } ]
       },
-      "StateDoc" : {
-        "type" : "object",
-        "properties" : {
-          "condense" : {
-            "type" : "boolean"
-          },
-          "condenseAge" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "condenseTimeUnit" : {
-            "type" : "string",
-            "enum" : [ "NANOSECONDS", "MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
-          },
-          "createTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "createUser" : {
-            "type" : "string"
-          },
-          "description" : {
-            "type" : "string"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "retainAge" : {
-            "type" : "integer",
-            "format" : "int32"
-          },
-          "retainForever" : {
-            "type" : "boolean"
-          },
-          "retainTimeUnit" : {
-            "type" : "string",
-            "enum" : [ "NANOSECONDS", "MILLISECONDS", "SECONDS", "MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS", "YEARS" ]
-          },
-          "scyllaDbRef" : {
-            "$ref" : "#/components/schemas/DocRef"
-          },
-          "stateType" : {
-            "type" : "string",
-            "enum" : [ "STATE", "TEMPORAL_STATE", "RANGED_STATE", "TEMPORAL_RANGED_STATE", "SESSION" ]
-          },
-          "type" : {
-            "type" : "string"
-          },
-          "updateTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "updateUser" : {
-            "type" : "string"
-          },
-          "uuid" : {
-            "type" : "string"
-          },
-          "version" : {
-            "type" : "string"
-          }
-        }
-      },
       "StateKeySchema" : {
         "type" : "object",
         "properties" : {
@@ -25635,17 +25878,6 @@
             "items" : {
               "$ref" : "#/components/schemas/StatisticField"
             }
-          }
-        }
-      },
-      "StatisticsDataSourceFieldChangeRequest" : {
-        "type" : "object",
-        "properties" : {
-          "newStatisticsDataSourceData" : {
-            "$ref" : "#/components/schemas/StatisticsDataSourceData"
-          },
-          "oldStatisticsDataSourceData" : {
-            "$ref" : "#/components/schemas/StatisticsDataSourceData"
           }
         }
       },
@@ -25955,87 +26187,6 @@
           }
         }
       },
-      "StroomStatsStoreDoc" : {
-        "type" : "object",
-        "properties" : {
-          "config" : {
-            "$ref" : "#/components/schemas/StroomStatsStoreEntityData"
-          },
-          "createTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "createUser" : {
-            "type" : "string"
-          },
-          "description" : {
-            "type" : "string"
-          },
-          "enabled" : {
-            "type" : "boolean"
-          },
-          "name" : {
-            "type" : "string"
-          },
-          "precision" : {
-            "type" : "string",
-            "enum" : [ "SECOND", "MINUTE", "HOUR", "DAY", "FOREVER" ]
-          },
-          "rollUpType" : {
-            "type" : "string",
-            "enum" : [ "NONE", "ALL", "CUSTOM" ]
-          },
-          "statisticType" : {
-            "type" : "string",
-            "enum" : [ "COUNT", "VALUE" ]
-          },
-          "type" : {
-            "type" : "string"
-          },
-          "updateTimeMs" : {
-            "type" : "integer",
-            "format" : "int64"
-          },
-          "updateUser" : {
-            "type" : "string"
-          },
-          "uuid" : {
-            "type" : "string"
-          },
-          "version" : {
-            "type" : "string"
-          }
-        }
-      },
-      "StroomStatsStoreEntityData" : {
-        "type" : "object",
-        "properties" : {
-          "customRollUpMasks" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/CustomRollUpMask"
-            },
-            "uniqueItems" : true
-          },
-          "fields" : {
-            "type" : "array",
-            "items" : {
-              "$ref" : "#/components/schemas/StatisticField"
-            }
-          }
-        }
-      },
-      "StroomStatsStoreFieldChangeRequest" : {
-        "type" : "object",
-        "properties" : {
-          "newEntityData" : {
-            "$ref" : "#/components/schemas/StroomStatsStoreEntityData"
-          },
-          "oldEntityData" : {
-            "$ref" : "#/components/schemas/StroomStatsStoreEntityData"
-          }
-        }
-      },
       "Suggestions" : {
         "type" : "object",
         "properties" : {
@@ -26130,6 +26281,51 @@
             }
           }
         } ]
+      },
+      "TabSession" : {
+        "type" : "object",
+        "properties" : {
+          "docRefs" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "sessionId" : {
+            "type" : "string"
+          },
+          "userId" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TabSessionAddRequest" : {
+        "type" : "object",
+        "properties" : {
+          "docRefs" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/DocRef"
+            }
+          },
+          "name" : {
+            "type" : "string"
+          }
+        }
+      },
+      "TabSessionDeleteRequest" : {
+        "type" : "object",
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "sessionId" : {
+            "type" : "string"
+          }
+        }
       },
       "TableBuilderAnalyticProcessConfig" : {
         "type" : "object",
@@ -26814,6 +27010,23 @@
           }
         }
       },
+      "Time" : {
+        "type" : "object",
+        "properties" : {
+          "hour" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "minute" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "second" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "TimeFilter" : {
         "type" : "object",
         "description" : "If the data includes time in the key then you can apply a time filter when retrieving rows",
@@ -26833,7 +27046,7 @@
         "properties" : {
           "condition" : {
             "type" : "string",
-            "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NOT_DOC_REF", "IS_USER_REF", "IS_NOT_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "WORD_BOUNDARY", "CONTAINS_CASE_SENSITIVE", "EQUALS_CASE_SENSITIVE", "NOT_EQUALS_CASE_SENSITIVE", "STARTS_WITH_CASE_SENSITIVE", "ENDS_WITH_CASE_SENSITIVE", "MATCHES_REGEX_CASE_SENSITIVE", "IS_SCHEDULE_TYPE", "IS_NOT_SCHEDULE_TYPE", "IS_PARENT_DOC_TYPE", "IS_NOT_PARENT_DOC_TYPE", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
+            "enum" : [ "CONTAINS", "EQUALS", "STARTS_WITH", "ENDS_WITH", "NOT_EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY", "IN_FOLDER", "IS_DOC_REF", "IS_NOT_DOC_REF", "IS_USER_REF", "IS_NOT_USER_REF", "IS_NULL", "IS_NOT_NULL", "MATCHES_REGEX", "WORD_BOUNDARY", "CONTAINS_CASE_SENSITIVE", "EQUALS_CASE_SENSITIVE", "NOT_EQUALS_CASE_SENSITIVE", "STARTS_WITH_CASE_SENSITIVE", "ENDS_WITH_CASE_SENSITIVE", "MATCHES_REGEX_CASE_SENSITIVE", "OF_DOC_REF", "USER_HAS_PERM", "USER_HAS_OWNER", "USER_HAS_DELETE", "USER_HAS_EDIT", "USER_HAS_VIEW", "USER_HAS_USE" ]
           },
           "from" : {
             "type" : "string"
@@ -27753,6 +27966,117 @@
           }
         } ],
         "required" : [ "componentId" ]
+      },
+      "VisualisationAsset" : {
+        "type" : "object",
+        "properties" : {
+          "folder" : {
+            "type" : "boolean"
+          },
+          "id" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        }
+      },
+      "VisualisationAssetContent" : {
+        "type" : "object",
+        "properties" : {
+          "content" : {
+            "type" : "string"
+          },
+          "editorMode" : {
+            "type" : "string"
+          }
+        }
+      },
+      "VisualisationAssetSaveAsParameters" : {
+        "type" : "object",
+        "properties" : {
+          "toOwnerDocId" : {
+            "type" : "string"
+          },
+          "updatedContent" : {
+            "type" : "string",
+            "format" : "byte"
+          },
+          "updatedContentPath" : {
+            "type" : "string"
+          }
+        }
+      },
+      "VisualisationAssetUpdateContent" : {
+        "type" : "object",
+        "properties" : {
+          "content" : {
+            "type" : "string",
+            "format" : "byte"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        }
+      },
+      "VisualisationAssetUpdateDelete" : {
+        "type" : "object",
+        "properties" : {
+          "folder" : {
+            "type" : "boolean"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        }
+      },
+      "VisualisationAssetUpdateNewFile" : {
+        "type" : "object",
+        "properties" : {
+          "path" : {
+            "type" : "string"
+          },
+          "resourceKey" : {
+            "$ref" : "#/components/schemas/ResourceKey"
+          }
+        }
+      },
+      "VisualisationAssetUpdateRename" : {
+        "type" : "object",
+        "properties" : {
+          "folder" : {
+            "type" : "boolean"
+          },
+          "newPath" : {
+            "type" : "string"
+          },
+          "oldPath" : {
+            "type" : "string"
+          }
+        }
+      },
+      "VisualisationAssets" : {
+        "type" : "object",
+        "properties" : {
+          "assets" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/VisualisationAsset"
+            }
+          },
+          "dirty" : {
+            "type" : "boolean"
+          },
+          "ownerId" : {
+            "type" : "string"
+          },
+          "uploadedFiles" : {
+            "type" : "object",
+            "additionalProperties" : {
+              "$ref" : "#/components/schemas/ResourceKey"
+            }
+          }
+        }
       },
       "VisualisationDoc" : {
         "type" : "object",

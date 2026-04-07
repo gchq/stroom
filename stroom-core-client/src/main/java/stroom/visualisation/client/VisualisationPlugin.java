@@ -23,7 +23,7 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
@@ -35,6 +35,8 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import javax.inject.Singleton;
 
@@ -59,7 +61,7 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
     }
 
     @Override
-    protected DocumentEditPresenter<?, ?> createEditor() {
+    protected DocPresenter<?, ?> createEditor() {
         return editorProvider.get();
     }
 
@@ -77,16 +79,34 @@ public class VisualisationPlugin extends DocumentPlugin<VisualisationDoc> {
                 .exec();
     }
 
+    /**
+     * Should not be called - only exists for back compatibility.
+     */
     @Override
     public void save(final DocRef docRef,
                      final VisualisationDoc document,
                      final Consumer<VisualisationDoc> resultConsumer,
                      final RestErrorHandler errorHandler,
                      final TaskMonitorFactory taskMonitorFactory) {
+        throw new IllegalStateException("Old save method called in VisualisationPlugin");
+    }
+
+    @Override
+    public void save(final DocRef docRef,
+                     final VisualisationDoc document,
+                     final BiConsumer<VisualisationDoc, Consumer<VisualisationDoc>> postSaveCallback,
+                     final Consumer<VisualisationDoc> resultConsumer,
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
+
+        // Sanity check before everything goes async
+        Objects.requireNonNull(postSaveCallback);
+        Objects.requireNonNull(resultConsumer);
+
         restFactory
                 .create(VISUALISATION_RESOURCE)
                 .method(res -> res.update(document.getUuid(), document))
-                .onSuccess(resultConsumer)
+                .onSuccess(doc -> postSaveCallback.accept(doc, resultConsumer))
                 .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();

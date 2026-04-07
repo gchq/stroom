@@ -7,6 +7,8 @@ package stroom.explorer.impl.db.jooq;
 import stroom.explorer.impl.db.jooq.tables.ExplorerFavourite;
 import stroom.explorer.impl.db.jooq.tables.ExplorerNode;
 import stroom.explorer.impl.db.jooq.tables.ExplorerPath;
+import stroom.explorer.impl.db.jooq.tables.TabSession;
+import stroom.explorer.impl.db.jooq.tables.TabSessionDocRef;
 
 
 /**
@@ -29,4 +31,14 @@ public class Tables {
      * The table <code>stroom.explorer_path</code>.
      */
     public static final ExplorerPath EXPLORER_PATH = ExplorerPath.EXPLORER_PATH;
+
+    /**
+     * The table <code>stroom.tab_session</code>.
+     */
+    public static final TabSession TAB_SESSION = TabSession.TAB_SESSION;
+
+    /**
+     * The table <code>stroom.tab_session_doc_ref</code>.
+     */
+    public static final TabSessionDocRef TAB_SESSION_DOC_REF = TabSessionDocRef.TAB_SESSION_DOC_REF;
 }

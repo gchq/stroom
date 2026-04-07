@@ -12,12 +12,9 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,7 +29,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.analytics.impl.db.jooq.Keys;
 import stroom.analytics.impl.db.jooq.Stroom;
-import stroom.analytics.impl.db.jooq.tables.ExecutionSchedule.ExecutionSchedulePath;
 import stroom.analytics.impl.db.jooq.tables.records.ExecutionHistoryRecord;
 
 
@@ -118,37 +114,6 @@ public class ExecutionHistory extends TableImpl<ExecutionHistoryRecord> {
         this(DSL.name("execution_history"), null);
     }
 
-    public <O extends Record> ExecutionHistory(Table<O> path, ForeignKey<O, ExecutionHistoryRecord> childPath, InverseForeignKey<O, ExecutionHistoryRecord> parentPath) {
-        super(path, childPath, parentPath, EXECUTION_HISTORY);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class ExecutionHistoryPath extends ExecutionHistory implements Path<ExecutionHistoryRecord> {
-        public <O extends Record> ExecutionHistoryPath(Table<O> path, ForeignKey<O, ExecutionHistoryRecord> childPath, InverseForeignKey<O, ExecutionHistoryRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private ExecutionHistoryPath(Name alias, Table<ExecutionHistoryRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public ExecutionHistoryPath as(String alias) {
-            return new ExecutionHistoryPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public ExecutionHistoryPath as(Name alias) {
-            return new ExecutionHistoryPath(alias, this);
-        }
-
-        @Override
-        public ExecutionHistoryPath as(Table<?> alias) {
-            return new ExecutionHistoryPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -167,19 +132,6 @@ public class ExecutionHistory extends TableImpl<ExecutionHistoryRecord> {
     @Override
     public List<ForeignKey<ExecutionHistoryRecord, ?>> getReferences() {
         return Arrays.asList(Keys.EXECUTION_HISTORY_EXECUTION_SCHEDULE_ID);
-    }
-
-    private transient ExecutionSchedulePath _executionSchedule;
-
-    /**
-     * Get the implicit join path to the <code>stroom.execution_schedule</code>
-     * table.
-     */
-    public ExecutionSchedulePath executionSchedule() {
-        if (_executionSchedule == null)
-            _executionSchedule = new ExecutionSchedulePath(this, Keys.EXECUTION_HISTORY_EXECUTION_SCHEDULE_ID, null);
-
-        return _executionSchedule;
     }
 
     @Override

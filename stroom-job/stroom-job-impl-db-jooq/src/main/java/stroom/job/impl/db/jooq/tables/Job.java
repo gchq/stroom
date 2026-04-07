@@ -10,14 +10,10 @@ import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,7 +28,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.job.impl.db.jooq.Keys;
 import stroom.job.impl.db.jooq.Stroom;
-import stroom.job.impl.db.jooq.tables.JobNode.JobNodePath;
 import stroom.job.impl.db.jooq.tables.records.JobRecord;
 
 
@@ -126,37 +121,6 @@ public class Job extends TableImpl<JobRecord> {
         this(DSL.name("job"), null);
     }
 
-    public <O extends Record> Job(Table<O> path, ForeignKey<O, JobRecord> childPath, InverseForeignKey<O, JobRecord> parentPath) {
-        super(path, childPath, parentPath, JOB);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class JobPath extends Job implements Path<JobRecord> {
-        public <O extends Record> JobPath(Table<O> path, ForeignKey<O, JobRecord> childPath, InverseForeignKey<O, JobRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private JobPath(Name alias, Table<JobRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public JobPath as(String alias) {
-            return new JobPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public JobPath as(Name alias) {
-            return new JobPath(alias, this);
-        }
-
-        @Override
-        public JobPath as(Table<?> alias) {
-            return new JobPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -175,19 +139,6 @@ public class Job extends TableImpl<JobRecord> {
     @Override
     public List<UniqueKey<JobRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.KEY_JOB_NAME);
-    }
-
-    private transient JobNodePath _jobNode;
-
-    /**
-     * Get the implicit to-many join path to the <code>stroom.job_node</code>
-     * table
-     */
-    public JobNodePath jobNode() {
-        if (_jobNode == null)
-            _jobNode = new JobNodePath(this, null, Keys.JOB_ID.getInverseKey());
-
-        return _jobNode;
     }
 
     @Override

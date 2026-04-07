@@ -16,7 +16,6 @@
 
 package stroom.planb.shared;
 
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 
@@ -49,7 +48,7 @@ public class DurationSetting {
     public DurationSetting(@JsonProperty("enabled") final boolean enabled,
                            @JsonProperty("duration") final SimpleDuration duration) {
         this.enabled = enabled;
-        this.duration = NullSafe.requireNonNullElse(duration, DEFAULT_DURATION);
+        this.duration = Objects.requireNonNullElse(duration, DEFAULT_DURATION);
     }
 
     public boolean isEnabled() {

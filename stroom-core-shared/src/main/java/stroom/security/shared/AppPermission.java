@@ -134,7 +134,7 @@ public enum AppPermission implements HasDisplayValue {
             "Ability to fetch the obfuscated receipt policy rules. This permission is required for " +
             "any Stroom-Proxy that needs to fetch receipt policy rules."),
     VERIFY_API_KEY(
-            "Check the validity of an API Key.",
+            "Check the validity of an API Key",
             "Ability to call the API endpoint to verify an API Key. This is required for any " +
             "Stroom-Proxy that needs to verify API keys sent to it from upstream Stroom-Proxies."),
     STROOM_PROXY(

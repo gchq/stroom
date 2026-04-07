@@ -256,7 +256,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         addEnabledColumn();
         addPipelineColumn();
         addPriorityColumn();
-        addMaxProcessingTasksColumn();
+//        addMaxProcessingTasksColumn();
         addStatusColumn();
 //        addTrackerColumns();
         addLastPollColumns();
@@ -399,7 +399,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             priorityColumn.setFieldUpdater((index, row, value) -> {
                 if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-                    processorFilter.setPriority(value.intValue());
+                    processorFilterRow.setProcessorFilter(
+                            processorFilter.copy().priority(value.intValue()).build());
                     processorFilterPrioritySaveQueue.setValue(processorFilter.getId(), value.intValue());
                 }
             });
@@ -407,36 +408,37 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         dataGrid.addColumn(priorityColumn, "Priority", ColumnSizeConstants.MEDIUM_COL);
     }
 
-    private void addMaxProcessingTasksColumn() {
-        final Column<ProcessorListRow, Number> maxProcessingTasksColumn = new Column<ProcessorListRow, Number>(
-                new ValueSpinnerCell(
-                        ProcessorFilter.MIN_MAX_PROCESSING_TASKS,
-                        ProcessorFilter.MAX_MAX_PROCESSING_TASKS)) {
-            @Override
-            public Number getValue(final ProcessorListRow row) {
-                Number maxProcessingTasks = null;
-                if (row instanceof final ProcessorFilterRow processorFilterRow) {
-                    if (allowUpdate) {
-                        maxProcessingTasks = new EditableInteger(processorFilterRow.getProcessorFilter()
-                                .getMaxProcessingTasks());
-                    } else {
-                        maxProcessingTasks = processorFilterRow.getProcessorFilter().getMaxProcessingTasks();
-                    }
-                }
-                return maxProcessingTasks;
-            }
-        };
-        if (allowUpdate) {
-            maxProcessingTasksColumn.setFieldUpdater((index, row, value) -> {
-                if (row instanceof final ProcessorFilterRow processorFilterRow) {
-                    final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-                    processorFilter.setMaxProcessingTasks(value.intValue());
-                    processorFilterMaxProcessingTasksSaveQueue.setValue(processorFilter.getId(), value.intValue());
-                }
-            });
-        }
-        dataGrid.addColumn(maxProcessingTasksColumn, "Max Concurrent", 120);
-    }
+//    private void addMaxProcessingTasksColumn() {
+//        final Column<ProcessorListRow, Number> maxProcessingTasksColumn = new Column<ProcessorListRow, Number>(
+//                new ValueSpinnerCell(
+//                        ProcessorFilter.MIN_MAX_PROCESSING_TASKS,
+//                        ProcessorFilter.MAX_MAX_PROCESSING_TASKS)) {
+//            @Override
+//            public Number getValue(final ProcessorListRow row) {
+//                Number maxProcessingTasks = null;
+//                if (row instanceof final ProcessorFilterRow processorFilterRow) {
+//                    if (allowUpdate) {
+//                        maxProcessingTasks = new EditableInteger(processorFilterRow.getProcessorFilter()
+//                                .getMaxProcessingTasks());
+//                    } else {
+//                        maxProcessingTasks = processorFilterRow.getProcessorFilter().getMaxProcessingTasks();
+//                    }
+//                }
+//                return maxProcessingTasks;
+//            }
+//        };
+//        if (allowUpdate) {
+//            maxProcessingTasksColumn.setFieldUpdater((index, row, value) -> {
+//                if (row instanceof final ProcessorFilterRow processorFilterRow) {
+//                    final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
+//                    processorFilterRow.setProcessorFilter(
+//                            processorFilter.copy().maxProcessingTasks(value.intValue()).build());
+//                    processorFilterMaxProcessingTasksSaveQueue.setValue(processorFilter.getId(), value.intValue());
+//                }
+//            });
+//        }
+//        dataGrid.addColumn(maxProcessingTasksColumn, "Max Concurrent", 120);
+//    }
 
     private void addTasksColumn() {
         dataGrid.addResizableColumn(new Column<ProcessorListRow, Number>(new NumberCell()) {
@@ -497,7 +499,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             enabledColumn.setFieldUpdater((index, row, value) -> {
                 if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-                    processorFilter.setEnabled(value.toBoolean());
+                    processorFilterRow.setProcessorFilter(
+                            processorFilter.copy().enabled(value.toBoolean()).build());
 
                     processorFilterEnabledSaveQueue.setValue(processorFilter.getId(), value.toBoolean());
 //                    final Rest<ProcessorFilter> rest = restFactory.create();
@@ -505,7 +508,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
 
                 } else if (row instanceof final ProcessorRow processorRow) {
                     final Processor processor = processorRow.getProcessor();
-                    processor.setEnabled(value.toBoolean());
+                    processorRow.setProcessor(
+                            processor.copy().enabled(value.toBoolean()).build());
 
                     processorEnabledSaveQueue.setValue(processor.getId(), value.toBoolean());
 //                    final Rest<Processor> rest = restFactory.create();

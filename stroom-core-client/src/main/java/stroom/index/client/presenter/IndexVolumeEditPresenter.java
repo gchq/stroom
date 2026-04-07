@@ -25,7 +25,7 @@ import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolume.VolumeUseState;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.item.client.SelectionBox;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -49,25 +49,23 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
     private static final IndexVolumeResource INDEX_VOLUME_RESOURCE = GWT.create(IndexVolumeResource.class);
 
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
-
-    private IndexVolume volume;
+    private final NodeClient nodeClient;
 
     @Inject
     public IndexVolumeEditPresenter(final EventBus eventBus,
                                     final IndexVolumeEditView view,
                                     final RestFactory restFactory,
-                                    final NodeManager nodeManager) {
+                                    final NodeClient nodeClient) {
         super(eventBus, view);
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
     }
 
     void show(final IndexVolume volume,
               final String caption,
               final Consumer<IndexVolume> consumer,
               final TaskMonitorFactory taskMonitorFactory) {
-        nodeManager.listAllNodes(
+        nodeClient.listAllNodes(
                 nodeNames -> {
                     read(nodeNames, volume);
 
@@ -80,14 +78,14 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                             .onHideRequest(e -> {
                                 if (e.isOk()) {
                                     try {
-                                        write();
-                                        if (volume.getId() != null) {
-                                            doWithVolumeValidation(volume, () ->
-                                                            updateVolume(consumer, volume, e, taskMonitorFactory),
+                                        final IndexVolume updated = write(volume);
+                                        if (updated.getId() != null) {
+                                            doWithVolumeValidation(updated, () ->
+                                                            updateVolume(consumer, updated, e, taskMonitorFactory),
                                                     e, taskMonitorFactory);
                                         } else {
-                                            doWithVolumeValidation(volume, () ->
-                                                            createIndexVolume(consumer, volume, e, taskMonitorFactory),
+                                            doWithVolumeValidation(updated, () ->
+                                                            createIndexVolume(consumer, updated, e, taskMonitorFactory),
                                                     e, taskMonitorFactory);
                                         }
 
@@ -176,8 +174,6 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
     }
 
     private void read(final List<String> nodeNames, final IndexVolume volume) {
-        this.volume = volume;
-
         getView().setNodeNames(nodeNames);
         getView().getNodeName().setText(volume.getNodeName());
         getView().getPath().setText(volume.getPath());
@@ -194,17 +190,19 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
         }
     }
 
-    private void write() {
-        volume.setNodeName(getView().getNodeName().getText());
-        volume.setPath(getView().getPath().getText());
-        volume.setState(getView().getState().getValue());
-
+    private IndexVolume write(final IndexVolume volume) {
         Long bytesLimit = null;
         final String limit = getView().getByteLimit().getText().trim();
         if (limit.length() > 0) {
             bytesLimit = ModelStringUtil.parseIECByteSizeString(limit);
         }
-        volume.setBytesLimit(bytesLimit);
+        return volume
+                .copy()
+                .nodeName(getView().getNodeName().getText())
+                .path(getView().getPath().getText())
+                .state(getView().getState().getValue())
+                .bytesLimit(bytesLimit)
+                .build();
     }
 
     public interface IndexVolumeEditView extends View, Focus {

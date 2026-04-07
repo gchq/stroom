@@ -16,6 +16,7 @@
 
 package stroom.planb.client.presenter;
 
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.planb.client.presenter.TraceSettingsPresenter.TraceSettingsView;
 import stroom.planb.client.view.GeneralSettingsView;
@@ -73,7 +74,7 @@ public class TraceSettingsPresenter
             RetentionSettingsView,
             SnapshotSettingsView,
             ReadOnlyChangeHandler,
-            HasUiHandlers<PlanBSettingsUiHandlers> {
+            HasUiHandlers<ChangeUiHandlers> {
 
     }
 }

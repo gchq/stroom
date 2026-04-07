@@ -34,7 +34,6 @@ import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.StoredQueryHistoryCleanExecutor;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.test.common.util.db.DbTestUtil;
-import stroom.util.AuditUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
@@ -105,17 +104,19 @@ class TestStoredQueryDao {
         dashboardRef = new DocRef("Dashboard", "8c1bc23c-f65c-413f-ba72-7538abf90b91", "Test Dashboard");
         indexRef = new DocRef("Index", "4a085071-1d1b-4c96-8567-82f6954584a4", "Test Index");
 
-        refQuery = new StoredQuery();
-        refQuery.setName("Ref query");
-        refQuery.setDashboardUuid(dashboardRef.getUuid());
-        refQuery.setComponentId(QUERY_COMPONENT);
-        refQuery.setFavourite(false);
-        refQuery.setQuery(Query.builder()
-                .dataSource(indexRef)
-                .expression(ExpressionOperator.builder().build())
-                .build());
-        refQuery.setOwner(owner);
-        AuditUtil.stamp(securityContext, refQuery);
+        refQuery = StoredQuery
+                .builder()
+                .name("Ref query")
+                .dashboardUuid(dashboardRef.getUuid())
+                .componentId(QUERY_COMPONENT)
+                .favourite(false)
+                .query(Query.builder()
+                        .dataSource(indexRef)
+                        .expression(ExpressionOperator.builder().build())
+                        .build())
+                .owner(owner)
+                .stampAudit(securityContext)
+                .build();
         storedQueryDao.create(refQuery);
 
         final ExpressionOperator.Builder root = ExpressionOperator.builder().op(Op.OR);
@@ -123,17 +124,19 @@ class TestStoredQueryDao {
 
         LOGGER.info(root.toString());
 
-        testQuery = new StoredQuery();
-        testQuery.setName("Test query");
-        testQuery.setDashboardUuid(dashboardRef.getUuid());
-        testQuery.setComponentId(QUERY_COMPONENT);
-        testQuery.setFavourite(false);
-        testQuery.setQuery(Query.builder()
-                .dataSource(indexRef)
-                .expression(root.build())
-                .build());
-        testQuery.setOwner(owner);
-        AuditUtil.stamp(securityContext, testQuery);
+        testQuery = StoredQuery
+                .builder()
+                .name("Test query")
+                .dashboardUuid(dashboardRef.getUuid())
+                .componentId(QUERY_COMPONENT)
+                .favourite(false)
+                .query(Query.builder()
+                        .dataSource(indexRef)
+                        .expression(root.build())
+                        .build())
+                .owner(owner)
+                .stampAudit(securityContext)
+                .build();
         testQuery = storedQueryDao.create(testQuery);
 
         LOGGER.info(testQuery.getQuery().toString());
@@ -197,14 +200,16 @@ class TestStoredQueryDao {
 
         // Now insert the same query over 100 times.
         for (int i = 0; i < 120; i++) {
-            final StoredQuery newQuery = new StoredQuery();
-            newQuery.setName("History");
-            newQuery.setDashboardUuid(query.getDashboardUuid());
-            newQuery.setComponentId(query.getComponentId());
-            newQuery.setFavourite(false);
-            newQuery.setQuery(query.getQuery());
-            newQuery.setOwner(owner);
-            AuditUtil.stamp(securityContext, newQuery);
+            final StoredQuery newQuery = StoredQuery
+                    .builder()
+                    .name("History")
+                    .dashboardUuid(query.getDashboardUuid())
+                    .componentId(query.getComponentId())
+                    .favourite(false)
+                    .query(query.getQuery())
+                    .owner(owner)
+                    .stampAudit(securityContext)
+                    .build();
             storedQueryDao.create(newQuery);
         }
 
@@ -217,14 +222,16 @@ class TestStoredQueryDao {
 
         // Add in 10 for a different user
         for (int i = 0; i < 10; i++) {
-            final StoredQuery newQuery = new StoredQuery();
-            newQuery.setName("History");
-            newQuery.setDashboardUuid(query.getDashboardUuid());
-            newQuery.setComponentId(query.getComponentId());
-            newQuery.setFavourite(false);
-            newQuery.setQuery(query.getQuery());
-            newQuery.setOwner(owner2);
-            AuditUtil.stamp(securityContext, newQuery);
+            final StoredQuery newQuery = StoredQuery
+                    .builder()
+                    .name("History")
+                    .dashboardUuid(query.getDashboardUuid())
+                    .componentId(query.getComponentId())
+                    .favourite(false)
+                    .query(query.getQuery())
+                    .owner(owner2)
+                    .stampAudit(securityContext)
+                    .build();
             storedQueryDao.create(newQuery);
         }
 
@@ -254,29 +261,33 @@ class TestStoredQueryDao {
         // Add 10 more for owner with OLD create time
         // These will be deleted
         for (int i = 0; i < 10; i++) {
-            final StoredQuery newQuery = new StoredQuery();
-            newQuery.setName("History");
-            newQuery.setDashboardUuid(query.getDashboardUuid());
-            newQuery.setComponentId(query.getComponentId());
-            newQuery.setFavourite(false);
-            newQuery.setQuery(query.getQuery());
-            newQuery.setOwner(owner);
-            AuditUtil.stamp(securityContext, newQuery);
-            newQuery.setCreateTimeMs(0L); // Make them VERY old
+            final StoredQuery newQuery = StoredQuery
+                    .builder()
+                    .name("History")
+                    .dashboardUuid(query.getDashboardUuid())
+                    .componentId(query.getComponentId())
+                    .favourite(false)
+                    .query(query.getQuery())
+                    .owner(owner)
+                    .stampAudit(securityContext)
+                    .createTimeMs(0L) // Make them VERY old
+                    .build();
             storedQueryDao.create(newQuery);
         }
 
         // Add 10 more for owner with recent create time
         // These will be kept
         for (int i = 0; i < 10; i++) {
-            final StoredQuery newQuery = new StoredQuery();
-            newQuery.setName("History");
-            newQuery.setDashboardUuid(query.getDashboardUuid());
-            newQuery.setComponentId(query.getComponentId());
-            newQuery.setFavourite(false);
-            newQuery.setQuery(query.getQuery());
-            newQuery.setOwner(owner);
-            AuditUtil.stamp(securityContext, newQuery); // New ones
+            final StoredQuery newQuery = StoredQuery
+                    .builder()
+                    .name("History")
+                    .dashboardUuid(query.getDashboardUuid())
+                    .componentId(query.getComponentId())
+                    .favourite(false)
+                    .query(query.getQuery())
+                    .owner(owner)
+                    .stampAudit(securityContext)// New ones
+                    .build();
             storedQueryDao.create(newQuery);
         }
 
@@ -290,14 +301,16 @@ class TestStoredQueryDao {
         // Add 10 more for owner2 with recent create time
         // These will be kept
         for (int i = 0; i < 10; i++) {
-            final StoredQuery newQuery = new StoredQuery();
-            newQuery.setName("History");
-            newQuery.setDashboardUuid(query.getDashboardUuid());
-            newQuery.setComponentId(query.getComponentId());
-            newQuery.setFavourite(false);
-            newQuery.setQuery(query.getQuery());
-            newQuery.setOwner(owner2);
-            AuditUtil.stamp(securityContext, newQuery);
+            final StoredQuery newQuery = StoredQuery
+                    .builder()
+                    .name("History")
+                    .dashboardUuid(query.getDashboardUuid())
+                    .componentId(query.getComponentId())
+                    .favourite(false)
+                    .query(query.getQuery())
+                    .owner(owner2)
+                    .stampAudit(securityContext)
+                    .build();
             storedQueryDao.create(newQuery);
         }
 

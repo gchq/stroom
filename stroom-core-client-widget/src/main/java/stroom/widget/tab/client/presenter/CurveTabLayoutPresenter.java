@@ -112,6 +112,10 @@ public abstract class CurveTabLayoutPresenter<P extends Proxy<?>> extends MyPres
         }
     }
 
+    public List<TabData> getTabs() {
+        return getView().getTabBar().getTabs();
+    }
+
     public void refresh(final TabData tabData) {
         getView().getTabBar().refresh();
     }

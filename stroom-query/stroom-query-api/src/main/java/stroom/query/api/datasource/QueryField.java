@@ -27,8 +27,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -252,34 +250,6 @@ public class QueryField implements Field, HasDisplayValue {
                 .fldName(name)
                 .fldType(FieldType.TEXT)
                 .conditionSet(ConditionSet.DEFAULT_TEXT)
-                .queryable(queryable)
-                .build();
-    }
-
-    public static QueryField createScheduleTypeSelect(final String name) {
-        return createScheduleTypeSelect(name, true);
-    }
-
-    public static QueryField createScheduleTypeSelect(final String name,
-                                                      final Boolean queryable) {
-        return builder()
-                .fldName(name)
-                .fldType(FieldType.TEXT)
-                .conditionSet(ConditionSet.SCHEDULE_TYPE)
-                .queryable(queryable)
-                .build();
-    }
-
-    public static QueryField createScheduleParentDocTypeSelect(final String name) {
-        return createScheduleParentDocTypeSelect(name, true);
-    }
-
-    public static QueryField createScheduleParentDocTypeSelect(final String name,
-                                                      final Boolean queryable) {
-        return builder()
-                .fldName(name)
-                .fldType(FieldType.TEXT)
-                .conditionSet(ConditionSet.SCHEDULE_PARENT_TYPE)
                 .queryable(queryable)
                 .build();
     }

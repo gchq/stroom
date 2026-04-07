@@ -18,7 +18,7 @@ package stroom.script.client.presenter;
 
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
 import stroom.script.shared.ScriptDoc;
 
@@ -26,7 +26,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-public class ScriptSettingsPresenter extends DocumentEditPresenter<ScriptSettingsView, ScriptDoc> {
+public class ScriptSettingsPresenter extends DocPresenter<ScriptSettingsView, ScriptDoc> {
 
     private final ScriptDependencyListPresenter scriptDependencyListPresenter;
 
@@ -41,7 +41,7 @@ public class ScriptSettingsPresenter extends DocumentEditPresenter<ScriptSetting
 
     @Override
     protected void onBind() {
-        final DirtyHandler dirtyHandler = event -> setDirty(true);
+        final DirtyHandler dirtyHandler = event -> onChange();
         registerHandler(scriptDependencyListPresenter.addDirtyHandler(dirtyHandler));
     }
 

@@ -111,6 +111,7 @@ public class ExpressionModel {
                 } else if (child instanceof Term) {
                     final Term term = (Term) child;
                     final String termValue = StringUtil.trimWhitespace(term.getValue());
+
                     dest.addTerm(ExpressionTerm.builder()
                             .enabled(term.isEnabled())
                             .field(term.getField())

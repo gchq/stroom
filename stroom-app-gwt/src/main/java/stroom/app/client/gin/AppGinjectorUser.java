@@ -49,6 +49,8 @@ import stroom.data.client.gin.StreamStoreGinjector;
 import stroom.data.client.gin.StreamStoreModule;
 import stroom.data.store.impl.fs.client.gin.FsVolumeGinjector;
 import stroom.data.store.impl.fs.client.gin.FsVolumeModule;
+import stroom.datagen.client.gin.DataGenGinjector;
+import stroom.datagen.client.gin.DataGenModule;
 import stroom.dictionary.client.gin.DictionaryGinjector;
 import stroom.dictionary.client.gin.DictionaryModule;
 import stroom.dispatch.client.RestModule;
@@ -105,12 +107,6 @@ import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
 import stroom.security.identity.client.gin.ChangePasswordGinjector;
 import stroom.security.identity.client.gin.ChangePasswordModule;
-import stroom.state.client.gin.ScyllaDbGinjector;
-import stroom.state.client.gin.ScyllaDbModule;
-import stroom.state.client.gin.StateStoreGinjector;
-import stroom.state.client.gin.StateStoreModule;
-import stroom.statistics.impl.hbase.client.gin.StroomStatsStoreGinjector;
-import stroom.statistics.impl.hbase.client.gin.StroomStatsStoreModule;
 import stroom.statistics.impl.sql.client.gin.StatisticsGinjector;
 import stroom.statistics.impl.sql.client.gin.StatisticsModule;
 import stroom.task.client.gin.TaskGinjector;
@@ -171,11 +167,11 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         ElasticClusterModule.class,
         ElasticIndexModule.class,
         AnalyticsModule.class,
+        DataGenModule.class,
         ReportModule.class,
         SolrIndexModule.class,
         StatisticsModule.class,
         StreamStoreModule.class,
-        StroomStatsStoreModule.class,
         TaskModule.class,
         VisModule.class,
         EmbeddedQueryModule.class,
@@ -184,8 +180,6 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         WelcomeModule.class,
         XMLSchemaModule.class,
         S3ConfigModule.class,
-        ScyllaDbModule.class,
-        StateStoreModule.class,
         PlanBModule.class,
         GitRepoModule.class
 })
@@ -220,13 +214,13 @@ public interface AppGinjectorUser extends
         SecurityGinjector,
         ChangePasswordGinjector,
         AnalyticsGinjector,
+        DataGenGinjector,
         ElasticClusterGinjector,
         ElasticIndexGinjector,
         ReportGinjector,
         SolrIndexGinjector,
         StatisticsGinjector,
         StreamStoreGinjector,
-        StroomStatsStoreGinjector,
         TaskGinjector,
         ViewGinjector,
         VisGinjector,
@@ -235,8 +229,6 @@ public interface AppGinjectorUser extends
         WelcomeGinjector,
         XMLSchemaGinjector,
         S3ConfigGinjector,
-        ScyllaDbGinjector,
-        StateStoreGinjector,
         PlanBGinjector,
         GitRepoGinjector /*,
         CredentialsGinjector*/ {

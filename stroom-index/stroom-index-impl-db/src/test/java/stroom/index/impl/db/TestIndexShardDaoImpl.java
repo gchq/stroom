@@ -30,7 +30,6 @@ import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.language.functions.FieldIndex;
-import stroom.util.AuditUtil;
 import stroom.util.io.ByteSizeUnit;
 import stroom.util.shared.Clearable;
 
@@ -169,18 +168,22 @@ class TestIndexShardDaoImpl {
     private IndexVolume createVolume(final String nodeName,
                                      final String path,
                                      final IndexVolumeGroup indexVolumeGroup) {
-        final IndexVolume indexVolume = new IndexVolume();
-        indexVolume.setNodeName(nodeName);
-        indexVolume.setPath(path);
-        indexVolume.setIndexVolumeGroupId(indexVolumeGroup.getId());
-        AuditUtil.stamp(() -> "test", indexVolume);
+        final IndexVolume indexVolume = IndexVolume
+                .builder()
+                .nodeName(nodeName)
+                .path(path)
+                .indexVolumeGroupId(indexVolumeGroup.getId())
+                .stampAudit("test")
+                .build();
         return indexVolumeDao.create(indexVolume);
     }
 
     private IndexVolumeGroup createGroup(final String name) {
-        final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
-        indexVolumeGroup.setName(name);
-        AuditUtil.stamp(() -> "test", indexVolumeGroup);
+        final IndexVolumeGroup indexVolumeGroup = IndexVolumeGroup
+                .builder()
+                .name(name)
+                .stampAudit("test")
+                .build();
         return indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
     }
 

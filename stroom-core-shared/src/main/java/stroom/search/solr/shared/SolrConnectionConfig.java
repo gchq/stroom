@@ -33,18 +33,15 @@ import java.util.Objects;
 public class SolrConnectionConfig implements Serializable {
 
     @JsonProperty
-    private InstanceType instanceType;
+    private final InstanceType instanceType;
     @JsonProperty
-    private boolean useZk;
+    private final boolean useZk;
     @JsonProperty
-    private List<String> solrUrls;
+    private final List<String> solrUrls;
     @JsonProperty
-    private List<String> zkHosts;
+    private final List<String> zkHosts;
     @JsonProperty
-    private String zkPath;
-
-    public SolrConnectionConfig() {
-    }
+    private final String zkPath;
 
     @JsonCreator
     public SolrConnectionConfig(@JsonProperty("instanceType") final InstanceType instanceType,
@@ -63,56 +60,33 @@ public class SolrConnectionConfig implements Serializable {
         return instanceType;
     }
 
-    public void setInstanceType(final InstanceType instanceType) {
-        this.instanceType = instanceType;
-    }
-
     public boolean isUseZk() {
         return useZk;
-    }
-
-    public void setUseZk(final boolean useZk) {
-        this.useZk = useZk;
     }
 
     public List<String> getSolrUrls() {
         return solrUrls;
     }
 
-    public void setSolrUrls(final List<String> solrUrls) {
-        this.solrUrls = solrUrls;
-    }
-
     public List<String> getZkHosts() {
         return zkHosts;
-    }
-
-    public void setZkHosts(final List<String> zkHosts) {
-        this.zkHosts = zkHosts;
     }
 
     public String getZkPath() {
         return zkPath;
     }
 
-    public void setZkPath(final String zkPath) {
-        this.zkPath = zkPath;
-    }
-
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof SolrConnectionConfig)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
         final SolrConnectionConfig that = (SolrConnectionConfig) o;
         return useZk == that.useZk &&
-                instanceType == that.instanceType &&
-                Objects.equals(solrUrls, that.solrUrls) &&
-                Objects.equals(zkHosts, that.zkHosts) &&
-                Objects.equals(zkPath, that.zkPath);
+               instanceType == that.instanceType &&
+               Objects.equals(solrUrls, that.solrUrls) &&
+               Objects.equals(zkHosts, that.zkHosts) &&
+               Objects.equals(zkPath, that.zkPath);
     }
 
     @Override
@@ -123,12 +97,12 @@ public class SolrConnectionConfig implements Serializable {
     @Override
     public String toString() {
         return "SolrConnectionConfig{" +
-                "instanceType=" + instanceType +
-                ", useZk=" + useZk +
-                ", solrUrls=" + solrUrls +
-                ", zkHosts=" + zkHosts +
-                ", zkPath='" + zkPath + '\'' +
-                '}';
+               "instanceType=" + instanceType +
+               ", useZk=" + useZk +
+               ", solrUrls=" + solrUrls +
+               ", zkHosts=" + zkHosts +
+               ", zkPath='" + zkPath + '\'' +
+               '}';
     }
 
     public enum InstanceType implements HasDisplayValue {
@@ -144,6 +118,68 @@ public class SolrConnectionConfig implements Serializable {
         @Override
         public String getDisplayValue() {
             return displayValue;
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
+        private InstanceType instanceType;
+        private boolean useZk;
+        private List<String> solrUrls;
+        private List<String> zkHosts;
+        private String zkPath;
+
+        private Builder() {
+        }
+
+        private Builder(final SolrConnectionConfig config) {
+            this.instanceType = config.instanceType;
+            this.useZk = config.useZk;
+            this.solrUrls = config.solrUrls;
+            this.zkHosts = config.zkHosts;
+            this.zkPath = config.zkPath;
+        }
+
+        public Builder instanceType(final InstanceType instanceType) {
+            this.instanceType = instanceType;
+            return this;
+        }
+
+        public Builder useZk(final boolean useZk) {
+            this.useZk = useZk;
+            return this;
+        }
+
+        public Builder solrUrls(final List<String> solrUrls) {
+            this.solrUrls = solrUrls;
+            return this;
+        }
+
+        public Builder zkHosts(final List<String> zkHosts) {
+            this.zkHosts = zkHosts;
+            return this;
+        }
+
+        public Builder zkPath(final String zkPath) {
+            this.zkPath = zkPath;
+            return this;
+        }
+
+        public SolrConnectionConfig build() {
+            return new SolrConnectionConfig(
+                    instanceType,
+                    useZk,
+                    solrUrls,
+                    zkHosts,
+                    zkPath);
         }
     }
 }

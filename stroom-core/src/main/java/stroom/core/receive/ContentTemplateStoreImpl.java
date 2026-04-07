@@ -18,13 +18,13 @@ package stroom.core.receive;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.receive.content.shared.ContentTemplate;
@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 /**
  * A bit of a special store that only ever holds one doc with a hard coded name.
@@ -62,7 +61,11 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
         this.securityContext = securityContext;
         final DocumentSerialiser2<ContentTemplates> serialiser = serialiser2Factory.createSerialiser(
                 ContentTemplates.class);
-        this.store = storeFactory.createStore(serialiser, ContentTemplates.TYPE, ContentTemplates::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                ContentTemplates.TYPE,
+                ContentTemplates::builder,
+                ContentTemplates::copy);
     }
 
     @Override
@@ -153,7 +156,7 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<ContentTemplates, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<ContentTemplates> createMapper() {
         return (doc, dependencyRemapper) -> {
             final List<ContentTemplate> templates = doc.getContentTemplates();
             if (NullSafe.hasItems(templates)) {
@@ -163,6 +166,7 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
                     }
                 });
             }
+            return doc;
         };
     }
 
@@ -204,20 +208,17 @@ public class ContentTemplateStoreImpl implements ContentTemplateStore {
 
     @Override
     public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
+                                 final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        return store.importDocument(docRef, dataMap, importState, importSettings);
+        return store.importDocument(docRef, importExportDocument, importState, importSettings);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
+    public ImportExportDocument exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

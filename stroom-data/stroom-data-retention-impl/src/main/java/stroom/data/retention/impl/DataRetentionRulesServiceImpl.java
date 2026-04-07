@@ -21,13 +21,13 @@ import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
@@ -42,7 +42,6 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -61,7 +60,11 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
         this.securityContext = securityContext;
         final DocumentSerialiser2<DataRetentionRules> serialiser = serialiser2Factory.createSerialiser(
                 DataRetentionRules.class);
-        this.store = storeFactory.createStore(serialiser, DataRetentionRules.TYPE, DataRetentionRules::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                DataRetentionRules.TYPE,
+                DataRetentionRules::builder,
+                DataRetentionRules::copy);
     }
 
     // ---------------------------------------------------------------------
@@ -126,7 +129,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<DataRetentionRules, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<DataRetentionRules> createMapper() {
         return (doc, dependencyRemapper) -> {
             final List<DataRetentionRule> rules = doc.getRules();
             if (rules != null && rules.size() > 0) {
@@ -136,6 +139,7 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
                     }
                 });
             }
+            return doc;
         };
     }
 
@@ -177,20 +181,17 @@ class DataRetentionRulesServiceImpl implements DataRetentionRulesService, DataRe
 
     @Override
     public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
+                                 final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        return store.importDocument(docRef, dataMap, importState, importSettings);
+        return store.importDocument(docRef, importExportDocument, importState, importSettings);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
+    public ImportExportDocument exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

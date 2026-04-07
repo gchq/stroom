@@ -267,7 +267,7 @@ public class ElementPresenter
         }
     }
 
-    public void save() {
+    public void save(final Runnable onComplete) {
         if (loaded && document != null && dirtyCode) {
             write();
 
@@ -277,14 +277,18 @@ public class ElementPresenter
                     result -> {
                         document = result;
                         dirtyCode = false;
+                        onComplete.run();
                     },
                     throwable -> {
                         AlertEvent.fireError(
                                 this,
                                 "Unable to save document " + docRef,
                                 throwable.getMessage(), null);
+                        onComplete.run();
                     },
                     this);
+        } else {
+            onComplete.run();
         }
     }
 
@@ -298,7 +302,7 @@ public class ElementPresenter
 
     private void write() {
         if (document instanceof final HasData hasData) {
-            hasData.setData(getCode());
+            document = (Document) hasData.copyWithData(getCode());
         }
     }
 

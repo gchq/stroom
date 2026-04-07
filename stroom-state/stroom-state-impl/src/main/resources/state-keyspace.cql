@@ -1,1 +1,0 @@
-CREATE KEYSPACE IF NOT EXISTS state WITH replication = { 'class': 'NetworkTopologyStrategy', 'replication_factor': '1' } AND durable_writes = TRUE;

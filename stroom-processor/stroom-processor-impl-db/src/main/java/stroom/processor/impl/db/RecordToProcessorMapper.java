@@ -29,18 +29,19 @@ class RecordToProcessorMapper implements Function<Record, Processor> {
 
     @Override
     public Processor apply(final Record record) {
-        final Processor processor = new Processor();
-        processor.setId(record.get(PROCESSOR.ID));
-        processor.setVersion(record.get(PROCESSOR.VERSION));
-        processor.setCreateTimeMs(record.get(PROCESSOR.CREATE_TIME_MS));
-        processor.setCreateUser(record.get(PROCESSOR.CREATE_USER));
-        processor.setUpdateTimeMs(record.get(PROCESSOR.UPDATE_TIME_MS));
-        processor.setUpdateUser(record.get(PROCESSOR.UPDATE_USER));
-        processor.setUuid(record.get(PROCESSOR.UUID));
-        processor.setPipelineUuid(record.get(PROCESSOR.PIPELINE_UUID));
-        processor.setProcessorType(ProcessorType.fromDisplayValue(record.get(PROCESSOR.TASK_TYPE)));
-        processor.setEnabled(record.get(PROCESSOR.ENABLED));
-        processor.setDeleted(record.get(PROCESSOR.DELETED));
-        return processor;
+        return Processor
+                .builder()
+                .id(record.get(PROCESSOR.ID))
+                .version(record.get(PROCESSOR.VERSION))
+                .createTimeMs(record.get(PROCESSOR.CREATE_TIME_MS))
+                .createUser(record.get(PROCESSOR.CREATE_USER))
+                .updateTimeMs(record.get(PROCESSOR.UPDATE_TIME_MS))
+                .updateUser(record.get(PROCESSOR.UPDATE_USER))
+                .uuid(record.get(PROCESSOR.UUID))
+                .pipelineUuid(record.get(PROCESSOR.PIPELINE_UUID))
+                .processorType(ProcessorType.fromDisplayValue(record.get(PROCESSOR.TASK_TYPE)))
+                .enabled(record.get(PROCESSOR.ENABLED))
+                .deleted(record.get(PROCESSOR.DELETED))
+                .build();
     }
 }

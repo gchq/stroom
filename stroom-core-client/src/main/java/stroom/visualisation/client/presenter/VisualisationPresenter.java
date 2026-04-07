@@ -17,8 +17,8 @@
 package stroom.visualisation.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -30,25 +30,33 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import javax.inject.Provider;
 
-public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPanelView, VisualisationDoc> {
+public class VisualisationPresenter extends DocTabPresenter<LinkTabPanelView, VisualisationDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
+    private static final TabData ASSETS = new TabDataImpl("Assets");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
+
+    private final VisualisationAssetsPresenter visualisationAssetsPresenter;
 
     @Inject
     public VisualisationPresenter(final EventBus eventBus,
                                   final LinkTabPanelView view,
                                   final Provider<VisualisationSettingsPresenter> settingsPresenterProvider,
+                                  final VisualisationAssetsPresenter visualisationAssetsPresenter,
                                   final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                                   final DocumentUserPermissionsTabProvider<VisualisationDoc>
                                           documentUserPermissionsTabProvider) {
         super(eventBus, view);
+        this.visualisationAssetsPresenter = visualisationAssetsPresenter;
 
-        addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
-        addTab(DOCUMENTATION, new MarkdownTabProvider<VisualisationDoc>(eventBus, markdownEditPresenterProvider) {
+        addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
+        addTab(ASSETS, new DocTabProvider<>(() -> visualisationAssetsPresenter));
+        addTab(DOCUMENTATION, new MarkdownTabProvider<>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
                                final DocRef docRef,
@@ -61,11 +69,11 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
             @Override
             public VisualisationDoc onWrite(final MarkdownEditPresenter presenter,
                                             final VisualisationDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
+
         selectTab(SETTINGS);
     }
 
@@ -82,5 +90,46 @@ public class VisualisationPresenter extends DocumentEditTabPresenter<LinkTabPane
     @Override
     protected TabData getDocumentationTab() {
         return DOCUMENTATION;
+    }
+
+    /**
+     * Provide a callback to be inserted into the save chain after the save is complete.
+     * @return The consumer for the callback. The second parameter will be the
+     * consumer to call after this method has completed.
+     */
+    @Override
+    public BiConsumer<VisualisationDoc, Consumer<VisualisationDoc>> getPostSaveCallback() {
+        return this::saveAssets;
+    }
+
+    /**
+     * Provide a callback to be inserted into the SaveAs chain after the document saveAs
+     * has happened.
+     * @return The consumer for the callback. The second parameter will be the
+     * consumer to call after this method has completed.
+     */
+    @Override
+    public BiConsumer<VisualisationDoc, Consumer<VisualisationDoc>> getPostSaveAsCallback() {
+        return this::saveAsAssets;
+    }
+
+    /**
+     * Called by DocumentPlugin to save the assets associated with the document.
+     * Specified in getPostSaveCallback().
+     * @param document The document that was written by all the data in all the tabs.
+     * @param callback Thing to call when the assets have been saved.
+     */
+    public void saveAssets(final VisualisationDoc document, final Consumer<VisualisationDoc> callback) {
+        visualisationAssetsPresenter.onSave(document, callback);
+    }
+
+    /**
+     * Called by DocumentPlugin to do a SaveAs to a new document.
+     * Specified in getPostSaveAsCallback().
+     * @param document The new document to save to.
+     * @param callback Thing to call when the assets have been saved.
+     */
+    public void saveAsAssets(final VisualisationDoc document, final Consumer<VisualisationDoc> callback) {
+        visualisationAssetsPresenter.onSaveAs(document, callback);
     }
 }

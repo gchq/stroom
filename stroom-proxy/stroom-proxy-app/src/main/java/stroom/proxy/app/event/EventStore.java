@@ -31,6 +31,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.metrics.Metrics;
 
 import com.codahale.metrics.Timer;
+import io.dropwizard.lifecycle.Managed;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -44,13 +45,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 @Singleton
-public class EventStore implements EventConsumer {
+public class EventStore implements EventConsumer, Managed {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EventStore.class);
     private static final String CACHE_NAME = "Event Store Open Appenders";
@@ -64,6 +66,7 @@ public class EventStore implements EventConsumer {
     private final EventSerialiser eventSerialiser;
     private final LinkedBlockingQueue<Path> forwardQueue;
     private final Timer handleTimer;
+    private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
     @Inject
     public EventStore(final ReceiverFactory receiverFactory,
@@ -104,6 +107,12 @@ public class EventStore implements EventConsumer {
         forwardOldFiles();
     }
 
+    private void checkState() {
+        if (shutdown.get()) {
+            throw new IllegalStateException("Event Store has been shut down");
+        }
+    }
+
     private void ensureDirExists(final Path path) {
         if (!Files.isDirectory(path)) {
             try {
@@ -125,7 +134,7 @@ public class EventStore implements EventConsumer {
 
     public void tryRoll() {
         stores.keySet().forEach(feedKey -> {
-            LOGGER.debug(() -> "Try rolling: " + feedKey.toString());
+            LOGGER.debug("Try rolling: {}", feedKey);
             stores.compute(feedKey, (k, v) -> {
                 EventAppender eventAppender = v;
                 if (eventAppender != null) {
@@ -145,7 +154,7 @@ public class EventStore implements EventConsumer {
 
     public void roll() {
         stores.keySet().forEach(feedKey -> {
-            LOGGER.debug(() -> "Rolling: " + feedKey.toString());
+            LOGGER.debug("Rolling: {}", feedKey);
             stores.compute(feedKey, (k, v) -> {
                 if (v != null) {
                     try {
@@ -175,7 +184,7 @@ public class EventStore implements EventConsumer {
     }
 
     private void forward(final Path file) {
-        LOGGER.debug(() -> "Forwarding: " + file);
+        LOGGER.debug("Forwarding: {}", file);
         if (Files.isRegularFile(file)) {
             final FeedKey feedKey = EventStoreFile.getFeedKey(file);
 
@@ -229,6 +238,7 @@ public class EventStore implements EventConsumer {
                         final UniqueId receiptId,
                         final String data) {
         try {
+            checkState();
             final FeedKey feedKey = FeedKey.from(attributeMap);
             final String string = eventSerialiser.serialise(
                     receiptId,
@@ -273,7 +283,7 @@ public class EventStore implements EventConsumer {
                     file = EventStoreFile.createNew(dir, k, now);
                     // Ensure file doesn't already exist.
                     if (Files.isRegularFile(file)) {
-                        LOGGER.debug("File already exists: " + file);
+                        LOGGER.debug("File already exists: {}", file);
                         ThreadUtil.sleep(1);
                     } else {
                         success = true;
@@ -299,5 +309,21 @@ public class EventStore implements EventConsumer {
 
             return eventAppender;
         });
+    }
+
+    @Override
+    public void stop() throws Exception {
+        if (shutdown.compareAndSet(false, true)) {
+            stores.values()
+                    .stream()
+                    .filter(Objects::nonNull)
+                    .forEach(eventAppender -> {
+                        try {
+                            eventAppender.close();
+                        } catch (final IOException e) {
+                            LOGGER.error("Error closing eventAppender {}", eventAppender, e);
+                        }
+                    });
+        }
     }
 }

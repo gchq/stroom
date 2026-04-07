@@ -20,22 +20,19 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.analytics.client.presenter.BatchExecutionScheduleEditPresenter.BatchExecutionScheduleEditView;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleResource;
-import stroom.analytics.shared.ScheduleBounds;
-import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.job.shared.ScheduleRestriction;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.schedule.client.ScheduleBox;
 import stroom.schedule.client.SchedulePopup;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.util.shared.NullSafe;
+import stroom.widget.button.client.Button;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimePopup;
-import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -68,7 +65,7 @@ public class BatchExecutionScheduleEditPresenter
     public BatchExecutionScheduleEditPresenter(final EventBus eventBus,
                                                final BatchExecutionScheduleEditView view,
                                                final DocSelectionBoxPresenter errorFeedPresenter,
-                                               final NodeManager nodeManager,
+                                               final NodeClient nodeClient,
                                                final Provider<SchedulePopup> schedulePresenterProvider,
                                                final Provider<DateTimePopup> dateTimePopupProvider,
                                                final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter) {
@@ -84,7 +81,7 @@ public class BatchExecutionScheduleEditPresenter
         view.getScheduleBox().setScheduleRestriction(new ScheduleRestriction(false, false, true));
 
 
-        nodeManager.listAllNodes(
+        nodeClient.listAllNodes(
             list -> {
                 if (NullSafe.hasItems(list)) {
                     getView().setNodes(list);
@@ -108,7 +105,7 @@ public class BatchExecutionScheduleEditPresenter
         registerHandler(userRefSelectionBoxPresenter.addDataSelectionHandler(e -> onDirty()));
     }
 
-    public void show(final Consumer<Boolean> consumer) {
+    public void show() {
         final PopupSize popupSize = PopupSize.builder()
                 .width(Size
                         .builder()
@@ -121,42 +118,28 @@ public class BatchExecutionScheduleEditPresenter
                 .build();
 
         ShowPopupEvent.builder(this)
-                .popupType(PopupType.SELECTED_AND_FILTERED_DIALOG)
+                .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(popupSize)
-                .onShow(e -> {
-                    getView().focus();
-//                    selectedAndFilteredConfirmationDialog.temp_test();
-                })
                 .caption("Batch Change Selected Schedules")
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        write(applyToFiltered -> {
-                            consumer.accept(applyToFiltered);
-                            e.hide();
-                        }, e);
-                    } else {
-                        e.hide();
-                    }
-                })
                 .fire();
     }
 
-    public void write(final Consumer<Boolean> consumer,
-                      final HidePopupRequestEvent event) {
+    public void validate(final Consumer<Boolean> consumer) {
         getView().getScheduleBox().validate(scheduledTimes -> {
             if (scheduledTimes == null) {
-                event.reset();
+                consumer.accept(false);
             } else if (getView().getScheduleBox().isEnabled() && scheduledTimes.isError()) {
-                AlertEvent.fireWarn(this, scheduledTimes.getError(), event::reset);
+                AlertEvent.fireWarn(this, scheduledTimes.getError(), null);
             } else {
                 if (getView().getStartTime().isEnabled() && !getView().getStartTime().isValid()) {
-                    AlertEvent.fireWarn(this, "Invalid start time", event::reset);
+                    AlertEvent.fireWarn(this, "Invalid start time", null);
                 } else if (getView().getEndTime().isEnabled() && !getView().getEndTime().isValid()) {
-                    AlertEvent.fireWarn(this, "Invalid end time", event::reset);
+                    AlertEvent.fireWarn(this, "Invalid end time", null);
                 } else {
-                    consumer.accept(event.getAction().isApplyToFiltered());
+                    consumer.accept(true);
                 }
             }
+            consumer.accept(false);
         });
     }
 
@@ -179,9 +162,7 @@ public class BatchExecutionScheduleEditPresenter
             HasUiHandlers<ProcessingStatusUiHandlers>,
             Focus {
 
-        ExecutionSchedule getUpdatedExecutionSchedule(ExecutionSchedule  executionSchedule);
-
-
+        ExecutionSchedule getUpdatedExecutionSchedule(ExecutionSchedule executionSchedule);
 
         String getName();
 
@@ -208,5 +189,9 @@ public class BatchExecutionScheduleEditPresenter
         boolean isAnyBoxEnabled();
 
         String getEditSummary();
+
+        Button getApplySelectionButton();
+
+        Button getApplyFilteredButton();
     }
 }

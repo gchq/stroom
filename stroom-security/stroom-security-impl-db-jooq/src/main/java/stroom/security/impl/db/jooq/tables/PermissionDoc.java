@@ -13,12 +13,9 @@ import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Index;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -35,8 +32,6 @@ import org.jooq.types.UByte;
 import stroom.security.impl.db.jooq.Indexes;
 import stroom.security.impl.db.jooq.Keys;
 import stroom.security.impl.db.jooq.Stroom;
-import stroom.security.impl.db.jooq.tables.PermissionDocId.PermissionDocIdPath;
-import stroom.security.impl.db.jooq.tables.StroomUser.StroomUserPath;
 import stroom.security.impl.db.jooq.tables.records.PermissionDocRecord;
 
 
@@ -110,37 +105,6 @@ public class PermissionDoc extends TableImpl<PermissionDocRecord> {
         this(DSL.name("permission_doc"), null);
     }
 
-    public <O extends Record> PermissionDoc(Table<O> path, ForeignKey<O, PermissionDocRecord> childPath, InverseForeignKey<O, PermissionDocRecord> parentPath) {
-        super(path, childPath, parentPath, PERMISSION_DOC);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class PermissionDocPath extends PermissionDoc implements Path<PermissionDocRecord> {
-        public <O extends Record> PermissionDocPath(Table<O> path, ForeignKey<O, PermissionDocRecord> childPath, InverseForeignKey<O, PermissionDocRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private PermissionDocPath(Name alias, Table<PermissionDocRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public PermissionDocPath as(String alias) {
-            return new PermissionDocPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public PermissionDocPath as(Name alias) {
-            return new PermissionDocPath(alias, this);
-        }
-
-        @Override
-        public PermissionDocPath as(Table<?> alias) {
-            return new PermissionDocPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -169,31 +133,6 @@ public class PermissionDoc extends TableImpl<PermissionDocRecord> {
     @Override
     public List<ForeignKey<PermissionDocRecord, ?>> getReferences() {
         return Arrays.asList(Keys.PERMISSION_DOC_USER_UUID, Keys.PERMISSION_DOC_PERMISSION_ID);
-    }
-
-    private transient StroomUserPath _stroomUser;
-
-    /**
-     * Get the implicit join path to the <code>stroom.stroom_user</code> table.
-     */
-    public StroomUserPath stroomUser() {
-        if (_stroomUser == null)
-            _stroomUser = new StroomUserPath(this, Keys.PERMISSION_DOC_USER_UUID, null);
-
-        return _stroomUser;
-    }
-
-    private transient PermissionDocIdPath _permissionDocId;
-
-    /**
-     * Get the implicit join path to the <code>stroom.permission_doc_id</code>
-     * table.
-     */
-    public PermissionDocIdPath permissionDocId() {
-        if (_permissionDocId == null)
-            _permissionDocId = new PermissionDocIdPath(this, Keys.PERMISSION_DOC_PERMISSION_ID, null);
-
-        return _permissionDocId;
     }
 
     @Override

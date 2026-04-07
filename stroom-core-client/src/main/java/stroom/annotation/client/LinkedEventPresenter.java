@@ -28,7 +28,7 @@ import stroom.data.client.presenter.DisplayMode;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
@@ -43,7 +43,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 public class LinkedEventPresenter
-        extends DocumentEditPresenter<LinkedEventView, Annotation> {
+        extends DocPresenter<LinkedEventView, Annotation> {
 
     private final MyDataGrid<EventId> dataGrid;
     private final MultiSelectionModelImpl<EventId> selectionModel;
@@ -198,10 +198,6 @@ public class LinkedEventPresenter
             dataPresenter.clear();
         }
         enableButtons();
-    }
-
-    public boolean isDirty() {
-        return dirty;
     }
 
     public void setParent(final AnnotationPresenter parent) {

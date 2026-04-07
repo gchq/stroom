@@ -33,6 +33,7 @@ import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
+import stroom.util.client.Pair;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
@@ -282,15 +283,17 @@ public class PipelineModel implements HasChangeDataHandlers<PipelineModel> {
     private void copyProperties(final String id, final List<PipelineProperty> source,
                                 final Consumer<PipelineProperty> dest,
                                 final List<PipelineProperty> ignore) {
-        final Set<PipelineProperty> set = new HashSet<>();
+        // uniqueness is by element+name, not value
+        final Set<Pair<String, String>> set = new HashSet<>();
 
         if (ignore != null) {
-            set.addAll(ignore);
+            for (final PipelineProperty p : ignore) {
+                set.add(Pair.of(p.getElement(), p.getName()));
+            }
         }
 
         for (final PipelineProperty property : source) {
-            if (id.equals(property.getElement()) && !set.contains(property)) {
-                set.add(property);
+            if (id.equals(property.getElement()) && set.add(Pair.of(property.getElement(), property.getName()))) {
                 dest.accept(property);
             }
         }

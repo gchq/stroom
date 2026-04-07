@@ -119,10 +119,8 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource {
                     case ENABLE -> processorFilterService.setEnabled(filter.getId(), true);
                     case DISABLE -> processorFilterService.setEnabled(filter.getId(), false);
                     case DELETE -> processorFilterService.delete(filter.getId());
-                    case SET_RUN_AS_USER -> {
-                        filter.setRunAsUser(request.getUserRef());
-                        processorFilterService.update(filter);
-                    }
+                    case SET_RUN_AS_USER ->
+                            processorFilterService.update(filter.copy().runAsUser(request.getUserRef()).build());
                 }
             });
         });

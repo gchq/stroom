@@ -18,9 +18,11 @@ package stroom.document.client;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.content.client.ContentPlugin;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.core.client.HasSave;
 import stroom.core.client.HasSaveRegistry;
+import stroom.core.client.TabPlugin;
 import stroom.core.client.UrlParameters;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.DefaultErrorHandler;
@@ -244,7 +246,13 @@ public class DocumentPluginEventManager extends Plugin {
                     if (!event.getSelectionType().isRightClick() && !event.getSelectionType().isMultiSelect()) {
                         final ExplorerNode explorerNode = event.getSelectionModel().getSelected();
                         if (explorerNode != null) {
-                            final DocumentPlugin<?> plugin = documentPluginRegistry.get(explorerNode.getType());
+                            // Dont try to open the doc if we have a tab with the same docref already selected
+                            if (selectedTab instanceof final DocumentTabData documentTabData
+                                && documentTabData.getDocRef().equals(explorerNode.getDocRef())) {
+                                return;
+                            }
+                            final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(
+                                    explorerNode.getType());
                             if (plugin != null) {
                                 plugin.open(
                                         explorerNode.getDocRef(),
@@ -274,7 +282,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         // 11. Handle entity reload events.
         registerHandler(getEventBus().addHandler(RefreshDocumentEvent.getType(), event -> {
-            final DocumentPlugin<?> plugin = documentPluginRegistry.get(event.getDocRef().getType());
+            final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(event.getDocRef().getType());
             if (plugin != null) {
 //                GWT.log("reloading " + event.getDocRef().getName());
                 plugin.reload(event.getDocRef());
@@ -285,7 +293,7 @@ public class DocumentPluginEventManager extends Plugin {
         registerHandler(getEventBus().addHandler(SaveDocumentEvent.getType(), event -> {
             if (isDirty(event.getTabData())) {
                 final DocumentTabData entityTabData = event.getTabData();
-                final DocumentPlugin<?> plugin = documentPluginRegistry.get(entityTabData.getType());
+                final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(entityTabData.getType());
                 if (plugin != null) {
                     plugin.save(entityTabData);
                 }
@@ -295,7 +303,7 @@ public class DocumentPluginEventManager extends Plugin {
         // 6. Handle save as events.
         registerHandler(getEventBus().addHandler(SaveAsDocumentEvent.getType(), event -> {
             final DocumentTabData tabData = event.getTabData();
-            final DocumentPlugin<?> plugin = documentPluginRegistry.get(tabData.getType());
+            final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(tabData.getType());
             if (plugin != null) {
                 // Get the explorer node for the docref.
                 TaskMonitorFactory taskMonitorFactory = null;
@@ -343,6 +351,8 @@ public class DocumentPluginEventManager extends Plugin {
                         event.isFullScreen(),
                         event.getSelectedTab().orElse(null),
                         event.getCallbackOnOpen(),
+                        event.getCallbackOnFailure().orElse(() -> {}),
+                        event.isDuplicate(),
                         explorerListener)));
 
         registerHandler(getEventBus().addHandler(CloseSelectedDocumentEvent.getType(), event -> {
@@ -506,6 +516,11 @@ public class DocumentPluginEventManager extends Plugin {
             menuItems.add(createCloseLeftMenu(++priority, event.getTabData(), event.getTabList()));
             menuItems.add(createCloseRightMenu(++priority, event.getTabData(), event.getTabList()));
 
+            if (event.getTabData() instanceof HasMultipleInstances) {
+                menuItems.add(new Separator(++priority));
+                menuItems.add(createDuplicateTabMenu(++priority, event.getTabData()));
+            }
+
             menuItems.add(new Separator(++priority));
 
             menuItems.add(createSaveMenuItem(++priority, event.getTabData()));
@@ -561,7 +576,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         explorerNodeList.forEach(node -> {
             final DocRef docRef = node.getDocRef();
-            final DocumentPlugin<?> plugin = documentPluginRegistry.get(docRef.getType());
+            final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(docRef.getType());
             if (plugin != null && plugin.isDirty(docRef)) {
                 dirtyList.add(node);
             } else {
@@ -611,7 +626,7 @@ public class DocumentPluginEventManager extends Plugin {
                 .collect(Collectors.groupingBy(DocRef::getType, Collectors.toList()));
 
         typeToDocRefsMap.forEach((type, docRefs) -> {
-            final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(type);
+            final DocumentPlugin<?> documentPlugin = documentPluginRegistry.getDocumentPlugin(type);
             final List<DocumentTabData> openTabs = documentPlugin.getOpenDocuments(docRefs);
             // Close even if dirty as we have already deleted the docs
             openTabs.forEach(tab ->
@@ -764,10 +779,12 @@ public class DocumentPluginEventManager extends Plugin {
                      final boolean fullScreen,
                      final CommonDocLinkTab selectedLinkTab,
                      final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                     final Runnable callbackOnFailure,
+                     final boolean duplicate,
                      final TaskMonitorFactory taskMonitorFactory) {
         if (docRef != null && docRef.getType() != null) {
-            final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(docRef.getType());
-            if (documentPlugin != null) {
+            final TabPlugin tabPlugin = documentPluginRegistry.get(docRef.getType());
+            if (tabPlugin instanceof final DocumentPlugin<?> documentPlugin) {
                 // Decorate the DocRef with its name from the info service (required by the doc presenter)
                 restFactory
                         .create(EXPLORER_RESOURCE)
@@ -778,6 +795,9 @@ public class DocumentPluginEventManager extends Plugin {
                                 AlertEvent.fireError(DocumentPluginEventManager.this,
                                         buildNotFoundMessage(docRef),
                                         null);
+                                if (callbackOnFailure != null) {
+                                    callbackOnFailure.run();
+                                }
                             } else {
                                 documentPlugin.open(
                                         decoratedDocRef,
@@ -785,17 +805,29 @@ public class DocumentPluginEventManager extends Plugin {
                                         fullScreen,
                                         selectedLinkTab,
                                         callbackOnOpen,
+                                        duplicate,
                                         new DefaultTaskMonitorFactory(this));
-                                highlight(decoratedDocRef, explorerListener);
+                                if (!duplicate) {
+                                    highlight(decoratedDocRef, explorerListener);
+                                }
                             }
                         })
                         .onFailure(error -> {
                             AlertEvent.fireError(DocumentPluginEventManager.this,
                                     buildNotFoundMessage(docRef),
                                     null);
+                            if (callbackOnFailure != null) {
+                                callbackOnFailure.run();
+                            }
                         })
                         .taskMonitorFactory(taskMonitorFactory)
                         .exec();
+            } else if (tabPlugin instanceof final ContentPlugin<?> contentPlugin) {
+                contentPlugin.open(p -> {
+                    if (callbackOnOpen != null) {
+                        callbackOnOpen.accept(p);
+                    }
+                });
             } else {
                 throw new IllegalArgumentException("Document type '" + docRef.getType() + "' not registered");
             }
@@ -1053,7 +1085,7 @@ public class DocumentPluginEventManager extends Plugin {
         final Consumer<ExplorerNode> newDocumentConsumer = newDocNode -> {
             final DocRef docRef = newDocNode.getDocRef();
             // Open the document in the content pane.
-            final DocumentPlugin<?> plugin = documentPluginRegistry.get(docRef.getType());
+            final DocumentPlugin<?> plugin = documentPluginRegistry.getDocumentPlugin(docRef.getType());
             if (plugin != null) {
                 plugin.open(docRef, true, false, new DefaultTaskMonitorFactory(this));
             }
@@ -1261,6 +1293,17 @@ public class DocumentPluginEventManager extends Plugin {
                 .text("Move Last")
                 .enabled(isTabItemSelected(selectedTab) && !isLastTab)
                 .command(() -> RequestMoveTabEvent.fire(DocumentPluginEventManager.this, selectedTab, tabs.size() - 1))
+                .build();
+    }
+
+    private MenuItem createDuplicateTabMenu(final int priority, final TabData selectedTab) {
+        final DocRef docRef = getSelectedDoc(selectedTab);
+
+        return new IconMenuItem.Builder()
+                .priority(priority)
+                .icon(SvgImage.COPY)
+                .text("Duplicate Tab")
+                .command(() -> OpenDocumentEvent.fire(DocumentPluginEventManager.this, docRef, true, false, null, true))
                 .build();
     }
 

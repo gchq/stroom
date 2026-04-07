@@ -19,12 +19,12 @@ package stroom.query.impl;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.query.shared.QueryDoc;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class QuerySerialiser implements DocumentSerialiser2<QueryDoc> {
 
@@ -40,39 +40,13 @@ public class QuerySerialiser implements DocumentSerialiser2<QueryDoc> {
     }
 
     @Override
-    public QueryDoc read(final Map<String, byte[]> data) throws IOException {
-        final QueryDoc document = delegate.read(data);
-//        final byte[] jsonData = data.get(JSON);
-//        if (jsonData != null) {
-//            try {
-//                final QueryConfig dashboardConfig = getQueryConfigFromJson(jsonData);
-//                document.setQueryConfig(dashboardConfig);
-//            } catch (final RuntimeException e) {
-//                LOGGER.error("Unable to unmarshal dashboard config", e);
-//            }
-//        }
-        return document;
+    public QueryDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        return delegate.read(importExportDocument);
     }
 
     @Override
-    public Map<String, byte[]> write(final QueryDoc document) throws IOException {
-//        final QueryConfig dashboardConfig = document.getQueryConfig();
-//        document.setQueryConfig(null);
-
-        final Map<String, byte[]> data = delegate.write(document);
-
-//        if (dashboardConfig != null) {
-//            final StringWriter stringWriter = new StringWriter();
-//            dashboardConfigSerialiser.write(stringWriter, dashboardConfig);
-//            data.put(JSON, EncodingUtil.asBytes(stringWriter.toString()));
-//            document.setQueryConfig(dashboardConfig);
-//        }
-
-
-        return data;
+    public ImportExportDocument write(final QueryDoc document) throws IOException {
+        return delegate.write(document);
     }
 
-//    public QueryConfig getQueryConfigFromJson(final byte[] jsonData) throws IOException {
-//        return dashboardConfigSerialiser.read(jsonData);
-//    }
 }

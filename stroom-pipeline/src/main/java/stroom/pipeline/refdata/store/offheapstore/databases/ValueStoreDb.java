@@ -41,8 +41,6 @@ import jakarta.inject.Inject;
 import org.lmdbjava.Cursor;
 import org.lmdbjava.GetOp;
 import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Optional;
@@ -82,8 +80,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ValueStoreDb.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ValueStoreDb.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ValueStoreDb.class);
 
     private static final int BUFFER_OUTPUT_STREAM_INITIAL_CAPACITY = 1_000;
 
@@ -146,7 +143,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
             areValuesEqual = currentValueBuf.equals(newValueBuffer);
             if (!areValuesEqual) {
                 // Hopefully this won't happen often, logging in case we want to track collisions.
-                LAMBDA_LOGGER.debug("Hash collision");
+                LOGGER.debug("Hash collision");
             }
         }
         return areValuesEqual;
@@ -194,7 +191,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
         final ByteBuffer valueBuffer = refDataValue.getValueBuffer();
 
-        LAMBDA_LOGGER.trace(() ->
+        LOGGER.trace(() ->
                 LogUtil.message("valueBuffer: {}", ByteBufferUtils.byteBufferInfo(valueBuffer)));
 
         // Use atomics so they can be mutated and then used in lambdas
@@ -247,7 +244,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                 }
                 lastKeyId = thisKeyId;
 
-                LAMBDA_LOGGER.trace(() -> LogUtil.message("Our value {}, db value {}",
+                LOGGER.trace(() -> LogUtil.message("Our value {}, db value {}",
                         LmdbUtils.byteBufferToHex(valueBuffer),
                         LmdbUtils.byteBufferToHex(valueFromDbBuf)));
 
@@ -264,7 +261,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
                 // see if the found value is identical to the value passed in
                 if (valueBuffer.equals(valueFromDbBuf)) {
                     isValueInDb.set(true);
-                    LAMBDA_LOGGER.trace(() ->
+                    LOGGER.trace(() ->
                             "Found our value so incrementing its ref count and breaking out");
 
                     // perform any entry found actions
@@ -272,14 +269,14 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
                     break;
                 } else {
-                    LAMBDA_LOGGER.trace(() -> "Values are not equal, keep looking");
+                    LOGGER.trace(() -> "Values are not equal, keep looking");
                 }
                 // advance cursor
                 isFound = cursor.next();
             }
         }
 
-        LAMBDA_LOGGER.trace(() -> LogUtil.message("isValueInMap: {}, valuesCount {}",
+        LOGGER.trace(() -> LogUtil.message("isValueInMap: {}, valuesCount {}",
                 isValueInDb.get(),
                 valuesCount.get()));
 

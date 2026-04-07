@@ -19,6 +19,8 @@ package stroom.docstore.impl.fs;
 import stroom.docref.DocRef;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.shared.AbstractDoc;
+import stroom.importexport.api.ByteArrayImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -27,9 +29,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,7 +50,7 @@ class TestFSPersistence {
             persistence.delete(docRef);
         }
 
-        final GenericDoc doc = new GenericDoc(
+        GenericDoc doc = new GenericDoc(
                 docRef.getUuid(),
                 docRef.getName(),
                 null,
@@ -62,43 +62,43 @@ class TestFSPersistence {
         byte[] bytes = mapper.writeValueAsBytes(doc);
 
         // Create
-        Map<String, byte[]> data = new HashMap<>();
-        data.put("meta", bytes);
-        persistence.write(docRef, false, data);
+        final ImportExportDocument ieDoc = new ImportExportDocument();
+        ieDoc.addExtAsset(new ByteArrayImportExportAsset("meta", bytes));
+        persistence.write(docRef, false, ieDoc);
 
         // Exists
         assertThat(persistence.exists(docRef)).isTrue();
 
         // Read
-        data = persistence.read(docRef);
-        assertThat(data.get("meta")).isEqualTo(bytes);
+        final ImportExportDocument ieDocRead = persistence.read(docRef);
+        assertThat(ieDocRead.getExtAssetData("meta")).isEqualTo(bytes);
 
         // List
         List<DocRef> refs = persistence.list(docRef.getType());
         assertThat(refs.size()).isEqualTo(1);
-        assertThat(refs.get(0)).isEqualTo(docRef);
-        assertThat(refs.get(0).getType()).isEqualTo(docRef.getType());
-        assertThat(refs.get(0).getUuid()).isEqualTo(docRef.getUuid());
-        assertThat(refs.get(0).getName()).isEqualTo(docRef.getName());
+        assertThat(refs.getFirst()).isEqualTo(docRef);
+        assertThat(refs.getFirst().getType()).isEqualTo(docRef.getType());
+        assertThat(refs.getFirst().getUuid()).isEqualTo(docRef.getUuid());
+        assertThat(refs.getFirst().getName()).isEqualTo(docRef.getName());
 
         // Update
-        doc.setName("New Name");
+        doc = doc.copy().name("New Name").build();
         bytes = mapper.writeValueAsBytes(doc);
-        data = new HashMap<>();
-        data.put("meta", bytes);
-        persistence.write(docRef, true, data);
+        final ImportExportDocument ieDocNewName = new ImportExportDocument();
+        ieDocNewName.addExtAsset(new ByteArrayImportExportAsset("meta", bytes));
+        persistence.write(docRef, true, ieDocNewName);
 
         // Read
-        data = persistence.read(docRef);
-        assertThat(data.get("meta")).isEqualTo(bytes);
+        final ImportExportDocument ieDocNewNameRead = persistence.read(docRef);
+        assertThat(ieDocNewNameRead.getExtAssetData("meta")).isEqualTo(bytes);
 
         // List
         refs = persistence.list(docRef.getType());
         assertThat(refs.size()).isEqualTo(1);
-        assertThat(refs.get(0)).isEqualTo(docRef);
-        assertThat(refs.get(0).getType()).isEqualTo(docRef.getType());
-        assertThat(refs.get(0).getUuid()).isEqualTo(docRef.getUuid());
-        assertThat(refs.get(0).getName()).isEqualTo("New Name");
+        assertThat(refs.getFirst()).isEqualTo(docRef);
+        assertThat(refs.getFirst().getType()).isEqualTo(docRef.getType());
+        assertThat(refs.getFirst().getUuid()).isEqualTo(docRef.getUuid());
+        assertThat(refs.getFirst().getName()).isEqualTo("New Name");
 
         // Delete
         persistence.delete(docRef);
@@ -114,6 +114,40 @@ class TestFSPersistence {
                           @JsonProperty("createUser") final String createUser,
                           @JsonProperty("updateUser") final String updateUser) {
             super("GenericDoc", uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        }
+
+        public Builder copy() {
+            return new Builder(this);
+        }
+
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        public static final class Builder extends AbstractBuilder<GenericDoc, Builder> {
+
+            private Builder() {
+            }
+
+            private Builder(final GenericDoc genericDoc) {
+                super(genericDoc);
+            }
+
+            @Override
+            protected Builder self() {
+                return this;
+            }
+
+            public GenericDoc build() {
+                return new GenericDoc(
+                        uuid,
+                        name,
+                        version,
+                        createTimeMs,
+                        updateTimeMs,
+                        createUser,
+                        updateUser);
+            }
         }
     }
 }

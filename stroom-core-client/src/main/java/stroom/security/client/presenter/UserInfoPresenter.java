@@ -71,10 +71,10 @@ public class UserInfoPresenter
                         .method(resource -> resource.fetch(userRef.getUuid()))
                         .onSuccess(user -> {
                             if (isEnabled != user.isEnabled()) {
-                                user.setEnabled(isEnabled);
                                 restFactory
                                         .create(USER_RESOURCE)
-                                        .method(resource -> resource.update(user))
+                                        .method(resource ->
+                                                resource.update(user.copy().enabled(isEnabled).build()))
                                         .onSuccess(aVoid ->
                                                 userRef = user.asRef())
                                         .taskMonitorFactory(this)

@@ -116,8 +116,7 @@ class TestDataSplitter extends AbstractProcessIntegrationTest {
      */
     @Test
     void testRefDataCSVWithXSL() {
-        final FeedDoc refFeed = createFeed("HostNameToIP-REFERENCE");
-        refFeed.setReference(true);
+        final FeedDoc refFeed = createFeed("HostNameToIP-REFERENCE").copy().reference(true).build();
         runFullTest(refFeed, TextConverterType.DATA_SPLITTER, "TestDataSplitter/SimpleCSVSplitter.ds",
                 "TestDataSplitter/SampleRefData-HostNameToIP.xsl", "TestDataSplitter/SampleRefData-HostNameToIP.in", 0);
     }

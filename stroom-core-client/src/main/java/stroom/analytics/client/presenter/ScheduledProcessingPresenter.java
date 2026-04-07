@@ -24,7 +24,7 @@ import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ScheduleBounds;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.util.shared.scheduler.CronExpressions;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
@@ -45,7 +45,7 @@ public class ScheduledProcessingPresenter
     private final ScheduledProcessListPresenter scheduledProcessListPresenter;
     private final ScheduledProcessHistoryListPresenter scheduledProcessHistoryListPresenter;
     private final ScheduledProcessEditPresenter scheduledProcessEditPresenter;
-    private DocumentEditPresenter<?, ?> documentEditPresenter;
+    private DocPresenter<?, ?> documentEditPresenter;
     private DocRef ownerDocRef;
 
     @Inject
@@ -77,7 +77,7 @@ public class ScheduledProcessingPresenter
         scheduledProcessListPresenter.read(ownerDocRef);
     }
 
-    public void setDocumentEditPresenter(final DocumentEditPresenter<?, ?> documentEditPresenter) {
+    public void setDocumentEditPresenter(final DocPresenter<?, ?> documentEditPresenter) {
         this.documentEditPresenter = documentEditPresenter;
         scheduledProcessListPresenter.setScheduledProcessingPresenter(this);
         scheduledProcessHistoryListPresenter.setScheduledProcessingPresenter(this);

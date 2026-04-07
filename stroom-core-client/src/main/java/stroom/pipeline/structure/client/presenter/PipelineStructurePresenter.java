@@ -21,10 +21,9 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.RefreshDocumentEvent;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
@@ -71,7 +70,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineStructureView, PipelineDoc>
+public class PipelineStructurePresenter
+        extends DocPresenter<PipelineStructureView, PipelineDoc>
         implements PipelineStructureUiHandlers {
 
     private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
@@ -136,11 +136,8 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
     @Override
     protected void onBind() {
         super.onBind();
-
-        final DirtyHandler dirtyHandler = event -> setDirty(true);
-
-        registerHandler(propertyListPresenter.addDirtyHandler(dirtyHandler));
-        registerHandler(pipelineReferenceListPresenter.addDirtyHandler(dirtyHandler));
+        registerHandler(propertyListPresenter.addChangeHandler(this::onChange));
+        registerHandler(pipelineReferenceListPresenter.addChangeHandler(this::onChange));
         registerHandler(pipelinePresenter.addDataSelectionHandler(event -> {
             final DocRef selectedDocRef = event.getSelectedItem();
             if (selectedDocRef != null && !Objects.equals(selectedDocRef, NULL_SELECTION)) {
@@ -174,7 +171,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
                     enableButtons();
                 }));
-        registerHandler(pipelineTreePresenter.addDirtyHandler(event -> setDirty(event.isDirty())));
+        registerHandler(pipelineTreePresenter.addChangeHandler(this::onChange));
         registerHandler(pipelineTreePresenter.addContextMenuHandler(event -> {
             if (advancedMode && selectedElement != null) {
                 final List<Item> menuItems = addPipelineActionsToMenu();
@@ -217,13 +214,10 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
     }
 
     @Override
-    public void setDirty(final boolean dirty) {
-        super.setDirty(dirty);
-
-        if (dirty) {
-            handlePipelineChange();
-            setPipelineModel(pipelineModel);
-        }
+    protected void onDirty() {
+        super.onDirty();
+        handlePipelineChange();
+        setPipelineModel(pipelineModel);
     }
 
     public void setPipelineModel(final PipelineModel model) {
@@ -239,20 +233,22 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
     @Override
     public PipelineDoc onWrite(final PipelineDoc document) {
+        final PipelineDoc.Builder builder = document.copy();
+
         // Only write if we have been revealed and therefore created a pipeline model.
         if (pipelineModel != null) {
             try {
                 // Set the parent pipeline.
-                document.setParentPipeline(getParentPipeline());
+                builder.parentPipeline(getParentPipeline());
 
                 // Diff base and combined to create fresh pipeline data.
                 final PipelineData pipelineData = pipelineModel.diff();
-                document.setPipelineData(pipelineData);
+                builder.pipelineData(pipelineData);
             } catch (final RuntimeException e) {
                 AlertEvent.fireError(this, e.getMessage(), null);
             }
         }
-        return document;
+        return builder.build();
     }
 
     @Override
@@ -281,7 +277,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                         if (parentElement != null) {
                             pipelineTreePresenter.getSelectionModel().setSelected(parentElement, true);
                         }
-                        setDirty(true);
+                        onChange();
                     }
                 });
             }
@@ -326,11 +322,11 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                             PipelineElement renamedElement = selected;
                             if (!Objects.equals(currentName, newName)) {
                                 renamedElement = pipelineModel.renameElement(selected, newName.trim());
-                                setDirty(true);
+                                onChange();
                             }
                             if (!Objects.equals(currentDescription, newDescription)) {
                                 renamedElement = pipelineModel.changeElementDescription(renamedElement, newDescription);
-                                setDirty(true);
+                                onChange();
                             }
                             pipelineTreePresenter.getSelectionModel().setSelected(renamedElement, true);
                         } catch (final RuntimeException ex) {
@@ -632,13 +628,13 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
         }
 
         this.parentPipeline = parentPipeline;
-        this.pipelineDoc.setParentPipeline(parentPipeline);
+        this.pipelineDoc = pipelineDoc.copy().parentPipeline(parentPipeline).build();
 
         if (parentPipeline == null) {
             pipelineModel.setBaseStack(null);
             try {
                 pipelineModel.build();
-                setDirty(true);
+                onChange();
             } catch (final PipelineModelException e) {
                 AlertEvent.fireError(this, e.getMessage(), null);
             }
@@ -652,7 +648,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
 
                         try {
                             pipelineModel.build();
-                            setDirty(true);
+                            onChange();
                         } catch (final PipelineModelException e) {
                             AlertEvent.fireError(
                                     PipelineStructurePresenter.this,
@@ -721,7 +717,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                                     name,
                                     description);
                             pipelineTreePresenter.getSelectionModel().setSelected(newElement, true);
-                            setDirty(true);
+                            onChange();
                         } catch (final RuntimeException ex) {
                             AlertEvent.fireError(
                                     PipelineStructurePresenter.this,
@@ -768,7 +764,7 @@ public class PipelineStructurePresenter extends DocumentEditPresenter<PipelineSt
                 try {
                     pipelineModel.addExistingElement(selectedElement, element);
                     pipelineTreePresenter.getSelectionModel().setSelected(element, true);
-                    setDirty(true);
+                    onChange();
                 } catch (final RuntimeException e) {
                     AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
                 }

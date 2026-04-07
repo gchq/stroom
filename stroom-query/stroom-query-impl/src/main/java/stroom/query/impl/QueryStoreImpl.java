@@ -18,11 +18,11 @@ package stroom.query.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.query.common.v2.DataSourceProviderRegistry;
@@ -42,7 +42,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 class QueryStoreImpl implements QueryStore {
@@ -60,7 +59,11 @@ class QueryStoreImpl implements QueryStore {
                    final SecurityContext securityContext,
                    final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                    final SearchRequestFactory searchRequestFactory) {
-        this.store = storeFactory.createStore(serialiser, QueryDoc.TYPE, QueryDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                QueryDoc.TYPE,
+                QueryDoc::builder,
+                QueryDoc::copy);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
@@ -138,8 +141,9 @@ class QueryStoreImpl implements QueryStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<QueryDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<QueryDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
+            final QueryDoc.Builder builder = doc.copy();
             try {
                 if (doc.getQuery() != null) {
                     searchRequestFactory.extractDataSourceOnly(doc.getQuery(), docRef -> {
@@ -157,16 +161,16 @@ class QueryStoreImpl implements QueryStore {
                                     if (remapped != null) {
                                         String query = doc.getQuery();
                                         if (remapped.getName() != null &&
-                                                !remapped.getName().isBlank() &&
-                                                !Objects.equals(remapped.getName(), docRef.getName())) {
+                                            !remapped.getName().isBlank() &&
+                                            !Objects.equals(remapped.getName(), docRef.getName())) {
                                             query = query.replaceFirst(docRef.getName(), remapped.getName());
                                         }
                                         if (remapped.getUuid() != null &&
-                                                !remapped.getUuid().isBlank() &&
-                                                !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
+                                            !remapped.getUuid().isBlank() &&
+                                            !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
                                             query = query.replaceFirst(docRef.getUuid(), remapped.getUuid());
                                         }
-                                        doc.setQuery(query);
+                                        builder.query(query);
                                     }
                                 });
                             }
@@ -178,6 +182,7 @@ class QueryStoreImpl implements QueryStore {
             } catch (final RuntimeException e) {
                 LOGGER.debug(e::getMessage, e);
             }
+            return builder.build();
         };
     }
 
@@ -214,20 +219,17 @@ class QueryStoreImpl implements QueryStore {
 
     @Override
     public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
+                                 final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        return store.importDocument(docRef, dataMap, importState, importSettings);
+        return store.importDocument(docRef, importExportDocument, importState, importSettings);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
+    public ImportExportDocument exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

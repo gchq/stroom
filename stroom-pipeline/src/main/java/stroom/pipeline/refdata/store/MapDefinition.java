@@ -33,9 +33,6 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class MapDefinition {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MapDefinition.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapDefinition.class);
-
     @JsonProperty
     private final RefStreamDefinition refStreamDefinition;
     @JsonProperty

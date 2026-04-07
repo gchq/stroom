@@ -33,7 +33,7 @@ buildscript {
         //classpath 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
 
         // Needed for parsing local.yml to get the jdbcUrl
-        classpath 'org.yaml:snakeyaml:2.2'
+        classpath 'org.yaml:snakeyaml:2.6'
     }
     // This was borrowed from
     // https://github.com/etiennestuder/gradle-jooq-plugin/blob/main/example/specify_jooq_config_xml_schema_version/build.gradle

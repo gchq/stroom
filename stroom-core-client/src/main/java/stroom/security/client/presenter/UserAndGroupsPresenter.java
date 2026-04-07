@@ -49,6 +49,8 @@ import java.util.Optional;
 
 public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsView> {
 
+    public static final String TAB_TYPE = "UsersAndGroups";
+
     private static final UserResource USER_RESOURCE = GWT.create(UserResource.class);
 
     private final UserListPresenter userList;
@@ -546,7 +548,7 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
     @Override
     public String getType() {
-        return "UsersAndGroups";
+        return TAB_TYPE;
     }
 
     /**

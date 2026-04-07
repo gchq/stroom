@@ -19,12 +19,12 @@ package stroom.feed.impl;
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
@@ -79,7 +79,11 @@ public class FeedStoreImpl implements FeedStore {
                          final SecurityContext securityContext,
                          final Provider<FsVolumeGroupService> fsVolumeGroupServiceProvider) {
         this.fsVolumeGroupServiceProvider = fsVolumeGroupServiceProvider;
-        this.store = storeFactory.createStore(serialiser, FeedDoc.TYPE, FeedDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                FeedDoc.TYPE,
+                FeedDoc::builder,
+                FeedDoc::copy);
         this.feedNameValidator = feedNameValidator;
         this.securityContext = securityContext;
         this.serialiser = serialiser;
@@ -211,7 +215,7 @@ public class FeedStoreImpl implements FeedStore {
 
     @Override
     public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
+                                 final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
         DocRef newDocRef = docRef;
@@ -223,9 +227,9 @@ public class FeedStoreImpl implements FeedStore {
 
         // If the imported feed's vol grp doesn't exist in this env use our default
         // or null it out
-        Map<String, byte[]> effectiveDataMap = dataMap;
+        ImportExportDocument effectiveDocument = importExportDocument;
         try {
-            final FeedDoc feedDoc = serialiser.read(dataMap);
+            final FeedDoc feedDoc = serialiser.read(importExportDocument);
 
             final String volumeGroup = feedDoc.getVolumeGroup();
             if (volumeGroup != null) {
@@ -234,12 +238,13 @@ public class FeedStoreImpl implements FeedStore {
                 if (!allVolumeGroups.contains(volumeGroup)) {
                     LOGGER.debug("Volume group '{}' in imported feed {} is not a valid volume group",
                             volumeGroup, docRef);
+                    final FeedDoc.Builder builder = feedDoc.copy();
                     fsVolumeGroupService.getDefaultVolumeGroup()
                             .ifPresentOrElse(
-                                    feedDoc::setVolumeGroup,
-                                    () -> feedDoc.setVolumeGroup(null));
+                                    builder::volumeGroup,
+                                    () -> builder.volumeGroup(null));
 
-                    effectiveDataMap = serialiser.write(feedDoc);
+                    effectiveDocument = serialiser.write(builder.build());
                 }
             }
         } catch (final IOException e) {
@@ -247,17 +252,14 @@ public class FeedStoreImpl implements FeedStore {
                     docRef, e.getMessage()), e);
         }
 
-        return store.importDocument(newDocRef, effectiveDataMap, importState, importSettings);
+        return store.importDocument(newDocRef, effectiveDocument, importState, importSettings);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
+    public ImportExportDocument exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

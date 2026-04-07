@@ -18,6 +18,8 @@ package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.ExecutionScheduleRunNowPresenter;
 import stroom.analytics.client.presenter.ProcessingStatusUiHandlers;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.Button;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -36,9 +38,17 @@ public final class ExecutionScheduleRunNowViewImpl
     @UiField
     FlowPanel label;
 
+    @UiField
+    Button applySelectionButton;
+    @UiField
+    Button applyFilteredButton;
+
     @Inject
     public ExecutionScheduleRunNowViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+
+        applySelectionButton.setIcon(SvgImage.OK);
+        applyFilteredButton.setIcon(SvgImage.GENERATE);
     }
 
     @Override
@@ -56,6 +66,16 @@ public final class ExecutionScheduleRunNowViewImpl
     @Override
     public void setText(final String text) {
         label.getElement().setInnerSafeHtml(SafeHtmlUtil.withLineBreaks(text));
+    }
+
+    @Override
+    public Button getApplySelectionButton() {
+        return applySelectionButton;
+    }
+
+    @Override
+    public Button getApplyFilteredButton() {
+        return applyFilteredButton;
     }
 
 

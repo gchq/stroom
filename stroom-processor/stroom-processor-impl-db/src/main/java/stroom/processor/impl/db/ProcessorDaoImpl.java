@@ -74,7 +74,6 @@ class ProcessorDaoImpl implements ProcessorDao {
 
     @Override
     public Processor create(final Processor processor) {
-        processor.setVersion(1);
         return JooqUtil.contextResult(
                         processorDbConnProvider,
                         context -> {
@@ -91,7 +90,7 @@ class ProcessorDaoImpl implements ProcessorDao {
                                             PROCESSOR.ENABLED,
                                             PROCESSOR.DELETED)
                                     .values(
-                                            processor.getVersion(),
+                                            1,
                                             processor.getCreateTimeMs(),
                                             processor.getCreateUser(),
                                             processor.getUpdateTimeMs(),

@@ -20,5 +20,5 @@ public interface HasData {
 
     String getData();
 
-    void setData(String data);
+    HasData copyWithData(String data);
 }

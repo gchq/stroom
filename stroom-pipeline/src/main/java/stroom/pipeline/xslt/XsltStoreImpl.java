@@ -18,10 +18,10 @@ package stroom.pipeline.xslt;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.shared.XsltDoc;
@@ -42,7 +42,11 @@ class XsltStoreImpl implements XsltStore {
     @Inject
     XsltStoreImpl(final StoreFactory storeFactory,
                   final XsltSerialiser serialiser) {
-        this.store = storeFactory.createStore(serialiser, XsltDoc.TYPE, XsltDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                XsltDoc.TYPE,
+                XsltDoc::builder,
+                XsltDoc::copy);
     }
 
     // ---------------------------------------------------------------------
@@ -140,20 +144,17 @@ class XsltStoreImpl implements XsltStore {
 
     @Override
     public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
+                                 final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        return store.importDocument(docRef, dataMap, importState, importSettings);
+        return store.importDocument(docRef, importExportDocument, importState, importSettings);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
+    public ImportExportDocument exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

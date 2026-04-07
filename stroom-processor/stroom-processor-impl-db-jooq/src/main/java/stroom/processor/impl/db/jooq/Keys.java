@@ -15,11 +15,13 @@ import stroom.processor.impl.db.jooq.tables.ProcessorFeed;
 import stroom.processor.impl.db.jooq.tables.ProcessorFilter;
 import stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker;
 import stroom.processor.impl.db.jooq.tables.ProcessorNode;
+import stroom.processor.impl.db.jooq.tables.ProcessorProfile;
 import stroom.processor.impl.db.jooq.tables.ProcessorTask;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFeedRecord;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterRecord;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFilterTrackerRecord;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorNodeRecord;
+import stroom.processor.impl.db.jooq.tables.records.ProcessorProfileRecord;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
 
@@ -45,6 +47,8 @@ public class Keys {
     public static final UniqueKey<ProcessorFilterTrackerRecord> KEY_PROCESSOR_FILTER_TRACKER_PRIMARY = Internal.createUniqueKey(ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER, DSL.name("KEY_processor_filter_tracker_PRIMARY"), new TableField[] { ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER.ID }, true);
     public static final UniqueKey<ProcessorNodeRecord> KEY_PROCESSOR_NODE_PRIMARY = Internal.createUniqueKey(ProcessorNode.PROCESSOR_NODE, DSL.name("KEY_processor_node_PRIMARY"), new TableField[] { ProcessorNode.PROCESSOR_NODE.ID }, true);
     public static final UniqueKey<ProcessorNodeRecord> KEY_PROCESSOR_NODE_PROCESSOR_NODE_NAME = Internal.createUniqueKey(ProcessorNode.PROCESSOR_NODE, DSL.name("KEY_processor_node_processor_node_name"), new TableField[] { ProcessorNode.PROCESSOR_NODE.NAME }, true);
+    public static final UniqueKey<ProcessorProfileRecord> KEY_PROCESSOR_PROFILE_NAME = Internal.createUniqueKey(ProcessorProfile.PROCESSOR_PROFILE, DSL.name("KEY_processor_profile_name"), new TableField[] { ProcessorProfile.PROCESSOR_PROFILE.NAME }, true);
+    public static final UniqueKey<ProcessorProfileRecord> KEY_PROCESSOR_PROFILE_PRIMARY = Internal.createUniqueKey(ProcessorProfile.PROCESSOR_PROFILE, DSL.name("KEY_processor_profile_PRIMARY"), new TableField[] { ProcessorProfile.PROCESSOR_PROFILE.ID }, true);
     public static final UniqueKey<ProcessorTaskRecord> KEY_PROCESSOR_TASK_PRIMARY = Internal.createUniqueKey(ProcessorTask.PROCESSOR_TASK, DSL.name("KEY_processor_task_PRIMARY"), new TableField[] { ProcessorTask.PROCESSOR_TASK.ID }, true);
 
     // -------------------------------------------------------------------------

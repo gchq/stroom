@@ -27,7 +27,6 @@ import stroom.job.shared.JobNodeListResponse;
 import stroom.job.shared.ScheduledTimes;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.scheduler.CronTrigger;
@@ -78,10 +77,9 @@ class JobNodeService {
             final Optional<JobNode> before = fetch(jobNode.getId());
 
             // We always want to update a job node instance even if we have a stale version.
-            before.ifPresent(j -> jobNode.setVersion(j.getVersion()));
+            final Integer version = before.map(JobNode::getVersion).orElse(jobNode.getVersion());
 
-            AuditUtil.stamp(securityContext, jobNode);
-            return jobNodeDao.update(jobNode);
+            return jobNodeDao.update(jobNode.copy().version(version).stampAudit(securityContext).build());
         });
     }
 
@@ -108,10 +106,11 @@ class JobNodeService {
                         final List<JobNode> list = jobNodeListResponse.getValues();
                         final List<JobNode> advancedList = new ArrayList<>();
                         final List<JobNode> nonAdvancedList = new ArrayList<>();
-                        for (final JobNode jobNode : list) {
-                            final Job job = jobNode.getJob();
+                        for (JobNode jobNode : list) {
+                            Job job = jobNode.getJob();
                             // Add the advanced state
-                            jobService.decorate(job);
+                            job = jobService.decorate(job);
+                            jobNode = jobNode.copy().job(job).build();
                             if (job.isAdvanced()) {
                                 advancedList.add(jobNode);
                             } else {

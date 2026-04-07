@@ -99,12 +99,14 @@ public class SchemaFilterFactory {
         final Path schemaFile = getSchemaFile(contentPack, fileName);
 
         final DocRef docRef = xmlSchemaStore.createDocument(schemaName);
-        final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(docRef);
-        xmlSchema.setSchemaGroup(schemaGroup);
-        xmlSchema.setName(schemaName);
-        xmlSchema.setNamespaceURI(namespaceURI);
-        xmlSchema.setSystemId(systemId);
-        xmlSchema.setData(StreamUtil.fileToString(schemaFile));
+        final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(docRef)
+                .copy()
+                .schemaGroup(schemaGroup)
+                .name(schemaName)
+                .namespaceURI(namespaceURI)
+                .systemId(systemId)
+                .data(StreamUtil.fileToString(schemaFile))
+                .build();
         xmlSchemaStore.writeDocument(xmlSchema);
     }
 

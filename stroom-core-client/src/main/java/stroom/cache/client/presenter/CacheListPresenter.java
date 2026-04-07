@@ -25,7 +25,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
@@ -72,7 +72,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
     public CacheListPresenter(final EventBus eventBus,
                               final PagerView view,
                               final RestFactory restFactory,
-                              final NodeManager nodeManager) {
+                              final NodeClient nodeClient) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.delayedUpdate = new DelayedUpdate(this::update);
@@ -124,7 +124,7 @@ public class CacheListPresenter extends MyPresenterWidget<PagerView> {
                                         final RestErrorHandler errorHandler) {
                         CacheListPresenter.this.range = range;
                         CacheListPresenter.this.dataConsumer = dataConsumer;
-                        nodeManager.listAllNodes(nodeNames -> fetchNamesForNodes(nodeNames), errorHandler, getView());
+                        nodeClient.listAllNodes(nodeNames -> fetchNamesForNodes(nodeNames), errorHandler, getView());
                     }
                 };
         dataProvider.addDataDisplay(dataGrid);

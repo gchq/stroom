@@ -16,14 +16,12 @@
 
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionHistory;
 import stroom.analytics.shared.ExecutionHistoryRequest;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ExecutionTracker;
-import stroom.analytics.shared.ReportDoc;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
@@ -39,24 +37,29 @@ import stroom.util.shared.UserRef;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @AutoLogged(OperationType.UNLOGGED)
 class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExecutionScheduleResourceImpl.class);
+
     private final Provider<ExecutionScheduleDao> executionScheduleDaoProvider;
     private final Provider<SecurityContext> securityContextProvider;
     private final Provider<UserRefLookup> userRefLookupProvider;
+    private final Provider<Map<ExecuteNowType, ExecuteNow>> executeNowMapProvider;
 
     @Inject
     ExecutionScheduleResourceImpl(final Provider<ExecutionScheduleDao> executionScheduleDaoProvider,
                                   final Provider<SecurityContext> securityContextProvider,
-                                  final Provider<UserRefLookup> userRefLookupProvider) {
+                                  final Provider<UserRefLookup> userRefLookupProvider,
+                                  final Provider<Map<ExecuteNowType, ExecuteNow>> executeNowMapProvider) {
         this.executionScheduleDaoProvider = executionScheduleDaoProvider;
         this.securityContextProvider = securityContextProvider;
         this.userRefLookupProvider = userRefLookupProvider;
+        this.executeNowMapProvider = executeNowMapProvider;
     }
 
     @Override
@@ -97,6 +100,26 @@ class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
     @Override
     public ExecutionTracker fetchTracker(final ExecutionSchedule schedule) {
         return executionScheduleDaoProvider.get().fetchTracker(schedule);
+    }
+
+    @Override
+    public Boolean executeSchedulesNow(final List<ExecutionSchedule> schedules) {
+        try {
+            for (final ExecutionSchedule schedule : schedules) {
+                final ExecuteNow executeNow = executeNowMapProvider.get()
+                        .get(new ExecuteNowType(schedule.getOwningDoc().getType()));
+                if (executeNow == null) {
+                    throw new UnsupportedOperationException(
+                            "Unsupported execution schedule type: " + schedule.getOwningDoc().getType());
+                }
+                executeNow.execute(schedule);
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.error(() ->
+                    LogUtil.message("Error during forced schedule processing: {}", e.getMessage()), e);
+            return false;
+        }
+        return true;
     }
 
     private ExecutionSchedule checkRunAs(final ExecutionSchedule executionSchedule) {

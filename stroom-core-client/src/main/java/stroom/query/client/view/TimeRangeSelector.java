@@ -40,7 +40,7 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
     private final Label label;
     private final PopupPanel popup;
     private final TimeRangePopup timeRangePopup;
-    private TimeRange value = TimeRanges.ALL_TIME;
+    private TimeRange value = stroom.query.api.TimeRanges.ALL_TIME;
     private ParamValues paramValues;
 
     public TimeRangeSelector() {
@@ -103,7 +103,7 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
     @Override
     public void setValue(TimeRange value, final boolean fireEvents) {
         if (value == null) {
-            value = TimeRanges.ALL_TIME;
+            value = stroom.query.api.TimeRanges.ALL_TIME;
         }
 
         this.value = value;
@@ -122,7 +122,7 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
             final String from = ParamUtil.replaceParameters(value.getFrom(), paramValues);
             final String to = ParamUtil.replaceParameters(value.getTo(), paramValues);
             if (NullSafe.isBlankString(from) && NullSafe.isBlankString(to)) {
-                return TimeRanges.ALL_TIME.toString();
+                return stroom.query.api.TimeRanges.ALL_TIME.toString();
             } else if (NullSafe.isNonBlankString(from)) {
                 return "After " + from;
             } else {

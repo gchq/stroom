@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     private final ByteBufferFactory bufferFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final AnnotationMapperFactory annotationMapperFactory;
-    final WordListProvider wordListProvider;
+    private final WordListProvider wordListProvider;
 
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvDirFactory lmdbEnvDirFactory,
@@ -102,7 +102,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                             final FieldIndex fieldIndex,
                             final Map<String, String> paramMap,
                             final DataStoreSettings dataStoreSettings,
-                            final ErrorConsumer errorConsumer) {
+                            final ErrorConsumer errorConsumer,
+                            final Provider<Executor> executorProvider) {
 
         final SearchResultStoreConfig resultStoreConfig = resultStoreConfigProvider.get();
         if (!resultStoreConfig.isOffHeapResults()) {
@@ -118,7 +119,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     fieldIndex,
                     paramMap,
                     dataStoreSettings,
-                    errorConsumer);
+                    errorConsumer,
+                    executorProvider);
 
         } else {
             final String subDirectory = queryKey + "_" + componentId + "_" + UUID.randomUUID();
@@ -148,7 +150,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     errorConsumer,
                     bufferFactory,
                     expressionPredicateFactory,
-                    annotationMapperFactory, wordListProvider);
+                    annotationMapperFactory,
+                    wordListProvider);
         }
     }
 

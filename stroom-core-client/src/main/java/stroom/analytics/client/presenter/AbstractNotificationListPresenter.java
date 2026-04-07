@@ -29,7 +29,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
@@ -49,7 +49,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyticRuleDoc>
-        extends DocumentEditPresenter<PagerView, D> {
+        extends DocPresenter<PagerView, D> {
 
     private final MyDataGrid<NotificationConfig> dataGrid;
     private final MultiSelectionModelImpl<NotificationConfig> selectionModel;
@@ -114,7 +114,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
                     if (e.isOk()) {
                         final NotificationConfig notification = presenter.write();
                         list.add(notification);
-                        setDirty(true);
+                        onChange();
                         refresh();
                     }
                     e.hide();
@@ -136,7 +136,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
                         if (e.isOk()) {
                             final NotificationConfig updated = presenter.write();
                             replace(updated);
-                            setDirty(true);
+                            onChange();
                             refresh();
                         }
                         e.hide();
@@ -153,7 +153,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
                         if (selected != null) {
                             int index = list.indexOf(selected);
                             list.remove(selected);
-                            setDirty(true);
+                            onChange();
                             refresh();
 
                             // Select next item.
@@ -179,7 +179,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
                                     .enabled(TickBoxState.getAsBoolean(value))
                                     .build();
                             replace(updated);
-                            setDirty(true);
+                            onChange();
                             refresh();
                         })
                         .build(),
@@ -219,7 +219,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
                                     .limitNotifications(TickBoxState.getAsBoolean(value))
                                     .build();
                             replace(updated);
-                            setDirty(true);
+                            onChange();
                             refresh();
                         })
                         .build(),

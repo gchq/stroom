@@ -7,10 +7,10 @@
     "time" : 0,
     "timeUnit" : "NANOSECONDS"
   },
-  "allowPathwayCreation" : false,
-  "allowPathwayMutation" : false,
-  "allowConstraintCreation" : false,
-  "allowConstraintMutation" : false,
+  "allowPathwayCreation" : true,
+  "allowPathwayMutation" : true,
+  "allowConstraintCreation" : true,
+  "allowConstraintMutation" : true,
   "infoFeed" : {
     "type" : "Feed",
     "uuid" : "a72b5157-7168-481c-94d0-945ae91d93c9",

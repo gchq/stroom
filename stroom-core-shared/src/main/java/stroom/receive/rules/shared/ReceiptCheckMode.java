@@ -27,17 +27,34 @@ public enum ReceiptCheckMode {
     /**
      * The feed status (RECEIVE|DROP|REJECT) for the feed of the received data will be checked by calling
      * the downstream stroom/proxy.
+     * If auto content creation is enabled on stroom, then when the check is performed,
+     * the feed will be auto-created (if various conditions for that are met) and the data will then
+     * be accpeted.
      */
     FEED_STATUS(true),
     /**
      * The meta attributes from the headers will be checked against the receipt policy rules to determine
      * whether the data should be accepted for receipt, rejected or silently dropped. ALL downstream
      * stroom-proxy instances in the chain must also use this mode if this mode is set.
+     * <p>
+     * This mode will also check if the feed exists. If the feed does not exist the data will be rejected.
+     * If auto content creation is enabled on stroom, then when the check is performed,
+     * the feed will be auto-created (if various conditions for that are met) and this
+     * filter will then return true.
      */
     RECEIPT_POLICY(true),
     /**
-     * No check is performed. All data is accepted for receipt (subject to other checks
-     * like presence of stream type).
+     * This mode will check if the feed exists. If the feed does not exist the data will be rejected.
+     * If it does exist it will be accepted regardless of the feed status.
+     * <p>
+     * If auto content creation is enabled on stroom, then when the check is performed,
+     * the feed will be auto-created (if various conditions for that are met) and this
+     * filter will then return true.
+     */
+    FEED_EXISTENCE(true),
+    /**
+     * No feed or receipt policy checks are performed.
+     * All data is accepted for receipt (subject to other checks like presence of stream type).
      */
     RECEIVE_ALL(true),
     /**

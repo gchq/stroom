@@ -20,12 +20,13 @@ import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.documentation.shared.DocumentationDoc;
+import stroom.importexport.api.ByteArrayImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.util.string.EncodingUtil;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class DocumentationSerialiser implements DocumentSerialiser2<DocumentationDoc> {
 
@@ -39,23 +40,18 @@ public class DocumentationSerialiser implements DocumentSerialiser2<Documentatio
     }
 
     @Override
-    public DocumentationDoc read(final Map<String, byte[]> data) throws IOException {
-        final DocumentationDoc document = delegate.read(data);
-        document.setData(EncodingUtil.asString(data.get(TEXT)));
-        return document;
+    public DocumentationDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        final DocumentationDoc document = delegate.read(importExportDocument);
+        return document.copy().data(EncodingUtil.asString(importExportDocument.getExtAssetData(TEXT))).build();
     }
 
     @Override
-    public Map<String, byte[]> write(final DocumentationDoc document) throws IOException {
+    public ImportExportDocument write(final DocumentationDoc document) throws IOException {
         final String text = document.getData();
-        document.setData(null);
-
-        final Map<String, byte[]> data = delegate.write(document);
+        final ImportExportDocument importExportDocument = delegate.write(document.copy().data(null).build());
         if (text != null) {
-            data.put(TEXT, EncodingUtil.asBytes(text));
-            document.setData(text);
+            importExportDocument.addExtAsset(new ByteArrayImportExportAsset(TEXT, EncodingUtil.asBytes(text)));
         }
-
-        return data;
+        return importExportDocument;
     }
 }

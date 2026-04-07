@@ -257,6 +257,24 @@ public final class TableComponentSettings implements ComponentSettings, HasSelec
             return false;
         }
         final TableComponentSettings that = (TableComponentSettings) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(queryId, that.queryId);
+//        final boolean b2 = Objects.equals(dataSourceRef, that.dataSourceRef);
+//        final boolean b3 = Objects.equals(fields, that.fields);
+//        final boolean b4 = Objects.equals(extractValues, that.extractValues);
+//        final boolean b5 = Objects.equals(useDefaultExtractionPipeline, that.useDefaultExtractionPipeline);
+//        final boolean b6 = Objects.equals(extractionPipeline, that.extractionPipeline);
+//        final boolean b7 = Objects.equals(maxResults, that.maxResults);
+//        final boolean b8 = Objects.equals(pageSize, that.pageSize);
+//        final boolean b9 = Objects.equals(showDetail, that.showDetail);
+//        final boolean b10 = Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules);
+//        final boolean b11 = Objects.equals(modelVersion, that.modelVersion);
+//        final boolean b12 = Objects.equals(applyValueFilters, that.applyValueFilters);
+//        final boolean b13 = Objects.equals(selectionHandlers, that.selectionHandlers);
+//        final boolean b14 = Objects.equals(maxStringFieldLength, that.maxStringFieldLength);
+//        final boolean b15 = Objects.equals(overrideMaxStringFieldLength, that.overrideMaxStringFieldLength);
+
         return Objects.equals(queryId, that.queryId) &&
                Objects.equals(dataSourceRef, that.dataSourceRef) &&
                Objects.equals(fields, that.fields) &&

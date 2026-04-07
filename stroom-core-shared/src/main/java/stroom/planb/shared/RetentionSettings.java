@@ -16,7 +16,6 @@
 
 package stroom.planb.shared;
 
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 
@@ -48,8 +47,8 @@ public class RetentionSettings extends DurationSetting {
     public RetentionSettings(@JsonProperty("enabled") final boolean enabled,
                              @JsonProperty("duration") final SimpleDuration duration,
                              @JsonProperty("useStateTime") final Boolean useStateTime) {
-        super(enabled, NullSafe.requireNonNullElse(duration, DEFAULT_DURATION));
-        this.useStateTime = NullSafe.requireNonNullElse(useStateTime, false);
+        super(enabled, Objects.requireNonNullElse(duration, DEFAULT_DURATION));
+        this.useStateTime = Objects.requireNonNullElse(useStateTime, false);
     }
 
     public boolean useStateTime() {

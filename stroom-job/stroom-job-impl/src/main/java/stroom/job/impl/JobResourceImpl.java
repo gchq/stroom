@@ -33,7 +33,7 @@ import jakarta.inject.Provider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.function.Consumer;
+import java.util.function.Function;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class JobResourceImpl implements JobResource {
@@ -87,10 +87,10 @@ class JobResourceImpl implements JobResource {
 
     @Override
     public void setEnabled(final Integer id, final Boolean enabled) {
-        modifyJob(id, job -> job.setEnabled(enabled));
+        modifyJob(id, job -> job.copy().enabled(enabled).build());
     }
 
-    private void modifyJob(final int id, final Consumer<Job> mutation) {
+    private void modifyJob(final int id, final Function<Job, Job> mutation) {
         Job job = null;
         Job before = null;
         Job after = null;
@@ -103,7 +103,7 @@ class JobResourceImpl implements JobResource {
             if (job == null) {
                 throw new RuntimeException("Unknown job: " + id);
             }
-            mutation.accept(job);
+            job = mutation.apply(job);
             after = jobService.update(job);
 
             documentEventLogProvider.get().update(before, after, null);

@@ -18,7 +18,6 @@ package stroom.security.client.view;
 
 import stroom.security.client.presenter.CreateExternalUserPresenter.CreateExternalUserView;
 import stroom.widget.popup.client.view.DialogAction;
-import stroom.widget.popup.client.view.DialogActionType;
 import stroom.widget.popup.client.view.DialogActionUiHandlers;
 
 import com.google.gwt.core.client.Scheduler;
@@ -99,7 +98,7 @@ public class CreateExternalUserViewImpl
 
     private void handleKeyDown(final KeyDownEvent event) {
         if (event.getNativeKeyCode() == '\r') {
-            getUiHandlers().onDialogAction(DialogAction.builder().type(DialogActionType.OK).build());
+            getUiHandlers().onDialogAction(DialogAction.OK);
         }
     }
 

@@ -16,8 +16,8 @@
 
 package stroom.config.global.shared;
 
-import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.AuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.PropertyPath;
 
@@ -53,22 +53,22 @@ import java.util.Optional;
  */
 @JsonIgnoreProperties(value = {"source"}, allowGetters = true)
 @JsonInclude(Include.NON_NULL)
-public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<ConfigProperty> {
+public class ConfigProperty implements HasAuditInfoGetters, HasIntegerId, Comparable<ConfigProperty> {
 
     @JsonProperty
-    private Integer id;
+    private final Integer id;
     @JsonProperty
-    private Integer version;
+    private final Integer version;
     @JsonProperty
-    private Long createTimeMs;
+    private final Long createTimeMs;
     @JsonProperty
-    private String createUser;
+    private final String createUser;
     @JsonProperty
-    private Long updateTimeMs;
+    private final Long updateTimeMs;
     @JsonProperty
-    private String updateUser;
+    private final String updateUser;
     @JsonProperty
-    private PropertyPath name;
+    private final PropertyPath name;
 
     // TODO now that properties are typed in AppConfig we should really be dealing with typed
     // values here so the UI can edit/display/validate them appropriately according to their type,
@@ -81,53 +81,32 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
 
     // The cluster wide compile-time default value set in the AppConfig object tree
     @JsonProperty
-    private String defaultValue;
+    private final String defaultValue;
 
     // The cluster wide value held in the database and set by the user in the UI, may be null.
     @JsonProperty
-    private OverrideValue<String> databaseOverrideValue;
+    private final OverrideValue<String> databaseOverrideValue;
 
     // These fields are not saved to the database,
     // they come from the annotations on the java config classes
 
     // The node specific value as set by the dropwizard YAML file
     @JsonProperty
-    private OverrideValue<String> yamlOverrideValue;
+    private final OverrideValue<String> yamlOverrideValue;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private boolean editable;
+    private final boolean editable;
     @JsonProperty
-    private boolean password;
+    private final boolean password;
     @JsonProperty
-    private boolean requireRestart;
+    private final boolean requireRestart;
     @JsonProperty
-    private boolean requireUiRestart;
+    private final boolean requireUiRestart;
     // TODO this is a stopgap until we have fully typed values
     @JsonProperty
-    private String dataTypeName;
-
-    ConfigProperty() {
-        databaseOverrideValue = OverrideValue.unSet(String.class);
-        yamlOverrideValue = OverrideValue.unSet(String.class);
-    }
-
-    @JsonIgnore
-    public ConfigProperty(final PropertyPath name) {
-        this.name = name;
-        databaseOverrideValue = OverrideValue.unSet(String.class);
-        yamlOverrideValue = OverrideValue.unSet(String.class);
-    }
-
-    @JsonIgnore
-    public ConfigProperty(final PropertyPath name,
-                          final String defaultValue) {
-        this.name = name;
-        this.defaultValue = defaultValue;
-        databaseOverrideValue = OverrideValue.unSet(String.class);
-        yamlOverrideValue = OverrideValue.unSet(String.class);
-    }
+    private final String dataTypeName;
 
     @JsonCreator
     public ConfigProperty(@JsonProperty("id") final Integer id,
@@ -169,16 +148,8 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
         return id;
     }
 
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
     public Integer getVersion() {
         return version;
-    }
-
-    public void setVersion(final Integer version) {
-        this.version = version;
     }
 
     @Override
@@ -186,17 +157,9 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
         return createTimeMs;
     }
 
-    public void setCreateTimeMs(final Long createTimeMs) {
-        this.createTimeMs = createTimeMs;
-    }
-
     @Override
     public String getCreateUser() {
         return createUser;
-    }
-
-    public void setCreateUser(final String createUser) {
-        this.createUser = createUser;
     }
 
     @Override
@@ -204,17 +167,9 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
         return updateTimeMs;
     }
 
-    public void setUpdateTimeMs(final Long updateTimeMs) {
-        this.updateTimeMs = updateTimeMs;
-    }
-
     @Override
     public String getUpdateUser() {
         return updateUser;
-    }
-
-    public void setUpdateUser(final String updateUser) {
-        this.updateUser = updateUser;
     }
 
     /**
@@ -231,15 +186,11 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
         return name;
     }
 
-    public void setName(final PropertyPath name) {
-        this.name = name;
-    }
-
-    @JsonIgnore
-    public void setName(final String propertyPathString) {
-        Objects.requireNonNull(propertyPathString);
-        this.name = PropertyPath.fromPathString(propertyPathString);
-    }
+//    @JsonIgnore
+//    public void setName(final String propertyPathString) {
+//        Objects.requireNonNull(propertyPathString);
+//        this.name = PropertyPath.fromPathString(propertyPathString);
+//    }
 
     /**
      * @return The effective value of the property on this node taking into account the precedence order
@@ -288,17 +239,17 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
         return databaseOverrideValue;
     }
 
-    @JsonIgnore
-    public void setDatabaseOverrideValue(final String databaseOverrideValue) {
-        // If somebody overrides the default with a value identical to the default then we need to save it
-        this.databaseOverrideValue = OverrideValue.with(databaseOverrideValue);
-    }
-
-    public void setDatabaseOverrideValue(final OverrideValue<String> databaseOverride) {
-        this.databaseOverrideValue = databaseOverride != null
-                ? databaseOverride
-                : OverrideValue.unSet(String.class);
-    }
+//    @JsonIgnore
+//    public void setDatabaseOverrideValue(final String databaseOverrideValue) {
+//        // If somebody overrides the default with a value identical to the default then we need to save it
+//        this.databaseOverrideValue = OverrideValue.with(databaseOverrideValue);
+//    }
+//
+//    public void setDatabaseOverrideValue(final OverrideValue<String> databaseOverride) {
+//        this.databaseOverrideValue = databaseOverride != null
+//                ? databaseOverride
+//                : OverrideValue.unSet(String.class);
+//    }
 
     /**
      * @return True if a value has been supplied to override the defaultValue, even it is null
@@ -307,12 +258,12 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
         return this.databaseOverrideValue.isHasOverride();
     }
 
-    /**
-     * Remove any override value at the database level, whether null or non-null
-     */
-    public void removeDatabaseOverride() {
-        this.databaseOverrideValue = OverrideValue.unSet(String.class);
-    }
+//    /**
+//     * Remove any override value at the database level, whether null or non-null
+//     */
+//    public void removeDatabaseOverride() {
+//        this.databaseOverrideValue = OverrideValue.unSet(String.class);
+//    }
 
     /**
      * @return The cluster wide compile time read only default value for the property
@@ -323,9 +274,9 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
                 .ofNullable(defaultValue);
     }
 
-    public void setDefaultValue(final String defaultValue) {
-        this.defaultValue = defaultValue;
-    }
+//    public void setDefaultValue(final String defaultValue) {
+//        this.defaultValue = defaultValue;
+//    }
 
     /**
      * @return The node specific value from the dropwizard YAML file on this node, if present.
@@ -344,40 +295,35 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
     /**
      * Remove any override value at the yaml level, whether null or non-null
      */
-    public void removeYamlOverride() {
-        this.yamlOverrideValue = OverrideValue.unSet(String.class);
-    }
-
-    @JsonIgnore
-    public void setYamlOverrideValue(final String yamlOverrideValue) {
-
-        // We cannot distinguish between a value that has been set in the yaml as say 10
-        // and a default value of 10, so if the default matches the yaml then we treat the
-        // yaml as unset.
-        if (Objects.equals(defaultValue, yamlOverrideValue)) {
-            // matches default so remove the yaml value
-            this.yamlOverrideValue = OverrideValue.unSet(String.class);
-        } else {
-            this.yamlOverrideValue = OverrideValue.with(yamlOverrideValue);
-        }
-    }
-
-    public void setYamlOverrideValue(final OverrideValue<String> yamlOverride) {
-        if (yamlOverride == null) {
-            this.yamlOverrideValue = OverrideValue.unSet(String.class);
-        } else if (yamlOverride.isHasOverride()) {
-            setYamlOverrideValue(yamlOverride.getValueAsOptional().orElse(null));
-        } else {
-            this.yamlOverrideValue = yamlOverride;
-        }
-    }
-
+//    public void removeYamlOverride() {
+//        this.yamlOverrideValue = OverrideValue.unSet(String.class);
+//    }
+//
+//    @JsonIgnore
+//    public void setYamlOverrideValue(final String yamlOverrideValue) {
+//
+//        // We cannot distinguish between a value that has been set in the yaml as say 10
+//        // and a default value of 10, so if the default matches the yaml then we treat the
+//        // yaml as unset.
+//        if (Objects.equals(defaultValue, yamlOverrideValue)) {
+//            // matches default so remove the yaml value
+//            this.yamlOverrideValue = OverrideValue.unSet(String.class);
+//        } else {
+//            this.yamlOverrideValue = OverrideValue.with(yamlOverrideValue);
+//        }
+//    }
+//
+//    public void setYamlOverrideValue(final OverrideValue<String> yamlOverride) {
+//        if (yamlOverride == null) {
+//            this.yamlOverrideValue = OverrideValue.unSet(String.class);
+//        } else if (yamlOverride.isHasOverride()) {
+//            setYamlOverrideValue(yamlOverride.getValueAsOptional().orElse(null));
+//        } else {
+//            this.yamlOverrideValue = yamlOverride;
+//        }
+//    }
     public String getDescription() {
         return description;
-    }
-
-    public void setDescription(final String description) {
-        this.description = description;
     }
 
     /**
@@ -387,19 +333,11 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
         return editable;
     }
 
-    public void setEditable(final boolean editable) {
-        this.editable = editable;
-    }
-
     /**
      * @return True if a change to the value requires a full cluster restart to take affect.
      */
     public boolean isRequireRestart() {
         return requireRestart;
-    }
-
-    public void setRequireRestart(final boolean requireRestart) {
-        this.requireRestart = requireRestart;
     }
 
     /**
@@ -409,16 +347,8 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
         return requireUiRestart;
     }
 
-    public void setRequireUiRestart(final boolean requireUiRestart) {
-        this.requireUiRestart = requireUiRestart;
-    }
-
     public boolean isPassword() {
         return password;
-    }
-
-    public void setPassword(final boolean password) {
-        this.password = password;
     }
 
     public SourceType getSource(final OverrideValue<String> databaseOverrideValue,
@@ -442,10 +372,6 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
 
     public String getDataTypeName() {
         return dataTypeName;
-    }
-
-    public void setDataTypeName(final String dataTypeName) {
-        this.dataTypeName = dataTypeName;
     }
 
     @Override
@@ -554,14 +480,10 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
         return new Builder(copy);
     }
 
-    public static class Builder extends AbstractBuilder<ConfigProperty, ConfigProperty.Builder> {
+    public static class Builder extends AuditInfoBuilder<ConfigProperty, ConfigProperty.Builder> {
 
         private Integer id;
         private Integer version;
-        private Long createTimeMs;
-        private String createUser;
-        private Long updateTimeMs;
-        private String updateUser;
         private PropertyPath name;
         private String defaultValue;
         private OverrideValue<String> databaseOverrideValue;
@@ -607,26 +529,6 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
             return self();
         }
 
-        public Builder createTimeMs(final Long createTimeMs) {
-            this.createTimeMs = createTimeMs;
-            return self();
-        }
-
-        public Builder createUser(final String createUser) {
-            this.createUser = createUser;
-            return self();
-        }
-
-        public Builder updateTimeMs(final Long updateTimeMs) {
-            this.updateTimeMs = updateTimeMs;
-            return self();
-        }
-
-        public Builder updateUser(final String updateUser) {
-            this.updateUser = updateUser;
-            return self();
-        }
-
         public Builder name(final PropertyPath name) {
             this.name = name;
             return self();
@@ -654,6 +556,14 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
             return self();
         }
 
+        /**
+         * Remove any override value at the database level, whether null or non-null
+         */
+        public Builder removeDatabaseOverride() {
+            this.databaseOverrideValue = OverrideValue.unSet(String.class);
+            return self();
+        }
+
         public Builder yamlOverrideValue(final OverrideValue<String> yamlOverrideValue) {
             this.yamlOverrideValue = yamlOverrideValue != null
                     ? yamlOverrideValue
@@ -663,6 +573,14 @@ public class ConfigProperty implements HasAuditInfo, HasIntegerId, Comparable<Co
 
         public Builder yamlOverrideValue(final String yamlOverrideValue) {
             this.yamlOverrideValue = OverrideValue.with(yamlOverrideValue);
+            return self();
+        }
+
+        /**
+         * Remove any override value at the yaml level, whether null or non-null
+         */
+        public Builder removeYamlOverride() {
+            this.yamlOverrideValue = OverrideValue.unSet(String.class);
             return self();
         }
 

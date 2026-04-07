@@ -19,13 +19,14 @@ package stroom.dashboard.impl.visualisation;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.importexport.api.ByteArrayImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.util.string.EncodingUtil;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class VisualisationSerialiser implements DocumentSerialiser2<VisualisationDoc> {
 
@@ -39,28 +40,22 @@ public class VisualisationSerialiser implements DocumentSerialiser2<Visualisatio
     }
 
     @Override
-    public VisualisationDoc read(final Map<String, byte[]> data) throws IOException {
-        final VisualisationDoc document = delegate.read(data);
-
-        final String json = EncodingUtil.asString(data.get(JSON));
+    public VisualisationDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        final VisualisationDoc.Builder builder = delegate.read(importExportDocument).copy();
+        final String json = EncodingUtil.asString(importExportDocument.getExtAssetData(JSON));
         if (json != null) {
-            document.setSettings(json);
+            builder.settings(json);
         }
-        return document;
+        return builder.build();
     }
 
     @Override
-    public Map<String, byte[]> write(final VisualisationDoc document) throws IOException {
+    public ImportExportDocument write(final VisualisationDoc document) throws IOException {
         final String settings = document.getSettings();
-        document.setSettings(null);
-
-        final Map<String, byte[]> data = delegate.write(document);
-
+        final ImportExportDocument importExportDocument = delegate.write(document.copy().settings(null).build());
         if (settings != null) {
-            data.put(JSON, EncodingUtil.asBytes(settings));
-            document.setSettings(settings);
+            importExportDocument.addExtAsset(new ByteArrayImportExportAsset(JSON, EncodingUtil.asBytes(settings)));
         }
-
-        return data;
+        return importExportDocument;
     }
 }

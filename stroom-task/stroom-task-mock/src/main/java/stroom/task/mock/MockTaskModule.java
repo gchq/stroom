@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.task.mock;
 
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.task.api.TaskContext;
@@ -23,16 +24,44 @@ import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
+import stroom.task.shared.ThreadPool;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class MockTaskModule extends AbstractModule {
+
+    private static final ExecutorService executorService = Executors.newCachedThreadPool();
 
     @Override
     protected void configure() {
         bind(TaskContextFactory.class).to(SimpleTaskContextFactory.class);
         bind(TaskContext.class).to(SimpleTaskContext.class);
+    }
+
+    @Provides
+    Executor getExecutor() {
+        return executorService;
+    }
+
+    @Provides
+    ExecutorProvider getExecutorProvider() {
+        return new ExecutorProvider() {
+
+            @Override
+            public Executor get() {
+                return executorService;
+            }
+
+            @Override
+            public Executor get(final ThreadPool threadPool) {
+                return executorService;
+            }
+        };
     }
 
     @Provides

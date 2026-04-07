@@ -83,7 +83,7 @@ public class ExpressionTreeViewImpl
             @Override
             protected void endDragging(final Item parent, final Item child) {
                 if (getUiHandlers() != null) {
-                    getUiHandlers().fireDirty();
+                    getUiHandlers().onChange();
                 }
             }
         };

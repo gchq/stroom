@@ -19,6 +19,7 @@ package stroom.security.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.event.OpenApiKeysScreenEvent;
@@ -26,6 +27,7 @@ import stroom.security.client.presenter.ApiKeysPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.welcome.client.presenter.WelcomePresenter;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.util.client.KeyBinding.Action;
 
@@ -45,8 +47,9 @@ public class ApiKeysPlugin extends MonitoringPlugin<ApiKeysPresenter> {
     public ApiKeysPlugin(final EventBus eventBus,
                          final ContentManager eventManager,
                          final ClientSecurityContext securityContext,
-                         final Provider<ApiKeysPresenter> apiKeysPresenterAsyncProvider) {
-        super(eventBus, eventManager, apiKeysPresenterAsyncProvider, securityContext);
+                         final Provider<ApiKeysPresenter> apiKeysPresenterAsyncProvider,
+                         final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, eventManager, apiKeysPresenterAsyncProvider, securityContext, documentPluginRegistry);
 
         registerHandler(getEventBus().addHandler(OpenApiKeysScreenEvent.getType(), event -> {
             open(apiKeysPresenter ->
@@ -82,5 +85,10 @@ public class ApiKeysPlugin extends MonitoringPlugin<ApiKeysPresenter> {
                 .command(this::open)
                 .build();
         event.getMenuItems().addMenuItem(MenuKeys.SECURITY_MENU, apiKeysMenuItem);
+    }
+
+    @Override
+    public String getType() {
+        return ApiKeysPresenter.TAB_TYPE;
     }
 }

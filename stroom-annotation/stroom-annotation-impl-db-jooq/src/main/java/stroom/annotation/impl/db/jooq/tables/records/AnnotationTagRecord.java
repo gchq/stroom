@@ -102,6 +102,20 @@ public class AnnotationTagRecord extends UpdatableRecordImpl<AnnotationTagRecord
         return (Boolean) get(5);
     }
 
+    /**
+     * Setter for <code>stroom.annotation_tag.tag_text</code>.
+     */
+    public void setTagText(String value) {
+        set(6, value);
+    }
+
+    /**
+     * Getter for <code>stroom.annotation_tag.tag_text</code>.
+     */
+    public String getTagText() {
+        return (String) get(6);
+    }
+
     // -------------------------------------------------------------------------
     // Primary key information
     // -------------------------------------------------------------------------
@@ -125,7 +139,7 @@ public class AnnotationTagRecord extends UpdatableRecordImpl<AnnotationTagRecord
     /**
      * Create a detached, initialised AnnotationTagRecord
      */
-    public AnnotationTagRecord(Integer id, String uuid, Byte typeId, String name, Byte styleId, Boolean deleted) {
+    public AnnotationTagRecord(Integer id, String uuid, Byte typeId, String name, Byte styleId, Boolean deleted, String tagText) {
         super(AnnotationTag.ANNOTATION_TAG);
 
         setId(id);
@@ -134,6 +148,7 @@ public class AnnotationTagRecord extends UpdatableRecordImpl<AnnotationTagRecord
         setName(name);
         setStyleId(styleId);
         setDeleted(deleted);
+        setTagText(tagText);
         resetChangedOnNotNull();
     }
 }

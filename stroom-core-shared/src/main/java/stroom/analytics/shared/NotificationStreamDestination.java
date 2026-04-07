@@ -42,7 +42,6 @@ public final class NotificationStreamDestination extends NotificationDestination
 
         this.destinationFeed = destinationFeed;
         this.useSourceFeedIfPossible = useSourceFeedIfPossible;
-
     }
 
     public DocRef getDestinationFeed() {

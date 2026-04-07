@@ -144,9 +144,7 @@ class TestApiKeyDaoImpl {
         assertThat(apiKey.getEnabled())
                 .isTrue();
 
-        final HashedApiKey apiKey2 = HashedApiKey.builder(apiKey)
-                .withEnabled(false)
-                .build();
+        final HashedApiKey apiKey2 = apiKey.copy().enabled(false).build();
 
         final HashedApiKey apiKey3 = apiKeyDao.update(apiKey2);
 
@@ -436,16 +434,13 @@ class TestApiKeyDaoImpl {
     }
 
     private UserRef createUser(final String subjectId) {
-        final long nowMs = Instant.now().toEpochMilli();
-        final User user = User.builder()
+        final User user = User
+                .builder()
                 .subjectId(subjectId)
                 .group(false)
                 .enabled(true)
+                .stampAudit(subjectId)
                 .build();
-        user.setCreateUser(subjectId);
-        user.setUpdateUser(subjectId);
-        user.setCreateTimeMs(nowMs);
-        user.setUpdateTimeMs(nowMs);
         final User persistedUser = userDao.tryCreate(user);
         return persistedUser.asRef();
     }

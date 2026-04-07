@@ -17,7 +17,6 @@
 package stroom.pipeline.client;
 
 import stroom.core.client.ContentManager;
-import stroom.data.client.presenter.ExpressionValidator;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -25,8 +24,7 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
-import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -56,9 +54,10 @@ import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import javax.inject.Singleton;
 
@@ -114,23 +113,6 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     }
 
     @Override
-    public MyPresenterWidget<?> open(final DocRef docRef,
-                                     final boolean forceOpen,
-                                     final boolean fullScreen,
-                                     final CommonDocLinkTab selectedLinkTab,
-                                     Consumer<MyPresenterWidget<?>> callbackOnOpen,
-                                     final TaskMonitorFactory taskMonitorFactory) {
-        if (callbackOnOpen == null) {
-            callbackOnOpen = presenter -> {
-                final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;
-                pipelinePresenter.setMetaListExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION);
-                pipelinePresenter.initPipelineModel(docRef);
-            };
-        }
-
-        return super.open(docRef, forceOpen, fullScreen, selectedLinkTab, callbackOnOpen, taskMonitorFactory);
-    }
-
     public void save(final DocumentTabData tabData) {
         if (tabData instanceof final PipelinePresenter pipelinePresenter) {
             final List<DocRef> dirtyDocs = pipelinePresenter.getDirtyDocs();
@@ -150,13 +132,16 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
                         .onHideRequest(e -> {
                             if (e.isOk()) {
                                 final List<DocRef> selectedDocRefs = docRefSelectionPresenter.getSelectedItems();
-                                pipelinePresenter.saveDocs(selectedDocRefs);
-
+                                final AtomicInteger completedSaves = new AtomicInteger(0);
+                                final Runnable onSaved = () -> {
+                                    if (completedSaves.incrementAndGet() == selectedDocRefs.size()) {
+                                        pipelinePresenter.onChange();
+                                    }
+                                };
+                                pipelinePresenter.saveDocs(selectedDocRefs, onSaved);
                                 if (selectedDocRefs.contains(pipeline)) {
-                                    super.save(tabData);
+                                    super.save(tabData, onSaved);
                                 }
-
-                                pipelinePresenter.setDirty(dirtyDocs.size() != selectedDocRefs.size());
                             }
                             e.hide();
                         })
@@ -168,7 +153,7 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     }
 
     @Override
-    protected DocumentEditPresenter<?, ?> createEditor() {
+    protected DocPresenter<?, ?> createEditor() {
         return editorProvider.get();
     }
 
@@ -252,9 +237,9 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     }
 
     private void step(final StepType stepType,
-                           final StepLocation stepLocation,
-                           final String childStreamType,
-                           final DocRef pipeDocRef) {
+                      final StepLocation stepLocation,
+                      final String childStreamType,
+                      final DocRef pipeDocRef) {
         final FindMetaCriteria findMetaCriteria = FindMetaCriteria.createFromId(
                 stepLocation.getMetaId());
 
@@ -277,22 +262,35 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     }
 
     private void openSteppingMode(final DocRef pipeline,
-                            final StepType stepType,
-                            final StepLocation stepLocation,
-                            final Meta meta,
-                            final String childStreamType) {
+                                  final StepType stepType,
+                                  final StepLocation stepLocation,
+                                  final Meta meta,
+                                  final String childStreamType) {
         open(pipeline, true, false,
-                null, presenter -> {
+                false, presenter -> {
                     final PipelinePresenter pipelinePresenter = (PipelinePresenter) presenter;
-                    // Only begin stepping when the pipeline model has been set up
-                    pipelinePresenter.addChangeDataHandler(event -> {
-                        pipelinePresenter.setMetaListExpression(
-                                MetaExpressionUtil.createDataIdExpression(meta.getId()));
-                        pipelinePresenter.setSteppingMode(true);
-                        pipelinePresenter.beginStepping(stepType, stepLocation, meta, childStreamType);
-                    });
 
-                    pipelinePresenter.initPipelineModel(pipeline);
+                    if (pipelinePresenter.isSteppingInit()) {
+                        pipelinePresenter.showSteppingMode(true);
+                        pipelinePresenter.setMetaListExpression(
+                                MetaExpressionUtil.createDataIdExpression(meta.getId()),
+                                () -> pipelinePresenter.beginStepping(stepType, stepLocation, meta, childStreamType));
+                    } else {
+                        pipelinePresenter.setSteppingMetaExpression(
+                                MetaExpressionUtil.createDataIdExpression(meta.getId()));
+                        pipelinePresenter.showSteppingMode(true);
+                        // Only begin stepping when the pipeline model has been loaded.
+                        // Then remove the handler because we dont want it to run again
+                        final HandlerRegistration[] registration = new HandlerRegistration[1];
+                        registration[0] = pipelinePresenter.addDataLoadedHandler(event -> {
+                            registration[0].removeHandler();
+                            pipelinePresenter.refreshSteppingMeta(
+                                    () -> pipelinePresenter.beginStepping(stepType,
+                                            stepLocation,
+                                            meta,
+                                            childStreamType));
+                        });
+                    }
                 }, new DefaultTaskMonitorFactory(this));
     }
 }

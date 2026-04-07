@@ -35,10 +35,13 @@ public interface ThrowingFunction<T, R, E extends Throwable> {
             try {
                 return f.apply(t);
             } catch (final Throwable e) {
-                if (e instanceof final IOException ioe) {
-                    throw new UncheckedIOException(ioe);
-                } else {
-                    throw new RuntimeException(e);
+                switch (e) {
+                    case final IOException ioe -> throw new UncheckedIOException(ioe);
+                    case final RuntimeException re -> {
+                        // Don't wrap it if it is a RuntimeException
+                        throw re;
+                    }
+                    default -> throw new RuntimeException(e);
                 }
             }
         };

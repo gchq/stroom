@@ -12,6 +12,8 @@ import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
 import stroom.node.impl.db.jooq.tables.Node;
+import stroom.node.impl.db.jooq.tables.NodeGroup;
+import stroom.node.impl.db.jooq.tables.NodeGroupLink;
 
 
 /**
@@ -33,6 +35,16 @@ public class Stroom extends SchemaImpl {
     public final Node NODE = Node.NODE;
 
     /**
+     * The table <code>stroom.node_group</code>.
+     */
+    public final NodeGroup NODE_GROUP = NodeGroup.NODE_GROUP;
+
+    /**
+     * The table <code>stroom.node_group_link</code>.
+     */
+    public final NodeGroupLink NODE_GROUP_LINK = NodeGroupLink.NODE_GROUP_LINK;
+
+    /**
      * No further instances allowed
      */
     private Stroom() {
@@ -48,7 +60,9 @@ public class Stroom extends SchemaImpl {
     @Override
     public final List<Table<?>> getTables() {
         return Arrays.asList(
-            Node.NODE
+            Node.NODE,
+            NodeGroup.NODE_GROUP,
+            NodeGroupLink.NODE_GROUP_LINK
         );
     }
 }

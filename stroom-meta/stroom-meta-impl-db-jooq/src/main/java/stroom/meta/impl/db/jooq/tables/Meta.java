@@ -13,12 +13,9 @@ import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Index;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -34,9 +31,6 @@ import org.jooq.impl.TableImpl;
 import stroom.meta.impl.db.jooq.Indexes;
 import stroom.meta.impl.db.jooq.Keys;
 import stroom.meta.impl.db.jooq.Stroom;
-import stroom.meta.impl.db.jooq.tables.MetaFeed.MetaFeedPath;
-import stroom.meta.impl.db.jooq.tables.MetaProcessor.MetaProcessorPath;
-import stroom.meta.impl.db.jooq.tables.MetaType.MetaTypePath;
 import stroom.meta.impl.db.jooq.tables.records.MetaRecord;
 
 
@@ -145,37 +139,6 @@ public class Meta extends TableImpl<MetaRecord> {
         this(DSL.name("meta"), null);
     }
 
-    public <O extends Record> Meta(Table<O> path, ForeignKey<O, MetaRecord> childPath, InverseForeignKey<O, MetaRecord> parentPath) {
-        super(path, childPath, parentPath, META);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class MetaPath extends Meta implements Path<MetaRecord> {
-        public <O extends Record> MetaPath(Table<O> path, ForeignKey<O, MetaRecord> childPath, InverseForeignKey<O, MetaRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private MetaPath(Name alias, Table<MetaRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public MetaPath as(String alias) {
-            return new MetaPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public MetaPath as(Name alias) {
-            return new MetaPath(alias, this);
-        }
-
-        @Override
-        public MetaPath as(Table<?> alias) {
-            return new MetaPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -199,43 +162,6 @@ public class Meta extends TableImpl<MetaRecord> {
     @Override
     public List<ForeignKey<MetaRecord, ?>> getReferences() {
         return Arrays.asList(Keys.META_FEED_ID, Keys.META_TYPE_ID, Keys.META_PROCESSOR_ID);
-    }
-
-    private transient MetaFeedPath _metaFeed;
-
-    /**
-     * Get the implicit join path to the <code>stroom.meta_feed</code> table.
-     */
-    public MetaFeedPath metaFeed() {
-        if (_metaFeed == null)
-            _metaFeed = new MetaFeedPath(this, Keys.META_FEED_ID, null);
-
-        return _metaFeed;
-    }
-
-    private transient MetaTypePath _metaType;
-
-    /**
-     * Get the implicit join path to the <code>stroom.meta_type</code> table.
-     */
-    public MetaTypePath metaType() {
-        if (_metaType == null)
-            _metaType = new MetaTypePath(this, Keys.META_TYPE_ID, null);
-
-        return _metaType;
-    }
-
-    private transient MetaProcessorPath _metaProcessor;
-
-    /**
-     * Get the implicit join path to the <code>stroom.meta_processor</code>
-     * table.
-     */
-    public MetaProcessorPath metaProcessor() {
-        if (_metaProcessor == null)
-            _metaProcessor = new MetaProcessorPath(this, Keys.META_PROCESSOR_ID, null);
-
-        return _metaProcessor;
     }
 
     @Override

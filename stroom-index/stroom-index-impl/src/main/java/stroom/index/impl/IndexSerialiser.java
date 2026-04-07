@@ -19,12 +19,12 @@ package stroom.index.impl;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.index.shared.LuceneIndexDoc;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class IndexSerialiser implements DocumentSerialiser2<LuceneIndexDoc> {
 
@@ -36,12 +36,12 @@ public class IndexSerialiser implements DocumentSerialiser2<LuceneIndexDoc> {
     }
 
     @Override
-    public LuceneIndexDoc read(final Map<String, byte[]> data) throws IOException {
-        return delegate.read(data);
+    public LuceneIndexDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        return delegate.read(importExportDocument);
     }
 
     @Override
-    public Map<String, byte[]> write(final LuceneIndexDoc document) throws IOException {
+    public ImportExportDocument write(final LuceneIndexDoc document) throws IOException {
         return delegate.write(document);
     }
 }

@@ -17,7 +17,6 @@
 package stroom.util.shared.http;
 
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -69,13 +68,13 @@ public class HttpTlsConfig {
 
         // HttpClientTlsConfig is defaulted to null on parent config objects so we need to apply defaults in the ctor
         // as the default config tree will not contain an HttpClientTlsConfig to use as a reference.
-        this.protocol = NullSafe.requireNonNullElse(protocol, DEFAULT_PROTOCOL);
+        this.protocol = Objects.requireNonNullElse(protocol, DEFAULT_PROTOCOL);
         this.provider = provider;
         this.keyStoreName = keyStoreName;
         this.trustStoreName = trustStoreName;
-        this.trustSelfSignedCertificates = NullSafe.requireNonNullElse(
+        this.trustSelfSignedCertificates = Objects.requireNonNullElse(
                 trustSelfSignedCertificates, DEFAULT_TRUST_SELF_SIGNED_CERTIFICATES);
-        this.verifyHostname = NullSafe.requireNonNullElse(verifyHostname, DEFAULT_VERIFY_HOSTNAME);
+        this.verifyHostname = Objects.requireNonNullElse(verifyHostname, DEFAULT_VERIFY_HOSTNAME);
         this.supportedProtocols = supportedProtocols;
         this.supportedCiphers = supportedCiphers;
         this.certAlias = certAlias;

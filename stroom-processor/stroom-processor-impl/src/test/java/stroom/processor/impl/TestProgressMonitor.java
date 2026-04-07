@@ -32,15 +32,19 @@ class TestProgressMonitor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProgressMonitor.class);
 
-    private static final ProcessorFilter PROCESSOR_FILTER_1 = new ProcessorFilter();
-    private static final ProcessorFilter PROCESSOR_FILTER_2 = new ProcessorFilter();
+    private static final ProcessorFilter PROCESSOR_FILTER_1;
+    private static final ProcessorFilter PROCESSOR_FILTER_2;
 
 
     static {
-        PROCESSOR_FILTER_1.setId(1);
-        PROCESSOR_FILTER_1.setPipelineName("Pipe 1");
-        PROCESSOR_FILTER_2.setId(2);
-        PROCESSOR_FILTER_2.setPipelineName("Pipe 2");
+        PROCESSOR_FILTER_1 = ProcessorFilter.builder()
+                .id(1)
+                .pipelineName("Pipe 1")
+                .build();
+        PROCESSOR_FILTER_2 = ProcessorFilter.builder()
+                .id(2)
+                .pipelineName("Pipe 2")
+                .build();
     }
 
     @Test

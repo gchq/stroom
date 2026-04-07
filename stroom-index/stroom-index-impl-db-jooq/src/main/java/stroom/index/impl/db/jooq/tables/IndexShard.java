@@ -13,12 +13,9 @@ import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
 import org.jooq.Index;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -34,7 +31,6 @@ import org.jooq.impl.TableImpl;
 import stroom.index.impl.db.jooq.Indexes;
 import stroom.index.impl.db.jooq.Keys;
 import stroom.index.impl.db.jooq.Stroom;
-import stroom.index.impl.db.jooq.tables.IndexVolume.IndexVolumePath;
 import stroom.index.impl.db.jooq.tables.records.IndexShardRecord;
 
 
@@ -158,37 +154,6 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
         this(DSL.name("index_shard"), null);
     }
 
-    public <O extends Record> IndexShard(Table<O> path, ForeignKey<O, IndexShardRecord> childPath, InverseForeignKey<O, IndexShardRecord> parentPath) {
-        super(path, childPath, parentPath, INDEX_SHARD);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class IndexShardPath extends IndexShard implements Path<IndexShardRecord> {
-        public <O extends Record> IndexShardPath(Table<O> path, ForeignKey<O, IndexShardRecord> childPath, InverseForeignKey<O, IndexShardRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private IndexShardPath(Name alias, Table<IndexShardRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public IndexShardPath as(String alias) {
-            return new IndexShardPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public IndexShardPath as(Name alias) {
-            return new IndexShardPath(alias, this);
-        }
-
-        @Override
-        public IndexShardPath as(Table<?> alias) {
-            return new IndexShardPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -212,19 +177,6 @@ public class IndexShard extends TableImpl<IndexShardRecord> {
     @Override
     public List<ForeignKey<IndexShardRecord, ?>> getReferences() {
         return Arrays.asList(Keys.INDEX_SHARD_FK_VOLUME_ID);
-    }
-
-    private transient IndexVolumePath _indexVolume;
-
-    /**
-     * Get the implicit join path to the <code>stroom_v7_11.index_volume</code>
-     * table.
-     */
-    public IndexVolumePath indexVolume() {
-        if (_indexVolume == null)
-            _indexVolume = new IndexVolumePath(this, Keys.INDEX_SHARD_FK_VOLUME_ID, null);
-
-        return _indexVolume;
     }
 
     @Override

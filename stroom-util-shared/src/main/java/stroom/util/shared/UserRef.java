@@ -129,7 +129,6 @@ public final class UserRef {
         return enabled;
     }
 
-
     @JsonIgnore
     public boolean isDisabled() {
         return !enabled;
@@ -193,7 +192,7 @@ public final class UserRef {
     }
 
     public String toDisplayString(final DisplayType displayType) {
-        final Function<UserRef, String> displayTextFunc = NullSafe.requireNonNullElse(
+        final Function<UserRef, String> displayTextFunc = Objects.requireNonNullElse(
                         displayType, DisplayType.AUTO)
                 .getDisplayTextFunc();
         return displayTextFunc.apply(this);
@@ -205,7 +204,7 @@ public final class UserRef {
         } else if (subjectId != null) {
             return subjectId;
         } else {
-            return NullSafe.requireNonNullElseGet(fullName, () ->
+            return Objects.requireNonNullElseGet(fullName, () ->
                     "{" + uuid + "}");
         }
     }

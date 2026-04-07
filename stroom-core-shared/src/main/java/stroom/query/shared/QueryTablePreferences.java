@@ -104,6 +104,14 @@ public class QueryTablePreferences {
             return false;
         }
         final QueryTablePreferences that = (QueryTablePreferences) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(columns, that.columns);
+//        final boolean b2 = Objects.equals(pageSize, that.pageSize);
+//        final boolean b3 = Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules);
+//        final boolean b4 = Objects.equals(applyValueFilters, that.applyValueFilters);
+//        final boolean b5 = Objects.equals(selectionFilter, that.selectionFilter);
+
         return Objects.equals(columns, that.columns) &&
                Objects.equals(pageSize, that.pageSize) &&
                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&

@@ -20,6 +20,7 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.docref.HasFindDocsByName;
 import stroom.docstore.shared.AbstractDoc;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
@@ -27,7 +28,6 @@ import stroom.util.shared.Message;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public interface Store<D extends AbstractDoc>
@@ -57,11 +57,11 @@ public interface Store<D extends AbstractDoc>
     // START OF HasDependencies
     // ---------------------------------------------------------------------
 
-    Map<DocRef, Set<DocRef>> getDependencies(BiConsumer<D, DependencyRemapper> mapper);
+    Map<DocRef, Set<DocRef>> getDependencies(DependencyRemapFunction<D> mapper);
 
-    Set<DocRef> getDependencies(DocRef docRef, BiConsumer<D, DependencyRemapper> mapper);
+    Set<DocRef> getDependencies(DocRef docRef, DependencyRemapFunction<D> mapper);
 
-    void remapDependencies(DocRef docRef, Map<DocRef, DocRef> remappings, BiConsumer<D, DependencyRemapper> mapper);
+    void remapDependencies(DocRef docRef, Map<DocRef, DocRef> remappings, DependencyRemapFunction<D> mapper);
 
     // ---------------------------------------------------------------------
     // END OF HasDependencies
@@ -78,13 +78,18 @@ public interface Store<D extends AbstractDoc>
 
     DocRef importDocument(
             DocRef docRef,
-            Map<String, byte[]> dataMap,
+            ImportExportDocument importExportDocument,
             ImportState importState,
             ImportSettings importSettings);
 
-    Map<String, byte[]> exportDocument(DocRef docRef,
+    ImportExportDocument exportDocument(DocRef docRef,
+                                       boolean omitAuditFields,
+                                       List<Message> messageList);
+
+    ImportExportDocument exportDocument(DocRef docRef,
+                                       boolean omitAuditFields,
                                        List<Message> messageList,
-                                       Function<D, D> filter);
+                                       Function<D, D> function);
 
     /**
      * List all documents of this stores type

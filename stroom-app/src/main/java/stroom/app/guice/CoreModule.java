@@ -60,6 +60,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.gitrepo.impl.GitRepoModule());
         install(new stroom.gitrepo.impl.db.GitRepoDaoModule());
         install(new stroom.dashboard.impl.visualisation.VisualisationModule());
+        install(new stroom.dashboard.impl.db.VisualisationAssetDaoModule());
         install(new stroom.data.retention.impl.DataRetentionModule());
         install(new stroom.data.store.impl.DataStoreModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
@@ -74,6 +75,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.dropwizard.common.DropwizardModule());
         install(new stroom.explorer.impl.ExplorerFavModule());
         install(new stroom.explorer.impl.db.ExplorerFavDbModule());
+        install(new stroom.explorer.impl.db.TabSessionDbModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.event.logging.rs.impl.RestResourceAutoLoggerModule());
         install(new stroom.explorer.impl.ExplorerModule());
@@ -125,18 +127,13 @@ public class CoreModule extends AbstractModule {
         install(new stroom.security.impl.db.SecurityDaoModule());
         install(new stroom.analytics.impl.AnalyticRuleModule());
         install(new stroom.analytics.impl.ReportModule());
-        install(new stroom.state.impl.StateModule());
+        install(new stroom.datagen.impl.DataGenModule());
         install(new stroom.planb.impl.PlanBModule());
         install(new stroom.statistics.impl.InternalStatisticsModule());
-        install(new stroom.statistics.impl.hbase.entity.StroomStatsStoreModule());
-        install(new stroom.statistics.impl.hbase.internal.InternalModule());
-        install(new stroom.statistics.impl.hbase.pipeline.StatisticsElementModule());
-        install(new stroom.statistics.impl.hbase.rollup.StroomStatsRollupModule());
         install(new stroom.statistics.impl.sql.SqlStatisticsModule());
         install(new stroom.statistics.impl.sql.entity.StatisticStoreModule());
         install(new stroom.statistics.impl.sql.filter.StatisticsElementsModule());
         install(new stroom.statistics.impl.sql.internal.InternalModule());
-        install(new stroom.statistics.impl.sql.rollup.SQLStatisticRollupModule());
         install(new stroom.statistics.impl.sql.search.SQLStatisticSearchModule());
         install(new stroom.storedquery.impl.StoredQueryModule());
         install(new stroom.storedquery.impl.db.StoredQueryDaoModule());

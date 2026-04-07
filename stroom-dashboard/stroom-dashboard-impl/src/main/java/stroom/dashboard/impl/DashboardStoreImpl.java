@@ -26,11 +26,12 @@ import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.DependencyRemapper;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
@@ -49,7 +50,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 class DashboardStoreImpl implements DashboardStore {
@@ -70,7 +70,11 @@ class DashboardStoreImpl implements DashboardStore {
     DashboardStoreImpl(final StoreFactory storeFactory,
                        final DashboardSerialiser serialiser,
                        final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, DashboardDoc.TYPE, DashboardDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                DashboardDoc.TYPE,
+                DashboardDoc::builder,
+                DashboardDoc::copy);
         this.serialiser = serialiser;
         this.securityContext = securityContext;
     }
@@ -80,10 +84,11 @@ class DashboardStoreImpl implements DashboardStore {
             try (final InputStream is = getClass().getResourceAsStream(TEMPLATE_FILE)) {
                 if (is != null) {
                     final byte[] bytes = is.readAllBytes();
-                    final DashboardConfig config = serialiser.getDashboardConfigFromJson(bytes);
-                    config.setModelVersion(VERSION_7_2_0);
-                    config.setDesignMode(true);
-                    template = config;
+                    template = serialiser.getDashboardConfigFromJson(bytes)
+                            .copy()
+                            .modelVersion(VERSION_7_2_0)
+                            .designMode(true)
+                            .build();
                 } else {
                     LOGGER.error("Error reading dashboard template as template not found: " + TEMPLATE_FILE);
                 }
@@ -107,8 +112,7 @@ class DashboardStoreImpl implements DashboardStore {
         // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
         // them until after they are created in the store.
         securityContext.asProcessingUser(() -> {
-            final DashboardDoc dashboardDoc = store.readDocument(docRef);
-            dashboardDoc.setDashboardConfig(getTemplate());
+            final DashboardDoc dashboardDoc = store.readDocument(docRef).copy().dashboardConfig(getTemplate()).build();
             store.writeDocument(dashboardDoc);
         });
         return docRef;
@@ -167,38 +171,32 @@ class DashboardStoreImpl implements DashboardStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<DashboardDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<DashboardDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
-            if (doc.getDashboardConfig() != null) {
-                final List<ComponentConfig> components = doc.getDashboardConfig().getComponents();
-                if (components != null && components.size() > 0) {
+            DashboardDoc updated = doc;
+            if (updated.getDashboardConfig() != null) {
+                final List<ComponentConfig> components = updated.getDashboardConfig().getComponents();
+                if (!NullSafe.isEmptyCollection(components)) {
                     final List<ComponentConfig> newComponents = new ArrayList<>();
 
                     components.forEach(componentConfig -> {
                         ComponentSettings componentSettings = componentConfig.getSettings();
                         if (componentSettings != null) {
-                            if (componentSettings instanceof QueryComponentSettings) {
-                                final QueryComponentSettings queryComponentSettings =
-                                        (QueryComponentSettings) componentSettings;
-                                componentSettings = remapQueryComponentSettings(queryComponentSettings,
-                                        dependencyRemapper);
-
-                            } else if (componentSettings instanceof TableComponentSettings) {
-                                final TableComponentSettings tableComponentSettings =
-                                        (TableComponentSettings) componentSettings;
-                                componentSettings = remapTableComponentSettings(tableComponentSettings,
-                                        dependencyRemapper);
-
-                            } else if (componentSettings instanceof VisComponentSettings) {
-                                final VisComponentSettings visComponentSettings =
-                                        (VisComponentSettings) componentSettings;
-                                componentSettings = remapVisComponentSettings(visComponentSettings, dependencyRemapper);
-
-                            } else if (componentSettings instanceof TextComponentSettings) {
-                                final TextComponentSettings textComponentSettings =
-                                        (TextComponentSettings) componentSettings;
-                                componentSettings = remapTextComponentSettings(textComponentSettings,
-                                        dependencyRemapper);
+                            switch (componentSettings) {
+                                case final QueryComponentSettings queryComponentSettings ->
+                                        componentSettings = remapQueryComponentSettings(queryComponentSettings,
+                                                dependencyRemapper);
+                                case final TableComponentSettings tableComponentSettings ->
+                                        componentSettings = remapTableComponentSettings(tableComponentSettings,
+                                                dependencyRemapper);
+                                case final VisComponentSettings visComponentSettings ->
+                                        componentSettings = remapVisComponentSettings(visComponentSettings,
+                                                dependencyRemapper);
+                                case final TextComponentSettings textComponentSettings ->
+                                        componentSettings = remapTextComponentSettings(textComponentSettings,
+                                                dependencyRemapper);
+                                default -> {
+                                }
                             }
                         }
 
@@ -209,9 +207,17 @@ class DashboardStoreImpl implements DashboardStore {
                         newComponents.add(newConfig);
                     });
 
-                    doc.getDashboardConfig().setComponents(newComponents);
+                    updated = updated
+                            .copy()
+                            .dashboardConfig(doc
+                                    .getDashboardConfig()
+                                    .copy()
+                                    .components(newComponents)
+                                    .build())
+                            .build();
                 }
             }
+            return updated;
         };
     }
 
@@ -289,20 +295,17 @@ class DashboardStoreImpl implements DashboardStore {
 
     @Override
     public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
+                                 final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        return store.importDocument(docRef, dataMap, importState, importSettings);
+        return store.importDocument(docRef, importExportDocument, importState, importSettings);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
+    public ImportExportDocument exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

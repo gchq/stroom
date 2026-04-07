@@ -26,6 +26,8 @@ import stroom.credentials.api.StoredSecret;
 import stroom.credentials.api.StoredSecrets;
 import stroom.credentials.impl.db.MockCredentialsDaoModule;
 import stroom.data.store.mock.MockStreamStoreModule;
+import stroom.dictionary.api.DictionaryStore;
+import stroom.dictionary.impl.DictionaryStoreImpl;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.docrefinfo.mock.MockDocRefInfoModule;
 import stroom.explorer.impl.MockExplorerModule;
@@ -46,7 +48,6 @@ import stroom.security.api.UserService;
 import stroom.security.mock.MockSecurityContext;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.shared.User;
-import stroom.state.impl.MockStateModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.impl.MockTaskModule;
 import stroom.test.common.MockMetricsModule;
@@ -118,11 +119,11 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.test.MockTestControlModule());
         install(new MockServletModule());
         install(new MockXmlSchemaModule());
-        install(new MockStateModule());
         install(new MockPlanBModule());
         install(new MockClusterLockModule());
         install(new MockOpenAIModule());
 
+        bind(DictionaryStore.class).to(DictionaryStoreImpl.class);
         bind(ContentPackUserService.class).to(MockSecurityContext.class);
         bind(HttpClientFactory.class).to(BasicHttpClientFactory.class);
         bind(StoredSecrets.class).toInstance(new StoredSecrets() {

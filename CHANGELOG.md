@@ -13,6 +13,72 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12-beta.1] - 2026-03-24
+
+* Feature **#5427** : Change the Data Feed Key authentication mechanism to support authentication by X509 certificate DN. Add a new allowed type of `CERTIFICATE_IDENTITY` to `.receive.enabledAuthenticationTypes`. Rename property `.receive.dataFeedKeysDir` to  `.receive.dataFeedIdentitiesDir` and change the structure of the files in it, all files will have to be replaced. Rename property `.receive.dataFeedKeyOwnerMetaKey` to `.receive.dataFeedOwnerMetaKey`. Change the default value of `.receive.dataFeedIdentitiesDir` from `data_feed_keys` to `data_feed_identities`.
+
+* Feature **#5442** : Add more configuration options to `stroom.autoContentCreation` to improve the explorer structure and permissions of the generated content. Add properties `additionalGroupParentGroupName`, `destinationExplorerSubPathTemplate` and `groupParentGroupName`. All have sensible defaults.
+
+* Feature **#5473** : Add `JSON_LINES` to the base list of data formats in the `.data.meta.dataFormats` property.
+
+
+## [v7.11.6] - 2026-03-24
+
+* Bug **#5471** : Fix bug in INFO logging output (the count of remaining shards) when flushing/deleting index shards.
+
+
+## [v7.11.5] - 2026-03-23
+
+* Bug **#5466** : Fix asynchronous code that was causing thread deadlocks on machines with a low number of cores (e.g. <= 2). This bug was caused by a change to the JVM.
+
+
+## [v7.11.4] - 2026-03-13
+
+* Feature **#5455** : Add DictionaryAppender to pipelines as an optional pipeline destination.
+
+* Bug **#5449** : Change the asynchronous behaviour in the data feed keys directory watcher.
+
+
+## [v7.11.3] - 2026-03-12
+
+* Bug **#5449** : Fix concurrency and exception handling Data Feed Key dir watcher (AbstractDirChangeMonitor).
+
+
+## [v7.11.2] - 2026-03-11
+
+* Bug **#5445** : Revert cache in PipelineDataCacheImpl to be keyed by PipelineDoc.
+
+* Bug **#5444** : Initialise pipelineStructurePresenter when opening in stepping mode.
+
+
+## [v7.11.1] - 2026-03-10
+
+* Bug **#5434** : Fix dense vector token limit to be 1024 for Lucene indexing.
+
+* Bug **#5413** : Fix column value selection.
+
+* Bug **#5275** : Add option to XMLWriter to prevent char 0 disabling output escaping.
+
+
+## [v7.11.0] - 2026-03-04
+
+* Bug : Change proxy event store to close its appenders on app shutdown.
+
+* Bug : Fix missing docker managed volues for proxy `zip_file_ingest` and `zip_file_ingest_failed` directories.
+
+* Bug : Fix NPE in downstreamHostConfig ctor if there is no hostname, which is a possibility.
+
+* Bug : Fix incorrect path for /datafeed in the ProxyWelcomeServlet response.
+
+* Bug : Move the `/queues` proxy endpoint from the app port to the admin port.
+
+* Bug **#5424** : Change the `receiptCheckMode` `RECEIVE_ALL` to no longer check for the existence of the feed. Add the `receiptCheckMode` `FEED_EXISTENCE` to perform a feed existence check.
+
+* Bug : Fix `subPathTemplate.enabled` defaulting to `false` if subPathTemplate has been set in the yaml, but enabled has not.
+
+* Bug : Fix bug in proxy which will throw an error if subPathTemplate contains repeated vars, e.g. `${year}/${year}-${month}`.
+
+
 ## [v7.11-beta.25] - 2026-02-13
 
 * Bug **#5392** : Fix PlanB segfault.
@@ -2014,7 +2080,15 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11-beta.25...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.12-beta.1...HEAD
+[v7.12-beta.1]: https://github.com/gchq/stroom/compare/v7.11.6...v7.12-beta.1
+[v7.11.6]: https://github.com/gchq/stroom/compare/v7.11.5...v7.11.6
+[v7.11.5]: https://github.com/gchq/stroom/compare/v7.11.4...v7.11.5
+[v7.11.4]: https://github.com/gchq/stroom/compare/v7.11.3...v7.11.4
+[v7.11.3]: https://github.com/gchq/stroom/compare/v7.11.2...v7.11.3
+[v7.11.2]: https://github.com/gchq/stroom/compare/v7.11.1...v7.11.2
+[v7.11.1]: https://github.com/gchq/stroom/compare/v7.11.0...v7.11.1
+[v7.11.0]: https://github.com/gchq/stroom/compare/v7.11-beta.25...v7.11.0
 [v7.11-beta.25]: https://github.com/gchq/stroom/compare/v7.11-beta.24...v7.11-beta.25
 [v7.11-beta.24]: https://github.com/gchq/stroom/compare/v7.11-beta.23...v7.11-beta.24
 [v7.11-beta.23]: https://github.com/gchq/stroom/compare/v7.11-beta.22...v7.11-beta.23

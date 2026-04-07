@@ -267,10 +267,6 @@ public final class ExpressionTerm extends ExpressionItem {
         MATCHES_REGEX_CASE_SENSITIVE("=/",
                 "matches regex (CS)",
                 "matches regex (case sensitive)"),
-        IS_SCHEDULE_TYPE("is"),
-        IS_NOT_SCHEDULE_TYPE("is not"),
-        IS_PARENT_DOC_TYPE("is"),
-        IS_NOT_PARENT_DOC_TYPE("is not"),
 
         // Permission related conditions.
         OF_DOC_REF("of"),

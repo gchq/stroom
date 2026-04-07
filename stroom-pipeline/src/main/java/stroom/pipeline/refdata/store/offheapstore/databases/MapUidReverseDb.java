@@ -36,16 +36,13 @@ import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 
 public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MapUidReverseDb.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapUidReverseDb.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MapUidReverseDb.class);
 
     public static final String DB_NAME = "MapUidBackward";
 
@@ -72,7 +69,7 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
 
                 final ByteBuffer highestUidBuffer = highestKeyVal.key();
 
-                LAMBDA_LOGGER.trace(() ->
+                LOGGER.trace(() ->
                         LogUtil.message("highestKey: {}", ByteBufferUtils.byteBufferInfo(highestUidBuffer)));
 
                 // DB has a UID in it so create a new one that is one higher

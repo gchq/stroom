@@ -36,11 +36,6 @@ public class LayoutConstraints {
     @JsonProperty
     private final boolean fitHeight;
 
-    public LayoutConstraints() {
-        fitWidth = true;
-        fitHeight = true;
-    }
-
     @JsonCreator
     public LayoutConstraints(@JsonProperty("fitWidth") final boolean fitWidth,
                              @JsonProperty("fitHeight") final boolean fitHeight) {
@@ -65,11 +60,25 @@ public class LayoutConstraints {
             return false;
         }
         final LayoutConstraints that = (LayoutConstraints) o;
-        return fitWidth == that.fitWidth && fitHeight == that.fitHeight;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = fitWidth == that.fitWidth;
+//        final boolean b2 = fitHeight == that.fitHeight;
+
+        return fitWidth == that.fitWidth &&
+               fitHeight == that.fitHeight;
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(fitWidth, fitHeight);
+    }
+
+    @Override
+    public String toString() {
+        return "LayoutConstraints{" +
+               "fitWidth=" + fitWidth +
+               ", fitHeight=" + fitHeight +
+               '}';
     }
 }

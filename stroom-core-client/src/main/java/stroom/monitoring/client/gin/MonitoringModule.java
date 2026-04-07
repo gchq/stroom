@@ -35,10 +35,15 @@ import stroom.job.client.view.JobViewImpl;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
 import stroom.monitoring.client.ExecutionScheduleManagerPlugin;
 import stroom.monitoring.client.JobListPlugin;
+import stroom.monitoring.client.NodeGroupsPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
+import stroom.monitoring.client.ProcessorProfilePlugin;
 import stroom.node.client.ManageGlobalPropertiesPlugin;
+import stroom.node.client.presenter.NodeGroupEditPresenter;
+import stroom.node.client.presenter.NodeGroupEditPresenter.NodeGroupEditView;
 import stroom.node.client.presenter.NodePresenter;
 import stroom.node.client.presenter.NodePresenter.NodeView;
+import stroom.node.client.view.NodeGroupEditViewImpl;
 import stroom.node.client.view.NodeViewImpl;
 import stroom.schedule.client.SchedulePopup;
 import stroom.schedule.client.SchedulePopup.ScheduleView;
@@ -51,12 +56,14 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.datepicker.client.DateTimePopup;
 import stroom.widget.datepicker.client.DateTimePopup.DateTimeView;
 import stroom.widget.datepicker.client.DateTimeViewImpl;
+import stroom.widget.datepicker.client.TimePopup;
+import stroom.widget.datepicker.client.TimePopup.TimeView;
+import stroom.widget.datepicker.client.TimeViewImpl;
 
 public class MonitoringModule extends PluginModule {
 
     @Override
     protected void configure() {
-
         bind(UiConfigCache.class).asEagerSingleton();
 
         bindPlugin(DatabaseTablesMonitoringPlugin.class);
@@ -64,8 +71,6 @@ public class MonitoringModule extends PluginModule {
         // Job management.
         bindPlugin(JobListPlugin.class);
         bindPlugin(ExecutionScheduleManagerPlugin.class);
-
-
 
         bindPresenterWidget(
                 SchedulePopup.class,
@@ -75,14 +80,24 @@ public class MonitoringModule extends PluginModule {
                 DateTimePopup.class,
                 DateTimeView.class,
                 DateTimeViewImpl.class);
+        bindPresenterWidget(
+                TimePopup.class,
+                TimeView.class,
+                TimeViewImpl.class);
 
         // Node management.
+        bindPlugin(NodeGroupsPlugin.class);
         bindPlugin(NodeMonitoringPlugin.class);
+        bindPlugin(ProcessorProfilePlugin.class);
 
         bindPresenterWidget(
                 NodePresenter.class,
                 NodeView.class,
                 NodeViewImpl.class);
+        bindPresenterWidget(
+                NodeGroupEditPresenter.class,
+                NodeGroupEditView.class,
+                NodeGroupEditViewImpl.class);
 
         bindPlugin(ManageFsVolumesPlugin.class);
         bindPlugin(ManageIndexVolumesPlugin.class);

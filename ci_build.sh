@@ -64,7 +64,7 @@ LATEST_SUFFIX="-LATEST"
 # As 7 is still in beta, this is currently 6.1
 
 # The version of stroom-resources used for running the DB, should be a tag really
-STROOM_RESOURCES_GIT_TAG="7.7-stroom-7.0-proxy"
+STROOM_RESOURCES_GIT_TAG="7.11-stroom-7.11-proxy"
 SWAGGER_UI_GIT_TAG="v3.49.0"
 doDockerBuild=false
 STROOM_RESOURCES_DIR="${BUILD_DIR}/stroom-resources"
@@ -595,8 +595,8 @@ docker_login
 
 check_for_out_of_date_puml_svgs
 
-echo "::group::Start stroom-all-dbs & scylladb"
-start_databases stroom-all-dbs scylladb
+echo "::group::Start stroom-all-dbs"
+start_databases stroom-all-dbs
 echo "::endgroup::"
 
 # Ensure we have a local.yml file as the integration tests will need it

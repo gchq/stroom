@@ -47,7 +47,7 @@ import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.data.client.presenter.ShowDataEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
@@ -100,7 +100,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public class AnnotationEditPresenter
-        extends DocumentEditPresenter<AnnotationEditView, Annotation>
+        extends DocPresenter<AnnotationEditView, Annotation>
         implements AnnotationEditUiHandlers {
 
     private static final String EMPTY_VALUE = "'  '";
@@ -128,7 +128,7 @@ public class AnnotationEditPresenter
     private final UserRefPopupPresenter assignedToPresenter;
     private final MultiChooserPresenter<AnnotationTag> annotationLabelPresenter;
     private final MultiChooserPresenter<AnnotationTag> annotationCollectionPresenter;
-    private final ChooserPresenter<String> commentPresenter;
+    private final ChooserPresenter<AnnotationTag> commentPresenter;
     private final ClientSecurityContext clientSecurityContext;
     private final DateTimeFormatter dateTimeFormatter;
     private final DurationPresenter retentionDurationProvider;
@@ -155,7 +155,7 @@ public class AnnotationEditPresenter
                                    final UserRefPopupPresenter assignedToPresenter,
                                    final MultiChooserPresenter<AnnotationTag> annotationLabelPresenter,
                                    final MultiChooserPresenter<AnnotationTag> annotationCollectionPresenter,
-                                   final ChooserPresenter<String> commentPresenter,
+                                   final ChooserPresenter<AnnotationTag> commentPresenter,
                                    final ClientSecurityContext clientSecurityContext,
                                    final DateTimeFormatter dateTimeFormatter,
                                    final DurationPresenter retentionDurationProvider,
@@ -201,12 +201,17 @@ public class AnnotationEditPresenter
         });
         annotationCollectionPresenter.setDisplayValueFunction(Lozenge::create);
 
-        this.commentPresenter.setDataSupplier((filter, consumer) ->
-                annotationResourceClient.getStandardComments(filter, consumer, this));
-
-        // See if we are able to get standard comments.
-        annotationResourceClient.getStandardComments(null, values ->
-                getView().setHasCommentValues(values != null && !values.isEmpty()), this);
+        this.commentPresenter.setDataSupplier((filter, consumer) -> {
+            final ExpressionCriteria criteria = createCriteria(AnnotationTagType.COMMENT, filter);
+            annotationResourceClient.findAnnotationTags(criteria, values -> {
+                if (values != null) {
+                    consumer.accept(values.getValues());
+                }
+            },
+                new DefaultErrorHandler(this, null), this);
+        });
+        commentPresenter.setDisplayValueFunction(at -> SafeHtmlUtils.fromString(at.getName()));
+        commentPresenter.setTooltipFunction(AnnotationTag::getTagText);
     }
 
     private ExpressionCriteria createCriteria(final AnnotationTagType annotationTagType,
@@ -247,7 +252,7 @@ public class AnnotationEditPresenter
             changeAnnotationCollections(selected);
         }));
         registerHandler(commentPresenter.addDataSelectionHandler(e -> {
-            final String selected = commentPresenter.getSelected();
+            final AnnotationTag selected = commentPresenter.getSelected();
             changeComment(selected);
         }));
     }
@@ -260,7 +265,7 @@ public class AnnotationEditPresenter
                     new ChangeTitle(selected));
             change(request);
 
-            getEntity().setName(selected);
+            read(getEntity().asDocRef(), getEntity().copy().name(selected).build(), isReadOnly());
             RefreshContentTabEvent.fire(this, parent);
         }
     }
@@ -420,9 +425,9 @@ public class AnnotationEditPresenter
                 : retentionPeriod.toLongString());
     }
 
-    private void changeComment(final String selected) {
-        if (selected != null && hasChanged(getView().getComment(), selected)) {
-            getView().setComment(getView().getComment() + selected);
+    private void changeComment(final AnnotationTag selected) {
+        if (selected != null && hasChanged(getView().getComment(), selected.getTagText())) {
+            getView().setComment(getView().getComment() + selected.getTagText());
             HidePopupRequestEvent.builder(commentPresenter).fire();
         }
     }
@@ -1202,7 +1207,7 @@ public class AnnotationEditPresenter
     @Override
     public void showCommentChooser(final Element element) {
         commentPresenter.clearFilter();
-        commentPresenter.setSelected(getView().getComment());
+        commentPresenter.clearSelection();
         final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
         ShowPopupEvent.builder(commentPresenter)
@@ -1279,8 +1284,6 @@ public class AnnotationEditPresenter
         String getComment();
 
         void setComment(String comment);
-
-        void setHasCommentValues(final boolean hasCommentValues);
 
         void setHistoryView(Widget view);
 

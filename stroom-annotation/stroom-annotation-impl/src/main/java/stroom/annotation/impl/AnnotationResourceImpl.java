@@ -206,12 +206,6 @@ class AnnotationResourceImpl implements AnnotationResource {
 //        return annotationService.get().getStatus(filter);
 //    }
 
-    @AutoLogged(OperationType.UNLOGGED)
-    @Override
-    public List<String> getStandardComments(final String filter) {
-        return annotationServiceProvider.get().getStandardComments(filter);
-    }
-
 //    @AutoLogged(OperationType.UNLOGGED)
 //    @Override
 //    public SimpleDuration getDefaultRetentionPeriod() {

@@ -16,13 +16,13 @@
 
 package stroom.planb.client.view;
 
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
 import stroom.planb.shared.RangeKeySchema;
 
 import com.gwtplatform.mvp.client.HasUiHandlers;
 
-public interface RangeKeySchemaSettingsView extends ReadOnlyChangeHandler, HasUiHandlers<PlanBSettingsUiHandlers> {
+public interface RangeKeySchemaSettingsView extends ReadOnlyChangeHandler, HasUiHandlers<ChangeUiHandlers> {
 
     RangeKeySchema getKeySchema();
 

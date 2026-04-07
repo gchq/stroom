@@ -23,7 +23,7 @@
 # jstat/jmap/jcmd/etc.
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:25.0.1_8-jdk-alpine-3.23 AS stroom-base-stage
+FROM eclipse-temurin:25.0.2_10-jdk-alpine-3.23@sha256:da683f4f02f9427597d8fa162b73b8222fe08596dcebaf23e4399576ff8b037e AS stroom-base-stage
 
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
@@ -59,7 +59,8 @@ VOLUME /stroom-proxy/content/
 VOLUME /stroom-proxy/data/
 VOLUME /stroom-proxy/logs/
 VOLUME /stroom-proxy/failures/
-# sqlite_library mounted as tmpfs not a managed volumne
+VOLUME /stroom-proxy/zip_file_ingest/
+VOLUME /stroom-proxy/zip_file_ingest_failed/
 
 # run entrypoint script inside tini for better unix process handling, 
 # see https://github.com/krallin/tini/issues/8
@@ -92,6 +93,8 @@ RUN \
     mkdir -p /stroom-proxy/logs/app && \
     mkdir -p /stroom-proxy/data && \
     mkdir -p /stroom-proxy/failures && \
+    mkdir -p /stroom-proxy/zip_file_ingest && \
+    mkdir -p /stroom-proxy/zip_file_ingest_failed && \
     chown -R proxy:proxy /stroom-proxy
 
 # Copy all the fat jars for the application and connectors

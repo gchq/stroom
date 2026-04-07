@@ -22,6 +22,11 @@ import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.core.client.UrlParameters;
 import stroom.dashboard.client.flexlayout.FlexLayout;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
+import stroom.dashboard.client.flexlayout.MutableLayoutConfig;
+import stroom.dashboard.client.flexlayout.MutableSize;
+import stroom.dashboard.client.flexlayout.MutableSplitLayoutConfig;
+import stroom.dashboard.client.flexlayout.MutableTabConfig;
+import stroom.dashboard.client.flexlayout.MutableTabLayoutConfig;
 import stroom.dashboard.client.input.KeyValueInputPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
@@ -34,20 +39,15 @@ import stroom.dashboard.shared.DashboardConfig;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.Dimension;
 import stroom.dashboard.shared.KeyValueInputComponentSettings;
-import stroom.dashboard.shared.LayoutConfig;
 import stroom.dashboard.shared.LayoutConstraints;
-import stroom.dashboard.shared.Size;
-import stroom.dashboard.shared.SplitLayoutConfig;
-import stroom.dashboard.shared.TabConfig;
-import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentTabData;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.document.client.event.OpenDocumentEvent;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.query.api.ParamUtil;
@@ -100,7 +100,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DashboardPresenter
-        extends DocumentEditPresenter<DashboardView, DashboardDoc>
+        extends DocPresenter<DashboardView, DashboardDoc>
         implements
         FlexLayoutChangeHandler,
         DocumentTabData,
@@ -129,7 +129,7 @@ public class DashboardPresenter
     private boolean queryOnOpen;
 
     private LayoutConstraints layoutConstraints = new LayoutConstraints(true, true);
-    private Size preferredSize = new Size();
+    private MutableSize preferredSize = new MutableSize();
     private boolean designMode;
 
     private ResultStoreInfo resultStoreInfo;
@@ -253,7 +253,7 @@ public class DashboardPresenter
         super.onBind();
         registerHandler(queryToolbarPresenter.addStartQueryHandler(e -> toggleStart()));
         registerHandler(queryToolbarPresenter.addTimeRangeChangeHandler(e -> {
-            setDirty(true);
+            onChange();
             dashboardContext.fireContextChangeEvent();
             start();
         }));
@@ -304,7 +304,7 @@ public class DashboardPresenter
         final LayoutConstraintPresenter presenter = layoutConstraintPresenterProvider.get();
         final HandlerRegistration handlerRegistration = presenter.addValueChangeHandler(e -> {
             if (!Objects.equals(e.getValue(), layoutConstraints)) {
-                setDirty(true);
+                onChange();
                 layoutConstraints = e.getValue();
                 layoutPresenter.setLayoutConstraints(layoutConstraints);
             }
@@ -325,8 +325,8 @@ public class DashboardPresenter
         }
 
         currentSelectionPresenter.refresh(dashboardContext, false);
-        final HandlerRegistration handlerRegistration = dashboardContext
-                .addContextChangeHandler(e -> currentSelectionPresenter.refresh(dashboardContext, false));
+        final HandlerRegistration handlerRegistration = dashboardContext.addContextChangeHandler(e ->
+                currentSelectionPresenter.refresh(dashboardContext, false));
         ShowPopupEvent.builder(currentSelectionPresenter)
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(PopupSize.resizable(600, 800))
@@ -426,20 +426,20 @@ public class DashboardPresenter
 
             dashboardContext.setDashboardDocRef(docRef);
             components.clear();
-            LayoutConfig layoutConfig = null;
+            MutableLayoutConfig layoutConfig = null;
 
-            final DashboardConfig dashboardConfig = dashboard.getDashboardConfig();
+            DashboardConfig dashboardConfig = dashboard.getDashboardConfig();
             if (dashboardConfig != null) {
                 queryToolbarPresenter.setTimeRange(dashboardConfig.getTimeRange());
 
-                layoutConfig = dashboardConfig.getLayout();
+                layoutConfig = MutableConfigUtil.fromLayoutConfig(dashboardConfig.getLayout());
                 layoutConstraints = dashboardConfig.getLayoutConstraints();
                 if (layoutConstraints == null) {
                     layoutConstraints = new LayoutConstraints(true, true);
                 }
-                preferredSize = dashboardConfig.getPreferredSize();
+                preferredSize = MutableConfigUtil.fromSize(dashboardConfig.getPreferredSize());
                 if (preferredSize == null) {
-                    preferredSize = new Size();
+                    preferredSize = new MutableSize();
                 }
 
                 List<ComponentConfig> componentConfigList = dashboardConfig.getComponents();
@@ -448,7 +448,7 @@ public class DashboardPresenter
                 if (dashboardConfig.getModelVersion() == null) {
                     if (componentConfigList == null) {
                         componentConfigList = new ArrayList<>();
-                        dashboardConfig.setComponents(componentConfigList);
+                        dashboardConfig = dashboardConfig.copy().components(componentConfigList).build();
                     }
 
                     final String params = NullSafe.string(dashboardConfig.getParameters());
@@ -459,16 +459,18 @@ public class DashboardPresenter
                                     DEFAULT_PARAMS_INPUT,
                                     DEFAULT_PARAMS_INPUT,
                                     new KeyValueInputComponentSettings(params)));
-                    final TabConfig tabConfig = new TabConfig(DEFAULT_PARAMS_INPUT, true);
-                    final List<TabConfig> tabs = new ArrayList<>();
-                    tabs.add(tabConfig);
-                    final TabLayoutConfig tabLayoutConfig =
-                            new TabLayoutConfig(new Size(200, 76), tabs, null);
-                    final List<LayoutConfig> children = new ArrayList<>();
-                    children.add(tabLayoutConfig);
-                    children.add(layoutConfig);
-                    layoutConfig = new SplitLayoutConfig(new Size(200, 76), Dimension.Y, children);
-                    dashboardConfig.setLayout(layoutConfig);
+                    final MutableTabConfig tabConfig = new MutableTabConfig(DEFAULT_PARAMS_INPUT, true);
+                    final MutableTabLayoutConfig tabLayoutConfig =
+                            new MutableTabLayoutConfig(new MutableSize(200, 76), null);
+                    tabLayoutConfig.add(tabConfig);
+
+                    final MutableSplitLayoutConfig splitLayoutConfig = new MutableSplitLayoutConfig(new MutableSize(200,
+                            76), Dimension.Y);
+                    splitLayoutConfig.add(tabLayoutConfig);
+                    splitLayoutConfig.add(layoutConfig);
+                    layoutConfig = splitLayoutConfig;
+
+//                    dashboardConfig = dashboardConfig.copy().layout(layoutConfig).build();
                 }
 
                 if (componentConfigList != null) {
@@ -595,8 +597,8 @@ public class DashboardPresenter
             component.setDashboardContext(dashboardContext);
 //            component.setDesignMode(designMode);
 
-            if (component instanceof HasDirtyHandlers) {
-                ((HasDirtyHandlers) component).addDirtyHandler(event -> setDirty(true));
+            if (component instanceof final HasChangeHandlers hasChangeHandlers) {
+                hasChangeHandlers.addChangeHandler(this::onChange);
             }
 
             // Set params on the component if it needs them.
@@ -653,16 +655,17 @@ public class DashboardPresenter
             componentDataList.add(componentConfig);
         }
 
-        final DashboardConfig dashboardConfig = new DashboardConfig();
-        dashboardConfig.setTimeRange(queryToolbarPresenter.getTimeRange());
-        dashboardConfig.setComponents(componentDataList);
-        dashboardConfig.setLayout(layoutPresenter.getLayoutConfig());
-        dashboardConfig.setLayoutConstraints(layoutConstraints);
-        dashboardConfig.setPreferredSize(preferredSize);
-        dashboardConfig.setDesignMode(false);
-        dashboardConfig.setModelVersion(VERSION_7_2_0);
-        dashboard.setDashboardConfig(dashboardConfig);
-        return dashboard;
+        final DashboardConfig dashboardConfig = DashboardConfig
+                .builder()
+                .timeRange(queryToolbarPresenter.getTimeRange())
+                .components(componentDataList)
+                .layout(MutableConfigUtil.toLayoutConfig(layoutPresenter.getLayoutConfig()))
+                .layoutConstraints(layoutConstraints)
+                .preferredSize(MutableConfigUtil.toSize(preferredSize))
+                .designMode(false)
+                .modelVersion(VERSION_7_2_0)
+                .build();
+        return dashboard.copy().dashboardConfig(dashboardConfig).build();
     }
 
     @Override
@@ -677,14 +680,7 @@ public class DashboardPresenter
         return DashboardDoc.TYPE;
     }
 
-    @Override
-    public void onDirty() {
-//        if (designMode) {
-        setDirty(true);
-//        }
-    }
-
-    public void duplicateTabTo(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
+    public void duplicateTabTo(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig) {
         final DocSelectionPopup chooser = dashboardSelection.get();
         chooser.setCaption("Choose Dashboard");
         chooser.setIncludedTypes(DashboardDoc.TYPE);
@@ -704,28 +700,28 @@ public class DashboardPresenter
         });
     }
 
-    public void duplicateTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tab) {
+    public void duplicateTab(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tab) {
         duplicateTabs(tabLayoutConfig, Collections.singletonList(tab), components);
     }
 
-    public void duplicateTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig,
+    public void duplicateTab(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tabConfig,
                              final Components components) {
         duplicateTabs(tabLayoutConfig, Collections.singletonList(tabConfig), components);
     }
 
-    public void duplicateTabPanel(final TabLayoutConfig tabLayoutConfig) {
+    public void duplicateTabPanel(final MutableTabLayoutConfig tabLayoutConfig) {
         duplicateTabs(tabLayoutConfig, new ArrayList<>(tabLayoutConfig.getTabs()), components);
     }
 
-    public void duplicateTabs(final TabLayoutConfig tabLayoutConfig, final List<TabConfig> tabs,
+    public void duplicateTabs(final MutableTabLayoutConfig tabLayoutConfig, final List<MutableTabConfig> tabs,
                               final Components orginalComponents) {
         // Get sets of unique component ids and names.
         final ComponentNameSet componentNameSet = new ComponentNameSet(this.components);
         final Map<String, String> idMapping = new HashMap<>();
         final List<ComponentConfig> newComponents = new ArrayList<>();
-        final Map<String, TabConfig> newTabConfigMap = new HashMap<>();
+        final Map<String, MutableTabConfig> newTabConfigMap = new HashMap<>();
         if (tabs != null) {
-            for (final TabConfig tabConfig : tabs) {
+            for (final MutableTabConfig tabConfig : tabs) {
                 // Duplicate the referenced component.
                 final Component originalComponent = orginalComponents.get(tabConfig.getId());
                 originalComponent.write();
@@ -741,7 +737,7 @@ public class DashboardPresenter
                 idMapping.put(tabConfig.getId(), componentId.id);
                 newComponents.add(componentConfig);
 
-                final TabConfig newTabConfig = tabConfig.copy().id(componentId.id).build();
+                final MutableTabConfig newTabConfig = new MutableTabConfig(componentId.id, tabConfig.isVisible());
                 newTabConfigMap.put(componentId.id, newTabConfig);
             }
         }
@@ -783,7 +779,7 @@ public class DashboardPresenter
         for (final ComponentConfig componentConfig : modifiedComponents) {
             final Component component = addComponent(componentConfig.getType(), componentConfig);
             if (component != null) {
-                final TabConfig newTabConfig = newTabConfigMap.get(component.getId());
+                final MutableTabConfig newTabConfig = newTabConfigMap.get(component.getId());
                 component.setTabConfig(newTabConfig);
                 duplicatedComponents.add(component);
             }
@@ -795,7 +791,7 @@ public class DashboardPresenter
         }
 
         if (!duplicatedComponents.isEmpty()) {
-            final TabConfig firstTabConfig = getFirstTabConfig(tabLayoutConfig);
+            final MutableTabConfig firstTabConfig = getFirstTabConfig(tabLayoutConfig);
             final Element selectedComponent = getFirstComponentElement(firstTabConfig);
             final Rect rect = ElementUtil.getClientRect(selectedComponent);
             layoutPresenter.enterNewComponentDestinationMode(
@@ -807,22 +803,22 @@ public class DashboardPresenter
     }
 
     @Override
-    public void removeTab(final TabLayoutConfig tabLayoutConfig, final TabConfig tab) {
+    public void removeTab(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tab) {
         removeTabs(tabLayoutConfig, Collections.singletonList(tab));
     }
 
     @Override
-    public void removeTabPanel(final TabLayoutConfig tabLayoutConfig) {
+    public void removeTabPanel(final MutableTabLayoutConfig tabLayoutConfig) {
         removeTabs(tabLayoutConfig, new ArrayList<>(tabLayoutConfig.getTabs()));
     }
 
-    private void removeTabs(final TabLayoutConfig tabLayoutConfig, final List<TabConfig> tabs) {
+    private void removeTabs(final MutableTabLayoutConfig tabLayoutConfig, final List<MutableTabConfig> tabs) {
         // Figure out what tabs would remain after removal.
         int hiddenCount = 0;
         int totalCount = 0;
-        for (final TabConfig tab : tabLayoutConfig.getTabs()) {
+        for (final MutableTabConfig tab : tabLayoutConfig.getTabs()) {
             if (!tabs.contains(tab)) {
-                if (!tab.visible()) {
+                if (!tab.isVisible()) {
                     hiddenCount++;
                 }
                 totalCount++;
@@ -840,7 +836,7 @@ public class DashboardPresenter
 
             ConfirmEvent.fire(this, message, ok -> {
                 if (ok) {
-                    for (final TabConfig tab : tabs) {
+                    for (final MutableTabConfig tab : tabs) {
                         layoutPresenter.closeTab(tab);
                         final Component component = components.get(tab.getId());
                         if (component != null) {
@@ -858,7 +854,7 @@ public class DashboardPresenter
         }
     }
 
-    public void maximiseTabs(final TabConfig tabConfig) {
+    public void maximiseTabs(final MutableTabConfig tabConfig) {
         maximiseTabsButton.setVisible(false);
         restoreTabsButton.setVisible(true);
         layoutPresenter.maximiseTabs(tabConfig);
@@ -944,9 +940,7 @@ public class DashboardPresenter
     }
 
     @Override
-    public void onDirty(final boolean dirty) {
-        super.onDirty(dirty);
-
+    protected void onDirty() {
         // Only fire tab refresh if the tab has changed.
         if (lastLabel == null || !lastLabel.equals(getLabel())) {
             lastLabel = getLabel();
@@ -975,23 +969,22 @@ public class DashboardPresenter
             final Component componentPresenter = addComponent(componentConfig.getType(), componentConfig);
             if (componentPresenter != null) {
                 componentPresenter.link();
-                final TabConfig tabConfig = new TabConfig(componentId.id, true);
+                final MutableTabConfig tabConfig = new MutableTabConfig(componentId.id, true);
                 componentPresenter.setTabConfig(tabConfig);
 
-                final TabConfig firstTabConfig = getFirstTabConfig(layoutPresenter.getLayoutConfig());
+                final MutableTabConfig firstTabConfig = getFirstTabConfig(layoutPresenter.getLayoutConfig());
                 if (firstTabConfig == null) {
                     // Add the panel directly.
                     // Note that as we don't have any panels then size it to fit the visible area.
-                    final Size visibleSize = layoutPresenter.getVisibleSize();
-                    preferredSize.setWidth(visibleSize.getWidth());
-                    preferredSize.setHeight(visibleSize.getHeight());
+                    final MutableSize visibleSize = layoutPresenter.getVisibleSize();
+                    preferredSize = visibleSize.copy();
 
-                    final TabLayoutConfig tabLayoutConfig =
-                            new TabLayoutConfig(visibleSize, null, 0);
+                    final MutableTabLayoutConfig tabLayoutConfig =
+                            new MutableTabLayoutConfig(visibleSize, 0);
                     tabLayoutConfig.add(tabConfig);
 
                     layoutPresenter.configure(tabLayoutConfig, layoutConstraints, preferredSize);
-                    setDirty(true);
+                    onChange();
 
                     // Show the component settings.
                     componentPresenter.showSettings();
@@ -1009,7 +1002,7 @@ public class DashboardPresenter
         }
     }
 
-    private Element getFirstComponentElement(final TabConfig firstTabConfig) {
+    private Element getFirstComponentElement(final MutableTabConfig firstTabConfig) {
         if (firstTabConfig != null) {
             final Component component = components.get(firstTabConfig.getId());
             if (component != null) {
@@ -1020,20 +1013,20 @@ public class DashboardPresenter
         return getWidget().getElement();
     }
 
-    private TabConfig getFirstTabConfig(final LayoutConfig layoutConfig) {
+    private MutableTabConfig getFirstTabConfig(final MutableLayoutConfig layoutConfig) {
         if (layoutConfig != null) {
-            if (layoutConfig instanceof final SplitLayoutConfig splitLayoutConfig) {
-                final List<LayoutConfig> list = splitLayoutConfig.getChildren();
+            if (layoutConfig instanceof final MutableSplitLayoutConfig splitLayoutConfig) {
+                final List<MutableLayoutConfig> list = splitLayoutConfig.getChildren();
                 if (list != null) {
-                    for (final LayoutConfig child : list) {
-                        final TabConfig tabConfig = getFirstTabConfig(child);
+                    for (final MutableLayoutConfig child : list) {
+                        final MutableTabConfig tabConfig = getFirstTabConfig(child);
                         if (tabConfig != null) {
                             return tabConfig;
                         }
                     }
                 }
 
-            } else if (layoutConfig instanceof final TabLayoutConfig tabLayoutConfig) {
+            } else if (layoutConfig instanceof final MutableTabLayoutConfig tabLayoutConfig) {
                 if (!tabLayoutConfig.getTabs().isEmpty()) {
                     if (tabLayoutConfig.getSelected() >= 0 &&
                         tabLayoutConfig.getSelected() < tabLayoutConfig.getTabs().size()) {
@@ -1046,163 +1039,6 @@ public class DashboardPresenter
         }
         return null;
     }
-
-//    private void addTabPanel(final TabLayoutConfig tabLayoutConfig) {
-//        // Choose where to put the new component in the layout data.
-//        LayoutConfig layoutConfig = layoutPresenter.getLayoutConfig();
-//        if (layoutConfig == null) {
-//            // There is no existing layout so add the new item as a
-//            // single item layout.
-//
-//            layoutConfig = tabLayoutConfig;
-//
-//        } else if (layoutConfig instanceof TabLayoutConfig) {
-//            // If the layout is a single item then replace it with a
-//            // split layout.
-//            final SplitLayoutConfig splitLayoutConfig =
-//                    new SplitLayoutConfig(layoutConfig.getPreferredSize().copy().build(), Dimension.Y);
-//            splitLayoutConfig.add(layoutConfig);
-//            splitLayoutConfig.add(tabLayoutConfig);
-//            layoutConfig = splitLayoutConfig;
-//
-//        } else {
-//            // If the layout is already a split then add a new component
-//            // to the split.
-//            final SplitLayoutConfig parent = (SplitLayoutConfig) layoutConfig;
-//
-//            // Add the new component.
-//            parent.add(tabLayoutConfig);
-//
-//            // Fix the heights of the components to fit the new
-//            // component in.
-//            fixHeights(parent);
-//        }
-//
-//        layoutPresenter.configure(layoutConfig, layoutConstraints, preferredSize);
-//        setDirty(true);
-//    }
-//
-//    private void fixHeights(final SplitLayoutConfig parent) {
-//        // Create a default size to use.
-//        final Size defaultSize = new Size();
-//
-//        if (parent.count() > 1) {
-//            final LayoutConfig previousComponent = parent.get(parent.count() - 2);
-//            final int height = previousComponent.getPreferredSize().getHeight();
-//
-//            // See if the previous component has enough height to be split
-//            // to include the new component.
-//            if (height > (defaultSize.getHeight() * 2)) {
-//                previousComponent.getPreferredSize().setHeight(height - defaultSize.getHeight());
-//            } else {
-//                // The previous component isn't high enough so resize all
-//                // components to fit.
-//                lazyRedistribution(parent);
-//            }
-//        }
-//    }
-//
-//    private void lazyRedistribution(final SplitLayoutConfig parent) {
-//        // Create a default size to use.
-//        final Size defaultSize = new Size();
-//
-//        // See if we can get the currently presented position and size for
-//        // the parent layout.
-//        final PositionAndSize positionAndSize = layoutPresenter.getPositionAndSize(parent);
-//        if (positionAndSize != null) {
-//            // Get the current height of the split layout.
-//            final double height = positionAndSize.getHeight();
-//
-//            final double totalHeight = getTotalHeight(parent);
-//            if (height > 0 && totalHeight > height) {
-//                double amountToSave = totalHeight - height;
-//
-//                // Try and set heights to the default height to claw back
-//                // space we want to save.
-//                for (int i = parent.count() - 1; i >= 0; i--) {
-//                    final LayoutConfig ld = parent.get(i);
-//                    final Size size = ld.getPreferredSize();
-//                    final double diff = size.getHeight() - defaultSize.getHeight();
-//                    if (diff > 0) {
-//                        if (diff > amountToSave) {
-//                            size.setHeight((int) (size.getHeight() - amountToSave));
-//                            amountToSave = 0;
-//                            break;
-//                        } else {
-//                            size.setHeight(defaultSize.getHeight());
-//                            amountToSave -= diff;
-//                        }
-//                    }
-//                }
-//
-//                // If we have more space we need to save then try and
-//                // distribute space evenly between widgets.
-//                if (amountToSave > 0) {
-//                    fairRedistribution(parent, height);
-//                }
-//            }
-//        } else {
-//            // We have no idea what size the parnet container is occupying
-//            // so just reset all heights.
-//            resetAllHeights(parent);
-//        }
-//    }
-//
-//    private void fairRedistribution(final SplitLayoutConfig parent, final double height) {
-//        // Find out how high each component could be if they were all the
-//        // same height.
-//        double fairHeight = (height / parent.count());
-//        fairHeight = Math.max(0D, fairHeight);
-//
-//        double used = 0;
-//        int count = 0;
-//
-//        // Try and find the components that are bigger than their fair size
-//        // and remember the amount of space used by smaller components.
-//        for (int i = parent.count() - 1; i >= 0; i--) {
-//            final LayoutConfig ld = parent.get(i);
-//            final Size size = ld.getPreferredSize();
-//            if (size.getHeight() > fairHeight) {
-//                count++;
-//            } else {
-//                used += size.getHeight();
-//            }
-//        }
-//
-//        // Calculate the height to set all components that are bigger than
-//        // the available height.
-//        if (count > 0) {
-//            final double newHeight = ((height - used) / count);
-//            for (int i = parent.count() - 1; i >= 0; i--) {
-//                final LayoutConfig ld = parent.get(i);
-//                final Size size = ld.getPreferredSize();
-//                if (size.getHeight() > fairHeight) {
-//                    size.setHeight((int) newHeight);
-//                }
-//            }
-//        }
-//    }
-//
-//    private void resetAllHeights(final SplitLayoutConfig parent) {
-//        final Size defaultSize = new Size();
-//        for (int i = 0; i < parent.count(); i++) {
-//            final LayoutConfig ld = parent.get(i);
-//            final Size size = ld.getPreferredSize();
-//            if (size.getHeight() > defaultSize.getHeight()) {
-//                size.setHeight(defaultSize.getHeight());
-//            }
-//        }
-//    }
-//
-//    private double getTotalHeight(final SplitLayoutConfig parent) {
-//        double totalHeight = 0;
-//        for (int i = parent.count() - 1; i >= 0; i--) {
-//            final LayoutConfig ld = parent.get(i);
-//            final Size size = ld.getPreferredSize();
-//            totalHeight += size.getHeight();
-//        }
-//        return totalHeight;
-//    }
 
     @Override
     public void onSearching(final boolean searching) {

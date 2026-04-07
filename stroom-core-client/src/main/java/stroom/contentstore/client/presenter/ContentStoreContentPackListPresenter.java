@@ -54,7 +54,6 @@ public class ContentStoreContentPackListPresenter
     /** Points to top level of this page. Allows updating state of everything. */
     private ContentStorePresenter contentStorePresenter = null;
 
-    /** REST to the server */
     final RestFactory restFactory;
 
     /** Table of content packs */
@@ -73,12 +72,6 @@ public class ContentStoreContentPackListPresenter
     /** Index of the first item in the list of content packs */
     private static final int FIRST_ITEM_INDEX = 0;
 
-    /**
-     * Injected constructor.
-     * @param eventBus GWT event bus
-     * @param view Where this component is going to be inserted
-     * @param restFactory Creates connection to server
-     */
     @SuppressWarnings("unused")
     @Inject
     public ContentStoreContentPackListPresenter(final EventBus eventBus,
@@ -318,16 +311,20 @@ public class ContentStoreContentPackListPresenter
                             .create(ContentStorePresenter.CONTENT_STORE_RESOURCE)
                             .method(res -> res.checkContentUpgradeAvailable(cpws.getContentPack()))
                             .onSuccess(upgradeAvailable -> {
-                                if (upgradeAvailable.getValue()) {
-                                    cpws.setInstallationStatus(ContentStoreContentPackStatus.CONTENT_UPGRADABLE);
-                                    contentPackStatusCache.put(cpws.getContentPack(), cpws.getInstallationStatus());
-                                    if (contentStorePresenter != null) {
-                                        contentStorePresenter.updateState();
+                                if (upgradeAvailable.isOk()) {
+                                    if (upgradeAvailable.getValue() != null && upgradeAvailable.getValue()) {
+                                        cpws.setInstallationStatus(ContentStoreContentPackStatus.CONTENT_UPGRADABLE);
+                                        contentPackStatusCache.put(cpws.getContentPack(), cpws.getInstallationStatus());
+                                        if (contentStorePresenter != null) {
+                                            contentStorePresenter.updateState();
+                                        }
+                                    } else {
+                                        contentPackStatusCache.put(cpws.getContentPack(), cpws.getInstallationStatus());
                                     }
                                 } else {
+                                    cpws.setInstallationStatus(ContentStoreContentPackStatus.ERROR);
                                     contentPackStatusCache.put(cpws.getContentPack(), cpws.getInstallationStatus());
                                 }
-
                                 // Check the next item
                                 doUpgradeCheckOn(rowIndex + 1);
                             })

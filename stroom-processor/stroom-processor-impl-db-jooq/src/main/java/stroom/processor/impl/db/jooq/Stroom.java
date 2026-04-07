@@ -16,6 +16,7 @@ import stroom.processor.impl.db.jooq.tables.ProcessorFeed;
 import stroom.processor.impl.db.jooq.tables.ProcessorFilter;
 import stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker;
 import stroom.processor.impl.db.jooq.tables.ProcessorNode;
+import stroom.processor.impl.db.jooq.tables.ProcessorProfile;
 import stroom.processor.impl.db.jooq.tables.ProcessorTask;
 
 
@@ -58,6 +59,11 @@ public class Stroom extends SchemaImpl {
     public final ProcessorNode PROCESSOR_NODE = ProcessorNode.PROCESSOR_NODE;
 
     /**
+     * The table <code>stroom.processor_profile</code>.
+     */
+    public final ProcessorProfile PROCESSOR_PROFILE = ProcessorProfile.PROCESSOR_PROFILE;
+
+    /**
      * The table <code>stroom.processor_task</code>.
      */
     public final ProcessorTask PROCESSOR_TASK = ProcessorTask.PROCESSOR_TASK;
@@ -83,6 +89,7 @@ public class Stroom extends SchemaImpl {
             ProcessorFilter.PROCESSOR_FILTER,
             ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER,
             ProcessorNode.PROCESSOR_NODE,
+            ProcessorProfile.PROCESSOR_PROFILE,
             ProcessorTask.PROCESSOR_TASK
         );
     }

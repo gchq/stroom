@@ -12,12 +12,9 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,7 +29,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.annotation.impl.db.jooq.Keys;
 import stroom.annotation.impl.db.jooq.Stroom;
-import stroom.annotation.impl.db.jooq.tables.Annotation.AnnotationPath;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
 
 
@@ -136,37 +132,6 @@ public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
         this(DSL.name("annotation_entry"), null);
     }
 
-    public <O extends Record> AnnotationEntry(Table<O> path, ForeignKey<O, AnnotationEntryRecord> childPath, InverseForeignKey<O, AnnotationEntryRecord> parentPath) {
-        super(path, childPath, parentPath, ANNOTATION_ENTRY);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class AnnotationEntryPath extends AnnotationEntry implements Path<AnnotationEntryRecord> {
-        public <O extends Record> AnnotationEntryPath(Table<O> path, ForeignKey<O, AnnotationEntryRecord> childPath, InverseForeignKey<O, AnnotationEntryRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private AnnotationEntryPath(Name alias, Table<AnnotationEntryRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public AnnotationEntryPath as(String alias) {
-            return new AnnotationEntryPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public AnnotationEntryPath as(Name alias) {
-            return new AnnotationEntryPath(alias, this);
-        }
-
-        @Override
-        public AnnotationEntryPath as(Table<?> alias) {
-            return new AnnotationEntryPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -185,18 +150,6 @@ public class AnnotationEntry extends TableImpl<AnnotationEntryRecord> {
     @Override
     public List<ForeignKey<AnnotationEntryRecord, ?>> getReferences() {
         return Arrays.asList(Keys.ANNOTATION_ENTRY_FK_ANNOTATION_ID);
-    }
-
-    private transient AnnotationPath _annotation;
-
-    /**
-     * Get the implicit join path to the <code>stroom.annotation</code> table.
-     */
-    public AnnotationPath annotation() {
-        if (_annotation == null)
-            _annotation = new AnnotationPath(this, Keys.ANNOTATION_ENTRY_FK_ANNOTATION_ID, null);
-
-        return _annotation;
     }
 
     @Override

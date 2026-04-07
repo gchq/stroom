@@ -24,6 +24,8 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.string.StringWrapper;
 
@@ -32,6 +34,8 @@ import jakarta.inject.Provider;
 
 @AutoLogged
 class ReportResourceImpl implements ReportResource {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReportResourceImpl.class);
 
     private final Provider<ReportStore> reportStoreProvider;
     private final Provider<DocumentResourceHelper> documentResourceHelperProvider;
@@ -48,7 +52,11 @@ class ReportResourceImpl implements ReportResource {
 
     @Override
     public ReportDoc fetch(final String uuid) {
-        return documentResourceHelperProvider.get().read(reportStoreProvider.get(), getDocRef(uuid));
+        final ReportDoc reportDoc = documentResourceHelperProvider.get()
+                .read(reportStoreProvider.get(), getDocRef(uuid));
+
+        LOGGER.debug("fetch() - uuid: {}, reportDoc: {}", uuid, reportDoc);
+        return reportDoc;
     }
 
     @Override
@@ -56,6 +64,7 @@ class ReportResourceImpl implements ReportResource {
         if (doc.getUuid() == null || !doc.getUuid().equals(uuid)) {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
+        LOGGER.debug("update() - uuid: {}, doc: {}", uuid, doc);
         return documentResourceHelperProvider.get().update(reportStoreProvider.get(), doc);
     }
 

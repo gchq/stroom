@@ -19,18 +19,11 @@ package stroom.pipeline.refdata.store.offheapstore.serdes;
 import stroom.lmdb.serde.AbstractKryoSerde;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class MapDefinitionSerde extends AbstractKryoSerde<MapDefinition> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(MapDefinitionSerde.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapDefinitionSerde.class);
 
     private final RefStreamDefinitionSerde refStreamDefinitionSerde;
 

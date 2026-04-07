@@ -17,6 +17,7 @@
 package stroom.query.api;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -55,10 +56,22 @@ public final class IncludeExcludeFilter {
                                 @JsonProperty("excludes") final String excludes,
                                 @JsonProperty("includeDictionaries") final List<DocRef> includeDictionaries,
                                 @JsonProperty("excludeDictionaries") final List<DocRef> excludeDictionaries) {
-        this.includes = includes;
-        this.excludes = excludes;
-        this.includeDictionaries = includeDictionaries == null ? new ArrayList<>() : includeDictionaries;
-        this.excludeDictionaries = excludeDictionaries == null ? new ArrayList<>() : excludeDictionaries;
+        if (NullSafe.isBlankString(includes)) {
+            this.includes = null;
+        } else {
+            this.includes = includes;
+        }
+        if (NullSafe.isBlankString(excludes)) {
+            this.excludes = null;
+        } else {
+            this.excludes = excludes;
+        }
+        this.includeDictionaries = includeDictionaries == null
+                ? new ArrayList<>()
+                : includeDictionaries;
+        this.excludeDictionaries = excludeDictionaries == null
+                ? new ArrayList<>()
+                : excludeDictionaries;
     }
 
     public String getIncludes() {

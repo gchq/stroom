@@ -21,7 +21,6 @@ import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.security.api.SecurityContext;
-import stroom.util.AuditUtil;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -98,7 +97,6 @@ public class JobManagerImpl implements JobManager {
     @Override
     public Boolean setNodeEnabled(final String nodeName, final boolean enabled) {
         modifyNode(nodeName, enabled);
-
         return Boolean.TRUE;
     }
 
@@ -133,9 +131,7 @@ public class JobManagerImpl implements JobManager {
 
         final Job job = jobs.getFirst();
         if (job != null) {
-            job.setEnabled(enabled);
-            AuditUtil.stamp(securityContext, job);
-            jobDao.update(job);
+            jobDao.update(job.copy().enabled(enabled).stampAudit(securityContext).build());
         }
     }
 
@@ -152,9 +148,7 @@ public class JobManagerImpl implements JobManager {
 
         final ResultPage<JobNode> jobNodes = jobNodeDao.find(criteria);
         for (final JobNode jobNode : jobNodes.getValues()) {
-            jobNode.setEnabled(enabled);
-            AuditUtil.stamp(securityContext, jobNode);
-            jobNodeDao.update(jobNode);
+            jobNodeDao.update(jobNode.copy().enabled(enabled).stampAudit(securityContext).build());
         }
     }
 
@@ -170,9 +164,7 @@ public class JobManagerImpl implements JobManager {
 
         final ResultPage<JobNode> jobNodes = jobNodeDao.find(criteria);
         for (final JobNode jobNode : jobNodes.getValues()) {
-            jobNode.setEnabled(enabled);
-            AuditUtil.stamp(securityContext, jobNode);
-            jobNodeDao.update(jobNode);
+            jobNodeDao.update(jobNode.copy().enabled(enabled).stampAudit(securityContext).build());
         }
     }
 }

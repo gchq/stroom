@@ -24,11 +24,11 @@ import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.query.common.v2.DataSourceProviderRegistry;
@@ -43,13 +43,11 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 class AnalyticRuleStoreImpl implements AnalyticRuleStore {
@@ -71,7 +69,11 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                           final Provider<ExecutionScheduleDao> executionScheduleDaoProvider,
                           final Provider<DataSourceProviderRegistry> dataSourceProviderRegistryProvider,
                           final SearchRequestFactory searchRequestFactory) {
-        this.store = storeFactory.createStore(serialiser, AnalyticRuleDoc.TYPE, AnalyticRuleDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                AnalyticRuleDoc.TYPE,
+                AnalyticRuleDoc::builder,
+                AnalyticRuleDoc::copy);
         this.securityContext = securityContext;
         this.dataSourceProviderRegistryProvider = dataSourceProviderRegistryProvider;
         this.searchRequestFactory = searchRequestFactory;
@@ -162,13 +164,13 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
         return store.info(docRef);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Map<DocRef, Set<DocRef>> getDependencies() {
@@ -186,8 +188,9 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<AnalyticRuleDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<AnalyticRuleDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
+            final AnalyticRuleDoc.Builder builder = doc.copy();
             try {
                 if (doc.getQuery() != null) {
                     searchRequestFactory.extractDataSourceOnly(doc.getQuery(), docRef -> {
@@ -214,7 +217,7 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
                                             !Objects.equals(remapped.getUuid(), docRef.getUuid())) {
                                             query = query.replaceFirst(docRef.getUuid(), remapped.getUuid());
                                         }
-                                        doc.setQuery(query);
+                                        builder.query(query);
                                     }
                                 });
                             }
@@ -226,16 +229,17 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
             } catch (final RuntimeException e) {
                 LOGGER.debug(e::getMessage, e);
             }
+            return builder.build();
         };
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public AnalyticRuleDoc readDocument(final DocRef docRef) {
@@ -247,13 +251,13 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
         return store.writeDocument(document);
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF DocumentActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public Set<DocRef> listDocuments() {
@@ -262,20 +266,17 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
 
     @Override
     public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
+                                 final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        return store.importDocument(docRef, dataMap, importState, importSettings);
+        return store.importDocument(docRef, importExportDocument, importState, importSettings);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+    public ImportExportDocument exportDocument(final DocRef docRef,
+                                               final boolean omitAuditFields,
+                                               final List<Message> messageList) {
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override
@@ -288,9 +289,9 @@ class AnalyticRuleStoreImpl implements AnalyticRuleStore {
         return null;
     }
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ImportExportActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     @Override
     public List<DocRef> list() {

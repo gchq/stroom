@@ -90,6 +90,7 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
+                                final boolean selectDefaultTab,
                                 final CommonDocLinkTab selectedTab,
                                 final Consumer<MyPresenterWidget<?>> callbackOnOpen,
                                 final TaskMonitorFactory taskMonitorFactory) {
@@ -104,7 +105,7 @@ public class FolderPlugin extends DocumentPlugin<DocRef> {
         }
 
         // Open the tab.
-        contentManager.open(closeHandler, tabData, myPresenterWidget);
+        contentManager.open(closeHandler, tabData, myPresenterWidget, myPresenterWidget, callbackOnOpen);
     }
 
     @Override

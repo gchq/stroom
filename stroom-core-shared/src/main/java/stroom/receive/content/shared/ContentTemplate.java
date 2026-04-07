@@ -19,7 +19,6 @@ package stroom.receive.content.shared;
 import stroom.docref.DocRef;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.query.api.ExpressionOperator;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -79,13 +78,12 @@ public class ContentTemplate {
         if (processorMaxConcurrent < 0) {
             throw new IllegalArgumentException("processorMaxConcurrent must be >= 0");
         }
-        this.enabled = NullSafe.requireNonNullElse(enabled, true);
+        this.enabled = Objects.requireNonNullElse(enabled, true);
         this.templateNumber = templateNumber;
-        this.expression = NullSafe.requireNonNullElseGet(
-                expression,
+        this.expression = Objects.requireNonNullElseGet(expression,
                 () -> ExpressionOperator.builder().build());
-        this.templateType = NullSafe.requireNonNullElse(templateType, DEFAULT_TEMPLATE_TYPE);
-        this.copyElementDependencies = NullSafe.requireNonNullElse(copyElementDependencies, false);
+        this.templateType = Objects.requireNonNullElse(templateType, DEFAULT_TEMPLATE_TYPE);
+        this.copyElementDependencies = Objects.requireNonNullElse(copyElementDependencies, false);
 
         if (this.copyElementDependencies && templateType == TemplateType.PROCESSOR_FILTER) {
             throw new IllegalArgumentException("copyElementDependencies cannot be set to true if templateType is "

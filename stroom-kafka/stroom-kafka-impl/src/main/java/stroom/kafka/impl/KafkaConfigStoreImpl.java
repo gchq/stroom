@@ -18,10 +18,10 @@ package stroom.kafka.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.kafka.shared.KafkaConfigDoc;
@@ -46,7 +46,11 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
                          final Provider<KafkaConfig> kafkaConfigProvider,
                          final KafkaConfigSerialiser serialiser) {
         this.kafkaConfigProvider = kafkaConfigProvider;
-        this.store = storeFactory.createStore(serialiser, KafkaConfigDoc.TYPE, KafkaConfigDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                KafkaConfigDoc.TYPE,
+                KafkaConfigDoc::builder,
+                KafkaConfigDoc::copy);
     }
 
     // ---------------------------------------------------------------------
@@ -161,20 +165,17 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
 
     @Override
     public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
+                                 final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        return store.importDocument(docRef, dataMap, importState, importSettings);
+        return store.importDocument(docRef, importExportDocument, importState, importSettings);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
+    public ImportExportDocument exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

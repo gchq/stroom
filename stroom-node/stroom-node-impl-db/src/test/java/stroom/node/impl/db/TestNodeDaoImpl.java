@@ -21,7 +21,6 @@ import stroom.node.impl.NodeDao;
 import stroom.node.shared.Node;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.db.DbTestUtil;
-import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
@@ -107,9 +106,7 @@ class TestNodeDaoImpl {
         final Node node3 = nodeDao.tryCreate(node2);
         assertThat(node3.getUrl())
                 .isNull();
-
-        node3.setUrl("myUrl");
-        final Node node4 = nodeDao.update(node3);
+        final Node node4 = nodeDao.update(node3.copy().url("myUrl").build());
         assertThat(node4.getUrl())
                 .isEqualTo("myUrl");
     }
@@ -119,11 +116,7 @@ class TestNodeDaoImpl {
     }
 
     private static Node createSkeletonNodeObj(final String nodeName) {
-        final Node node2 = new Node();
-        node2.setName(nodeName);
-        node2.setPriority(1);
-        AuditUtil.stamp(() -> "test", node2);
-        return node2;
+        return Node.builder().name(nodeName).priority(1).stampAudit("test").build();
     }
 
     @Test
@@ -134,16 +127,10 @@ class TestNodeDaoImpl {
         final Node disabledNode2 = createSkeletonNode("disabledNode2");
 
         Stream.of(enabledNode1, enabledNode2)
-                .forEach(node -> {
-                    node.setEnabled(true);
-                    nodeDao.update(node);
-                });
+                .forEach(node -> nodeDao.update(node.copy().enabled(true).build()));
 
         Stream.of(disabledNode1, disabledNode2)
-                .forEach(node -> {
-                    node.setEnabled(false);
-                    nodeDao.update(node);
-                });
+                .forEach(node -> nodeDao.update(node.copy().enabled(false).build()));
 
         final FindNodeCriteria findNodeCriteria = new FindNodeCriteria();
         findNodeCriteria.setEnabled(true);

@@ -23,8 +23,9 @@ import stroom.credentials.shared.Credential;
 import stroom.credentials.shared.CredentialType;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
+import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsView;
 import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.gitrepo.shared.GitRepoPushDto;
 import stroom.gitrepo.shared.GitRepoResource;
@@ -44,7 +45,7 @@ import java.util.Set;
  * Provides the main functionality on the client behind the GitRepo Settings tab.
  */
 public class GitRepoSettingsPresenter
-        extends DocumentEditPresenter<GitRepoSettingsPresenter.GitRepoSettingsView, GitRepoDoc>
+        extends DocPresenter<GitRepoSettingsView, GitRepoDoc>
         implements GitRepoSettingsUiHandlers {
 
     /**
@@ -131,34 +132,28 @@ public class GitRepoSettingsPresenter
     @Override
     protected GitRepoDoc onWrite(final GitRepoDoc doc) {
         final GitRepoSettingsView view = this.getView();
-        doc.setUrl(view.getUrl());
-        doc.setBranch(view.getBranch());
-        doc.setPath(view.getPath());
-        doc.setCommit(view.getCommitToPull());
+        final GitRepoDoc.Builder builder = doc
+                .copy()
+                .url(view.getUrl())
+                .branch(view.getBranch())
+                .path(view.getPath())
+                .commit(view.getCommitToPull());
 
         // Only save autoPush = true if we can push i.e. no commit hash ref
         if (doc.getCommit().isEmpty()) {
-            doc.setAutoPush(view.isAutoPush());
+            builder.autoPush(view.isAutoPush());
         } else {
-            doc.setAutoPush(false);
+            builder.autoPush(false);
             view.setAutoPush(false);
         }
 
         // Credentials - store from local values
         final Credential credential = view.getCredentialSelectionBox().getValue();
-        doc.setCredentialName(credential == null
+        builder.credentialName(credential == null
                 ? null
                 : credential.getName());
 
-        return doc;
-    }
-
-    /**
-     * Called when anything changes, so the UI is dirty.
-     */
-    @Override
-    public void onDirty() {
-        this.setDirty(true);
+        return builder.build();
     }
 
     /**
@@ -290,13 +285,11 @@ public class GitRepoSettingsPresenter
                                     null);
                         }
                     })
-                    .onFailure(error -> {
-                        AlertEvent.fireError(
-                                this,
-                                "Update Check Failure",
-                                error.getMessage(),
-                                null);
-                    })
+                    .onFailure(error -> AlertEvent.fireError(
+                            this,
+                            "Update Check Failure",
+                            error.getMessage(),
+                            null))
                     .taskMonitorFactory(taskMonitorFactory)
                     .exec();
 

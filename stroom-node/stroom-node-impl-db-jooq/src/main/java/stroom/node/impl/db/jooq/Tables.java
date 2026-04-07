@@ -5,6 +5,8 @@ package stroom.node.impl.db.jooq;
 
 
 import stroom.node.impl.db.jooq.tables.Node;
+import stroom.node.impl.db.jooq.tables.NodeGroup;
+import stroom.node.impl.db.jooq.tables.NodeGroupLink;
 
 
 /**
@@ -17,4 +19,14 @@ public class Tables {
      * The table <code>stroom.node</code>.
      */
     public static final Node NODE = Node.NODE;
+
+    /**
+     * The table <code>stroom.node_group</code>.
+     */
+    public static final NodeGroup NODE_GROUP = NodeGroup.NODE_GROUP;
+
+    /**
+     * The table <code>stroom.node_group_link</code>.
+     */
+    public static final NodeGroupLink NODE_GROUP_LINK = NodeGroupLink.NODE_GROUP_LINK;
 }

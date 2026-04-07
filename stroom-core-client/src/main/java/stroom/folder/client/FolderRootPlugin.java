@@ -94,6 +94,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
 //                }));
 //    }
 
+    @Override
     protected FolderRootPresenter createEditor() {
         if (securityContext.hasAppPermission(AppPermission.VIEW_DATA_PERMISSION) ||
             securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
@@ -127,6 +128,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
+                                final boolean selectDefaultTab,
                                 final CommonDocLinkTab selectedTab,
                                 final Consumer<MyPresenterWidget<?>> callbackOnOpen,
                                 final TaskMonitorFactory taskMonitorFactory) {
@@ -139,7 +141,7 @@ public class FolderRootPlugin extends DocumentPlugin<DocRef> implements TabData 
         }
 
         // Open the tab.
-        contentManager.open(closeHandler, tabData, myPresenterWidget);
+        contentManager.open(closeHandler, tabData, myPresenterWidget, myPresenterWidget, callbackOnOpen);
     }
 
     @Override

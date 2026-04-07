@@ -18,11 +18,11 @@ package stroom.view.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
-import stroom.docstore.api.AuditFieldFilter;
-import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DependencyRemapFunction;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
@@ -36,7 +36,6 @@ import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 
 @Singleton
 class ViewStoreImpl implements ViewStore {
@@ -48,7 +47,11 @@ class ViewStoreImpl implements ViewStore {
     ViewStoreImpl(final StoreFactory storeFactory,
                   final ViewSerialiser serialiser,
                   final SecurityContext securityContext) {
-        this.store = storeFactory.createStore(serialiser, ViewDoc.TYPE, ViewDoc::builder);
+        this.store = storeFactory.createStore(
+                serialiser,
+                ViewDoc.TYPE,
+                ViewDoc::builder,
+                ViewDoc::copy);
         this.securityContext = securityContext;
     }
 
@@ -124,14 +127,16 @@ class ViewStoreImpl implements ViewStore {
         store.remapDependencies(docRef, remappings, createMapper());
     }
 
-    private BiConsumer<ViewDoc, DependencyRemapper> createMapper() {
+    private DependencyRemapFunction<ViewDoc> createMapper() {
         return (doc, dependencyRemapper) -> {
+            final ViewDoc.Builder builder = doc.copy();
             if (doc.getDataSource() != null) {
-                doc.setDataSource(dependencyRemapper.remap(doc.getDataSource()));
+                builder.dataSource(dependencyRemapper.remap(doc.getDataSource()));
             }
             if (doc.getPipeline() != null) {
-                doc.setPipeline(dependencyRemapper.remap(doc.getPipeline()));
+                builder.pipeline(dependencyRemapper.remap(doc.getPipeline()));
             }
+            return builder.build();
         };
     }
 
@@ -168,20 +173,17 @@ class ViewStoreImpl implements ViewStore {
 
     @Override
     public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
+                                 final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        return store.importDocument(docRef, dataMap, importState, importSettings);
+        return store.importDocument(docRef, importExportDocument, importState, importSettings);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
+    public ImportExportDocument exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
-        if (omitAuditFields) {
-            return store.exportDocument(docRef, messageList, new AuditFieldFilter<>());
-        }
-        return store.exportDocument(docRef, messageList, d -> d);
+        return store.exportDocument(docRef, omitAuditFields, messageList);
     }
 
     @Override

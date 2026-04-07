@@ -22,8 +22,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.AbstractTabProvider;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -49,7 +49,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import java.util.function.Consumer;
 import javax.inject.Provider;
 
-public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XmlSchemaDoc> {
+public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSchemaDoc> {
 
     private static final XmlSchemaResource XML_SCHEMA_RESOURCE = GWT.create(XmlSchemaResource.class);
 
@@ -133,7 +133,7 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
                 if (!readOnly) {
                     // Enable controls based on user permission
                     registerHandler(presenter.addValueChangeHandler(event -> {
-                        setDirty(true);
+                        onChange();
                         updateDiagram = true;
 
                         // Kick off debounce validation
@@ -145,11 +145,10 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
 
             @Override
             public XmlSchemaDoc onWrite(final EditorPresenter presenter, final XmlSchemaDoc document) {
-                document.setData(presenter.getText().trim());
-                return document;
+                return document.copy().data(presenter.getText().trim()).build();
             }
         });
-        addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
+        addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<XmlSchemaDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -163,8 +162,7 @@ public class XMLSchemaPresenter extends DocumentEditTabPresenter<LinkTabPanelVie
             @Override
             public XmlSchemaDoc onWrite(final MarkdownEditPresenter presenter,
                                         final XmlSchemaDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

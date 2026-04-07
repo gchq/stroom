@@ -12,12 +12,9 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,7 +29,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.annotation.impl.db.jooq.Keys;
 import stroom.annotation.impl.db.jooq.Stroom;
-import stroom.annotation.impl.db.jooq.tables.Annotation.AnnotationPath;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationLinkRecord;
 
 
@@ -101,37 +97,6 @@ public class AnnotationLink extends TableImpl<AnnotationLinkRecord> {
         this(DSL.name("annotation_link"), null);
     }
 
-    public <O extends Record> AnnotationLink(Table<O> path, ForeignKey<O, AnnotationLinkRecord> childPath, InverseForeignKey<O, AnnotationLinkRecord> parentPath) {
-        super(path, childPath, parentPath, ANNOTATION_LINK);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class AnnotationLinkPath extends AnnotationLink implements Path<AnnotationLinkRecord> {
-        public <O extends Record> AnnotationLinkPath(Table<O> path, ForeignKey<O, AnnotationLinkRecord> childPath, InverseForeignKey<O, AnnotationLinkRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private AnnotationLinkPath(Name alias, Table<AnnotationLinkRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public AnnotationLinkPath as(String alias) {
-            return new AnnotationLinkPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public AnnotationLinkPath as(Name alias) {
-            return new AnnotationLinkPath(alias, this);
-        }
-
-        @Override
-        public AnnotationLinkPath as(Table<?> alias) {
-            return new AnnotationLinkPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -155,32 +120,6 @@ public class AnnotationLink extends TableImpl<AnnotationLinkRecord> {
     @Override
     public List<ForeignKey<AnnotationLinkRecord, ?>> getReferences() {
         return Arrays.asList(Keys.ANNOTATION_LINK_FK_ANNOTATION_SRC_ID, Keys.ANNOTATION_LINK_FK_ANNOTATION_DST_ID);
-    }
-
-    private transient AnnotationPath _annotationLinkFkAnnotationSrcId;
-
-    /**
-     * Get the implicit join path to the <code>stroom.annotation</code> table,
-     * via the <code>annotation_link_fk_annotation_src_id</code> key.
-     */
-    public AnnotationPath annotationLinkFkAnnotationSrcId() {
-        if (_annotationLinkFkAnnotationSrcId == null)
-            _annotationLinkFkAnnotationSrcId = new AnnotationPath(this, Keys.ANNOTATION_LINK_FK_ANNOTATION_SRC_ID, null);
-
-        return _annotationLinkFkAnnotationSrcId;
-    }
-
-    private transient AnnotationPath _annotationLinkFkAnnotationDstId;
-
-    /**
-     * Get the implicit join path to the <code>stroom.annotation</code> table,
-     * via the <code>annotation_link_fk_annotation_dst_id</code> key.
-     */
-    public AnnotationPath annotationLinkFkAnnotationDstId() {
-        if (_annotationLinkFkAnnotationDstId == null)
-            _annotationLinkFkAnnotationDstId = new AnnotationPath(this, Keys.ANNOTATION_LINK_FK_ANNOTATION_DST_ID, null);
-
-        return _annotationLinkFkAnnotationDstId;
     }
 
     @Override

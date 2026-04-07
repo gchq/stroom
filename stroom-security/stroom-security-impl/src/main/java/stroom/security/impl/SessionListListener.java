@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import stroom.security.shared.HasUserRef;
 import stroom.security.shared.SessionDetails;
 import stroom.security.shared.SessionListResponse;
 import stroom.security.shared.SessionResource;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.jersey.UriBuilderUtil;
 import stroom.util.jersey.WebTargetFactory;
@@ -53,6 +54,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 @Singleton
@@ -70,6 +72,7 @@ class SessionListListener implements HttpSessionListener, HttpSessionIdListener,
     // user/session/codeFlow stuff
     private final StroomUserIdentityFactory stroomUserIdentityFactory;
     private final SecurityContext securityContext;
+    private final Executor executor;
 
     @Inject
     SessionListListener(final NodeInfo nodeInfo,
@@ -77,13 +80,15 @@ class SessionListListener implements HttpSessionListener, HttpSessionIdListener,
                         final TaskContextFactory taskContextFactory,
                         final WebTargetFactory webTargetFactory,
                         final StroomUserIdentityFactory stroomUserIdentityFactory,
-                        final SecurityContext securityContext) {
+                        final SecurityContext securityContext,
+                        final ExecutorProvider executorProvider) {
         this.nodeInfo = nodeInfo;
         this.nodeService = nodeService;
         this.taskContextFactory = taskContextFactory;
         this.webTargetFactory = webTargetFactory;
         this.stroomUserIdentityFactory = stroomUserIdentityFactory;
         this.securityContext = securityContext;
+        this.executor = executorProvider.get();
     }
 
     @Override
@@ -225,7 +230,7 @@ class SessionListListener implements HttpSessionListener, HttpSessionIdListener,
 
                                     LOGGER.debug("Creating async task for node {}", nodeName);
                                     return CompletableFuture
-                                            .supplyAsync(listSessionsOnNodeTask)
+                                            .supplyAsync(listSessionsOnNodeTask, executor)
                                             .exceptionally(throwable -> {
                                                 LOGGER.error("Error getting session list for node [{}]: {}. " +
                                                              "Enable DEBUG for stacktrace",

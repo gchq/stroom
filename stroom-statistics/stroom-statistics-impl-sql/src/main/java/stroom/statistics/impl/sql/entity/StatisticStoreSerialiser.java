@@ -19,12 +19,12 @@ package stroom.statistics.impl.sql.entity;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class StatisticStoreSerialiser implements DocumentSerialiser2<StatisticStoreDoc> {
 
@@ -36,12 +36,12 @@ public class StatisticStoreSerialiser implements DocumentSerialiser2<StatisticSt
     }
 
     @Override
-    public StatisticStoreDoc read(final Map<String, byte[]> data) throws IOException {
-        return delegate.read(data);
+    public StatisticStoreDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        return delegate.read(importExportDocument);
     }
 
     @Override
-    public Map<String, byte[]> write(final StatisticStoreDoc document) throws IOException {
+    public ImportExportDocument write(final StatisticStoreDoc document) throws IOException {
         return delegate.write(document);
     }
 }

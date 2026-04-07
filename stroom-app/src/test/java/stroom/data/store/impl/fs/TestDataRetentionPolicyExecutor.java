@@ -153,12 +153,12 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
 
     private void setupDataRetentionRules(final String feedName) {
         final DocRef docRef = dataRetentionRulesService.createDocument("test");
-        final DataRetentionRules dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
+        DataRetentionRules dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
 
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         builder.addTextTerm(MetaFields.FEED, Condition.EQUALS, feedName);
         final DataRetentionRule rule = createRule(1, builder.build(), FIFTY_FIVE, TimeUnit.DAYS);
-        dataRetentionRules.setRules(Collections.singletonList(rule));
+        dataRetentionRules = dataRetentionRules.copy().rules(Collections.singletonList(rule)).build();
         dataRetentionRulesService.writeDocument(dataRetentionRules);
     }
 

@@ -50,7 +50,7 @@ public final class TransformerFactoryFactory {
                 LOGGER.info(SYSPROP_SET_TO + factoryName + END);
             }
 
-            final TransformerFactory factory = newInstance();
+            final TransformerFactory factory = newInstance(false);
             LOGGER.info(IMP_USED + factory.getClass().getName());
         } catch (final Exception ex) {
             LOGGER.error("Unable to create new TransformerFactory!", ex);
@@ -61,13 +61,13 @@ public final class TransformerFactoryFactory {
         // Utility class.
     }
 
-    public static TransformerFactory newInstance() {
+    public static TransformerFactory newInstance(final boolean preventEscapeSwitching) {
         final TransformerFactory factory = TransformerFactory.newInstance();
         secureProcessing(factory);
 
         final SaxonTransformerFactory saxonTransformerFactory = (SaxonTransformerFactory) factory;
         final Configuration configuration = saxonTransformerFactory.getConfiguration();
-        configuration.setSerializerFactory(new MySerializerFactory(configuration));
+        configuration.setSerializerFactory(new MySerializerFactory(configuration, preventEscapeSwitching));
 
         return factory;
     }
@@ -82,13 +82,17 @@ public final class TransformerFactoryFactory {
 
     private static class MySerializerFactory extends SerializerFactory {
 
-        public MySerializerFactory(final Configuration config) {
+        private final boolean preventEscapeSwitching;
+
+        public MySerializerFactory(final Configuration config,
+                                   final boolean preventEscapeSwitching) {
             super(config);
+            this.preventEscapeSwitching = preventEscapeSwitching;
         }
 
         @Override
         protected Emitter newXMLEmitter(final Properties properties) {
-            return new MyXmlEmitter();
+            return new MyXmlEmitter(preventEscapeSwitching);
         }
     }
 }

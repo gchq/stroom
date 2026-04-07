@@ -34,7 +34,7 @@ public final class ProcessorFilterRow extends ProcessorListRow {
     private static final Expander EXPANDER = new Expander(1, false, true);
 
     @JsonProperty
-    private final ProcessorFilter processorFilter;
+    private ProcessorFilter processorFilter;
 
     @JsonCreator
     public ProcessorFilterRow(@JsonProperty("processorFilter") final ProcessorFilter processorFilter) {
@@ -43,6 +43,10 @@ public final class ProcessorFilterRow extends ProcessorListRow {
 
     public ProcessorFilter getProcessorFilter() {
         return processorFilter;
+    }
+
+    public void setProcessorFilter(final ProcessorFilter processorFilter) {
+        this.processorFilter = processorFilter;
     }
 
     @JsonIgnore
