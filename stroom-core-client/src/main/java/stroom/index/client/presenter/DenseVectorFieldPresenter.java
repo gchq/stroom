@@ -21,6 +21,7 @@ import stroom.index.client.presenter.DenseVectorFieldPresenter.DenseVectorFieldV
 import stroom.item.client.SelectionBox;
 import stroom.openai.shared.OpenAIModelDoc;
 import stroom.query.api.datasource.DenseVectorFieldConfig;
+import stroom.query.api.datasource.DenseVectorFieldConfig.RerankModelType;
 import stroom.query.api.datasource.DenseVectorFieldConfig.VectorSimilarityFunctionType;
 import stroom.security.shared.DocumentPermission;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -35,35 +36,50 @@ import com.gwtplatform.mvp.client.View;
 
 public class DenseVectorFieldPresenter extends MyPresenterWidget<DenseVectorFieldView> {
 
-    private final DocSelectionBoxPresenter modelPresenter;
+    private final DocSelectionBoxPresenter embeddingModelPresenter;
+    private final DocSelectionBoxPresenter rerankModelPresenter;
 
     @Inject
     public DenseVectorFieldPresenter(final EventBus eventBus,
                                      final DenseVectorFieldView view,
-                                     final DocSelectionBoxPresenter modelPresenter) {
+                                     final DocSelectionBoxPresenter embeddingModelPresenter,
+                                     final DocSelectionBoxPresenter rerankModelPresenter) {
         super(eventBus, view);
-        this.modelPresenter = modelPresenter;
+        this.embeddingModelPresenter = embeddingModelPresenter;
+        this.rerankModelPresenter = rerankModelPresenter;
 
-        modelPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
-        modelPresenter.setRequiredPermissions(DocumentPermission.VIEW);
-        view.setModelView(modelPresenter.getView());
+        embeddingModelPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
+        embeddingModelPresenter.setRequiredPermissions(DocumentPermission.VIEW);
+        view.setEmbeddingModelView(embeddingModelPresenter.getView());
+
+        rerankModelPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
+        rerankModelPresenter.setRequiredPermissions(DocumentPermission.VIEW);
+        view.setRerankModelView(rerankModelPresenter.getView());
     }
 
     public void read(final DenseVectorFieldConfig config) {
-        modelPresenter.setSelectedEntityReference(config.getModelRef(), true);
+        embeddingModelPresenter.setSelectedEntityReference(config.getEmbeddingModelRef(), true);
+        rerankModelPresenter.setSelectedEntityReference(config.getRerankModelRef(), true);
         getView().getVectorSimilarityFunctionType().setValue(config.getVectorSimilarityFunction());
         getView().setSegmentSize(config.getSegmentSize());
         getView().setOverlapSize(config.getOverlapSize());
         getView().setNearestNeighbourCount(config.getNearestNeighbourCount());
+        getView().getRerankModelType().setValue(config.getRerankModelType());
+        getView().setRerankBatchSize(config.getRerankBatchSize());
+        getView().setRerankScoreMinimum(config.getRerankScoreMinimum());
     }
 
     public DenseVectorFieldConfig write() {
         return DenseVectorFieldConfig.builder()
-                .modelRef(modelPresenter.getSelectedEntityReference())
+                .embeddingModelRef(embeddingModelPresenter.getSelectedEntityReference())
                 .vectorSimilarityFunction(getView().getVectorSimilarityFunctionType().getValue())
                 .segmentSize(getView().getSegmentSize())
                 .overlapSize(getView().getOverlapSize())
                 .nearestNeighbourCount(getView().getNearestNeighbourCount())
+                .rerankModelRef(rerankModelPresenter.getSelectedEntityReference())
+                .rerankModelType(getView().getRerankModelType().getValue())
+                .rerankBatchSize(getView().getRerankBatchSize())
+                .rerankScoreMinimum(getView().getRerankScoreMinimum())
                 .build();
     }
 
@@ -74,14 +90,14 @@ public class DenseVectorFieldPresenter extends MyPresenterWidget<DenseVectorFiel
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption(caption)
-                .onShow(e -> modelPresenter.focus())
+                .onShow(e -> embeddingModelPresenter.focus())
                 .onHideRequest(handler)
                 .fire();
     }
 
     public interface DenseVectorFieldView extends View {
 
-        void setModelView(View view);
+        void setEmbeddingModelView(View view);
 
         SelectionBox<VectorSimilarityFunctionType> getVectorSimilarityFunctionType();
 
@@ -96,5 +112,17 @@ public class DenseVectorFieldPresenter extends MyPresenterWidget<DenseVectorFiel
         int getNearestNeighbourCount();
 
         void setNearestNeighbourCount(int nearestNeighbourCount);
+
+        void setRerankModelView(View view);
+
+        SelectionBox<RerankModelType> getRerankModelType();
+
+        int getRerankBatchSize();
+
+        void setRerankBatchSize(int rerankBatchSize);
+
+        float getRerankScoreMinimum();
+
+        void setRerankScoreMinimum(float rerankScoreMinimum);
     }
 }

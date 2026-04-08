@@ -18,6 +18,8 @@ package stroom.query.api.datasource;
 
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
+import stroom.util.shared.AbstractBuilder;
+import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,8 +31,12 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class DenseVectorFieldConfig {
 
+    public static final Float DEFAULT_RERANK_SCORE_MINIMUM = 0.8f;
+    private static final RerankModelType DEFAULT_RERANK_MODEL_TYPE = RerankModelType.OPEN_AI;
+    private static final int DEFAULT_RERANK_BATCH_SIZE = 1000;
+
     @JsonProperty
-    private final DocRef modelRef;
+    private final DocRef embeddingModelRef;
     @JsonProperty
     private final VectorSimilarityFunctionType vectorSimilarityFunction;
 
@@ -42,26 +48,44 @@ public class DenseVectorFieldConfig {
     @JsonProperty
     private final int overlapSize;
 
-    // The number of nearest neighbors to gather when querying
+    // The number of nearest neighbours to gather when querying
     @JsonProperty
     private final int nearestNeighbourCount;
 
+
+    @JsonProperty
+    private final DocRef rerankModelRef;
+    @JsonProperty
+    private final RerankModelType rerankModelType;
+    @JsonProperty
+    private final int rerankBatchSize;
+    @JsonProperty
+    private final Float rerankScoreMinimum;
+
     @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
-    public DenseVectorFieldConfig(@JsonProperty("modelRef") final DocRef modelRef,
+    public DenseVectorFieldConfig(@JsonProperty("embeddingModelRef") final DocRef embeddingModelRef,
                                   @JsonProperty("vectorSimilarityFunction") final VectorSimilarityFunctionType vectorSimilarityFunction,
                                   @JsonProperty("segmentSize") final int segmentSize,
                                   @JsonProperty("overlapSize") final int overlapSize,
-                                  @JsonProperty("nearestNeighbourCount") final int nearestNeighbourCount) {
-        this.modelRef = modelRef;
+                                  @JsonProperty("nearestNeighbourCount") final int nearestNeighbourCount,
+                                  @JsonProperty("rerankModelRef") final DocRef rerankModelRef,
+                                  @JsonProperty("rerankModelType") final RerankModelType rerankModelType,
+                                  @JsonProperty("rerankBatchSize") final Integer rerankBatchSize,
+                                  @JsonProperty("rerankScoreMinimum") final Float rerankScoreMinimum) {
+        this.embeddingModelRef = embeddingModelRef;
         this.vectorSimilarityFunction = vectorSimilarityFunction;
         this.segmentSize = segmentSize;
         this.nearestNeighbourCount = nearestNeighbourCount;
         this.overlapSize = overlapSize;
+        this.rerankModelRef = rerankModelRef;
+        this.rerankModelType = NullSafe.requireNonNullElse(rerankModelType, DEFAULT_RERANK_MODEL_TYPE);
+        this.rerankBatchSize = NullSafe.requireNonNullElse(rerankBatchSize, DEFAULT_RERANK_BATCH_SIZE);
+        this.rerankScoreMinimum = NullSafe.requireNonNullElse(rerankScoreMinimum, DEFAULT_RERANK_SCORE_MINIMUM);
     }
 
-    public DocRef getModelRef() {
-        return modelRef;
+    public DocRef getEmbeddingModelRef() {
+        return embeddingModelRef;
     }
 
     public VectorSimilarityFunctionType getVectorSimilarityFunction() {
@@ -80,6 +104,22 @@ public class DenseVectorFieldConfig {
         return nearestNeighbourCount;
     }
 
+    public DocRef getRerankModelRef() {
+        return rerankModelRef;
+    }
+
+    public RerankModelType getRerankModelType() {
+        return rerankModelType;
+    }
+
+    public int getRerankBatchSize() {
+        return rerankBatchSize;
+    }
+
+    public Float getRerankScoreMinimum() {
+        return rerankScoreMinimum;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass()) {
@@ -89,28 +129,39 @@ public class DenseVectorFieldConfig {
         return segmentSize == that.segmentSize &&
                overlapSize == that.overlapSize &&
                nearestNeighbourCount == that.nearestNeighbourCount &&
-               Objects.equals(modelRef, that.modelRef) &&
-               vectorSimilarityFunction == that.vectorSimilarityFunction;
+               Objects.equals(embeddingModelRef, that.embeddingModelRef) &&
+               vectorSimilarityFunction == that.vectorSimilarityFunction &&
+               Objects.equals(rerankModelRef, that.rerankModelRef) &&
+               rerankModelType == that.rerankModelType &&
+               rerankBatchSize == that.rerankBatchSize &&
+               Objects.equals(rerankScoreMinimum, that.rerankScoreMinimum);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                modelRef,
+        return Objects.hash(embeddingModelRef,
                 vectorSimilarityFunction,
                 segmentSize,
                 overlapSize,
-                nearestNeighbourCount);
+                nearestNeighbourCount,
+                rerankModelRef,
+                rerankModelType,
+                rerankBatchSize,
+                rerankScoreMinimum);
     }
 
     @Override
     public String toString() {
         return "DenseVectorFieldConfig{" +
-               "modelRef=" + modelRef +
+               "embeddingModelRef=" + embeddingModelRef +
                ", vectorSimilarityFunction=" + vectorSimilarityFunction +
                ", segmentSize=" + segmentSize +
                ", overlapSize=" + overlapSize +
                ", nearestNeighbourCount=" + nearestNeighbourCount +
+               ", rerankModelRef=" + rerankModelRef +
+               ", rerankModelType=" + rerankModelType +
+               ", rerankBatchSize=" + rerankBatchSize +
+               ", rerankScoreMinimum=" + rerankScoreMinimum +
                '}';
     }
 
@@ -157,6 +208,23 @@ public class DenseVectorFieldConfig {
         }
     }
 
+    public enum RerankModelType implements HasDisplayValue {
+        JINA("Jina"),
+        COHERE("Cohere"),
+        OPEN_AI("Open AI");
+
+        private final String displayValue;
+
+        RerankModelType(final String displayValue) {
+            this.displayValue = displayValue;
+        }
+
+        @Override
+        public String getDisplayValue() {
+            return displayValue;
+        }
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -165,57 +233,94 @@ public class DenseVectorFieldConfig {
         return new Builder(this);
     }
 
-    public static final class Builder {
+    public static final class Builder extends AbstractBuilder<DenseVectorFieldConfig, DenseVectorFieldConfig.Builder> {
 
-        private DocRef modelRef;
+        private DocRef embeddingModelRef;
         private VectorSimilarityFunctionType vectorSimilarityFunction = VectorSimilarityFunctionType.DOT_PRODUCT;
         private int segmentSize = 2000;
         private int overlapSize = 200;
         private int nearestNeighbourCount = 10;
+        private DocRef rerankModelRef;
+        private RerankModelType rerankModelType = RerankModelType.OPEN_AI;
+        private int rerankBatchSize = DEFAULT_RERANK_BATCH_SIZE;
+        private Float rerankScoreMinimum = DEFAULT_RERANK_SCORE_MINIMUM;
 
         private Builder() {
         }
 
-        public Builder(final DenseVectorFieldConfig indexField) {
-            this.modelRef = indexField.modelRef;
-            this.vectorSimilarityFunction = indexField.vectorSimilarityFunction;
-            this.segmentSize = indexField.segmentSize;
-            this.overlapSize = indexField.overlapSize;
-            this.nearestNeighbourCount = indexField.nearestNeighbourCount;
+        public Builder(final DenseVectorFieldConfig config) {
+            this.embeddingModelRef = config.embeddingModelRef;
+            this.vectorSimilarityFunction = config.vectorSimilarityFunction;
+            this.segmentSize = config.segmentSize;
+            this.overlapSize = config.overlapSize;
+            this.nearestNeighbourCount = config.nearestNeighbourCount;
+            this.rerankModelRef = config.rerankModelRef;
+            this.rerankModelType = config.rerankModelType;
+            this.rerankBatchSize = config.rerankBatchSize;
+            this.rerankScoreMinimum = config.rerankScoreMinimum;
         }
 
-        public Builder modelRef(final DocRef modelRef) {
-            this.modelRef = modelRef;
-            return this;
+        public Builder embeddingModelRef(final DocRef embeddingModelRef) {
+            this.embeddingModelRef = embeddingModelRef;
+            return self();
         }
 
         public Builder vectorSimilarityFunction(final VectorSimilarityFunctionType vectorSimilarityFunction) {
             this.vectorSimilarityFunction = vectorSimilarityFunction;
-            return this;
+            return self();
         }
 
         public Builder segmentSize(final int segmentSize) {
             this.segmentSize = segmentSize;
-            return this;
+            return self();
         }
 
         public Builder overlapSize(final int overlapSize) {
             this.overlapSize = overlapSize;
-            return this;
+            return self();
         }
 
         public Builder nearestNeighbourCount(final int nearestNeighbourCount) {
             this.nearestNeighbourCount = nearestNeighbourCount;
+            return self();
+        }
+
+        public Builder rerankModelRef(final DocRef rerankModelRef) {
+            this.rerankModelRef = rerankModelRef;
+            return self();
+        }
+
+        public Builder rerankModelType(final RerankModelType rerankModelType) {
+            this.rerankModelType = rerankModelType;
+            return self();
+        }
+
+        public Builder rerankBatchSize(final int rerankBatchSize) {
+            this.rerankBatchSize = rerankBatchSize;
+            return self();
+        }
+
+        public Builder rerankScoreMinimum(final Float rerankScoreMinimum) {
+            this.rerankScoreMinimum = rerankScoreMinimum;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
             return this;
         }
 
         public DenseVectorFieldConfig build() {
             return new DenseVectorFieldConfig(
-                    modelRef,
+                    embeddingModelRef,
                     vectorSimilarityFunction,
                     segmentSize,
                     overlapSize,
-                    nearestNeighbourCount);
+                    nearestNeighbourCount,
+                    rerankModelRef,
+                    rerankModelType,
+                    rerankBatchSize,
+                    rerankScoreMinimum);
         }
     }
 }
