@@ -47,6 +47,7 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.scheduler.Schedule;
+import stroom.util.shared.scheduler.ScheduleType;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -245,14 +246,31 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
             }
 
             // Update tracker.
+            final long lastEffectiveExecutionTime = effectiveExecutionTime.toEpochMilli();
+            final long nextEffectiveExecutionTime;
+            if (executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
+                nextEffectiveExecutionTime = effectiveExecutionTime.toEpochMilli();
+            } else {
+                nextEffectiveExecutionTime = nextExecutionTime.toEpochMilli();
+            }
             final ExecutionTracker executionTracker = new ExecutionTracker(
                     now.toEpochMilli(),
-                    effectiveExecutionTime.toEpochMilli(),
-                    nextExecutionTime.toEpochMilli());
+                    lastEffectiveExecutionTime,
+                    nextEffectiveExecutionTime);
             if (currentTracker != null) {
                 executionScheduleDao.updateTracker(executionSchedule, executionTracker);
             } else {
                 executionScheduleDao.createTracker(executionSchedule, executionTracker);
+            }
+
+            if (executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
+                executionScheduleDao.updateExecutionSchedule(executionSchedule
+                        .copy()
+                        .enabled(false)
+                        .scheduleBounds(new ScheduleBounds(effectiveExecutionTime.toEpochMilli(),
+                                                           effectiveExecutionTime.toEpochMilli()))
+                        .build()
+                );
             }
 
             if (executionResult.status() == null) {
@@ -490,7 +508,9 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
         final Trigger trigger = TriggerFactory.create(schedule);
 
         final Instant effectiveExecutionTime;
-        if (currentTracker != null) {
+        if (schedule.getType().equals(ScheduleType.INSTANT)) {
+            effectiveExecutionTime = executionTime;
+        } else if (currentTracker != null) {
             effectiveExecutionTime = Instant.ofEpochMilli(currentTracker.getNextEffectiveExecutionTimeMs());
         } else {
             if (scheduleBounds != null && scheduleBounds.getStartTimeMs() != null) {
@@ -506,7 +526,8 @@ public final class ScheduledExecutorService<T> implements HasUserDependencies {
             endTime = Instant.ofEpochMilli(scheduleBounds.getEndTimeMs());
         }
 
-        if (!effectiveExecutionTime.isAfter(executionTime) && !effectiveExecutionTime.isAfter(endTime)) {
+        if (!effectiveExecutionTime.isAfter(executionTime) && !effectiveExecutionTime.isAfter(endTime)
+            || schedule.getType() == ScheduleType.INSTANT) {
             taskContext.info(() -> "Executing schedule '" +
                                    executionSchedule.getName() +
                                    "' with effective time: " +

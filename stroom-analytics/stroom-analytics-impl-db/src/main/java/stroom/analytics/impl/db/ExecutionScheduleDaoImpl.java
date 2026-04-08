@@ -16,10 +16,10 @@
 
 package stroom.analytics.impl.db;
 
+import stroom.analytics.impl.ExecuteNow;
+import stroom.analytics.impl.ExecuteNowType;
 import stroom.analytics.impl.ExecutionNode;
 import stroom.analytics.impl.ExecutionScheduleDao;
-import stroom.analytics.impl.ReportExecutor;
-import stroom.analytics.impl.ScheduledQueryAnalyticExecutor;
 import stroom.analytics.impl.db.jooq.tables.records.ExecutionScheduleRecord;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionHistory;
@@ -65,6 +65,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -79,26 +80,23 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
 
     private final AnalyticsDbConnProvider analyticsDbConnProvider;
     private final Provider<UserRefLookup> userRefLookupProvider;
-    private final Provider<ScheduledQueryAnalyticExecutor> scheduledQueryAnalyticExecutorProvider;
-    private final Provider<ReportExecutor> reportExecutorProvider;
     private final SecurityContext securityContext;
     private final DocRefInfoService docRefInfoService;
     private final ExpressionMapper expressionMapper;
+    private final Provider<Map<ExecuteNowType, ExecuteNow>> executeNowMapProvider;
 
     @Inject
     public ExecutionScheduleDaoImpl(final AnalyticsDbConnProvider analyticsDbConnProvider,
                                     final Provider<UserRefLookup> userRefLookupProvider,
-                                    final Provider<ScheduledQueryAnalyticExecutor> scheduledQueryAEProvider,
-                                    final Provider<ReportExecutor> reportExecutorProvider,
                                     final SecurityContext securityContext,
                                     final DocRefInfoService docRefInfoService,
-                                    final ExpressionMapperFactory expressionMapperFactory) {
+                                    final ExpressionMapperFactory expressionMapperFactory,
+                                    final Provider<Map<ExecuteNowType, ExecuteNow>> executeNowMapProvider) {
         this.analyticsDbConnProvider = analyticsDbConnProvider;
         this.userRefLookupProvider = userRefLookupProvider;
-        this.scheduledQueryAnalyticExecutorProvider = scheduledQueryAEProvider;
-        this.reportExecutorProvider = reportExecutorProvider;
         this.securityContext = securityContext;
         this.docRefInfoService = docRefInfoService;
+        this.executeNowMapProvider = executeNowMapProvider;
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ExecutionScheduleFields.FIELD_ID, EXECUTION_SCHEDULE.ID, Integer::valueOf);
@@ -473,13 +471,11 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                 .set(EXECUTION_SCHEDULE.START_TIME_MS,
                         executionSchedule.getScheduleBounds() == null
                                 ? null
-                                :
-                                        executionSchedule.getScheduleBounds().getStartTimeMs())
+                                : executionSchedule.getScheduleBounds().getStartTimeMs())
                 .set(EXECUTION_SCHEDULE.END_TIME_MS,
                         executionSchedule.getScheduleBounds() == null
                                 ? null
-                                :
-                                        executionSchedule.getScheduleBounds().getEndTimeMs())
+                                : executionSchedule.getScheduleBounds().getEndTimeMs())
                 .set(EXECUTION_SCHEDULE.DOC_TYPE, executionSchedule.getOwningDoc().getType())
                 .set(EXECUTION_SCHEDULE.DOC_UUID, executionSchedule.getOwningDoc().getUuid())
                 .set(EXECUTION_SCHEDULE.RUN_AS_USER_UUID, runAsUser.getUuid())
@@ -526,22 +522,14 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
     @Override
     public Boolean executeSchedulesNow(final List<ExecutionSchedule> schedules) {
         try {
-            final List<ExecutionSchedule> analyticRuleSchedules = new ArrayList<>();
-            final List<ExecutionSchedule> reportSchedules = new ArrayList<>();
             for (final ExecutionSchedule schedule : schedules) {
-                switch (schedule.getOwningDoc().getType()) {
-                    case AnalyticRuleDoc.TYPE -> analyticRuleSchedules.add(schedule);
-                    case ReportDoc.TYPE -> reportSchedules.add(schedule);
-                    default -> throw new UnsupportedOperationException(
-                            "Unsupported execution schedule type: " + schedule.getOwningDoc().getType()
-                    );
+                final ExecuteNow executeNow = executeNowMapProvider.get()
+                        .get(new ExecuteNowType(schedule.getOwningDoc().getType()));
+                if (executeNow == null) {
+                    throw new UnsupportedOperationException(
+                            "Unsupported execution schedule type: " + schedule.getOwningDoc().getType());
                 }
-            }
-            if (!analyticRuleSchedules.isEmpty()) {
-                scheduledQueryAnalyticExecutorProvider.get().execFromSchedules(analyticRuleSchedules);
-            }
-            if (!reportSchedules.isEmpty()) {
-                reportExecutorProvider.get().execFromSchedules(reportSchedules);
+                executeNow.execute(schedule);
             }
         } catch (final RuntimeException e) {
             LOGGER.error(() ->
