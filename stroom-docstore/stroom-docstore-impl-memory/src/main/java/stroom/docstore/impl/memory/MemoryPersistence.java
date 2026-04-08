@@ -19,6 +19,7 @@ package stroom.docstore.impl.memory;
 import stroom.docref.DocRef;
 import stroom.docstore.api.RWLockFactory;
 import stroom.docstore.impl.Persistence;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.util.shared.Clearable;
 
 import jakarta.inject.Singleton;
@@ -33,7 +34,7 @@ public class MemoryPersistence implements Persistence, Clearable {
 
     private static final RWLockFactory LOCK_FACTORY = new NoLockFactory();
 
-    private final Map<DocRef, Map<String, byte[]>> map = new ConcurrentHashMap<>();
+    private final Map<DocRef, ImportExportDocument> map = new ConcurrentHashMap<>();
 
     @Override
     public boolean exists(final DocRef docRef) {
@@ -41,12 +42,12 @@ public class MemoryPersistence implements Persistence, Clearable {
     }
 
     @Override
-    public Map<String, byte[]> read(final DocRef docRef) {
+    public ImportExportDocument read(final DocRef docRef) {
         return map.get(docRef);
     }
 
     @Override
-    public void write(final DocRef docRef, final boolean update, final Map<String, byte[]> data) {
+    public void write(final DocRef docRef, final boolean update, final ImportExportDocument importExportDocument) {
         if (update) {
             if (!map.containsKey(docRef)) {
                 throw new RuntimeException("Document does not exist with uuid=" + docRef.getUuid());
@@ -55,7 +56,7 @@ public class MemoryPersistence implements Persistence, Clearable {
             throw new RuntimeException("Document already exists with uuid=" + docRef.getUuid());
         }
 
-        map.put(docRef, data);
+        map.put(docRef, importExportDocument);
     }
 
     @Override

@@ -62,6 +62,7 @@ public class ScheduledProcessEditViewImpl
     @Inject
     public ScheduledProcessEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        endTime.setOptional(true);
     }
 
     @Override

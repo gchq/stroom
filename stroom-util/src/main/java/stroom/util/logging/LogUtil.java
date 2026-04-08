@@ -349,6 +349,23 @@ public final class LogUtil {
     }
 
     /**
+     * Applies itemMapper to each item in collection then calls {@link NullSafe#toString(Object)}
+     * on each one, then joins all the resulting strings with ', '.
+     * If itemMapper is null or collection is null or empty, it returns an empty string.
+     */
+    public static <T> String toCsv(final Collection<T> collection,
+                                   final Function<T, Object> itemMapper) {
+        if (itemMapper == null) {
+            return "";
+        } else {
+            return NullSafe.stream(collection)
+                    .map(itemMapper)
+                    .map(NullSafe::toString)
+                    .collect(Collectors.joining(", "));
+        }
+    }
+
+    /**
      * @return The simple class name followed by value.toString().
      * If value is null, returns null.
      */

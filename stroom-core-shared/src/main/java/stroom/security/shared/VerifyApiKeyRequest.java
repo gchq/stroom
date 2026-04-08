@@ -16,8 +16,6 @@
 
 package stroom.security.shared;
 
-import stroom.util.shared.NullSafe;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -41,8 +39,7 @@ public class VerifyApiKeyRequest {
             @JsonProperty("requiredAppPermissions") final AppPermissionSet requiredAppPermissions) {
 
         this.apiKey = Objects.requireNonNull(apiKey);
-        this.requiredAppPermissions = NullSafe.requireNonNullElseGet(
-                requiredAppPermissions,
+        this.requiredAppPermissions = Objects.requireNonNullElseGet(requiredAppPermissions,
                 AppPermissionSet::empty);
     }
 

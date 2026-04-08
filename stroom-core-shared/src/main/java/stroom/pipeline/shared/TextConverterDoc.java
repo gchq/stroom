@@ -19,12 +19,10 @@ package stroom.pipeline.shared;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.AbstractEmbeddableDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasData;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -89,7 +87,7 @@ public class TextConverterDoc extends AbstractEmbeddableDoc implements HasData {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser, embeddedIn);
         this.description = description;
         this.data = data;
-        this.converterType = NullSafe.requireNonNullElse(converterType, TextConverterType.NONE);
+        this.converterType = Objects.requireNonNullElse(converterType, TextConverterType.NONE);
     }
 
     /**

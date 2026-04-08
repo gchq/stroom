@@ -161,8 +161,7 @@ public class CIKey implements Comparable<CIKey> {
         } else {
             // See if we have a common key that matches exactly with the one requested.
             // Case-sensitive here because CIKey should wrap the exact case passed in.
-            return NullSafe.requireNonNullElseGet(
-                    CIKeys.getCommonKey(key),
+            return Objects.requireNonNullElseGet(CIKeys.getCommonKey(key),
                     () -> {
                         checkNoUpperCaseChars(lowerKey);
                         if (key.equalsIgnoreCase(lowerKey)) {

@@ -20,7 +20,6 @@ import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.AuditInfoBuilder;
 import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -30,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @JsonInclude(Include.NON_NULL)
@@ -294,8 +294,8 @@ public class Activity implements HasAuditInfoGetters, HasIntegerId {
             this.validation = validation;
             this.validationMessage = validationMessage;
             this.value = value;
-            this.showInSelection = NullSafe.requireNonNullElse(showInSelection, true);
-            this.showInList = NullSafe.requireNonNullElse(showInList, true);
+            this.showInSelection = Objects.requireNonNullElse(showInSelection, true);
+            this.showInList = Objects.requireNonNullElse(showInList, true);
         }
 
 //        private void setDefaultValues() {

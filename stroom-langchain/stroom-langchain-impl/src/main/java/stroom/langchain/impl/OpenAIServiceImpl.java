@@ -222,7 +222,8 @@ public class OpenAIServiceImpl implements OpenAIService {
         final OpenAiEmbeddingModelBuilder modelBuilder = OpenAiEmbeddingModel.builder()
                 .modelName(modelDoc.getModelId())
                 .apiKey(apiKey)
-                .httpClientBuilder(httpClientBuilder);
+                .httpClientBuilder(httpClientBuilder)
+                .dimensions(1024); // Lucene can only support 1024 dimensions.
 
         if (NullSafe.isNonEmptyString(modelDoc.getBaseUrl())) {
             // Override the base URL

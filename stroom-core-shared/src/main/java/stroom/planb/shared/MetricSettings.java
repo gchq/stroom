@@ -16,8 +16,6 @@
 
 package stroom.planb.shared;
 
-import stroom.util.shared.NullSafe;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -53,8 +51,8 @@ public final class MetricSettings
                           @JsonProperty("keySchema") final MetricKeySchema keySchema,
                           @JsonProperty("valueSchema") final MetricValueSchema valueSchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.keySchema = NullSafe.requireNonNullElse(keySchema, new MetricKeySchema.Builder().build());
-        this.valueSchema = NullSafe.requireNonNullElse(valueSchema, new MetricValueSchema.Builder().build());
+        this.keySchema = Objects.requireNonNullElse(keySchema, new MetricKeySchema.Builder().build());
+        this.valueSchema = Objects.requireNonNullElse(valueSchema, new MetricValueSchema.Builder().build());
     }
 
     public MetricKeySchema getKeySchema() {

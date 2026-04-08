@@ -25,7 +25,6 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
-import stroom.entity.client.presenter.AbstractDocPresenter;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourcePresenter;
@@ -88,9 +87,9 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
 
     @Override
     public void save(final DocumentTabData tabData) {
-        if (tabData instanceof AbstractDocPresenter<?, ?>) {
-            final AbstractDocPresenter<?, StatisticStoreDoc> presenter =
-                    (AbstractDocPresenter<?, StatisticStoreDoc>) tabData;
+        if (tabData instanceof DocPresenter<?, ?>) {
+            final DocPresenter<?, StatisticStoreDoc> presenter =
+                    (DocPresenter<?, StatisticStoreDoc>) tabData;
             if (presenter.isDirty()) {
                 final StatisticStoreDoc entity = presenter.getEntity();
 
@@ -106,7 +105,7 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
         }
     }
 
-    private void doConfirmSave(final AbstractDocPresenter<?, StatisticStoreDoc> presenter,
+    private void doConfirmSave(final DocPresenter<?, StatisticStoreDoc> presenter,
                                final StatisticStoreDoc entity,
                                final StatisticStoreDoc entityFromDb,
                                final TaskMonitorFactory taskMonitorFactory) {
@@ -158,7 +157,7 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
         }
     }
 
-    private void doSave(final AbstractDocPresenter<?, StatisticStoreDoc> presenter,
+    private void doSave(final DocPresenter<?, StatisticStoreDoc> presenter,
                         final StatisticStoreDoc entity,
                         final TaskMonitorFactory taskMonitorFactory) {
         save(DocRefUtil.create(entity), entity, doc ->

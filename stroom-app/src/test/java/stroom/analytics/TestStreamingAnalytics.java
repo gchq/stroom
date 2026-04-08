@@ -16,7 +16,7 @@
 
 package stroom.analytics;
 
-import stroom.analytics.rule.impl.AnalyticRuleProcessors;
+import stroom.analytics.impl.AnalyticRuleProcessors;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.QueryLanguageVersion;

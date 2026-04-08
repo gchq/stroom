@@ -635,6 +635,15 @@ public class NullSafe {
     /**
      * @return The size of the collection or zero if null.
      */
+    public static <T> int size(final ResultPage<T> resultPage) {
+        return resultPage != null
+                ? resultPage.size()
+                : 0;
+    }
+
+    /**
+     * @return The size of the collection or zero if null.
+     */
     public static <T> int size(final T[] items) {
         return items != null
                 ? items.length
@@ -826,6 +835,25 @@ public class NullSafe {
     }
 
     /**
+     * Returns a list containing only the non-null items from list.
+     * If list is null, an empty list will be returned.
+     *
+     * @return An immutable list containing no null values.
+     */
+    public static <L extends List<T>, T> List<T> removeNulls(final L list) {
+        if (list == null || list.stream().allMatch(Objects::isNull)) {
+            return Collections.emptyList();
+        } else if (list.stream().allMatch(Objects::nonNull)) {
+            return Collections.unmodifiableList(list);
+        } else {
+            //noinspection SimplifyStreamApiCallChains // cos GWT
+            return list.stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toUnmodifiableList());
+        }
+    }
+
+    /**
      * Returns an unmodifiable view of a new {@link ArrayList} instance that has been populated with the
      * contents of list in a null-safe way.
      * Allows null list elements.
@@ -882,6 +910,24 @@ public class NullSafe {
         return set != null
                 ? Collections.unmodifiableSet(set)
                 : Collections.emptySet();
+    }
+
+    /**
+     * Returns a set containing only the non-null items from set.
+     * If set is null, an empty set will be returned.
+     *
+     * @return An immutable set containing no null values.
+     */
+    public static <S extends Set<T>, T> Set<T> removeNulls(final S set) {
+        if (set == null || set.stream().allMatch(Objects::isNull)) {
+            return Collections.emptySet();
+        } else if (set.stream().allMatch(Objects::nonNull)) {
+            return Collections.unmodifiableSet(set);
+        } else {
+            return set.stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toUnmodifiableSet());
+        }
     }
 
     /**
@@ -1096,14 +1142,14 @@ public class NullSafe {
     public static <T1, R> R getOrElse(final T1 value,
                                       final Function<T1, R> getter,
                                       final R other) {
-        return requireNonNullElse(get(value, getter), other);
+        return Objects.requireNonNullElse(get(value, getter), other);
     }
 
     public static <T1, T2, R> R getOrElse(final T1 value,
                                           final Function<T1, T2> getter1,
                                           final Function<T2, R> getter2,
                                           final R other) {
-        return requireNonNullElse(get(value, getter1, getter2), other);
+        return Objects.requireNonNullElse(get(value, getter1, getter2), other);
     }
 
     public static <T1, T2, T3, R> R getOrElse(final T1 value,
@@ -1111,7 +1157,7 @@ public class NullSafe {
                                               final Function<T2, T3> getter2,
                                               final Function<T3, R> getter3,
                                               final R other) {
-        return requireNonNullElse(get(value, getter1, getter2, getter3), other);
+        return Objects.requireNonNullElse(get(value, getter1, getter2, getter3), other);
     }
 
     public static <T1, T2, T3, T4, R> R getOrElse(final T1 value,
@@ -1120,7 +1166,7 @@ public class NullSafe {
                                                   final Function<T3, T4> getter3,
                                                   final Function<T4, R> getter4,
                                                   final R other) {
-        return requireNonNullElse(get(value, getter1, getter2, getter3, getter4), other);
+        return Objects.requireNonNullElse(get(value, getter1, getter2, getter3, getter4), other);
     }
 
     public static <T1> String toStringOrElse(final T1 value,
@@ -1139,14 +1185,14 @@ public class NullSafe {
     public static <T1, R> R getOrElseGet(final T1 value,
                                          final Function<T1, R> getter,
                                          final Supplier<R> otherSupplier) {
-        return requireNonNullElseGet(get(value, getter), otherSupplier);
+        return Objects.requireNonNullElseGet(get(value, getter), otherSupplier);
     }
 
     public static <T1, T2, R> R getOrElseGet(final T1 value,
                                              final Function<T1, T2> getter1,
                                              final Function<T2, R> getter2,
                                              final Supplier<R> otherSupplier) {
-        return requireNonNullElseGet(get(value, getter1, getter2), otherSupplier);
+        return Objects.requireNonNullElseGet(get(value, getter1, getter2), otherSupplier);
     }
 
     public static <T1, T2, T3, R> R getOrElseGet(final T1 value,
@@ -1154,7 +1200,7 @@ public class NullSafe {
                                                  final Function<T2, T3> getter2,
                                                  final Function<T3, R> getter3,
                                                  final Supplier<R> otherSupplier) {
-        return requireNonNullElseGet(get(value, getter1, getter2, getter3), otherSupplier);
+        return Objects.requireNonNullElseGet(get(value, getter1, getter2, getter3), otherSupplier);
     }
 
     public static <T1, T2, T3, T4, R> R getOrElseGet(final T1 value,
@@ -1163,7 +1209,7 @@ public class NullSafe {
                                                      final Function<T3, T4> getter3,
                                                      final Function<T4, R> getter4,
                                                      final Supplier<R> otherSupplier) {
-        return requireNonNullElseGet(get(value, getter1, getter2, getter3, getter4), otherSupplier);
+        return Objects.requireNonNullElseGet(get(value, getter1, getter2, getter3, getter4), otherSupplier);
     }
 
     /**
@@ -1734,6 +1780,21 @@ public class NullSafe {
     }
 
     /**
+     * If value is null or empty an {@link IllegalArgumentException} will be thrown with a message
+     * supplied by messageSupplier.
+     *
+     * @param value           THe string to test.
+     * @param messageSupplier The supplier of the exception message.
+     * @return The supplied string if not empty.
+     */
+    public static String requireNonEmtpyString(final String value, final Supplier<String> messageSupplier) {
+        if (isEmptyString(value)) {
+            throw new IllegalArgumentException(Objects.requireNonNull(messageSupplier).get());
+        }
+        return value;
+    }
+
+    /**
      * Require that both {@code value} is non-null and the result of applying {@code getter} to
      * {@code value} is non-null. Throws an {@link NullPointerException} otherwise.
      *
@@ -1786,58 +1847,54 @@ public class NullSafe {
     }
 
     /**
-     * GWT currently doesn't emulate requireNonNullElse
-     */
-    public static <T> T requireNonNullElse(final T obj, final T other) {
-        return (obj != null)
-                ? obj
-                : Objects.requireNonNull(other, "other");
-    }
-
-    /**
-     * GWT currently doesn't emulate requireNonNullElse
-     */
-    public static <T> T requireNonNullElseGet(final T obj, final Supplier<? extends T> supplier) {
-        return (obj != null)
-                ? obj
-                : Objects.requireNonNull(
-                        Objects.requireNonNull(supplier, "supplier").get(),
-                        "supplier.get()");
-    }
-
-    /**
-     * Will throw a {@link RuntimeException} if value is null or empty.
+     * If value is null or empty an {@link IllegalArgumentException} will be thrown.
+     *
+     * @param value           THe string to test.
+     * @return The supplied string if not empty.
      */
     public static String requireNonEmptyString(final String value) {
         return requireNonEmptyString(value, null);
     }
 
     /**
-     * Will throw a {@link RuntimeException} if value is null or empty.
+     * If value is null or empty an {@link IllegalArgumentException} will be thrown with a message
+     * supplied by messageSupplier.
+     *
+     * @param value           THe string to test.
+     * @param messageSupplier The supplier of the exception message.
+     * @return The supplied string if not empty.
      */
     public static String requireNonEmptyString(final String value, final Supplier<String> messageSupplier) {
         if (isEmptyString(value)) {
             final String msg = NullSafe.getOrElse(messageSupplier, Supplier::get, "Non-empty string required");
-            throw new RuntimeException(msg);
+            throw new IllegalArgumentException(msg);
         } else {
             return value;
         }
     }
 
     /**
-     * Will throw a {@link RuntimeException} if value is null, empty or only contains whitespace.
+     * If value is null, empty or blank an {@link IllegalArgumentException} will be thrown.
+     *
+     * @param value           THe string to test.
+     * @return The supplied string if not blank.
      */
     public static String requireNonBlankString(final String value) {
         return requireNonBlankString(value, null);
     }
 
     /**
-     * Will throw a {@link RuntimeException} if value is null, empty or only contains whitespace.
+     * If value is null, empty or blank an {@link IllegalArgumentException} will be thrown with a message
+     * supplied by messageSupplier.
+     *
+     * @param value           THe string to test.
+     * @param messageSupplier The supplier of the exception message.
+     * @return The supplied string if not blank.
      */
     public static String requireNonBlankString(final String value, final Supplier<String> messageSupplier) {
         if (isBlankString(value)) {
             final String msg = NullSafe.getOrElse(messageSupplier, Supplier::get, "Non-blank string required");
-            throw new RuntimeException(msg);
+            throw new IllegalArgumentException(msg);
         } else {
             return value;
         }

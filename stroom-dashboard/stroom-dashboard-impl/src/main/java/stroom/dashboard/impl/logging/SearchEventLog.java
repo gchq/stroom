@@ -23,6 +23,7 @@ import stroom.query.api.Param;
 import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
 import stroom.query.api.SearchRequest;
+import stroom.query.api.TimeRange;
 import stroom.query.shared.DownloadQueryResultsRequest;
 
 import java.util.List;
@@ -35,6 +36,7 @@ public interface SearchEventLog {
                 String rawQuery,
                 DocRef dataSourceRef,
                 ExpressionOperator expression,
+                TimeRange timeRange,
                 String queryInfo,
                 List<Param> params,
                 List<Result> results,

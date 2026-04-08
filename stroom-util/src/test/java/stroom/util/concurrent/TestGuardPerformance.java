@@ -16,6 +16,7 @@
 
 package stroom.util.concurrent;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -30,8 +31,8 @@ import java.util.stream.IntStream;
 
 public class TestGuardPerformance {
 
-    private final int iterations = 100_000;
-    private final int threadCount = Runtime.getRuntime().availableProcessors();
+    private final int iterations = 1_000_000;
+    private final int threadCount = Integer.highestOneBit(Runtime.getRuntime().availableProcessors());
     private volatile Object env = new Object();
 
     private IntStream buildThreadCountStream() {
@@ -42,16 +43,16 @@ public class TestGuardPerformance {
     }
 
     @Test
+    @Disabled
     public void perfTest() {
-        // Do multiple rounds to let it warm up
         for (int i = 1; i <= 3; i++) {
             System.out.println("Round: " + i + " SimpleGuard");
-            buildThreadCountStream()
+            IntStream.of(1, 2, 4, 8, 16, 32, 64)
                     .forEach(stripes -> runTest(stripes, new SimpleGuard(this::onClose)));
 
 
             System.out.println("Round: " + i + " StripedGuard");
-            buildThreadCountStream()
+            IntStream.of(1, 2, 4, 8, 16, 32, 64)
                     .forEach(stripes -> runTest(stripes, new StripedGuard(this::onClose, stripes)));
         }
     }

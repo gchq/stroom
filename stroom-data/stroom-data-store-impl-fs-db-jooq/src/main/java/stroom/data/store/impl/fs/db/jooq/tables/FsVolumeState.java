@@ -8,14 +8,10 @@ import java.util.Collection;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -30,7 +26,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.data.store.impl.fs.db.jooq.Keys;
 import stroom.data.store.impl.fs.db.jooq.Stroom;
-import stroom.data.store.impl.fs.db.jooq.tables.FsVolume.FsVolumePath;
 import stroom.data.store.impl.fs.db.jooq.tables.records.FsVolumeStateRecord;
 
 
@@ -114,37 +109,6 @@ public class FsVolumeState extends TableImpl<FsVolumeStateRecord> {
         this(DSL.name("fs_volume_state"), null);
     }
 
-    public <O extends Record> FsVolumeState(Table<O> path, ForeignKey<O, FsVolumeStateRecord> childPath, InverseForeignKey<O, FsVolumeStateRecord> parentPath) {
-        super(path, childPath, parentPath, FS_VOLUME_STATE);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class FsVolumeStatePath extends FsVolumeState implements Path<FsVolumeStateRecord> {
-        public <O extends Record> FsVolumeStatePath(Table<O> path, ForeignKey<O, FsVolumeStateRecord> childPath, InverseForeignKey<O, FsVolumeStateRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private FsVolumeStatePath(Name alias, Table<FsVolumeStateRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public FsVolumeStatePath as(String alias) {
-            return new FsVolumeStatePath(DSL.name(alias), this);
-        }
-
-        @Override
-        public FsVolumeStatePath as(Name alias) {
-            return new FsVolumeStatePath(alias, this);
-        }
-
-        @Override
-        public FsVolumeStatePath as(Table<?> alias) {
-            return new FsVolumeStatePath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -158,19 +122,6 @@ public class FsVolumeState extends TableImpl<FsVolumeStateRecord> {
     @Override
     public UniqueKey<FsVolumeStateRecord> getPrimaryKey() {
         return Keys.KEY_FS_VOLUME_STATE_PRIMARY;
-    }
-
-    private transient FsVolumePath _fsVolume;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_oidc_v7_11.fs_volume</code> table
-     */
-    public FsVolumePath fsVolume() {
-        if (_fsVolume == null)
-            _fsVolume = new FsVolumePath(this, null, Keys.FS_VOLUME_FK_FS_VOLUME_STATE_ID.getInverseKey());
-
-        return _fsVolume;
     }
 
     @Override

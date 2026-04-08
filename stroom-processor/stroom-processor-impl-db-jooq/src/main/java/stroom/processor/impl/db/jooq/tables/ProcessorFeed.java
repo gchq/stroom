@@ -10,14 +10,10 @@ import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,7 +28,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.processor.impl.db.jooq.Keys;
 import stroom.processor.impl.db.jooq.Stroom;
-import stroom.processor.impl.db.jooq.tables.ProcessorTask.ProcessorTaskPath;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFeedRecord;
 
 
@@ -96,37 +91,6 @@ public class ProcessorFeed extends TableImpl<ProcessorFeedRecord> {
         this(DSL.name("processor_feed"), null);
     }
 
-    public <O extends Record> ProcessorFeed(Table<O> path, ForeignKey<O, ProcessorFeedRecord> childPath, InverseForeignKey<O, ProcessorFeedRecord> parentPath) {
-        super(path, childPath, parentPath, PROCESSOR_FEED);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class ProcessorFeedPath extends ProcessorFeed implements Path<ProcessorFeedRecord> {
-        public <O extends Record> ProcessorFeedPath(Table<O> path, ForeignKey<O, ProcessorFeedRecord> childPath, InverseForeignKey<O, ProcessorFeedRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private ProcessorFeedPath(Name alias, Table<ProcessorFeedRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public ProcessorFeedPath as(String alias) {
-            return new ProcessorFeedPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public ProcessorFeedPath as(Name alias) {
-            return new ProcessorFeedPath(alias, this);
-        }
-
-        @Override
-        public ProcessorFeedPath as(Table<?> alias) {
-            return new ProcessorFeedPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -145,19 +109,6 @@ public class ProcessorFeed extends TableImpl<ProcessorFeedRecord> {
     @Override
     public List<UniqueKey<ProcessorFeedRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.KEY_PROCESSOR_FEED_PROCESSOR_FEED_NAME);
-    }
-
-    private transient ProcessorTaskPath _processorTask;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_v7_11.processor_task</code> table
-     */
-    public ProcessorTaskPath processorTask() {
-        if (_processorTask == null)
-            _processorTask = new ProcessorTaskPath(this, null, Keys.PROCESSOR_TASK_FK_PROCESSOR_FEED_ID.getInverseKey());
-
-        return _processorTask;
     }
 
     @Override

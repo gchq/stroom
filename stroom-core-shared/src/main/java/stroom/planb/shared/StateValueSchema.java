@@ -17,7 +17,6 @@
 package stroom.planb.shared;
 
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -48,8 +47,8 @@ public class StateValueSchema {
     @JsonCreator
     public StateValueSchema(@JsonProperty("stateValueType") final StateValueType stateValueType,
                             @JsonProperty("hashLength") final HashLength hashLength) {
-        this.stateValueType = NullSafe.requireNonNullElse(stateValueType, DEFAULT_VALUE_TYPE);
-        this.hashLength = NullSafe.requireNonNullElse(hashLength, DEFAULT_HASH_LENGTH);
+        this.stateValueType = Objects.requireNonNullElse(stateValueType, DEFAULT_VALUE_TYPE);
+        this.hashLength = Objects.requireNonNullElse(hashLength, DEFAULT_HASH_LENGTH);
     }
 
     public StateValueType getStateValueType() {

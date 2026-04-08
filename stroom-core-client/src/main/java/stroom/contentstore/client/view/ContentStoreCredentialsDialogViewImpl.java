@@ -54,9 +54,6 @@ public class ContentStoreCredentialsDialogViewImpl
     @UiField
     PasswordTextBox pwdPassword;
 
-    /**
-     * Injected constructor.
-     */
     @Inject
     @SuppressWarnings("unused")
     public ContentStoreCredentialsDialogViewImpl(final Binder binder) {

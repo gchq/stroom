@@ -16,8 +16,6 @@
 
 package stroom.query.api;
 
-import stroom.util.shared.NullSafe;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -70,7 +68,7 @@ public final class NumberFormatSettings implements FormatSettings {
     @JsonIgnore
     public boolean isDefault() {
         return (decimalPlaces == null || decimalPlaces.equals(DEFAULT_DECIMAL_PLACES))
-                && (useSeparator == null || useSeparator.equals(DEFAULT_USE_SEPARATOR));
+               && (useSeparator == null || useSeparator.equals(DEFAULT_USE_SEPARATOR));
     }
 
     @Override
@@ -83,7 +81,7 @@ public final class NumberFormatSettings implements FormatSettings {
         }
         final NumberFormatSettings that = (NumberFormatSettings) o;
         return Objects.equals(decimalPlaces, that.decimalPlaces) &&
-                Objects.equals(useSeparator, that.useSeparator);
+               Objects.equals(useSeparator, that.useSeparator);
     }
 
     @Override
@@ -94,9 +92,9 @@ public final class NumberFormatSettings implements FormatSettings {
     @Override
     public String toString() {
         return "NumberFormatSettings{" +
-                "decimalPlaces=" + decimalPlaces +
-                ", useSeparator=" + useSeparator +
-                '}';
+               "decimalPlaces=" + decimalPlaces +
+               ", useSeparator=" + useSeparator +
+               '}';
     }
 
     public static Builder builder() {
@@ -147,8 +145,8 @@ public final class NumberFormatSettings implements FormatSettings {
 
         public NumberFormatSettings build() {
             return new NumberFormatSettings(
-                    NullSafe.requireNonNullElse(decimalPlaces, DEFAULT_DECIMAL_PLACES),
-                    NullSafe.requireNonNullElse(useSeparator, DEFAULT_USE_SEPARATOR));
+                    Objects.requireNonNullElse(decimalPlaces, DEFAULT_DECIMAL_PLACES),
+                    Objects.requireNonNullElse(useSeparator, DEFAULT_USE_SEPARATOR));
         }
     }
 }

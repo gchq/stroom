@@ -52,6 +52,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 
 public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
@@ -364,7 +365,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                     if (docRef == null) {
                         return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     } else {
-                        final String displayValue = docRef.getDisplayValue(NullSafe.requireNonNullElse(
+                        final String displayValue = docRef.getDisplayValue(Objects.requireNonNullElse(
                                 displayType,
                                 DisplayType.AUTO));
                         return NullSafe.isNonBlankString(displayValue)
@@ -389,7 +390,7 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
 //                    if (docRef == null) {
 //                        return null;
 //                    } else {
-//                        return docRef.getDisplayValue(NullSafe.requireNonNullElse(displayType, DisplayType.AUTO));
+//                        return docRef.getDisplayValue(Objects.requireNonNullElse(displayType, DisplayType.AUTO));
 //                    }
 //                }
 //

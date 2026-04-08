@@ -22,7 +22,6 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -34,7 +33,7 @@ import java.util.List;
 import java.util.Objects;
 
 @Description(
-        "Lucene Index is the standard built-in index within Stroom and is one of may data sources.\n" +
+        "Lucene Index is the standard built-in index within Stroom and is one of many data sources.\n" +
         "An index is like a catalog in a library and provides a very fast way to access " +
         "documents/records/events when searching using fields that have been indexed.\n" +
         "The index stores the field values and pointers to the document they came from " +
@@ -124,10 +123,10 @@ public class LuceneIndexDoc extends AbstractDoc {
                           @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
-        this.maxDocsPerShard = NullSafe.requireNonNullElse(maxDocsPerShard, DEFAULT_MAX_DOCS_PER_SHARD);
-        this.partitionBy = NullSafe.requireNonNullElse(partitionBy, DEFAULT_PARTITION_BY);
-        this.partitionSize = NullSafe.requireNonNullElse(partitionSize, DEFAULT_PARTITION_SIZE);
-        this.shardsPerPartition = NullSafe.requireNonNullElse(shardsPerPartition, DEFAULT_SHARDS_PER_PARTITION);
+        this.maxDocsPerShard = Objects.requireNonNullElse(maxDocsPerShard, DEFAULT_MAX_DOCS_PER_SHARD);
+        this.partitionBy = Objects.requireNonNullElse(partitionBy, DEFAULT_PARTITION_BY);
+        this.partitionSize = Objects.requireNonNullElse(partitionSize, DEFAULT_PARTITION_SIZE);
+        this.shardsPerPartition = Objects.requireNonNullElse(shardsPerPartition, DEFAULT_SHARDS_PER_PARTITION);
         this.retentionDayAge = retentionDayAge;
         this.fields = fields;
         this.timeField = timeField;

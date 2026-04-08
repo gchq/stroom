@@ -24,12 +24,15 @@ import stroom.document.client.event.HasDirtyHandlers;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public abstract class DocPresenter<V extends View, D>
-        extends AbstractDocPresenter<V, D>
+        extends MyPresenterWidget<V>
         implements HasDocumentRead<D>, HasDocumentWrite<D>, HasDirtyHandlers, HasClose, ChangeUiHandlers {
 
     private D entity;
@@ -57,7 +60,7 @@ public abstract class DocPresenter<V extends View, D>
         return false;
     }
 
-    private void setDirty(final boolean dirty) {
+    protected void setDirty(final boolean dirty) {
         if (this.dirty != dirty) {
             this.dirty = dirty;
             onDirty();
@@ -115,4 +118,25 @@ public abstract class DocPresenter<V extends View, D>
     public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
         return addHandlerToSource(DirtyEvent.getType(), handler);
     }
+
+    /**
+     * Allows the derived class to specify a callback after the document has been written
+     * to the server. Default is no callback. Override if you want a callback.
+     *
+     * @return null if no callback, otherwise the consumer to be called.
+     */
+    public BiConsumer<D, Consumer<D>> getPostSaveCallback() {
+        return null;
+    }
+
+    /**
+     * Allows the derived class to specify a callback after SaveAs has been invoked.
+     * Default is no callback. Override if you want a callback.
+     *
+     * @return null if no callback, otherwise the consumer to be called.
+     */
+    public BiConsumer<D, Consumer<D>> getPostSaveAsCallback() {
+        return null;
+    }
+
 }

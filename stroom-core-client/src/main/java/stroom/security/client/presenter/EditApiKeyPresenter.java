@@ -46,6 +46,8 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Objects;
+
 public class EditApiKeyPresenter
         extends MyPresenterWidget<EditApiKeyView>
         implements HidePopupRequestEvent.Handler, HasHandlers {
@@ -110,7 +112,7 @@ public class EditApiKeyPresenter
         final PopupSize popupSize = PopupSize.resizableX(600);
         uiConfigCache.get(uiConfigCache -> {
             if (Mode.PRE_CREATE.equals(mode)) {
-                getView().setHashAlgorithm(NullSafe.requireNonNullElse(
+                getView().setHashAlgorithm(Objects.requireNonNullElse(
                         uiConfigCache.getDefaultApiKeyHashAlgorithm(),
                         HashAlgorithm.DEFAULT));
             }

@@ -1,0 +1,87 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:schedule="urn:import:stroom.schedule.client"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client">
+    <g:FlowPanel styleName="documentPermissions form max dock-container-vertical overflow-hidden">
+
+
+        <g:HorizontalPanel verticalAlignment="ALIGN_MIDDLE">
+            <g:Cell width="50px">
+                <tickbox:CustomCheckBox ui:field="nameEnable"/>
+            </g:Cell>
+            <form:FormGroup ui:field="nameForm" identity="name" label="Schedule Name">
+                <g:TextBox ui:field="nameBox" addStyleNames="w-100"/>
+            </form:FormGroup>
+        </g:HorizontalPanel>
+
+        <g:HorizontalPanel verticalAlignment="ALIGN_MIDDLE">
+            <g:Cell width="50px">
+                <tickbox:CustomCheckBox ui:field="enabledEnable"/>
+            </g:Cell>
+            <form:FormGroup ui:field="enabledForm" label="Enabled">
+                <tickbox:CustomCheckBox ui:field="enabledBox"/>
+            </form:FormGroup>
+        </g:HorizontalPanel>
+
+        <g:HorizontalPanel verticalAlignment="ALIGN_MIDDLE">
+            <g:Cell width="50px">
+                <tickbox:CustomCheckBox ui:field="nodeEnable"/>
+            </g:Cell>
+            <form:FormGroup ui:field="nodeForm" identity="analyticProcessingNode" label="Processing Node">
+                <l:SelectionBox ui:field="nodeBox" addStyleNames="w-100"/>
+            </form:FormGroup>
+        </g:HorizontalPanel>
+
+        <g:HorizontalPanel verticalAlignment="ALIGN_MIDDLE">
+            <g:Cell width="50px">
+                <tickbox:CustomCheckBox ui:field="scheduleEnable"/>
+            </g:Cell>
+            <form:FormGroup ui:field="scheduleForm" identity="schedule" label="Schedule">
+                <schedule:ScheduleBox ui:field="scheduleBox" addStyleNames="w-100"/>
+            </form:FormGroup>
+        </g:HorizontalPanel>
+
+        <g:HorizontalPanel verticalAlignment="ALIGN_MIDDLE">
+            <g:Cell width="50px">
+                <tickbox:CustomCheckBox ui:field="startTimeEnable"/>
+            </g:Cell>
+            <form:FormGroup ui:field="startTimeForm" identity="startTime" label="Start Time">
+                <datetimebox:DateTimeBox ui:field="startTimeBox" addStyleNames="w-100"/>
+            </form:FormGroup>
+        </g:HorizontalPanel>
+
+        <g:HorizontalPanel verticalAlignment="ALIGN_MIDDLE">
+            <g:Cell width="50px">
+                <tickbox:CustomCheckBox ui:field="endTimeEnable"/>
+            </g:Cell>
+            <form:FormGroup ui:field="endTimeForm" identity="endTime" label="End Time (Optional)">
+                <datetimebox:DateTimeBox ui:field="endTimeBox" addStyleNames="w-100"/>
+            </form:FormGroup>
+        </g:HorizontalPanel>
+
+        <g:HorizontalPanel verticalAlignment="ALIGN_MIDDLE">
+            <g:Cell width="50px">
+                <tickbox:CustomCheckBox ui:field="runAsUserEnable"/>
+            </g:Cell>
+            <form:FormGroup ui:field="runAsUserForm" identity="runAsUser" label="Run As User">
+                <g:SimplePanel ui:field="runAsUserBox" addStyleNames="w-100"/>
+            </form:FormGroup>
+        </g:HorizontalPanel>
+
+        <g:FlowPanel styleName="dialog-buttons">
+            <g:SimplePanel width="45%">
+                <b:Button ui:field="applySelectionButton" addStyleNames="allow-focus Button--contained-primary w-100" text="Apply to Selection"/>
+            </g:SimplePanel>
+            <g:SimplePanel width="45%">
+                <b:Button ui:field="applyFilteredButton" addStyleNames="allow-focus Button--contained-green w-100" text="Apply to Filtered"/>
+            </g:SimplePanel>
+        </g:FlowPanel>
+
+    </g:FlowPanel>
+</ui:UiBinder>
+

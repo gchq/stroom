@@ -43,18 +43,22 @@ public class AnnotationTag {
     private final String name;
     @JsonProperty
     private final ConditionalFormattingStyle style;
+    @JsonProperty
+    private final String tagText;
 
     @JsonCreator
     public AnnotationTag(@JsonProperty("id") final int id,
                          @JsonProperty("uuid") final String uuid,
                          @JsonProperty("type") final AnnotationTagType type,
                          @JsonProperty("name") final String name,
-                         @JsonProperty("style") final ConditionalFormattingStyle style) {
+                         @JsonProperty("style") final ConditionalFormattingStyle style,
+                         @JsonProperty("tagText") final String tagText) {
         this.id = id;
         this.uuid = uuid;
         this.type = type;
         this.name = name;
         this.style = style;
+        this.tagText = tagText;
     }
 
     public int getId() {
@@ -75,6 +79,10 @@ public class AnnotationTag {
 
     public ConditionalFormattingStyle getStyle() {
         return style;
+    }
+
+    public String getTagText() {
+        return tagText;
     }
 
     @Override
@@ -102,6 +110,7 @@ public class AnnotationTag {
                ", type=" + type +
                ", name='" + name + '\'' +
                ", style=" + style +
+               ", tagText='" + tagText + '\'' +
                '}';
     }
 
@@ -120,6 +129,7 @@ public class AnnotationTag {
         private AnnotationTagType type;
         private String name;
         private ConditionalFormattingStyle style;
+        private String tagText;
 
         public Builder() {
         }
@@ -130,6 +140,7 @@ public class AnnotationTag {
             this.type = doc.type;
             this.name = doc.name;
             this.style = doc.style;
+            this.tagText = doc.tagText;
         }
 
         public Builder id(final int id) {
@@ -157,6 +168,11 @@ public class AnnotationTag {
             return self();
         }
 
+        public Builder tagText(final String tagText) {
+            this.tagText = tagText;
+            return self();
+        }
+
         protected Builder self() {
             return this;
         }
@@ -167,7 +183,8 @@ public class AnnotationTag {
                     uuid,
                     type,
                     name,
-                    style);
+                    style,
+                    tagText);
         }
     }
 }

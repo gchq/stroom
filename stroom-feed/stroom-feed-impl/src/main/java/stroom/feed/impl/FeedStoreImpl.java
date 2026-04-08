@@ -24,6 +24,7 @@ import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
@@ -214,7 +215,7 @@ public class FeedStoreImpl implements FeedStore {
 
     @Override
     public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
+                                 final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
         DocRef newDocRef = docRef;
@@ -226,9 +227,9 @@ public class FeedStoreImpl implements FeedStore {
 
         // If the imported feed's vol grp doesn't exist in this env use our default
         // or null it out
-        Map<String, byte[]> effectiveDataMap = dataMap;
+        ImportExportDocument effectiveDocument = importExportDocument;
         try {
-            final FeedDoc feedDoc = serialiser.read(dataMap);
+            final FeedDoc feedDoc = serialiser.read(importExportDocument);
 
             final String volumeGroup = feedDoc.getVolumeGroup();
             if (volumeGroup != null) {
@@ -243,7 +244,7 @@ public class FeedStoreImpl implements FeedStore {
                                     builder::volumeGroup,
                                     () -> builder.volumeGroup(null));
 
-                    effectiveDataMap = serialiser.write(builder.build());
+                    effectiveDocument = serialiser.write(builder.build());
                 }
             }
         } catch (final IOException e) {
@@ -251,11 +252,11 @@ public class FeedStoreImpl implements FeedStore {
                     docRef, e.getMessage()), e);
         }
 
-        return store.importDocument(newDocRef, effectiveDataMap, importState, importSettings);
+        return store.importDocument(newDocRef, effectiveDocument, importState, importSettings);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
+    public ImportExportDocument exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
         return store.exportDocument(docRef, omitAuditFields, messageList);

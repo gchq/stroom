@@ -20,6 +20,7 @@ import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.concurrent.DurationAdder;
 
+import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.TestFactory;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
@@ -55,6 +57,7 @@ class TestLogUtil {
                         └───────────────┘""");
     }
 
+    @SuppressWarnings("checkstyle:RegexpSingleline") // IDE keeps adding trailing spaces to text block
     @Test
     void inBox_newLine() {
         final String box = LogUtil.inBoxOnNewLine("Hello World");
@@ -62,12 +65,13 @@ class TestLogUtil {
 
         assertThat(box)
                 .isEqualTo("""
-
+                        
                         ┌───────────────┐
                         │  Hello World  │
                         └───────────────┘""");
     }
 
+    @SuppressWarnings("checkstyle:RegexpSingleline") // IDE keeps adding trailing spaces to text block
     @Test
     void inBoxMultiLine() {
         final String box = LogUtil.inBoxOnNewLine("""
@@ -79,7 +83,7 @@ class TestLogUtil {
         LOGGER.info(box);
         assertThat(box)
                 .isEqualTo("""
-
+                        
                         ┌───────────────────────┐
                         │  This is              │
                         │  an example showing   │
@@ -376,5 +380,21 @@ class TestLogUtil {
     @Test
     void message_tooManyArgs() {
         System.out.println(LogUtil.message("Hello {}", "world", "foo"));
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testToCsv() {
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<Integer>>() {
+                })
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(list ->
+                        LogUtil.toCsv(list, i -> i * 10))
+                .withSimpleEqualityAssertion()
+                .addCase(null, "")
+                .addCase(Collections.emptyList(), "")
+                .addCase(List.of(1, 2, 3), "10, 20, 30")
+                .build();
     }
 }

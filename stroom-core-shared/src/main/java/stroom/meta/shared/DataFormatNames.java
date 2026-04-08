@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,20 @@ public class DataFormatNames {
      */
     public static final String XML_FRAGMENT = "XML_FRAGMENT";
     public static final String JSON = "JSON";
+    /**
+     * Each line (delimited by \n) is a valid JSON document. The JSON equivalent of XML_FRAGMENT.
+     * See <a href="https://jsonlines.org">JSON Lines</a>.
+     */
+    public static final String JSON_LINES = "JSON_LINES";
+    /**
+     * YAML Ain't Markup Language.
+     * See <a href="https://yaml.org">YAML</a>.
+     */
     public static final String YAML = "YAML";
+    /**
+     * Tom's Obvious Minimal Language.
+     * See <a href="https://toml.io/en/">TOML</a>.
+     */
     public static final String TOML = "TOML";
     public static final String INI = "INI";
     /**
@@ -85,6 +98,7 @@ public class DataFormatNames {
             XML,
             XML_FRAGMENT,
             JSON,
+            JSON_LINES,
             YAML,
             TOML,
             INI,

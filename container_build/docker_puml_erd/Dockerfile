@@ -1,5 +1,5 @@
 # Need glibc for plant_erd_linux_amd64
-FROM frolvlad/alpine-glibc:alpine-3.17_glibc-2.34
+FROM frolvlad/alpine-glibc:alpine-3.22_glibc-2.42@sha256:bb5dc38d97ced7d9c014dcada2545a343272e4f6a16addc8a2bcbfbed28d302b
 
 ARG DOCKER_HOST
 ENV DOCKER_HOST=$DOCKER_HOST

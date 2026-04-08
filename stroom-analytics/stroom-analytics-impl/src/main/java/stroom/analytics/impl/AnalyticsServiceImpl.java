@@ -17,7 +17,6 @@
 package stroom.analytics.impl;
 
 import stroom.analytics.api.AnalyticsService;
-import stroom.analytics.rule.impl.AnalyticRuleStore;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.DuplicateCheckResource;
@@ -43,7 +42,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
 
     private final EmailSender emailSender;
     private final RuleEmailTemplatingService ruleEmailTemplatingService;
-    private final ScheduledQueryAnalyticExecutor scheduledQueryAnalyticExecutor;
+    private final ScheduledQueryAnalyticExecutable scheduledQueryAnalyticExecutor;
     private final AnalyticRuleStore analyticRuleStore;
     private final Provider<DuplicateCheckResource> duplicateCheckResourceProvider;
     private final Provider<DuplicateCheckService> duplicateCheckServiceProvider;
@@ -51,7 +50,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
     @Inject
     AnalyticsServiceImpl(final EmailSender emailSender,
                          final RuleEmailTemplatingService ruleEmailTemplatingService,
-                         final ScheduledQueryAnalyticExecutor scheduledQueryAnalyticExecutor,
+                         final ScheduledQueryAnalyticExecutable scheduledQueryAnalyticExecutor,
                          final AnalyticRuleStore analyticRuleStore,
                          final Provider<DuplicateCheckResource> duplicateCheckResourceProvider,
                          final Provider<DuplicateCheckService> duplicateCheckServiceProvider) {

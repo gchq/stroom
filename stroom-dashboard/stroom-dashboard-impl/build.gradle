@@ -58,6 +58,9 @@ dependencies {
     implementation libs.slf4j.api
     implementation libs.ws.rs.api
 
+    testImplementation project(':stroom-explorer:stroom-docrefinfo-mock')
+    testImplementation project(':stroom-security:stroom-security-mock')
+
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime
 }

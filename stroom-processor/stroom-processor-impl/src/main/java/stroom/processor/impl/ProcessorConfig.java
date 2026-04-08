@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.validation.constraints.Min;
 
 
 @SuppressWarnings("unused")
@@ -161,6 +162,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         return fillTaskQueue;
     }
 
+    @Min(1)
     @JsonPropertyDescription("The number of tasks to attempt to queue from filters considered in priority order. " +
                              "Note that this number will be exceeded if we have currently queued tasks from lower " +
                              "priority filters.")
@@ -168,6 +170,7 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         return queueSize;
     }
 
+    @Min(1)
     @JsonPropertyDescription("How many tasks should we try to create in the DB ready to be queued." +
                              "Note that the number of tasks created may be greater than this number as each task " +
                              "creation thread will " +
@@ -184,11 +187,13 @@ public class ProcessorConfig extends AbstractConfig implements IsStroomConfig, H
         return createTasksBeyondProcessLimit;
     }
 
+    @Min(1)
     @JsonPropertyDescription("The number of concurrent threads to use for task creation.")
     public int getTaskCreationThreadCount() {
         return taskCreationThreadCount;
     }
 
+    @Min(1)
     @JsonPropertyDescription("The maximum number of rows to insert in a single multi insert statement, " +
                              "e.g. INSERT INTO X VALUES (...), (...), (...)")
     public int getDatabaseMultiInsertMaxBatchSize() {

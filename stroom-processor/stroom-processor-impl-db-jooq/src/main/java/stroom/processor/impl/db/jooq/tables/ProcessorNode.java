@@ -10,14 +10,10 @@ import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,7 +28,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.processor.impl.db.jooq.Keys;
 import stroom.processor.impl.db.jooq.Stroom;
-import stroom.processor.impl.db.jooq.tables.ProcessorTask.ProcessorTaskPath;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorNodeRecord;
 
 
@@ -96,37 +91,6 @@ public class ProcessorNode extends TableImpl<ProcessorNodeRecord> {
         this(DSL.name("processor_node"), null);
     }
 
-    public <O extends Record> ProcessorNode(Table<O> path, ForeignKey<O, ProcessorNodeRecord> childPath, InverseForeignKey<O, ProcessorNodeRecord> parentPath) {
-        super(path, childPath, parentPath, PROCESSOR_NODE);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class ProcessorNodePath extends ProcessorNode implements Path<ProcessorNodeRecord> {
-        public <O extends Record> ProcessorNodePath(Table<O> path, ForeignKey<O, ProcessorNodeRecord> childPath, InverseForeignKey<O, ProcessorNodeRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private ProcessorNodePath(Name alias, Table<ProcessorNodeRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public ProcessorNodePath as(String alias) {
-            return new ProcessorNodePath(DSL.name(alias), this);
-        }
-
-        @Override
-        public ProcessorNodePath as(Name alias) {
-            return new ProcessorNodePath(alias, this);
-        }
-
-        @Override
-        public ProcessorNodePath as(Table<?> alias) {
-            return new ProcessorNodePath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -145,19 +109,6 @@ public class ProcessorNode extends TableImpl<ProcessorNodeRecord> {
     @Override
     public List<UniqueKey<ProcessorNodeRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.KEY_PROCESSOR_NODE_PROCESSOR_NODE_NAME);
-    }
-
-    private transient ProcessorTaskPath _processorTask;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom_v7_11.processor_task</code> table
-     */
-    public ProcessorTaskPath processorTask() {
-        if (_processorTask == null)
-            _processorTask = new ProcessorTaskPath(this, null, Keys.PROCESSOR_TASK_FK_PROCESSOR_NODE_ID.getInverseKey());
-
-        return _processorTask;
     }
 
     @Override

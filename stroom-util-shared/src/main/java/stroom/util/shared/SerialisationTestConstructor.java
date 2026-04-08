@@ -21,6 +21,14 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Used to mark a private no-args constructor that will construct
+ * an instance of the class for the purposes of testing serialisation.
+ * It is needed when the {@link com.fasterxml.jackson.annotation.JsonCreator}
+ * constructor has non-null arguments that are not simple types.
+ * <p>
+ * Used by stroom.importexport.TestJsonSerialisation
+ */
 @Target({ElementType.ANNOTATION_TYPE, ElementType.CONSTRUCTOR})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SerialisationTestConstructor {

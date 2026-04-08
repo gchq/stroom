@@ -10,14 +10,10 @@ import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.ForeignKey;
 import org.jooq.Identity;
-import org.jooq.InverseForeignKey;
 import org.jooq.Name;
-import org.jooq.Path;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
-import org.jooq.Record;
 import org.jooq.SQL;
 import org.jooq.Schema;
 import org.jooq.Select;
@@ -32,7 +28,6 @@ import org.jooq.impl.TableImpl;
 
 import stroom.explorer.impl.db.jooq.Keys;
 import stroom.explorer.impl.db.jooq.Stroom;
-import stroom.explorer.impl.db.jooq.tables.TabSessionDocRef.TabSessionDocRefPath;
 import stroom.explorer.impl.db.jooq.tables.records.TabSessionRecord;
 
 
@@ -101,37 +96,6 @@ public class TabSession extends TableImpl<TabSessionRecord> {
         this(DSL.name("tab_session"), null);
     }
 
-    public <O extends Record> TabSession(Table<O> path, ForeignKey<O, TabSessionRecord> childPath, InverseForeignKey<O, TabSessionRecord> parentPath) {
-        super(path, childPath, parentPath, TAB_SESSION);
-    }
-
-    /**
-     * A subtype implementing {@link Path} for simplified path-based joins.
-     */
-    public static class TabSessionPath extends TabSession implements Path<TabSessionRecord> {
-        public <O extends Record> TabSessionPath(Table<O> path, ForeignKey<O, TabSessionRecord> childPath, InverseForeignKey<O, TabSessionRecord> parentPath) {
-            super(path, childPath, parentPath);
-        }
-        private TabSessionPath(Name alias, Table<TabSessionRecord> aliased) {
-            super(alias, aliased);
-        }
-
-        @Override
-        public TabSessionPath as(String alias) {
-            return new TabSessionPath(DSL.name(alias), this);
-        }
-
-        @Override
-        public TabSessionPath as(Name alias) {
-            return new TabSessionPath(alias, this);
-        }
-
-        @Override
-        public TabSessionPath as(Table<?> alias) {
-            return new TabSessionPath(alias.getQualifiedName(), this);
-        }
-    }
-
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
@@ -150,19 +114,6 @@ public class TabSession extends TableImpl<TabSessionRecord> {
     @Override
     public List<UniqueKey<TabSessionRecord>> getUniqueKeys() {
         return Arrays.asList(Keys.KEY_TAB_SESSION_TAB_SESSION_NAME_USER_UUID_IDX);
-    }
-
-    private transient TabSessionDocRefPath _tabSessionDocRef;
-
-    /**
-     * Get the implicit to-many join path to the
-     * <code>stroom.tab_session_doc_ref</code> table
-     */
-    public TabSessionDocRefPath tabSessionDocRef() {
-        if (_tabSessionDocRef == null)
-            _tabSessionDocRef = new TabSessionDocRefPath(this, null, Keys.TAB_SESSION_DOC_REF_TAB_SESSION_ID.getInverseKey());
-
-        return _tabSessionDocRef;
     }
 
     @Override

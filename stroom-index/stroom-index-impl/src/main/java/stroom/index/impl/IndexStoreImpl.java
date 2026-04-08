@@ -21,6 +21,7 @@ import stroom.docref.DocRefInfo;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.index.api.IndexVolumeGroupService;
@@ -168,14 +169,14 @@ public class IndexStoreImpl implements IndexStore {
 
     @Override
     public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
+                                 final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
 
-        Map<String, byte[]> effectiveDataMap = dataMap;
+        ImportExportDocument effectiveImportExportDocument = importExportDocument;
         try {
             boolean altered = false;
-            final LuceneIndexDoc doc = serialiser.read(dataMap);
+            final LuceneIndexDoc doc = serialiser.read(importExportDocument);
             final LuceneIndexDoc.Builder builder = doc.copy();
 
             // If the imported feed's vol grp doesn't exist in this env use our default
@@ -208,7 +209,7 @@ public class IndexStoreImpl implements IndexStore {
             }
 
             if (altered) {
-                effectiveDataMap = serialiser.write(builder.build());
+                effectiveImportExportDocument = serialiser.write(builder.build());
             }
 
         } catch (final IOException e) {
@@ -216,13 +217,13 @@ public class IndexStoreImpl implements IndexStore {
                     docRef, e.getMessage()), e);
         }
 
-        return store.importDocument(docRef, effectiveDataMap, importState, importSettings);
+        return store.importDocument(docRef, effectiveImportExportDocument, importState, importSettings);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
-                                              final boolean omitAuditFields,
-                                              final List<Message> messageList) {
+    public ImportExportDocument exportDocument(final DocRef docRef,
+                                               final boolean omitAuditFields,
+                                               final List<Message> messageList) {
         // Get the first 1000 fields.
         final List<LuceneIndexField> fields = getFieldsForExport(docRef);
         return store.exportDocument(docRef, omitAuditFields, messageList, d -> d.copy().fields(fields).build());

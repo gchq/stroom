@@ -106,15 +106,15 @@ public final class XMLUtil {
                                       final InputSource inputSource,
                                       final Writer writer) {
         try {
-            final TransformerHandler handler = createTransformerHandler(new FatalErrorListener(), true);
+            final TransformerHandler handler = createTransformerHandler(new FatalErrorListener(), true, true);
             handler.setResult(new StreamResult(writer));
             xmlReader.setErrorHandler(new FatalErrorHandler());
             xmlReader.setContentHandler(handler);
             xmlReader.parse(inputSource);
 
         } catch (final TransformerConfigurationException
-                | IOException
-                | SAXException e) {
+                       | IOException
+                       | SAXException e) {
             throw new RuntimeException(e);
         }
     }
@@ -133,13 +133,15 @@ public final class XMLUtil {
 
     public static TransformerHandler createTransformerHandler(final boolean indentOutput)
             throws TransformerConfigurationException {
-        return createTransformerHandler(null, indentOutput);
+        return createTransformerHandler(null, indentOutput, true);
     }
 
     public static TransformerHandler createTransformerHandler(final ErrorListener errorListener,
-                                                              final boolean indentOutput)
+                                                              final boolean indentOutput,
+                                                              final boolean preventEscapeSwitching)
             throws TransformerConfigurationException {
-        final SAXTransformerFactory stf = (SAXTransformerFactory) TransformerFactoryFactory.newInstance();
+        final SAXTransformerFactory stf = (SAXTransformerFactory) TransformerFactoryFactory
+                .newInstance(preventEscapeSwitching);
         if (errorListener != null) {
             stf.setErrorListener(errorListener);
         }

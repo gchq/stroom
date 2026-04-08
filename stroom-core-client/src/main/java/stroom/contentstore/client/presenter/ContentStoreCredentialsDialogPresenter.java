@@ -38,18 +38,15 @@ import javax.inject.Inject;
 public class ContentStoreCredentialsDialogPresenter
         extends MyPresenterWidget<ContentStoreCredentialsDialogPresenter.ContentStoreCredentialsDialogView> {
 
-    /** Converts markdown to HTML */
-    private final MarkdownConverter markdownConverter;
-
     /** Width of dialog */
     private static final int DIALOG_WIDTH = 400;
 
     /** Height of dialog */
     private static final int DIALOG_HEIGHT = 400;
 
-    /**
-     * Constructor. Injected.
-     */
+    /** Converts markdown to HTML */
+    private final MarkdownConverter markdownConverter;
+
     @Inject
     public ContentStoreCredentialsDialogPresenter(final MarkdownConverter markdownConverter,
                                                   final EventBus eventBus,

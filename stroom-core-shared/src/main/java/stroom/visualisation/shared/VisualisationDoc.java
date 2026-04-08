@@ -118,9 +118,6 @@ public class VisualisationDoc extends AbstractDoc {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
@@ -128,10 +125,10 @@ public class VisualisationDoc extends AbstractDoc {
             return false;
         }
         final VisualisationDoc that = (VisualisationDoc) o;
-        return Objects.equals(description, that.description) &&
-               Objects.equals(functionName, that.functionName) &&
-               Objects.equals(scriptRef, that.scriptRef) &&
-               Objects.equals(settings, that.settings);
+        return Objects.equals(description, that.description)
+               && Objects.equals(functionName, that.functionName)
+               && Objects.equals(scriptRef, that.scriptRef)
+               && Objects.equals(settings, that.settings);
     }
 
     @Override

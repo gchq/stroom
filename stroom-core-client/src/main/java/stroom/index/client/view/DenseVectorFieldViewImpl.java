@@ -49,8 +49,11 @@ public class DenseVectorFieldViewImpl extends ViewImpl implements DenseVectorFie
         widget = binder.createAndBindUi(this);
         vectorSimilarityFunctionType.addItems(VectorSimilarityFunctionType.values());
         segmentSize.setMin(1);
+        segmentSize.setMax(1000000);
         overlapSize.setMin(1);
+        overlapSize.setMax(1000000);
         nearestNeighbourCount.setMin(1);
+        nearestNeighbourCount.setMax(1000000);
     }
 
     @Override

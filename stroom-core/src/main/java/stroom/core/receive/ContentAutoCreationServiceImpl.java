@@ -57,7 +57,6 @@ import stroom.security.api.AppPermissionService;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserService;
-import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.User;
 import stroom.util.concurrent.CachedValue;
@@ -72,6 +71,7 @@ import stroom.util.shared.UserDesc;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserType;
 import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CaseType;
 import stroom.util.string.TemplateUtil;
 import stroom.util.string.TemplateUtil.Template;
 
@@ -120,6 +120,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
     private final PipelineService pipelineService;
     private final CachedValue<ExpressionMatcher, Set<String>> cachedExpressionMatcher;
     private final CachedValue<Template, String> cachedDestinationPathTemplator;
+    private final CachedValue<Template, String> cachedDestinationSubPathTemplator;
     private final CachedValue<Template, String> cachedGroupTemplator;
     private final CachedValue<Template, String> cachedAdditionalGroupTemplator;
 
@@ -170,11 +171,18 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                 .withValueFunction(template ->
                         TemplateUtil.parseTemplate(
                                 template,
-                                str -> PATH_PARAM_REPLACE_PATTERN.matcher(NullSafe.trim(str))
-                                        .replaceAll("_"),
-                                str -> PATH_STATIC_REPLACE_PATTERN.matcher(NullSafe.trim(str))
-                                        .replaceAll("_")
-                        ))
+                                ContentAutoCreationServiceImpl::cleanTemplateVariable,
+                                ContentAutoCreationServiceImpl::cleanTemplateStaticText))
+                .build();
+        this.cachedDestinationSubPathTemplator = CachedValue.builder()
+                .withMaxCheckInterval(CHECK_INTERVAL)
+                .withStateSupplier(() ->
+                        autoContentCreationConfigProvider.get().getDestinationExplorerSubPathTemplate())
+                .withValueFunction(template ->
+                        TemplateUtil.parseTemplate(
+                                template,
+                                ContentAutoCreationServiceImpl::cleanTemplateVariable,
+                                ContentAutoCreationServiceImpl::cleanTemplateStaticText))
                 .build();
         this.cachedGroupTemplator = CachedValue.builder()
                 .withMaxCheckInterval(CHECK_INTERVAL)
@@ -209,6 +217,16 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         return expressionMatcherFactory.create(fields);
     }
 
+    private static String cleanTemplateVariable(String str) {
+        return PATH_PARAM_REPLACE_PATTERN.matcher(NullSafe.trim(str))
+                .replaceAll("_");
+    }
+
+    private static String cleanTemplateStaticText(String str) {
+        return PATH_STATIC_REPLACE_PATTERN.matcher(NullSafe.trim(str))
+                .replaceAll("_");
+    }
+
     @Override
     public Optional<FeedDoc> tryCreateFeed(final String feedName,
                                            final UserDesc userDesc,
@@ -232,15 +250,21 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         if (optFeedDoc.isEmpty()) {
             optFeedDoc = getMatchingTemplate(attributeMap)
                     .flatMap(contentTemplate -> {
-                        // Content gets created as the configured user
-                        final UserRef runAsUserRef = getRunAsUser();
+                        try {
+                            // Content gets created as the configured user
+                            final UserRef runAsUserRef = getRunAsUser();
 
-                        final Optional<FeedDoc> optFeedDoc2 = securityContext.asUserResult(runAsUserRef, () ->
-                                ensureFeed(feedName, userDesc, attributeMap, contentTemplate));
+                            final Optional<FeedDoc> optFeedDoc2 = securityContext.asUserResult(runAsUserRef, () ->
+                                    ensureFeed(feedName, userDesc, attributeMap, contentTemplate));
 
-                        LOGGER.debug("feedName: '{}', userDesc: '{}', optFeedDoc: {}",
-                                feedName, userDesc, optFeedDoc2);
-                        return optFeedDoc2;
+                            LOGGER.debug("feedName: '{}', userDesc: '{}', optFeedDoc: {}",
+                                    feedName, userDesc, optFeedDoc2);
+                            return optFeedDoc2;
+                        } catch (final Exception e) {
+                            LOGGER.error("Error applying contentTemplate {} - {}",
+                                    contentTemplate, LogUtil.exceptionMessage(e), e);
+                            throw e;
+                        }
                     });
         }
         return optFeedDoc;
@@ -309,16 +333,33 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                                         final AttributeMap attributeMap,
                                         final ContentTemplate contentTemplate) {
 
-        final Template template = cachedDestinationPathTemplator.getValue();
+        final AutoContentCreationConfig autoContentCreationConfig = autoContentCreationConfigProvider.get();
+        final Template pathTemplator = cachedDestinationPathTemplator.getValue();
         final Map<CIKey, String> caseInsenseAttrMap = CIKey.mapOf(attributeMap);
-        final String destinationPath = template.executeWith(caseInsenseAttrMap);
-        final DocPath docPath = DocPath.fromPathString(destinationPath);
+        final String destinationPath = pathTemplator.executeWith(caseInsenseAttrMap);
+        final DocPath baseDocPath = DocPath.fromPathString(destinationPath);
 
-        LOGGER.info("Ensuring path '{}' exists", docPath);
-        final ExplorerNode destFolder = explorerService.ensureFolderPath(docPath, PermissionInheritance.DESTINATION);
+        final ExplorerNode destFolder = ensureExplorerNode(baseDocPath);
         final DocRef destFolderRef = destFolder.getDocRef();
-        final UserRef userRef;
 
+        // Only create a sub dir if there are some deps to put in it
+        final Optional<ExplorerNode> optDestSubFolder;
+        if (contentTemplate.isCopyElementDependencies()) {
+            // If a sub dir has been configured then ensure it exists
+            final Template subPathTemplator = cachedDestinationSubPathTemplator.getValue();
+            if (!subPathTemplator.isBlank()) {
+                final DocPath subDirDocPath = baseDocPath.append(DocPath.fromPathString(
+                        subPathTemplator.executeWith(caseInsenseAttrMap)));
+                optDestSubFolder = Optional.ofNullable(
+                        ensureExplorerNode(subDirDocPath));
+            } else {
+                optDestSubFolder = Optional.empty();
+            }
+        } else {
+            optDestSubFolder = Optional.empty();
+        }
+
+        final UserRef userRef;
         // Get/create the user if possible
         if (userDesc != null) {
             if (UnauthenticatedUserIdentity.getInstance().subjectId().equals(userDesc.getSubjectId())) {
@@ -335,33 +376,78 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         }
 
         // Set up the group
-        final Template groupTemplate = cachedGroupTemplator.getValue();
-        final String groupName = groupTemplate.executeWith(caseInsenseAttrMap);
-        LOGGER.info("Auto-creating user group '{}'", groupName);
-        final User group = userService.getOrCreateUserGroup(groupName);
-        addAppPerms(group);
-        if (userRef != null) {
-            LOGGER.info("Adding userRef {} to group '{}", userRef, groupName);
-            userService.addUserToGroup(userRef, group.asRef());
+        final Template groupTemplator = cachedGroupTemplator.getValue();
+        final User group = ensureGroup(groupTemplator, caseInsenseAttrMap, userRef);
+        final String groupParentGroupName = autoContentCreationConfig.getGroupParentGroupName();
+        if (NullSafe.isNonBlankString(groupParentGroupName)) {
+            // Ensure the common parent group for the main group
+            ensureGroup(groupParentGroupName, group.asRef());
         }
 
-        // Set up the additional group
-        Optional<User> optAdditionalGroup = Optional.empty();
-        final Template additionalGroupTemplate = cachedAdditionalGroupTemplator.getValue();
-        final String additionalGroupName = additionalGroupTemplate.executeWith(caseInsenseAttrMap);
-        if (NullSafe.isNonBlankString(additionalGroupName)) {
-            LOGGER.info("Auto-creating user group '{}'", additionalGroupName);
-            final User additionalGroup = userService.getOrCreateUserGroup(additionalGroupName);
-            addAppPerms(additionalGroup);
-            if (userRef != null) {
-                LOGGER.info("Adding userRef {} to additional group '{}", userRef, additionalGroupName);
-                userService.addUserToGroup(userRef, additionalGroup.asRef());
+        // Additional group only needed if we are copying deps, else it would be
+        // the same as the main group
+        final Optional<User> optAdditionalGroup;
+        if (contentTemplate.isCopyElementDependencies()) {
+            final Template additionalGroupTemplator = cachedAdditionalGroupTemplator.getValue();
+            optAdditionalGroup = Optional.ofNullable(
+                    ensureGroup(additionalGroupTemplator, caseInsenseAttrMap, userRef));
+            optAdditionalGroup.ifPresent(additionalGroup -> {
+                final String additionalGroupParentGroupName =
+                        autoContentCreationConfig.getAdditionalGroupParentGroupName();
+                if (NullSafe.isNonBlankString(additionalGroupParentGroupName)) {
+                    // Ensure the common parent group for the additional group
+                    ensureGroup(additionalGroupParentGroupName, additionalGroup.asRef());
+                }
+            });
+        } else {
+            optAdditionalGroup = Optional.empty();
+        }
+
+        final FeedDoc feedDoc = createFeedDoc(feedName, attributeMap, baseDocPath, destFolder, userRef);
+        final DocRef feedDocRef = feedDoc.asDocRef();
+
+        grantPermOnDoc(destFolderRef, group, DocumentPermission.VIEW);
+        grantPermOnDoc(feedDocRef, group, DocumentPermission.VIEW);
+
+        optAdditionalGroup.ifPresent(additionalGroup -> {
+            // Give the group EDIT on the feed
+            grantPermOnDoc(feedDocRef, additionalGroup, DocumentPermission.VIEW);
+            if (optDestSubFolder.isPresent()) {
+                final ExplorerNode destSubFolder = optDestSubFolder.get();
+                grantPermOnDoc(destFolderRef, additionalGroup, DocumentPermission.VIEW);
+                grantPermOnDoc(destSubFolder.getDocRef(), group, DocumentPermission.VIEW);
+                grantPermOnDoc(destSubFolder.getDocRef(), additionalGroup, DocumentPermission.EDIT);
+            } else {
+                grantPermOnDoc(destFolderRef, additionalGroup, DocumentPermission.EDIT);
             }
-            optAdditionalGroup = Optional.of(additionalGroup);
-        }
+        });
 
+        // Create any templated content
+        final Optional<DocRef> optNewPipeDocRef = createTemplatedContent(
+                attributeMap,
+                feedDocRef,
+                destFolder,
+                optDestSubFolder,
+                contentTemplate);
+
+        optNewPipeDocRef.ifPresent(newPipeDocRef -> {
+            grantPermOnDoc(newPipeDocRef, group, DocumentPermission.VIEW);
+            optAdditionalGroup.ifPresent(additionalGroup -> {
+                grantPermOnDoc(newPipeDocRef, additionalGroup, DocumentPermission.VIEW);
+            });
+        });
+
+        LOGGER.debug("feedDoc after configuration: {}", feedDoc);
+        return feedDocRef;
+    }
+
+    private FeedDoc createFeedDoc(final String feedName,
+                                  final AttributeMap attributeMap,
+                                  final DocPath baseDocPath,
+                                  final ExplorerNode destFolder,
+                                  final UserRef userRef) {
         // Creates the explorer node for the Feed and the FeedDoc itself
-        LOGGER.info("Auto-creating feed {} in path '{}'", feedName, docPath);
+        LOGGER.info("Auto-creating feed {} in path '{}'", feedName, baseDocPath);
         final DocRef feedDocRef = explorerService.create(
                 FeedDoc.TYPE,
                 feedName,
@@ -372,23 +458,12 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         // Set up the feed doc using the information in the data feed key
         feedDoc = configureFeed(feedDoc, attributeMap, userRef);
         feedDoc = feedStore.writeDocument(feedDoc);
+        return feedDoc;
+    }
 
-        LOGGER.info("Granting READ permission on {} and {}", destFolderRef, feedDocRef);
-        setUpdateDocPerms(group, destFolderRef, DocumentPermission.VIEW);
-        setUpdateDocPerms(group, feedDocRef, DocumentPermission.VIEW);
-
-        optAdditionalGroup.ifPresent(additionalGroup -> {
-            LOGGER.info("Granting UPDATE permission on {} and {}", destFolderRef, feedDocRef);
-            setUpdateDocPerms(additionalGroup, destFolderRef, DocumentPermission.EDIT);
-            setUpdateDocPerms(additionalGroup, feedDocRef, DocumentPermission.EDIT);
-        });
-
-        // Create any templated content
-        createTemplatedContent(attributeMap, feedDocRef, destFolder, contentTemplate);
-
-        LOGGER.debug("feedDoc after configuration: {}", feedDoc);
-
-        return feedDocRef;
+    private ExplorerNode ensureExplorerNode(final DocPath docPath) {
+        LOGGER.info("Ensuring explorer path '{}' exists", docPath);
+        return explorerService.ensureFolderPath(docPath, PermissionInheritance.DESTINATION);
     }
 
     private FeedDoc configureFeed(final FeedDoc feedDoc,
@@ -476,17 +551,11 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         }
     }
 
-    private void addAppPerms(final User user) {
-        final UserRef userRef = user.asRef();
-        appPermissionService.addPermission(userRef, AppPermission.VIEW_DATA_PERMISSION);
-        appPermissionService.addPermission(userRef, AppPermission.EXPORT_DATA_PERMISSION);
-        appPermissionService.addPermission(userRef, AppPermission.IMPORT_DATA_PERMISSION);
-        appPermissionService.addPermission(userRef, AppPermission.STEPPING_PERMISSION);
-    }
-
-    private void setUpdateDocPerms(final User user,
-                                   final DocRef docRef,
-                                   final DocumentPermission perm) {
+    private void grantPermOnDoc(final DocRef docRef,
+                                final User user,
+                                final DocumentPermission perm) {
+        LOGGER.info(() -> LogUtil.message("Granting permission {} on {} to {} {}",
+                perm, docRef, user.getType(CaseType.LOWER), user.getUserRef().toDisplayString()));
         documentPermissionService.setPermission(docRef, user.asRef(), perm);
     }
 
@@ -495,6 +564,7 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         final ContentTemplates contentTemplates = contentTemplateStore.getOrCreate();
         final List<ContentTemplate> activeTemplates = contentTemplates.getActiveTemplates();
         ContentTemplate matchingTemplate = null;
+        Map<String, Object> normalisedAttributes = null;
         if (NullSafe.hasItems(activeTemplates)) {
             for (final ContentTemplate contentTemplate : activeTemplates) {
                 final ExpressionOperator expression = contentTemplate.getExpression();
@@ -502,16 +572,20 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                     matchingTemplate = contentTemplate;
                     break;
                 } else {
-                    // Normalise the keys to lower case
-                    final Map<String, Object> attributes = attributeMap.asMap(true)
-                            .entrySet()
-                            .stream()
-                            .collect(Collectors.toMap(
-                                    entry1 -> normaliseField(entry1.getKey()),
-                                    entry -> NullSafe.get(entry.getValue(), val -> (Object) val)));
+                    if (normalisedAttributes == null) {
+                        // Normalise the keys to lower case
+                        normalisedAttributes = attributeMap.asMap(true)
+                                .entrySet()
+                                .stream()
+                                .collect(Collectors.toMap(
+                                        entry1 -> normaliseField(entry1.getKey()),
+                                        entry -> NullSafe.get(
+                                                entry.getValue(),
+                                                val -> (Object) val)));
+                    }
 
                     final boolean isMatch = cachedExpressionMatcher.getValue()
-                            .match(attributes, expression);
+                            .match(normalisedAttributes, expression);
                     if (isMatch) {
                         matchingTemplate = contentTemplate;
                         break;
@@ -519,8 +593,14 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                 }
             }
         }
-        LOGGER.debug("getMatchingTemplate() - matchingTemplate: {}, attributeMap: {}",
-                matchingTemplate, activeTemplates);
+        if (LOGGER.isInfoEnabled()) {
+            if (matchingTemplate != null) {
+                LOGGER.info("Data matched content template {} '{}', attributeMap: {}",
+                        matchingTemplate.getTemplateNumber(), matchingTemplate.getName(), attributeMap);
+            } else {
+                LOGGER.info("Data didn't match any active content templates, attributeMap: {}", attributeMap);
+            }
+        }
         return Optional.ofNullable(matchingTemplate);
     }
 
@@ -531,14 +611,18 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                 String::toLowerCase);
     }
 
-    private void createTemplatedContent(final AttributeMap attributeMap,
-                                        final DocRef feedDocRef,
-                                        final ExplorerNode destFolder,
-                                        final ContentTemplate contentTemplate) {
+    private Optional<DocRef> createTemplatedContent(final AttributeMap attributeMap,
+                                                    final DocRef feedDocRef,
+                                                    final ExplorerNode destFolder,
+                                                    final Optional<ExplorerNode> optDestSubFolder,
+                                                    final ContentTemplate contentTemplate) {
 
-        LOGGER.debug("createTemplatedContent() - Matched template {}, attributeMap: {}",
-                contentTemplate, attributeMap);
+        LOGGER.debug("createTemplatedContent() - Matched template {}, attributeMap: {}, " +
+                     "destFolder: {}, destSubFolder: {}",
+                contentTemplate, attributeMap, destFolder, optDestSubFolder);
         final DocRef pipelineDocRef = Objects.requireNonNull(contentTemplate.getPipeline());
+        Objects.requireNonNull(pipelineDocRef,
+                () -> LogUtil.message("No pipeline defined in contentTemplate {}", contentTemplate));
         final PipelineDoc pipelineDoc;
         try {
             pipelineDoc = pipelineService.fetch(pipelineDocRef.getUuid());
@@ -550,21 +634,28 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
                     contentTemplate.getName()), e);
         }
 
-        switch (contentTemplate.getTemplateType()) {
+        final DocRef newPipeDocRef = switch (contentTemplate.getTemplateType()) {
 
-            case PROCESSOR_FILTER -> createProcessorFilter(
-                    attributeMap.get(StandardHeaderArguments.TYPE),
-                    contentTemplate.getPipeline(),
-                    feedDocRef,
-                    contentTemplate);
+            case PROCESSOR_FILTER -> {
+                createProcessorFilter(
+                        attributeMap.get(StandardHeaderArguments.TYPE),
+                        contentTemplate.getPipeline(),
+                        feedDocRef,
+                        contentTemplate);
+                // No new pipe created.
+                yield null;
+            }
 
             case INHERIT_PIPELINE -> createPipelineFromParent(
                     pipelineDoc,
                     attributeMap.get(StandardHeaderArguments.TYPE),
                     feedDocRef,
                     destFolder,
+                    optDestSubFolder,
                     contentTemplate);
-        }
+        };
+        LOGGER.debug("createTemplatedContent() - Returning newPipeDocRef: {}", newPipeDocRef);
+        return Optional.ofNullable(newPipeDocRef);
     }
 
     private void createProcessorFilter(final String streamType,
@@ -596,8 +687,9 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
 
             processorFilterService.create(request);
 
-            LOGGER.info("Created processor filter using contentTemplate '{}' for expression: {}, running as {}",
-                    contentTemplate.getName(), expression, runAsUser);
+            LOGGER.info(() -> LogUtil.message(
+                    "Created processor filter using contentTemplate {} '{}' for expression: {}, running as {}",
+                    contentTemplate.getTemplateNumber(), contentTemplate.getName(), expression, runAsUser));
         } catch (final Exception e) {
             LOGGER.error("Error creating processor filter on {}, contentTemplate: {}, feedDocRef: {}, {}",
                     pipelineDocRef, contentTemplate, feedDocRef, LogUtil.exceptionMessage(e), e);
@@ -605,18 +697,19 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         }
     }
 
-    private void createPipelineFromParent(final PipelineDoc parentPipelineDoc,
-                                          final String streamType,
-                                          final DocRef feedDocRef,
-                                          final ExplorerNode destFolder,
-                                          final ContentTemplate contentTemplate) {
+    private DocRef createPipelineFromParent(final PipelineDoc parentPipelineDoc,
+                                            final String streamType,
+                                            final DocRef feedDocRef,
+                                            final ExplorerNode destFolder,
+                                            final Optional<ExplorerNode> optDestSubFolder,
+                                            final ContentTemplate contentTemplate) {
 
         DocRef parentPipeDocRef = null;
         try {
             parentPipeDocRef = Objects.requireNonNull(parentPipelineDoc).asDocRef();
             LOGGER.debug("createPipelineFromParent() - parentPipelineDoc: {}, feedDocRef: {}, " +
-                         "destFolder: {}, contentTemplate: {}",
-                    parentPipeDocRef, feedDocRef, destFolder, contentTemplate);
+                         "destFolder: {}, destSubFolder: {}, contentTemplate: {}",
+                    parentPipeDocRef, feedDocRef, destFolder, optDestSubFolder, contentTemplate);
 
             // Use feed name for the name of the new pipeline
             final String pipeDocName = feedDocRef.getName();
@@ -629,65 +722,91 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
             // Update the new pipe so it inherits from the parent
             final String newPipelineUuid = newPipelineNode.getUuid();
             PipelineDoc newPipelineDoc = pipelineService.fetch(newPipelineUuid);
-            newPipelineDoc = newPipelineDoc.copy().parentPipeline(parentPipeDocRef).build();
+            final DocRef newPipelineDocRef = newPipelineDoc.asDocRef();
+            newPipelineDoc = newPipelineDoc.copy()
+                    .parentPipeline(parentPipeDocRef)
+                    .build();
 
             if (contentTemplate.isCopyElementDependencies()) {
-                final Set<PipelineProperty> directEntityDependencies = getDirectEntityDependencies(parentPipelineDoc);
-                LOGGER.debug("createPipelineFromParent() - directEntityDependencies: {}", directEntityDependencies);
-                if (!directEntityDependencies.isEmpty()) {
-                    final Map<DocRef, DocRef> remappings = new HashMap<>(directEntityDependencies.size());
-                    for (final PipelineProperty property : directEntityDependencies) {
-                        final DocRef depDocRef = property.getValue().getEntity();
-                        final ExplorerNode dependencyNode = explorerNodeService.getNode(depDocRef)
-                                .orElseThrow(() ->
-                                        new RuntimeException("No explorer node found for " + property));
-                        final String newName = newPipelineDoc.getName() + "-" + property.getElement();
-                        final BulkActionResult result = explorerService.copy(
-                                List.of(dependencyNode),
-                                destFolder,
-                                true,
-                                newName,
-                                PermissionInheritance.DESTINATION);
-                        if (NullSafe.size(result.getExplorerNodes()) != 1) {
-                            throw new RuntimeException("Expecting exactly one node");
-                        }
-                        final ExplorerNode nodeCopy = result.getExplorerNodes().getFirst();
-                        LOGGER.debug(() -> LogUtil.message("createPipelineFromParent() - Copied: {} to: {}",
-                                dependencyNode.getDocRef(), nodeCopy.getDocRef()));
-                        remappings.put(dependencyNode.getDocRef(), nodeCopy.getDocRef());
-                    }
-                    // Update the pipeline so it uses
-                    final List<PipelineProperty> parentAddedProperties = parentPipelineDoc.getPipelineData()
-                            .getAddedProperties();
-                    final PipelineDataBuilder pipelineDataBuilder = new PipelineDataBuilder();
-                    for (final PipelineProperty parentAddedProperty : parentAddedProperties) {
-                        final DocRef propEntity = NullSafe.get(
-                                parentAddedProperty,
-                                PipelineProperty::getValue,
-                                PipelinePropertyValue::getEntity);
-
-                        final DocRef newPropEntity = remappings.get(propEntity);
-                        if (newPropEntity != null) {
-                            final PipelineProperty newPipelineProperty = PipelineProperty.builder(parentAddedProperty)
-                                    .value(new PipelinePropertyValue(newPropEntity))
-                                    .build();
-                            pipelineDataBuilder.addProperty(newPipelineProperty);
-                        }
-                    }
-                    newPipelineDoc = newPipelineDoc.copy().pipelineData(pipelineDataBuilder.build()).build();
-                }
+                newPipelineDoc = copyPipelineElementDependencies(
+                        parentPipelineDoc, destFolder, optDestSubFolder, newPipelineDoc);
             }
             pipelineService.update(newPipelineUuid, newPipelineDoc);
 
-            LOGGER.info("Created pipeline {} with parentPipeline {} using contentTemplate '{}'",
-                    newPipelineDoc.asDocRef(), parentPipeDocRef, contentTemplate.getName());
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info("Created pipeline {} with parentPipeline {} using contentTemplate '{}'",
+                        newPipelineDocRef, parentPipeDocRef, contentTemplate.getName());
+            }
 
             // Now create the proc filter for the new pipe
-            createProcessorFilter(streamType, newPipelineDoc.asDocRef(), feedDocRef, contentTemplate);
+            createProcessorFilter(streamType, newPipelineDocRef, feedDocRef, contentTemplate);
+            return newPipelineDocRef;
         } catch (final RuntimeException e) {
             LOGGER.error("Error creating pipeline that inherits {}, contentTemplate: {}, feedDocRef: {}, {}",
                     parentPipeDocRef, contentTemplate, feedDocRef, LogUtil.exceptionMessage(e), e);
             throw new RuntimeException(e);
+        }
+    }
+
+    private PipelineDoc copyPipelineElementDependencies(final PipelineDoc parentPipelineDoc,
+                                                        final ExplorerNode destFolder,
+                                                        final Optional<ExplorerNode> optDestSubFolder,
+                                                        final PipelineDoc newPipelineDoc) {
+        final Set<PipelineProperty> directEntityDependencies = getDirectEntityDependencies(parentPipelineDoc);
+        LOGGER.debug(
+                "copyPipelineElementDependencies() - directEntityDependencies: {}, destFolder: {}, destSubFolder: {}",
+                directEntityDependencies,
+                destFolder,
+                optDestSubFolder);
+        final ExplorerNode effectiveDestination = optDestSubFolder.orElse(destFolder);
+        LOGGER.debug("copyPipelineElementDependencies() - effectiveDestination: {}", effectiveDestination);
+        Objects.requireNonNull(effectiveDestination);
+        if (NullSafe.hasItems(directEntityDependencies)) {
+            final Map<DocRef, DocRef> remappings = new HashMap<>(directEntityDependencies.size());
+            for (final PipelineProperty property : directEntityDependencies) {
+                final DocRef depDocRef = property.getValue().getEntity();
+                final ExplorerNode dependencyNode = explorerNodeService.getNode(depDocRef)
+                        .orElseThrow(() ->
+                                new RuntimeException("No explorer node found for " + property));
+                final String newName = newPipelineDoc.getName() + "-" + property.getElement();
+                final BulkActionResult result = explorerService.copy(
+                        List.of(dependencyNode),
+                        effectiveDestination,
+                        true,
+                        newName,
+                        PermissionInheritance.DESTINATION);
+                if (NullSafe.size(result.getExplorerNodes()) != 1) {
+                    throw new RuntimeException("Expecting exactly one node");
+                }
+                final ExplorerNode nodeCopy = result.getExplorerNodes().getFirst();
+                LOGGER.debug(() -> LogUtil.message("createPipelineFromParent() - Copied: {} to: {}",
+                        dependencyNode.getDocRef(), nodeCopy.getDocRef()));
+                remappings.put(dependencyNode.getDocRef(), nodeCopy.getDocRef());
+            }
+            // Update the pipeline so it uses
+            final List<PipelineProperty> parentAddedProperties = parentPipelineDoc.getPipelineData()
+                    .getAddedProperties();
+            final PipelineDataBuilder pipelineDataBuilder = new PipelineDataBuilder();
+            for (final PipelineProperty parentAddedProperty : parentAddedProperties) {
+                final DocRef propEntity = NullSafe.get(
+                        parentAddedProperty,
+                        PipelineProperty::getValue,
+                        PipelinePropertyValue::getEntity);
+
+                final DocRef newPropEntity = remappings.get(propEntity);
+                if (newPropEntity != null) {
+                    final PipelineProperty newPipelineProperty = PipelineProperty.builder(parentAddedProperty)
+                            .value(new PipelinePropertyValue(newPropEntity))
+                            .build();
+                    pipelineDataBuilder.addProperty(newPipelineProperty);
+                }
+            }
+            return newPipelineDoc.copy()
+                    .pipelineData(pipelineDataBuilder.build())
+                    .build();
+        } else {
+            LOGGER.debug("copyPipelineElementDependencies() - No direct dependencies");
+            return newPipelineDoc;
         }
     }
 
@@ -715,5 +834,34 @@ public class ContentAutoCreationServiceImpl implements ContentAutoCreationServic
         final String type = NullSafe.get(docRef, DocRef::getType);
         return type != null
                && COPYABLE_DOC_TYPES.contains(type);
+    }
+
+    private User ensureGroup(final Template groupNameTemplator,
+                             final Map<CIKey, String> caseInsenseAttrMap,
+                             final UserRef... groupMembers) {
+        final String groupName = groupNameTemplator.executeWith(caseInsenseAttrMap);
+        LOGGER.debug("ensureGroup() - groupNameTemplator: {}, groupName: {}, groupMembers: {}, caseInsenseAttrMap: {}",
+                groupNameTemplator, groupName, groupMembers, caseInsenseAttrMap);
+        return ensureGroup(groupName, groupMembers);
+    }
+
+    private User ensureGroup(final String groupName, final UserRef... groupMembers) {
+        LOGGER.debug("ensureGroup() - groupName: {}, groupMembers: {}", groupName, groupMembers);
+        if (NullSafe.isNonBlankString(groupName)) {
+            LOGGER.info("Auto-creating user group '{}'", groupName);
+            final User group = userService.getOrCreateUserGroup(groupName);
+            NullSafe.forEach(groupMembers, groupMember -> {
+                if (groupMember != null) {
+                    LOGGER.info("Adding userRef {} of type {} to group '{}",
+                            groupMember, groupMember.getType(), groupName);
+                    userService.addUserToGroup(groupMember, group.asRef());
+                }
+            });
+            return group;
+        } else {
+            LOGGER.debug(() -> LogUtil.message("ensureGroup() - groupName is blank, groupMembers: {}",
+                    (Object[]) groupMembers));
+            return null;
+        }
     }
 }

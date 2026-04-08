@@ -38,6 +38,7 @@ import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
 import org.fusesource.restygwt.client.REST;
 
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -177,8 +178,8 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
 
         @Override
         public void exec() {
-            final RestErrorHandler innerErrorHandler = NullSafe
-                    .requireNonNullElseGet(this.errorHandler, () -> new DefaultErrorHandler(hasHandlers, null));
+            final RestErrorHandler innerErrorHandler = Objects.requireNonNullElseGet(this.errorHandler,
+                    () -> new DefaultErrorHandler(hasHandlers, null));
             final RestErrorHandler errorHandler = error -> {
                 final int statusCode = NullSafe
                         .getOrElse(error, RestError::getMethod, Method::getResponse, Response::getStatusCode, -1);
@@ -190,8 +191,8 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                     innerErrorHandler.onError(error);
                 }
             };
-            final TaskMonitorFactory taskMonitorFactory = NullSafe
-                    .requireNonNullElseGet(this.taskMonitorFactory, () -> new DefaultTaskMonitorFactory(hasHandlers));
+            final TaskMonitorFactory taskMonitorFactory = Objects.requireNonNullElseGet(this.taskMonitorFactory,
+                    () -> new DefaultTaskMonitorFactory(hasHandlers));
 
             final TaskMonitor taskMonitor = taskMonitorFactory.createTaskMonitor();
             final MethodCallbackImpl<R> methodCallback = new MethodCallbackImpl<>(

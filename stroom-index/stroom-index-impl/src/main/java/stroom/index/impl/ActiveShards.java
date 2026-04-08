@@ -51,7 +51,7 @@ public class ActiveShards {
             IndexShardStatus.CLOSED,
             IndexShardStatus.CLOSING);
 
-    private static final int MAX_ATTEMPTS = 10_000;
+    private static final int MAX_ATTEMPTS = 10;
 
     private final NodeInfo nodeInfo;
     private final IndexShardWriterCache indexShardWriterCache;

@@ -19,13 +19,14 @@ package stroom.pipeline.xslt;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.importexport.api.ByteArrayImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.util.string.EncodingUtil;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class XsltSerialiser implements DocumentSerialiser2<XsltDoc> {
 
@@ -39,17 +40,20 @@ public class XsltSerialiser implements DocumentSerialiser2<XsltDoc> {
     }
 
     @Override
-    public XsltDoc read(final Map<String, byte[]> data) throws IOException {
-        return delegate.read(data).copy().data(EncodingUtil.asString(data.get(XSL))).build();
+    public XsltDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        return delegate.read(importExportDocument)
+                .copy()
+                .data(EncodingUtil.asString(importExportDocument.getExtAssetData(XSL)))
+                .build();
     }
 
     @Override
-    public Map<String, byte[]> write(final XsltDoc document) throws IOException {
+    public ImportExportDocument write(final XsltDoc document) throws IOException {
         final String xsl = document.getData();
-        final Map<String, byte[]> data = delegate.write(document.copy().data(null).build());
+        final ImportExportDocument importExportDocument = delegate.write(document.copy().data(null).build());
         if (xsl != null) {
-            data.put(XSL, EncodingUtil.asBytes(xsl));
+            importExportDocument.addExtAsset(new ByteArrayImportExportAsset(XSL, EncodingUtil.asBytes(xsl)));
         }
-        return data;
+        return importExportDocument;
     }
 }

@@ -19,6 +19,8 @@ package stroom.index.impl.db.migration;
 import stroom.docref.DocRef;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
+import stroom.importexport.api.ByteArrayImportExportAsset;
+import stroom.importexport.api.ImportExportAsset;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
 import stroom.util.logging.LambdaLogger;
@@ -180,7 +182,9 @@ public class V07_08_00_001__IndexFields extends BaseJavaMigration {
     private LuceneIndexDoc readDoc(final String data) {
         LuceneIndexDoc doc = null;
         try {
-            doc = indexDocSerialiser.read(data.getBytes(StandardCharsets.UTF_8));
+            final ImportExportAsset asset =
+                    new ByteArrayImportExportAsset("dummy", data.getBytes(StandardCharsets.UTF_8));
+            doc = indexDocSerialiser.read(asset);
         } catch (final IOException | RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
@@ -188,7 +192,7 @@ public class V07_08_00_001__IndexFields extends BaseJavaMigration {
     }
 
     private void writeDoc(final Context context, final LuceneIndexDoc doc) throws IOException, SQLException {
-        final Map<String, byte[]> dataMap = indexDocSerialiser.write(doc);
+        final Map<String, byte[]> dataMap = indexDocSerialiser.write(doc).toDataMap();
         final byte[] newData = dataMap.remove("meta");
         // Add the records.
         try (final PreparedStatement ps = context.getConnection().prepareStatement(

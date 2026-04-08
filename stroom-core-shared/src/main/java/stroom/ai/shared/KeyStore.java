@@ -3,7 +3,6 @@ package stroom.ai.shared;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NotInjectableConfig;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.validation.ValidFilePath;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -43,7 +42,7 @@ public class KeyStore extends AbstractConfig implements IsProxyConfig {
         // SSLConfig is defaulted to null on parent config objects so we need to apply defaults in the ctor
         // as the default config tree will not contain an SSLConfig to use as a reference.
         this.keyStorePath = keyStorePath;
-        this.keyStoreType = NullSafe.requireNonNullElse(keyStoreType, DEFAULT_KEYSTORE_TYPE);
+        this.keyStoreType = Objects.requireNonNullElse(keyStoreType, DEFAULT_KEYSTORE_TYPE);
         this.keyStorePassword = keyStorePassword;
     }
 

@@ -117,6 +117,9 @@ include 'stroom-data:stroom-data-store-mock'
 include 'stroom-data:stroom-data-store-util'
 include 'stroom-data:stroom-data-zip'
 
+// DataGen
+include 'stroom-datagen:stroom-datagen-impl'
+
 // DB Utilities
 include 'stroom-db-util'
 
@@ -325,3 +328,5 @@ include 'stroom-gitrepo:stroom-gitrepo-mock'
 
 include 'stroom-credentials:stroom-credentials-impl'
 include 'stroom-credentials:stroom-credentials-impl-db-jooq'
+include 'stroom-dashboard:stroom-dashboard-impl-db'
+include 'stroom-dashboard:stroom-dashboard-impl-db-jooq'

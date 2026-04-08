@@ -25,6 +25,7 @@ import stroom.docstore.api.DocumentStoreRegistry;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.api.UniqueNameUtil;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.pipeline.legacy.PipelineDataMigration;
@@ -52,7 +53,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
 @Singleton
@@ -307,16 +307,16 @@ public class PipelineStoreImpl implements PipelineStore {
 
     @Override
     public DocRef importDocument(final DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
+                                 final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
         // Migrate the data we are importing.
-        pipelineDataMigration.migrate(dataMap);
-        return store.importDocument(docRef, dataMap, importState, importSettings);
+        pipelineDataMigration.migrate(importExportDocument);
+        return store.importDocument(docRef, importExportDocument, importState, importSettings);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
+    public ImportExportDocument exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
         return store.exportDocument(docRef, omitAuditFields, messageList);

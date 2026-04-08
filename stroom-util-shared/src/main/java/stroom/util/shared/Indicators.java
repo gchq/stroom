@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
@@ -155,8 +156,8 @@ public class Indicators {
             final Predicate<StoredError> locationPredicate = includeLocationAgnostic
                     ? err -> true
                     : err -> err.getLocation() != null
-                            && err.getLocation().getLineNo() > 0
-                            && err.getLocation().getColNo() > 0;
+                             && err.getLocation().getLineNo() > 0
+                             && err.getLocation().getColNo() > 0;
 
             final List<StoredError> filteredErrors = NullSafe.list(errorList)
                     .stream()
@@ -199,7 +200,7 @@ public class Indicators {
         if (severity == null) {
             return 0;
         } else {
-            return NullSafe.requireNonNullElse(errorCount.get(severity), 0);
+            return Objects.requireNonNullElse(errorCount.get(severity), 0);
         }
     }
 

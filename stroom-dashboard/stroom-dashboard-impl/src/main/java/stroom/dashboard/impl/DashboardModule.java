@@ -47,5 +47,6 @@ public class DashboardModule extends AbstractModule {
 
         RestResourcesBinder.create(binder())
                 .bind(DashboardResourceImpl.class);
+
     }
 }

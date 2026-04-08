@@ -106,14 +106,6 @@ public interface AnnotationResource extends RestResource, DirectRestService {
     Integer batchChange(@Parameter(description = "request", required = true)
                         MultiAnnotationChangeRequest request);
 
-    @GET
-    @Path("getStandardComments")
-    @Operation(
-            summary = "Gets a list of predefined comments",
-            operationId = "getAnnotationSampleComments")
-    List<String> getStandardComments(@QueryParam("filter") String filter);
-
-
     @POST
     @Path("getLinkedEvents")
     @Operation(

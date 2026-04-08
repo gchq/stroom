@@ -58,4 +58,5 @@ class VisualisationResourceImpl implements VisualisationResource {
                 .type(VisualisationDoc.TYPE)
                 .build();
     }
+
 }

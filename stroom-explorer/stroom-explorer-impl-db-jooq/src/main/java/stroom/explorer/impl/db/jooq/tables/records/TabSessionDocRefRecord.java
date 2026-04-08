@@ -4,7 +4,7 @@
 package stroom.explorer.impl.db.jooq.tables.records;
 
 
-import org.jooq.Record3;
+import org.jooq.Record2;
 import org.jooq.impl.UpdatableRecordImpl;
 
 import stroom.explorer.impl.db.jooq.tables.TabSessionDocRef;
@@ -79,8 +79,8 @@ public class TabSessionDocRefRecord extends UpdatableRecordImpl<TabSessionDocRef
     // -------------------------------------------------------------------------
 
     @Override
-    public Record3<Integer, String, String> key() {
-        return (Record3) super.key();
+    public Record2<Integer, Integer> key() {
+        return (Record2) super.key();
     }
 
     // -------------------------------------------------------------------------

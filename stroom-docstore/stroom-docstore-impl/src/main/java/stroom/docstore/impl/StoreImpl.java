@@ -28,6 +28,8 @@ import stroom.docstore.api.Store;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.AbstractDoc.AbstractBuilder;
 import stroom.docstore.shared.DocRefUtil;
+import stroom.importexport.api.ImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportSettings.ImportMode;
 import stroom.importexport.shared.ImportState;
@@ -55,7 +57,9 @@ import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -340,10 +344,10 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
 
     @Override
     public DocRef importDocument(DocRef docRef,
-                                 final Map<String, byte[]> dataMap,
+                                 final ImportExportDocument importExportDocument,
                                  final ImportState importState,
                                  final ImportSettings importSettings) {
-        if (dataMap != null) {
+        if (importExportDocument != null) {
             Objects.requireNonNull(docRef);
             final String uuid = docRef.getUuid();
             try {
@@ -365,7 +369,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                         final List<String> updatedFields = importState.getUpdatedFieldList();
                         checkForUpdatedFields(
                                 existingDocument,
-                                dataMap,
+                                importExportDocument,
                                 updatedFields);
                         if (updatedFields.isEmpty()) {
                             importState.setState(State.EQUAL);
@@ -381,7 +385,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                         }
                     }
 
-                    final D document = importDocument(docRef, existingDocument, uuid, dataMap);
+                    final D document = importDocument(docRef, existingDocument, uuid, importExportDocument);
 
                     if (document instanceof final Embeddable embeddable && embeddable.getEmbeddedIn() != null) {
                         docRef = new EmbeddedDocRef(docRef);
@@ -397,13 +401,13 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     }
 
     private D importDocument(final DocRef docRef,
-                             final D existingDocument,
-                             final String uuid,
-                             final Map<String, byte[]> convertedDataMap) {
+                                final D existingDocument,
+                                final String uuid,
+                                final ImportExportDocument convertedImportExportDocument) {
         return persistence.getLockFactory().lockResult(uuid, () -> {
             try {
                 // Turn the data map into a document.
-                final D newDocument = serialiser.read(convertedDataMap);
+                final D newDocument = serialiser.read(convertedImportExportDocument);
 
                 // Get a builder to mutate the doc.
                 final AbstractBuilder<D, ?> builder = builderFunction.apply(newDocument);
@@ -420,7 +424,7 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                 builder.stampAudit(securityContext);
 
                 // Convert the document back into a data map.
-                final Map<String, byte[]> finalData = serialiser.write(builder.build());
+                final ImportExportDocument finalData = serialiser.write(builder.build());
                 // Write the data.
                 persistence.write(docRef, existingDocument != null, finalData);
 
@@ -457,18 +461,18 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
+    public ImportExportDocument exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList) {
         return exportDocument(docRef, omitAuditFields, messageList, d -> d);
     }
 
     @Override
-    public Map<String, byte[]> exportDocument(final DocRef docRef,
+    public ImportExportDocument exportDocument(final DocRef docRef,
                                               final boolean omitAuditFields,
                                               final List<Message> messageList,
                                               final Function<D, D> function) {
-        Map<String, byte[]> data = Collections.emptyMap();
+        ImportExportDocument importExportDocument = new ImportExportDocument();
 
         try {
             // Check that the user has permission to read this item.
@@ -482,20 +486,20 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
                 if (omitAuditFields) {
                     document = removeAuditData(builderFunction, document);
                 }
-                data = serialiser.write(function.apply(document));
+                importExportDocument = serialiser.write(function.apply(document));
             }
         } catch (final IOException e) {
             messageList.add(new Message(Severity.ERROR, e.getMessage()));
         }
 
-        return data;
+        return importExportDocument;
     }
 
     private void checkForUpdatedFields(final D existingDoc,
-                                       final Map<String, byte[]> dataMap,
+                                       final ImportExportDocument importExportDocument,
                                        final List<String> updatedFieldList) {
         try {
-            final D newDoc = serialiser.read(dataMap);
+            final D newDoc = serialiser.read(importExportDocument);
             final D existingDocument = removeAuditData(builderFunction, existingDoc);
             final D newDocument = removeAuditData(builderFunction, newDoc);
 
@@ -538,10 +542,10 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     private D create(final D document) {
         try {
             final DocRef docRef = createDocRef(document);
-            final Map<String, byte[]> data = serialiser.write(document);
+            final ImportExportDocument importExportDocument = serialiser.write(document);
             persistence.getLockFactory().lock(document.getUuid(), () -> {
                 try {
-                    persistence.write(docRef, false, data);
+                    persistence.write(docRef, false, importExportDocument);
                     EntityEvent.fire(entityEventBus, docRef, EntityAction.CREATE);
                 } catch (final IOException e) {
                     throw new UncheckedIOException(e);
@@ -563,10 +567,10 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
         final String uuid = NullSafe.requireNonNull(docRef, DocRef::getUuid, () -> "UUID required");
         checkType(docRef);
 
-        final Map<String, byte[]> data = readPersistence(docRef);
-        if (data != null) {
+        final ImportExportDocument importExportDocument = readPersistence(docRef);
+        if (importExportDocument != null) {
             try {
-                final D doc = serialiser.read(data);
+                final D doc = serialiser.read(importExportDocument);
                 if (doc instanceof final Embeddable embeddable) {
                     final DocRef parentDocRef = embeddable.getEmbeddedIn();
                     if (parentDocRef != null) {
@@ -654,20 +658,20 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
             builder.stampAudit(securityContext);
             updatedDoc = builder.build();
 
-            final Map<String, byte[]> newData = serialiser.write(updatedDoc);
+            final ImportExportDocument newData = serialiser.write(updatedDoc);
 
             persistence.getLockFactory().lock(updatedDoc.getUuid(), () -> {
                 try {
                     // Read existing data for this document.
-                    final Map<String, byte[]> data = persistence.read(docRef);
+                    final ImportExportDocument importExportDocument = persistence.read(docRef);
 
                     // Perform version check to ensure the item hasn't been updated by somebody
                     // else before we try to update it.
-                    if (data == null) {
+                    if (importExportDocument == null) {
                         throw new DocumentNotFoundException(docRef);
                     }
 
-                    final D existingDocument = serialiser.read(data);
+                    final D existingDocument = serialiser.read(importExportDocument);
 
                     // Perform version check to ensure the item hasn't been updated by somebody
                     // else before we try to update it.
@@ -717,18 +721,35 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
             return Collections.emptyMap();
         }
 
-        final Map<String, byte[]> data = readPersistence(docRef);
-        if (data == null) {
+        final ImportExportDocument importExportDocument = readPersistence(docRef);
+        if (importExportDocument == null) {
             return Collections.emptyMap();
         }
 
-        return data
-                .entrySet()
-                .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> new String(e.getValue(), StandardCharsets.UTF_8)));
+        final Map<String, String> retval = new HashMap<>();
+        final Collection<ImportExportAsset> extAssets = importExportDocument.getExtAssets();
+        for (final ImportExportAsset asset : extAssets) {
+            final byte[] data;
+            try {
+                data = asset.getInputData();
+            } catch (final IOException e) {
+                throw new UncheckedIOException(LogUtil.message("Error reading {} asset {}: {}",
+                        toDocRefDisplayString(docRef),
+                        asset.getKey(),
+                        e.getMessage()), e);
+            }
+
+            String stringData = "";
+            if (data != null) {
+                stringData = new String(data, StandardCharsets.UTF_8);
+            }
+            retval.put(asset.getKey(), stringData);
+        }
+
+        return retval;
     }
 
-    private Map<String, byte[]> readPersistence(final DocRef docRef) {
+    private ImportExportDocument readPersistence(final DocRef docRef) {
         return persistence.getLockFactory().lockResult(docRef.getUuid(), () -> {
             try {
                 return persistence.read(docRef);
@@ -747,16 +768,24 @@ public class StoreImpl<D extends AbstractDoc, B extends AbstractBuilder<D, ?>> i
     public void migratePipelines(final Function<Map<String, byte[]>, Optional<Map<String, byte[]>>> function) {
         persistence.list(type).forEach(docRef ->
                 persistence.getLockFactory().lock(docRef.getUuid(), () -> {
-                    final Map<String, byte[]> data = readPersistence(docRef);
-                    if (data != null) {
-                        final Optional<Map<String, byte[]>> migrated = function.apply(data);
-                        migrated.ifPresent(newData -> {
-                            try {
-                                persistence.write(docRef, true, newData);
-                            } catch (final Exception e) {
-                                LOGGER.error(e::getMessage, e);
-                            }
-                        });
+                    final ImportExportDocument importExportDocument = readPersistence(docRef);
+                    if (importExportDocument != null) {
+                        try {
+                            final Map<String, byte[]> mapIn = importExportDocument.toDataMap();
+                            final Optional<Map<String, byte[]>> migrated = function.apply(mapIn);
+                            migrated.ifPresent(newData -> {
+                                try {
+                                    final ImportExportDocument migratedDocument =
+                                            ImportExportDocument.fromDataMap(newData);
+
+                                    persistence.write(docRef, true, migratedDocument);
+                                } catch (final Exception e) {
+                                    LOGGER.error(e::getMessage, e);
+                                }
+                            });
+                        } catch (final Exception e) {
+                            LOGGER.error(e::getMessage, e);
+                        }
                     }
                 }));
     }

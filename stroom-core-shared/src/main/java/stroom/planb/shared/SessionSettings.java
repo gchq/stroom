@@ -16,8 +16,6 @@
 
 package stroom.planb.shared;
 
-import stroom.util.shared.NullSafe;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -54,8 +52,8 @@ public final class SessionSettings
                            @JsonProperty("condense") final DurationSetting condense,
                            @JsonProperty("keySchema") final SessionKeySchema keySchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.condense = NullSafe.requireNonNullElse(condense, new DurationSetting.Builder().build());
-        this.keySchema = NullSafe.requireNonNullElse(keySchema, new SessionKeySchema.Builder().build());
+        this.condense = Objects.requireNonNullElse(condense, new DurationSetting.Builder().build());
+        this.keySchema = Objects.requireNonNullElse(keySchema, new SessionKeySchema.Builder().build());
     }
 
     @Override

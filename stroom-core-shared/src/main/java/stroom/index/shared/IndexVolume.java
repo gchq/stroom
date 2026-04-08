@@ -23,7 +23,6 @@ import stroom.util.shared.HasCapacity;
 import stroom.util.shared.HasCapacityInfo;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.PrimitiveValueConverter;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -117,7 +116,7 @@ public class IndexVolume implements HasAuditInfoGetters, HasIntegerId, HasCapaci
         this.updateUser = updateUser;
         this.path = path;
         this.nodeName = nodeName;
-        this.state = NullSafe.requireNonNullElse(state, VolumeUseState.ACTIVE);
+        this.state = Objects.requireNonNullElse(state, VolumeUseState.ACTIVE);
         this.bytesLimit = bytesLimit;
         this.bytesUsed = bytesUsed;
         this.bytesFree = bytesFree;

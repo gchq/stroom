@@ -16,7 +16,6 @@
 
 package stroom.processor.shared;
 
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.Days;
 import stroom.util.shared.time.Time;
 
@@ -69,7 +68,7 @@ public class ProfilePeriod {
             @JsonProperty("maxClusterThreads") final int maxClusterThreads) {
         Objects.requireNonNull(uuid);
         this.uuid = uuid;
-        this.days = NullSafe.requireNonNullElse(days, Days.EMPTY);
+        this.days = Objects.requireNonNullElse(days, Days.EMPTY);
         this.startTime = startTime;
         this.endTime = endTime;
         this.limitNodeThreads = limitNodeThreads;

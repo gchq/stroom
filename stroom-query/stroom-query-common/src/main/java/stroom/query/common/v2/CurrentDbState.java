@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class CurrentDbState {
@@ -65,18 +66,17 @@ public class CurrentDbState {
     @Override
     public String toString() {
         return "CurrentDbState{" +
-                "streamId=" + streamId +
-                ", eventId=" + eventId +
-                ", lastEventTime=" + LocalDateTime.ofInstant(Instant.ofEpochMilli(lastEventTime), ZoneOffset.UTC) +
-                '}';
+               "streamId=" + streamId +
+               ", eventId=" + eventId +
+               ", lastEventTime=" + LocalDateTime.ofInstant(Instant.ofEpochMilli(lastEventTime), ZoneOffset.UTC) +
+               '}';
     }
 
     /**
      * Merges existingCurrentDbState with this to create a new state.
      */
     public CurrentDbState mergeExisting(final CurrentDbState existingCurrentDbState) {
-        final Long lastEventTime = NullSafe.requireNonNullElseGet(
-                this.lastEventTime,
+        final Long lastEventTime = Objects.requireNonNullElseGet(this.lastEventTime,
                 () -> NullSafe.get(existingCurrentDbState, CurrentDbState::getLastEventTime));
 
         return new CurrentDbState(

@@ -21,18 +21,21 @@ import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
 public enum AnnotationTagType implements HasDisplayValue, HasPrimitiveValue {
-    STATUS("Status", 0),
-    LABEL("Label", 1),
-    COLLECTION("Collection", 2);
+    STATUS("Status", 0, false),
+    LABEL("Label", 1, false),
+    COLLECTION("Collection", 2, false),
+    COMMENT("Comment", 3, true);
 
     public static final PrimitiveValueConverter<AnnotationTagType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AnnotationTagType.class, AnnotationTagType.values());
     private final String displayValue;
     private final byte primitiveValue;
+    private final boolean hasTagText;
 
-    AnnotationTagType(final String displayValue, final int primitiveValue) {
+    AnnotationTagType(final String displayValue, final int primitiveValue, final boolean hasTagText) {
         this.displayValue = displayValue;
         this.primitiveValue = (byte) primitiveValue;
+        this.hasTagText = hasTagText;
     }
 
     @Override
@@ -43,5 +46,9 @@ public enum AnnotationTagType implements HasDisplayValue, HasPrimitiveValue {
     @Override
     public byte getPrimitiveValue() {
         return primitiveValue;
+    }
+
+    public boolean hasTagText() {
+        return hasTagText;
     }
 }

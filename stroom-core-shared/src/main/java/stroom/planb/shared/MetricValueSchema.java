@@ -17,7 +17,6 @@
 package stroom.planb.shared;
 
 import stroom.util.shared.AbstractBuilder;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -65,12 +64,12 @@ public class MetricValueSchema {
                              @JsonProperty("storeMax") final Boolean storeMax,
                              @JsonProperty("storeCount") final Boolean storeCount,
                              @JsonProperty("storeSum") final Boolean storeSum) {
-        this.valueType = NullSafe.requireNonNullElse(valueType, DEFAULT_MAX_VALUE_SIZE);
-        this.storeLatestValue = NullSafe.requireNonNullElse(storeLatestValue, DEFAULT_STORE_LATEST_VALUE);
-        this.storeMin = NullSafe.requireNonNullElse(storeMin, DEFAULT_STORE_MIN);
-        this.storeMax = NullSafe.requireNonNullElse(storeMax, DEFAULT_STORE_MAX);
-        this.storeCount = NullSafe.requireNonNullElse(storeCount, DEFAULT_STORE_COUNT);
-        this.storeSum = NullSafe.requireNonNullElse(storeSum, DEFAULT_STORE_SUM);
+        this.valueType = Objects.requireNonNullElse(valueType, DEFAULT_MAX_VALUE_SIZE);
+        this.storeLatestValue = Objects.requireNonNullElse(storeLatestValue, DEFAULT_STORE_LATEST_VALUE);
+        this.storeMin = Objects.requireNonNullElse(storeMin, DEFAULT_STORE_MIN);
+        this.storeMax = Objects.requireNonNullElse(storeMax, DEFAULT_STORE_MAX);
+        this.storeCount = Objects.requireNonNullElse(storeCount, DEFAULT_STORE_COUNT);
+        this.storeSum = Objects.requireNonNullElse(storeSum, DEFAULT_STORE_SUM);
     }
 
     public MaxValueSize getValueType() {

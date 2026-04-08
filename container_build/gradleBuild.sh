@@ -91,6 +91,12 @@ main() {
   export STROOM_JDBC_DRIVER_HOST="${host_ip}"
   echo -e "${GREEN}Setting STROOM_JDBC_DRIVER_HOST to ${BLUE}${host_ip}${NC}"
 
+  echo "::group::Gradle vendors"
+  echo -e "${GREEN}Gradle Vendors${NC}"
+  ./gradlew \
+    -q javaToolchains
+  echo "::endgroup::"
+
   echo "::group::Gradle clean"
   echo -e "${GREEN}Clean${NC}"
   ./gradlew \

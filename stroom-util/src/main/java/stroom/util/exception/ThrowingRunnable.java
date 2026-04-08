@@ -47,4 +47,14 @@ public interface ThrowingRunnable<E extends Throwable> {
             }
         };
     }
+
+    /**
+     * Run the passed {@link Runnable} that throws a checked exception.
+     * Any {@link Throwable} will be caught and wrapped into either a {@link RuntimeException}
+     * of {@link UncheckedIOException} then re-thrown.
+     */
+    static <E extends Throwable> void run(final ThrowingRunnable<E> runnable) {
+        unchecked(runnable)
+                .run();
+    }
 }

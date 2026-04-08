@@ -63,7 +63,7 @@ public final class StoredError implements Marker, Comparable<StoredError> {
         this.location = location;
         this.elementId = elementId;
         this.message = message;
-        this.errorType = NullSafe.requireNonNullElse(errorType, ErrorType.UNKNOWN);
+        this.errorType = Objects.requireNonNullElse(errorType, ErrorType.UNKNOWN);
     }
 
     @Override

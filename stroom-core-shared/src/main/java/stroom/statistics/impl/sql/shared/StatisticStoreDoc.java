@@ -21,7 +21,6 @@ import stroom.docs.shared.Description;
 import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -103,9 +102,9 @@ public class StatisticStoreDoc extends AbstractDoc implements StatisticStore {
                              @JsonProperty("config") final StatisticsDataSourceData config) {
         super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
-        this.statisticType = NullSafe.requireNonNullElse(statisticType, StatisticType.COUNT);
-        this.rollUpType = NullSafe.requireNonNullElse(rollUpType, StatisticRollUpType.NONE);
-        this.precision = NullSafe.requireNonNullElse(precision, DEFAULT_PRECISION);
+        this.statisticType = Objects.requireNonNullElse(statisticType, StatisticType.COUNT);
+        this.rollUpType = Objects.requireNonNullElse(rollUpType, StatisticRollUpType.NONE);
+        this.precision = Objects.requireNonNullElse(precision, DEFAULT_PRECISION);
         this.enabled = enabled;
         this.config = config;
     }

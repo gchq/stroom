@@ -17,9 +17,11 @@
 package stroom.annotation.client;
 
 import stroom.annotation.client.AnnotationTagCreatePresenter.AnnotationTagCreateView;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -31,6 +33,10 @@ public class AnnotationTagCreateViewImpl extends ViewImpl implements AnnotationT
 
     @UiField
     TextBox name;
+    @UiField
+    FormGroup tagTextGroup;
+    @UiField
+    TextArea tagText;
 
     @Inject
     public AnnotationTagCreateViewImpl(final Binder binder) {
@@ -55,6 +61,22 @@ public class AnnotationTagCreateViewImpl extends ViewImpl implements AnnotationT
     @Override
     public void setName(final String name) {
         this.name.setText(name);
+    }
+
+    @Override
+    public void showTagText(final boolean show, final String label) {
+        tagTextGroup.setLabel(label);
+        tagTextGroup.setVisible(show);
+    }
+
+    @Override
+    public String getTagText() {
+        return this.tagText.getText();
+    }
+
+    @Override
+    public void setTagText(final String comment) {
+        this.tagText.setText(comment);
     }
 
     public interface Binder extends UiBinder<Widget, AnnotationTagCreateViewImpl> {

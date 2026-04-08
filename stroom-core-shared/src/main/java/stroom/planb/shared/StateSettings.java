@@ -16,8 +16,6 @@
 
 package stroom.planb.shared;
 
-import stroom.util.shared.NullSafe;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -53,8 +51,8 @@ public final class StateSettings
                          @JsonProperty("keySchema") final StateKeySchema keySchema,
                          @JsonProperty("valueSchema") final StateValueSchema valueSchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.keySchema = NullSafe.requireNonNullElse(keySchema, new StateKeySchema.Builder().build());
-        this.valueSchema = NullSafe.requireNonNullElse(valueSchema, new StateValueSchema.Builder().build());
+        this.keySchema = Objects.requireNonNullElse(keySchema, new StateKeySchema.Builder().build());
+        this.valueSchema = Objects.requireNonNullElse(valueSchema, new StateValueSchema.Builder().build());
     }
 
     public StateKeySchema getKeySchema() {
