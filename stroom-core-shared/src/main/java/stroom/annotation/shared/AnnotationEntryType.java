@@ -20,6 +20,10 @@ import stroom.docref.HasDisplayValue;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 public enum AnnotationEntryType implements HasDisplayValue, HasPrimitiveValue {
     TITLE("Title", "title", 0),
     SUBJECT("Subject", "subject", 1),
@@ -41,6 +45,37 @@ public enum AnnotationEntryType implements HasDisplayValue, HasPrimitiveValue {
 
     public static final PrimitiveValueConverter<AnnotationEntryType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AnnotationEntryType.class, AnnotationEntryType.values());
+
+    public static final Map<AnnotationEntryType, Set<AnnotationEntryType>> GROUPED_TYPES = new HashMap<>();
+
+    static {
+        GROUPED_TYPES.put(AnnotationEntryType.ASSIGNED,
+                Set.of(AnnotationEntryType.ASSIGNED));
+        GROUPED_TYPES.put(AnnotationEntryType.LINK_EVENT,
+                Set.of(AnnotationEntryType.LINK_EVENT, AnnotationEntryType.UNLINK_EVENT));
+        GROUPED_TYPES.put(AnnotationEntryType.UNLINK_EVENT,
+                Set.of(AnnotationEntryType.LINK_EVENT, AnnotationEntryType.UNLINK_EVENT));
+        GROUPED_TYPES.put(AnnotationEntryType.RETENTION_PERIOD,
+                Set.of(AnnotationEntryType.RETENTION_PERIOD));
+        GROUPED_TYPES.put(AnnotationEntryType.DESCRIPTION,
+                Set.of(AnnotationEntryType.DESCRIPTION));
+        GROUPED_TYPES.put(AnnotationEntryType.ADD_TO_COLLECTION,
+                Set.of(AnnotationEntryType.ADD_TO_COLLECTION, AnnotationEntryType.REMOVE_FROM_COLLECTION));
+        GROUPED_TYPES.put(AnnotationEntryType.REMOVE_FROM_COLLECTION,
+                Set.of(AnnotationEntryType.ADD_TO_COLLECTION, AnnotationEntryType.REMOVE_FROM_COLLECTION));
+        GROUPED_TYPES.put(AnnotationEntryType.ADD_LABEL,
+                Set.of(AnnotationEntryType.ADD_LABEL, AnnotationEntryType.REMOVE_LABEL));
+        GROUPED_TYPES.put(AnnotationEntryType.REMOVE_LABEL,
+                Set.of(AnnotationEntryType.ADD_LABEL, AnnotationEntryType.REMOVE_LABEL));
+        GROUPED_TYPES.put(AnnotationEntryType.ADD_TABLE_DATA,
+                Set.of(AnnotationEntryType.ADD_TABLE_DATA));
+        GROUPED_TYPES.put(AnnotationEntryType.LINK_ANNOTATION,
+                Set.of(AnnotationEntryType.LINK_ANNOTATION, AnnotationEntryType.UNLINK_ANNOTATION));
+        GROUPED_TYPES.put(AnnotationEntryType.UNLINK_ANNOTATION,
+                Set.of(AnnotationEntryType.LINK_ANNOTATION, AnnotationEntryType.UNLINK_ANNOTATION));
+        GROUPED_TYPES.put(AnnotationEntryType.DELETE,
+                Set.of(AnnotationEntryType.DELETE));
+    }
 
     private final String displayValue;
     private final String actionText;
