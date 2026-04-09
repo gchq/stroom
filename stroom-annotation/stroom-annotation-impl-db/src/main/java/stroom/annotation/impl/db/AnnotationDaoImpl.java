@@ -1859,6 +1859,10 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 final int tagLinkCount = txnContext.deleteFrom(ANNOTATION_TAG_LINK)
                         .where(ANNOTATION_TAG_LINK.FK_ANNOTATION_ID.in(boxedIds))
                         .execute();
+                final int annoLinkCount = txnContext.deleteFrom(ANNOTATION_LINK)
+                        .where(ANNOTATION_LINK.FK_ANNOTATION_SRC_ID.in(boxedIds))
+                        .or(ANNOTATION_LINK.FK_ANNOTATION_DST_ID.in(boxedIds))
+                        .execute();
                 final int annoCount = txnContext.deleteFrom(ANNOTATION)
                         .where(ANNOTATION.ID.in(boxedIds))
                         .execute();
@@ -1872,9 +1876,9 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 final LongList batchDeletedIds = new LongArrayList(boxedIds);
                 LOGGER.debug(() -> LogUtil.message(
                         "physicallyDelete() - age: {}, batchSize: {}, ids.size: {}, linkCount: {}, " +
-                        "entryCount: {}, tagLinkCount: {}, batchProcessById.size: {}",
+                        "entryCount: {}, tagLinkCount: {}, annoLinkCount: {}, batchProcessById.size: {}",
                         age, batchSize, ids.size(), linkCount, entryCount,
-                        tagLinkCount, batchDeletedIds.size()));
+                        tagLinkCount, annoLinkCount, batchDeletedIds.size()));
 
                 deletedIds.addAll(batchDeletedIds);
             };
