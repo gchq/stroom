@@ -218,8 +218,8 @@ class S3StreamTypeExtensions {
         if (firstDotIdx == -1) {
             throw new IllegalArgumentException("Missing extension in key: " + key);
         }
-        final String uuid = key.substring(0, firstDotIdx);
-        LOGGER.debug("getDictUuid() - key: '{}', uuid: '{}'", key, uuid);
+        final String uuid = fileName.substring(0, firstDotIdx);
+        LOGGER.debug("getDictUuid() - key: '{}', fileName: {}, uuid: '{}'", key, fileName, uuid);
         return uuid;
     }
 

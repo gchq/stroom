@@ -823,7 +823,7 @@ public class S3Manager {
         // metaDataKey is like
         String key = metaEntry.getKey();
         // Remove AWS user-defined meta key prefix if present
-        removeAwsPrefix(key);
+        key = removeAwsPrefix(key);
 
         final SegmentedMetaEntry segmentedMetaEntry;
         if (key.startsWith(META_METADATA_KEY_PREFIX)) {

@@ -25,13 +25,16 @@ import stroom.test.common.TestUtil;
 import io.vavr.Tuple;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@ExtendWith(MockitoExtension.class)
 class TestS3StreamTypeExtensions {
 
     @Mock
@@ -93,6 +96,7 @@ class TestS3StreamTypeExtensions {
         final int volId = 123;
         Mockito.when(mockDataVolume.getVolumeId())
                 .thenReturn(volId);
+
         return TestUtil.buildDynamicTestStream()
                 .withInputType(FileKey.class)
                 .withOutputType(String.class)
@@ -124,14 +128,13 @@ class TestS3StreamTypeExtensions {
 
     @TestFactory
     Stream<DynamicTest> testGetDictKey() {
-        final S3StreamTypeExtensions s3StreamTypeExtensions = new S3StreamTypeExtensions(FsVolumeConfig::new);
         return TestUtil.buildDynamicTestStream()
                 .withInputType(String.class)
                 .withOutputType(String.class)
                 .withTestFunction(testCase -> {
-                    final String key = s3StreamTypeExtensions.getDictkey(testCase.getInput());
+                    final String key = S3StreamTypeExtensions.getDictkey(testCase.getInput());
                     // Makes sure we can reverse the conversion
-                    final String uuid2 = s3StreamTypeExtensions.getDictUuid(key);
+                    final String uuid2 = S3StreamTypeExtensions.getDictUuid(key);
                     assertThat(uuid2)
                             .isEqualTo(testCase.getInput());
                     return key;
