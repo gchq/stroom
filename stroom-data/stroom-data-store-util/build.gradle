@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,14 @@ ext.moduleName = 'stroom.data.store.util'
 
 dependencies {
     implementation project(':stroom-activity:stroom-activity-mock')
+    implementation project(':stroom-aws:stroom-aws-s3-impl')
     implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-cache:stroom-cache-impl')
     implementation project(':stroom-cluster:stroom-cluster-impl')
     implementation project(':stroom-cluster:stroom-cluster-lock-mock')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-docstore:stroom-docstore-impl')
+    implementation project(':stroom-docstore:stroom-docstore-impl-db')
     implementation project(':stroom-data:stroom-data-retention-api')
     implementation project(':stroom-data:stroom-data-store-api')
     implementation project(':stroom-data:stroom-data-store-impl')

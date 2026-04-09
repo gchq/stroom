@@ -86,18 +86,19 @@ class TestZstdSeekTableCacheImpl {
 
         final AtomicInteger fetchCount = new AtomicInteger(0);
 
-        Mockito.doAnswer(invocation -> {
-                    fetchCount.incrementAndGet();
-                    final Range<Long> range = invocation.getArgument(3, Range.class);
-                    LOGGER.debug("range: {}", range);
-                    final int from = Math.toIntExact(range.getFrom());
-                    final int to = Math.toIntExact(range.getTo());
+        Mockito.doAnswer(
+                        invocation -> {
+                            fetchCount.incrementAndGet();
+                            final Range<Long> range = invocation.getArgument(3, Range.class);
+                            LOGGER.debug("range: {}", range);
+                            final int from = Math.toIntExact(range.getFrom());
+                            final int to = Math.toIntExact(range.getTo());
 
-                    Mockito.when(mockResponseInputStream.readAllBytes())
-                            .thenReturn(Arrays.copyOfRange(compressedData, from, to));
+                            Mockito.when(mockResponseInputStream.readAllBytes())
+                                    .thenReturn(Arrays.copyOfRange(compressedData, from, to));
 
-                    return mockResponseInputStream;
-                }).when(mockS3Manager)
+                            return mockResponseInputStream;
+                        }).when(mockS3Manager)
                 .getByteRange(Mockito.any(Meta.class), Mockito.anyString(), Mockito.any(), Mockito.any());
 
         final ZstdSeekTable seekTable = zstdSeekTableCache.getSeekTable(

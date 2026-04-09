@@ -53,12 +53,16 @@ public class ToolModule extends AbstractModule {
         install(new MockTaskModule());
         install(new MockWordListProviderModule());
         install(new stroom.activity.mock.MockActivityModule());
+        install(new stroom.aws.s3.impl.S3ConfigModule());
         install(new stroom.cache.impl.CacheModule());
         install(new stroom.data.store.impl.fs.FsDataStoreModule());
         install(new stroom.data.store.impl.fs.s3v2.ZstdModule());
         install(new stroom.data.store.impl.fs.db.FsDataStoreDaoModule());
         install(new stroom.data.store.impl.fs.db.FsDataStoreDaoModule());
         install(new stroom.data.store.impl.fs.db.FsDataStoreDbModule());
+        install(new stroom.docstore.impl.DocStoreModule());
+        install(new stroom.docstore.impl.db.DocStoreDbPersistenceModule());
+        install(new stroom.docstore.impl.db.DocStoreDBPersistenceDbModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new stroom.meta.impl.MetaModule());
         install(new stroom.meta.impl.db.MetaDaoModule());
