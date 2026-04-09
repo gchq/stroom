@@ -212,7 +212,9 @@ public final class ForwardFileConfig
             "This ensures that the move does not happen more than once. If an atomic move is not possible, " +
             "e.g. the destination is a remote file system that does not support an atomic move, then it will " +
             "fall back to a non-atomic move with the risk of it happening more than once. If you see warnings " +
-            "in the logs or know the file system will not support atomic moves then set this to false.")
+            "in the logs or know the file system will not support atomic moves then set this to false. " +
+            "This property only affects moves to the directory defined by 'path' and 'subPathTemplate', not " +
+            "retry/error directories.")
     public boolean isAtomicMoveEnabled() {
         return atomicMoveEnabled;
     }
