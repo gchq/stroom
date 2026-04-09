@@ -284,13 +284,16 @@ public class RetryingForwardDestination implements ForwardDestination {
         final Path failureDir = forwardingDir.resolve("03_failure");
         final PathTemplateConfig errorSubPathTemplate = forwardQueueConfig.getErrorSubPathTemplate();
         DirUtil.ensureDirExists(failureDir);
+        // Use atomic move here as the failure dir is within the proxy data dirs, rather
+        // than on the forward dest
         failureDestination = new ForwardFileDestinationImpl(
                 failureDir,
                 destinationName + " (failures)",
                 errorSubPathTemplate,
                 null,
                 null,
-                simplePathCreator);
+                simplePathCreator,
+                true);
         fileStores.add(FORWARD_ORDER, "forward - " + destinationName + " - failure", failureDir);
         return failureDestination;
     }
