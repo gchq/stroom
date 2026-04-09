@@ -363,8 +363,8 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
     }
 
     private void move(final Path source, final Path target) throws IOException {
-        LOGGER.debug(() -> LogUtil.message("Moving '{}' to '{}",
-                LogUtil.path(source), LogUtil.path(target)));
+        LOGGER.debug(() -> LogUtil.message("Moving '{}' to '{}', isAtomicMoveEnabled: {}",
+                LogUtil.path(source), LogUtil.path(target), isAtomicMoveEnabled));
 
         boolean success = false;
         int tryCount = 0;
@@ -383,8 +383,8 @@ class ForwardFileDestinationImpl implements ForwardFileDestination {
             }
         }
         if (!success) {
-            throw new RuntimeException(LogUtil.message("Unable to move {} to {} after {} attempts {}",
-                    source, target, tryCount));
+            throw new RuntimeException(LogUtil.message("Unable to move '{}' to '{}' after {} attempts {}",
+                    LogUtil.path(source), LogUtil.path(target), tryCount));
         }
     }
 
