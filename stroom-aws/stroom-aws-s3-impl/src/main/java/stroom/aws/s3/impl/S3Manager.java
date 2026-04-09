@@ -145,10 +145,6 @@ public class S3Manager {
     private final S3ClientConfig s3ClientConfig;
     private final S3MetaFieldsMapper s3MetaFieldsMapper;
     private final S3ClientPool s3ClientPool;
-    // Clients are thread safe and designed to be reused
-    // https://docs.aws.amazon.com/sdk-for-java/latest/developer-guide/best-practices.html#bestpractice1
-//    private final LazyValue<S3Client> lazyS3Client;
-//    private final LazyValue<S3AsyncClient> lazyS3AsyncClient;
 
     public S3Manager(final TemplateCache templateCache,
                      final S3ClientConfig s3ClientConfig,
@@ -158,53 +154,11 @@ public class S3Manager {
         this.s3ClientConfig = s3ClientConfig;
         this.s3MetaFieldsMapper = s3MetaFieldsMapper;
         this.s3ClientPool = clientPool;
-
-//        lazyS3Client = LazyValue.initialisedBy(() ->
-//                createClient(s3ClientConfig));
-//        lazyS3AsyncClient = LazyValue.initialisedBy(() ->
-//                createAsyncClient(s3ClientConfig));
     }
-
-//    private S3AsyncClient createAsyncClient(final S3ClientConfig s3ClientConfig) {
-//        final AwsCredentialsProvider awsCredentialsProvider = createCredentialsProvider(s3ClientConfig);
-//        return S3AsyncClient
-//                .crtBuilder()
-//                .credentialsProvider(awsCredentialsProvider)
-//                .region(createRegion(s3ClientConfig.getRegion()))
-//                .minimumPartSizeInBytes(s3ClientConfig.getMinimalPartSizeInBytes())
-//                .targetThroughputInGbps(s3ClientConfig.getTargetThroughputInGbps())
-//                .maxConcurrency(s3ClientConfig.getMaxConcurrency())
-//                .endpointOverride(createUri(s3ClientConfig.getEndpointOverride()))
-//                .checksumValidationEnabled(s3ClientConfig.getChecksumValidationEnabled())
-//                .initialReadBufferSizeInBytes(s3ClientConfig.getReadBufferSizeInBytes())
-//                .httpConfiguration(createHttpConfiguration(s3ClientConfig.getHttpConfiguration()))
-//                .retryConfiguration(S3CrtRetryConfiguration
-//                        .builder()
-//                        .numRetries(s3ClientConfig.getNumRetries())
-//                        .build())
-//                .accelerate(s3ClientConfig.getAccelerate())
-//                .forcePathStyle(s3ClientConfig.getForcePathStyle())
-//                .crossRegionAccessEnabled(s3ClientConfig.isCrossRegionAccessEnabled())
-//                .thresholdInBytes(s3ClientConfig.getThresholdInBytes())
-//                .build();
-//    }
 
     private PooledClient<S3AsyncClient> getAsyncClient() {
         return s3ClientPool.getPooledS3AsyncClient(s3ClientConfig);
     }
-
-//    private S3Client createClient(final S3ClientConfig s3ClientConfig) {
-//        final AwsCredentialsProvider awsCredentialsProvider = createCredentialsProvider(s3ClientConfig);
-//        return S3Client
-//                .builder()
-//                .credentialsProvider(awsCredentialsProvider)
-//                .region(createRegion(s3ClientConfig.getRegion()))
-//                .endpointOverride(createUri(s3ClientConfig.getEndpointOverride()))
-//                .accelerate(s3ClientConfig.getAccelerate())
-//                .forcePathStyle(s3ClientConfig.getForcePathStyle())
-//                .crossRegionAccessEnabled(s3ClientConfig.isCrossRegionAccessEnabled())
-//                .build();
-//    }
 
     private PooledClient<S3Client> getSyncClient() {
         return s3ClientPool.getPooledS3Client(s3ClientConfig);
@@ -1274,6 +1228,11 @@ public class S3Manager {
     // --------------------------------------------------------------------------------
 
 
+    /**
+     * @param segmentIdx The part/segment index that the meta entry is for
+     * @param key        Meta entry key
+     * @param value      Meta entry value
+     */
     record SegmentedMetaEntry(int segmentIdx, String key, String value) {
 
     }
