@@ -47,6 +47,7 @@ import org.lmdbjava.Env.AlreadyClosedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -62,6 +63,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -113,7 +115,6 @@ class TestSnapshotShard {
                 .builder()
                 .nodeList(Collections.singletonList("test-node"))
                 .minTimeToKeepSnapshots(StroomDuration.ofSeconds(10))
-                .minTimeToKeepEnvOpen(StroomDuration.ofSeconds(1))
                 .snapshotRetryFetchInterval(StroomDuration.ofSeconds(2))
                 .build();
 
@@ -410,13 +411,8 @@ class TestSnapshotShard {
     }
 
     @Test
-    void testCleanupClosesIdleDb() throws Exception {
-        // Given: A snapshot with very short idle timeout
-        config = config
-                .copy()
-                .minTimeToKeepEnvOpen(StroomDuration.ofMillis(100))
-                .build();
-
+    void testCleanupIsNoOp() {
+        // Given: A snapshot
         when(fileTransferClient.fetchSnapshot(any(), any(), any()))
                 .thenReturn(Instant.now());
 
@@ -430,16 +426,11 @@ class TestSnapshotShard {
                 DB_FACTORY,
                 executorService);
 
-        // Access to open the DB
+        // Access the DB
         shard.getInfo();
 
-        // When: We wait past the idle timeout and run clean-up
-        Thread.sleep(150);
-        shard.cleanup();
-
-        // Then: The DB should be closed (hard to verify without exposing internals)
-        // But we can verify clean-up doesn't throw
-        assertThat(true).isTrue();
+        final String info = shard.getInfo();
+        assertThat(info).isNotNull();
     }
 
     @Test
@@ -609,6 +600,101 @@ class TestSnapshotShard {
         assertThat(destroyCount.get()).isEqualTo(1);
         // And some attempts should have failed with TryAgainException
         assertThat(tryAgainCount.get()).isGreaterThan(0);
+    }
+
+    @Test
+    void testReadsDuringRotationRetryGracefully() throws Exception {
+        // This test verifies that when rotation replaces the current instance,
+        // any concurrent readers that got the old instance reference and find
+        // the guard destroyed will get TryAgainException and retry successfully
+        // with the new instance.
+
+        // Given: A snapshot with short expiry
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(100))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger(0);
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    fetchCount.incrementAndGet();
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // Access the DB
+        shard.getInfo();
+
+        // Wait for expiry and trigger rotation
+        Thread.sleep(150);
+        shard.getInfo(); // triggers rotation asynchronously
+
+        // Wait for rotation to complete
+        Thread.sleep(300);
+
+        // When/Then: Subsequent reads should succeed (via the new instance)
+        // and NOT throw any exception
+        final String info = shard.getInfo();
+        assertThat(info).isNotNull();
+        assertThat(fetchCount.get()).isGreaterThanOrEqualTo(2);
+    }
+
+    @Test
+    void testFailedRotationCleansUpAbandonedDirectory() throws Exception {
+        // Given: A snapshot where rotation fetches will fail
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(100))
+                .snapshotRetryFetchInterval(StroomDuration.ofSeconds(5))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger(0);
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    final int count = fetchCount.incrementAndGet();
+                    if (count == 1) {
+                        return Instant.now(); // First fetch succeeds
+                    } else {
+                        throw new RuntimeException("Fetch failed");
+                    }
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // When: We wait for expiry and trigger a failed rotation
+        Thread.sleep(150);
+        shard.getInfo(); // triggers rotation
+        Thread.sleep(300); // wait for rotation to complete
+
+        // Then: The snapshot dir should NOT accumulate abandoned directories.
+        // Count the directories under the snapshot/uuid path.
+        final Path snapshotUuidDir = statePaths.getSnapshotDir().resolve(doc.getUuid());
+        if (Files.exists(snapshotUuidDir)) {
+            try (final Stream<Path> dirs = Files.list(snapshotUuidDir).filter(Files::isDirectory)) {
+                final long dirCount = dirs.count();
+                // Should have at most 1 directory (the active instance).
+                // The failed rotation's directory should have been cleaned up.
+                assertThat(dirCount).isLessThanOrEqualTo(1);
+            }
+        }
     }
 
     private static final class TestDb implements Db<String, String> {

@@ -425,11 +425,6 @@ class StoreShard implements Shard {
         }
     }
 
-    @Override
-    public void cleanup() {
-
-    }
-
     /**
      * Must only be called during construction (before the object is published) or while holding
      * {@code exclusiveReadLock}.

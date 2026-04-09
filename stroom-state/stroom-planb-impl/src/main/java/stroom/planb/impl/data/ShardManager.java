@@ -251,15 +251,6 @@ public class ShardManager {
         }
     }
 
-    public void cleanup() {
-        try {
-            shardMap.values().forEach(Shard::cleanup);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-            throw e;
-        }
-    }
-
     public Shard getShardForMapName(final String mapName) {
         final PlanBDoc doc = planBDocCache.get(mapName);
         if (doc == null) {

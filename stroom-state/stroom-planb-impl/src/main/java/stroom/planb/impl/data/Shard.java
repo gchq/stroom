@@ -70,12 +70,6 @@ public interface Shard {
     <R> R get(Function<Db<?, ?>, R> function);
 
     /**
-     * Close the DB if it isn't currently in use for read or write.
-     */
-    void cleanup();
-
-
-    /**
      * Delete the DB if the associated doc has been deleted.
      */
     boolean delete();

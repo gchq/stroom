@@ -123,12 +123,6 @@ public class PlanBModule extends AbstractModule {
                         .description("Plan B snapshot creation")
                         .cronSchedule(CronExpressions.EVERY_10_MINUTES.getExpression())
                         .advanced(true));
-        ScheduledJobsBinder.create(binder())
-                .bindJobTo(ShardManagerCleanupRunnable.class, builder -> builder
-                        .name(ShardManager.CLEANUP_TASK_NAME)
-                        .description("Plan B shard cleanup")
-                        .cronSchedule(CronExpressions.EVERY_10_MINUTES.getExpression())
-                        .advanced(true));
     }
 
     private static class StateMergeRunnable extends RunnableWrapper {
@@ -152,14 +146,6 @@ public class PlanBModule extends AbstractModule {
         @Inject
         SnapshotCreatorRunnable(final ShardManager shardManager) {
             super(shardManager::createSnapshots);
-        }
-    }
-
-    private static class ShardManagerCleanupRunnable extends RunnableWrapper {
-
-        @Inject
-        ShardManagerCleanupRunnable(final ShardManager shardManager) {
-            super(shardManager::cleanup);
         }
     }
 }
