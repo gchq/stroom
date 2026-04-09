@@ -132,6 +132,7 @@ public class AnnotationEditPresenter
     private static final Attribute HISTORY_GROUP_HEADER = Attribute
             .className("annotationHistoryCommentHeader annotationHistoryGroupHeader");
     private static final Attribute HISTORY_GROUP_BODY = Attribute.className("annotationHistoryGroupBody");
+    private static final Attribute HISTORY_LABEL = Attribute.className("annotationHistoryLabel");
     private static final Attribute HISTORY_ITEM = Attribute.className("annotationHistoryItem");
     private static final Attribute ANNOTATION_TABLE = Attribute.className("annotationTable");
     private static final Attribute ANNOTATION_LINK = Attribute.className("annotationLink");
@@ -857,14 +858,21 @@ public class AnnotationEditPresenter
         html.append(line);
         html.div(border -> {
             border.div(header -> {
+                // Add row icon.
                 addIcon(header, first.getEntryType());
-                if (userRef != null) {
-                    header.bold(getUserName(userRef));
-                    header.nbsp();
-                }
-                header.append(actionText);
-                header.nbsp();
-                durationLabel.append(header, first.getEntryTime(), now);
+
+                // Add row label.
+                header.div(label -> {
+                    if (userRef != null) {
+                        label.bold(getUserName(userRef));
+                        label.nbsp();
+                    }
+                    label.append(actionText);
+                    label.nbsp();
+                    durationLabel.append(label, first.getEntryTime(), now);
+                }, HISTORY_LABEL);
+
+                // Add expander icon.
                 if (expanded) {
                     header.append(COLLAPSE);
                 } else {
@@ -872,6 +880,7 @@ public class AnnotationEditPresenter
                 }
             }, getGroupIdAttributes(HISTORY_GROUP_HEADER, first));
 
+            // Add content if expanded.
             if (expanded) {
                 border.div(body -> {
                     for (final AnnotationEntry entry : group.entries) {
@@ -896,25 +905,28 @@ public class AnnotationEditPresenter
                 html.append(line);
                 html.div(border -> {
                     border.div(header -> {
+                        // Add row label.
+                        header.div(label -> {
+                            label.bold(getUserName(entry.getEntryUser()));
+                            label.append(HtmlBuilder.NB_SPACE);
+                            label.appendTrustedString("commented");
+                            label.append(HtmlBuilder.NB_SPACE);
+                            durationLabel.append(label, entry.getEntryTime(), now);
 
-                        header.bold(getUserName(entry.getEntryUser()));
-                        header.append(HtmlBuilder.NB_SPACE);
-                        header.appendTrustedString("commented");
-                        header.append(HtmlBuilder.NB_SPACE);
-                        durationLabel.append(header, entry.getEntryTime(), now);
+                            if (!Objects.equals(entry.getEntryUser(), entry.getUpdateUser()) ||
+                                !Objects.equals(entry.getEntryTime(), entry.getUpdateTime())) {
+                                label.append(HtmlBuilder.NB_SPACE);
+                                label.appendTrustedString(" - ");
+                                label.append(HtmlBuilder.NB_SPACE);
+                                label.bold(getUserName(entry.getUpdateUser()));
+                                label.append(HtmlBuilder.NB_SPACE);
+                                label.appendTrustedString("edited");
+                                label.append(HtmlBuilder.NB_SPACE);
+                                durationLabel.append(label, entry.getUpdateTime(), now);
+                            }
+                        }, HISTORY_LABEL);
 
-                        if (!Objects.equals(entry.getEntryUser(), entry.getUpdateUser()) ||
-                            !Objects.equals(entry.getEntryTime(), entry.getUpdateTime())) {
-                            header.append(HtmlBuilder.NB_SPACE);
-                            header.appendTrustedString(" - ");
-                            header.append(HtmlBuilder.NB_SPACE);
-                            header.bold(getUserName(entry.getUpdateUser()));
-                            header.append(HtmlBuilder.NB_SPACE);
-                            header.appendTrustedString("edited");
-                            header.append(HtmlBuilder.NB_SPACE);
-                            durationLabel.append(header, entry.getUpdateTime(), now);
-                        }
-
+                        // Add change icon.
                         header.append(ELLIPSES);
 
                     }, getEntryIdAttributes(HISTORY_COMMENT_HEADER, entry));
@@ -933,14 +945,21 @@ public class AnnotationEditPresenter
                  DELETE -> {
                 html.append(line);
                 html.div(item -> {
+                    // Add row icon.
                     addIcon(item, entry.getEntryType());
-                    item.bold(getUserName(entry.getEntryUser()));
-                    item.nbsp();
-                    item.append(entry.getEntryType().getActionText());
-                    item.nbsp();
-                    link(html, entry.getEntryType(), entryUiValue);
-                    item.nbsp();
-                    durationLabel.append(item, entry.getEntryTime(), now);
+
+                    // Add row label.
+                    item.div(label -> {
+                        label.bold(getUserName(entry.getEntryUser()));
+                        label.nbsp();
+                        label.append(entry.getEntryType().getActionText());
+                        label.nbsp();
+                        link(html, entry.getEntryType(), entryUiValue);
+                        label.nbsp();
+                        durationLabel.append(label, entry.getEntryTime(), now);
+                    }, HISTORY_LABEL);
+
+                    // Add change icon.
                     item.append(ELLIPSES);
                 }, getEntryIdAttributes(HISTORY_ITEM, entry));
 
@@ -953,14 +972,21 @@ public class AnnotationEditPresenter
                     html.append(line);
                     html.div(border -> {
                         border.div(header -> {
+                            // Add row icon.
                             addIcon(header, entry.getEntryType());
-                            header.bold(getUserName(entry.getEntryUser()));
-                            header.nbsp();
-                            header.append(values.size() == 1
-                                    ? "added " + values.size() + " row"
-                                    : "added " + values.size() + " rows");
-                            header.nbsp();
-                            durationLabel.append(header, entry.getEntryTime(), now);
+
+                            // Add row label.
+                            header.div(label -> {
+                                label.bold(getUserName(entry.getEntryUser()));
+                                label.nbsp();
+                                label.append(values.size() == 1
+                                        ? "added " + values.size() + " row"
+                                        : "added " + values.size() + " rows");
+                                label.nbsp();
+                                durationLabel.append(label, entry.getEntryTime(), now);
+                            }, HISTORY_LABEL);
+
+                            // Add change icon.
                             header.append(ELLIPSES);
 
                         }, getEntryIdAttributes(HISTORY_COMMENT_HEADER, entry));
@@ -993,19 +1019,26 @@ public class AnnotationEditPresenter
                 if (entry.getPreviousValue() != null) {
                     html.append(line);
                     html.div(item -> {
+                        // Add row icon.
                         addIcon(item, entry.getEntryType());
-                        item.bold(getUserName(entry.getEntryUser()));
-                        if (areSameUser(entry.getEntryUser(), entry.getPreviousValue())) {
-                            item.nbsp();
-                            item.appendTrustedString("removed their assignment");
-                        } else {
-                            item.nbsp();
-                            item.appendTrustedString("unassigned");
-                            item.nbsp();
-                            item.bold(getValueString(entry.getPreviousValue().asUiValue()));
-                        }
-                        item.nbsp();
-                        durationLabel.append(item, entry.getEntryTime(), now);
+
+                        // Add row label.
+                        item.div(label -> {
+                            label.bold(getUserName(entry.getEntryUser()));
+                            if (areSameUser(entry.getEntryUser(), entry.getPreviousValue())) {
+                                label.nbsp();
+                                label.appendTrustedString("removed their assignment");
+                            } else {
+                                label.nbsp();
+                                label.appendTrustedString("unassigned");
+                                label.nbsp();
+                                label.bold(getValueString(entry.getPreviousValue().asUiValue()));
+                            }
+                            label.nbsp();
+                            durationLabel.append(label, entry.getEntryTime(), now);
+                        }, HISTORY_LABEL);
+
+                        // Add change icon.
                         item.append(ELLIPSES);
                     }, getEntryIdAttributes(HISTORY_ITEM, entry));
                     added = true;
@@ -1014,19 +1047,26 @@ public class AnnotationEditPresenter
                 if (entryUiValue != null && !entryUiValue.trim().isEmpty()) {
                     html.append(line);
                     html.div(item -> {
+                        // Add row icon.
                         addIcon(html, entry.getEntryType());
-                        item.bold(getUserName(entry.getEntryUser()));
-                        if (areSameUser(entry.getEntryUser(), entry.getEntryValue())) {
-                            item.nbsp();
-                            item.appendTrustedString("self-assigned this");
-                        } else {
-                            item.nbsp();
-                            item.appendTrustedString("assigned");
-                            item.nbsp();
-                            item.bold(getValueString(entryUiValue));
-                        }
-                        item.nbsp();
-                        durationLabel.append(item, entry.getEntryTime(), now);
+
+                        // Add row label.
+                        item.div(label -> {
+                            label.bold(getUserName(entry.getEntryUser()));
+                            if (areSameUser(entry.getEntryUser(), entry.getEntryValue())) {
+                                label.nbsp();
+                                label.appendTrustedString("self-assigned this");
+                            } else {
+                                label.nbsp();
+                                label.appendTrustedString("assigned");
+                                label.nbsp();
+                                label.bold(getValueString(entryUiValue));
+                            }
+                            label.nbsp();
+                            durationLabel.append(label, entry.getEntryTime(), now);
+                        }, HISTORY_LABEL);
+
+                        // Add change icon.
                         item.append(ELLIPSES);
                     }, getEntryIdAttributes(HISTORY_ITEM, entry));
                     added = true;
@@ -1035,33 +1075,40 @@ public class AnnotationEditPresenter
             default -> {
                 html.append(line);
                 html.div(item -> {
+                    // Add row icon.
                     addIcon(html, entry.getEntryType());
-                    item.bold(getUserName(entry.getEntryUser()));
-                    if (entry.getPreviousValue() != null) {
-                        item.nbsp();
-                        item.appendTrustedString("changed the");
-                        item.nbsp();
-                    } else {
-                        item.nbsp();
-                        item.appendTrustedString("set the");
-                        item.nbsp();
-                    }
-                    item.append(entry.getEntryType().getDisplayValue().toLowerCase());
-                    item.nbsp();
 
-                    if (entry.getPreviousValue() != null) {
-                        item.del(getValueString(entry.getPreviousValue().asUiValue()));
-                        item.nbsp();
-                        item.appendTrustedString("to");
-                        item.nbsp();
-                        item.ins(getValueString(entryUiValue));
+                    // Add row label.
+                    item.div(label -> {
+                        label.bold(getUserName(entry.getEntryUser()));
+                        if (entry.getPreviousValue() != null) {
+                            label.nbsp();
+                            label.appendTrustedString("changed the");
+                            label.nbsp();
+                        } else {
+                            label.nbsp();
+                            label.appendTrustedString("set the");
+                            label.nbsp();
+                        }
+                        label.append(entry.getEntryType().getDisplayValue().toLowerCase());
+                        label.nbsp();
 
-                    } else {
-                        item.append(getValueString(entryUiValue));
-                    }
+                        if (entry.getPreviousValue() != null) {
+                            label.del(getValueString(entry.getPreviousValue().asUiValue()));
+                            label.nbsp();
+                            label.appendTrustedString("to");
+                            label.nbsp();
+                            label.ins(getValueString(entryUiValue));
 
-                    item.nbsp();
-                    durationLabel.append(item, entry.getEntryTime(), now);
+                        } else {
+                            label.append(getValueString(entryUiValue));
+                        }
+
+                        label.nbsp();
+                        durationLabel.append(label, entry.getEntryTime(), now);
+                    }, HISTORY_LABEL);
+
+                    // Add change icon.
                     item.append(ELLIPSES);
                 }, getEntryIdAttributes(HISTORY_ITEM, entry));
                 added = true;
