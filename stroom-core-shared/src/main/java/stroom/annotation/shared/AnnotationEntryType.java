@@ -46,7 +46,7 @@ public enum AnnotationEntryType implements HasDisplayValue, HasPrimitiveValue {
     public static final PrimitiveValueConverter<AnnotationEntryType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AnnotationEntryType.class, AnnotationEntryType.values());
 
-    public final static Map<AnnotationEntryType, Set<AnnotationEntryType>> GROUPED_TYPES = new HashMap<>();
+    public static final Map<AnnotationEntryType, Set<AnnotationEntryType>> GROUPED_TYPES = new HashMap<>();
 
     static {
         GROUPED_TYPES.put(AnnotationEntryType.ASSIGNED,
