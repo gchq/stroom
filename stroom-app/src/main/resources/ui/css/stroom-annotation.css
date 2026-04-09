@@ -226,7 +226,7 @@
 .annotationHistoryCommentHeader {
     position: relative;
     width: 100%;
-    padding: 5px;
+    padding: 5px 8px;
     white-space: pre-wrap;
     word-break: break-word;
     border-bottom: 1px solid var(--border-color);
@@ -263,20 +263,39 @@
     background-color: var(--border-color);
 }
 
-.annotationHistoryItem .setting-block-icon svg {
+.annotationHistoryItem .setting-block-icon svg,
+.annotationHistoryCommentHeader svg,
+.annotationHistoryGroupHeader .setting-block-icon svg {
     opacity: 1;
     margin-right: 0;
 }
 
-.annotationHistoryItem svg {
+.annotationHistoryItem svg,
+.annotationHistoryCommentHeader svg,
+.annotationHistoryGroupHeader svg {
     width: 16px;
     height: 16px;
     opacity: 0.6;
     margin-right: 10px;
 }
 
-.annotationHistoryItem u {
+.annotationHistoryItem u,
+.annotationHistoryGroupHeader u {
     cursor: pointer;
+}
+
+.annotationHistoryGroupHeader {
+    padding: 5px 8px;
+    display: flex;
+    cursor: pointer;
+    -moz-transition: background-color .3s;
+    -o-transition: background-color .3s;
+}
+
+.annotationHistoryGroupBody {
+    display: flex;
+    flex-direction: column;
+    padding: 0 10px 10px 10px
 }
 
 .annotationHistoryText {
@@ -338,7 +357,14 @@
     -o-transition: opacity .3s;
 }
 
+.setting-block-expander {
+    position: absolute;
+    top: 6px;
+    right: -2px;
+}
+
 .annotationHistoryItem:hover .setting-block-icon,
+.annotationHistoryGroupHeader:hover .setting-block-icon,
 .annotationHistoryCommentHeader:hover .setting-block-icon,
 .setting-block:hover .setting-block-icon {
     opacity: 0.6;
