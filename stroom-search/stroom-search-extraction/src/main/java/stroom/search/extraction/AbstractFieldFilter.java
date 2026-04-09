@@ -23,6 +23,7 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.query.api.datasource.AnalyzerType;
 import stroom.query.api.datasource.DenseVectorFieldConfig;
+import stroom.query.api.datasource.DenseVectorFieldConfig.RerankModelType;
 import stroom.query.api.datasource.DenseVectorFieldConfig.VectorSimilarityFunctionType;
 import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.IndexField;
@@ -88,7 +89,9 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
         if (DENSE_VECTOR.equalsIgnoreCase(localName)) {
             denseVectorFieldConfigBuilder = DenseVectorFieldConfig.builder();
         } else if (denseVectorFieldConfigBuilder != null) {
-            if ("modelRef".equalsIgnoreCase(localName)) {
+            if ("embeddingModelRef".equalsIgnoreCase(localName)) {
+                docRefBuilder = DocRef.builder();
+            } else if ("rerankModelRef".equalsIgnoreCase(localName)) {
                 docRefBuilder = DocRef.builder();
             }
         }
@@ -98,8 +101,11 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (denseVectorFieldConfigBuilder != null) {
             if (docRefBuilder != null) {
-                if ("modelRef".equalsIgnoreCase(localName)) {
-                    denseVectorFieldConfigBuilder.modelRef(docRefBuilder.build());
+                if ("embeddingModelRef".equalsIgnoreCase(localName)) {
+                    denseVectorFieldConfigBuilder.embeddingModelRef(docRefBuilder.build());
+                    docRefBuilder = null;
+                } else if ("rerankModelRef".equalsIgnoreCase(localName)) {
+                    denseVectorFieldConfigBuilder.rerankModelRef(docRefBuilder.build());
                     docRefBuilder = null;
                 } else if ("type".equalsIgnoreCase(localName)) {
                     docRefBuilder.type(content.toString());
@@ -124,6 +130,12 @@ public abstract class AbstractFieldFilter extends AbstractXMLFilter {
                 } else if ("nearestNeighbourCount".equalsIgnoreCase(localName)) {
                     denseVectorFieldConfigBuilder
                             .nearestNeighbourCount(Integer.parseInt(content.toString()));
+                } else if ("rerankModelType".equalsIgnoreCase(localName)) {
+                    denseVectorFieldConfigBuilder
+                            .rerankModelType(RerankModelType.valueOf(content.toString()));
+                } else if ("rerankScoreMinimum".equalsIgnoreCase(localName)) {
+                    denseVectorFieldConfigBuilder
+                            .rerankScoreMinimum(Float.parseFloat(content.toString()));
                 }
             }
 

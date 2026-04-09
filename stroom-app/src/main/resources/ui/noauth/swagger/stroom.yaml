@@ -11318,7 +11318,7 @@ components:
     DenseVectorFieldConfig:
       type: object
       properties:
-        modelRef:
+        embeddingModelRef:
           $ref: "#/components/schemas/DocRef"
         nearestNeighbourCount:
           type: integer
@@ -11326,6 +11326,20 @@ components:
         overlapSize:
           type: integer
           format: int32
+        rerankBatchSize:
+          type: integer
+          format: int32
+        rerankModelRef:
+          $ref: "#/components/schemas/DocRef"
+        rerankModelType:
+          type: string
+          enum:
+          - JINA
+          - COHERE
+          - OPEN_AI
+        rerankScoreMinimum:
+          type: number
+          format: float
         segmentSize:
           type: integer
           format: int32
