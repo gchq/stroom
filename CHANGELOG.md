@@ -13,6 +13,29 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Dependency : Uplift docker images to `eclipse-temurin:25.0.2_10-jdk-alpine-3.23`. Change Java docker build to use 25.0.2. Change ERD build to use a fixed docker image.
+
+* Bug **#5484** : Fix stream browser Retention column and Info pane showing wrong retention period/rule.
+
+* Feature **#5490** : Add rerank capability to dense vector search.
+
+* Feature **#5492** : Change Git Repo folder colour as red looked like an error.
+
+* Bug **#5486** : Fix SQL to physically delete annotations.
+
+* Bug **#5488** : Fix `forwardFileDestinations[n].atomicMoveEnabled` property not being used.
+
+* Feature **#5480** : Group some annotation history items and make them expandable.
+
+* Bug **#5485** : Fix Plan B snapshot race condition bug.
+
+* Bug **#5495** : Fix query column order bug.
+
+* Bug **#5495** : Add option to reset query table customisation.
+
+* Feature **#5161** : Make dashboard tab menu available from settings icon.
+
+
 ## [v7.12-beta.1] - 2026-03-24
 
 * Feature **#5427** : Change the Data Feed Key authentication mechanism to support authentication by X509 certificate DN. Add a new allowed type of `CERTIFICATE_IDENTITY` to `.receive.enabledAuthenticationTypes`. Rename property `.receive.dataFeedKeysDir` to  `.receive.dataFeedIdentitiesDir` and change the structure of the files in it, all files will have to be replaced. Rename property `.receive.dataFeedKeyOwnerMetaKey` to `.receive.dataFeedOwnerMetaKey`. Change the default value of `.receive.dataFeedIdentitiesDir` from `data_feed_keys` to `data_feed_identities`.

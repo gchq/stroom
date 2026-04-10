@@ -70,12 +70,6 @@ public interface Shard {
     <R> R get(Function<Db<?, ?>, R> function);
 
     /**
-     * Close the DB if it isn't currently in use for read or write.
-     */
-    void cleanup();
-
-
-    /**
      * Delete the DB if the associated doc has been deleted.
      */
     boolean delete();
@@ -93,4 +87,9 @@ public interface Shard {
      * @return Information about the environment and associated databases as a JSON string.
      */
     String getInfo();
+
+    /**
+     * @return true if the shard is idle and can be safely evicted from the shard map.
+     */
+    boolean isIdle();
 }

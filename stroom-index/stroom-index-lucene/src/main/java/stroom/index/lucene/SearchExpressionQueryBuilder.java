@@ -558,7 +558,7 @@ class SearchExpressionQueryBuilder {
         } else if (FieldType.DENSE_VECTOR.equals(indexField.getFldType())) {
             final DenseVectorFieldConfig denseVectorFieldConfig = indexField.getDenseVectorFieldConfig();
             if (denseVectorFieldConfig == null ||
-                denseVectorFieldConfig.getModelRef() == null) {
+                denseVectorFieldConfig.getEmbeddingModelRef() == null) {
                 throw new IllegalArgumentException("Vector embedding model is not defined for field " +
                                                    indexField);
             }
@@ -566,7 +566,7 @@ class SearchExpressionQueryBuilder {
             try {
                 // Query the embeddings API for a vector representation of the query expression
                 final OpenAIModelDoc modelDoc = openAIService
-                        .getOpenAIModelDoc(denseVectorFieldConfig.getModelRef());
+                        .getOpenAIModelDoc(denseVectorFieldConfig.getEmbeddingModelRef());
 
                 final EmbeddingModel embeddingModel = openAIService.getEmbeddingModel(modelDoc);
                 final float[] queryVector = embeddingModel.embed(value).content().vector();

@@ -18,12 +18,15 @@ package stroom.index.client.view;
 
 import stroom.index.client.presenter.DenseVectorFieldPresenter.DenseVectorFieldView;
 import stroom.item.client.SelectionBox;
+import stroom.query.api.datasource.DenseVectorFieldConfig;
+import stroom.query.api.datasource.DenseVectorFieldConfig.RerankModelType;
 import stroom.query.api.datasource.DenseVectorFieldConfig.VectorSimilarityFunctionType;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -34,7 +37,7 @@ public class DenseVectorFieldViewImpl extends ViewImpl implements DenseVectorFie
     private final Widget widget;
 
     @UiField
-    SimplePanel model;
+    SimplePanel embeddingModel;
     @UiField
     SelectionBox<VectorSimilarityFunctionType> vectorSimilarityFunctionType;
     @UiField
@@ -43,6 +46,14 @@ public class DenseVectorFieldViewImpl extends ViewImpl implements DenseVectorFie
     ValueSpinner overlapSize;
     @UiField
     ValueSpinner nearestNeighbourCount;
+    @UiField
+    SimplePanel rerankModel;
+    @UiField
+    SelectionBox<RerankModelType> rerankModelType;
+    @UiField
+    ValueSpinner rerankBatchSize;
+    @UiField
+    TextBox rerankScoreMinimum;
 
     @Inject
     public DenseVectorFieldViewImpl(final Binder binder) {
@@ -54,6 +65,9 @@ public class DenseVectorFieldViewImpl extends ViewImpl implements DenseVectorFie
         overlapSize.setMax(1000000);
         nearestNeighbourCount.setMin(1);
         nearestNeighbourCount.setMax(1000000);
+        rerankBatchSize.setMin(1);
+        rerankBatchSize.setMax(1000000);
+        rerankModelType.addItems(RerankModelType.values());
     }
 
     @Override
@@ -62,8 +76,8 @@ public class DenseVectorFieldViewImpl extends ViewImpl implements DenseVectorFie
     }
 
     @Override
-    public void setModelView(final View view) {
-        model.setWidget(view.asWidget());
+    public void setEmbeddingModelView(final View view) {
+        embeddingModel.setWidget(view.asWidget());
     }
 
     @Override
@@ -99,6 +113,41 @@ public class DenseVectorFieldViewImpl extends ViewImpl implements DenseVectorFie
     @Override
     public void setNearestNeighbourCount(final int nearestNeighbourCount) {
         this.nearestNeighbourCount.setValue(nearestNeighbourCount);
+    }
+
+    @Override
+    public void setRerankModelView(final View view) {
+        rerankModel.setWidget(view.asWidget());
+    }
+
+    @Override
+    public SelectionBox<RerankModelType> getRerankModelType() {
+        return rerankModelType;
+    }
+
+    @Override
+    public int getRerankBatchSize() {
+        return rerankBatchSize.getIntValue();
+    }
+
+    @Override
+    public void setRerankBatchSize(final int rerankBatchSize) {
+        this.rerankBatchSize.setValue(rerankBatchSize);
+    }
+
+    @Override
+    public void setRerankScoreMinimum(final float rerankScoreMinimum) {
+        this.rerankScoreMinimum.setValue(String.valueOf(rerankScoreMinimum));
+    }
+
+    @Override
+    public float getRerankScoreMinimum() {
+        try {
+            return Float.parseFloat(rerankScoreMinimum.getValue());
+        } catch (final NumberFormatException e) {
+            // Ignore.
+        }
+        return DenseVectorFieldConfig.DEFAULT_RERANK_SCORE_MINIMUM;
     }
 
     public interface Binder extends UiBinder<Widget, DenseVectorFieldViewImpl> {

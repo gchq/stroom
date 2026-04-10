@@ -1765,7 +1765,7 @@ public class FlexLayout extends Composite {
             if (key instanceof final TabLayoutConfig tabLayoutConfig) {
                 TabLayout tabLayout = layoutToWidgetMap.get(tabLayoutConfig);
                 if (tabLayout == null) {
-                    tabLayout = new TabLayout(eventBus, tabLayoutConfig, changeHandler);
+                    tabLayout = new TabLayout(eventBus, this, tabManager, tabLayoutConfig, changeHandler);
                     if (tabLayoutConfig.getAllTabCount() > 0) {
                         for (final TabConfig tabConfig : tabLayoutConfig.getTabs()) {
                             if (tabConfig.visible()) {

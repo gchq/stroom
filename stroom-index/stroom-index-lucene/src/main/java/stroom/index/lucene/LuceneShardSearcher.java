@@ -54,16 +54,15 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.KnnFloatVectorQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
-import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SearcherManager;
-import org.apache.lucene.search.TopDocs;
 
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.LongAdder;
 
 class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
@@ -205,39 +204,28 @@ class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
                                 try {
                                     LOGGER.logDurationIfDebugEnabled(() -> {
                                         try {
-                                            // Determine if we are going to use a KNN vector search.
-                                            final boolean isKNN = isKNN(query);
-                                            if (isKNN) {
-                                                // TODO : Allow configuration of max hits.
-                                                final TopDocs results = searcher
-                                                        .search(query, shardConfig.getMaxDocIdQueueSize());
-                                                final ScoreDoc[] scoreDocs = results.scoreDocs;
-                                                for (final ScoreDoc scoreDoc : scoreDocs) {
-                                                    // Add to the hit count.
-                                                    docIdQueue.put(scoreDoc.doc);
-                                                    hitCount.increment();
-                                                }
+                                            // Determine the scoring mode.
+                                            final ScoreMode scoreMode = isKNN(query)
+                                                    ? ScoreMode.TOP_SCORES
+                                                    : ScoreMode.COMPLETE_NO_SCORES;
 
-                                                LOGGER.debug("Shard search complete. {}, query term [{}]",
-                                                        results,
-                                                        query);
+                                            // Create a collector manager.
+                                            final IndexShardHitCollectorManager manager =
+                                                    new IndexShardHitCollectorManager(
+                                                            taskContext,
+                                                            queryKey,
+                                                            indexShard,
+                                                            query,
+                                                            docIdQueue,
+                                                            hitCount,
+                                                            scoreMode);
 
-                                            } else {
-                                                // Create a collector.
-                                                final IndexShardHitCollector collector = new IndexShardHitCollector(
-                                                        taskContext,
-                                                        queryKey,
-                                                        indexShard,
-                                                        query,
-                                                        docIdQueue,
-                                                        hitCount);
+                                            // Search.
+                                            searcher.search(query, manager);
 
-                                                searcher.search(query, collector);
-
-                                                LOGGER.debug("Shard search complete. {}, query term [{}]",
-                                                        collector,
-                                                        query);
-                                            }
+                                            LOGGER.debug("Shard search complete. {}, query term [{}]",
+                                                    manager,
+                                                    query);
 
                                         } catch (final TaskTerminatedException e) {
                                             // Expected error on early completion.
@@ -300,16 +288,25 @@ class LuceneShardSearcher implements stroom.index.impl.LuceneShardSearcher {
 
     private boolean isKNN(final Query query) {
         // Determine if we are going to use a KNN vector search.
-        final AtomicBoolean usingVector = new AtomicBoolean();
+        return getKnnFloatVectorQuery(query) != null;
+    }
+
+    private KnnFloatVectorQuery getKnnFloatVectorQuery(final Query query) {
+        // Find the KnnFlatVectorQuery that is being used.
+        final AtomicReference<KnnFloatVectorQuery> queryRef = new AtomicReference<>();
         query.visit(new QueryVisitor() {
             @Override
             public void visitLeaf(final Query query) {
-                if (query instanceof KnnFloatVectorQuery) {
-                    usingVector.set(true);
+                if (query instanceof final KnnFloatVectorQuery knnFloatVectorQuery) {
+                    if (queryRef.get() != null) {
+                        throw new UnsupportedOperationException("Rerank using multiple dense_vector fields is not " +
+                                                                "supported");
+                    }
+                    queryRef.set(knnFloatVectorQuery);
                 }
             }
         });
-        return usingVector.get();
+        return queryRef.get();
     }
 
     /**
