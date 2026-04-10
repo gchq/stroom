@@ -81,6 +81,25 @@ class TestFeedKey {
                 .build();
     }
 
+    @TestFactory
+    Stream<DynamicTest> testCtor() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputTypes(String.class, String.class)
+                .withOutputType(FeedKey.class)
+                .withTestFunction(testCase ->
+                        FeedKey.of(testCase.getInput()._1(), testCase.getInput()._2()))
+                .withSimpleEqualityAssertion()
+                .addCase(Tuple.of(null, null), FeedKey.of(null, null))
+                .addCase(Tuple.of("", null), FeedKey.of(null, null))
+                .addCase(Tuple.of(null, ""), FeedKey.of(null, null))
+                .addCase(Tuple.of("", ""), FeedKey.of(null, null))
+                .addCase(Tuple.of("foo", null), FeedKey.of("foo", null))
+                .addCase(Tuple.of(null, "foo"), FeedKey.of(null, "foo"))
+                .addCase(Tuple.of("foo", "bar"), FeedKey.of("foo", "bar"))
+                .build();
+    }
+
+
     @Test
     void testComparable() {
         final List<FeedKey> feedKeys = new ArrayList<>();

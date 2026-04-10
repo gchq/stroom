@@ -49,7 +49,7 @@ public final class FeedKey implements Comparable<FeedKey> {
         if (feed2 == null && type2 == null) {
             return EMPTY;
         } else {
-            return new FeedKey(feed, type);
+            return new FeedKey(feed2, type2);
         }
     }
 
