@@ -105,7 +105,7 @@ class StoreShard implements Shard {
     }
 
     @Override
-    public boolean cleanup() {
+    public boolean isIdle() {
         // Store shards are long-lived and don't need idle cleanup.
         return false;
     }

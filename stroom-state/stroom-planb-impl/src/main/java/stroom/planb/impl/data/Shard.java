@@ -89,11 +89,7 @@ public interface Shard {
     String getInfo();
 
     /**
-     * Check if this shard's resources can be cleaned up due to inactivity.
-     *
      * @return true if the shard is idle and can be safely evicted from the shard map.
-     *         The caller is responsible for calling {@link #delete()} and removing
-     *         the map entry.
      */
-    boolean cleanup();
+    boolean isIdle();
 }

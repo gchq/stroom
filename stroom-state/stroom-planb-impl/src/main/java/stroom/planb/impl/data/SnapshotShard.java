@@ -236,7 +236,7 @@ class SnapshotShard implements Shard {
     }
 
     @Override
-    public boolean cleanup() {
+    public boolean isIdle() {
         final Duration idleTimeout = configProvider.get().getMinTimeToKeepSnapshotEnv().getDuration();
         return lastAccessTime.plus(idleTimeout).isBefore(Instant.now());
     }

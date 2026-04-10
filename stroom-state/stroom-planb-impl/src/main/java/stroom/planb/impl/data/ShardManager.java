@@ -233,7 +233,7 @@ public class ShardManager {
                         shouldRemove = true;
                     } else {
                         // Check if the shard is idle.
-                        shouldRemove = shard.cleanup();
+                        shouldRemove = shard.isIdle();
                     }
                 } catch (final DocumentNotFoundException e) {
                     LOGGER.debug(e::getMessage, e);
