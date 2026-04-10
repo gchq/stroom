@@ -28,10 +28,14 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @Description(
-        "Defines a data generator which can be used to send data into a Stroom Feed.\n" +
-        "The data is defined as a String.\n" +
-        "The schedule on which the data is sent into the feed can be customised.")
+        """
+        Defines a data generator which can be used to send data into a Stroom Feed.
+        The data is defined as a String.
+        The schedule on which the data is sent into the feed can be customised.
+        """)
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class DataGenDoc extends AbstractDoc {
@@ -87,6 +91,28 @@ public class DataGenDoc extends AbstractDoc {
      */
     public static DocRef.TypedBuilder buildDocRef() {
         return DocRef.builder(TYPE);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        final DataGenDoc that = (DataGenDoc) o;
+        return Objects.equals(description, that.description) &&
+               Objects.equals(template, that.template) &&
+               Objects.equals(feed, that.feed);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), description, template, feed);
     }
 
     public Builder copy() {
