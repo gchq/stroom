@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -527,6 +528,16 @@ public class StringUtil {
                     }
                 }
             }
+        }
+    }
+
+    public static String removeBlankLines(final String str) {
+        if (NullSafe.isBlankString(str)) {
+            return "";
+        } else {
+            return str.lines()
+                    .filter(Predicate.not(String::isBlank))
+                    .collect(Collectors.joining("\n"));
         }
     }
 }

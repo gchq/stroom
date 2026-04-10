@@ -591,4 +591,23 @@ class TestStringUtil {
                 .addCase("ABC", -1)
                 .build();
     }
+
+    @TestFactory
+    Stream<DynamicTest> testRemoveBlankLines() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputAndOutputType(String.class)
+                .withSingleArgTestFunction(StringUtil::removeBlankLines)
+                .withSimpleEqualityAssertion()
+                .addCase(null, "")
+                .addCase("", "")
+                .addCase(" ", "")
+                .addCase(" foo ", " foo ")
+                .addCase(" foo \n bar ", " foo \n bar ")
+                .addCase(" foo \n\n bar ", " foo \n bar ")
+                .addCase(" foo \n \n bar ", " foo \n bar ")
+                .addCase(" foo \n \n \n bar ", " foo \n bar ")
+                .addCase(" \n foo \n \n \n bar \n ", " foo \n bar ")
+                .addCase(" \n  \n foo \n \n \n bar \n \n ", " foo \n bar ")
+                .build();
+    }
 }

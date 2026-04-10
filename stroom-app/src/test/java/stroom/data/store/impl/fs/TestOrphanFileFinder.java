@@ -36,6 +36,7 @@ import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.string.StringUtil;
 import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
@@ -174,7 +175,7 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
                 |------------|----------------|-------------------|------------|--------------|
                 | RAW_EVENTS | Dir            |                   | {} |            1 |""", date);
 
-        assertThat(summary.toString().trim())
+        assertThat(StringUtil.removeBlankLines(summary.toString().trim()))
                 .isEqualTo(expected);
 
         final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
@@ -332,7 +333,7 @@ class TestOrphanFileFinder extends AbstractCoreIntegrationTest {
                     |------------|----------------|-------------------|------------|--------------|
                     | RAW_EVENTS | Dir            |                   | {} |            3 |""", date);
 
-            assertThat(summary2.toString().trim())
+            assertThat(StringUtil.removeBlankLines(summary2.toString().trim()))
                     .isEqualTo(expected);
 
             final List<FsVolume> volumeList = volumeService.find(FindFsVolumeCriteria.matchAll()).getValues();
