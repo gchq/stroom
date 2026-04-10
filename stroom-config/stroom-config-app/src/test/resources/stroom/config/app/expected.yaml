@@ -699,7 +699,7 @@ appConfig:
         statisticsMode: "INTERNAL"
       maxElements: 1000000
   planb:
-    minTimeToKeepEnvOpen: "PT1M"
+    minTimeToKeepSnapshotEnv: "PT20M"
     minTimeToKeepSnapshots: "PT10M"
     nodeList: []
     path: "${stroom.home}/planb"
@@ -944,12 +944,6 @@ appConfig:
       offHeapResults: true
       valueQueueSize: 10000
     shard:
-      indexShardSearcherCache:
-        expireAfterAccess: "PT1M"
-        expireAfterWrite: null
-        maximumSize: 2
-        refreshAfterWrite: null
-        statisticsMode: "INTERNAL"
       maxDocIdQueueSize: 1000000
       maxThreadsPerTask: 5
       remoteSearchResultCache:

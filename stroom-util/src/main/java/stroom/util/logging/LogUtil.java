@@ -434,10 +434,16 @@ public final class LogUtil {
      * @return The path as an absolute and normalised path or null if path is null
      */
     public static String path(final Path path) {
-        return NullSafe.toString(
-                path,
-                Path::toAbsolutePath,
-                Path::normalize);
+        try {
+            return NullSafe.toString(
+                    path,
+                    Path::toAbsolutePath,
+                    Path::normalize);
+        } catch (final Exception e) {
+            LOGGER.error("Error converting '{}' to an absolute and normalised path - {}",
+                    path, LogUtil.exceptionMessage(e), e);
+            return NullSafe.toString(path);
+        }
     }
 
     /**

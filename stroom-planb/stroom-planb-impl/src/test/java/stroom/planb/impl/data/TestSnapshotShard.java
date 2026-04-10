@@ -47,6 +47,7 @@ import org.lmdbjava.Env.AlreadyClosedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -62,6 +63,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -113,7 +115,7 @@ class TestSnapshotShard {
                 .builder()
                 .nodeList(Collections.singletonList("test-node"))
                 .minTimeToKeepSnapshots(StroomDuration.ofSeconds(10))
-                .minTimeToKeepEnvOpen(StroomDuration.ofSeconds(1))
+                .minTimeToKeepSnapshotEnv(StroomDuration.ofSeconds(1))
                 .snapshotRetryFetchInterval(StroomDuration.ofSeconds(2))
                 .build();
 
@@ -410,11 +412,11 @@ class TestSnapshotShard {
     }
 
     @Test
-    void testCleanupClosesIdleDb() throws Exception {
+    void testCleanupReportsIdleAfterTimeout() throws Exception {
         // Given: A snapshot with very short idle timeout
         config = config
                 .copy()
-                .minTimeToKeepEnvOpen(StroomDuration.ofMillis(100))
+                .minTimeToKeepSnapshotEnv(StroomDuration.ofMillis(100))
                 .build();
 
         when(fileTransferClient.fetchSnapshot(any(), any(), any()))
@@ -430,16 +432,21 @@ class TestSnapshotShard {
                 DB_FACTORY,
                 executorService);
 
-        // Access to open the DB
+        // Access the DB
         shard.getInfo();
 
-        // When: We wait past the idle timeout and run clean-up
-        Thread.sleep(150);
-        shard.cleanup();
+        // When: Checked immediately — should NOT be idle
+        assertThat(shard.isIdle()).isFalse();
 
-        // Then: The DB should be closed (hard to verify without exposing internals)
-        // But we can verify clean-up doesn't throw
-        assertThat(true).isTrue();
+        // When: We wait past the idle timeout
+        Thread.sleep(150);
+
+        // Then: Should report as idle
+        assertThat(shard.isIdle()).isTrue();
+
+        // When: We access it again — should reset the idle timer
+        shard.getInfo();
+        assertThat(shard.isIdle()).isFalse();
     }
 
     @Test
@@ -611,6 +618,101 @@ class TestSnapshotShard {
         assertThat(tryAgainCount.get()).isGreaterThan(0);
     }
 
+    @Test
+    void testReadsDuringRotationRetryGracefully() throws Exception {
+        // This test verifies that when rotation replaces the current instance,
+        // any concurrent readers that got the old instance reference and find
+        // the guard destroyed will get TryAgainException and retry successfully
+        // with the new instance.
+
+        // Given: A snapshot with short expiry
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(100))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger(0);
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    fetchCount.incrementAndGet();
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // Access the DB
+        shard.getInfo();
+
+        // Wait for expiry and trigger rotation
+        Thread.sleep(150);
+        shard.getInfo(); // triggers rotation asynchronously
+
+        // Wait for rotation to complete
+        Thread.sleep(300);
+
+        // When/Then: Subsequent reads should succeed (via the new instance)
+        // and NOT throw any exception
+        final String info = shard.getInfo();
+        assertThat(info).isNotNull();
+        assertThat(fetchCount.get()).isGreaterThanOrEqualTo(2);
+    }
+
+    @Test
+    void testFailedRotationCleansUpAbandonedDirectory() throws Exception {
+        // Given: A snapshot where rotation fetches will fail
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(100))
+                .snapshotRetryFetchInterval(StroomDuration.ofSeconds(5))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger(0);
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    final int count = fetchCount.incrementAndGet();
+                    if (count == 1) {
+                        return Instant.now(); // First fetch succeeds
+                    } else {
+                        throw new RuntimeException("Fetch failed");
+                    }
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // When: We wait for expiry and trigger a failed rotation
+        Thread.sleep(150);
+        shard.getInfo(); // triggers rotation
+        Thread.sleep(300); // wait for rotation to complete
+
+        // Then: The snapshot dir should NOT accumulate abandoned directories.
+        // Count the directories under the snapshot/uuid path.
+        final Path snapshotUuidDir = statePaths.getSnapshotDir().resolve(doc.getUuid());
+        if (Files.exists(snapshotUuidDir)) {
+            try (final Stream<Path> dirs = Files.list(snapshotUuidDir).filter(Files::isDirectory)) {
+                final long dirCount = dirs.count();
+                // Should have at most 1 directory (the active instance).
+                // The failed rotation's directory should have been cleaned up.
+                assertThat(dirCount).isLessThanOrEqualTo(1);
+            }
+        }
+    }
+
     private static final class TestDb implements Db<String, String> {
 
         private final AtomicBoolean closed = new AtomicBoolean();
@@ -697,5 +799,203 @@ class TestSnapshotShard {
                 throw new AlreadyClosedException();
             }
         }
+    }
+
+    @Test
+    void testDeleteDuringRotationDoesNotLeak() throws Exception {
+        // Given: A snapshot with short expiry and slow fetch to simulate in-flight rotation
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(100))
+                .build();
+
+        final CountDownLatch fetchStarted = new CountDownLatch(1);
+        final CountDownLatch proceedFetch = new CountDownLatch(1);
+        final AtomicInteger fetchCount = new AtomicInteger(0);
+
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    final int count = fetchCount.incrementAndGet();
+                    if (count == 2) {
+                        // Block the rotation fetch so delete() runs mid-flight
+                        fetchStarted.countDown();
+                        proceedFetch.await(5, TimeUnit.SECONDS);
+                    }
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // When: We wait for expiry, trigger rotation, then delete mid-rotation
+        Thread.sleep(150);
+        shard.getInfo(); // triggers async rotation
+
+        // Wait for rotation fetch to start
+        assertThat(fetchStarted.await(2, TimeUnit.SECONDS)).isTrue();
+
+        // Now delete while rotation is blocked
+        final boolean deleted = shard.delete();
+        assertThat(deleted).isTrue();
+
+        // Let the rotation finish
+        proceedFetch.countDown();
+        Thread.sleep(300); // give rotation time to complete and clean up
+
+        // Then: No directories should be leaked — the rotation's new instance should
+        // be destroyed because the CAS will fail (snapshotRef is null).
+        final Path snapshotUuidDir = statePaths.getSnapshotDir().resolve(doc.getUuid());
+        if (Files.exists(snapshotUuidDir)) {
+            try (final Stream<Path> dirs = Files.list(snapshotUuidDir).filter(Files::isDirectory)) {
+                final long dirCount = dirs.count();
+                assertThat(dirCount).as("No snapshot directories should remain after delete").isEqualTo(0);
+            }
+        }
+    }
+
+    @Test
+    void testDeleteFailsFastOnSubsequentReads() throws Exception {
+        // Given: A snapshot shard
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenReturn(Instant.now());
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // Access works before delete
+        assertThat(shard.getInfo()).isNotNull();
+
+        // When: We delete it
+        shard.delete();
+
+        // Then: Subsequent reads should fail immediately (not after 100 retries)
+        final long start = System.nanoTime();
+        assertThatThrownBy(() -> shard.getInfo())
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("closed");
+        final long elapsed = System.nanoTime() - start;
+
+        // Should fail almost instantly (well under 1 second)
+        assertThat(elapsed).isLessThan(1_000_000_000L);
+    }
+
+    @Test
+    void testDeleteDoesNotTriggerNewRotation() throws Exception {
+        // Given: A snapshot that has expired
+        config = config
+                .copy()
+                .minTimeToKeepSnapshots(StroomDuration.ofMillis(100))
+                .build();
+
+        final AtomicInteger fetchCount = new AtomicInteger(0);
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenAnswer(inv -> {
+                    fetchCount.incrementAndGet();
+                    return Instant.now();
+                });
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // Wait for expiry
+        Thread.sleep(150);
+
+        final int countBefore = fetchCount.get();
+
+        // When: We delete the expired shard
+        shard.delete();
+
+        // Give time for any rotation that might have been triggered
+        Thread.sleep(300);
+
+        // Then: No new fetch should have been triggered by delete()
+        assertThat(fetchCount.get()).isEqualTo(countBefore);
+    }
+
+    @Test
+    void testConcurrentDeleteAndReads() throws Exception {
+        // Given: A snapshot shard
+        when(fileTransferClient.fetchSnapshot(any(), any(), any()))
+                .thenReturn(Instant.now());
+
+        final SnapshotShard shard = new SnapshotShard(
+                byteBuffers,
+                byteBufferFactory,
+                () -> config,
+                statePaths,
+                fileTransferClient,
+                doc,
+                DB_FACTORY,
+                executorService);
+
+        // When: Multiple readers and a deleter race
+        final int readerCount = 20;
+        final CyclicBarrier barrier = new CyclicBarrier(readerCount + 1);
+        final AtomicInteger successCount = new AtomicInteger(0);
+        final AtomicInteger closedCount = new AtomicInteger(0);
+        final AtomicReference<Throwable> unexpectedError = new AtomicReference<>();
+
+        try (final ExecutorService executor = Executors.newFixedThreadPool(readerCount + 1)) {
+            // Start readers
+            for (int i = 0; i < readerCount; i++) {
+                executor.submit(() -> {
+                    try {
+                        barrier.await(5, TimeUnit.SECONDS);
+                        for (int j = 0; j < 50; j++) {
+                            try {
+                                shard.getInfo();
+                                successCount.incrementAndGet();
+                            } catch (final RuntimeException e) {
+                                if (e.getMessage() != null && e.getMessage().contains("closed")) {
+                                    closedCount.incrementAndGet();
+                                    break; // Stop reading after shard is closed
+                                } else {
+                                    unexpectedError.compareAndSet(null, e);
+                                }
+                            }
+                        }
+                    } catch (final Exception e) {
+                        unexpectedError.compareAndSet(null, e);
+                    }
+                });
+            }
+
+            // Start deleter
+            executor.submit(() -> {
+                try {
+                    barrier.await(5, TimeUnit.SECONDS);
+                    Thread.sleep(10); // Let some reads happen first
+                    shard.delete();
+                } catch (final Exception e) {
+                    unexpectedError.compareAndSet(null, e);
+                }
+            });
+        }
+
+        // Then: No unexpected errors should have occurred
+        assertThat(unexpectedError.get()).isNull();
+        // Some reads should have succeeded before delete
+        assertThat(successCount.get()).isGreaterThan(0);
     }
 }
