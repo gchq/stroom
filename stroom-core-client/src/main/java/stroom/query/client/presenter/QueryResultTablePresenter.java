@@ -135,6 +135,7 @@ public class QueryResultTablePresenter
     private final DownloadPresenter downloadPresenter;
     private final AnnotationManager annotationManager;
     private final InlineSvgToggleButton valueFilterButton;
+    private final ButtonView resetButton;
     private final ButtonView annotateButton;
     private final EventBus eventBus;
     private final ButtonView askAiButton;
@@ -228,6 +229,11 @@ public class QueryResultTablePresenter
         valueFilterButton.setTitle("Filter Values");
         pagerView.addButton(valueFilterButton);
 
+        // Reset button
+        resetButton = pagerView.addButton(SvgPresets.UNDO);
+        resetButton.setEnabled(true);
+        resetButton.setTitle("Reset table customisation");
+
         // Annotate
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
         annotateButton.setVisible(annotationManager.isEnabled());
@@ -320,6 +326,13 @@ public class QueryResultTablePresenter
         }));
 
         registerHandler(valueFilterButton.addClickHandler(event -> toggleApplyValueFilters()));
+
+        registerHandler(resetButton.addClickHandler(event -> {
+            if (MouseUtil.isPrimary(event)) {
+                setPreferredColumns(Collections.emptyList());
+                refresh();
+            }
+        }));
 
         registerHandler(annotateButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
