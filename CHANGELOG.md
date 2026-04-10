@@ -13,6 +13,31 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11.7] - 2026-04-10
+
+* Dependency : Uplift docker images to `eclipse-temurin:25.0.2_10-jdk-alpine-3.23`. Change Java docker build to use 25.0.2. Change ERD build to use a fixed docker image.
+
+* Bug **#5484** : Fix stream browser Retention column and Info pane showing wrong retention period/rule.
+
+* Feature **#5490** : Add rerank capability to dense vector search.
+
+* Feature **#5492** : Change Git Repo folder colour as red looked like an error.
+
+* Bug **#5486** : Fix SQL to physically delete annotations.
+
+* Bug **#5488** : Fix `forwardFileDestinations[n].atomicMoveEnabled` property not being used.
+
+* Feature **#5480** : Group some annotation history items and make them expandable.
+
+* Bug **#5485** : Fix Plan B snapshot race condition bug.
+
+* Bug **#5495** : Fix query column order bug.
+
+* Bug **#5495** : Add option to reset query table customisation.
+
+* Feature **#5161** : Make dashboard tab menu available from settings icon.
+
+
 ## [v7.11.6] - 2026-03-24
 
 * Bug **#5471** : Fix bug in INFO logging output (the count of remaining shards) when flushing/deleting index shards.
@@ -2071,7 +2096,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.7...HEAD
+[v7.11.7]: https://github.com/gchq/stroom/compare/v7.11.6...v7.11.7
 [v7.11.6]: https://github.com/gchq/stroom/compare/v7.11.5...v7.11.6
 [v7.11.5]: https://github.com/gchq/stroom/compare/v7.11.4...v7.11.5
 [v7.11.4]: https://github.com/gchq/stroom/compare/v7.11.3...v7.11.4
