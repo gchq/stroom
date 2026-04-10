@@ -115,6 +115,7 @@ class TestSnapshotShard {
                 .builder()
                 .nodeList(Collections.singletonList("test-node"))
                 .minTimeToKeepSnapshots(StroomDuration.ofSeconds(10))
+                .minTimeToKeepSnapshotEnv(StroomDuration.ofSeconds(1))
                 .snapshotRetryFetchInterval(StroomDuration.ofSeconds(2))
                 .build();
 
@@ -411,8 +412,13 @@ class TestSnapshotShard {
     }
 
     @Test
-    void testCleanupIsNoOp() {
-        // Given: A snapshot
+    void testCleanupReportsIdleAfterTimeout() throws Exception {
+        // Given: A snapshot with very short idle timeout
+        config = config
+                .copy()
+                .minTimeToKeepSnapshotEnv(StroomDuration.ofMillis(100))
+                .build();
+
         when(fileTransferClient.fetchSnapshot(any(), any(), any()))
                 .thenReturn(Instant.now());
 
@@ -429,8 +435,18 @@ class TestSnapshotShard {
         // Access the DB
         shard.getInfo();
 
-        final String info = shard.getInfo();
-        assertThat(info).isNotNull();
+        // When: Checked immediately — should NOT be idle
+        assertThat(shard.cleanup()).isFalse();
+
+        // When: We wait past the idle timeout
+        Thread.sleep(150);
+
+        // Then: Should report as idle
+        assertThat(shard.cleanup()).isTrue();
+
+        // When: We access it again — should reset the idle timer
+        shard.getInfo();
+        assertThat(shard.cleanup()).isFalse();
     }
 
     @Test

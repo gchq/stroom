@@ -105,6 +105,12 @@ class StoreShard implements Shard {
     }
 
     @Override
+    public boolean cleanup() {
+        // Store shards are long-lived and don't need idle cleanup.
+        return false;
+    }
+
+    @Override
     public boolean delete() {
         try {
             writeLock.lockInterruptibly();

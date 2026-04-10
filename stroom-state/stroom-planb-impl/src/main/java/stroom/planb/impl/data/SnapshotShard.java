@@ -52,6 +52,10 @@ import java.util.function.Function;
  * is deleted. Rotation happens asynchronously in the background and never blocks reads —
  * readers continue using the current instance until the new one is ready.
  *
+ * <p>Idle shards are cleaned up by {@link ShardManager}: if a shard has not been accessed
+ * within {@code minTimeToKeepSnapshotEnv}, it is evicted from the map and its resources (DB files,
+ * snapshot directory) are freed. If someone reads the shard later, it is lazily recreated.
+ *
  * <p>Thread safety:
  * <ul>
  *   <li>Reads are lock-free and never block each other
@@ -76,6 +80,7 @@ class SnapshotShard implements Shard {
 
     private volatile SnapshotInstance snapshotInstance;
     private final AtomicBoolean rotating = new AtomicBoolean();
+    private volatile Instant lastAccessTime = Instant.now();
 
     public SnapshotShard(final ByteBuffers byteBuffers,
                          final ByteBufferFactory byteBufferFactory,
@@ -214,7 +219,9 @@ class SnapshotShard implements Shard {
         for (int attempts = 0; attempts < MAX_ATTEMPTS; attempts++) {
             try {
                 final SnapshotInstance instance = getSnapshotInstance();
-                return function.apply(instance);
+                final R result = function.apply(instance);
+                lastAccessTime = Instant.now();
+                return result;
             } catch (final TryAgainException e) {
                 LOGGER.trace("Retry attempt {} due to: {}", attempts, e.getMessage());
                 lastException = e;
@@ -226,6 +233,12 @@ class SnapshotShard implements Shard {
             }
         }
         throw new RuntimeException("Failed to acquire snapshot after " + MAX_ATTEMPTS + " attempts", lastException);
+    }
+
+    @Override
+    public boolean cleanup() {
+        final Duration idleTimeout = configProvider.get().getMinTimeToKeepSnapshotEnv().getDuration();
+        return lastAccessTime.plus(idleTimeout).isBefore(Instant.now());
     }
 
     @Override

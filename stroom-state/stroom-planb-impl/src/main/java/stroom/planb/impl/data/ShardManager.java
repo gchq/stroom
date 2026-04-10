@@ -59,8 +59,8 @@ public class ShardManager {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ShardManager.class);
 
-    public static final String CLEANUP_TASK_NAME = "Plan B Cleanup";
     public static final String SNAPSHOT_CREATOR_TASK_NAME = "Plan B Snapshot Creator";
+    public static final String SNAPSHOT_CLEANUP_TASK_NAME = "Plan B Snapshot Cleanup";
 
     private static final DbFactory DB_FACTORY = PlanBDb::open;
 
@@ -218,6 +218,37 @@ public class ShardManager {
             LOGGER.error(e::getMessage, e);
             throw e;
         }
+    }
+
+    public void cleanup() {
+        shardMap.forEach((uuid, shard) -> {
+            try {
+                boolean shouldRemove;
+
+                // Check if the doc has been deleted.
+                try {
+                    final PlanBDoc loaded = planBDocStore.readDocument(
+                            DocRef.builder().type(PlanBDoc.TYPE).uuid(uuid).build());
+                    if (loaded == null) {
+                        shouldRemove = true;
+                    } else {
+                        // Check if the shard is idle.
+                        shouldRemove = shard.cleanup();
+                    }
+                } catch (final DocumentNotFoundException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    shouldRemove = true;
+                }
+
+                if (shouldRemove) {
+                    if (shard.delete()) {
+                        shardMap.remove(uuid);
+                    }
+                }
+            } catch (final Exception e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        });
     }
 
     public void fetchSnapshot(final SnapshotRequest request, final OutputStream outputStream) {
