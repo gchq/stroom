@@ -127,7 +127,14 @@ class SnapshotShard implements Shard {
                                 rotating.set(false));
             }
 
-            // Re-read after triggering rotation to get latest reference.
+            // Re-read after triggering rotation to get latest reference. Getting the ref again is virtually pointless
+            // but here it is...
+            //
+            // Rotation is async so is very unlikely to have changed the reference, however there is also
+            // another possible but similarly unlikely scenario where delete() has nullified the ref.
+            //
+            // In either case the returned instance is protected by the Guard even if the reference ends up being stale
+            // after it is returned.
             final SnapshotInstance latest = snapshotRef.get();
             if (latest == null) {
                 throw new ShardClosedException();
