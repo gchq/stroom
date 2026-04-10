@@ -436,17 +436,17 @@ class TestSnapshotShard {
         shard.getInfo();
 
         // When: Checked immediately — should NOT be idle
-        assertThat(shard.cleanup()).isFalse();
+        assertThat(shard.isIdle()).isFalse();
 
         // When: We wait past the idle timeout
         Thread.sleep(150);
 
         // Then: Should report as idle
-        assertThat(shard.cleanup()).isTrue();
+        assertThat(shard.isIdle()).isTrue();
 
         // When: We access it again — should reset the idle timer
         shard.getInfo();
-        assertThat(shard.cleanup()).isFalse();
+        assertThat(shard.isIdle()).isFalse();
     }
 
     @Test
