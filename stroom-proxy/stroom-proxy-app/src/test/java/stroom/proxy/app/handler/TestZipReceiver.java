@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import stroom.proxy.StroomStatusCode;
 import stroom.proxy.app.handler.TestDataUtil.ItemGroup;
 import stroom.proxy.app.handler.TestDataUtil.ProxyZipSnapshot;
 import stroom.proxy.app.handler.ZipReceiver.ReceiveResult;
-import stroom.proxy.repo.FeedKey;
+import stroom.proxy.repo.FeedKeyInterner;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
@@ -36,6 +36,7 @@ import stroom.util.exception.ThrowingConsumer;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.FeedKey;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -70,11 +71,13 @@ public class TestZipReceiver extends StroomUnitTest {
     public static final String FEED_2 = "test-feed-2";
     public static final String TYPE_1 = "test-type-1";
     public static final String TYPE_2 = "test-type-2";
-    public static final FeedKey FEED_KEY_1_1 = new FeedKey(FEED_1, TYPE_1);
-    public static final FeedKey FEED_KEY_1_2 = new FeedKey(FEED_1, TYPE_2);
-    public static final FeedKey FEED_KEY_2_1 = new FeedKey(FEED_2, TYPE_1);
-    public static final FeedKey FEED_KEY_2_2 = new FeedKey(FEED_2, TYPE_2);
+    public static final FeedKey FEED_KEY_1_1 = FeedKey.of(FEED_1, TYPE_1);
+    public static final FeedKey FEED_KEY_1_2 = FeedKey.of(FEED_1, TYPE_2);
+    public static final FeedKey FEED_KEY_2_1 = FeedKey.of(FEED_2, TYPE_1);
+    public static final FeedKey FEED_KEY_2_2 = FeedKey.of(FEED_2, TYPE_2);
     public static final int ZIP_ENTRY_COUNT_PER_FEED_KEY = 2;
+
+    private final FeedKeyInterner feedKeyInterner = FeedKeyInterner.create();
 
     @Mock
     private AttributeMapFilterFactory mockAttributeMapFilterFactory;
@@ -92,6 +95,7 @@ public class TestZipReceiver extends StroomUnitTest {
     @TempDir
     private Path inputDir;
 
+
     @Test
     void testReceiveSimpleZipStream() throws IOException {
         final String defaultFeedName = FEED_1;
@@ -101,7 +105,7 @@ public class TestZipReceiver extends StroomUnitTest {
         final AttributeMap attributeMap = new AttributeMap();
         AttributeMapUtil.addFeedAndType(attributeMap, defaultFeedName, defaultTypeName);
 
-        final Path testZipFile = TestDataUtil.writeZip(new FeedKey(defaultFeedName, defaultTypeName));
+        final Path testZipFile = TestDataUtil.writeZip(FeedKey.of(defaultFeedName, defaultTypeName));
 
         LOGGER.info("testZipFile {}", testZipFile.toAbsolutePath());
 
@@ -156,7 +160,8 @@ public class TestZipReceiver extends StroomUnitTest {
             return ZipReceiver.receiveZipStream(
                     inputStream,
                     attributeMap,
-                    receivedZipFile);
+                    receivedZipFile,
+                    feedKeyInterner);
         }
     }
 
@@ -332,7 +337,7 @@ public class TestZipReceiver extends StroomUnitTest {
         assertThat(proxyZipSnapshot.getItemGroups())
                 .hasSize(ZIP_ENTRY_COUNT_PER_FEED_KEY * feedKeys.size());
 
-        final List<ZipEntryGroup> entries = ZipEntryGroup.read(outputFileGroup.getEntries());
+        final List<ZipEntryGroup> entries = ZipEntryGroup.read(outputFileGroup.getEntries(), feedKeyInterner);
         assertThat(entries)
                 .hasSize(ZIP_ENTRY_COUNT_PER_FEED_KEY);
 
@@ -394,7 +399,7 @@ public class TestZipReceiver extends StroomUnitTest {
         assertThat(proxyZipSnapshot.getItemGroups())
                 .hasSize(ZIP_ENTRY_COUNT_PER_FEED_KEY * feedKeys.size());
 
-        final List<ZipEntryGroup> entries = ZipEntryGroup.read(outputFileGroup.getEntries());
+        final List<ZipEntryGroup> entries = ZipEntryGroup.read(outputFileGroup.getEntries(), feedKeyInterner);
         assertThat(entries)
                 .hasSize(ZIP_ENTRY_COUNT_PER_FEED_KEY * allowedFeedKeys.size());
 
@@ -418,7 +423,7 @@ public class TestZipReceiver extends StroomUnitTest {
         final AttributeMap attributeMap = new AttributeMap();
         AttributeMapUtil.addFeedAndType(attributeMap, defaultFeedName, defaultTypeName);
 
-        final Path testZipFile = TestDataUtil.writeZip(new FeedKey(defaultFeedName, defaultTypeName));
+        final Path testZipFile = TestDataUtil.writeZip(FeedKey.of(defaultFeedName, defaultTypeName));
 
         LOGGER.info("testZipFile {}", testZipFile.toAbsolutePath());
 
@@ -441,7 +446,8 @@ public class TestZipReceiver extends StroomUnitTest {
                 () -> dataDir,
                 mockLogStream,
                 mockZipSplitter,
-                () -> mockReceiveDataConfig);
+                () -> mockReceiveDataConfig,
+                feedKeyInterner);
 
         final List<Path> consumedPaths = new ArrayList<>();
         final AtomicLong counter = new AtomicLong();

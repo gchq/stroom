@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.repo.AggregatorConfig;
-import stroom.proxy.repo.FeedKey;
-import stroom.proxy.repo.FeedKey.FeedKeyInterner;
+import stroom.proxy.repo.FeedKeyInterner;
 import stroom.proxy.repo.ProxyServices;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
@@ -29,6 +28,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.metrics.Metrics;
+import stroom.util.shared.FeedKey;
 import stroom.util.shared.NullSafe;
 import stroom.util.string.StringIdUtil;
 import stroom.util.zip.ZipUtil;
@@ -79,6 +79,8 @@ public class PreAggregator {
             StandardHeaderArguments.TYPE);
     private static final int FEED_HEADER_KEY_INDEX = FEED_AND_TYPE_HEADER_KEYS.indexOf(StandardHeaderArguments.FEED);
     private static final int TYPE_HEADER_KEY_INDEX = FEED_AND_TYPE_HEADER_KEYS.indexOf(StandardHeaderArguments.TYPE);
+    // 192 with a 0.75 load factor results in an initial capacity of 256
+    public static final int INTERNER_EXPECTED_FEED_COUNT = 192;
 
     /**
      * /22_splitting/
@@ -94,11 +96,14 @@ public class PreAggregator {
      * 21_pre_aggregates
      */
     private final Path aggregatingDir;
-    private final Map<FeedKey, AggregateState> aggregateStateMap = new ConcurrentHashMap<>();
+    // We are likely dealing with hundreds of different feed keys so use an initial capacity of 256
+    // allows for 192 entries before it is resized.
+    private final Map<FeedKey, AggregateState> aggregateStateMap = new ConcurrentHashMap<>(256);
     private final Striped<Lock> feedKeyLock = Striped.lock(FEED_KEY_LOCK_STRIPES);
     private final Histogram aggregateItemCountHistogram;
     private final Histogram aggregateByteSizeHistogram;
     private final Histogram aggregateAgeHistogram;
+    private final FeedKeyInterner feedKeyInterner;
 
     private Consumer<Path> destination;
 
@@ -107,9 +112,11 @@ public class PreAggregator {
                          final DataDirProvider dataDirProvider,
                          final ProxyServices proxyServices,
                          final Provider<AggregatorConfig> aggregatorConfigProvider,
-                         final Metrics metrics) {
+                         final Metrics metrics,
+                         final FeedKeyInterner feedKeyInterner) {
         this.deleteDirQueue = deleteDirQueue;
         this.aggregatorConfigProvider = aggregatorConfigProvider;
+        this.feedKeyInterner = feedKeyInterner;
 
         // Get or create the aggregating dir.
         aggregatingDir = dataDirProvider.get().resolve(DirNames.PRE_AGGREGATES);
@@ -201,7 +208,6 @@ public class PreAggregator {
                 final AggregateState aggregateState = new AggregateState(aggregatorConfig, aggregateDir);
                 final AtomicReference<FeedKey> feedKeyRef = new AtomicReference<>();
                 // Intern the feedKeys in the entries to reduce mem use
-                final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
                 // Now examine each file group to read state.
                 try (final Stream<Path> groupStream = Files.list(aggregateDir)) {
                     // Now read the entries.
@@ -442,7 +448,6 @@ public class PreAggregator {
         final List<ZipEntryGroup> partEntries = new ArrayList<>();
         boolean firstEntry = true;
         // Intern the feedKeys in the entries to reduce mem use
-        final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
         feedKeyInterner.intern(feedKey);
 
         try (final BufferedReader bufferedReader = Files.newBufferedReader(fileGroup.getEntries())) {
@@ -498,7 +503,7 @@ public class PreAggregator {
      * Just get a single part for the entire file group.
      *
      * @param fileGroup The file group to get the zip item count and total uncompressed size from.
-     * @return A single part to add to teh current aggregate.
+     * @return A single part to add to the current aggregate.
      * @throws IOException Could be throws when reading entries.
      */
     private List<Part> calculateOverflowingParts(final FileGroup fileGroup) throws IOException {
@@ -506,7 +511,6 @@ public class PreAggregator {
         long partBytes = 0;
         final List<ZipEntryGroup> partEntries = new ArrayList<>();
         // Intern the feedKeys in the entries to reduce mem use
-        final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
         try (final BufferedReader bufferedReader = Files.newBufferedReader(fileGroup.getEntries())) {
             String line = bufferedReader.readLine();
             while (line != null) {

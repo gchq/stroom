@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,19 +22,18 @@ import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.TestDataUtil.Item;
 import stroom.proxy.app.handler.TestDataUtil.ItemGroup;
 import stroom.proxy.app.handler.TestDataUtil.ProxyZipSnapshot;
-import stroom.proxy.repo.FeedKey;
-import stroom.proxy.repo.ProxyServices;
+import stroom.proxy.repo.FeedKeyInterner;
 import stroom.test.common.DirectorySnapshot;
 import stroom.test.common.DirectorySnapshot.PathSnapshot;
 import stroom.test.common.DirectorySnapshot.Snapshot;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.FeedKey;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.Mock;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -53,13 +52,12 @@ class TestZipSplitter {
     public static final String FEED_2 = "test-feed-2";
     public static final String TYPE_1 = "test-type-1";
     public static final String TYPE_2 = "test-type-2";
-    public static final FeedKey FEED_KEY_1_1 = new FeedKey(FEED_1, TYPE_1);
-    public static final FeedKey FEED_KEY_1_2 = new FeedKey(FEED_1, TYPE_2);
-    public static final FeedKey FEED_KEY_2_1 = new FeedKey(FEED_2, TYPE_1);
-    public static final FeedKey FEED_KEY_2_2 = new FeedKey(FEED_2, TYPE_2);
+    public static final FeedKey FEED_KEY_1_1 = FeedKey.of(FEED_1, TYPE_1);
+    public static final FeedKey FEED_KEY_1_2 = FeedKey.of(FEED_1, TYPE_2);
+    public static final FeedKey FEED_KEY_2_1 = FeedKey.of(FEED_2, TYPE_1);
+    public static final FeedKey FEED_KEY_2_2 = FeedKey.of(FEED_2, TYPE_2);
 
-    @Mock
-    private ProxyServices mockProxyServices;
+    private final FeedKeyInterner feedKeyInterner = FeedKeyInterner.create();
 
     @Test
     void test_oneFeedKey(@TempDir final Path tempDir) throws IOException {
@@ -105,7 +103,8 @@ class TestZipSplitter {
                     } catch (final IOException ex) {
                         throw new RuntimeException(ex);
                     }
-                });
+                },
+                feedKeyInterner);
 
         assertThat(fileGroup.getParentDir())
                 .doesNotExist();
@@ -228,7 +227,8 @@ class TestZipSplitter {
                     } catch (final IOException ex) {
                         throw new RuntimeException(ex);
                     }
-                });
+                },
+                feedKeyInterner);
 
         assertThat(fileGroup.getParentDir())
                 .doesNotExist();
@@ -351,7 +351,8 @@ class TestZipSplitter {
                     } catch (final IOException ex) {
                         throw new RuntimeException(ex);
                     }
-                });
+                },
+                feedKeyInterner);
 
         assertThat(fileGroup.getParentDir())
                 .doesNotExist();
@@ -477,7 +478,8 @@ class TestZipSplitter {
                     } catch (final IOException ex) {
                         throw new RuntimeException(ex);
                     }
-                });
+                },
+                feedKeyInterner);
 
         assertThat(fileGroup.getParentDir())
                 .doesNotExist();

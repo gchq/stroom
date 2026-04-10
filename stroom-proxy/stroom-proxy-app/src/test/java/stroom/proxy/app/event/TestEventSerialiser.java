@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.app.handler.ProxyReceiptIdGenerator;
 import stroom.util.concurrent.UniqueId;
+import stroom.util.shared.FeedKey;
 
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +32,7 @@ public class TestEventSerialiser {
 
     @Test
     void test() throws IOException {
-        final FeedKey feedKey = new FeedKey("test-feed", null);
+        final FeedKey feedKey = FeedKey.of("test-feed", null);
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put(StandardHeaderArguments.FEED, "test-feed");
         final String data = "this\nis some data \n with new \n\n lines";

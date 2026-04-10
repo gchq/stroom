@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,13 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
-import stroom.proxy.repo.FeedKey;
-import stroom.proxy.repo.FeedKey.FeedKeyInterner;
+import stroom.proxy.repo.FeedKeyInterner;
 import stroom.test.common.data.DataGenerator;
 import stroom.test.common.data.FlatDataWriterBuilder;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.FeedKey;
 import stroom.util.shared.NullSafe;
 import stroom.util.zip.ZipUtil;
 
@@ -221,7 +221,7 @@ public class TestDataUtil {
         } else {
             final Path path = entriesPaths.getFirst();
             try {
-                final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
+                final FeedKeyInterner feedKeyInterner = FeedKeyInterner.create();
                 try (final Stream<String> stream = Files.lines(path)) {
                     return stream.map(ThrowingFunction.unchecked(line ->
                                     ZipEntryGroup.read(line, feedKeyInterner)))

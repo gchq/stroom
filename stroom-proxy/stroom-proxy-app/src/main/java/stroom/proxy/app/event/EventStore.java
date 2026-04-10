@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import stroom.util.concurrent.UniqueId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.metrics.Metrics;
+import stroom.util.shared.FeedKey;
 
 import com.codahale.metrics.Timer;
 import io.dropwizard.lifecycle.Managed;
@@ -135,7 +136,7 @@ public class EventStore implements EventConsumer, Managed {
     public void tryRoll() {
         stores.keySet().forEach(feedKey -> {
             LOGGER.debug("Try rolling: {}", feedKey);
-            stores.compute(feedKey, (k, v) -> {
+            stores.compute(feedKey, (ignored, v) -> {
                 EventAppender eventAppender = v;
                 if (eventAppender != null) {
                     if (eventAppender.shouldRoll(0)) {
@@ -239,7 +240,7 @@ public class EventStore implements EventConsumer, Managed {
                         final String data) {
         try {
             checkState();
-            final FeedKey feedKey = FeedKey.from(attributeMap);
+            final FeedKey feedKey = FeedKeyEncoder.from(attributeMap);
             final String string = eventSerialiser.serialise(
                     receiptId,
                     feedKey,

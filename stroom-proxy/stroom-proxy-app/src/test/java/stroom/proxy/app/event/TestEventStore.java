@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import stroom.test.common.MockMetrics;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.concurrent.UniqueId.NodeType;
 import stroom.util.metrics.Metrics;
+import stroom.util.shared.FeedKey;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -42,7 +43,7 @@ public class TestEventStore {
     void test() throws IOException {
         final Path dir = Files.createTempDirectory("stroom");
         final Path eventDir = dir.resolve("event");
-        final FeedKey feedKey = new FeedKey("Test", "Raw Events");
+        final FeedKey feedKey = FeedKey.of("Test", "Raw Events");
         final EventStoreConfig eventStoreConfig = new EventStoreConfig();
         final ReceiverFactory receiveStreamHandlers = Mockito.mock(ReceiverFactory.class);
         final DataDirProvider dataDirProvider = () -> dir;

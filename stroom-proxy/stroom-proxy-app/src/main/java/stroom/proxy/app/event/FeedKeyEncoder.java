@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,41 +16,59 @@
 
 package stroom.proxy.app.event;
 
+
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.FeedKey;
+import stroom.util.shared.NullSafe;
 
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
-public record FeedKey(String feed, String type) {
+public class FeedKeyEncoder {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FeedKeyEncoder.class);
 
     public static final String DELIMITER = "=";
 
-    public String encodeKey() {
-        return encode(feed) + DELIMITER + encode(type);
+    private FeedKeyEncoder() {
+        // Static methods only
+    }
+
+    public static String encodeKey(final FeedKey feedKey) {
+        return encode(feedKey.feed()) + DELIMITER + encode(feedKey.type());
     }
 
     public static FeedKey decodeKey(final String string) {
         String feed = null;
         String type = null;
 
-        final String[] parts = string.split(DELIMITER);
-        if (parts.length > 0) {
-            feed = decode(parts[0]);
+        final FeedKey feedKey;
+        if (NullSafe.isEmptyString(string)) {
+            feedKey = FeedKey.empty();
+        } else {
+            final String[] parts = string.split(DELIMITER);
+            if (parts.length > 0) {
+                feed = decode(parts[0]);
+            }
+            if (parts.length > 1) {
+                type = decode(parts[1]);
+            }
+            feedKey = FeedKey.of(feed, type);
         }
-        if (parts.length > 1) {
-            type = decode(parts[1]);
-        }
-        return new FeedKey(feed, type);
+        LOGGER.debug("decodeKey() - string: '{}', feedKey: {}", string, feedKey);
+        return feedKey;
     }
 
     public static FeedKey from(final AttributeMap attributeMap) {
         Objects.requireNonNull(attributeMap);
-        final String feed = attributeMap.get(StandardHeaderArguments.FEED);
-        final String type = attributeMap.get(StandardHeaderArguments.TYPE);
-        return new FeedKey(feed, type);
+        return FeedKey.of(
+                attributeMap.get(StandardHeaderArguments.FEED),
+                attributeMap.get(StandardHeaderArguments.TYPE));
     }
 
     private static String encode(final String string) {

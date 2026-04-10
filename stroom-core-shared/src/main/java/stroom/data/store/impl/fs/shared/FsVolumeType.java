@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public enum FsVolumeType implements HasDisplayValue, HasPrimitiveValue {
      * as a separate zstd frame. The segment index is included at the end of the zstd file as a skippable frame.
      * If there is sufficient data to create a dictionary, then a dictionary will be used.
      */
-    S3_V2(2, "S3 v2"),
+    S3_V2(2, "S3 v2 (Experimental)"),
     ;
 
     public static final PrimitiveValueConverter<FsVolumeType> PRIMITIVE_VALUE_CONVERTER =

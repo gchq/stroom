@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 package stroom.proxy.app.event;
+
+import stroom.util.shared.FeedKey;
 
 import org.junit.jupiter.api.Test;
 
@@ -32,7 +34,7 @@ public class TestEventAppender {
     void test() throws IOException {
         final Path dir = Files.createTempDirectory("stroom");
 
-        final FeedKey feedKey = new FeedKey("Test", "Raw Events");
+        final FeedKey feedKey = FeedKey.of("Test", "Raw Events");
         final Instant now = Instant.now();
         final Path file = EventStoreFile.createNew(dir, feedKey, now);
         final EventAppender eventAppender = new EventAppender(file, now, new EventStoreConfig());

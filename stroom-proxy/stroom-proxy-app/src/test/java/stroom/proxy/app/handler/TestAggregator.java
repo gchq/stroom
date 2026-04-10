@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,11 @@ package stroom.proxy.app.handler;
 
 import stroom.data.zip.StroomZipFileType;
 import stroom.proxy.app.DataDirProvider;
-import stroom.proxy.repo.FeedKey;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.FeedKey;
 import stroom.util.zip.ZipUtil;
 
 import org.junit.jupiter.api.Disabled;

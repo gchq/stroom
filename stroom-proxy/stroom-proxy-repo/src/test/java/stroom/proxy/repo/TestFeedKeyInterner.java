@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 package stroom.proxy.repo;
 
-import stroom.proxy.repo.FeedKey.FeedKeyInterner;
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.FeedKey;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -30,13 +30,13 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestFeedKey {
+class TestFeedKeyInterner {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestFeedKey.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestFeedKeyInterner.class);
 
     @Test
     void testIntern_null() {
-        final FeedKeyInterner interner = FeedKey.createInterner();
+        final FeedKeyInterner interner = FeedKeyInterner.create();
 
         assertThat(interner.intern(null))
                 .isNull();
@@ -44,13 +44,13 @@ class TestFeedKey {
 
     @Test
     void testIntern_1() {
-        final FeedKeyInterner interner = FeedKey.createInterner();
+        final FeedKeyInterner interner = FeedKeyInterner.create();
 
-        final FeedKey feedKey1a = new FeedKey("feed1", "type1");
-        final FeedKey feedKey1b = new FeedKey("feed1", "type1");
-        final FeedKey feedKey2 = new FeedKey("feed2", "type1");
-        final FeedKey feedKey3 = new FeedKey("feed1", "type2");
-        final FeedKey feedKey4 = new FeedKey("feed2", "type2");
+        final FeedKey feedKey1a = FeedKey.of("feed1", "type1");
+        final FeedKey feedKey1b = FeedKey.of("feed1", "type1");
+        final FeedKey feedKey2 = FeedKey.of("feed2", "type1");
+        final FeedKey feedKey3 = FeedKey.of("feed1", "type2");
+        final FeedKey feedKey4 = FeedKey.of("feed2", "type2");
 
         assertThat(feedKey1a)
                 .isEqualTo(feedKey1b)
@@ -88,7 +88,7 @@ class TestFeedKey {
 
     @Test
     void testIntern3() {
-        final FeedKeyInterner interner = FeedKey.createInterner();
+        final FeedKeyInterner interner = FeedKeyInterner.create();
         final FeedKey feedKeyNulla = interner.intern(null, null);
         final FeedKey feedKeyNullb = interner.intern(null, null);
         final FeedKey feedKey11a = interner.intern("feed1", "type1");
@@ -132,13 +132,14 @@ class TestFeedKey {
     @Test
     void testInternPerf() {
 
-        final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
+        final FeedKeyInterner feedKeyInterner = FeedKeyInterner.create();
         for (int i = 1; i <= 2; i++) {
             for (int j = 1; j <= 2; j++) {
                 feedKeyInterner.intern("feed" + i, "type" + j);
             }
         }
         final int iter = 1_000_000;
+        //noinspection MismatchedQueryAndUpdateOfCollection
         final List<FeedKey> feedKeys = new ArrayList<>(iter * 4);
 
         TestUtil.comparePerformance(
@@ -161,7 +162,7 @@ class TestFeedKey {
                     for (long k = 0; k < iterations; k++) {
                         for (int i = 1; i <= 2; i++) {
                             for (int j = 1; j <= 2; j++) {
-                                feedKeys.add(new FeedKey("feed" + i, "type" + j));
+                                feedKeys.add(FeedKey.of("feed" + i, "type" + j));
                             }
                         }
                     }

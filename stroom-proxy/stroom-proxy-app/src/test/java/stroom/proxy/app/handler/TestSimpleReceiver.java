@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.proxy.repo.FeedKey;
 import stroom.proxy.repo.LogStream;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
@@ -29,6 +28,7 @@ import stroom.util.exception.ThrowingConsumer;
 import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.FeedKey;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -77,7 +77,9 @@ class TestSimpleReceiver extends StroomUnitTest {
     @NullSource
     void testReceive(final Integer maxSize) throws IOException {
         Mockito.lenient().when(mockReceiveDataConfig.getMaxRequestSize()).thenReturn(
-                maxSize == null ? null : ByteSize.ofGibibytes(maxSize));
+                maxSize == null
+                        ? null
+                        : ByteSize.ofGibibytes(maxSize));
 
         final String defaultFeedName = FEED_1;
         final String defaultTypeName = null;
@@ -85,11 +87,11 @@ class TestSimpleReceiver extends StroomUnitTest {
         final AttributeMap attributeMap = new AttributeMap();
         AttributeMapUtil.addFeedAndType(attributeMap, defaultFeedName, defaultTypeName);
 
-        final Path testZipFile = TestDataUtil.writeZip(new FeedKey(defaultFeedName, defaultTypeName));
+        final Path testZipFile = TestDataUtil.writeZip(FeedKey.of(defaultFeedName, defaultTypeName));
 
         LOGGER.info("testZipFile {}", testZipFile.toAbsolutePath());
 
-        final List<Path> results = doReceive(testZipFile, attributeMap, attrMap -> true);
+        final List<Path> results = doReceive(testZipFile, attributeMap, ignored -> true);
 
         assertThat(results).hasSize(1);
     }
@@ -102,13 +104,13 @@ class TestSimpleReceiver extends StroomUnitTest {
         final AttributeMap attributeMap = new AttributeMap();
         AttributeMapUtil.addFeedAndType(attributeMap, defaultFeedName, defaultTypeName);
 
-        final Path testZipFile = TestDataUtil.writeZip(new FeedKey(defaultFeedName, defaultTypeName));
+        final Path testZipFile = TestDataUtil.writeZip(FeedKey.of(defaultFeedName, defaultTypeName));
 
         LOGGER.info("testZipFile {}", testZipFile.toAbsolutePath());
 
         Mockito.lenient().when(mockReceiveDataConfig.getMaxRequestSize()).thenReturn(ByteSize.ofBytes(10));
 
-        assertThatThrownBy(() -> doReceive(testZipFile, attributeMap, attrMap -> true))
+        assertThatThrownBy(() -> doReceive(testZipFile, attributeMap, ignored -> true))
                 .isInstanceOf(StroomStreamException.class)
                 .hasMessageContaining("Maximum request size exceeded");
     }

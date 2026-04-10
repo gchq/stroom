@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package stroom.proxy.app.handler;
 
-import stroom.proxy.repo.FeedKey;
-import stroom.proxy.repo.FeedKey.FeedKeyInterner;
+import stroom.proxy.repo.FeedKeyInterner;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.FeedKey;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
@@ -147,11 +147,6 @@ public class ZipEntryGroup {
         writer.write("\n");
     }
 
-    public static List<ZipEntryGroup> read(final Path entriesFile) {
-        final FeedKeyInterner interner = FeedKey.createInterner();
-        return read(entriesFile, interner);
-    }
-
     public static List<ZipEntryGroup> read(final Path entriesFile,
                                            final FeedKeyInterner feedKeyInterner) {
         try (final Stream<String> linesStream = Files.lines(entriesFile)) {
@@ -169,7 +164,7 @@ public class ZipEntryGroup {
                                      final FeedKeyInterner feedKeyInterner) {
         final ZipEntryGroup zipEntryGroup = read(line);
         // Use an interned FeedKey to save on mem use
-        feedKeyInterner.consumeInterned(zipEntryGroup.feedKey, zipEntryGroup::setFeedKey);
+        feedKeyInterner.consumeIfNotInterned(zipEntryGroup.feedKey, zipEntryGroup::setFeedKey);
         return zipEntryGroup;
     }
 
