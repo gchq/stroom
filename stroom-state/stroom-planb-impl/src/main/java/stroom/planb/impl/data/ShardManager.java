@@ -223,27 +223,30 @@ public class ShardManager {
     public void cleanup() {
         shardMap.forEach((uuid, shard) -> {
             try {
-                boolean shouldRemove;
+                boolean docDeleted;
 
                 // Check if the doc has been deleted.
                 try {
                     final PlanBDoc loaded = planBDocStore.readDocument(
                             DocRef.builder().type(PlanBDoc.TYPE).uuid(uuid).build());
-                    if (loaded == null) {
-                        shouldRemove = true;
-                    } else {
-                        // Check if the shard is idle.
-                        shouldRemove = shard.isIdle();
-                    }
+                    docDeleted = loaded == null;
                 } catch (final DocumentNotFoundException e) {
                     LOGGER.debug(e::getMessage, e);
-                    shouldRemove = true;
+                    docDeleted = true;
                 }
 
-                if (shouldRemove) {
+                if (docDeleted) {
+                    // Doc deleted — could be StoreShard whose delete() may fail if readers
+                    // are active. Keep in map for retry on next cycle if delete fails.
                     if (shard.delete()) {
                         shardMap.remove(uuid);
                     }
+                } else if (shard.isIdle()) {
+                    // Idle eviction — only SnapshotShard reaches here (StoreShard.isIdle()
+                    // always returns false). Remove from map first to prevent a zombie shard
+                    // window where a concurrent reader gets a deleted shard from computeIfAbsent.
+                    shardMap.remove(uuid);
+                    shard.delete();
                 }
             } catch (final Exception e) {
                 LOGGER.error(e::getMessage, e);
@@ -274,6 +277,12 @@ public class ShardManager {
 
     public <R> R get(final String mapName, final Function<Db<?, ?>, R> function) {
         try {
+            final Shard shard = getShardForMapName(mapName);
+            return shard.get(function);
+        } catch (final SnapshotShard.ShardClosedException e) {
+            // The shard was evicted by cleanup between our lookup and use.
+            // Retry once — computeIfAbsent will create a fresh shard.
+            LOGGER.debug(() -> "Shard was evicted, retrying with fresh shard for: " + mapName);
             final Shard shard = getShardForMapName(mapName);
             return shard.get(function);
         } catch (final RuntimeException e) {

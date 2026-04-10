@@ -40,6 +40,7 @@ import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Function;
 
@@ -78,7 +79,7 @@ class SnapshotShard implements Shard {
     private final DbFactory dbFactory;
     private final Executor executor;
 
-    private volatile SnapshotInstance snapshotInstance;
+    private final AtomicReference<SnapshotInstance> snapshotRef;
     private final AtomicBoolean rotating = new AtomicBoolean();
     private volatile Instant lastAccessTime = Instant.now();
 
@@ -99,7 +100,7 @@ class SnapshotShard implements Shard {
         this.dbFactory = dbFactory;
         this.executor = executor;
 
-        snapshotInstance = new SnapshotInstance(
+        snapshotRef = new AtomicReference<>(new SnapshotInstance(
                 byteBuffers,
                 byteBufferFactory,
                 configProvider,
@@ -108,11 +109,14 @@ class SnapshotShard implements Shard {
                 doc,
                 Instant.now(),
                 null,
-                dbFactory);
+                dbFactory));
     }
 
     private SnapshotInstance getSnapshotInstance() {
-        SnapshotInstance instance = snapshotInstance;
+        final SnapshotInstance instance = snapshotRef.get();
+        if (instance == null) {
+            throw new ShardClosedException();
+        }
 
         // If the current instance has expired then asynchronously try to get a new snapshot.
         if (instance.getExpiryTime().isBefore(Instant.now())) {
@@ -123,8 +127,12 @@ class SnapshotShard implements Shard {
                                 rotating.set(false));
             }
 
-            // Re-read volatile after triggering rotation to get latest reference
-            instance = snapshotInstance;
+            // Re-read after triggering rotation to get latest reference.
+            final SnapshotInstance latest = snapshotRef.get();
+            if (latest == null) {
+                throw new ShardClosedException();
+            }
+            return latest;
         }
 
         return instance;
@@ -134,9 +142,14 @@ class SnapshotShard implements Shard {
         try {
             final Instant now = Instant.now();
 
+            final SnapshotInstance currentInstance = snapshotRef.get();
+            // If null, the shard has been closed — abandon rotation.
+            if (currentInstance == null) {
+                return;
+            }
+
             // Check again if the current instance has expired, if it has then try to get a new
             // snapshot.
-            final SnapshotInstance currentInstance = snapshotInstance;
             if (currentInstance.getExpiryTime().isBefore(now)) {
                 LOGGER.debug("Starting snapshot rotation");
 
@@ -162,12 +175,19 @@ class SnapshotShard implements Shard {
                     // Clean up the abandoned instance's directory and guard to prevent resource leaks.
                     newInstance.destroy();
                 } else {
-                    // Switch the instance and destroy the previous instance.
-                    snapshotInstance = newInstance;
-                    currentInstance.destroy();
+                    // Atomically swap: only succeeds if nobody else has changed the reference
+                    // (i.e., delete() hasn't set it to null).
+                    if (snapshotRef.compareAndSet(currentInstance, newInstance)) {
+                        currentInstance.destroy();
+                    } else {
+                        // The shard was closed (or somehow swapped) while we were fetching.
+                        // Discard the new instance to prevent a resource leak.
+                        LOGGER.debug("Snapshot rotation aborted — shard was closed during fetch");
+                        newInstance.destroy();
+                    }
                 }
 
-                LOGGER.debug("Snapshot rotation completed successfully");
+                LOGGER.debug("Snapshot rotation completed");
             }
         } catch (final Exception e) {
             LOGGER.error("Error during snapshot rotation", e);
@@ -222,6 +242,9 @@ class SnapshotShard implements Shard {
                 final R result = function.apply(instance);
                 lastAccessTime = Instant.now();
                 return result;
+            } catch (final ShardClosedException e) {
+                // Shard has been deleted — fail immediately, don't retry.
+                throw e;
             } catch (final TryAgainException e) {
                 LOGGER.trace("Retry attempt {} due to: {}", attempts, e.getMessage());
                 lastException = e;
@@ -243,7 +266,10 @@ class SnapshotShard implements Shard {
 
     @Override
     public boolean delete() {
-        getSnapshotInstance().destroy();
+        final SnapshotInstance instance = snapshotRef.getAndSet(null);
+        if (instance != null) {
+            instance.destroy();
+        }
         return true;
     }
 
@@ -397,6 +423,17 @@ class SnapshotShard implements Shard {
                     LOGGER.error(e::getMessage, e);
                 }
             }
+        }
+    }
+
+    /**
+     * Thrown when an operation is attempted on a shard that has been closed/deleted.
+     * Package-private so that {@link ShardManager} can catch and retry with a fresh shard.
+     */
+    static class ShardClosedException extends RuntimeException {
+
+        ShardClosedException() {
+            super("Shard has been closed");
         }
     }
 
