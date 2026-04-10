@@ -690,7 +690,7 @@ appConfig:
         statisticsMode: "INTERNAL"
       maxElements: 1000000
   planb:
-    minTimeToKeepEnvOpen: "PT1M"
+    minTimeToKeepSnapshotEnv: "PT20M"
     minTimeToKeepSnapshots: "PT10M"
     nodeList: []
     path: "${stroom.home}/planb"

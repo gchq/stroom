@@ -40,17 +40,22 @@ import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 /**
- * Thread-safe snapshot shard that automatically rotates snapshots every 10 minutes (default)
- * and closes idle databases after 1 minute (default) of inactivity.
+ * Thread-safe snapshot shard that automatically rotates snapshots every 10 minutes (default).
  *
- * <p>Supports high-concurrency reads using lock-free CAS-based guards. Multiple
- * threads can read concurrently without blocking. Snapshot rotation happens
- * asynchronously in the background.
+ * <p>The LMDB database is opened eagerly when a snapshot is fetched and stays open for the
+ * lifetime of the instance. When the instance is destroyed (via rotation or explicit delete),
+ * the guard ensures all active readers complete before the DB is closed and the directory
+ * is deleted. Rotation happens asynchronously in the background and never blocks reads —
+ * readers continue using the current instance until the new one is ready.
+ *
+ * <p>Idle shards are cleaned up by {@link ShardManager}: if a shard has not been accessed
+ * within {@code minTimeToKeepSnapshotEnv}, it is evicted from the map and its resources (DB files,
+ * snapshot directory) are freed. If someone reads the shard later, it is lazily recreated.
  *
  * <p>Thread safety:
  * <ul>
@@ -74,8 +79,9 @@ class SnapshotShard implements Shard {
     private final DbFactory dbFactory;
     private final Executor executor;
 
-    private volatile SnapshotInstance snapshotInstance;
+    private final AtomicReference<SnapshotInstance> snapshotRef;
     private final AtomicBoolean rotating = new AtomicBoolean();
+    private volatile Instant lastAccessTime = Instant.now();
 
     public SnapshotShard(final ByteBuffers byteBuffers,
                          final ByteBufferFactory byteBufferFactory,
@@ -94,7 +100,7 @@ class SnapshotShard implements Shard {
         this.dbFactory = dbFactory;
         this.executor = executor;
 
-        snapshotInstance = new SnapshotInstance(
+        snapshotRef = new AtomicReference<>(new SnapshotInstance(
                 byteBuffers,
                 byteBufferFactory,
                 configProvider,
@@ -103,11 +109,14 @@ class SnapshotShard implements Shard {
                 doc,
                 Instant.now(),
                 null,
-                dbFactory);
+                dbFactory));
     }
 
     private SnapshotInstance getSnapshotInstance() {
-        SnapshotInstance instance = snapshotInstance;
+        final SnapshotInstance instance = snapshotRef.get();
+        if (instance == null) {
+            throw new ShardClosedException();
+        }
 
         // If the current instance has expired then asynchronously try to get a new snapshot.
         if (instance.getExpiryTime().isBefore(Instant.now())) {
@@ -118,8 +127,19 @@ class SnapshotShard implements Shard {
                                 rotating.set(false));
             }
 
-            // Re-read volatile after triggering rotation to get latest reference
-            instance = snapshotInstance;
+            // Re-read after triggering rotation to get latest reference. Getting the ref again is virtually pointless
+            // but here it is...
+            //
+            // Rotation is async so is very unlikely to have changed the reference, however there is also
+            // another possible but similarly unlikely scenario where delete() has nullified the ref.
+            //
+            // In either case the returned instance is protected by the Guard even if the reference ends up being stale
+            // after it is returned.
+            final SnapshotInstance latest = snapshotRef.get();
+            if (latest == null) {
+                throw new ShardClosedException();
+            }
+            return latest;
         }
 
         return instance;
@@ -129,9 +149,14 @@ class SnapshotShard implements Shard {
         try {
             final Instant now = Instant.now();
 
+            final SnapshotInstance currentInstance = snapshotRef.get();
+            // If null, the shard has been closed — abandon rotation.
+            if (currentInstance == null) {
+                return;
+            }
+
             // Check again if the current instance has expired, if it has then try to get a new
             // snapshot.
-            final SnapshotInstance currentInstance = snapshotInstance;
             if (currentInstance.getExpiryTime().isBefore(now)) {
                 LOGGER.debug("Starting snapshot rotation");
 
@@ -154,13 +179,22 @@ class SnapshotShard implements Shard {
                     currentInstance.extendExpiry(
                             configProvider.get().getSnapshotRetryFetchInterval().getDuration());
 
+                    // Clean up the abandoned instance's directory and guard to prevent resource leaks.
+                    newInstance.destroy();
                 } else {
-                    // Switch the instance and destroy the previous instance.
-                    snapshotInstance = newInstance;
-                    currentInstance.destroy();
+                    // Atomically swap: only succeeds if nobody else has changed the reference
+                    // (i.e., delete() hasn't set it to null).
+                    if (snapshotRef.compareAndSet(currentInstance, newInstance)) {
+                        currentInstance.destroy();
+                    } else {
+                        // The shard was closed (or somehow swapped) while we were fetching.
+                        // Discard the new instance to prevent a resource leak.
+                        LOGGER.debug("Snapshot rotation aborted — shard was closed during fetch");
+                        newInstance.destroy();
+                    }
                 }
 
-                LOGGER.debug("Snapshot rotation completed successfully");
+                LOGGER.debug("Snapshot rotation completed");
             }
         } catch (final Exception e) {
             LOGGER.error("Error during snapshot rotation", e);
@@ -212,7 +246,12 @@ class SnapshotShard implements Shard {
         for (int attempts = 0; attempts < MAX_ATTEMPTS; attempts++) {
             try {
                 final SnapshotInstance instance = getSnapshotInstance();
-                return function.apply(instance);
+                final R result = function.apply(instance);
+                lastAccessTime = Instant.now();
+                return result;
+            } catch (final ShardClosedException e) {
+                // Shard has been deleted — fail immediately, don't retry.
+                throw e;
             } catch (final TryAgainException e) {
                 LOGGER.trace("Retry attempt {} due to: {}", attempts, e.getMessage());
                 lastException = e;
@@ -227,30 +266,38 @@ class SnapshotShard implements Shard {
     }
 
     @Override
-    public void cleanup() {
-        getSnapshotInstance().cleanup();
+    public boolean isIdle() {
+        final Duration idleTimeout = configProvider.get().getMinTimeToKeepSnapshotEnv().getDuration();
+        return lastAccessTime.plus(idleTimeout).isBefore(Instant.now());
     }
 
     @Override
     public boolean delete() {
-        getSnapshotInstance().destroy();
+        final SnapshotInstance instance = snapshotRef.getAndSet(null);
+        if (instance != null) {
+            instance.destroy();
+        }
         return true;
     }
 
+    /**
+     * Represents a single snapshot of data fetched from a remote node.
+     *
+     * <p>The LMDB database is opened eagerly during construction (after a successful fetch)
+     * and remains open for the lifetime of this instance. A single {@link StripedGuard}
+     * protects against use-after-close: readers call {@link #get} which acquires the guard,
+     * and {@link #destroy()} waits for all active readers to finish before running
+     * {@link #delete()} which closes the DB and removes the directory.
+     */
     private static class SnapshotInstance {
 
-        private final ByteBuffers byteBuffers;
-        private final ByteBufferFactory byteBufferFactory;
-        private final Provider<PlanBConfig> configProvider;
         private final PlanBDoc doc;
         private final Path dbDir;
         private final RuntimeException fetchException;
-        private final ReentrantLock openLock = new ReentrantLock();
         private final Instant currentSnapshotTime;
         private final Guard guard;
-        private final DbFactory dbFactory;
+        private final Db<?, ?> db;
 
-        private volatile CurrentDb currentDb;
         private volatile Instant expiryTime;
 
         public SnapshotInstance(final ByteBuffers byteBuffers,
@@ -262,15 +309,11 @@ class SnapshotShard implements Shard {
                                 final Instant createTime,
                                 final Instant previousSnapshotTime,
                                 final DbFactory dbFactory) {
-            this.byteBufferFactory = byteBufferFactory;
-            this.dbFactory = dbFactory;
             Instant currentSnapshotTime = null;
             Instant expiryTime = null;
             Path dbDir = null;
             RuntimeException fetchException = null;
-
-            // Begin life in use.
-            guard = new StripedGuard(this::delete, 64);
+            Db<?, ?> db = null;
 
             try {
                 // Get the snapshot dir.
@@ -305,6 +348,11 @@ class SnapshotShard implements Shard {
                     throw new RuntimeException("Unable to get snapshot shard for '" + doc.asDocRef() + "'");
                 }
 
+                // Eagerly open the DB now that the snapshot is fetched.
+                final String mapName = doc.getName();
+                LOGGER.debug("Opening local snapshot for '{}'", mapName);
+                db = dbFactory.open(doc, dbDir, byteBuffers, byteBufferFactory, true);
+
             } catch (final Exception e) {
                 LOGGER.debug(e::getMessage, e);
                 fetchException = new RuntimeException(e);
@@ -312,13 +360,15 @@ class SnapshotShard implements Shard {
                 expiryTime = createTime.plus(configProvider.get().getSnapshotRetryFetchInterval());
             }
 
-            this.byteBuffers = byteBuffers;
-            this.configProvider = configProvider;
             this.currentSnapshotTime = currentSnapshotTime;
             this.expiryTime = expiryTime;
             this.doc = doc;
             this.dbDir = dbDir;
             this.fetchException = fetchException;
+            this.db = db;
+
+            // Begin life in use. The guard ensures delete() only runs when all readers have finished.
+            guard = new StripedGuard(this::delete, 64);
         }
 
         public boolean hasFetchException() {
@@ -330,33 +380,16 @@ class SnapshotShard implements Shard {
         }
 
         public <R> R get(final Function<Db<?, ?>, R> function) {
-            return guard.acquire(() -> getDb().get(function));
+            return guard.acquire(() -> {
+                if (db == null) {
+                    return null;
+                }
+                return function.apply(db);
+            });
         }
 
         public void destroy() {
             guard.destroy();
-        }
-
-        public void cleanup() {
-            final CurrentDb instance = this.currentDb;
-            if (instance != null) {
-                final Instant now = Instant.now();
-                final Instant oldest = now.minus(configProvider.get().getMinTimeToKeepEnvOpen().getDuration());
-
-                if (instance.getLastAccessTime().isBefore(oldest)) {
-                    openLock.lock();
-                    try {
-                        // Re-check under lock
-                        final CurrentDb current = this.currentDb;
-                        if (current != null && current.getLastAccessTime().isBefore(oldest)) {
-                            current.destroy();
-                            this.currentDb = null;
-                        }
-                    } finally {
-                        openLock.unlock();
-                    }
-                }
-            }
         }
 
         public Instant getExpiryTime() {
@@ -368,102 +401,46 @@ class SnapshotShard implements Shard {
         }
 
         public String getInfo() {
-            return guard.acquire(() -> getDb().getInfo());
-        }
-
-        private CurrentDb getDb() {
-            CurrentDb instance = this.currentDb;
-            if (instance == null) {
-                openLock.lock();
-                try {
-                    instance = this.currentDb;
-                    if (instance == null) {
-                        instance = new CurrentDb(byteBuffers, byteBufferFactory, doc, dbDir, dbFactory);
-                    }
-                    this.currentDb = instance;
-                } finally {
-                    openLock.unlock();
-                }
-            }
-            return instance;
-        }
-
-        private void delete() {
-            LOGGER.debug("Deleting DB");
-
-            CurrentDb instance = this.currentDb;
-            if (instance != null) {
-                openLock.lock();
-                try {
-                    instance = this.currentDb;
-                    if (instance != null) {
-                        instance.destroy();
-                    }
-                } catch (final Exception e) {
-                    LOGGER.error(e::getMessage, e);
-                } finally {
-                    openLock.unlock();
-                }
-            }
-            currentDb = null;
-
-            // Delete this snapshot.
-            try {
-                if (dbDir != null) {
-                    LOGGER.info("Deleting snapshot for '{}'", doc);
-                    FileUtil.deleteDir(dbDir);
-                }
-            } catch (final Exception e) {
-                LOGGER.error(e::getMessage, e);
-            }
-        }
-    }
-
-    private static class CurrentDb {
-
-        private final Guard guard;
-        private final Db<?, ?> db;
-        private volatile Instant lastAccessTime;
-
-        public CurrentDb(final ByteBuffers byteBuffers,
-                         final ByteBufferFactory byteBufferFactory,
-                         final PlanBDoc doc,
-                         final Path dbDir,
-                         final DbFactory dbFactory) {
-            final String mapName = doc.getName();
-
-            // If we already fetched the snapshot then reopen.
-            LOGGER.debug("Opening local snapshot for '{}'", mapName);
-            this.db = dbFactory.open(doc, dbDir, byteBuffers, byteBufferFactory, true);
-            guard = new StripedGuard(this::close, 64);
-            lastAccessTime = Instant.now();
-        }
-
-        public <R> R get(final Function<Db<?, ?>, R> function) {
             return guard.acquire(() -> {
-                lastAccessTime = Instant.now();
-                return function.apply(db);
-            });
-        }
-
-        public void destroy() {
-            guard.destroy();
-        }
-
-        public Instant getLastAccessTime() {
-            return lastAccessTime;
-        }
-
-        public String getInfo() {
-            return guard.acquire(() -> {
-                lastAccessTime = Instant.now();
+                if (db == null) {
+                    return "No data (fetch exception)";
+                }
                 return db.getInfoString();
             });
         }
 
-        private void close() {
-            LOGGER.debug("Closing DB");
-            db.close();
+        private void delete() {
+            LOGGER.debug("Deleting snapshot instance for '{}'", doc);
+
+            // Close the DB.
+            if (db != null) {
+                try {
+                    db.close();
+                } catch (final Exception e) {
+                    LOGGER.error(e::getMessage, e);
+                }
+            }
+
+            // Delete this snapshot directory.
+            if (dbDir != null) {
+                try {
+                    LOGGER.info("Deleting snapshot for '{}'", doc);
+                    FileUtil.deleteDir(dbDir);
+                } catch (final Exception e) {
+                    LOGGER.error(e::getMessage, e);
+                }
+            }
+        }
+    }
+
+    /**
+     * Thrown when an operation is attempted on a shard that has been closed/deleted.
+     * Package-private so that {@link ShardManager} can catch and retry with a fresh shard.
+     */
+    static class ShardClosedException extends RuntimeException {
+
+        ShardClosedException() {
+            super("Shard has been closed");
         }
     }
 

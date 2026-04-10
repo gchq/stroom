@@ -59,8 +59,8 @@ public class ShardManager {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ShardManager.class);
 
-    public static final String CLEANUP_TASK_NAME = "Plan B Cleanup";
     public static final String SNAPSHOT_CREATOR_TASK_NAME = "Plan B Snapshot Creator";
+    public static final String SNAPSHOT_CLEANUP_TASK_NAME = "Plan B Snapshot Cleanup";
 
     private static final DbFactory DB_FACTORY = PlanBDb::open;
 
@@ -220,6 +220,40 @@ public class ShardManager {
         }
     }
 
+    public void cleanup() {
+        shardMap.forEach((uuid, shard) -> {
+            try {
+                boolean docDeleted;
+
+                // Check if the doc has been deleted.
+                try {
+                    final PlanBDoc loaded = planBDocStore.readDocument(
+                            DocRef.builder().type(PlanBDoc.TYPE).uuid(uuid).build());
+                    docDeleted = loaded == null;
+                } catch (final DocumentNotFoundException e) {
+                    LOGGER.debug(e::getMessage, e);
+                    docDeleted = true;
+                }
+
+                if (docDeleted) {
+                    // Doc deleted — could be StoreShard whose delete() may fail if readers
+                    // are active. Keep in map for retry on next cycle if delete fails.
+                    if (shard.delete()) {
+                        shardMap.remove(uuid);
+                    }
+                } else if (shard.isIdle()) {
+                    // Idle eviction — only SnapshotShard reaches here (StoreShard.isIdle()
+                    // always returns false). Remove from map first to prevent a zombie shard
+                    // window where a concurrent reader gets a deleted shard from computeIfAbsent.
+                    shardMap.remove(uuid);
+                    shard.delete();
+                }
+            } catch (final Exception e) {
+                LOGGER.error(e::getMessage, e);
+            }
+        });
+    }
+
     public void fetchSnapshot(final SnapshotRequest request, final OutputStream outputStream) {
         try {
             final Shard shard = getShardForDocUuid(request.getPlanBDocRef().getUuid());
@@ -245,17 +279,14 @@ public class ShardManager {
         try {
             final Shard shard = getShardForMapName(mapName);
             return shard.get(function);
+        } catch (final SnapshotShard.ShardClosedException e) {
+            // The shard was evicted by cleanup between our lookup and use.
+            // Retry once — computeIfAbsent will create a fresh shard.
+            LOGGER.debug(() -> "Shard was evicted, retrying with fresh shard for: " + mapName);
+            final Shard shard = getShardForMapName(mapName);
+            return shard.get(function);
         } catch (final RuntimeException e) {
             LOGGER.error(() -> LogUtil.message("Error getting shard for map: {} {}", mapName, e.getMessage()), e);
-            throw e;
-        }
-    }
-
-    public void cleanup() {
-        try {
-            shardMap.values().forEach(Shard::cleanup);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
             throw e;
         }
     }

@@ -125,8 +125,8 @@ public class PlanBModule extends AbstractModule {
                         .advanced(true));
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(ShardManagerCleanupRunnable.class, builder -> builder
-                        .name(ShardManager.CLEANUP_TASK_NAME)
-                        .description("Plan B shard cleanup")
+                        .name(ShardManager.SNAPSHOT_CLEANUP_TASK_NAME)
+                        .description("Plan B snapshot cleanup")
                         .cronSchedule(CronExpressions.EVERY_10_MINUTES.getExpression())
                         .advanced(true));
     }
