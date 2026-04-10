@@ -21,6 +21,8 @@ import stroom.data.store.impl.fs.FindDataVolumeCriteria;
 import stroom.data.store.impl.fs.FsVolumeCache;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.db.util.JooqUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
@@ -37,6 +39,8 @@ import java.util.Objects;
 import static stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume.FS_META_VOLUME;
 
 public class DataVolumeDaoImpl implements DataVolumeDao {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataVolumeDaoImpl.class);
 
     private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
     private final FsVolumeCache fsVolumeCache;
@@ -71,21 +75,22 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
     @Override
     public DataVolume findDataVolume(final long metaId) {
         final List<DataVolume> dataVolumes = findDataVolumes(List.of(metaId));
-        if (dataVolumes.isEmpty()) {
-            throw new RuntimeException(LogUtil.message("No DataVolume found for metaId {}", metaId));
-        }
-        return dataVolumes.getFirst();
+        final DataVolume dataVolume = NullSafe.first(dataVolumes);
+        LOGGER.debug("findDataVolume() - metaId: {}, dataVolume: {}", metaId, dataVolume);
+        return dataVolume;
     }
 
     @Override
     public List<DataVolume> findDataVolumes(final Collection<Long> metaIds) {
         if (NullSafe.hasItems(metaIds)) {
-            return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+            final List<DataVolume> dataVolumes = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                             .select(FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
                             .from(FS_META_VOLUME)
                             .where(FS_META_VOLUME.META_ID.in(metaIds))
                             .fetch())
                     .map(this::mapRecordToDataVolume);
+            LOGGER.debug("findDataVolumes - metaIds: {}, dataVolumes: {}", metaIds, dataVolumes);
+            return dataVolumes;
         } else {
             return Collections.emptyList();
         }
@@ -113,10 +118,12 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
     @Override
     public int delete(final Collection<Long> metaIdList) {
         if (NullSafe.hasItems(metaIdList)) {
-            return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+            final Integer count = JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                     .deleteFrom(FS_META_VOLUME)
                     .where(FS_META_VOLUME.META_ID.in(metaIdList))
                     .execute());
+            LOGGER.debug("delete - metaIdList: {}, count: {}", metaIdList, count);
+            return count;
         } else {
             return 0;
         }

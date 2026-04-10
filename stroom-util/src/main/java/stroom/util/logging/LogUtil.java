@@ -288,35 +288,39 @@ public final class LogUtil {
         if (value == null || total == null) {
             return null;
         } else {
-            if (value instanceof Duration) {
-                return withPercentage(value,
-                        ((Duration) value).toMillis(),
-                        ((Duration) total).toMillis());
-            } else if (value instanceof final DurationAdder durationAdder) {
-                return withPercentage(value,
-                        durationAdder.toMillis(),
-                        ((DurationAdder) total).toMillis());
-            } else if (value instanceof final DurationTimer durationTimer) {
-                return withPercentage(value,
-                        durationTimer.get().toMillis(),
-                        ((DurationTimer) total).get().toMillis());
-            } else if (value instanceof Number) {
-                final double valNum = ((Number) value).doubleValue();
-                final double totalNum = ((Number) total).doubleValue();
-                if (totalNum == 0) {
-                    return originalValue + " (undefined%)";
-                } else {
+            switch (value) {
+                case final Duration duration -> {
+                    return withPercentage(value,
+                            duration.toMillis(),
+                            ((Duration) total).toMillis());
+                }
+                case final DurationAdder durationAdder -> {
+                    return withPercentage(value,
+                            durationAdder.toMillis(),
+                            ((DurationAdder) total).toMillis());
+                }
+                case final DurationTimer durationTimer -> {
+                    return withPercentage(value,
+                            durationTimer.get().toMillis(),
+                            ((DurationTimer) total).get().toMillis());
+                }
+                case final Number number -> {
+                    final double valNum = number.doubleValue();
+                    final double totalNum = ((Number) total).doubleValue();
+                    if (totalNum == 0) {
+                        return originalValue + " (undefined%)";
+                    } else {
 //                    final int pct = (int) (valNum / totalNum * 100);
 
-                    final BigDecimal pct = BigDecimal.valueOf(valNum / totalNum * 100)
-                            .stripTrailingZeros()
-                            .round(new MathContext(3, RoundingMode.HALF_UP));
-                    return originalValue + " (" + pct.toPlainString() + "%)";
+                        final BigDecimal pct = BigDecimal.valueOf(valNum / totalNum * 100)
+                                .stripTrailingZeros()
+                                .round(new MathContext(3, RoundingMode.HALF_UP));
+                        return originalValue + " (" + pct.toPlainString() + "%)";
+                    }
                 }
-            } else {
-                throw new IllegalArgumentException("Type "
-                                                   + value.getClass().getSimpleName()
-                                                   + " not supported");
+                default -> throw new IllegalArgumentException("Type "
+                                                              + value.getClass().getSimpleName()
+                                                              + " not supported");
             }
         }
     }

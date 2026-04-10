@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright 2016-2025 Crown Copyright
+  ~ Copyright 2016-2026 Crown Copyright
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@
     <logger name="stroom.headless" level="debug" />
     <logger name="stroom.query.impl" level="debug" />
     <logger name="stroom.proxy" level="info" />
+<!--    <logger name="stroom.data" level="debug" />-->
 
 <!--    <logger name="stroom.resource.impl.UserResourceStoreImpl" level="debug" />-->
 

@@ -379,13 +379,13 @@ public class PhysicalDeleteExecutor {
     private void deleteDictionaryTasks(final Progress progress,
                                        final Set<Long> successfulMetaIdSet,
                                        final int successCount) {
-        // Delete data volumes.
+        // Delete zstd dictionary tasks.
         info(() -> LogUtil.message("Deleting Zstd dictionary tasks for {} meta IDs", successCount));
         final DurationTimer volDeleteTimer = DurationTimer.start();
         final int volCount = zstdDictionaryTaskDao.deleteByMetaIds(successfulMetaIdSet);
         progress.addVolumeDeletionDuration(volDeleteTimer);
         LOGGER.debug(() -> LogUtil.message(
-                "{} - Deleted {} data volume records for {} meta IDs in {}",
+                "{} - Deleted {} zstd dictionary task records for {} meta IDs in {}",
                 TASK_NAME, volCount, successfulMetaIdSet.size(), volDeleteTimer.get()));
     }
 
