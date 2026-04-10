@@ -135,6 +135,7 @@ public class QueryResultTablePresenter
     private final DownloadPresenter downloadPresenter;
     private final AnnotationManager annotationManager;
     private final InlineSvgToggleButton valueFilterButton;
+    private final ButtonView resetButton;
     private final ButtonView annotateButton;
     private final EventBus eventBus;
     private final ButtonView askAiButton;
@@ -228,6 +229,11 @@ public class QueryResultTablePresenter
         valueFilterButton.setTitle("Filter Values");
         pagerView.addButton(valueFilterButton);
 
+        // Reset button
+        resetButton = pagerView.addButton(SvgPresets.UNDO);
+        resetButton.setEnabled(true);
+        resetButton.setTitle("Reset table customisation");
+
         // Annotate
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
         annotateButton.setVisible(annotationManager.isEnabled());
@@ -320,6 +326,13 @@ public class QueryResultTablePresenter
         }));
 
         registerHandler(valueFilterButton.addClickHandler(event -> toggleApplyValueFilters()));
+
+        registerHandler(resetButton.addClickHandler(event -> {
+            if (MouseUtil.isPrimary(event)) {
+                setPreferredColumns(Collections.emptyList());
+                refresh();
+            }
+        }));
 
         registerHandler(annotateButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
@@ -644,30 +657,11 @@ public class QueryResultTablePresenter
                             .stream()
                             .map(c -> c.column)
                             .collect(Collectors.toList());
-
-
-//                    // Adjust result columns to match UI preferences.
-//                    final Map<String, Column> prefs = queryTablePreferences
-//                            .getColumns()
-//                            .stream()
-//                            .collect(Collectors.toMap(Column::getId, c -> c));
-//
-//                    final List<Column> fixedColumns = new ArrayList<>(columns.size());
-//                    columns.forEach(column -> {
-//                        final Column pref = prefs.get(column.getId());
-//                        if (pref != null) {
-//                            fixedColumns.add(column.copy().width(pref.getWidth()).build());
-//                        } else {
-//                            fixedColumns.add(column);
-//                        }
-//                    });
-//                    columns = fixedColumns;
                 }
-
 
                 updateColumns(columns);
 
-                final List<TableRow> values = processData(columns, tableResult.getRows());
+                final List<TableRow> values = processData(tableResult.getColumns(), tableResult.getRows());
                 final OffsetRange valuesRange = tableResult.getResultRange();
 
                 // Only set data in the table if we have got some results and
