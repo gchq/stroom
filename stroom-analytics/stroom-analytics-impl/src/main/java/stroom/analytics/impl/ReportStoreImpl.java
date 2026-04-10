@@ -37,11 +37,13 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Message;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -269,6 +271,20 @@ class ReportStoreImpl implements ReportStore {
 
     @Override
     public Set<DocRef> findAssociatedNonExplorerDocRefs(final DocRef docRef) {
+        if (docRef != null) {
+            final ExecutionScheduleRequest request = ExecutionScheduleRequest.builder()
+                    .ownerDocRef(docRef)
+                    .build();
+            final ResultPage<ExecutionSchedule> resultPage =
+                    executionScheduleDaoProvider.get().fetchExecutionSchedule(request);
+
+            final Set<DocRef> docRefs = new HashSet<>();
+            resultPage.getValues().forEach(schedule -> {
+                docRefs.add(new DocRef(ExecutionSchedule.ENTITY_TYPE,
+                        schedule.getUuid(), schedule.getName()));
+            });
+            return docRefs;
+        }
         return null;
     }
 

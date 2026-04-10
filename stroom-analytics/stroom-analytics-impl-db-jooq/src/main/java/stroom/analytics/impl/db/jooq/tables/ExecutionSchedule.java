@@ -10,7 +10,6 @@ import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.PlainSQL;
@@ -53,11 +52,6 @@ public class ExecutionSchedule extends TableImpl<ExecutionScheduleRecord> {
     public Class<ExecutionScheduleRecord> getRecordType() {
         return ExecutionScheduleRecord.class;
     }
-
-    /**
-     * The column <code>stroom.execution_schedule.id</code>.
-     */
-    public final TableField<ExecutionScheduleRecord, Integer> ID = createField(DSL.name("id"), SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
      * The column <code>stroom.execution_schedule.name</code>.
@@ -114,6 +108,11 @@ public class ExecutionSchedule extends TableImpl<ExecutionScheduleRecord> {
      */
     public final TableField<ExecutionScheduleRecord, String> RUN_AS_USER_UUID = createField(DSL.name("run_as_user_uuid"), SQLDataType.VARCHAR(255), this, "");
 
+    /**
+     * The column <code>stroom.execution_schedule.uuid</code>.
+     */
+    public final TableField<ExecutionScheduleRecord, String> UUID = createField(DSL.name("uuid"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+
     private ExecutionSchedule(Name alias, Table<ExecutionScheduleRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
     }
@@ -154,13 +153,8 @@ public class ExecutionSchedule extends TableImpl<ExecutionScheduleRecord> {
     }
 
     @Override
-    public Identity<ExecutionScheduleRecord, Integer> getIdentity() {
-        return (Identity<ExecutionScheduleRecord, Integer>) super.getIdentity();
-    }
-
-    @Override
-    public UniqueKey<ExecutionScheduleRecord> getPrimaryKey() {
-        return Keys.KEY_EXECUTION_SCHEDULE_PRIMARY;
+    public List<UniqueKey<ExecutionScheduleRecord>> getUniqueKeys() {
+        return Arrays.asList(Keys.KEY_EXECUTION_SCHEDULE_UUID);
     }
 
     @Override

@@ -139,7 +139,7 @@ public class ScheduledProcessEditPresenter
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
-                .caption(executionSchedule.getId() == null
+                .caption(executionSchedule.getUuid() == null
                         ? "Create Schedule"
                         : "Edit Schedule")
                 .onShow(e -> getView().focus())

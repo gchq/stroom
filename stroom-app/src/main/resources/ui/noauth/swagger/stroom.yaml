@@ -12495,9 +12495,6 @@ components:
           type: boolean
         enabled:
           type: boolean
-        id:
-          type: integer
-          format: int32
         name:
           type: string
         nodeName:
@@ -12510,6 +12507,8 @@ components:
           $ref: "#/components/schemas/Schedule"
         scheduleBounds:
           $ref: "#/components/schemas/ScheduleBounds"
+        uuid:
+          type: string
     ExecutionScheduleRequest:
       type: object
       properties:

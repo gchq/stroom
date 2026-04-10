@@ -20,26 +20,10 @@ public class ExecutionTrackerRecord extends UpdatableRecordImpl<ExecutionTracker
 
     /**
      * Setter for
-     * <code>stroom.execution_tracker.fk_execution_schedule_id</code>.
-     */
-    public void setFkExecutionScheduleId(Integer value) {
-        set(0, value);
-    }
-
-    /**
-     * Getter for
-     * <code>stroom.execution_tracker.fk_execution_schedule_id</code>.
-     */
-    public Integer getFkExecutionScheduleId() {
-        return (Integer) get(0);
-    }
-
-    /**
-     * Setter for
      * <code>stroom.execution_tracker.actual_execution_time_ms</code>.
      */
     public void setActualExecutionTimeMs(Long value) {
-        set(1, value);
+        set(0, value);
     }
 
     /**
@@ -47,7 +31,7 @@ public class ExecutionTrackerRecord extends UpdatableRecordImpl<ExecutionTracker
      * <code>stroom.execution_tracker.actual_execution_time_ms</code>.
      */
     public Long getActualExecutionTimeMs() {
-        return (Long) get(1);
+        return (Long) get(0);
     }
 
     /**
@@ -55,7 +39,7 @@ public class ExecutionTrackerRecord extends UpdatableRecordImpl<ExecutionTracker
      * <code>stroom.execution_tracker.last_effective_execution_time_ms</code>.
      */
     public void setLastEffectiveExecutionTimeMs(Long value) {
-        set(2, value);
+        set(1, value);
     }
 
     /**
@@ -63,7 +47,7 @@ public class ExecutionTrackerRecord extends UpdatableRecordImpl<ExecutionTracker
      * <code>stroom.execution_tracker.last_effective_execution_time_ms</code>.
      */
     public Long getLastEffectiveExecutionTimeMs() {
-        return (Long) get(2);
+        return (Long) get(1);
     }
 
     /**
@@ -71,7 +55,7 @@ public class ExecutionTrackerRecord extends UpdatableRecordImpl<ExecutionTracker
      * <code>stroom.execution_tracker.next_effective_execution_time_ms</code>.
      */
     public void setNextEffectiveExecutionTimeMs(Long value) {
-        set(3, value);
+        set(2, value);
     }
 
     /**
@@ -79,7 +63,23 @@ public class ExecutionTrackerRecord extends UpdatableRecordImpl<ExecutionTracker
      * <code>stroom.execution_tracker.next_effective_execution_time_ms</code>.
      */
     public Long getNextEffectiveExecutionTimeMs() {
-        return (Long) get(3);
+        return (Long) get(2);
+    }
+
+    /**
+     * Setter for
+     * <code>stroom.execution_tracker.fk_execution_schedule_uuid</code>.
+     */
+    public void setFkExecutionScheduleUuid(String value) {
+        set(3, value);
+    }
+
+    /**
+     * Getter for
+     * <code>stroom.execution_tracker.fk_execution_schedule_uuid</code>.
+     */
+    public String getFkExecutionScheduleUuid() {
+        return (String) get(3);
     }
 
     // -------------------------------------------------------------------------
@@ -87,7 +87,7 @@ public class ExecutionTrackerRecord extends UpdatableRecordImpl<ExecutionTracker
     // -------------------------------------------------------------------------
 
     @Override
-    public Record1<Integer> key() {
+    public Record1<String> key() {
         return (Record1) super.key();
     }
 
@@ -105,13 +105,13 @@ public class ExecutionTrackerRecord extends UpdatableRecordImpl<ExecutionTracker
     /**
      * Create a detached, initialised ExecutionTrackerRecord
      */
-    public ExecutionTrackerRecord(Integer fkExecutionScheduleId, Long actualExecutionTimeMs, Long lastEffectiveExecutionTimeMs, Long nextEffectiveExecutionTimeMs) {
+    public ExecutionTrackerRecord(Long actualExecutionTimeMs, Long lastEffectiveExecutionTimeMs, Long nextEffectiveExecutionTimeMs, String fkExecutionScheduleUuid) {
         super(ExecutionTracker.EXECUTION_TRACKER);
 
-        setFkExecutionScheduleId(fkExecutionScheduleId);
         setActualExecutionTimeMs(actualExecutionTimeMs);
         setLastEffectiveExecutionTimeMs(lastEffectiveExecutionTimeMs);
         setNextEffectiveExecutionTimeMs(nextEffectiveExecutionTimeMs);
+        setFkExecutionScheduleUuid(fkExecutionScheduleUuid);
         resetChangedOnNotNull();
     }
 }
