@@ -37,8 +37,8 @@ public class FsDataStoreModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(Store.class).to(FsStore.class);
-        bind(AttributeMapFactory.class).to(FsStore.class);
+        bind(Store.class).to(StoreImpl.class);
+        bind(AttributeMapFactory.class).to(StoreImpl.class);
         bind(FsVolumeGroupService.class).to(FsVolumeGroupServiceImpl.class);
 
         GuiceUtil.buildMapBinder(binder(), FsVolumeType.class, StreamStore.class)
