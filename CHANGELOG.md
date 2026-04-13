@@ -13,6 +13,86 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.1] - 2026-04-13
+
+* Feature **#5282** : Add pipeline scheduling.
+
+* Feature **#5346** : Choose which external document changes to save when saving a pipeline.
+
+* Issue **#5366** : Add level and status to rules.
+
+* Feature **#5377** : Embedded pipeline docs.
+
+* Issue **#5366** : Create new doc object DataGen.
+
+* Issue **#5366** : Add Execution tab to DataGen.
+
+* Feature **#5387** : Allow pipeline stepping across multiple streams.
+
+* Issue **#5366** : Implement job scheduling for DataGen.
+
+* Feature **#3103** : Allow multiple dashboard instances.
+
+* Refactor : Refactor the feedKey locking in PreAggregator and make AttributeMapUtil#readKeys() more lenient when reading `.meta `files.
+
+* Dependency : Uplift org.apache.commons:commons-pool2 from 2.12.1 to 2.13.1.
+
+* Dependency : Uplift org.flywaydb:flyway-core from 11.20.0 to 12.0.0.
+
+* Dependency : Uplift org.eclipse.jgit:org.eclipse.jgit from 7.3.0.202506031305-r to 7.5.0.202512021534-r.
+
+* Dependency : Uplift org.apache.solr:solr-solrj from 9.8.0 to 9.10.1.
+
+* Dependency : Uplift swagger from 2.2.41 to 2.2.42.
+
+* Bug : Fix output of the manage_users --listPermissions command.
+
+* Bug : Fix missing arg validation on reset_password CLI command. Obfuscate password in logging.
+
+* Refactor : Remove HBase statistics (may require change to default config).
+
+* Refactor : Remove ScyllaDB based state store.
+
+* Feature : Editing items in the UI now indicates save required only when changes are made.
+
+* Issue **#5366** : Refactor schedulers.
+
+* Feature **#3206** : User tab sessions.
+
+* Issue **#5366** : Refactor schedulers to interface and cleanup.
+
+* Dependency : Uplift gwt from 2.12.2 to 2.13.0.
+
+* Dependency : Uplift co.elastic.clients:elasticsearch-java from 9.2.1 to 9.3.2.
+
+* Build : Uplift gradle-wrapper from 9.3.0 to 9.3.1.
+
+* Dependency : Uplift org.yaml:snakeyaml from 2.2 to 2.6.
+
+* Refactor : Replace NullSafe.requireNonNullElse() with Objects.requireNonNullElse().
+
+* Refactor : Replace NullSafe.requireNonNullElseGet() with Objects.requireNonNullElseGet().
+
+* Issue **#5366** : Fix typo.
+
+* Feature **#5366** : Rebase on master.
+
+* Feature **#5366** : Cleanup.
+
+* Feature **#5366** : Checkstyle.
+
+* Feature **#5232** : Add standard annotation comments. MIGRATION: Any comments previously configured in standardComments property will need to saved as annotation comments.
+
+* Feature **#5366** : Change icon for DataGen.
+
+* Feature **#5366** : Add feed name to rule detection.
+
+* Feature : Improve the ProgressMonitor task creation logging output to included counts of errored and skipped filters. Change task creation to re-test filter enabled/deleted state just prior to creating tasks. Add validation to ProcessorConfig to enforce a minimum value of `1` on some properties.
+
+* Feature **#5366** : Fix DataGen destination feed not firing dirty event.
+
+* Feature **#5366** : Checkstyle.
+
 * Bug **#5503** : Fix search rerank LLM processing and add debug logging.
 
 * Dependency : Uplift docker images to `eclipse-temurin:25.0.2_10-jdk-alpine-3.23`. Change Java docker build to use 25.0.2. Change ERD build to use a fixed docker image.
@@ -2105,7 +2185,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.12-beta.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.1...HEAD
+[v7.13-beta.1]: https://github.com/gchq/stroom/compare/v7.12-beta.1...v7.13-beta.1
 [v7.12-beta.1]: https://github.com/gchq/stroom/compare/v7.11.6...v7.12-beta.1
 [v7.11.6]: https://github.com/gchq/stroom/compare/v7.11.5...v7.11.6
 [v7.11.5]: https://github.com/gchq/stroom/compare/v7.11.4...v7.11.5
