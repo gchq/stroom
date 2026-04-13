@@ -64,7 +64,7 @@ final class S3ZstdSource implements Source {
     private final S3StreamTypeExtensions s3StreamTypeExtensions;
     private final ExecutorProvider executorProvider;
     private final S3Manager s3Manager;
-    private final S3ZstdStore s3ZstdStore;
+    private final S3ZstdStreamStore s3ZstdStreamStore;
     private final Meta meta;
     private final DataVolume dataVolume;
     /**
@@ -78,7 +78,7 @@ final class S3ZstdSource implements Source {
     private Set<String> childTypes;
     private ZstdSegmentationType zstdSegmentationType;
 
-    public S3ZstdSource(final S3ZstdStore s3ZstdStore,
+    public S3ZstdSource(final S3ZstdStreamStore s3ZstdStreamStore,
                         final Path tempDir,
                         final String s3Location,
                         final S3Manager s3Manager,
@@ -90,7 +90,7 @@ final class S3ZstdSource implements Source {
         this.executorProvider = executorProvider;
         LOGGER.debug("ctor() - tempDir: {}, s3Location: {}, meta: {}, dataVolume: {}",
                 tempDir, s3Location, meta, dataVolume);
-        this.s3ZstdStore = s3ZstdStore;
+        this.s3ZstdStreamStore = s3ZstdStreamStore;
         this.tempDir = tempDir;
         this.s3Location = s3Location;
         this.s3Manager = s3Manager;
@@ -207,7 +207,7 @@ final class S3ZstdSource implements Source {
                 LOGGER.error("closeStreamSource() - Error on closing stream {}", this, streamCloseException);
                 throw new UncheckedIOException(streamCloseException);
             } else {
-                s3ZstdStore.release(meta, tempDir);
+                s3ZstdStreamStore.release(meta, tempDir);
             }
 
         } finally {
@@ -225,7 +225,7 @@ final class S3ZstdSource implements Source {
 
     private long getPartCount(final String childStreamType) {
         if (getSegmentationType() == ZstdSegmentationType.PARTS) {
-            final Optional<ZstdSeekTable> optSeekTable = s3ZstdStore.getZstdSeekTableCache().getSeekTable(
+            final Optional<ZstdSeekTable> optSeekTable = s3ZstdStreamStore.getZstdSeekTableCache().getSeekTable(
                     s3Manager,
                     dataVolume,
                     meta,
@@ -256,7 +256,7 @@ final class S3ZstdSource implements Source {
     }
 
     private ZstdSeekTable getZstdSeekTable(final String childStreamType) {
-        return s3ZstdStore.getZstdSeekTableCache()
+        return s3ZstdStreamStore.getZstdSeekTableCache()
                 .getSeekTable(s3Manager, dataVolume, meta, childStreamType)
                 .orElse(null);
     }
@@ -279,7 +279,7 @@ final class S3ZstdSource implements Source {
             final String uuid = zstdSeekTable.getDictionaryUuid()
                     .map(UUID::toString)
                     .orElse(null);
-            return s3ZstdStore.getZstdDictionaryService()
+            return s3ZstdStreamStore.getZstdDictionaryService()
                     .getZstdDictionary(uuid, dataVolume)
                     .orElseThrow();
         } else {
@@ -295,7 +295,7 @@ final class S3ZstdSource implements Source {
                 zstdSeekTable,
                 zstdFrameSupplier,
                 zstdDictionary,
-                s3ZstdStore.getHeapBufferPool());
+                s3ZstdStreamStore.getHeapBufferPool());
     }
 
     private FileKey getFileKey(final String childStreamType) {

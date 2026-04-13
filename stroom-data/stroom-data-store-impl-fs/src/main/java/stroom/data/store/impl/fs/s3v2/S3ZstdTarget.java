@@ -64,7 +64,7 @@ public final class S3ZstdTarget implements Target {
     private static final int DEFAULT_ZSTD_COMPRESSION_LEVEL = 3;
 
     private final MetaService metaService;
-    private final S3ZstdStore s3ZstdStore;
+    private final S3ZstdStreamStore s3ZstdStreamStore;
     private final S3Manager s3Manager;
     private final S3StreamTypeExtensions s3StreamTypeExtensions;
     private final HeapBufferPool heapBufferPool;
@@ -96,7 +96,7 @@ public final class S3ZstdTarget implements Target {
     private long partNo;
 
     private S3ZstdTarget(final MetaService metaService,
-                         final S3ZstdStore s3ZstdStore,
+                         final S3ZstdStreamStore s3ZstdStreamStore,
                          final S3Manager s3Manager,
                          final S3StreamTypeExtensions s3StreamTypeExtensions,
                          final HeapBufferPool heapBufferPool,
@@ -108,7 +108,7 @@ public final class S3ZstdTarget implements Target {
         this.heapBufferPool = heapBufferPool;
         this.dataVolume = dataVolume;
         this.metaService = metaService;
-        this.s3ZstdStore = s3ZstdStore;
+        this.s3ZstdStreamStore = s3ZstdStreamStore;
         this.s3Manager = s3Manager;
         this.s3StreamTypeExtensions = s3StreamTypeExtensions;
         this.meta = meta;
@@ -128,7 +128,7 @@ public final class S3ZstdTarget implements Target {
     }
 
     static S3ZstdTarget create(final MetaService metaService,
-                               final S3ZstdStore s3ZstdStore,
+                               final S3ZstdStreamStore s3ZstdStreamStore,
                                final S3Manager s3Manager,
                                final S3StreamTypeExtensions s3StreamTypeExtensions,
                                final HeapBufferPool heapBufferPool,
@@ -137,7 +137,7 @@ public final class S3ZstdTarget implements Target {
                                final Meta meta) {
         return new S3ZstdTarget(
                 metaService,
-                s3ZstdStore,
+                s3ZstdStreamStore,
                 s3Manager,
                 s3StreamTypeExtensions,
                 heapBufferPool,
@@ -494,7 +494,7 @@ public final class S3ZstdTarget implements Target {
         Objects.requireNonNull(streamTypeName);
         return new S3ZstdTarget(
                 metaService,
-                s3ZstdStore,
+                s3ZstdStreamStore,
                 s3Manager,
                 s3StreamTypeExtensions,
                 heapBufferPool,
@@ -567,7 +567,7 @@ public final class S3ZstdTarget implements Target {
                 meta.getFeedName(),
                 fileKey.streamType(),
                 fileKey.childStreamType());
-        final ZstdDictionaryService zstdDictionaryService = s3ZstdStore.getZstdDictionaryService();
+        final ZstdDictionaryService zstdDictionaryService = s3ZstdStreamStore.getZstdDictionaryService();
         final ZstdDictionary zstdDictionary = zstdDictionaryService.getZstdDictionary(zstdDictionaryKey, dataVolume)
                 .orElse(null);
 

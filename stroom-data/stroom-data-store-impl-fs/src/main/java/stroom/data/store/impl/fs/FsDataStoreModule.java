@@ -20,7 +20,7 @@ import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.fs.s3v1.S3Store;
-import stroom.data.store.impl.fs.s3v2.S3ZstdStore;
+import stroom.data.store.impl.fs.s3v2.S3ZstdStreamStore;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeType;
 import stroom.data.store.impl.fs.standard.EchoServlet;
@@ -44,7 +44,7 @@ public class FsDataStoreModule extends AbstractModule {
         GuiceUtil.buildMapBinder(binder(), FsVolumeType.class, StreamStore.class)
                 .addBinding(FsVolumeType.STANDARD, FsStore.class)
                 .addBinding(FsVolumeType.S3_V1, S3Store.class)
-                .addBinding(FsVolumeType.S3_V2, S3ZstdStore.class);
+                .addBinding(FsVolumeType.S3_V2, S3ZstdStreamStore.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(FsVolumeService.class)

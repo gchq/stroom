@@ -52,9 +52,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Singleton
-public class S3ZstdStore implements StreamStore {
+public class S3ZstdStreamStore implements StreamStore {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ZstdStore.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3ZstdStreamStore.class);
 
 //    public static final String KEY_NAME_TEMPLATE_BASE =
 //    "${type}/${year}/${month}/${day}/${idPath}/${feed}/${idPadded}";
@@ -76,7 +76,7 @@ public class S3ZstdStore implements StreamStore {
     private final Path tempDir;
 
     @Inject
-    S3ZstdStore(
+    S3ZstdStreamStore(
 //            final TemplateCache templateCache,
             final TempDirProvider tempDirProvider,
             final MetaService metaService,
@@ -141,7 +141,7 @@ public class S3ZstdStore implements StreamStore {
                         LOGGER.debug("getSource() - Creating trackedSource: {}", trackedSource2);
                         return trackedSource2;
                     } else {
-                        synchronized (S3ZstdStore.this) {
+                        synchronized (S3ZstdStreamStore.this) {
                             evictable.remove(aTrackedSource);
                         }
                         aTrackedSource.useCount().incrementAndGet();
@@ -190,7 +190,7 @@ public class S3ZstdStore implements StreamStore {
                 final int count = v.useCount().decrementAndGet();
                 assert count >= 0;
                 if (count == 0) {
-                    synchronized (S3ZstdStore.this) {
+                    synchronized (S3ZstdStreamStore.this) {
                         evictable.add(v);
                     }
                 }
@@ -204,7 +204,7 @@ public class S3ZstdStore implements StreamStore {
     private void evict() {
         if (cache.size() > MAX_CACHED_ITEMS) {
             final List<TrackedSource> list;
-            synchronized (S3ZstdStore.this) {
+            synchronized (S3ZstdStreamStore.this) {
                 list = new ArrayList<>(evictable);
             }
             list.sort(Comparator.comparing(TrackedSource::createTime));
@@ -214,7 +214,7 @@ public class S3ZstdStore implements StreamStore {
                     cache.compute(trackedSource.metaId, (k, v) -> {
                         if (v == null || v.useCount().get() == 0) {
                             deleteLocalDir("Evict delete dir: ", trackedSource.path());
-                            synchronized (S3ZstdStore.this) {
+                            synchronized (S3ZstdStreamStore.this) {
                                 evictable.remove(trackedSource);
                             }
                             return null;
