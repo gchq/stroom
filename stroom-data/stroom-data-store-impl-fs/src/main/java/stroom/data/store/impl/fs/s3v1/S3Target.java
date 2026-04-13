@@ -59,7 +59,7 @@ public final class S3Target implements Target {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3Target.class);
 
     private final MetaService metaService;
-    private final S3Store s3Store;
+    private final S3StreamStore s3StreamStore;
     private final DataVolume dataVolume;
     private final Map<Long, S3OutputStreamProvider> partMap = new HashMap<>();
     private final Path tempDir;
@@ -71,13 +71,13 @@ public final class S3Target implements Target {
     private long partNo;
 
     public S3Target(final MetaService metaService,
-                    final S3Store s3Store,
+                    final S3StreamStore s3StreamStore,
                     final Path tempDir,
                     final DataVolume dataVolume,
                     final Meta meta) {
         this.dataVolume = dataVolume;
         this.metaService = metaService;
-        this.s3Store = s3Store;
+        this.s3StreamStore = s3StreamStore;
         this.meta = meta;
         this.tempDir = tempDir;
     }
@@ -166,7 +166,7 @@ public final class S3Target implements Target {
                         final AttributeMap attributeMap = getAttributes();
 
                         // Zip and upload.
-                        s3Store.upload(tempDir, dataVolume, meta, attributeMap);
+                        s3StreamStore.upload(tempDir, dataVolume, meta, attributeMap);
 
                         // Unlock will update the meta data so set it back on the stream
                         // target so the client has the up to date copy

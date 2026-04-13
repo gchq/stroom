@@ -56,9 +56,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Singleton
-public class S3Store implements StreamStore {
+public class S3StreamStore implements StreamStore {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3Store.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(S3StreamStore.class);
 
     private static final int MAX_CACHED_ITEMS = 10;
 
@@ -69,9 +69,9 @@ public class S3Store implements StreamStore {
     private final Path tempDir;
 
     @Inject
-    S3Store(final TempDirProvider tempDirProvider,
-            final MetaService metaService,
-            final S3ManagerFactory s3ManagerFactory) {
+    S3StreamStore(final TempDirProvider tempDirProvider,
+                  final MetaService metaService,
+                  final S3ManagerFactory s3ManagerFactory) {
         this.metaService = metaService;
         this.s3ManagerFactory = s3ManagerFactory;
 
@@ -119,7 +119,7 @@ public class S3Store implements StreamStore {
 
                 return new TrackedSource(meta.getId(), tempPath, Instant.now(), new AtomicInteger(1));
             } else {
-                synchronized (S3Store.this) {
+                synchronized (S3StreamStore.this) {
                     evictable.remove(v);
                 }
                 v.getUseCount().incrementAndGet();
@@ -151,7 +151,7 @@ public class S3Store implements StreamStore {
                 final int count = v.getUseCount().decrementAndGet();
                 assert count >= 0;
                 if (count == 0) {
-                    synchronized (S3Store.this) {
+                    synchronized (S3StreamStore.this) {
                         evictable.add(v);
                     }
                 }
@@ -165,7 +165,7 @@ public class S3Store implements StreamStore {
     private void evict() {
         if (cache.size() > MAX_CACHED_ITEMS) {
             final List<TrackedSource> list;
-            synchronized (S3Store.this) {
+            synchronized (S3StreamStore.this) {
                 list = new ArrayList<>(evictable);
             }
             list.sort(Comparator.comparing(TrackedSource::getCreateTime));
@@ -175,7 +175,7 @@ public class S3Store implements StreamStore {
                     cache.compute(trackedSource.metaId, (k, v) -> {
                         if (v == null || v.getUseCount().get() == 0) {
                             deleteDir("Evict delete dir: ", trackedSource.getPath());
-                            synchronized (S3Store.this) {
+                            synchronized (S3StreamStore.this) {
                                 evictable.remove(trackedSource);
                             }
                             return null;

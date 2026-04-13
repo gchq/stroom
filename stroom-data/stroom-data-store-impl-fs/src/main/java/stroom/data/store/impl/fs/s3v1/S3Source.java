@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 Crown Copyright
+ * Copyright 2016-2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,16 +63,16 @@ final class S3Source implements Source {
     private final String s3Location;
     private AttributeMap attributeMap;
 
-    private final S3Store s3Store;
+    private final S3StreamStore s3StreamStore;
     private final Meta meta;
     private boolean closed;
     private final Map<String, Long> counts;
 
-    public S3Source(final S3Store s3Store,
+    public S3Source(final S3StreamStore s3StreamStore,
                     final Path tempDir,
                     final String s3Location,
                     final Meta meta) {
-        this.s3Store = s3Store;
+        this.s3StreamStore = s3StreamStore;
         this.tempDir = tempDir;
         this.s3Location = s3Location;
         this.meta = meta;
@@ -168,7 +168,7 @@ final class S3Source implements Source {
                 LOGGER.error("closeStreamSource() - Error on closing stream {}", this, streamCloseException);
                 throw new UncheckedIOException(streamCloseException);
             } else {
-                s3Store.release(meta, tempDir);
+                s3StreamStore.release(meta, tempDir);
             }
 
         } finally {
