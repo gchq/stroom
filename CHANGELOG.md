@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11.8] - 2026-04-13
+
+* Bug **#5503** : Fix search rerank LLM processing and add debug logging.
+
+
 ## [v7.11.7] - 2026-04-10
 
 * Dependency : Uplift docker images to `eclipse-temurin:25.0.2_10-jdk-alpine-3.23`. Change Java docker build to use 25.0.2. Change ERD build to use a fixed docker image.
@@ -2096,7 +2101,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.8...HEAD
+[v7.11.8]: https://github.com/gchq/stroom/compare/v7.11.7...v7.11.8
 [v7.11.7]: https://github.com/gchq/stroom/compare/v7.11.6...v7.11.7
 [v7.11.6]: https://github.com/gchq/stroom/compare/v7.11.5...v7.11.6
 [v7.11.5]: https://github.com/gchq/stroom/compare/v7.11.4...v7.11.5
