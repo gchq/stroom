@@ -13,6 +13,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+* Bug **#5503** : Fix search rerank LLM processing and add debug logging.
+
 * Dependency : Uplift docker images to `eclipse-temurin:25.0.2_10-jdk-alpine-3.23`. Change Java docker build to use 25.0.2. Change ERD build to use a fixed docker image.
 
 * Bug **#5484** : Fix stream browser Retention column and Info pane showing wrong retention period/rule.
