@@ -49,6 +49,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+ * This is the front door for all stream store implementations. It delegates down to
+ * a {@link StreamStore} implementation depending on the volume type of the stream.
+ */
 @NullMarked
 public class StoreImpl implements Store, AttributeMapFactory {
 

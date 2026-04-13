@@ -25,11 +25,33 @@ import stroom.meta.shared.Meta;
 
 import java.util.Collection;
 
+/**
+ * Interface for the various implementations of Stream Store, i.e. traditional FS, S3, etc.
+ */
 public interface StreamStore {
 
+    /**
+     * Open a new target (i.e. new file) based on some meta data
+     *
+     * @return the stream to write to
+     */
     Target openTarget(final Meta meta, final DataVolume dataVolume) throws DataException;
 
+    /**
+     * Physically delete streams.
+     */
     void physicallyDelete(final Collection<DataVolume> dataVolumes);
 
+    /**
+     * <p>
+     * Open a existing stream source.
+     * </p>
+     *
+     * @param meta       The Meta object of the stream to open.
+     * @param dataVolume The volume on which the stream exists.
+     * @return The stream source if the stream can be found.
+     * @throws DataException in case of a IO error or stream volume not visible or non
+     *                       existent.
+     */
     Source openSource(final Meta meta, final DataVolume dataVolume) throws DataException;
 }

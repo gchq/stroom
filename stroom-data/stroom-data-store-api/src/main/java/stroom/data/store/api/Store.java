@@ -25,11 +25,9 @@ import java.util.Collection;
  * API to the data store.
  * </p>
  * <p>
- * <p>
  * The store abstracts a repository of large files keyed by some meta
  * data.
  * </p>
- * <p>
  * <p>
  * When you read or write to a stream the file is locked. You must close the
  * stream to unlock the file.
@@ -37,7 +35,7 @@ import java.util.Collection;
  */
 public interface Store {
 
-    default Target openTarget(MetaProperties metaProperties) throws DataException {
+    default Target openTarget(final MetaProperties metaProperties) throws DataException {
         return openTarget(metaProperties, null);
     }
 
@@ -74,7 +72,7 @@ public interface Store {
      * @throws DataException in case of a IO error or stream volume not visible or non
      *                       existent.
      */
-    default Source openSource(long streamId) throws DataException {
+    default Source openSource(final long streamId) throws DataException {
         return openSource(streamId, false);
     }
 
