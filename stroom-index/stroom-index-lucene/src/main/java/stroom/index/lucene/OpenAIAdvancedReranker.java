@@ -16,7 +16,14 @@
 
 package stroom.index.lucene;
 
-import dev.langchain4j.data.segment.TextSegment;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.ContentMetadata;
@@ -24,13 +31,15 @@ import dev.langchain4j.rag.content.aggregator.ContentAggregator;
 import dev.langchain4j.rag.query.Query;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 public class OpenAIAdvancedReranker implements ContentAggregator {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OpenAIAdvancedReranker.class);
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private final ChatModel scoringModel;
 
@@ -57,33 +66,67 @@ public class OpenAIAdvancedReranker implements ContentAggregator {
         final Query primaryQuery = queryToContents.keySet().iterator().next();
 
         // 3. Ask the ChatModel to score the candidates
-        final String prompt = "Score these docs (0.0 to 1.0) for query: " + primaryQuery.text() + "\n" +
-                              formatForScoring(allCandidates);
-
+        final String prompt = writeJsonPrompt(primaryQuery, allCandidates);
+        LOGGER.debug("rerank prompt = {}", prompt);
         final String response = scoringModel.chat(prompt);
-        final List<Double> scores = parseScores(response, allCandidates.size());
+        LOGGER.debug("rerank response = {}", response);
 
+        // 4. Parse response and get scores
         final List<Content> result = new ArrayList<>();
-        for (int i = 0; i < allCandidates.size() && i < scores.size(); i++) {
+        final List<ScoreResult> results = readJsonResponse(response);
+        for (int i = 0; i < allCandidates.size() && i < results.size(); i++) {
             final Content doc = allCandidates.get(i);
-            final Double score = scores.get(i);
-            result.add(Content.from(doc.textSegment(), Map.of(ContentMetadata.RERANKED_SCORE, score)));
+            final ScoreResult score = results.get(i);
+            result.add(Content.from(doc.textSegment(), Map.of(ContentMetadata.RERANKED_SCORE, score.score)));
         }
-
         return result;
     }
 
-    private String formatForScoring(final List<Content> docs) {
-        return docs.stream()
-                .map(d -> "- " + d.textSegment().text())
-                .collect(java.util.stream.Collectors.joining("\n"));
+    private String writeJsonPrompt(final Query primaryQuery, final List<Content> allCandidates) {
+        try {
+            final ObjectNode root = MAPPER.createObjectNode();
+            root.put("task", "relevance_scoring");
+            root.put("instructions", "Score each document for relevance to the query. " +
+                                     "Use the full 0.0–1.0 range — do not cluster scores. " +
+                                     "Respond ONLY with a JSON array, no preamble or markdown fences.");
+
+            final ArrayNode outputFormat = root.putArray("output_format");
+            final ObjectNode example = outputFormat.addObject();
+            example.put("id", 1);
+            example.put("score", 0.92);
+            example.put("reason", "one sentence justification");
+
+            root.put("query", primaryQuery.text());
+
+            final ArrayNode documents = root.putArray("documents");
+            for (int i = 0; i < allCandidates.size(); i++) {
+                final ObjectNode doc = documents.addObject();
+                doc.put("id", i + 1);
+                doc.put("text", allCandidates.get(i).textSegment().text());
+            }
+
+            return MAPPER.writeValueAsString(root);
+        } catch (final JsonProcessingException e) {
+            LOGGER.error(e::getMessage, e);
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
-    private List<Double> parseScores(final String res, final int size) {
+    private List<ScoreResult> readJsonResponse(final String response) {
         try {
-            return Arrays.stream(res.split(",")).map(s -> Double.parseDouble(s.trim())).toList();
+            return MAPPER.readValue(response,
+                    MAPPER.getTypeFactory().constructCollectionType(List.class, ScoreResult.class));
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+            throw e;
         } catch (final Exception e) {
-            return Collections.nCopies(size, 0.5);
+            LOGGER.error(e::getMessage, e);
+            throw new RuntimeException(e.getMessage(), e);
         }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ScoreResult(int id, double score, String reason) {
+
     }
 }
