@@ -16,8 +16,8 @@
         <form:FormGroup identity="analyticProcessingNode" label="Processing Node">
             <l:SelectionBox ui:field="node" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="schedule" label="Schedule">
-            <schedule:ScheduleBox ui:field="schedule" addStyleNames="w-100"/>
+        <form:FormGroup ui:field="scheduleForm" identity="schedule" label="Schedule">
+            <schedule:ScheduleBox ui:field="scheduleBox" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="startTime" label="Start Time">
             <datetimebox:DateTimeBox ui:field="startTime" addStyleNames="w-100"/>

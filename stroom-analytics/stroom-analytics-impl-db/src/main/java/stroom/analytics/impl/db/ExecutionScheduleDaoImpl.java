@@ -16,6 +16,8 @@
 
 package stroom.analytics.impl.db;
 
+import stroom.analytics.impl.ExecuteNow;
+import stroom.analytics.impl.ExecuteNowType;
 import stroom.analytics.impl.ExecutionNode;
 import stroom.analytics.impl.ExecutionScheduleDao;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -39,6 +41,9 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.FindUserContext;
 import stroom.security.shared.UserFields;
 import stroom.security.user.api.UserRefLookup;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.scheduler.CronTrigger;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ModelStringUtil;
@@ -59,6 +64,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -69,22 +75,28 @@ import static stroom.analytics.impl.db.jooq.tables.ExecutionSchedule.EXECUTION_S
 import static stroom.analytics.impl.db.jooq.tables.ExecutionTracker.EXECUTION_TRACKER;
 
 public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExecutionScheduleDaoImpl.class);
+
     private final AnalyticsDbConnProvider analyticsDbConnProvider;
     private final Provider<UserRefLookup> userRefLookupProvider;
     private final SecurityContext securityContext;
     private final DocRefInfoService docRefInfoService;
     private final ExpressionMapper expressionMapper;
+    private final Provider<Map<ExecuteNowType, ExecuteNow>> executeNowMapProvider;
 
     @Inject
     public ExecutionScheduleDaoImpl(final AnalyticsDbConnProvider analyticsDbConnProvider,
                                     final Provider<UserRefLookup> userRefLookupProvider,
                                     final SecurityContext securityContext,
                                     final DocRefInfoService docRefInfoService,
-                                    final ExpressionMapperFactory expressionMapperFactory) {
+                                    final ExpressionMapperFactory expressionMapperFactory,
+                                    final Provider<Map<ExecuteNowType, ExecuteNow>> executeNowMapProvider) {
         this.analyticsDbConnProvider = analyticsDbConnProvider;
         this.userRefLookupProvider = userRefLookupProvider;
         this.securityContext = securityContext;
         this.docRefInfoService = docRefInfoService;
+        this.executeNowMapProvider = executeNowMapProvider;
 
         expressionMapper = expressionMapperFactory.create();
 
@@ -385,38 +397,53 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                 ? UUID.randomUUID().toString()
                 : executionSchedule.getUuid();
 
-        JooqUtil.contextResult(analyticsDbConnProvider, context -> context
-                .insertInto(EXECUTION_SCHEDULE,
-                        EXECUTION_SCHEDULE.UUID,
-                        EXECUTION_SCHEDULE.NAME,
-                        EXECUTION_SCHEDULE.ENABLED,
-                        EXECUTION_SCHEDULE.NODE_NAME,
-                        EXECUTION_SCHEDULE.SCHEDULE_TYPE,
-                        EXECUTION_SCHEDULE.EXPRESSION,
-                        EXECUTION_SCHEDULE.CONTIGUOUS,
-                        EXECUTION_SCHEDULE.START_TIME_MS,
-                        EXECUTION_SCHEDULE.END_TIME_MS,
-                        EXECUTION_SCHEDULE.DOC_TYPE,
-                        EXECUTION_SCHEDULE.DOC_UUID,
-                        EXECUTION_SCHEDULE.RUN_AS_USER_UUID)
-                .values(uuid,
-                        executionSchedule.getName(),
-                        executionSchedule.isEnabled(),
-                        executionSchedule.getNodeName(),
-                        executionSchedule.getSchedule().getType().name(),
-                        executionSchedule.getSchedule().getExpression(),
-                        executionSchedule.isContiguous(),
-                        executionSchedule.getScheduleBounds() == null
-                                ? null
-                                : executionSchedule.getScheduleBounds().getStartTimeMs(),
-                        executionSchedule.getScheduleBounds() == null
-                                ? null
-                                : executionSchedule.getScheduleBounds().getEndTimeMs(),
-                        executionSchedule.getOwningDoc().getType(),
-                        executionSchedule.getOwningDoc().getUuid(),
-                        runAsUser.getUuid())
-                .execute());
-        return fetchScheduleByUuid(uuid).orElse(null);
+        final Long startTimeMs;
+        final Long endTimeMs;
+        if (executionSchedule.getSchedule().getType().equals(ScheduleType.INSTANT)) {
+            startTimeMs = Instant.now().toEpochMilli();
+            endTimeMs = Instant.now().toEpochMilli();
+        } else {
+            startTimeMs = (executionSchedule.getScheduleBounds() == null)
+                    ? null
+                    : executionSchedule.getScheduleBounds().getStartTimeMs();
+            endTimeMs = (executionSchedule.getScheduleBounds() == null)
+                    ? null
+                    : executionSchedule.getScheduleBounds().getEndTimeMs();
+        }
+
+        JooqUtil.context(analyticsDbConnProvider, context -> context
+                        .insertInto(EXECUTION_SCHEDULE,
+                                EXECUTION_SCHEDULE.UUID,
+                                EXECUTION_SCHEDULE.NAME,
+                                EXECUTION_SCHEDULE.ENABLED,
+                                EXECUTION_SCHEDULE.NODE_NAME,
+                                EXECUTION_SCHEDULE.SCHEDULE_TYPE,
+                                EXECUTION_SCHEDULE.EXPRESSION,
+                                EXECUTION_SCHEDULE.CONTIGUOUS,
+                                EXECUTION_SCHEDULE.START_TIME_MS,
+                                EXECUTION_SCHEDULE.END_TIME_MS,
+                                EXECUTION_SCHEDULE.DOC_TYPE,
+                                EXECUTION_SCHEDULE.DOC_UUID,
+                                EXECUTION_SCHEDULE.RUN_AS_USER_UUID)
+                        .values(uuid,
+                                executionSchedule.getName(),
+                                executionSchedule.isEnabled(),
+                                executionSchedule.getNodeName(),
+                                executionSchedule.getSchedule().getType().name(),
+                                executionSchedule.getSchedule().getExpression(),
+                                executionSchedule.isContiguous(),
+                                startTimeMs,
+                                endTimeMs,
+                                executionSchedule.getOwningDoc().getType(),
+                                executionSchedule.getOwningDoc().getUuid(),
+                                runAsUser.getUuid())
+                        .execute());
+
+        final ExecutionSchedule result = fetchScheduleByUuid(uuid).orElseThrow();
+        if (result.getSchedule().getType().equals(ScheduleType.INSTANT) && result.isEnabled()) {
+            executeSchedulesNow(Collections.singletonList(result));
+        }
+        return result;
     }
 
     private UserRef checkRunAs(final ExecutionSchedule executionSchedule) {
@@ -453,20 +480,22 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
                 .set(EXECUTION_SCHEDULE.START_TIME_MS,
                         executionSchedule.getScheduleBounds() == null
                                 ? null
-                                : executionSchedule.getScheduleBounds()
-                                        .getStartTimeMs())
+                                : executionSchedule.getScheduleBounds().getStartTimeMs())
                 .set(EXECUTION_SCHEDULE.END_TIME_MS,
                         executionSchedule.getScheduleBounds() == null
                                 ? null
-                                : executionSchedule.getScheduleBounds()
-                                        .getEndTimeMs())
+                                : executionSchedule.getScheduleBounds().getEndTimeMs())
                 .set(EXECUTION_SCHEDULE.DOC_TYPE, executionSchedule.getOwningDoc().getType())
                 .set(EXECUTION_SCHEDULE.DOC_UUID, executionSchedule.getOwningDoc().getUuid())
                 .set(EXECUTION_SCHEDULE.RUN_AS_USER_UUID, runAsUser.getUuid())
                 .where(EXECUTION_SCHEDULE.UUID.eq(executionSchedule.getUuid()))
                 .execute());
 
-        return fetchScheduleByUuid(executionSchedule.getUuid()).orElse(null);
+        final ExecutionSchedule result = fetchScheduleByUuid(executionSchedule.getUuid()).orElseThrow();
+        if (result.getSchedule().getType().equals(ScheduleType.INSTANT) && result.isEnabled()) {
+            executeSchedulesNow(Collections.singletonList(result));
+        }
+        return result;
     }
 
     @Override
@@ -497,6 +526,26 @@ public class ExecutionScheduleDaoImpl implements ExecutionScheduleDao {
             if (!result) {
                 return false;
             }
+        }
+        return true;
+    }
+
+    @Override
+    public Boolean executeSchedulesNow(final List<ExecutionSchedule> schedules) {
+        try {
+            for (final ExecutionSchedule schedule : schedules) {
+                final ExecuteNow executeNow = executeNowMapProvider.get()
+                        .get(new ExecuteNowType(schedule.getOwningDoc().getType()));
+                if (executeNow == null) {
+                    throw new UnsupportedOperationException(
+                            "Unsupported execution schedule type: " + schedule.getOwningDoc().getType());
+                }
+                executeNow.execute(schedule);
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.error(() ->
+                    LogUtil.message("Error during forced schedule processing: {}", e.getMessage()), e);
+            return false;
         }
         return true;
     }

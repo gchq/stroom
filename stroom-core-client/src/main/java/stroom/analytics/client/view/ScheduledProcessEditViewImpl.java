@@ -20,7 +20,10 @@ import stroom.analytics.client.presenter.ProcessingStatusUiHandlers;
 import stroom.analytics.client.presenter.ScheduledProcessEditView;
 import stroom.item.client.SelectionBox;
 import stroom.schedule.client.ScheduleBox;
+import stroom.util.shared.scheduler.Schedule;
+import stroom.util.shared.scheduler.ScheduleType;
 import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -49,7 +52,9 @@ public class ScheduledProcessEditViewImpl
     @UiField
     SelectionBox<String> node;
     @UiField
-    ScheduleBox schedule;
+    FormGroup scheduleForm;
+    @UiField
+    ScheduleBox scheduleBox;
     @UiField
     DateTimeBox startTime;
     @UiField
@@ -63,6 +68,32 @@ public class ScheduledProcessEditViewImpl
     public ScheduledProcessEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
         endTime.setOptional(true);
+        scheduleBox.addValueChangeHandler(this::onSchedule);
+    }
+
+    private void onSchedule(final ValueChangeEvent<Schedule> event) {
+        if (event == null) {
+            return;
+        }
+        if (event.getValue() == null) {
+            return;
+        }
+        updateNonInstantUI(event.getValue().getType());
+    }
+
+    private void updateNonInstantUI(final ScheduleType scheduleType) {
+        startTime.setEnabled(!scheduleType.equals(ScheduleType.INSTANT));
+        endTime.setEnabled(!scheduleType.equals(ScheduleType.INSTANT));
+        scheduleBox.setEnabled(!scheduleType.equals(ScheduleType.INSTANT));
+        if (scheduleType.equals(ScheduleType.INSTANT)) {
+            scheduleBox.setValue(scheduleBox
+                    .getValue()
+                    .copy()
+                    .expression(ScheduleType.INSTANT.getDisplayValue())
+                    .build()
+            );
+        }
+        scheduleForm.setLabel("Schedule (" + scheduleType.getDisplayValue() + ")");
     }
 
     @Override
@@ -74,6 +105,10 @@ public class ScheduledProcessEditViewImpl
     public void focus() {
         name.setFocus(true);
         name.selectAll();
+
+        if (scheduleBox != null) {
+            updateNonInstantUI(scheduleBox.getValue().getType());
+        }
     }
 
     @Override
@@ -125,7 +160,7 @@ public class ScheduledProcessEditViewImpl
 
     @Override
     public ScheduleBox getScheduleBox() {
-        return schedule;
+        return scheduleBox;
     }
 
     @Override

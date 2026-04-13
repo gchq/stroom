@@ -8,16 +8,16 @@
         <form:FormGroup identity="scheduleType" label="Schedule Type" addStyleNames="dock-min">
             <l:SelectionBox ui:field="scheduleType" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="quickSettings" label="Quick Settings" addStyleNames="dock-min">
+        <form:FormGroup ui:field="quickSettingsFormGroup" identity="quickSettings" label="Quick Settings" addStyleNames="dock-min">
             <g:SimplePanel ui:field="quickSettings" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="scheduleExpression" label="Expression">
+        <form:FormGroup ui:field="expressionFormGroup" identity="scheduleExpression" label="Expression">
             <g:TextBox ui:field="expression" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="scheduleLastExecuted" label="Last Executed">
+        <form:FormGroup ui:field="lastExecutedFormGroup" identity="scheduleLastExecuted" label="Last Executed">
             <g:Label ui:field="lastExecuted"/>
         </form:FormGroup>
-        <form:FormGroup identity="scheduleNextScheduledTime" label="Next Scheduled Time">
+        <form:FormGroup ui:field="nextScheduledTimeFormGroup" identity="scheduleNextScheduledTime" label="Next Scheduled Time">
             <g:Label ui:field="nextScheduledTime"/>
         </form:FormGroup>
         <b:Button ui:field="calculate" addStyleNames="allow-focus w-100" text="Calculate"/>

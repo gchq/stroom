@@ -49,7 +49,6 @@ class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
     private final Provider<ExecutionScheduleDao> executionScheduleDaoProvider;
     private final Provider<SecurityContext> securityContextProvider;
     private final Provider<UserRefLookup> userRefLookupProvider;
-    private final Provider<Map<ExecuteNowType, ExecuteNow>> executeNowMapProvider;
 
     @Inject
     ExecutionScheduleResourceImpl(final Provider<ExecutionScheduleDao> executionScheduleDaoProvider,
@@ -59,7 +58,6 @@ class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
         this.executionScheduleDaoProvider = executionScheduleDaoProvider;
         this.securityContextProvider = securityContextProvider;
         this.userRefLookupProvider = userRefLookupProvider;
-        this.executeNowMapProvider = executeNowMapProvider;
     }
 
     @Override
@@ -99,22 +97,7 @@ class ExecutionScheduleResourceImpl implements ExecutionScheduleResource {
 
     @Override
     public Boolean executeSchedulesNow(final List<ExecutionSchedule> schedules) {
-        try {
-            for (final ExecutionSchedule schedule : schedules) {
-                final ExecuteNow executeNow = executeNowMapProvider.get()
-                        .get(new ExecuteNowType(schedule.getOwningDoc().getType()));
-                if (executeNow == null) {
-                    throw new UnsupportedOperationException(
-                            "Unsupported execution schedule type: " + schedule.getOwningDoc().getType());
-                }
-                executeNow.execute(schedule);
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.error(() ->
-                    LogUtil.message("Error during forced schedule processing: {}", e.getMessage()), e);
-            return false;
-        }
-        return true;
+        return executionScheduleDaoProvider.get().executeSchedulesNow(schedules);
     }
 
     private ExecutionSchedule checkRunAs(final ExecutionSchedule executionSchedule) {

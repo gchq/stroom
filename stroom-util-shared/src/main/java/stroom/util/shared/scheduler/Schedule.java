@@ -40,7 +40,11 @@ public class Schedule {
     public Schedule(@JsonProperty("type") final ScheduleType type,
                     @JsonProperty("expression") final String expression) {
         this.type = type;
-        this.expression = expression;
+        if (type == ScheduleType.INSTANT) {
+            this.expression = "";
+        } else {
+            this.expression = expression;
+        }
     }
 
     public ScheduleType getType() {
@@ -75,8 +79,7 @@ public class Schedule {
         if (type != null) {
             sb.append(type.getDisplayValue());
         }
-        if ((ScheduleType.FREQUENCY.equals(type) || ScheduleType.CRON.equals(type))
-            && expression != null) {
+        if (expression != null) {
             sb.append(" ");
             sb.append(expression);
         }
