@@ -42,9 +42,9 @@ import java.util.Collection;
  * Stores streams in the stream store indexed by some metadata.
  */
 @Singleton
-class FsStore implements StreamStore {
+class FsStreamStore implements StreamStore {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsStore.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsStreamStore.class);
 
     private final FsPathHelper fileSystemStreamPathHelper;
     private final MetaService metaService;
@@ -55,9 +55,9 @@ class FsStore implements StreamStore {
 //    private final S3ZstdStore s3ZstdStore;
 
     @Inject
-    FsStore(final FsPathHelper fileSystemStreamPathHelper,
-            final MetaService metaService,
-            final PathCreator pathCreator) {
+    FsStreamStore(final FsPathHelper fileSystemStreamPathHelper,
+                  final MetaService metaService,
+                  final PathCreator pathCreator) {
 
         this.fileSystemStreamPathHelper = fileSystemStreamPathHelper;
         this.metaService = metaService;

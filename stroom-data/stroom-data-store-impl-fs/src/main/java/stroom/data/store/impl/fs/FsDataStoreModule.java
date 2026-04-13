@@ -42,7 +42,7 @@ public class FsDataStoreModule extends AbstractModule {
         bind(FsVolumeGroupService.class).to(FsVolumeGroupServiceImpl.class);
 
         GuiceUtil.buildMapBinder(binder(), FsVolumeType.class, StreamStore.class)
-                .addBinding(FsVolumeType.STANDARD, FsStore.class)
+                .addBinding(FsVolumeType.STANDARD, FsStreamStore.class)
                 .addBinding(FsVolumeType.S3_V1, S3StreamStore.class)
                 .addBinding(FsVolumeType.S3_V2, S3ZstdStreamStore.class);
 
