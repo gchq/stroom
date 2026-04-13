@@ -50,9 +50,9 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @NullMarked
-public class StoreImpl implements Store, AttributeMapFactory {
+public class FsStore implements Store, AttributeMapFactory {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StoreImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsStore.class);
 
     private static final int MINIMUM_BYTE_COUNT = 10;
 
@@ -62,10 +62,10 @@ public class StoreImpl implements Store, AttributeMapFactory {
     private final DataVolumeService dataVolumeService;
 
     @Inject
-    public StoreImpl(final Map<FsVolumeType, StreamStore> streamStoreMap,
-                     final MetaService metaService,
-                     final FsVolumeService volumeService,
-                     final DataVolumeService dataVolumeService) {
+    public FsStore(final Map<FsVolumeType, StreamStore> streamStoreMap,
+                   final MetaService metaService,
+                   final FsVolumeService volumeService,
+                   final DataVolumeService dataVolumeService) {
         this.streamStoreMap = streamStoreMap;
         this.metaService = metaService;
         this.volumeService = volumeService;
