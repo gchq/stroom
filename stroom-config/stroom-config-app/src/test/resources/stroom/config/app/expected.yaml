@@ -697,7 +697,7 @@ appConfig:
     minTimeToKeepSnapshotEnv: "PT20M"
     minTimeToKeepSnapshots: "PT10M"
     nodeList: []
-    path: "${stroom.home}/planb"
+    path: "planb"
     snapshotRetryFetchInterval: "PT1M"
     stateDocCache:
       expireAfterAccess: null
