@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13-beta.2] - 2026-04-15
+
+* Build : Fix CI build failure due to missing Docker container prefix.
+
+
 ## [v7.13-beta.1] - 2026-04-13
 
 * Feature **#5282** : Add pipeline scheduling.
@@ -2185,7 +2190,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.2...HEAD
+[v7.13-beta.2]: https://github.com/gchq/stroom/compare/v7.13-beta.1...v7.13-beta.2
 [v7.13-beta.1]: https://github.com/gchq/stroom/compare/v7.12-beta.1...v7.13-beta.1
 [v7.12-beta.1]: https://github.com/gchq/stroom/compare/v7.11.6...v7.12-beta.1
 [v7.11.6]: https://github.com/gchq/stroom/compare/v7.11.5...v7.11.6
