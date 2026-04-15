@@ -83,8 +83,16 @@ VOLUME /stroom/logs/
 # Create Docker volume for any output stroom creates, e.g. from file appenders
 VOLUME /stroom/output/
 
+# Create Docker volume for PlanB state store
+VOLUME /stroom/planb/
+
 # Create Docker volume for Stroom's off-heap reference data
 VOLUME /stroom/reference_data/
+
+# Create Docker volume for Stroom's off-heap reference data staging area
+# This could potentiall be mounted as tmpfs (if the host has sufficient memory) as the
+# data is only present for the life of a ref load.
+VOLUME /stroom/reference_staging_data/
 
 # Create Docker volume for Stroom's off-heap search result data
 VOLUME /stroom/search_results/
