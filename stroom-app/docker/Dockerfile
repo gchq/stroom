@@ -65,10 +65,17 @@ VOLUME /stroom/config/
 # Create Docker volume for the content_pack_import dir as this will be mutated on 
 VOLUME /stroom/content_pack_import/
 
+# Create Docker volume for data feed idenity files to be dropped into
+VOLUME /stroom/data_feed_identities/
+
+# Create Docker volume for local checkouts of git repos
+VOLUME /stroom/git_repo/
+
 # Create Docker volume for use by any lmdb data stores.
 VOLUME /stroom/lmdb/
 
-# lmdb_library muted as tmpfs not a managed volume
+# lmdb binaries that are extracted from the stroom jar on each boot.
+VOLUME /stroom/lmdb_library/
 
 # Create Docker volume for SLF4J output
 VOLUME /stroom/logs/
@@ -110,6 +117,8 @@ RUN \
     mkdir -p /stroom/config && \
     mkdir -p /stroom/config_fallback && \
     mkdir -p /stroom/content_pack_import && \
+    mkdir -p /stroom/data_feed_identities && \
+    mkdir -p /stroom/git_repo && \
     mkdir -p /stroom/lmdb && \
     mkdir -p /stroom/lmdb_library && \
     mkdir -p /stroom/logs/access && \
