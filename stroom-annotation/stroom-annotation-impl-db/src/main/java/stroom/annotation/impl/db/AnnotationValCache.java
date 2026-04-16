@@ -17,7 +17,7 @@
 package stroom.annotation.impl.db;
 
 import stroom.annotation.impl.AnnotationConfig;
-import stroom.annotation.shared.AnnotationTag;
+import stroom.annotation.impl.AnnotationValues;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
 import stroom.util.shared.Clearable;
@@ -26,31 +26,33 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.Optional;
-
-// Make this a singleton so we don't keep recreating the mappers.
+/**
+ * Cache for mapping annotation feed IDs to feed names.
+ * <p>
+ * This cache uses async execution to avoid thread-local connection conflicts
+ * when accessed from within existing database transaction contexts.
+ */
 @Singleton
-class AnnotationTagCache implements Clearable {
+class AnnotationValCache implements Clearable {
 
-    private static final String CACHE_NAME = "Annotation Tag Cache";
+    private static final String CACHE_NAME = "Annotation Value Cache";
 
-    private final AnnotationTagDaoImpl annotationTagDao;
-    private final StroomCache<Integer, Optional<AnnotationTag>> cache;
+    private final StroomCache<Long, AnnotationValues> cache;
 
     @Inject
-    AnnotationTagCache(final AnnotationTagDaoImpl annotationTagDao,
-                       final CacheManager cacheManager,
+    AnnotationValCache(final CacheManager cacheManager,
                        final Provider<AnnotationConfig> annotationConfigProvider) {
-        this.annotationTagDao = annotationTagDao;
-        // Can't use a loading cache cos the caller of get needs to provide the load function
-        // with their DSLContext
         cache = cacheManager.create(
                 CACHE_NAME,
-                () -> annotationConfigProvider.get().getAnnotationTagCache());
+                () -> annotationConfigProvider.get().getAnnotationValCache());
     }
 
-    public AnnotationTag get(final int id) {
-        return cache.get(id, annotationTagDao::load).orElse(null);
+    public AnnotationValues get(final Long id) {
+        return cache.get(id, k -> new AnnotationValues());
+    }
+
+    public void invalidate(final Long id) {
+        cache.invalidate(id);
     }
 
     @Override

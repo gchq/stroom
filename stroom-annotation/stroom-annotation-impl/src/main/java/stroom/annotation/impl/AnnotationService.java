@@ -151,12 +151,19 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                 securityContext.hasDocumentPermission(annotation.asDocRef(), DocumentPermission.VIEW));
     }
 
-    public List<Annotation> getAnnotationsForEvents(final EventId eventId) {
-        final List<Annotation> list = annotationDao.getAnnotationsForEvents(eventId);
-        return list
+    public List<Long> getAnnotationIdListForEvent(final EventId eventId) {
+        return annotationDao.getAnnotationIdsForEvent(eventId);
+    }
+
+    public List<AnnotationValues> getAnnotationValues(final List<Long> idList,
+                                                      final List<QueryField> requiredAnnotationFields) {
+        // Get annotation values from the cache or DB if required.
+        final List<AnnotationValues> values = annotationDao.getAnnotationValues(idList, requiredAnnotationFields);
+        // Filter the values by user permission and return the map of query fields and values.
+        return values
                 .stream()
-                .filter(annotation ->
-                        securityContext.hasDocumentPermission(annotation.asDocRef(), DocumentPermission.VIEW))
+                .filter(annotationValues -> securityContext.hasDocumentPermission(
+                        new DocRef(Annotation.TYPE, annotationValues.getUuid()), DocumentPermission.VIEW))
                 .toList();
     }
 

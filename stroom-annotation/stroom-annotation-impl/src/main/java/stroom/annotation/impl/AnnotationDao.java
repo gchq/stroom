@@ -24,6 +24,7 @@ import stroom.annotation.shared.FindAnnotationRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.ResultPage;
@@ -47,7 +48,10 @@ public interface AnnotationDao {
 
     Optional<Annotation> getAnnotationByDocRef(DocRef annotationRef);
 
-    List<Annotation> getAnnotationsForEvents(EventId eventId);
+    List<Long> getAnnotationIdsForEvent(EventId eventId);
+
+    List<AnnotationValues> getAnnotationValues(List<Long> idList,
+                                               List<QueryField> requiredAnnotationFields);
 
     Annotation createAnnotation(CreateAnnotationRequest request, UserRef currentUser);
 

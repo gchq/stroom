@@ -36,6 +36,7 @@ public class AnnotationDaoModule extends AbstractModule {
                 .addBinding(AnnotationDaoImpl.class)
                 .addBinding(AnnotationTagDaoImpl.class)
                 .addBinding(AnnotationFeedIdToNameCache.class)
-                .addBinding(AnnotationFeedNameToIdCache.class);
+                .addBinding(AnnotationFeedNameToIdCache.class)
+                .addBinding(AnnotationValCache.class);
     }
 }

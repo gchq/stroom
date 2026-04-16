@@ -16,9 +16,7 @@
 
 package stroom.annotation.impl;
 
-import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDecorationFields;
-import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.EventId;
 import stroom.index.shared.IndexConstants;
 import stroom.query.api.SpecialColumns;
@@ -26,85 +24,24 @@ import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.query.common.v2.StoredValueMapper;
 import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValDate;
-import stroom.query.language.functions.ValLong;
-import stroom.query.language.functions.ValNull;
-import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
-import stroom.util.shared.NullSafe;
-import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
-
-    private static final Map<String, Function<Annotation, Val>> EXTRACTION_FUNCTIONS = Map.ofEntries(
-            createLongFunction(AnnotationDecorationFields.ANNOTATION_ID_FIELD, Annotation::getId),
-            createStringFunction(AnnotationDecorationFields.ANNOTATION_UUID_FIELD, Annotation::getUuid),
-            createDateFunction(AnnotationDecorationFields.ANNOTATION_CREATED_ON_FIELD, Annotation::getCreateTimeMs),
-            createStringFunction(AnnotationDecorationFields.ANNOTATION_CREATED_BY_FIELD, Annotation::getCreateUser),
-            createDateFunction(AnnotationDecorationFields.ANNOTATION_UPDATED_ON_FIELD, Annotation::getUpdateTimeMs),
-            createStringFunction(AnnotationDecorationFields.ANNOTATION_UPDATED_BY_FIELD, Annotation::getUpdateUser),
-            createStringFunction(AnnotationDecorationFields.ANNOTATION_TITLE_FIELD, Annotation::getName),
-            createStringFunction(AnnotationDecorationFields.ANNOTATION_SUBJECT_FIELD, Annotation::getSubject),
-            createStringFunction(AnnotationDecorationFields.ANNOTATION_STATUS_FIELD, annotation ->
-                    NullSafe.get(annotation, Annotation::getStatus, AnnotationTag::getName)),
-            createStringFunction(AnnotationDecorationFields.ANNOTATION_ASSIGNED_TO_FIELD, annotation ->
-                    NullSafe.get(annotation, Annotation::getAssignedTo, UserRef::getDisplayName)),
-            createStringFunction(AnnotationDecorationFields.ANNOTATION_LABEL_FIELD, annotation ->
-                    NullSafe.get(annotation, Annotation::getLabels, labels -> labels
-                            .stream()
-                            .map(AnnotationTag::getName)
-                            .collect(Collectors.joining(", ")))),
-            createStringFunction(AnnotationDecorationFields.ANNOTATION_COLLECTION_FIELD, annotation ->
-                    NullSafe.get(annotation, Annotation::getCollections, collections -> collections
-                            .stream()
-                            .map(AnnotationTag::getName)
-                            .collect(Collectors.joining(", ")))));
 
     private final Provider<AnnotationService> annotationServiceProvider;
 
     @Inject
     public AnnotationMapperFactoryImpl(final Provider<AnnotationService> annotationServiceProvider) {
         this.annotationServiceProvider = annotationServiceProvider;
-    }
-
-    private static Entry<String, Function<Annotation, Val>> createLongFunction(final QueryField field,
-                                                                               final Function<Annotation, Long>
-                                                                                       mapper) {
-        return Map.entry(field.getFldName(), annotation -> {
-            final Long l = mapper.apply(annotation);
-            return NullSafe.getOrElse(l, ValLong::create, ValNull.INSTANCE);
-        });
-    }
-
-    private static Entry<String, Function<Annotation, Val>> createStringFunction(final QueryField field,
-                                                                                 final Function<Annotation, String>
-                                                                                         mapper) {
-        return Map.entry(field.getFldName(), annotation -> {
-            final String s = mapper.apply(annotation);
-            return NullSafe.getOrElse(s, ValString::create, ValNull.INSTANCE);
-        });
-    }
-
-    private static Entry<String, Function<Annotation, Val>> createDateFunction(final QueryField field,
-                                                                               final Function<Annotation, Long>
-                                                                                       mapper) {
-        return Map.entry(field.getFldName(), annotation -> {
-            final Long l = mapper.apply(annotation);
-            return NullSafe.getOrElse(l, ValDate::create, ValNull.INSTANCE);
-        });
     }
 
     @Override
@@ -118,17 +55,17 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
             return AnnotationMapperFactory.NO_OP.createMapper(valueReferenceIndex);
         }
 
-        final List<Mutator> mutators = EXTRACTION_FUNCTIONS
-                .entrySet()
+        final List<QueryField> requiredAnnotationFields = new ArrayList<>();
+        final List<Mutator> mutators = AnnotationDecorationFields.DECORATION_FIELDS
                 .stream()
-                .map(entry -> {
-                    final String name = entry.getKey();
-                    final Function<Annotation, Val> function = entry.getValue();
-                    final Integer pos = valueReferenceIndex.getFieldValIndex(name);
+                .map(field -> {
+                    final Integer pos = valueReferenceIndex.getFieldValIndex(field.getFldName());
                     if (pos == null) {
                         return null;
                     }
-                    return (Mutator) (storedValues, annotation) -> storedValues.set(pos, function.apply(annotation));
+                    requiredAnnotationFields.add(field);
+                    return (Mutator) (storedValues, annotationValues) ->
+                            storedValues.set(pos, annotationValues.getValues().get(field));
                 })
                 .filter(Objects::nonNull)
                 .toList();
@@ -144,16 +81,18 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
         final int annotationIdIndex = getFieldValIndex(valueReferenceIndex, SpecialColumns.RESERVED_ANNOTATION_ID,
                 AnnotationDecorationFields.ANNOTATION_ID);
         if (annotationIdIndex != -1) {
-            final Function<Annotation, Val> function = annotation -> ValLong.create(annotation.getId());
+            requiredAnnotationFields.add(AnnotationDecorationFields.ANNOTATION_ID_FIELD);
             allMutators = new ArrayList<>(mutators);
-            allMutators.add((storedValues, annotation) ->
-                    storedValues.set(annotationIdIndex, function.apply(annotation)));
+            allMutators.add((storedValues, annotationValues) -> storedValues.set(
+                    annotationIdIndex,
+                    annotationValues.getValues().get(AnnotationDecorationFields.ANNOTATION_ID_FIELD)));
         } else {
             allMutators = mutators;
         }
 
         final AnnotationService annotationService = annotationServiceProvider.get();
-        return new StoredValueMapperImpl(annotationService, streamIdIndex, eventIdIndex, allMutators);
+        return new StoredValueMapperImpl(annotationService, streamIdIndex, eventIdIndex, requiredAnnotationFields,
+                allMutators);
     }
 
     private int getFieldValIndex(final ValueReferenceIndex valueReferenceIndex,
@@ -168,6 +107,7 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
     private record StoredValueMapperImpl(AnnotationService annotationService,
                                          int streamIdIndex,
                                          int eventIdIndex,
+                                         List<QueryField> requiredAnnotationFields,
                                          List<Mutator> mutators) implements StoredValueMapper {
 
         @Override
@@ -178,20 +118,33 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
                 return Stream.of(storedValues);
             }
 
-            final List<Annotation> list = annotationService
-                    .getAnnotationsForEvents(new EventId(streamId.toLong(), eventId.toLong()));
-            if (list == null || list.isEmpty()) {
+            // Start by getting a list of annotation ids.
+            final List<Long> idList = annotationService
+                    .getAnnotationIdListForEvent(new EventId(streamId.toLong(), eventId.toLong()));
+
+            // If we get no ids then just return.
+            if (idList.isEmpty()) {
                 return Stream.of(storedValues);
             }
 
-            if (list.size() == 1) {
+            // Get requested annotation fields for the ids.
+            final List<AnnotationValues> valueList = annotationService
+                    .getAnnotationValues(idList, requiredAnnotationFields);
+
+            // If we can not resolve any annotation fields (possibly due to permissions) then just return.
+            if (valueList.isEmpty()) {
+                return Stream.of(storedValues);
+            }
+
+            // If we have id's then turn them into the values we need.
+            if (valueList.size() == 1) {
                 for (final Mutator mutator : mutators) {
-                    mutator.mutate(storedValues, list.getFirst());
+                    mutator.mutate(storedValues, valueList.getFirst());
                 }
                 return Stream.of(storedValues);
             }
 
-            return list.stream().map(annotation -> {
+            return valueList.stream().map(annotation -> {
                 final StoredValues copy = storedValues.copy();
                 copy.setPeriod(storedValues.getPeriod());
                 for (final Mutator mutator : mutators) {
@@ -205,6 +158,6 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
 
     private interface Mutator {
 
-        void mutate(StoredValues storedValues, Annotation annotation);
+        void mutate(StoredValues storedValues, AnnotationValues annotationValues);
     }
 }

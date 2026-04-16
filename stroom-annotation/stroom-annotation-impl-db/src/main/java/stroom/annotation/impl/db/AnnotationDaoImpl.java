@@ -18,6 +18,7 @@ package stroom.annotation.impl.db;
 
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.annotation.impl.AnnotationDao;
+import stroom.annotation.impl.AnnotationValues;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationDataLinkRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationEntryRecord;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationLinkRecord;
@@ -113,6 +114,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.text.ParseException;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -125,6 +127,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -224,6 +227,10 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     private final StreamFeedProvider streamFeedProvider;
     private final AnnotationFeedNameToIdCache annotationFeedNameToIdCache;
     private final AnnotationFeedIdToNameCache annotationFeedIdToNameCache;
+    private final AnnotationValCache annotationValCache;
+
+    private volatile Map<EventId, List<Long>> annotationEventIdCache = new ConcurrentHashMap<>();
+    private volatile Instant lastEventIdLoad = Instant.MIN;
 
     @Inject
     AnnotationDaoImpl(final AnnotationDbConnProvider connectionProvider,
@@ -234,7 +241,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                       final AnnotationTagDaoImpl annotationTagDao,
                       final StreamFeedProvider streamFeedProvider,
                       final AnnotationFeedNameToIdCache annotationFeedNameToIdCache,
-                      final AnnotationFeedIdToNameCache annotationFeedIdToNameCache) {
+                      final AnnotationFeedIdToNameCache annotationFeedIdToNameCache,
+                      final AnnotationValCache annotationValCache) {
         this.connectionProvider = connectionProvider;
         this.userRefLookup = userRefLookup;
         this.valueMapper = createValueMapper();
@@ -243,6 +251,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         this.streamFeedProvider = streamFeedProvider;
         this.annotationFeedNameToIdCache = annotationFeedNameToIdCache;
         this.annotationFeedIdToNameCache = annotationFeedIdToNameCache;
+        this.annotationValCache = annotationValCache;
         this.expressionMapper = createExpressionMapper(expressionMapperFactory, userRefLookup);
         this.termHandlerFactory = termHandlerFactory;
     }
@@ -574,17 +583,6 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 .toList();
     }
 
-    @Override
-    public List<Annotation> getAnnotationsForEvents(final EventId eventId) {
-        return JooqUtil.contextResult(connectionProvider, context -> commonSelect(context)
-                .join(ANNOTATION_DATA_LINK).on(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
-                .where(ANNOTATION_DATA_LINK.STREAM_ID.eq(eventId.getStreamId())
-                        .and(ANNOTATION_DATA_LINK.EVENT_ID.eq(eventId.getEventId())))
-                .and(ANNOTATION.DELETED.isFalse())
-                .fetch()
-                .map(this::mapToAnnotation));
-    }
-
     private AnnotationEntry mapToAnnotationEntry(final Record record) {
         final byte typeId = record.get(ANNOTATION_ENTRY.TYPE_ID);
         final AnnotationEntryType type = AnnotationEntryType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(typeId);
@@ -794,6 +792,11 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 case final AddAnnotationTable addAnnotationTable ->
                         addAnnotationTable(userUuid, now, annotationId, addAnnotationTable);
             }
+
+            // Invalidate the annotation value cache for this annotation.
+            // TODO : The cache currently doesn't listen to cluster events to invalidate items.
+            annotationValCache.invalidate(annotationId);
+
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
             throw e;
@@ -1219,7 +1222,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         final Map<Long, String> streamToFeed = new HashMap<>();
         final Map<String, Integer> feedNameToId = new HashMap<>();
 
-        // Resolve all feed named and IDs.
+        // Resolve all feed names and IDs
         for (final EventId eventId : eventIds) {
             final String feedName = streamToFeed
                     .computeIfAbsent(eventId.getStreamId(), streamFeedProvider::getFeedName);
@@ -1302,8 +1305,14 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 }
             }
         });
-    }
 
+        // Update the annotation link cache.
+        synchronized (this) {
+            for (final EventId eventId : validEventIds) {
+                annotationEventIdCache.computeIfAbsent(eventId, k -> new ArrayList<>()).add(annotationId);
+            }
+        }
+    }
 
     private void unlinkEvents(final String userUuid,
                               final Instant now,
@@ -1364,6 +1373,19 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 }
             }
         });
+
+        // Update the annotation link cache.
+        synchronized (this) {
+            for (final EventId eventId : eventIds) {
+                final List<Long> annotations = annotationEventIdCache.get(eventId);
+                if (annotations != null) {
+                    annotations.remove(annotationId);
+                    if (annotations.isEmpty()) {
+                        annotationEventIdCache.remove(eventId);
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -1820,6 +1842,10 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                         message);
             }
 
+            // Invalidate the annotation value cache for this annotation.
+            // TODO : The cache currently doesn't listen to cluster events to invalidate items.
+            annotationValCache.invalidate(annotationId);
+
             return count > 0;
         });
     }
@@ -2020,5 +2046,122 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             AnnotationEntryType type,
             @Nullable String entryData) {
 
+    }
+
+    @Override
+    public List<Long> getAnnotationIdsForEvent(final EventId eventId) {
+        final Instant lastLoad = lastEventIdLoad;
+        if (lastLoad.isBefore(Instant.now().minus(10, ChronoUnit.MINUTES))) {
+            synchronized (this) {
+                if (lastLoad.isBefore(Instant.now().minus(10, ChronoUnit.MINUTES))) {
+                    // TODO : items are added and removed from the cache elsewhere in here so we need to make sure
+                    //  those changes are reflected in the map as they may occur during map load.
+                    reloadEventIdCache();
+                    lastEventIdLoad = Instant.now();
+                }
+            }
+        }
+        return NullSafe.list(annotationEventIdCache.get(eventId));
+    }
+
+    private void reloadEventIdCache() {
+        final Map<EventId, List<Long>> map = new ConcurrentHashMap<>();
+        JooqUtil.contextResult(connectionProvider, context -> context
+                .select(ANNOTATION_DATA_LINK.STREAM_ID,
+                        ANNOTATION_DATA_LINK.EVENT_ID,
+                        ANNOTATION_DATA_LINK.FK_ANNOTATION_ID)
+                .from(ANNOTATION_DATA_LINK)
+                .fetch()).forEach(r -> {
+            map.computeIfAbsent(new EventId(
+                                    r.get(ANNOTATION_DATA_LINK.STREAM_ID),
+                                    r.get(ANNOTATION_DATA_LINK.EVENT_ID)),
+                            k -> new ArrayList<>())
+                    .add(r.get(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID));
+        });
+        annotationEventIdCache = map;
+    }
+
+    @Override
+    public List<AnnotationValues> getAnnotationValues(final List<Long> idList,
+                                                      final List<QueryField> requiredAnnotationFields) {
+
+        // First try to get existing values from the cache and see if any additional values need loading.
+        final List<AnnotationValues> annotationValues = new ArrayList<>();
+        final Map<Long, AnnotationValues> annotationValuesToLoad = new HashMap<>();
+        for (final Long id : idList) {
+            final AnnotationValues annotationValue = annotationValCache.get(id);
+
+            // Determine if we need to load this annotation.
+            if (!annotationValue.isDeleted()) {
+                boolean needsLoad = false;
+                if (annotationValue.getUuid() == null) {
+                    needsLoad = true;
+                }
+                if (!needsLoad) {
+                    for (final QueryField requiredAnnotationField : requiredAnnotationFields) {
+                        if (!annotationValue.getValues().containsKey(requiredAnnotationField)) {
+                            needsLoad = true;
+                            break;
+                        }
+                    }
+                }
+                if (needsLoad) {
+                    annotationValuesToLoad.put(id, annotationValue);
+                }
+            }
+
+            annotationValues.add(annotationValue);
+        }
+
+        // Do any need loading.
+        if (!annotationValuesToLoad.isEmpty()) {
+            final QueryField[] queryFields = requiredAnnotationFields.toArray(new QueryField[0]);
+            final String[] fieldNames = requiredAnnotationFields
+                    .stream()
+                    .map(QueryField::getFldName)
+                    .toArray(String[]::new);
+
+
+            final Set<Field<?>> dbFields = new HashSet<>(valueMapper.getDbFieldsByName(fieldNames));
+            final Mapper<?>[] mappers = valueMapper.getMappersForFieldNames(fieldNames);
+            dbFields.add(ANNOTATION.ID);
+            dbFields.add(ANNOTATION.UUID);
+
+            JooqUtil.context(connectionProvider, context -> {
+                final SelectJoinStep<?> select = context
+                        .select(dbFields)
+                        .from(ANNOTATION);
+
+                try (final Cursor<?> cursor = select
+                        .where(ANNOTATION.ID.in(annotationValuesToLoad.keySet()))
+                        .and(ANNOTATION.DELETED.eq(false))
+                        .fetchLazy()) {
+
+                    while (cursor.hasNext()) {
+                        final Result<?> result = cursor.fetchNext(BATCH_SIZE);
+                        result.forEach(r -> {
+                            final long id = r.get(ANNOTATION.ID);
+                            final String uuid = r.get(ANNOTATION.UUID);
+                            final AnnotationValues load = annotationValuesToLoad.remove(id);
+                            load.setUuid(uuid);
+                            for (int i = 0; i < queryFields.length; i++) {
+                                final QueryField queryField = queryFields[i];
+                                Val val = ValNull.INSTANCE;
+                                final Mapper<?> mapper = mappers[i];
+                                if (mapper != null) {
+                                    val = mapper.map(r);
+                                }
+                                load.getValues().put(queryField, val);
+                            }
+                        });
+                    }
+                }
+            });
+
+            // Any we couldn't load are likely deleted.
+            annotationValuesToLoad.values().forEach(av -> av.setDeleted(true));
+        }
+
+        return annotationValues;
     }
 }
