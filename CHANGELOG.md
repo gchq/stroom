@@ -13,6 +13,10 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.12-beta.2] - 2026-04-16
+
+* Bug : Add missing directories (data_feed_identities, git_repo, lmdb_library, planb, reference_staging_data) as volumes in the docker image.
+
 * Bug **#5503** : Fix search rerank LLM processing and add debug logging.
 
 * Dependency : Uplift docker images to `eclipse-temurin:25.0.2_10-jdk-alpine-3.23`. Change Java docker build to use 25.0.2. Change ERD build to use a fixed docker image.
@@ -2105,7 +2109,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.12-beta.1...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.12-beta.2...HEAD
+[v7.12-beta.2]: https://github.com/gchq/stroom/compare/v7.12-beta.1...v7.12-beta.2
 [v7.12-beta.1]: https://github.com/gchq/stroom/compare/v7.11.6...v7.12-beta.1
 [v7.11.6]: https://github.com/gchq/stroom/compare/v7.11.5...v7.11.6
 [v7.11.5]: https://github.com/gchq/stroom/compare/v7.11.4...v7.11.5
