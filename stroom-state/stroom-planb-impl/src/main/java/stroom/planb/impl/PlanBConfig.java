@@ -41,7 +41,7 @@ public class PlanBConfig extends AbstractConfig implements IsStroomConfig {
     private final StroomDuration snapshotRetryFetchInterval;
 
     public PlanBConfig() {
-        this("${stroom.home}/planb");
+        this("planb");
     }
 
     public PlanBConfig(final String path) {

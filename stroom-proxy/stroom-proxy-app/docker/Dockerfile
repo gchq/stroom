@@ -57,6 +57,7 @@ VOLUME /stroom-proxy/config/
 VOLUME /stroom-proxy/certs/
 VOLUME /stroom-proxy/content/
 VOLUME /stroom-proxy/data/
+VOLUME /stroom-proxy/data_feed_identities/
 VOLUME /stroom-proxy/logs/
 VOLUME /stroom-proxy/failures/
 VOLUME /stroom-proxy/zip_file_ingest/
@@ -92,6 +93,7 @@ RUN \
     mkdir -p /stroom-proxy/logs/send && \
     mkdir -p /stroom-proxy/logs/app && \
     mkdir -p /stroom-proxy/data && \
+    mkdir -p /stroom-proxy/data_feed_identities && \
     mkdir -p /stroom-proxy/failures && \
     mkdir -p /stroom-proxy/zip_file_ingest && \
     mkdir -p /stroom-proxy/zip_file_ingest_failed && \
