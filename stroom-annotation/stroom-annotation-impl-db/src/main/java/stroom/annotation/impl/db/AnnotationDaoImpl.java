@@ -2071,13 +2071,10 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                         ANNOTATION_DATA_LINK.EVENT_ID,
                         ANNOTATION_DATA_LINK.FK_ANNOTATION_ID)
                 .from(ANNOTATION_DATA_LINK)
-                .fetch()).forEach(r -> {
-            map.computeIfAbsent(new EventId(
-                                    r.get(ANNOTATION_DATA_LINK.STREAM_ID),
-                                    r.get(ANNOTATION_DATA_LINK.EVENT_ID)),
-                            k -> new ArrayList<>())
-                    .add(r.get(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID));
-        });
+                .fetch()).forEach(r -> map.computeIfAbsent(
+                        new EventId(r.get(ANNOTATION_DATA_LINK.STREAM_ID), r.get(ANNOTATION_DATA_LINK.EVENT_ID)),
+                        k -> new ArrayList<>())
+                .add(r.get(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID)));
         annotationEventIdCache = map;
     }
 
