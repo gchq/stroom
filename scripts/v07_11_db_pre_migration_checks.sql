@@ -12,7 +12,7 @@
 SELECT a.id, a.title, ae.id AS entry_id
 FROM annotation a
 INNER JOIN annotation_entry ae ON a.id = ae.fk_annotation_id
-WHERE ae.entry_user_uuid IS NULL;
+WHERE ae.entry_user_uuid IS NULL OR ae.entry_user_uuid = '';
 
 \! echo 'Listing all enabled Stroom users for reference';
 
