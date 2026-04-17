@@ -71,6 +71,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -152,20 +153,21 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                 securityContext.hasDocumentPermission(annotation.asDocRef(), DocumentPermission.VIEW));
     }
 
-    public List<Long> getAnnotationIdListForEvent(final EventId eventId) {
+    public Collection<AnnotationIdentity> getAnnotationIdListForEvent(final EventId eventId) {
         return annotationDao.getAnnotationIdsForEvent(eventId);
     }
 
-    public List<AnnotationValues> getAnnotationValues(final List<Long> idList,
-                                                      final List<QueryField> requiredAnnotationFields) {
-        // Get annotation values from the cache or DB if required.
-        final List<AnnotationValues> values = annotationDao.getAnnotationValues(idList, requiredAnnotationFields);
-        // Filter the values by user permission and return the map of query fields and values.
-        return values
+    public Collection<AnnotationValues> getAnnotationValues(final Collection<AnnotationIdentity> idList,
+                                                            final Set<QueryField> requiredAnnotationFields) {
+        // Filter the annotations by user permission.
+        final Collection<AnnotationIdentity> filtered = idList
                 .stream()
-                .filter(annotationValues -> securityContext.hasDocumentPermission(
-                        new DocRef(Annotation.TYPE, annotationValues.getUuid()), DocumentPermission.VIEW))
+                .filter(annotationIdentity ->
+                        securityContext.hasDocumentPermission(annotationIdentity.getDocRef(), DocumentPermission.VIEW))
                 .toList();
+
+        // Get annotation values from the cache or DB if required.
+        return annotationDao.getAnnotationValues(filtered, requiredAnnotationFields);
     }
 
     @Override

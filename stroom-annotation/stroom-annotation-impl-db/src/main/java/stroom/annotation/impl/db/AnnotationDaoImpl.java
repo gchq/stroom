@@ -234,10 +234,6 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     private final EntityEventBus entityEventBus;
     private final AnnotationEventLinkCache annotationEventLinkCache;
 
-    // TODO move into a class
-//    private volatile Map<EventId, List<Long>> annotationEventIdCache = new ConcurrentHashMap<>();
-//    private volatile Instant lastEventIdLoad = Instant.MIN;
-
     @Inject
     AnnotationDaoImpl(final AnnotationDbConnProvider connectionProvider,
                       final ExpressionMapperFactory expressionMapperFactory,
@@ -740,7 +736,9 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             }
 
             if (!NullSafe.isEmptyCollection(request.getLinkedEvents())) {
-                createEventLinks(context, userUuid, now, annotationId, request.getLinkedEvents());
+                final AnnotationIdentity annotationIdentity =
+                        new AnnotationIdentity(annotation.getUuid(), annotationId);
+                createEventLinks(context, userUuid, now, annotationIdentity, request.getLinkedEvents());
             }
 
             if (request.getTable() != null) {
@@ -779,6 +777,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                                 .orElseThrow(() -> new RuntimeException("No Annotation record found with docRef "
                                                                         + annotationRef));
                     });
+            final AnnotationIdentity annotationIdentity =
+                    new AnnotationIdentity(request.getAnnotationRef().getUuid(), request.getAnnotationId());
 
             // Update parent if we need to.
             final String userUuid = currentUser.getUuid();
@@ -799,9 +799,10 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                         changeDescription(changeDescription, currentUser, annotationId, now);
                 case final ChangeRetentionPeriod changeRetentionPeriod ->
                         changeRetentionPeriod(changeRetentionPeriod, currentUser, annotationId, now);
-                case final LinkEvents linkEvents -> linkEvents(userUuid, now, annotationId, linkEvents.getEvents());
+                case final LinkEvents linkEvents ->
+                        linkEvents(userUuid, now, annotationIdentity, linkEvents.getEvents());
                 case final UnlinkEvents unlinkEvents ->
-                        unlinkEvents(userUuid, now, annotationId, unlinkEvents.getEvents());
+                        unlinkEvents(userUuid, now, annotationIdentity, unlinkEvents.getEvents());
                 case final LinkAnnotations linkAnnotations ->
                         linkAnnotations(userUuid, now, annotationId, linkAnnotations.getAnnotations());
                 case final UnlinkAnnotations unlinkAnnotations ->
@@ -1223,7 +1224,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
 
     private void linkEvents(final String userUuid,
                             final Instant now,
-                            final long annotationId,
+                            final AnnotationIdentity annotationId,
                             final List<EventId> eventIds) {
         JooqUtil.transaction(connectionProvider, context ->
                 createEventLinks(context, userUuid, now, annotationId, eventIds));
@@ -1232,7 +1233,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     private void createEventLinks(final DSLContext context,
                                   final String userUuid,
                                   final Instant now,
-                                  final long annotationId,
+                                  final AnnotationIdentity identity,
                                   final List<EventId> eventIds) {
         // If we have been given an empty list then exit.
         if (NullSafe.isEmptyCollection(eventIds)) {
@@ -1271,7 +1272,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             final Set<EventId> existingLinks = context
                     .select(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
                     .from(ANNOTATION_DATA_LINK)
-                    .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationId))
+                    .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(identity.getId()))
                     .and(DSL.row(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
                             .in(batch.stream()
                                     .map(e -> DSL.row(e.getStreamId(), e.getEventId()))
@@ -1300,14 +1301,19 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                     final String feedName = streamToFeed.get(eventId.getStreamId());
                     final Integer feedId = feedNameToId.get(feedName);
                     insertStep = insertStep.values(
-                            annotationId,
+                            identity.getId(),
                             feedId,
                             eventId.getStreamId(),
                             eventId.getEventId()
                     );
 
                     // Remember the entry to add.
-                    entries.add(new Entry(now, userUuid, now, userUuid, annotationId, AnnotationEntryType.LINK_EVENT,
+                    entries.add(new Entry(now,
+                            userUuid,
+                            now,
+                            userUuid,
+                            identity.getId(),
+                            AnnotationEntryType.LINK_EVENT,
                             eventId.toString()));
                 }
 
@@ -1338,16 +1344,16 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
 
     private void unlinkEvents(final String userUuid,
                               final Instant now,
-                              final long annotationId,
+                              final AnnotationIdentity annotationIdentity,
                               final List<EventId> eventIds) {
         JooqUtil.transaction(connectionProvider, context ->
-                removeEventLinks(context, userUuid, now, annotationId, eventIds));
+                removeEventLinks(context, userUuid, now, annotationIdentity, eventIds));
     }
 
     private void removeEventLinks(final DSLContext context,
                                   final String userUuid,
                                   final Instant now,
-                                  final long annotationId,
+                                  final AnnotationIdentity annotationIdentity,
                                   final List<EventId> eventIds) {
         // If we have been given an empty list then exit.
         if (NullSafe.isEmptyCollection(eventIds)) {
@@ -1359,7 +1365,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             final Set<EventId> existingLinks = context
                     .select(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
                     .from(ANNOTATION_DATA_LINK)
-                    .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationId))
+                    .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationIdentity.getId()))
                     .and(DSL.row(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
                             .in(batch.stream()
                                     .map(e -> DSL.row(e.getStreamId(), e.getEventId()))
@@ -1379,7 +1385,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 // Remove links.
                 final int result = context
                         .deleteFrom(ANNOTATION_DATA_LINK)
-                        .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationId))
+                        .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationIdentity.getId()))
                         .and(DSL.row(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
                                 .in(existingIds.stream()
                                         .map(e -> DSL.row(e.getStreamId(), e.getEventId()))
@@ -1389,7 +1395,12 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 if (result > 0) {
                     // Create history entries for successful deletes
                     final List<Entry> entries = existingIds.stream().map(eventId ->
-                            new Entry(now, userUuid, now, userUuid, annotationId, AnnotationEntryType.UNLINK_EVENT,
+                            new Entry(now,
+                                    userUuid,
+                                    now,
+                                    userUuid,
+                                    annotationIdentity.getId(),
+                                    AnnotationEntryType.UNLINK_EVENT,
                                     eventId.toString())).toList();
                     createEntries(context, entries);
                 }
@@ -2075,7 +2086,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     }
 
     @Override
-    public List<Long> getAnnotationIdsForEvent(final EventId eventId) {
+    public Collection<AnnotationIdentity> getAnnotationIdsForEvent(final EventId eventId) {
         final Instant lastLoad = annotationEventLinkCache.getLastLoadTime();
 
         if (lastLoad.isBefore(Instant.now().minus(10, ChronoUnit.MINUTES))) {
@@ -2087,7 +2098,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 }
             }
         }
-        return NullSafe.list(annotationEventLinkCache.getLinkedAnnotations(eventId));
+        return NullSafe.collection(annotationEventLinkCache.getLinkedAnnotations(eventId));
     }
 
     private void reloadEventIdCache() {
@@ -2112,37 +2123,38 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     }
 
     @Override
-    public List<AnnotationValues> getAnnotationValues(final List<Long> idList,
-                                                      final List<QueryField> requiredAnnotationFields) {
+    public Collection<AnnotationValues> getAnnotationValues(final Collection<AnnotationIdentity> idList,
+                                                            final Set<QueryField> requiredAnnotationFields) {
         LOGGER.debug(() -> LogUtil.message("getAnnotationValues() - idList: {}, requiredAnnotationFields: {}",
                 idList,
                 NullSafe.stream(requiredAnnotationFields)
                         .map(QueryField::getFldName)
                         .collect(Collectors.joining(", "))));
 
+        // ID and UUID are always present so do not request them.
+        requiredAnnotationFields.remove(AnnotationDecorationFields.ANNOTATION_ID_FIELD);
+        requiredAnnotationFields.remove(AnnotationDecorationFields.ANNOTATION_UUID_FIELD);
+
         // First try to get existing values from the cache and see if any additional values need loading.
         final List<AnnotationValues> annotationValues = new ArrayList<>();
         final Map<Long, AnnotationValues> annotationValuesToLoad = new HashMap<>();
 
-        for (final Long id : idList) {
-            final AnnotationValues annotationValue = annotationValCache.get(id);
+        for (final AnnotationIdentity annotationIdentity : idList) {
+            final AnnotationValues annotationValue = annotationValCache.get(annotationIdentity);
 
             // Determine if we need to load this annotation.
             if (!annotationValue.isDeleted()) {
+                // If we don't have a uuid then we need to load it.
                 boolean needsLoad = false;
-                if (annotationValue.getUuid() == null) {
-                    needsLoad = true;
-                }
-                if (!needsLoad) {
-                    for (final QueryField requiredAnnotationField : requiredAnnotationFields) {
-                        if (!annotationValue.getValues().containsKey(requiredAnnotationField)) {
-                            needsLoad = true;
-                            break;
-                        }
+                for (final QueryField requiredAnnotationField : requiredAnnotationFields) {
+                    // ID and UUID are always present so do not request them.
+                    if (!annotationValue.containsKey(requiredAnnotationField)) {
+                        needsLoad = true;
+                        break;
                     }
                 }
                 if (needsLoad) {
-                    annotationValuesToLoad.put(id, annotationValue);
+                    annotationValuesToLoad.put(annotationIdentity.getId(), annotationValue);
                 }
             }
 
@@ -2156,7 +2168,6 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                     .stream()
                     .map(QueryField::getFldName)
                     .toArray(String[]::new);
-
 
             final Set<Field<?>> dbFields = new HashSet<>(valueMapper.getDbFieldsByName(fieldNames));
             final Mapper<?>[] mappers = valueMapper.getMappersForFieldNames(fieldNames);
@@ -2177,9 +2188,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                         final Result<?> result = cursor.fetchNext(BATCH_SIZE);
                         result.forEach(r -> {
                             final long id = r.get(ANNOTATION.ID);
-                            final String uuid = r.get(ANNOTATION.UUID);
                             final AnnotationValues load = annotationValuesToLoad.remove(id);
-                            load.setAnnotationIdentity(new AnnotationIdentity(uuid, id));
                             for (int i = 0; i < queryFields.length; i++) {
                                 final QueryField queryField = queryFields[i];
                                 Val val = ValNull.INSTANCE;
@@ -2187,7 +2196,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                                 if (mapper != null) {
                                     val = mapper.map(r);
                                 }
-                                load.getValues().put(queryField, val);
+                                load.put(queryField, val);
                             }
                         });
                     }
@@ -2195,8 +2204,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             });
 
             // Any we couldn't load are likely deleted.
-            annotationValuesToLoad.values()
-                    .forEach(AnnotationValues::markDeleted);
+            annotationValuesToLoad.values().forEach(AnnotationValues::markDeleted);
         }
 
         return annotationValues;

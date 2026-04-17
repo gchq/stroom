@@ -17,6 +17,7 @@
 package stroom.annotation.impl;
 
 import stroom.annotation.shared.AnnotationDecorationFields;
+import stroom.annotation.shared.AnnotationIdentity;
 import stroom.annotation.shared.EventId;
 import stroom.index.shared.IndexConstants;
 import stroom.query.api.SpecialColumns;
@@ -24,6 +25,7 @@ import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.query.common.v2.StoredValueMapper;
 import stroom.query.language.functions.Val;
+import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
 
@@ -31,8 +33,11 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
@@ -55,7 +60,7 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
             return AnnotationMapperFactory.NO_OP.createMapper(valueReferenceIndex);
         }
 
-        final List<QueryField> requiredAnnotationFields = new ArrayList<>();
+        final Set<QueryField> requiredAnnotationFields = new HashSet<>();
         final List<Mutator> mutators = AnnotationDecorationFields.DECORATION_FIELDS
                 .stream()
                 .map(field -> {
@@ -65,7 +70,7 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
                     }
                     requiredAnnotationFields.add(field);
                     return (Mutator) (storedValues, annotationValues) ->
-                            storedValues.set(pos, annotationValues.getValues().get(field));
+                            storedValues.set(pos, annotationValues.get(field));
                 })
                 .filter(Objects::nonNull)
                 .toList();
@@ -75,17 +80,26 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
             return AnnotationMapperFactory.NO_OP.createMapper(valueReferenceIndex);
         }
 
+        // If the only required annotation field is the id then we will not decorate.
+        // TODO : The problem with this is that the user might just want to see the annotation id but as it is always
+        //  added by the UI invisibly we cannot know if it's inclusion is intentional or not at this point in the code.
+        //  Ideally the UI would only add a special hidden annotation field by default so that we could just ignore if
+        //  that was the only field present here.
+        if (requiredAnnotationFields.size() == 1 &&
+            requiredAnnotationFields.contains(AnnotationDecorationFields.ANNOTATION_ID_FIELD)) {
+            return AnnotationMapperFactory.NO_OP.createMapper(valueReferenceIndex);
+        }
+
         final List<Mutator> allMutators;
 
         // Add annotation id if needed.
         final int annotationIdIndex = getFieldValIndex(valueReferenceIndex, SpecialColumns.RESERVED_ANNOTATION_ID,
                 AnnotationDecorationFields.ANNOTATION_ID);
         if (annotationIdIndex != -1) {
-            requiredAnnotationFields.add(AnnotationDecorationFields.ANNOTATION_ID_FIELD);
             allMutators = new ArrayList<>(mutators);
             allMutators.add((storedValues, annotationValues) -> storedValues.set(
                     annotationIdIndex,
-                    annotationValues.getValues().get(AnnotationDecorationFields.ANNOTATION_ID_FIELD)));
+                    ValLong.create(annotationValues.getAnnotationIdentity().getId())));
         } else {
             allMutators = mutators;
         }
@@ -107,7 +121,7 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
     private record StoredValueMapperImpl(AnnotationService annotationService,
                                          int streamIdIndex,
                                          int eventIdIndex,
-                                         List<QueryField> requiredAnnotationFields,
+                                         Set<QueryField> requiredAnnotationFields,
                                          List<Mutator> mutators) implements StoredValueMapper {
 
         @Override
@@ -119,7 +133,7 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
             }
 
             // Start by getting a list of annotation ids.
-            final List<Long> idList = annotationService
+            final Collection<AnnotationIdentity> idList = annotationService
                     .getAnnotationIdListForEvent(new EventId(streamId.toLong(), eventId.toLong()));
 
             // If we get no ids then just return.
@@ -128,7 +142,7 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
             }
 
             // Get requested annotation fields for the ids.
-            final List<AnnotationValues> valueList = annotationService
+            final Collection<AnnotationValues> valueList = annotationService
                     .getAnnotationValues(idList, requiredAnnotationFields);
 
             // If we can not resolve any annotation fields (possibly due to permissions) then just return.
@@ -139,16 +153,16 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
             // If we have id's then turn them into the values we need.
             if (valueList.size() == 1) {
                 for (final Mutator mutator : mutators) {
-                    mutator.mutate(storedValues, valueList.getFirst());
+                    mutator.mutate(storedValues, valueList.iterator().next());
                 }
                 return Stream.of(storedValues);
             }
 
-            return valueList.stream().map(annotation -> {
+            return valueList.stream().map(annotationValues -> {
                 final StoredValues copy = storedValues.copy();
                 copy.setPeriod(storedValues.getPeriod());
                 for (final Mutator mutator : mutators) {
-                    mutator.mutate(copy, annotation);
+                    mutator.mutate(copy, annotationValues);
                 }
 
                 return copy;

@@ -37,6 +37,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public interface AnnotationDao {
@@ -51,10 +52,10 @@ public interface AnnotationDao {
 
     Optional<Annotation> getAnnotationByDocRef(DocRef annotationRef);
 
-    List<Long> getAnnotationIdsForEvent(EventId eventId);
+    Collection<AnnotationIdentity> getAnnotationIdsForEvent(EventId eventId);
 
-    List<AnnotationValues> getAnnotationValues(List<Long> idList,
-                                               List<QueryField> requiredAnnotationFields);
+    Collection<AnnotationValues> getAnnotationValues(Collection<AnnotationIdentity> idList,
+                                                     Set<QueryField> requiredAnnotationFields);
 
     Annotation createAnnotation(CreateAnnotationRequest request, UserRef currentUser);
 

@@ -20,6 +20,7 @@ import stroom.annotation.impl.AnnotationConfig;
 import stroom.annotation.impl.AnnotationIdEntityEventData;
 import stroom.annotation.impl.AnnotationValues;
 import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationIdentity;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
 import stroom.util.entityevent.EntityAction;
@@ -60,9 +61,8 @@ class AnnotationValCache implements Clearable, EntityEvent.Handler {
                 () -> annotationConfigProvider.get().getAnnotationValCache());
     }
 
-    public AnnotationValues get(final Long id) {
-        Objects.requireNonNull(id);
-        return cache.get(id, ignored -> new AnnotationValues());
+    public AnnotationValues get(final AnnotationIdentity annotationIdentity) {
+        return cache.get(annotationIdentity.getId(), ignored -> new AnnotationValues(annotationIdentity));
     }
 
     public void invalidate(final long id) {
