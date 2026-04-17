@@ -507,10 +507,6 @@ public class TermEditor extends Composite {
         registerHandler(dateFrom.addValueChangeHandler(e -> fireDirty()));
         registerHandler(dateTo.addValueChangeHandler(e -> fireDirty()));
 
-        registerHandler(date.addValueChangeHandler(event -> fireDirty()));
-        registerHandler(dateFrom.addValueChangeHandler(event -> fireDirty()));
-        registerHandler(dateTo.addValueChangeHandler(event -> fireDirty()));
-
         if (docSelectionBoxPresenter != null) {
             registerHandler(docSelectionBoxPresenter.addDataSelectionHandler(event -> {
                 final DocRef selection = docSelectionBoxPresenter.getSelectedEntityReference();
@@ -606,6 +602,7 @@ public class TermEditor extends Composite {
 
     private void fireDirty() {
         if (!reading) {
+            write(term);
             if (uiHandlers != null) {
                 uiHandlers.onChange();
             }

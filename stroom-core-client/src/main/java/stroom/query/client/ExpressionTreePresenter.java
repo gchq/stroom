@@ -89,7 +89,6 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     }
 
     public ExpressionOperator write() {
-        clearSelection();
         return new ExpressionModel().getExpressionFromTree(tree);
     }
 
