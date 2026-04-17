@@ -79,7 +79,8 @@ class AnnotationValCache implements Clearable, EntityEvent.Handler {
         LOGGER.debug("onChange() - event: {}", event);
         if (event != null && Objects.equals(event.getDataClassName(), AnnotationIdEntityEventData.class.getName())) {
             final EntityAction action = event.getAction();
-            final AnnotationIdEntityEventData entityEventData = event.getDataAsObject(AnnotationIdEntityEventData.class);
+            final AnnotationIdEntityEventData entityEventData = event.getDataAsObject(
+                    AnnotationIdEntityEventData.class);
             if (entityEventData != null) {
                 switch (action) {
                     // TODO the event data could include the change type so that we only

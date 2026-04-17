@@ -69,8 +69,6 @@ public class AnnotationModule extends AbstractModule {
                         .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression()));
 
 
-        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
-                .addBinding(AnnotationV.class);
     }
 
 

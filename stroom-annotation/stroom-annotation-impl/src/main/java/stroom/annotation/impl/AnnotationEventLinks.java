@@ -17,41 +17,44 @@
 package stroom.annotation.impl;
 
 
+import stroom.annotation.shared.AnnotationIdentity;
 import stroom.annotation.shared.EventId;
 import stroom.util.entityevent.EntityEvent.EntityEventData;
-import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
 
 public class AnnotationEventLinks implements EntityEventData {
 
     @JsonProperty
-    private final long annotationId;
+    private final AnnotationIdentity annotationIdentity;
     @JsonProperty
-    private final List<EventId> eventIds;
+    private final Collection<EventId> eventIds;
 
     @JsonCreator
-    public AnnotationEventLinks(@JsonProperty("annotationId") final long annotationId,
-                                @JsonProperty("eventIds") final List<EventId> eventIds) {
-        this.annotationId = annotationId;
-        this.eventIds = NullSafe.unmodifiableList(eventIds);
+    public AnnotationEventLinks(@JsonProperty("annotationId") final AnnotationIdentity annotationIdentity,
+                                @JsonProperty("eventIds") final Collection<EventId> eventIds) {
+        this.annotationIdentity = annotationIdentity;
+        this.eventIds = eventIds == null
+                ? Collections.emptyList()
+                : Collections.unmodifiableCollection(eventIds);
     }
 
-    public long getAnnotationId() {
-        return annotationId;
+    public AnnotationIdentity getAnnotationIdentity() {
+        return annotationIdentity;
     }
 
-    public List<EventId> getEventIds() {
+    public Collection<EventId> getEventIds() {
         return eventIds;
     }
 
     @Override
     public String toString() {
         return "AnnotationEventLinks{" +
-               "annotationId=" + annotationId +
+               "annotationId=" + annotationIdentity +
                ", eventIds=" + eventIds +
                '}';
     }

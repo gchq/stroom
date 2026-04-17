@@ -19,7 +19,6 @@ package stroom.annotation.shared;
 import stroom.docref.DocRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -74,11 +73,6 @@ public class SingleAnnotationChangeRequest {
 
     public AbstractAnnotationChange getChange() {
         return change;
-    }
-
-    @JsonIgnore
-    public AnnotationIdentity getAnnotationIdentity() {
-        return new AnnotationIdentity(annotationRef, annotationId);
     }
 
     /**

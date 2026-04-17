@@ -19,8 +19,6 @@ package stroom.annotation.shared;
 
 import stroom.docref.DocRef;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import java.util.Objects;
 
 /**
@@ -28,39 +26,25 @@ import java.util.Objects;
  */
 public class AnnotationIdentity {
 
-    private final DocRef docRef;
+    private final String uuid;
     private final long id;
 
-    public AnnotationIdentity(final DocRef docRef,
+    public AnnotationIdentity(final String uuid,
                               final long id) {
-        this.docRef = Objects.requireNonNull(docRef);
-        this.docRef.validateType(Annotation.TYPE);
+        this.uuid = Objects.requireNonNull(uuid);
         this.id = id;
     }
 
     public DocRef getDocRef() {
-        return docRef;
+        return new DocRef(Annotation.TYPE, uuid);
     }
 
     public long getId() {
         return id;
     }
 
-    public String getType() {
-        return docRef.getType();
-    }
-
     public String getUuid() {
-        return docRef.getUuid();
-    }
-
-    public String getName() {
-        return docRef.getName();
-    }
-
-    @JsonIgnore
-    public String getDisplayValue() {
-        return docRef.getDisplayValue();
+        return uuid;
     }
 
     @Override
@@ -69,18 +53,18 @@ public class AnnotationIdentity {
             return false;
         }
         final AnnotationIdentity that = (AnnotationIdentity) o;
-        return id == that.id && Objects.equals(docRef, that.docRef);
+        return id == that.id && Objects.equals(uuid, that.uuid);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(docRef, id);
+        return Objects.hash(uuid, id);
     }
 
     @Override
     public String toString() {
         return "AnnotationIdentity{" +
-               "docRef=" + docRef +
+               "uuid=" + uuid +
                ", id=" + id +
                '}';
     }
