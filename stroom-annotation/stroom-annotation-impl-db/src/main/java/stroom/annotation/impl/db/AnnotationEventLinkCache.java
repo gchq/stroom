@@ -211,7 +211,7 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
                 NullSafe.consume(cache.get(eventId), cacheValues -> {
                     final CachedAnnotationIdentity valueToAdd = new CachedAnnotationIdentity(
                             annotationIdentity.getId(),
-                            UUID.fromString(annotationIdentity.getUuid()));
+                            annotationIdentity.getUuid());
                     cacheValues.add(valueToAdd);
                 });
             }

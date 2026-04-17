@@ -2104,21 +2104,22 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     private void reloadEventIdCache() {
         final List<AnnotationEventLink> eventLinks = new ArrayList<>();
         JooqUtil.contextResult(connectionProvider, context -> context
-                .select(ANNOTATION_DATA_LINK.STREAM_ID,
-                        ANNOTATION_DATA_LINK.EVENT_ID,
-                        ANNOTATION_DATA_LINK.FK_ANNOTATION_ID,
-                        ANNOTATION.UUID)
-                .from(ANNOTATION_DATA_LINK)
-                .join(ANNOTATION)
-                .on(ANNOTATION.ID.eq(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID))
-                .fetch()).forEach(r -> {
-            final long id = r.get(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID);
-            final String uuid = r.get(ANNOTATION.UUID);
-            final EventId eventId = new EventId(
-                    r.get(ANNOTATION_DATA_LINK.STREAM_ID),
-                    r.get(ANNOTATION_DATA_LINK.EVENT_ID));
-            eventLinks.add(new AnnotationEventLink(eventId, uuid, id));
-        });
+                        .select(ANNOTATION_DATA_LINK.STREAM_ID,
+                                ANNOTATION_DATA_LINK.EVENT_ID,
+                                ANNOTATION_DATA_LINK.FK_ANNOTATION_ID,
+                                ANNOTATION.UUID)
+                        .from(ANNOTATION_DATA_LINK)
+                        .join(ANNOTATION)
+                        .on(ANNOTATION.ID.eq(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID))
+                        .fetch())
+                .forEach(r -> {
+                    final long id = r.get(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID);
+                    final String uuid = r.get(ANNOTATION.UUID);
+                    final EventId eventId = new EventId(
+                            r.get(ANNOTATION_DATA_LINK.STREAM_ID),
+                            r.get(ANNOTATION_DATA_LINK.EVENT_ID));
+                    eventLinks.add(new AnnotationEventLink(eventId, uuid, id));
+                });
         annotationEventLinkCache.reload(eventLinks);
     }
 
