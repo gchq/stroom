@@ -131,6 +131,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -1336,8 +1337,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         // Update the annotation link cache.
         synchronized (this) {
             for (final EventId eventId : validEventIds) {
-                // TODO
-//                annotationEventLinkCache.addLink(eventId, annotationUuid, annotationId);
+                annotationEventLinkCache.addLink(eventId, identity.getUuid(), identity.getId());
             }
         }
     }
@@ -1409,18 +1409,12 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
 
         // Update the annotation link cache.
         synchronized (this) {
-
-            // TODO
-
-//            for (final EventId eventId : eventIds) {
-//                final List<Long> annotations = annotationEventIdCache.get(eventId);
-//                if (annotations != null) {
-//                    annotations.remove(annotationId);
-//                    if (annotations.isEmpty()) {
-//                        annotationEventIdCache.remove(eventId);
-//                    }
-//                }
-//            }
+            for (final EventId eventId : eventIds) {
+                annotationEventLinkCache.removeLink(
+                        eventId,
+                        annotationIdentity.getUuid(),
+                        annotationIdentity.getId());
+            }
         }
     }
 
@@ -2087,11 +2081,13 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
 
     @Override
     public Collection<AnnotationIdentity> getAnnotationIdsForEvent(final EventId eventId) {
-        final Instant lastLoad = annotationEventLinkCache.getLastLoadTime();
+        final BooleanSupplier isReloadRequiredTest = () ->
+                annotationEventLinkCache.getLastLoadTime()
+                        .isBefore(Instant.now().minus(10, ChronoUnit.MINUTES));
 
-        if (lastLoad.isBefore(Instant.now().minus(10, ChronoUnit.MINUTES))) {
+        if (isReloadRequiredTest.getAsBoolean()) {
             synchronized (this) {
-                if (lastLoad.isBefore(Instant.now().minus(10, ChronoUnit.MINUTES))) {
+                if (isReloadRequiredTest.getAsBoolean()) {
                     // TODO : items are added and removed from the cache elsewhere in here so we need to make sure
                     //  those changes are reflected in the map as they may occur during map load.
                     reloadEventIdCache();
@@ -2120,6 +2116,9 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                             r.get(ANNOTATION_DATA_LINK.EVENT_ID));
                     eventLinks.add(new AnnotationEventLink(eventId, uuid, id));
                 });
+        LOGGER.debug(() -> LogUtil.message("reloadEventIdCache() - Fetched {} eventLinks", eventLinks.size()));
+        // It's possible that an event link is added/removed in the UI between the fetch above and
+        // the swapping of the map in reload().
         annotationEventLinkCache.reload(eventLinks);
     }
 

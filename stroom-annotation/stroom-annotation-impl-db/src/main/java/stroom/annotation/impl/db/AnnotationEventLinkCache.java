@@ -28,6 +28,7 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import it.unimi.dsi.fastutil.longs.LongCollection;
@@ -73,6 +74,7 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
     }
 
     void reload(final Collection<AnnotationEventLink> annotationEventLinks) {
+        LOGGER.debug(() -> LogUtil.message("reload() - annotationEventLinks.size", annotationEventLinks.size()));
         if (NullSafe.hasItems(annotationEventLinks)) {
             final Map<EventId, Set<CachedAnnotationIdentity>> newMap = new ConcurrentHashMap<>();
             annotationEventLinks.forEach(annotationEventLink -> {
@@ -82,13 +84,18 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
                 newMap.computeIfAbsent(annotationEventLink.eventId, ignored -> new HashSet<>())
                         .add(cachedAnnotationIdentity);
             });
-            mapWrapper.set(new MapWrapper(newMap, Instant.now()));
+            final Instant now = Instant.now();
+            mapWrapper.set(new MapWrapper(newMap, now));
+            LOGGER.debug(() -> LogUtil.message("reload() - Swapped mapWrapper, entry count: {}, now: {}",
+                    newMap.size(), now));
         } else {
             clear(Instant.now());
         }
     }
 
     void addLink(final EventId eventId, final String annotationUuid, final long annotationId) {
+        LOGGER.debug("addLink() - eventId: {}, annotationUuid: {}, annotationId: {}",
+                eventId, annotationUuid, annotationId);
         Objects.requireNonNull(eventId);
         Objects.requireNonNull(annotationUuid);
         mapWrapper.get().annotationEventIdCache.computeIfAbsent(
@@ -97,6 +104,8 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
     }
 
     void removeLink(final EventId eventId, final String annotationUuid, final long annotationId) {
+        LOGGER.debug("removeLink() - eventId: {}, annotationUuid: {}, annotationId: {}",
+                eventId, annotationUuid, annotationId);
         Objects.requireNonNull(eventId);
         Objects.requireNonNull(annotationUuid);
         mapWrapper.get().annotationEventIdCache.compute(
@@ -117,15 +126,22 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
 
     public Set<AnnotationIdentity> getLinkedAnnotations(final EventId eventId) {
         Objects.requireNonNull(eventId);
-        final Set<CachedAnnotationIdentity> values = mapWrapper.get().annotationEventIdCache.get(eventId);
+        final Set<CachedAnnotationIdentity> values = mapWrapper.get()
+                .annotationEventIdCache.get(eventId);
+        final Set<AnnotationIdentity> result;
         if (NullSafe.isEmptyCollection(values)) {
-            return Collections.emptySet();
+            result = Collections.emptySet();
         } else {
-            return values.stream()
-                    .map(cacheValue -> new AnnotationIdentity(
-                            cacheValue.uuid.toString(), cacheValue.id))
+            result = values.stream()
+                    .map(CachedAnnotationIdentity::getAnnotationIdentity)
                     .collect(Collectors.toSet());
         }
+
+        LOGGER.debug(() -> LogUtil.message(
+                "getLinkedAnnotations() - Returning {} annotationIdentities for eventId: {}",
+                result.size(), eventId));
+
+        return result;
     }
 
     public LongCollection getLinkedAnnotationIds(final EventId eventId) {
@@ -174,7 +190,7 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
                 //  need to clear one entry inside AnnotationValues rather than bin the whole lot
                 case LINK -> link(event);
                 case UNLINK -> unlink(event);
-                case DELETE -> delete(event);
+                case DELETE -> deleteAnnotation(event);
                 case CLEAR_CACHE -> clear(Instant.now());
             }
         } else {
@@ -205,15 +221,9 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
     private void link(final EntityEvent entityEvent) {
         final AnnotationEventLinks annotationEventLinks = getAnnotationEventLinks(entityEvent);
         if (annotationEventLinks != null) {
-            final Map<EventId, Set<CachedAnnotationIdentity>> cache = mapWrapper.get().annotationEventIdCache();
             final AnnotationIdentity annotationIdentity = annotationEventLinks.getAnnotationIdentity();
             for (final EventId eventId : annotationEventLinks.getEventIds()) {
-                NullSafe.consume(cache.get(eventId), cacheValues -> {
-                    final CachedAnnotationIdentity valueToAdd = new CachedAnnotationIdentity(
-                            annotationIdentity.getId(),
-                            annotationIdentity.getUuid());
-                    cacheValues.add(valueToAdd);
-                });
+                addLink(eventId, annotationIdentity.getUuid(), annotationIdentity.getId());
             }
         }
     }
@@ -221,29 +231,19 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
     private void unlink(final EntityEvent entityEvent) {
         final AnnotationEventLinks annotationEventLinks = getAnnotationEventLinks(entityEvent);
         if (annotationEventLinks != null) {
-            final Map<EventId, Set<CachedAnnotationIdentity>> cache = mapWrapper.get().annotationEventIdCache();
             final AnnotationIdentity annotationIdentity = annotationEventLinks.getAnnotationIdentity();
             for (final EventId eventId : annotationEventLinks.getEventIds()) {
-                NullSafe.consume(cache.get(eventId), cacheValues -> {
-                    final CachedAnnotationIdentity valueToRemove = new CachedAnnotationIdentity(
-                            annotationIdentity.getId(),
-                            UUID.fromString(annotationIdentity.getUuid()));
-                    cacheValues.remove(valueToRemove);
-                });
+                removeLink(eventId, annotationIdentity.getUuid(), annotationIdentity.getId());
             }
         }
     }
 
-    private void delete(final EntityEvent entityEvent) {
+    private void deleteAnnotation(final EntityEvent entityEvent) {
         final AnnotationIdEntityEventData annotationIdEventData = getAnnotationIdEventData(entityEvent);
         if (annotationIdEventData != null) {
             final CachedAnnotationIdentity cachedAnnotationIdentity = new CachedAnnotationIdentity(
                     annotationIdEventData.getAnnotationId(),
                     entityEvent.getDocRef().getUuid());
-
-            final AnnotationIdentity annotationIdentity = new AnnotationIdentity(
-                    entityEvent.getDocRef().getUuid(),
-                    annotationIdEventData.getAnnotationId());
 
             final Map<EventId, Set<CachedAnnotationIdentity>> cache = mapWrapper.get().annotationEventIdCache();
             cache.values().forEach(cacheValues ->
@@ -285,6 +285,10 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
 
         private String getUuidAsString() {
             return uuid.toString();
+        }
+
+        private AnnotationIdentity getAnnotationIdentity() {
+            return new AnnotationIdentity(uuid.toString(), id);
         }
     }
 
