@@ -31,6 +31,7 @@ import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationEntryType;
 import stroom.annotation.shared.AnnotationFields;
+import stroom.annotation.shared.AnnotationIdentity;
 import stroom.annotation.shared.AnnotationTable;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.AnnotationTagType;
@@ -81,6 +82,9 @@ import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.security.shared.FindUserContext;
 import stroom.security.user.api.UserRefLookup;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBus;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -228,7 +232,9 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     private final AnnotationFeedNameToIdCache annotationFeedNameToIdCache;
     private final AnnotationFeedIdToNameCache annotationFeedIdToNameCache;
     private final AnnotationValCache annotationValCache;
+    private final EntityEventBus entityEventBus;
 
+    // TODO move into a class
     private volatile Map<EventId, List<Long>> annotationEventIdCache = new ConcurrentHashMap<>();
     private volatile Instant lastEventIdLoad = Instant.MIN;
 
@@ -242,9 +248,11 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                       final StreamFeedProvider streamFeedProvider,
                       final AnnotationFeedNameToIdCache annotationFeedNameToIdCache,
                       final AnnotationFeedIdToNameCache annotationFeedIdToNameCache,
-                      final AnnotationValCache annotationValCache) {
+                      final AnnotationValCache annotationValCache,
+                      final EntityEventBus entityEventBus) {
         this.connectionProvider = connectionProvider;
         this.userRefLookup = userRefLookup;
+        this.entityEventBus = entityEventBus;
         this.valueMapper = createValueMapper();
         this.annotationConfigProvider = annotationConfigProvider;
         this.annotationTagDao = annotationTagDao;
@@ -440,7 +448,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         return valueMapper;
     }
 
-    private Optional<Long> getId(final DocRef docRef) {
+    @Override
+    public Optional<Long> getId(final DocRef docRef) {
         return JooqUtil.contextResult(connectionProvider, context ->
                 getId(context, docRef));
     }
@@ -537,14 +546,20 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     }
 
     @Override
-    public List<DocRef> idListToDocRefs(final Collection<Long> idList) {
+    public List<AnnotationIdentity> idListToDocRefs(final Collection<Long> idList) {
         return JooqUtil.contextResult(connectionProvider, context -> context
-                        .select(ANNOTATION.UUID)
+                        .select(ANNOTATION.UUID, ANNOTATION.ID)
                         .from(ANNOTATION)
                         .where(ANNOTATION.ID.in(idList))
-                        .fetch(ANNOTATION.UUID))
+                        .fetch())
                 .stream()
-                .map(uuid -> Annotation.buildDocRef().uuid(uuid).build())
+                .map(rec -> {
+                    final String uuid = rec.get(ANNOTATION.UUID);
+                    final long id = rec.get(ANNOTATION.ID);
+                    return new AnnotationIdentity(
+                            Annotation.buildDocRef().uuid(uuid).build(),
+                            id);
+                })
                 .toList();
     }
 
@@ -756,14 +771,16 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     public boolean change(final SingleAnnotationChangeRequest request, final UserRef currentUser) {
         try {
             final Instant now = Instant.now();
+            final long annotationId = Objects.requireNonNullElseGet(
+                    request.getAnnotationId(),
+                    () -> {
+                        final DocRef annotationRef = request.getAnnotationRef();
+                        return getId(annotationRef)
+                                .orElseThrow(() -> new RuntimeException("No Annotation record found with docRef "
+                                                                        + annotationRef));
+                    });
 
             // Update parent if we need to.
-            final Optional<Long> optionalId = getId(request.getAnnotationRef());
-            if (optionalId.isEmpty()) {
-                throw new RuntimeException("Unable to create entry for unknown annotation");
-            }
-
-            final long annotationId = optionalId.get();
             final String userUuid = currentUser.getUuid();
             final AbstractAnnotationChange change = request.getChange();
 
@@ -792,17 +809,20 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 case final AddAnnotationTable addAnnotationTable ->
                         addAnnotationTable(userUuid, now, annotationId, addAnnotationTable);
             }
-
-            // Invalidate the annotation value cache for this annotation.
-            // TODO : The cache currently doesn't listen to cluster events to invalidate items.
-            annotationValCache.invalidate(annotationId);
-
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
             throw e;
         }
 
         return true;
+    }
+
+    private void fireAnnotationChangeEvent(final EntityAction update,
+                                           final long annotationId) {
+        EntityEvent.fire(
+                entityEventBus,
+
+                );
     }
 
     private void changeAnnotationTitle(final ChangeTitle changeTitle,
@@ -1309,7 +1329,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         // Update the annotation link cache.
         synchronized (this) {
             for (final EventId eventId : validEventIds) {
-                annotationEventIdCache.computeIfAbsent(eventId, k -> new ArrayList<>()).add(annotationId);
+                annotationEventIdCache.computeIfAbsent(eventId, k -> new ArrayList<>())
+                        .add(annotationId);
             }
         }
     }
@@ -1376,6 +1397,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
 
         // Update the annotation link cache.
         synchronized (this) {
+            Batch here
             for (final EventId eventId : eventIds) {
                 final List<Long> annotations = annotationEventIdCache.get(eventId);
                 if (annotations != null) {
@@ -1846,6 +1868,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             // TODO : The cache currently doesn't listen to cluster events to invalidate items.
             annotationValCache.invalidate(annotationId);
 
+
             return count > 0;
         });
     }
@@ -2081,10 +2104,16 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     @Override
     public List<AnnotationValues> getAnnotationValues(final List<Long> idList,
                                                       final List<QueryField> requiredAnnotationFields) {
+        LOGGER.debug(() -> LogUtil.message("getAnnotationValues() - idList: {}, requiredAnnotationFields: {}",
+                idList,
+                NullSafe.stream(requiredAnnotationFields)
+                        .map(QueryField::getFldName)
+                        .collect(Collectors.joining(", "))));
 
         // First try to get existing values from the cache and see if any additional values need loading.
         final List<AnnotationValues> annotationValues = new ArrayList<>();
         final Map<Long, AnnotationValues> annotationValuesToLoad = new HashMap<>();
+
         for (final Long id : idList) {
             final AnnotationValues annotationValue = annotationValCache.get(id);
 
@@ -2156,7 +2185,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             });
 
             // Any we couldn't load are likely deleted.
-            annotationValuesToLoad.values().forEach(av -> av.setDeleted(true));
+            annotationValuesToLoad.values()
+                    .forEach(av -> av.setDeleted(true));
         }
 
         return annotationValues;

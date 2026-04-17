@@ -16,24 +16,30 @@
 
 package stroom.annotation.impl;
 
+import stroom.annotation.shared.AnnotationIdentity;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.language.functions.Val;
+import stroom.util.shared.NullSafe;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AnnotationValues {
 
-    private String uuid;
+    private volatile AnnotationIdentity annotationIdentity;
+    private volatile boolean deleted;
     private final Map<QueryField, Val> values = new ConcurrentHashMap<>();
-    private boolean deleted;
 
     public String getUuid() {
-        return uuid;
+        return NullSafe.get(annotationIdentity, AnnotationIdentity::getUuid);
     }
 
-    public void setUuid(final String uuid) {
-        this.uuid = uuid;
+    public long getAnnotationId() {
+        return NullSafe.get(annotationIdentity, AnnotationIdentity::getId);
+    }
+
+    public void setAnnotationIdentity(final AnnotationIdentity annotationIdentity) {
+        this.annotationIdentity = annotationIdentity;
     }
 
     public Map<QueryField, Val> getValues() {
@@ -44,7 +50,24 @@ public class AnnotationValues {
         return deleted;
     }
 
-    public void setDeleted(final boolean deleted) {
-        this.deleted = deleted;
+    public void markDeleted() {
+        deleted = true;
+        values.clear();
+    }
+
+//    public void setDeleted(final boolean deleted) {
+//        this.deleted = deleted;
+//        if (deleted) {
+//            values.clear();
+//        }
+//    }
+
+    @Override
+    public String toString() {
+        return "AnnotationValues{" +
+               "uuid='" + annotationIdentity + '\'' +
+               ", values=" + values +
+               ", deleted=" + deleted +
+               '}';
     }
 }

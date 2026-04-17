@@ -20,6 +20,7 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationCreator;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationFields;
+import stroom.annotation.shared.AnnotationIdentity;
 import stroom.annotation.shared.AnnotationTag;
 import stroom.annotation.shared.ChangeAnnotationEntryRequest;
 import stroom.annotation.shared.CreateAnnotationRequest;
@@ -318,40 +319,57 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 //            }
         });
 
-        fireEntityChangeEvent(annotation.asDocRef());
+        fireEntityEvent(EntityAction.CREATE, annotation.asDocRef(), annotation.getId());
         return annotation;
     }
 
     public boolean change(final SingleAnnotationChangeRequest request) {
+        Objects.requireNonNull(request);
+        final SingleAnnotationChangeRequest effectiveRequest = ensureIdIsPresent(request);
         checkAppPermission();
-        checkEditPermission(request.getAnnotationRef());
-        final boolean result = annotationDao.change(request, getCurrentUser());
-        fireEntityChangeEvent(request.getAnnotationRef());
+        checkEditPermission(effectiveRequest.getAnnotationRef());
+        final boolean result = annotationDao.change(effectiveRequest, getCurrentUser());
+        fireEntityEvent(EntityAction.UPDATE, effectiveRequest.getAnnotationRef(), effectiveRequest.getAnnotationId());
         return result;
     }
 
+    private SingleAnnotationChangeRequest ensureIdIsPresent(final SingleAnnotationChangeRequest request) {
+        if (request == null) {
+            return null;
+        } else {
+            if (!request.hasAnnotationId()) {
+                final long id = annotationDao.getId(request.getAnnotationRef())
+                        .orElseThrow(() -> new RuntimeException("Annotation not found for docRef " +
+                                                                request.getAnnotationRef()));
+                return request.withAnnotationId(id);
+            } else {
+                return request;
+            }
+        }
+    }
+
     public Integer batchChange(final MultiAnnotationChangeRequest request) {
-        final List<DocRef> refs = getRefsForEdit(request.getAnnotationIdList());
-        for (final DocRef ref : refs) {
+        final List<AnnotationIdentity> annotationIdentities = getRefsForEdit(request.getAnnotationIdList());
+
+        for (final AnnotationIdentity annotationIdentity : annotationIdentities) {
             final SingleAnnotationChangeRequest singleAnnotationChangeRequest =
-                    new SingleAnnotationChangeRequest(ref, request.getChange());
+                    new SingleAnnotationChangeRequest(annotationIdentity, request.getChange());
             annotationDao.change(singleAnnotationChangeRequest, getCurrentUser());
         }
 
-        if (!refs.isEmpty()) {
-            fireEntityChangeEvents(refs);
+        if (!annotationIdentities.isEmpty()) {
+            fireEntityChangeEvents(EntityAction.UPDATE, annotationIdentities);
         }
 
-        return refs.size();
+        return annotationIdentities.size();
     }
 
-    private List<DocRef> getRefsForEdit(final List<Long> annotationIdList) {
+    private List<AnnotationIdentity> getRefsForEdit(final List<Long> annotationIdList) {
         checkAppPermission();
-        final List<DocRef> annotationRefs = annotationDao.idListToDocRefs(annotationIdList);
-        for (final DocRef annotationRef : annotationRefs) {
-            checkEditPermission(annotationRef);
-        }
-        return annotationRefs;
+        final List<AnnotationIdentity> annotationIdentities = annotationDao.idListToDocRefs(annotationIdList);
+        annotationIdentities.forEach(annotationIdentity ->
+                checkEditPermission(annotationIdentity.getDocRef()));
+        return annotationIdentities;
     }
 
     List<EventId> getLinkedEvents(final DocRef annotationRef) {
@@ -394,14 +412,19 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     }
 
     public Boolean deleteAnnotation(final DocRef annotationRef) {
+        Objects.requireNonNull(annotationRef);
         checkAppPermission();
         checkDeletePermission(annotationRef);
 
-        documentPermissionServiceProvider.get().removeAllDocumentPermissions(annotationRef);
+        documentPermissionServiceProvider.get()
+                .removeAllDocumentPermissions(annotationRef);
+        final long id = annotationDao.getId(annotationRef)
+                .orElseThrow(() -> new RuntimeException("Annotation not found for docRef " + annotationRef));
         final Boolean result = annotationDao.logicalDelete(annotationRef, securityContext.getUserRef());
-        fireEntityChangeEvent(annotationRef);
+        fireEntityEvent(EntityAction.DELETE, annotationRef, id);
         return result;
     }
+
 
 //    public List<String> getStatus(final String filter) {
 //        final boolean admin = securityContext.isAdmin();
@@ -459,7 +482,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
             final LongList logicallyDeletedIds = annotationDao.markDeletedByDataRetention();
 
             if (NullSafe.hasItems(logicallyDeletedIds)) {
-                fireEntityChangeEvents(logicallyDeletedIds, batchSize);
+                fireEntityDeleteEvents(logicallyDeletedIds, batchSize);
             }
 
             // Now delete items that have been deleted longer than the max deletion age.
@@ -467,7 +490,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
             final Instant age = Instant.now().minus(physicalDeleteAge);
             final LongList physicallyDeletedIds = annotationDao.physicallyDelete(age);
             if (NullSafe.hasItems(physicallyDeletedIds)) {
-                fireEntityChangeEvents(physicallyDeletedIds, batchSize);
+                fireEntityDeleteEvents(physicallyDeletedIds, batchSize);
             }
             LOGGER.info(() -> LogUtil.message(
                     "Annotation data retention - logically deleted count: {}, physically deleted count: {}",
@@ -475,7 +498,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         });
     }
 
-    private void fireEntityChangeEvents(final LongList ids, final int batchSize) {
+    private void fireEntityDeleteEvents(final LongList ids, final int batchSize) {
         // Limit the size of the event batches so we are not sending massive requests
         final int count = ids.size();
         int fromIdxInc = 0;
@@ -487,12 +510,12 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
             final int thisBatchSize = Math.min(batchSize, remaining);
             final int toIdxExc = fromIdxInc + thisBatchSize;
             final LongList batchIds = ids.subList(fromIdxInc, toIdxExc);
-            final List<DocRef> docRefs = annotationDao.idListToDocRefs(batchIds);
+            final List<AnnotationIdentity> annotationIdentities = annotationDao.idListToDocRefs(batchIds);
             final int finalFromIdxInc = fromIdxInc;
             LOGGER.debug(() -> LogUtil.message(
                     "fireEntityChangeEvents() - fromIdxInc: {}, toIdxExc: {}, ids: {}, batchIds: {}, docRefs: {}",
-                    finalFromIdxInc, toIdxExc, ids.size(), batchIds.size(), docRefs.size()));
-            fireEntityChangeEvents(docRefs);
+                    finalFromIdxInc, toIdxExc, ids.size(), batchIds.size(), annotationIdentities.size()));
+            fireEntityChangeEvents(EntityAction.DELETE, annotationIdentities);
             fromIdxInc += batchSize;
         }
     }
@@ -546,24 +569,26 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                 request.getAnnotationEntryId());
     }
 
-    private void fireEntityChangeEvents(final List<DocRef> annotationRefs) {
-        final List<EntityEvent> events = NullSafe.stream(annotationRefs)
+    private void fireEntityEvent(final EntityAction entityAction, final DocRef annotationRef, final long id) {
+        EntityEvent.fire(
+                entityEventBus,
+                Objects.requireNonNull(annotationRef),
+                null,
+                Objects.requireNonNull(entityAction),
+                new AnnotationIdEntityEventData(id));
+    }
+
+    private void fireEntityChangeEvents(final EntityAction entityAction,
+                                        final List<AnnotationIdentity> annotationIdentities) {
+        final List<EntityEvent> events = NullSafe.stream(annotationIdentities)
                 .filter(Objects::nonNull)
-                .peek(docRef -> {
-                    if (!Annotation.TYPE.equals(docRef.getType())) {
-                        throw new RuntimeException("Unexpected document type: " + docRef.getType());
-                    }
+                .map(annotationIdentity -> {
+                    final AnnotationIdEntityEventData entityEventData = new AnnotationIdEntityEventData(
+                            annotationIdentity.getId());
+                    return new EntityEvent(annotationIdentity.getDocRef(), entityAction, entityEventData);
                 })
-                .map(docRef -> new EntityEvent(docRef, EntityAction.UPDATE))
                 .toList();
         final EntityEventBatch entityEventBatch = new EntityEventBatch(events, true);
         entityEventBus.fire(entityEventBatch);
-    }
-
-    private void fireEntityChangeEvent(final DocRef annotation) {
-        EntityEvent.fire(
-                entityEventBus,
-                annotation,
-                EntityAction.UPDATE);
     }
 }

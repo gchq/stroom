@@ -17,14 +17,23 @@
 package stroom.annotation.impl.db;
 
 import stroom.annotation.impl.AnnotationConfig;
+import stroom.annotation.impl.AnnotationIdEntityEventData;
 import stroom.annotation.impl.AnnotationValues;
+import stroom.annotation.shared.Annotation;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.StroomCache;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
+
+import java.util.Objects;
 
 /**
  * Cache for mapping annotation feed IDs to feed names.
@@ -33,8 +42,12 @@ import jakarta.inject.Singleton;
  * when accessed from within existing database transaction contexts.
  */
 @Singleton
-class AnnotationValCache implements Clearable {
+@EntityEventHandler(
+        type = Annotation.TYPE,
+        action = {EntityAction.UPDATE, EntityAction.DELETE, EntityAction.CLEAR_CACHE})
+class AnnotationValCache implements Clearable, EntityEvent.Handler {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationValCache.class);
     private static final String CACHE_NAME = "Annotation Value Cache";
 
     private final StroomCache<Long, AnnotationValues> cache;
@@ -48,15 +61,38 @@ class AnnotationValCache implements Clearable {
     }
 
     public AnnotationValues get(final Long id) {
-        return cache.get(id, k -> new AnnotationValues());
+        Objects.requireNonNull(id);
+        return cache.get(id, ignored -> new AnnotationValues());
     }
 
-    public void invalidate(final Long id) {
+    public void invalidate(final long id) {
         cache.invalidate(id);
     }
 
     @Override
     public void clear() {
         cache.clear();
+    }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        LOGGER.debug("onChange() - event: {}", event);
+        if (event != null && Objects.equals(event.getDataClassName(), AnnotationIdEntityEventData.class.getName())) {
+            final EntityAction action = event.getAction();
+            final AnnotationIdEntityEventData entityEventData = event.getDataAsObject(AnnotationIdEntityEventData.class);
+            if (entityEventData != null) {
+                switch (action) {
+                    // TODO the event data could include the change type so that we only
+                    //  need to clear one entry inside AnnotationValues rather than bin the whole lot
+                    case UPDATE -> invalidate(entityEventData.getAnnotationId());
+                    case DELETE -> invalidate(entityEventData.getAnnotationId());
+                    case CLEAR_CACHE -> clear();
+                }
+            } else {
+                LOGGER.debug("onChange() - Ignoring event with no entityEventData, event: {}", event);
+            }
+        } else {
+            LOGGER.debug("onChange() - Ignoring null event or with no dataClassName, event: {}", event);
+        }
     }
 }

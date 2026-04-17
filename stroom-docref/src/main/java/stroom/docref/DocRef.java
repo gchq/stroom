@@ -128,6 +128,16 @@ public final class DocRef implements Comparable<DocRef>, HasDisplayValue, HasTyp
                 : uuid;
     }
 
+    /**
+     * Throw a {@link RuntimeException} if the type of this does not match expectedType
+     */
+    public void validateType(final String expectedType) {
+        if (!Objects.equals(type, expectedType)) {
+            throw new RuntimeException("Unexpected document type '" + type + "', expected '" + expectedType + "'");
+        }
+    }
+
+
     @Override
     public int compareTo(final DocRef o) {
         int diff = 0;

@@ -18,6 +18,7 @@ package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationEntry;
+import stroom.annotation.shared.AnnotationIdentity;
 import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.FindAnnotationRequest;
@@ -40,9 +41,11 @@ import java.util.function.Predicate;
 
 public interface AnnotationDao {
 
+    Optional<Long> getId(DocRef docRef);
+
     ResultPage<Annotation> findAnnotations(FindAnnotationRequest request, Predicate<Annotation> vierwPredicate);
 
-    List<DocRef> idListToDocRefs(Collection<Long> idList);
+    List<AnnotationIdentity> idListToDocRefs(Collection<Long> idList);
 
     Optional<Annotation> getAnnotationById(long id);
 
