@@ -559,6 +559,9 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                     final long id = rec.get(ANNOTATION.ID);
                     return new AnnotationIdentity(uuid, id);
                 })
+                .peek(annotationIdentity -> {
+                    LOGGER.info("annotationIdentity: {}", annotationIdentity);
+                })
                 .toList();
     }
 
