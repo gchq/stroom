@@ -82,6 +82,12 @@ appConfig:
       maximumSize: 1000
       refreshAfterWrite: null
       statisticsMode: "INTERNAL"
+    annotationValCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     createText: "Create Annotation"
     db:
       connection:

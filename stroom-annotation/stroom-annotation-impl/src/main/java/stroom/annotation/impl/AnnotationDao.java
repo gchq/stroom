@@ -18,12 +18,14 @@ package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationEntry;
+import stroom.annotation.shared.AnnotationIdentity;
 import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.FindAnnotationRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.util.shared.ResultPage;
@@ -35,19 +37,25 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public interface AnnotationDao {
 
+    Optional<Long> getId(DocRef docRef);
+
     ResultPage<Annotation> findAnnotations(FindAnnotationRequest request, Predicate<Annotation> vierwPredicate);
 
-    List<DocRef> idListToDocRefs(Collection<Long> idList);
+    List<AnnotationIdentity> idListToDocRefs(Collection<Long> idList);
 
     Optional<Annotation> getAnnotationById(long id);
 
     Optional<Annotation> getAnnotationByDocRef(DocRef annotationRef);
 
-    List<Annotation> getAnnotationsForEvents(EventId eventId);
+    Collection<AnnotationIdentity> getAnnotationIdsForEvent(EventId eventId);
+
+    Collection<AnnotationValues> getAnnotationValues(Collection<AnnotationIdentity> idList,
+                                                     Set<QueryField> requiredAnnotationFields);
 
     Annotation createAnnotation(CreateAnnotationRequest request, UserRef currentUser);
 

@@ -16,7 +16,7 @@
 
 package stroom.annotation.impl;
 
-import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationIdentity;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.cluster.lock.mock.MockClusterLockService;
 import stroom.docref.DocRef;
@@ -71,14 +71,12 @@ class TestAnnotationService {
         Mockito.when(mockAnnotationDao.idListToDocRefs(Mockito.any()))
                 .thenAnswer(invocation -> {
                     final LongList ids = invocation.getArgument(0, LongList.class);
-                    final List<DocRef> docRefs = ids.longStream()
+                    final List<AnnotationIdentity> annotationIdentities = ids.longStream()
                             .boxed()
-                            .map(id -> Annotation.buildDocRef()
-                                    .uuid(String.valueOf(id))
-                                    .build())
+                            .map(id -> new AnnotationIdentity(String.valueOf(id), id))
                             .collect(Collectors.toList());
 
-                    return docRefs;
+                    return annotationIdentities;
                 });
 
         final AnnotationService annotationService = new AnnotationService(
