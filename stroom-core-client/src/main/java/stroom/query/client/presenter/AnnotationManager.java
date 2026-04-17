@@ -408,7 +408,9 @@ public class AnnotationManager implements HasHandlers {
         if (table == null) {
             runnable.run();
         } else {
-            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(annotation.asDocRef(),
+            final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
+                    annotation.asDocRef(),
+                    annotation.getId(),
                     new AddAnnotationTable(table));
             annotationResourceClient.change(request, r -> runnable.run(), taskMonitorFactory);
         }

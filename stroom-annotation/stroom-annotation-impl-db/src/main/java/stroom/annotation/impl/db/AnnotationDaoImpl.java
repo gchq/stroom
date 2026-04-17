@@ -18,6 +18,7 @@ package stroom.annotation.impl.db;
 
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.annotation.impl.AnnotationDao;
+import stroom.annotation.impl.AnnotationEventLinks;
 import stroom.annotation.impl.AnnotationValues;
 import stroom.annotation.impl.db.AnnotationEventLinkCache.AnnotationEventLink;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationDataLinkRecord;
@@ -84,6 +85,7 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.security.shared.FindUserContext;
 import stroom.security.user.api.UserRefLookup;
 import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
@@ -770,16 +772,13 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
     public boolean change(final SingleAnnotationChangeRequest request, final UserRef currentUser) {
         try {
             final Instant now = Instant.now();
-            final long annotationId = Objects.requireNonNullElseGet(
-                    request.getAnnotationId(),
-                    () -> {
-                        final DocRef annotationRef = request.getAnnotationRef();
-                        return getId(annotationRef)
-                                .orElseThrow(() -> new RuntimeException("No Annotation record found with docRef "
-                                                                        + annotationRef));
-                    });
-            final AnnotationIdentity annotationIdentity =
-                    new AnnotationIdentity(request.getAnnotationRef().getUuid(), request.getAnnotationId());
+            final DocRef annotationRef = request.getAnnotationRef();
+            final long annotationId = request.getAnnotationId()
+                    .orElseGet(() -> getId(annotationRef).orElseThrow(() ->
+                            new RuntimeException("No Annotation record found with docRef " + annotationRef)));
+            final AnnotationIdentity annotationIdentity = new AnnotationIdentity(
+                    annotationRef.getUuid(),
+                    annotationId);
 
             // Update parent if we need to.
             final String userUuid = currentUser.getUuid();
@@ -1334,12 +1333,12 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             }
         });
 
-        // Update the annotation link cache.
-        synchronized (this) {
-            for (final EventId eventId : validEventIds) {
-                annotationEventLinkCache.addLink(eventId, identity.getUuid(), identity.getId());
-            }
-        }
+        // Notify all nodes about the added links
+        EntityEvent.fire(
+                entityEventBus,
+                new DocRef(Annotation.TYPE, identity.getUuid()),
+                EntityAction.LINK,
+                new AnnotationEventLinks(identity.getId(), validEventIds));
     }
 
     private void unlinkEvents(final String userUuid,
@@ -1407,15 +1406,12 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
             }
         });
 
-        // Update the annotation link cache.
-        synchronized (this) {
-            for (final EventId eventId : eventIds) {
-                annotationEventLinkCache.removeLink(
-                        eventId,
-                        annotationIdentity.getUuid(),
-                        annotationIdentity.getId());
-            }
-        }
+        // Notify all nodes about the added links
+        EntityEvent.fire(
+                entityEventBus,
+                annotationIdentity.getDocRef(),
+                EntityAction.UNLINK,
+                new AnnotationEventLinks(annotationIdentity.getId(), eventIds));
     }
 
     @Override
@@ -2081,6 +2077,11 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
 
     @Override
     public Collection<AnnotationIdentity> getAnnotationIdsForEvent(final EventId eventId) {
+        reloadEventLinkCacheIfOld();
+        return annotationEventLinkCache.getLinkedAnnotations(eventId);
+    }
+
+    private void reloadEventLinkCacheIfOld() {
         final BooleanSupplier isReloadRequiredTest = () ->
                 annotationEventLinkCache.getLastLoadTime()
                         .isBefore(Instant.now().minus(10, ChronoUnit.MINUTES));
@@ -2094,7 +2095,6 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 }
             }
         }
-        return NullSafe.collection(annotationEventLinkCache.getLinkedAnnotations(eventId));
     }
 
     private void reloadEventIdCache() {
@@ -2121,6 +2121,33 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         // the swapping of the map in reload().
         annotationEventLinkCache.reload(eventLinks);
     }
+
+//    private void reloadEventIdCache(final AnnotationIdentity annotationIdentity) {
+//        Objects.requireNonNull(annotationIdentity);
+//        final List<AnnotationEventLink> eventLinks = new ArrayList<>();
+//        JooqUtil.contextResult(connectionProvider, context -> context
+//                        .select(ANNOTATION_DATA_LINK.STREAM_ID,
+//                                ANNOTATION_DATA_LINK.EVENT_ID,
+//                                ANNOTATION_DATA_LINK.FK_ANNOTATION_ID,
+//                                ANNOTATION.UUID)
+//                        .from(ANNOTATION_DATA_LINK)
+//                        .join(ANNOTATION)
+//                        .on(ANNOTATION.ID.eq(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID))
+//                        .where(ANNOTATION.ID.eq(annotationIdentity.getId()))
+//                        .fetch())
+//                .forEach(r -> {
+//                    final long id = r.get(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID);
+//                    final String uuid = r.get(ANNOTATION.UUID);
+//                    final EventId eventId = new EventId(
+//                            r.get(ANNOTATION_DATA_LINK.STREAM_ID),
+//                            r.get(ANNOTATION_DATA_LINK.EVENT_ID));
+//                    eventLinks.add(new AnnotationEventLink(eventId, uuid, id));
+//                });
+//        LOGGER.debug(() -> LogUtil.message("reloadEventIdCache() - Fetched {} eventLinks for annotationIdentity: {}",
+//                eventLinks.size(), annotationIdentity));
+//
+//        annotationEventLinkCache.partialReload(eventLinks);
+//    }
 
     @Override
     public Collection<AnnotationValues> getAnnotationValues(final Collection<AnnotationIdentity> idList,

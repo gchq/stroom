@@ -35,6 +35,11 @@ public class AnnotationIdentity {
         this.id = id;
     }
 
+    public AnnotationIdentity(final DocRef docRef,
+                              final long id) {
+        this(Objects.requireNonNull(docRef).getUuid(), id);
+    }
+
     public DocRef getDocRef() {
         return new DocRef(Annotation.TYPE, uuid);
     }
@@ -53,7 +58,8 @@ public class AnnotationIdentity {
             return false;
         }
         final AnnotationIdentity that = (AnnotationIdentity) o;
-        return id == that.id && Objects.equals(uuid, that.uuid);
+        return id == that.id
+               && Objects.equals(uuid, that.uuid);
     }
 
     @Override

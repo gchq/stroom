@@ -17,7 +17,6 @@
 package stroom.annotation.impl;
 
 
-import stroom.annotation.shared.AnnotationIdentity;
 import stroom.annotation.shared.EventId;
 import stroom.util.entityevent.EntityEvent.EntityEventData;
 
@@ -30,21 +29,21 @@ import java.util.Collections;
 public class AnnotationEventLinks implements EntityEventData {
 
     @JsonProperty
-    private final AnnotationIdentity annotationIdentity;
+    private final long annotationId;
     @JsonProperty
     private final Collection<EventId> eventIds;
 
     @JsonCreator
-    public AnnotationEventLinks(@JsonProperty("annotationId") final AnnotationIdentity annotationIdentity,
+    public AnnotationEventLinks(@JsonProperty("annotationId") final long annotationId,
                                 @JsonProperty("eventIds") final Collection<EventId> eventIds) {
-        this.annotationIdentity = annotationIdentity;
+        this.annotationId = annotationId;
         this.eventIds = eventIds == null
                 ? Collections.emptyList()
                 : Collections.unmodifiableCollection(eventIds);
     }
 
-    public AnnotationIdentity getAnnotationIdentity() {
-        return annotationIdentity;
+    public long getAnnotationId() {
+        return annotationId;
     }
 
     public Collection<EventId> getEventIds() {
@@ -54,7 +53,7 @@ public class AnnotationEventLinks implements EntityEventData {
     @Override
     public String toString() {
         return "AnnotationEventLinks{" +
-               "annotationId=" + annotationIdentity +
+               "annotationId=" + annotationId +
                ", eventIds=" + eventIds +
                '}';
     }

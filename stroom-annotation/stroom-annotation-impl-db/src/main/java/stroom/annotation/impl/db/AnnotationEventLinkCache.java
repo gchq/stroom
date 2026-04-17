@@ -22,7 +22,6 @@ import stroom.annotation.impl.AnnotationIdEntityEventData;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationIdentity;
 import stroom.annotation.shared.EventId;
-import stroom.docref.DocRef;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
@@ -31,11 +30,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
-import it.unimi.dsi.fastutil.longs.LongCollection;
-import it.unimi.dsi.fastutil.longs.LongCollections;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.NonNull;
 
 import java.time.Instant;
 import java.util.Collection;
@@ -124,17 +120,16 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
                 });
     }
 
-    public Set<AnnotationIdentity> getLinkedAnnotations(final EventId eventId) {
+    public @NonNull Set<AnnotationIdentity> getLinkedAnnotations(@NonNull final EventId eventId) {
         Objects.requireNonNull(eventId);
-        final Set<CachedAnnotationIdentity> values = mapWrapper.get()
-                .annotationEventIdCache.get(eventId);
+        final Set<CachedAnnotationIdentity> values = mapWrapper.get().annotationEventIdCache.get(eventId);
         final Set<AnnotationIdentity> result;
         if (NullSafe.isEmptyCollection(values)) {
             result = Collections.emptySet();
         } else {
             result = values.stream()
                     .map(CachedAnnotationIdentity::getAnnotationIdentity)
-                    .collect(Collectors.toSet());
+                    .collect(Collectors.toUnmodifiableSet());
         }
 
         LOGGER.debug(() -> LogUtil.message(
@@ -142,30 +137,6 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
                 result.size(), eventId));
 
         return result;
-    }
-
-    public LongCollection getLinkedAnnotationIds(final EventId eventId) {
-        final Set<CachedAnnotationIdentity> values = mapWrapper.get().annotationEventIdCache.get(eventId);
-        if (NullSafe.isEmptyCollection(values)) {
-            return LongSet.of();
-        } else {
-            final LongSet ids = new LongOpenHashSet(values.size());
-            for (final CachedAnnotationIdentity cacheValue : values) {
-                ids.add(cacheValue.id);
-            }
-            return LongCollections.unmodifiable(ids);
-        }
-    }
-
-    public Collection<DocRef> getLinkedAnnotationDocRefs(final EventId eventId) {
-        final Set<CachedAnnotationIdentity> values = mapWrapper.get().annotationEventIdCache.get(eventId);
-        if (NullSafe.isEmptyCollection(values)) {
-            return Collections.emptySet();
-        } else {
-            return values.stream()
-                    .map(cacheValue -> new DocRef(DOC_REF_TYPE, cacheValue.uuid.toString()))
-                    .collect(Collectors.toSet());
-        }
     }
 
     public boolean hasAnnotationLinks(final EventId eventId) {
@@ -221,9 +192,8 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
     private void link(final EntityEvent entityEvent) {
         final AnnotationEventLinks annotationEventLinks = getAnnotationEventLinks(entityEvent);
         if (annotationEventLinks != null) {
-            final AnnotationIdentity annotationIdentity = annotationEventLinks.getAnnotationIdentity();
             for (final EventId eventId : annotationEventLinks.getEventIds()) {
-                addLink(eventId, annotationIdentity.getUuid(), annotationIdentity.getId());
+                addLink(eventId, entityEvent.getDocRef().getUuid(), annotationEventLinks.getAnnotationId());
             }
         }
     }
@@ -231,9 +201,8 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
     private void unlink(final EntityEvent entityEvent) {
         final AnnotationEventLinks annotationEventLinks = getAnnotationEventLinks(entityEvent);
         if (annotationEventLinks != null) {
-            final AnnotationIdentity annotationIdentity = annotationEventLinks.getAnnotationIdentity();
             for (final EventId eventId : annotationEventLinks.getEventIds()) {
-                removeLink(eventId, annotationIdentity.getUuid(), annotationIdentity.getId());
+                removeLink(eventId, entityEvent.getDocRef().getUuid(), annotationEventLinks.getAnnotationId());
             }
         }
     }

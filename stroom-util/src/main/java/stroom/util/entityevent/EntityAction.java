@@ -56,10 +56,15 @@ public enum EntityAction implements HasDisplayValue {
      */
     UPDATE_EXPLORER_NODE("Update Explorer Node"),
     DELETE_EXPLORER_NODE("Delete Explorer Node"),
+    /**
+     * Fired when a link between an annotation and an event is made
+     */
     LINK("Link"),
+    /**
+     * Fired when a link between an annotation and an event is removed
+     */
     UNLINK("Unlink"),
     ;
-
 
     private final String displayValue;
 

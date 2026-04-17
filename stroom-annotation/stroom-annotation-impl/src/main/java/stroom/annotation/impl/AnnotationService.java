@@ -327,35 +327,28 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     public boolean change(final SingleAnnotationChangeRequest request) {
         Objects.requireNonNull(request);
-        final SingleAnnotationChangeRequest effectiveRequest = ensureIdIsPresent(request);
         checkAppPermission();
-        checkEditPermission(effectiveRequest.getAnnotationRef());
-        final boolean result = annotationDao.change(effectiveRequest, getCurrentUser());
-        fireEntityEvent(EntityAction.UPDATE, effectiveRequest.getAnnotationRef(), effectiveRequest.getAnnotationId());
+        checkEditPermission(request.getAnnotationRef());
+        final boolean result = annotationDao.change(request, getCurrentUser());
+        final DocRef annotationRef = request.getAnnotationRef();
+        final long annotationId = request.getAnnotationId()
+                .orElseGet(() -> getId(annotationRef));
+        fireEntityEvent(EntityAction.UPDATE, annotationRef, annotationId);
         return result;
     }
 
-    private SingleAnnotationChangeRequest ensureIdIsPresent(final SingleAnnotationChangeRequest request) {
-        if (request == null) {
-            return null;
-        } else {
-            if (!request.hasAnnotationId()) {
-                final long id = annotationDao.getId(request.getAnnotationRef())
-                        .orElseThrow(() -> new RuntimeException("Annotation not found for docRef " +
-                                                                request.getAnnotationRef()));
-                return request.withAnnotationId(id);
-            } else {
-                return request;
-            }
-        }
+    private long getId(final DocRef annotationRef) {
+        Objects.requireNonNull(annotationRef);
+        return annotationDao.getId(annotationRef)
+                .orElseThrow(() -> new RuntimeException("Annotation not found for docRef " + annotationRef));
     }
 
     public Integer batchChange(final MultiAnnotationChangeRequest request) {
         final List<AnnotationIdentity> annotationIdentities = getRefsForEdit(request.getAnnotationIdList());
 
         for (final AnnotationIdentity annotationIdentity : annotationIdentities) {
-            final SingleAnnotationChangeRequest singleAnnotationChangeRequest =
-                    new SingleAnnotationChangeRequest(annotationIdentity, request.getChange());
+            final SingleAnnotationChangeRequest singleAnnotationChangeRequest = new SingleAnnotationChangeRequest(
+                    annotationIdentity, request.getChange());
             annotationDao.change(singleAnnotationChangeRequest, getCurrentUser());
         }
 
