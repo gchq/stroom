@@ -16,6 +16,7 @@
 
 package stroom.annotation.impl;
 
+import stroom.annotation.shared.AbstractAnnotationChange;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationCreator;
 import stroom.annotation.shared.AnnotationEntry;
@@ -29,8 +30,10 @@ import stroom.annotation.shared.DeleteAnnotationEntryRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.FetchAnnotationEntryRequest;
 import stroom.annotation.shared.FindAnnotationRequest;
+import stroom.annotation.shared.LinkEvents;
 import stroom.annotation.shared.MultiAnnotationChangeRequest;
 import stroom.annotation.shared.SingleAnnotationChangeRequest;
+import stroom.annotation.shared.UnlinkEvents;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
@@ -329,11 +332,17 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         Objects.requireNonNull(request);
         checkAppPermission();
         checkEditPermission(request.getAnnotationRef());
+        final AbstractAnnotationChange change = request.getChange();
         final boolean result = annotationDao.change(request, getCurrentUser());
         final DocRef annotationRef = request.getAnnotationRef();
         final long annotationId = request.getAnnotationId()
                 .orElseGet(() -> getId(annotationRef));
-        fireEntityEvent(EntityAction.UPDATE, annotationRef, annotationId);
+
+        switch (change) {
+            case final LinkEvents ignored -> LOGGER.debug("change() - Skipping linkEvents, handled by DAO");
+            case final UnlinkEvents ignored -> LOGGER.debug("change() - Skipping unlinkEvents, handled by DAO");
+            default -> fireEntityEvent(EntityAction.UPDATE, annotationRef, annotationId);
+        }
         return result;
     }
 
@@ -353,9 +362,13 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         }
 
         if (!annotationIdentities.isEmpty()) {
-            fireEntityChangeEvents(EntityAction.UPDATE, annotationIdentities);
+            final AbstractAnnotationChange change = request.getChange();
+            if (change instanceof UnlinkEvents || change instanceof LinkEvents) {
+                LOGGER.debug("batchChange() - Skipping linkEvents/unlinkEvents, handled by DAO");
+            } else {
+                fireEntityChangeEvents(EntityAction.UPDATE, annotationIdentities);
+            }
         }
-
         return annotationIdentities.size();
     }
 

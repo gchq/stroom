@@ -821,15 +821,6 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         return true;
     }
 
-    private void fireAnnotationChangeEvent(final EntityAction update,
-                                           final long annotationId) {
-        // TODO
-//        EntityEvent.fire(
-//                entityEventBus,
-//
-//                );
-    }
-
     private void changeAnnotationTitle(final ChangeTitle changeTitle,
                                        final UserRef currentUser,
                                        final long annotationId,
@@ -1337,11 +1328,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         });
 
         // Notify all nodes about the added links
-        EntityEvent.fire(
-                entityEventBus,
-                new DocRef(Annotation.TYPE, identity.getUuid()),
-                EntityAction.LINK,
-                new AnnotationEventLinks(identity.getId(), validEventIds));
+        final AnnotationEventLinks eventData = new AnnotationEventLinks(identity.getId(), validEventIds);
+        EntityEvent.fire(entityEventBus, identity.getDocRef(), EntityAction.LINK, eventData);
     }
 
     private void unlinkEvents(final String userUuid,
@@ -1410,11 +1398,8 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         });
 
         // Notify all nodes about the added links
-        EntityEvent.fire(
-                entityEventBus,
-                annotationIdentity.getDocRef(),
-                EntityAction.UNLINK,
-                new AnnotationEventLinks(annotationIdentity.getId(), eventIds));
+        final AnnotationEventLinks eventData = new AnnotationEventLinks(annotationIdentity.getId(), eventIds);
+        EntityEvent.fire(entityEventBus, annotationIdentity.getDocRef(), EntityAction.UNLINK, eventData);
     }
 
     @Override
