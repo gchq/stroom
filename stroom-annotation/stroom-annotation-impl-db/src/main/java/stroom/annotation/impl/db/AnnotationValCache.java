@@ -34,8 +34,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
-import java.util.Objects;
-
 /**
  * Cache for mapping annotation feed IDs to feed names.
  * <p>
@@ -77,7 +75,7 @@ class AnnotationValCache implements Clearable, EntityEvent.Handler {
     @Override
     public void onChange(final EntityEvent event) {
         LOGGER.debug("onChange() - event: {}", event);
-        if (event != null && Objects.equals(event.getDataClassName(), AnnotationIdEntityEventData.class.getName())) {
+        if (event != null && event.hasDataClass(AnnotationIdEntityEventData.class)) {
             final EntityAction action = event.getAction();
             final AnnotationIdEntityEventData entityEventData = event.getDataAsObject(
                     AnnotationIdEntityEventData.class);

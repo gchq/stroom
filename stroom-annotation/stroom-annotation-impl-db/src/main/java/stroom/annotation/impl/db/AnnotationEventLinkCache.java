@@ -153,15 +153,21 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
     @Override
     public void onChange(final EntityEvent event) {
         LOGGER.debug("onChange() - event: {}", event);
-        if (event != null && Objects.equals(event.getDataClassName(), AnnotationIdEntityEventData.class.getName())) {
-            final EntityAction action = event.getAction();
-            switch (action) {
-                // TODO the event data could include the change type so that we only
-                //  need to clear one entry inside AnnotationValues rather than bin the whole lot
-                case LINK -> link(event);
-                case UNLINK -> unlink(event);
-                case DELETE -> deleteAnnotation(event);
-                case CLEAR_CACHE -> clear(Instant.now());
+        if (event != null) {
+            // Depending on what has fired the event, it may have different data classes
+            if (event.hasDataClass(AnnotationEventLinks.class)
+                || event.hasDataClass(AnnotationIdEntityEventData.class)) {
+                final EntityAction action = event.getAction();
+                switch (action) {
+                    // TODO the event data could include the change type so that we only
+                    //  need to clear one entry inside AnnotationValues rather than bin the whole lot
+                    case LINK -> link(event);
+                    case UNLINK -> unlink(event);
+                    case DELETE -> deleteAnnotation(event);
+                    case CLEAR_CACHE -> clear(Instant.now());
+                }
+            } else {
+                LOGGER.debug("onChange() - Ignoring null event or with unexpected dataClassName, event: {}", event);
             }
         } else {
             LOGGER.debug("onChange() - Ignoring null event or with no dataClassName, event: {}", event);

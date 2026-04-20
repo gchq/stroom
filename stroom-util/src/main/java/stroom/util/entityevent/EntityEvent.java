@@ -194,6 +194,13 @@ public class EntityEvent {
     }
 
     /**
+     * @return True if dataClassName matched the fully qualified class name of expectedDataClass.
+     */
+    public boolean hasDataClass(@NonNull final Class<? extends EntityEventData> expectedDataClass) {
+        return Objects.equals(dataClassName, Objects.requireNonNull(expectedDataClass).getName());
+    }
+
+    /**
      * @return Additional data relating to the event. The data is JSON and the structure should
      * be expected and understood by sender and receiver. The format of the data will likely be
      * specific to the docRef.
