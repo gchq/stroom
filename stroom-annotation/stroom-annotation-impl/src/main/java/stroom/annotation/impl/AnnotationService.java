@@ -161,15 +161,18 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     public Collection<AnnotationValues> getAnnotationValues(final Collection<AnnotationIdentity> idList,
                                                             final Set<QueryField> requiredAnnotationFields) {
-        // Filter the annotations by user permission.
-        final Collection<AnnotationIdentity> filtered = idList
-                .stream()
-                .filter(annotationIdentity ->
-                        securityContext.hasDocumentPermission(annotationIdentity.getDocRef(), DocumentPermission.VIEW))
-                .toList();
+        return LOGGER.logDurationIfInfoEnabled(() -> {
+            // Filter the annotations by user permission.
+            final Collection<AnnotationIdentity> filtered = idList.stream()
+                    .filter(annotationIdentity ->
+                            securityContext.hasDocumentPermission(annotationIdentity.getDocRef(),
+                                    DocumentPermission.VIEW))
+                    .toList();
 
-        // Get annotation values from the cache or DB if required.
-        return annotationDao.getAnnotationValues(filtered, requiredAnnotationFields);
+            // Get annotation values from the cache or DB if required.
+            return annotationDao.getAnnotationValues(filtered, requiredAnnotationFields);
+        }, collection ->
+                LogUtil.message("getAnnotationValues() - count: {}", collection.size()));
     }
 
     @Override

@@ -118,6 +118,10 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
                         valueReferenceIndex.getFieldValIndex(secondaryName), -1));
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private record StoredValueMapperImpl(AnnotationService annotationService,
                                          int streamIdIndex,
                                          int eventIdIndex,
@@ -142,8 +146,8 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
             }
 
             // Get requested annotation fields for the ids.
-            final Collection<AnnotationValues> valueList = annotationService
-                    .getAnnotationValues(idList, requiredAnnotationFields);
+            final Collection<AnnotationValues> valueList = annotationService.getAnnotationValues(
+                    idList, requiredAnnotationFields);
 
             // If we can not resolve any annotation fields (possibly due to permissions) then just return.
             if (valueList.isEmpty()) {
@@ -169,6 +173,10 @@ public class AnnotationMapperFactoryImpl implements AnnotationMapperFactory {
             });
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private interface Mutator {
 

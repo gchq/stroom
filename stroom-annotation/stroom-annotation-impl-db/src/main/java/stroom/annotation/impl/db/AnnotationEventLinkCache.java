@@ -52,19 +52,21 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationEventLinkCache.class);
 
-    private final AtomicReference<MapWrapper> mapWrapper;
+    private final AtomicReference<MapWrapper> atomicRef;
 
     public AnnotationEventLinkCache() {
-        this.mapWrapper = new AtomicReference<>();
+        this.atomicRef = new AtomicReference<>();
         clear(Instant.MIN);
     }
 
     public Instant getLastLoadTime() {
-        return mapWrapper.get().lastEventIdLoad();
+        return atomicRef.get().lastEventIdLoad();
     }
 
     private void clear(final Instant time) {
-        this.mapWrapper.set(new MapWrapper(new ConcurrentHashMap<>(), time));
+        LOGGER.debug(() -> LogUtil.message("clear() - size: {}",
+                NullSafe.toString(this.atomicRef.get(), MapWrapper::annotationEventIdCache, Map::size)));
+        this.atomicRef.set(new MapWrapper(new ConcurrentHashMap<>(), time));
     }
 
     void reload(final Collection<AnnotationEventLink> annotationEventLinks) {
@@ -79,7 +81,7 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
                         .add(cacheValue);
             });
             final Instant now = Instant.now();
-            mapWrapper.set(new MapWrapper(newMap, now));
+            atomicRef.set(new MapWrapper(newMap, now));
             LOGGER.debug(() -> LogUtil.message("reload() - Swapped mapWrapper, entry count: {}, now: {}",
                     newMap.size(), now));
         } else {
@@ -93,7 +95,7 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
         Objects.requireNonNull(eventId);
         Objects.requireNonNull(annotationUuid);
         // Use compute rather than computeIfAbsent so we are sure we are the only thread working on this eventId
-        mapWrapper.get().annotationEventIdCache.compute(
+        atomicRef.get().annotationEventIdCache.compute(
                 eventId,
                 (ignored, cachedAnnotationIdentities) -> {
                     final Set<CacheValue> set = Objects.requireNonNullElseGet(
@@ -108,7 +110,7 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
                 eventId, annotationUuid, annotationId);
         Objects.requireNonNull(eventId);
         Objects.requireNonNull(annotationUuid);
-        mapWrapper.get().annotationEventIdCache.compute(
+        atomicRef.get().annotationEventIdCache.compute(
                 eventId, (ignored, cachedAnnotationIdentities) -> {
                     if (cachedAnnotationIdentities != null) {
                         cachedAnnotationIdentities.remove(new CacheValue(annotationId, annotationUuid));
@@ -125,7 +127,11 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
 
     public @NonNull Set<AnnotationIdentity> getLinkedAnnotations(@NonNull final EventId eventId) {
         Objects.requireNonNull(eventId);
-        final Set<CacheValue> values = mapWrapper.get().annotationEventIdCache.get(eventId);
+        final Set<CacheValue> values = NullSafe.getOrElseGet(
+                atomicRef.get(),
+                MapWrapper::annotationEventIdCache,
+                map -> map.get(eventId),
+                Collections::emptySet);
         final Set<AnnotationIdentity> result;
         if (NullSafe.isEmptyCollection(values)) {
             result = Collections.emptySet();
@@ -134,11 +140,9 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
                     .map(CacheValue::getAnnotationIdentity)
                     .collect(Collectors.toUnmodifiableSet());
         }
-
-        LOGGER.debug(() -> LogUtil.message(
+        LOGGER.trace(() -> LogUtil.message(
                 "getLinkedAnnotations() - Returning {} annotationIdentities for eventId: {}",
                 result.size(), eventId));
-
         return result;
     }
 
@@ -215,7 +219,7 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
             // It is possible that a reload may happen while we are iterating, in which case
             // all our changes will be against the redundant map, however, the reload should
             // have swapped in a fresh snapshot
-            final Map<EventId, Set<CacheValue>> cache = mapWrapper.get().annotationEventIdCache();
+            final Map<EventId, Set<CacheValue>> cache = atomicRef.get().annotationEventIdCache();
             cache.keySet().forEach(eventId ->
                     cache.compute(eventId, (ignored, cacheValues) -> {
                         if (cacheValues != null) {

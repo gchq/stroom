@@ -28,6 +28,7 @@ import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;
@@ -69,6 +70,7 @@ class AnnotationValCache implements Clearable, EntityEvent.Handler {
 
     @Override
     public void clear() {
+        LOGGER.debug(() -> LogUtil.message("clear() - size: {}", cache.size()));
         cache.clear();
     }
 

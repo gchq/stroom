@@ -29,6 +29,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * A lazy cache of the queryable values for a single annotation, keyed by
+ * their {@link QueryField}.
+ */
 public class AnnotationValues {
 
     private final AnnotationIdentity annotationIdentity;
@@ -50,11 +54,11 @@ public class AnnotationValues {
     public Val get(final QueryField queryField) {
         if (queryField.equals(AnnotationDecorationFields.ANNOTATION_ID_FIELD)) {
             return ValLong.create(annotationIdentity.getId());
-        }
-        if (queryField.equals(AnnotationDecorationFields.ANNOTATION_UUID_FIELD)) {
+        } else if (queryField.equals(AnnotationDecorationFields.ANNOTATION_UUID_FIELD)) {
             return NullSafe.getOrElse(annotationIdentity.getUuid(), ValString::create, ValNull.INSTANCE);
+        } else {
+            return Objects.requireNonNullElse(values.get(queryField), ValNull.INSTANCE);
         }
-        return Objects.requireNonNullElse(values.get(queryField), ValNull.INSTANCE);
     }
 
     public boolean containsKey(final QueryField queryField) {

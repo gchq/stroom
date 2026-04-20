@@ -36,6 +36,7 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
+    implementation libs.caffeine
     implementation libs.fastutil.core
     implementation libs.flyway.core
     implementation libs.flyway.mysql
