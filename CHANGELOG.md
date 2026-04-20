@@ -13,6 +13,13 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.11.9] - 2026-04-20
+
+* Bug **#5508** : Improve annotation decoration performance.
+
+* Bug : Fix Annotation -> Events screen not refreshing the linked events list when an event link is added/removed.
+
+
 ## [v7.11.8] - 2026-04-13
 
 * Bug **#5503** : Fix search rerank LLM processing and add debug logging.
@@ -2101,7 +2108,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.11.9...HEAD
+[v7.11.9]: https://github.com/gchq/stroom/compare/v7.11.8...v7.11.9
 [v7.11.8]: https://github.com/gchq/stroom/compare/v7.11.7...v7.11.8
 [v7.11.7]: https://github.com/gchq/stroom/compare/v7.11.6...v7.11.7
 [v7.11.6]: https://github.com/gchq/stroom/compare/v7.11.5...v7.11.6
