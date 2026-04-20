@@ -12168,6 +12168,12 @@ components:
           - CREATE_EXPLORER_NODE
           - UPDATE_EXPLORER_NODE
           - DELETE_EXPLORER_NODE
+          - LINK
+          - UNLINK
+        data:
+          type: string
+        dataClassName:
+          type: string
         docRef:
           $ref: "#/components/schemas/DocRef"
         oldDocRef:
@@ -18262,6 +18268,9 @@ components:
     SingleAnnotationChangeRequest:
       type: object
       properties:
+        annotationId:
+          type: integer
+          format: int64
         annotationRef:
           $ref: "#/components/schemas/DocRef"
         change:
