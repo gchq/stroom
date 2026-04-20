@@ -42,6 +42,8 @@ public interface AnnotationDao {
 
     Optional<Long> getId(DocRef docRef);
 
+    long getIdOrThrow(DocRef docRef);
+
     ResultPage<Annotation> findAnnotations(FindAnnotationRequest request, Predicate<Annotation> vierwPredicate);
 
     List<AnnotationIdentity> idListToDocRefs(Collection<Long> idList);

@@ -461,6 +461,12 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                 getId(context, docRef));
     }
 
+    @Override
+    public long getIdOrThrow(final DocRef docRef) {
+        return getId(docRef)
+                .orElseThrow(() -> new RuntimeException("No Annotation record found with docRef " + docRef));
+    }
+
     private Optional<Long> getId(final DSLContext context, final DocRef docRef) {
         return context
                 .select(ANNOTATION.ID)
@@ -788,9 +794,9 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
         try {
             final Instant now = Instant.now();
             final DocRef annotationRef = request.getAnnotationRef();
-            final long annotationId = request.getAnnotationId()
-                    .orElseGet(() -> getId(annotationRef).orElseThrow(() ->
-                            new RuntimeException("No Annotation record found with docRef " + annotationRef)));
+            final long annotationId = Objects.requireNonNullElseGet(
+                    request.getAnnotationId(),
+                    () -> getIdOrThrow(annotationRef));
             final AnnotationIdentity annotationIdentity = new AnnotationIdentity(
                     annotationRef.getUuid(),
                     annotationId);
@@ -1997,9 +2003,7 @@ class AnnotationDaoImpl implements AnnotationDao, Clearable {
                                          final UserRef currentUser,
                                          final long entryId,
                                          final String data) {
-        final Optional<Long> optionalId = getId(annotationRef);
-        final long annotationId = optionalId.orElseThrow(() ->
-                new RuntimeException("Unable to change entry for unknown annotation"));
+        final long annotationId = getIdOrThrow(annotationRef);
 
         // Get the entry first.
         return JooqUtil.transactionResult(connectionProvider, context -> {

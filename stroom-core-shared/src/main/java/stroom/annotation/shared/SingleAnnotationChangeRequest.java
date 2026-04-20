@@ -24,7 +24,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
-import java.util.OptionalLong;
 
 @JsonInclude(Include.NON_NULL)
 public class SingleAnnotationChangeRequest {
@@ -66,10 +65,8 @@ public class SingleAnnotationChangeRequest {
      *
      * @return The Annotation ID, if known, else null.
      */
-    public OptionalLong getAnnotationId() {
-        return annotationId != null
-                ? OptionalLong.of(annotationId)
-                : OptionalLong.empty();
+    public Long getAnnotationId() {
+        return annotationId;
     }
 
     public boolean hasAnnotationId() {

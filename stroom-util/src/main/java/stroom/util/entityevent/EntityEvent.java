@@ -219,7 +219,6 @@ public class EntityEvent {
      * @throws IllegalArgumentException if dataClass does not match the dataClassName in the event.
      * @throws RuntimeException         if the data cannot be deserialised.
      */
-    @JsonIgnore
     public <T extends EntityEventData> T getDataObject(@NonNull final Class<T> dataClass) {
         if (data == null) {
             return null;
@@ -238,7 +237,6 @@ public class EntityEvent {
         }
     }
 
-    @JsonIgnore
     public <T extends EntityEventData, R> R getDataObjectAs(@NonNull final Class<T> dataClass,
                                                             @NonNull final Function<T, R> mapper) {
         final T data = getDataObject(dataClass);

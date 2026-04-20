@@ -305,8 +305,9 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         final AbstractAnnotationChange change = request.getChange();
         final boolean result = annotationDao.change(request, getCurrentUser());
         final DocRef annotationRef = request.getAnnotationRef();
-        final long annotationId = request.getAnnotationId()
-                .orElseGet(() -> getId(annotationRef));
+        final long annotationId = Objects.requireNonNullElseGet(
+                request.getAnnotationId(),
+                () -> getIdOrThrow(annotationRef));
 
         switch (change) {
             case final LinkEvents ignored -> LOGGER.debug("change() - Skipping linkEvents, handled by DAO");
@@ -316,10 +317,9 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         return result;
     }
 
-    private long getId(final DocRef annotationRef) {
+    private long getIdOrThrow(final DocRef annotationRef) {
         Objects.requireNonNull(annotationRef);
-        return annotationDao.getId(annotationRef)
-                .orElseThrow(() -> new RuntimeException("Annotation not found for docRef " + annotationRef));
+        return annotationDao.getIdOrThrow(annotationRef);
     }
 
     public Integer batchChange(final MultiAnnotationChangeRequest request) {
@@ -396,8 +396,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
         documentPermissionServiceProvider.get()
                 .removeAllDocumentPermissions(annotationRef);
-        final long id = annotationDao.getId(annotationRef)
-                .orElseThrow(() -> new RuntimeException("Annotation not found for docRef " + annotationRef));
+        final long id = annotationDao.getIdOrThrow(annotationRef);
         final Boolean result = annotationDao.logicalDelete(annotationRef, securityContext.getUserRef());
         fireEntityEvent(EntityAction.DELETE, annotationRef, id);
         return result;
