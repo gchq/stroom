@@ -464,7 +464,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
             LOGGER.debug(() -> LogUtil.message(
                     "fireEntityChangeEvents() - fromIdxInc: {}, toIdxExc: {}, ids: {}, batchIds: {}, docRefs: {}",
                     finalFromIdxInc, toIdxExc, annotationIdentities.size(), batchIds.size(), batchIds.size()));
-            fireEntityChangeEvents(EntityAction.DELETE, annotationIdentities);
+            fireEntityChangeEvents(EntityAction.DELETE, batchIds);
             fromIdxInc += batchSize;
         }
     }
@@ -531,11 +531,8 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                                         final List<AnnotationIdentity> annotationIdentities) {
         final List<EntityEvent> events = NullSafe.stream(annotationIdentities)
                 .filter(Objects::nonNull)
-                .map(annotationIdentity -> {
-                    final AnnotationIdEntityEventData entityEventData = new AnnotationIdEntityEventData(
-                            annotationIdentity.getId());
-                    return new EntityEvent(annotationIdentity.getDocRef(), entityAction, entityEventData);
-                })
+                .map(annotationIdentity ->
+                        AnnotationIdEntityEventData.createEntityEvent(entityAction, annotationIdentity))
                 .toList();
         final EntityEventBatch entityEventBatch = new EntityEventBatch(events, true);
         entityEventBus.fire(entityEventBatch);

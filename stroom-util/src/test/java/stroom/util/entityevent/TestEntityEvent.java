@@ -42,7 +42,7 @@ class TestEntityEvent {
                 myEntityEventData);
 
         final EntityEvent entityEvent2 = TestUtil.testSerialisation(entityEvent, EntityEvent.class);
-        final MyEntityEventData myEntityEventData2 = entityEvent2.getDataAsObject(MyEntityEventData.class);
+        final MyEntityEventData myEntityEventData2 = entityEvent2.getDataObject(MyEntityEventData.class);
 
         Assertions.assertThat(myEntityEventData2)
                 .isEqualTo(myEntityEventData);

@@ -19,10 +19,9 @@ package stroom.annotation.impl;
 import stroom.annotation.shared.AnnotationIdentity;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.cluster.lock.mock.MockClusterLockService;
-import stroom.docref.DocRef;
-import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEventBatch;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.shared.HasId;
 import stroom.util.time.StroomDuration;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
@@ -37,7 +36,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,14 +66,14 @@ class TestAnnotationService {
         Mockito.when(mockAnnotationDao.physicallyDelete(Mockito.any()))
                 .thenReturn(physicallyDeletedIds);
 
-        Mockito.when(mockAnnotationDao.idListToDocRefs(Mockito.any()))
-                .thenAnswer(invocation -> {
-                    final LongList ids = invocation.getArgument(0, LongList.class);
-                    return ids.longStream()
-                            .boxed()
-                            .map(id -> new AnnotationIdentity(String.valueOf(id), id))
-                            .collect(Collectors.toList());
-                });
+//        Mockito.when(mockAnnotationDao.idListToDocRefs(Mockito.any()))
+//                .thenAnswer(invocation -> {
+//                    final LongList ids = invocation.getArgument(0, LongList.class);
+//                    return ids.longStream()
+//                            .boxed()
+//                            .map(id -> new AnnotationIdentity(String.valueOf(id), id))
+//                            .collect(Collectors.toList());
+//                });
 
         final AnnotationService annotationService = new AnnotationService(
                 mockAnnotationDao,
@@ -98,10 +96,11 @@ class TestAnnotationService {
 
         final LongList allIds = entityEventBatchArgumentCaptor.getAllValues()
                 .stream()
-                .flatMap(batch -> batch.getEntityEvents().stream())
-                .map(EntityEvent::getDocRef)
-                .map(DocRef::getUuid)
-                .mapToLong(Long::parseLong)
+                .flatMap(batch ->
+                        batch.getEntityEvents().stream())
+                .mapToLong(entityEvent -> entityEvent.getDataObjectAs(
+                        AnnotationIdEntityEventData.class,
+                        AnnotationIdEntityEventData::getAnnotationId))
                 .collect(LongArrayList::new,
                         LongArrayList::add,
                         LongArrayList::addAll);
@@ -109,9 +108,9 @@ class TestAnnotationService {
         assertThat(allIds.size())
                 .isEqualTo(100 + 100);
         final LongOpenHashSet allIdsSet = new LongOpenHashSet(allIds);
-        assertThat(allIdsSet.containsAll(logicallyDeletedIds))
+        assertThat(allIdsSet.containsAll(HasId.asIdList(logicallyDeletedIds)))
                 .isTrue();
-        assertThat(allIdsSet.containsAll(physicallyDeletedIds))
+        assertThat(allIdsSet.containsAll(HasId.asIdList(physicallyDeletedIds)))
                 .isTrue();
     }
 

@@ -176,7 +176,7 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
 
     private AnnotationEventLinks getAnnotationEventLinks(final EntityEvent entityEvent) {
         if (AnnotationEventLinks.class.getName().equals(entityEvent.getDataClassName())) {
-            return entityEvent.getDataAsObject(AnnotationEventLinks.class);
+            return entityEvent.getDataObject(AnnotationEventLinks.class);
         } else {
             LOGGER.error("getAnnotationEventLinks() - Unexpected dataClassName for event: {}, expecting: {}",
                     entityEvent.getDataClassName(), AnnotationEventLinks.class.getName());
@@ -186,7 +186,7 @@ public class AnnotationEventLinkCache implements EntityEvent.Handler {
 
     private AnnotationIdEntityEventData getAnnotationIdEventData(final EntityEvent entityEvent) {
         if (AnnotationIdEntityEventData.class.getName().equals(entityEvent.getDataClassName())) {
-            return entityEvent.getDataAsObject(AnnotationIdEntityEventData.class);
+            return entityEvent.getDataObject(AnnotationIdEntityEventData.class);
         } else {
             LOGGER.error("getAnnotationIdEventData() - Unexpected dataClassName for event: {}, expecting: {}",
                     entityEvent.getDataClassName(), AnnotationEventLinks.class.getName());

@@ -31,6 +31,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
@@ -219,7 +220,7 @@ public class EntityEvent {
      * @throws RuntimeException         if the data cannot be deserialised.
      */
     @JsonIgnore
-    public <T extends EntityEventData> T getDataAsObject(@NonNull final Class<T> dataClass) {
+    public <T extends EntityEventData> T getDataObject(@NonNull final Class<T> dataClass) {
         if (data == null) {
             return null;
         } else {
@@ -235,6 +236,13 @@ public class EntityEvent {
                         dataClass.getName(), data, LogUtil.exceptionMessage(e)), e);
             }
         }
+    }
+
+    @JsonIgnore
+    public <T extends EntityEventData, R> R getDataObjectAs(@NonNull final Class<T> dataClass,
+                                                            @NonNull final Function<T, R> mapper) {
+        final T data = getDataObject(dataClass);
+        return mapper.apply(data);
     }
 
     public EntityEventKey asEntityEventKey() {

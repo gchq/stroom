@@ -49,15 +49,20 @@ public class AnnotationIdEntityEventData implements EntityEventData {
                '}';
     }
 
+    public static EntityEvent createEntityEvent(final EntityAction entityAction,
+                                                final AnnotationIdentity annotationId) {
+        return new EntityEvent(
+                new DocRef(Annotation.TYPE, annotationId.getUuid()),
+                entityAction,
+                new AnnotationIdEntityEventData(annotationId.getId()));
+    }
+
     public static void fireEvent(final EntityEventBus entityEventBus,
                                  final EntityAction entityAction,
                                  final AnnotationIdentity annotationId) {
         if (entityEventBus != null) {
-            entityEventBus.fire(
-                    new EntityEvent(
-                            new DocRef(Annotation.TYPE, annotationId.getUuid()),
-                            entityAction,
-                            new AnnotationIdEntityEventData(annotationId.getId())));
+            final EntityEvent entityEvent = createEntityEvent(entityAction, annotationId);
+            entityEventBus.fire(entityEvent);
         }
     }
 }
